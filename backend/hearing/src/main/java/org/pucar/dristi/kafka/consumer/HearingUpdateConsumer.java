@@ -89,53 +89,14 @@ public class HearingUpdateConsumer {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
             }
             if (hearingStatus.equalsIgnoreCase(COMPLETED)) {
-                OrderCriteria criteria = OrderCriteria.builder()
-                        .hearingNumber(hearingRequest.getHearing().getHearingId())
-                        .status("DRAFT_IN_PROGRESS")
-                        .orderType("SCHEDULING_NEXT_HEARING")
-                        .tenantId(hearingRequest.getHearing().getTenantId())
-                        .build();
-
-                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
-                        .criteria(criteria)
-                        .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
-                        .build();
-
-                OrderListResponse response = orderUtil.getOrders(searchRequest);
-                if (response != null && !CollectionUtils.isEmpty(response.getList())) {
-                    log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingRequest.getHearing().getHearingId());
-                    return;
-                } else {
-                    org.pucar.dristi.web.models.orders.Order order = Order.builder()
-                            .hearingNumber(hearingRequest.getHearing().getHearingId())
-                            .filingNumber(
-                                    hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
-                                            ? hearingRequest.getHearing().getFilingNumber().get(0)
-                                            : null
-                            )
-                            .cnrNumber(
-                                    hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
-                                            ? hearingRequest.getHearing().getCnrNumbers().get(0)
-                                            : null
-                            )
-                            .tenantId(hearingRequest.getHearing().getTenantId())
-                            .orderTitle("SCHEDULING_NEXT_HEARING")
-                            .orderType("SCHEDULING_NEXT_HEARING")
-                            .orderCategory("INTERMEDIATE")
-                            .statuteSection(StatuteSection.builder().tenantId(hearingRequest.getHearing().getTenantId()).build())
-                            .build();
-
-                    WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction("SAVE_DRAFT");
-                    order.setWorkflow(workflow);
-
-                    OrderRequest orderRequest = OrderRequest.builder()
-                            .requestInfo(hearingRequest.getRequestInfo()).order(order).build();
-                    OrderResponse orderResponse = orderUtil.createOrder(orderRequest);
-                    log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingRequest.getHearing().getHearingId(), orderResponse.getOrder().getOrderNumber());
-
-                    checkAndCreatePendingTasks(hearingRequest);
-                }
+              String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
+                                ? hearingRequest.getHearing().getFilingNumber().get(0)
+                                : null;
+              String cnrNumber = hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
+                                        ? hearingRequest.getHearing().getCnrNumbers().get(0)
+                                        : null;
+              hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
+              checkAndCreatePendingTasks(hearingRequest);
             }
             log.info("Updated hearings");
         } catch (IllegalArgumentException e) {
@@ -239,6 +200,5 @@ public class HearingUpdateConsumer {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
-
 
 }
