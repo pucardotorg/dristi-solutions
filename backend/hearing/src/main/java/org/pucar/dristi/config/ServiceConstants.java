@@ -125,8 +125,8 @@ public class ServiceConstants {
     public static final String CASE_ID = "id";
     public static final String SCHEDULE_HEARING_SUFFIX = "_SCHEDULE_HEARING";
     public static final String ACTION_CATEGORY_SCHEDULE_HEARING = "Schedule Hearing";
-    public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
-    public static final String ASSIGNED_ROLE_JUDGE = "JUDGE_ROLE";
+    public static final String CREATE_ORDER = "CREATE_ORDER";
+    public static final String JUDGE_ROLE = "JUDGE_ROLE";
     public static final String SCREEN_TYPE_HOME = "home";
 
     // module for localized hearing types
