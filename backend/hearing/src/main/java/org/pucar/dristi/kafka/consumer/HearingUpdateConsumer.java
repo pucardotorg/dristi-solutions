@@ -96,6 +96,7 @@ public class HearingUpdateConsumer {
                                         ? hearingRequest.getHearing().getCnrNumbers().get(0)
                                         : null;
               hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
+              checkAndCreatePendingTasks(hearingRequest);
             }
             log.info("Updated hearings");
         } catch (IllegalArgumentException e) {
