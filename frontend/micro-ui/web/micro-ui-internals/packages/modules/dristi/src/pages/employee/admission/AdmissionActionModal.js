@@ -223,7 +223,7 @@ function AdmissionActionModal({
           documents: [{}],
         },
         documents: [],
-        ...(hearingNumber && { hearingNumber }),
+        // ...(hearingNumber && { hearingNumber }),
         additionalDetails: {
           formdata: {
             orderType: {
