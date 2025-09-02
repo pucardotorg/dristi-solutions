@@ -8,6 +8,7 @@ import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
+import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
@@ -28,12 +29,14 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
     private final HearingUtil hearingUtil;
     private final Configuration configuration;
     private final CaseUtil caseUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil) {
+    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     @Override
@@ -82,6 +85,18 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
     public OrderRequest postProcess(OrderRequest orderRequest) {
 
         hearingUtil.updateHearingStatus(orderRequest);
+
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        CourtCase courtCase = cases.get(0);
+        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
+
 
         return null;
     }
