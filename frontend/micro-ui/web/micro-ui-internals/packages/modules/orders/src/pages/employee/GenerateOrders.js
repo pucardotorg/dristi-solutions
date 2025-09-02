@@ -2583,6 +2583,10 @@ const GenerateOrders = () => {
         orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails },
       });
       orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
+      console.log('first', {
+                    ...order?.additionalDetails,
+                    ...(taskDetails && { taskDetails }),
+                  })
       return await ordersService
         .updateOrder(
           {
@@ -3115,7 +3119,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+              orderType
             ),
             feesStatus: "",
           },
@@ -3161,7 +3165,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType
+              orderType
             ),
             feesStatus: "",
           },
@@ -3210,7 +3214,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+              orderType
             ),
             feesStatus: "",
           },
@@ -3254,7 +3258,7 @@ const GenerateOrders = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+            orderType
           );
 
           if ("deliveryChannels" in clonedPayload) {

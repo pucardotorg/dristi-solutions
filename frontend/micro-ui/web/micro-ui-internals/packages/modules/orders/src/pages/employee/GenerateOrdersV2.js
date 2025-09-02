@@ -1888,7 +1888,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1935,7 +1935,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1985,7 +1985,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -2030,7 +2030,7 @@ const GenerateOrdersV2 = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType,
             tenantId
           );
 
@@ -2093,6 +2093,7 @@ const GenerateOrdersV2 = () => {
 
   const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
+      debugger;
       let localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
       let taskDetails = null;
@@ -2191,18 +2192,14 @@ const GenerateOrdersV2 = () => {
               ...order,
               ...orderSchema,
               ...(isSigning && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
-              ...(isSigning &&
-                order?.orderCategory === "INTERMEDIATE" && {
-                  additionalDetails: {
-                    ...order?.additionalDetails,
-                    ...(taskDetails && { taskDetails }),
-                  },
-                }),
               ...((currentInProgressHearing || hearingId) && {
                 hearingSummary: order?.itemText,
               }),
               additionalDetails: {
                 ...order?.additionalDetails,
+                ...(isSigning &&
+                  order?.orderCategory === "INTERMEDIATE" &&
+                  taskDetails && { taskDetails }),
                 ...((currentInProgressHearing || hearingId) &&
                   !skipScheduling && {
                     formdata: {

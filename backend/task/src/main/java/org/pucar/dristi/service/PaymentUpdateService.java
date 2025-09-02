@@ -199,12 +199,38 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case WARRANT, PROCLAMATION, ATTACHMENT -> {
+                case WARRANT-> {
                     WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+                    task.setStatus(status);
+                    updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
+                case PROCLAMATION -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
+                    task.setStatus(status);
+                    updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
+                case ATTACHMENT -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
@@ -574,7 +600,9 @@ public class PaymentUpdateService {
 
         return switch (taskType) {
             case SUMMON -> "task-summons";
-            case WARRANT, PROCLAMATION, ATTACHMENT -> "task-warrant";
+            case WARRANT -> "task-warrant";
+            case PROCLAMATION -> "task-proclamation";
+            case ATTACHMENT -> "task-attachment";
             case NOTICE -> "task-notice";
             default -> null;
         };
