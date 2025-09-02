@@ -85,7 +85,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
                     color: "#101828",
                   }}
                 >
-                  {order?.orderTitle}
+                  {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderTitle)}
                 </div>
                 <CustomArrowOut />
               </div>

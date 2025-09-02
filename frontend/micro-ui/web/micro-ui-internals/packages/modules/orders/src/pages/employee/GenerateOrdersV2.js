@@ -195,7 +195,7 @@ const GenerateOrdersV2 = () => {
   const [presentAttendees, setPresentAttendees] = useState([]);
   const [absentAttendees, setAbsentAttendees] = useState([]);
   const [purposeOfHearing, setPurposeOfHearing] = useState("");
-  const [nextHearingDate, setNextHearingDate] = useState("");
+  const [nextHearingDate, setNextHearingDate] = useState(null);
   const [skipScheduling, setSkipScheduling] = useState(false);
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
@@ -3331,7 +3331,7 @@ const GenerateOrdersV2 = () => {
                       setSkipScheduling(newSkipValue);
                       if (newSkipValue) {
                         // Clear purpose and date when skipping
-                        setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: "" });
+                        setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: null });
                         setPurposeOfHearing("");
                         setNextHearingDate("");
                         setErrors((prevErrors) => {
@@ -3381,8 +3381,8 @@ const GenerateOrdersV2 = () => {
                     config={nextDateOfHearing}
                     formData={{ nextHearingDate: nextHearingDate || currentOrder?.nextHearingDate }}
                     onDateChange={(date) => {
-                      setCurrentOrder({ ...currentOrder, nextHearingDate: new Date(date).setHours(0, 0, 0, 0) });
-                      setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));
+                      setCurrentOrder({ ...currentOrder, nextHearingDate: date ? new Date(date).setHours(0, 0, 0, 0) : null });
+                      setNextHearingDate(date ? new Date(date).setHours(0, 0, 0, 0) : null);
                       setErrors((prevErrors) => {
                         const newErrors = { ...prevErrors };
                         delete newErrors["nextHearingDate"];
@@ -3525,14 +3525,14 @@ const GenerateOrdersV2 = () => {
             borderTop: "1px solid #BBBBBD",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
             <Button
-              label={t("SAVE_AS_DRAFT")}
+              label={t("CS_COMMON_BACK")}
               variation={"secondary"}
               onButtonClick={() => {
-                handleSaveDraft(currentOrder);
+                history.goBack();
               }}
-              style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+              style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
               textStyles={{
                 fontFamily: "Roboto",
                 fontSize: "16px",
@@ -3542,7 +3542,25 @@ const GenerateOrdersV2 = () => {
                 color: "#007E7E",
               }}
             />
-            <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+              <Button
+                label={t("SAVE_AS_DRAFT")}
+                variation={"secondary"}
+                onButtonClick={() => {
+                  handleSaveDraft(currentOrder);
+                }}
+                style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                textStyles={{
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+              />
+              <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+            </div>
           </div>
         </ActionBar>
       </div>

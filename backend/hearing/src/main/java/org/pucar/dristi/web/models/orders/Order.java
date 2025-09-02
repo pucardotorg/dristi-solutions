@@ -100,7 +100,6 @@ public class Order {
     private Object compositeItems = null;
 
     @JsonProperty("orderTitle")
-    @NotNull
     private String orderTitle = null;
 
     @JsonProperty("hearingSummary")
