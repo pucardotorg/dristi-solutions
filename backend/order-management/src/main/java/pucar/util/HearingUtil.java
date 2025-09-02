@@ -39,8 +39,9 @@ public class HearingUtil {
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
+    private final OrderUtil orderUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -49,6 +50,7 @@ public class HearingUtil {
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
+        this.orderUtil = orderUtil;
     }
 
 
@@ -243,6 +245,41 @@ public class HearingUtil {
 
     }
 
+    public HearingRequest createHearingRequestForScheduleNextHearing(RequestInfo requestInfo, Order order, CourtCase courtCase) {
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction("CREATE");
+        workflowObject.setComments("Create new Hearing");
+
+        Hearing hearing = Hearing.builder()
+                .tenantId(order.getTenantId())
+                .filingNumber(Collections.singletonList(order.getFilingNumber()))
+                .cnrNumbers(Collections.singletonList(order.getCnrNumber()))
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cmpNumber(courtCase.getCmpNumber())
+                .hearingType(order.getPurposeOfNextHearing())
+                .status("true") // this is not confirmed ui is sending true
+                .attendees(getAttendees(requestInfo, courtCase, order , true))
+                .startTime(order.getNextHearingDate())
+                .endTime(order.getNextHearingDate())
+                .hearingSummary(orderUtil.getBusinessOfTheDay(order))
+                .workflow(workflowObject)
+                .applicationNumbers(new ArrayList<>())
+                .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
+                        .benchID("BENCH_ID")
+                        .judgeID(Collections.singletonList(courtCase.getJudgeId()))
+                        .courtID(courtCase.getCourtId()).build())
+
+                .build();
+
+
+        // create hearing
+        return HearingRequest.builder()
+                .requestInfo(requestInfo)
+                .hearing(hearing).build();
+
+    }
+
 
     /**
      * Adds a new value inside the first pair of brackets in the given text.
@@ -324,14 +361,9 @@ public class HearingUtil {
     public void updateHearingSummary(OrderRequest orderRequest, Hearing hearing) {
         log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
 
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
 
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        hearing.setHearingSummary(getHearingSummary(order));
+        hearing.setHearingSummary(orderUtil.getBusinessOfTheDay(order));
         List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
         List<Attendee> attendees = hearing.getAttendees();
 
