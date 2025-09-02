@@ -9,8 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.service.HearingService;
+import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.OrderUtil;
+import org.pucar.dristi.util.PendingTaskUtil;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.MessageHeaders;
 import org.slf4j.Logger;
@@ -34,11 +38,23 @@ class HearingUpdateConsumerTest {
     private OrderUtil orderUtil;
 
     @Mock
+    private PendingTaskUtil pendingTaskUtil;
+
+    @Mock
+    private Configuration configuration;
+
+    @Mock
+    private DateUtil dateUtil;
+
+    @Mock
+    private CaseUtil caseUtil;
+
+    @Mock
     private Logger log;
 
     @BeforeEach
     void setup() {
-        hearingUpdateConsumer = new HearingUpdateConsumer(hearingService, objectMapper, orderUtil);
+        hearingUpdateConsumer = new HearingUpdateConsumer(hearingService, objectMapper, orderUtil, pendingTaskUtil, configuration, dateUtil, caseUtil);
     }
 
     @Test

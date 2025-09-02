@@ -123,6 +123,9 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
         // close manual pending task for filing number
         log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
         pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
+        // close manual pending task of schedule of hearing
+        log.info("close manual pending task of schedule of hearing");
+        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
