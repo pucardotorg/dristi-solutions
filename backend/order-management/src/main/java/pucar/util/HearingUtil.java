@@ -363,7 +363,7 @@ public class HearingUtil {
 
         Order order = orderRequest.getOrder();
 
-        hearing.setHearingSummary(getHearingSummary(order));
+        hearing.setHearingSummary(orderUtil.getBusinessOfTheDay(order));
         List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
         List<Attendee> attendees = hearing.getAttendees();
 
