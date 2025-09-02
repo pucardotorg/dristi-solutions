@@ -236,7 +236,7 @@ function ScheduleNextHearing({
           createdDate: null,
           tenantId,
           cnrNumber,
-          hearingNumber: applicationData.applicationList[0]?.hearingId,
+          // hearingNumber: applicationData.applicationList[0]?.hearingId,
           filingNumber: filingNumber,
           statuteSection: {
             tenantId,
