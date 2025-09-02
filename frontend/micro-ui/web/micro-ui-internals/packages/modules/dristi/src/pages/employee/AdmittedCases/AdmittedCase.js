@@ -2216,7 +2216,7 @@ const AdmittedCases = () => {
           order: {
             createdDate: null,
             tenantId: tenantId,
-            hearingNumber: hearingNumber,
+            // hearingNumber: hearingNumber,
             filingNumber: filingNumber,
             cnrNumber: cnrNumber,
             statuteSection: {
