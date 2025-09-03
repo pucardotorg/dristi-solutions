@@ -468,7 +468,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const respondentMobileNumbersArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
@@ -480,19 +480,19 @@ export const checkDuplicateMobileEmailValidation = ({
   const witnessMobileNumbersArray =
     caseDetails?.witnessDetails
       ?.filter((data) => {
-        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
       ?.map((data) => {
         return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const respondentEmailsArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -504,7 +504,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const witnessEmailsArray =
     caseDetails?.witnessDetails
       ?.filter((data) => {
-        if (data?.emails?.emailId && data?.emails?.emailId.length !== 0) {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -3349,7 +3349,7 @@ export const updateCaseDetails = async ({
   );
 };
 
-export const transformCaseDataForEfilingLogic = (caseDetails, key) => {
+export const transformCaseDataForFetching = (caseDetails, key) => {
   if (key === "witnessDetails" && caseDetails?.witnessDetails?.length > 0) {
     let updatedCaseData = structuredClone(caseDetails || {});
     updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
