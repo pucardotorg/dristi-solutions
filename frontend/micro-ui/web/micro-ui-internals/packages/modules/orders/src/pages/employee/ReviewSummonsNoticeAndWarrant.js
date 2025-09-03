@@ -494,8 +494,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } else {
       if (orderType === "NOTICE") {
         msg = t("SENT_NOTICE_VIA");
-      } else if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") {
+      } else if (orderType === "WARRANT") {
         msg = t("SENT_WARRANT_VIA");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SENT_PROCLAMATION_VIA");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SENT_ATTACHMENT_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
