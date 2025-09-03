@@ -165,21 +165,25 @@ public class EvidenceService {
 
             JsonNode courtCase = searchCaseDetails(body, filingNumber);
 
-            List<WitnessDetails> witnessDetails = objectMapper.convertValue(courtCase.get("witnessDetails"), new TypeReference<>() {});
+            JsonNode witnessDetailsNode = courtCase.get("witnessDetails");
+            if (StringUtils.isBlank(uniqueId) || witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+                log.info("Witness list missing/invalid or uniqueId blank; falling back to legacy path. uniqueIdPresent={}", StringUtils.isNotBlank(uniqueId));
+                updateWitnessDeposition(body, courtCase);
+                return;
+            }
+            List<WitnessDetails> witnessDetails = objectMapper.convertValue(witnessDetailsNode, new TypeReference<>() {});
             WitnessDetails witness = witnessDetails.stream()
-                    .filter(w -> w.getUniqueId().equalsIgnoreCase(uniqueId))
+                    .filter(w -> StringUtils.isNotBlank(w.getUniqueId()) && StringUtils.equalsIgnoreCase(w.getUniqueId(), uniqueId))
                     .findFirst()
                     .orElse(null);
-            if(witness != null) {
-                log.info("Updating witness with unique id: {}", uniqueId);
+            if (witness != null) {
+                log.info("Updating witness found by uniqueId");
                 updateWitnessRecord(body, uniqueId, witness);
-            }
-            else{
-                log.info("No witness exists with unique id: {}", uniqueId);
+            } else {
+                log.info("No matching witness by uniqueId; using legacy update path");
                 updateWitnessDeposition(body, courtCase);
             }
-            log.info("Successfully completed updateCaseWitness for filing number: {}",
-                    filingNumber);
+            log.info("Successfully completed updateCaseWitness for filing number: {}", filingNumber);
 
         } catch (CustomException e) {
             log.error("Unexpected error in updateCaseWitness for filing number: {}",
