@@ -48,9 +48,11 @@ public class PublishOrderMoveCaseToLongPendingRegister implements OrderUpdateStr
         Order order = orderRequest.getOrder();
 
         //update the case to long pending register
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
 
         if (cases.isEmpty()) {
             log.info("No cases found : {}", order.getFilingNumber());
