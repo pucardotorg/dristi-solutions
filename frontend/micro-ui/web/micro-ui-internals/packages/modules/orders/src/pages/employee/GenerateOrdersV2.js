@@ -63,6 +63,7 @@ import {
   nextDateOfHearing,
   configsCost,
   configsWitnessBatta,
+  itemTextConfig,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -261,6 +262,7 @@ const GenerateOrdersV2 = () => {
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const [itemTextNull, setItemTextNull] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
   const fetchCaseDetails = async () => {
     try {
@@ -403,6 +405,8 @@ const GenerateOrdersV2 = () => {
   const currentInProgressHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
     hearingsData?.HearingList,
   ]);
+
+  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
 
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
@@ -1894,7 +1898,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1941,7 +1945,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1991,7 +1995,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -2036,7 +2040,7 @@ const GenerateOrdersV2 = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType,
             tenantId
           );
 
@@ -2200,6 +2204,13 @@ const GenerateOrdersV2 = () => {
               ...((currentInProgressHearing || hearingId) && {
                 hearingSummary: order?.itemText,
               }),
+              ...(order?.orderCategory === "INTERMEDIATE"
+                ? {
+                    orderTitle: t(order?.orderType) || t("DEFAULT_ORDER_TITLE"),
+                  }
+                : {
+                    orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
+                  }),
               additionalDetails: {
                 ...order?.additionalDetails,
                 ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
@@ -2212,6 +2223,9 @@ const GenerateOrdersV2 = () => {
                       namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   }),
+                ...(currentScheduledHearing && {
+                  scheduledHearingNumber: currentScheduledHearing?.hearingId,
+                }),
               },
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
@@ -2255,6 +2269,7 @@ const GenerateOrdersV2 = () => {
             itemText: itemTextNull ? null : updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
+            t,
             updatedOrder,
             OrderWorkflowAction.SAVE_DRAFT,
             tenantId,
@@ -2279,6 +2294,7 @@ const GenerateOrdersV2 = () => {
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
             updatedOrder.compositeItems = enabledCompositeItems;
             updateOrderResponse = await addOrderItem(
+              t,
               updatedOrder,
               OrderWorkflowAction.SAVE_DRAFT,
               tenantId,
@@ -3139,6 +3155,19 @@ const GenerateOrdersV2 = () => {
     });
   };
 
+  const onItemTextSelect = (key, value) => {
+    if (key === "itemText" && value?.["itemText"] !== undefined) {
+      setCurrentOrder({ ...currentOrder, itemText: value[key] });
+      if (value[key]) {
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          delete newErrors["itemText"];
+          return newErrors;
+        });
+      }
+    }
+  };
+
   if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
   }
@@ -3469,22 +3498,13 @@ const GenerateOrdersV2 = () => {
 
             <div>
               <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ITEM_TEXT")}</div>
-              <textarea
-                value={currentOrder?.itemText || ""}
-                onChange={(data) => {
-                  setCurrentOrder({ ...currentOrder, itemText: data.target.value });
-                  if (data.target.value) {
-                    setErrors((prevErrors) => {
-                      const newErrors = { ...prevErrors };
-                      delete newErrors["itemText"];
-                      return newErrors;
-                    });
-                  }
-                }}
-                rows={currentInProgressHearing || currentOrder?.hearingNumber ? 8 : 20}
-                maxLength={1000}
-                className={`custom-textarea-style`}
-              ></textarea>
+              <SelectCustomFormatterTextArea
+                t={t}
+                config={itemTextConfig}
+                formData={{ itemText: { itemText: currentOrder?.itemText || "" } }}
+                onSelect={onItemTextSelect}
+                errors={{}}
+              />
               {errors["itemText"] && <CardLabelError>{t(errors["itemText"]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
             </div>
 
@@ -3600,9 +3620,7 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
           }}
-          headerLabel={
-            showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)} ${t("CS_ORDER")}` : `${t("ADD")} ${t(orderType?.code)} ${t("CS_ORDER")}`
-          }
+          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)}` : `${t("ADD")} ${t(orderType?.code)}`}
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}

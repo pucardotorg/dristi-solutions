@@ -245,13 +245,13 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber,
+        hearingId: orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderData?.list?.[0]?.hearingNumber,
-    Boolean(orderData?.list?.[0]?.hearingNumber && caseCourtId)
+    orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+    Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {

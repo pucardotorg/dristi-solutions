@@ -25,7 +25,7 @@ const styles = {
     paddingLeft: "2rem",
     marginTop: "1rem",
     listStyleType: "decimal",
-  }
+  },
 };
 
 export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, defaultLanding = "citizen" }) => {
@@ -65,7 +65,6 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   }, [pathname]);
 
   useEffect(() => {
-
     // Track web vitals
     const reportWebVitals = ({ name, delta, id, value }) => {
       trackEvent(name, value, "Performance_Metrics");
@@ -119,9 +118,10 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     initData,
   };
 
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
-  if (isMobileView) {
+  const openMobileViewRoutes = [`home/login`, `/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
+  if (isMobileView && !openMobileViewRoutes.some((path) => pathname.includes(path))) {
     return (
       <div style={styles.container}>
         <TopBarSideBar

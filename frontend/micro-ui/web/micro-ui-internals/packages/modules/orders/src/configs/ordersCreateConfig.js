@@ -637,7 +637,7 @@ export const configsOrderMandatorySubmissions = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
     ],
-  }
+  },
 ];
 
 export const configsOrderSubmissionExtension = [
@@ -869,6 +869,23 @@ export const configsOrderTranferToADR = [
         key: "dateOfOrder",
         type: "date",
         populators: { name: "dateOfOrder", hideInForm: true },
+      },
+      {
+        label: "DATE_END_ADR",
+        isMandatory: true,
+        key: "dateOfEndADR",
+        schemaKeyPath: "orderDetails.dateOfEndADR",
+        transformer: "date",
+        type: "date",
+        populators: {
+          name: "dateOfEndADR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
       },
       {
         label: "ADR_MODE",
@@ -1472,6 +1489,28 @@ export const configsRescheduleHearingDate = [
         type: "text",
         disable: true,
         populators: { name: "applicationStatus", hideInForm: true },
+      },
+      {
+        label: "HEARING_PURPOSE",
+        isMandatory: true,
+        key: "hearingPurpose",
+        schemaKeyPath: "orderDetails.purposeOfHearing",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "hearingPurpose",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          hideInForm: false,
+          mdmsConfig: {
+            masterName: "HearingType",
+            moduleName: "Hearing",
+            localePrefix: "HEARING_PURPOSE",
+          },
+        },
       },
       {
         label: "ORIGINAL_HEARING_DATE",
@@ -5599,6 +5638,25 @@ export const nextDateOfHearing = {
     name: "nextHearingDate",
     error: "CORE_REQUIRED_FIELD_ERROR",
   },
+};
+
+export const itemTextConfig = {
+  key: "itemText",
+  populators: {
+    inputs: [
+      {
+        name: "itemText",
+        rows: 10,
+        isOptional: false,
+        style: {
+          width: "100%",
+          minHeight: "30vh",
+          fontSize: "large",
+        },
+      },
+    ],
+  },
+  disableScrutinyHeader: true,
 };
 
 export const configsCost = [

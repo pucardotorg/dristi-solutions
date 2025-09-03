@@ -175,12 +175,14 @@ export const getParties = (type, orderSchema, allParties) => {
     ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
   ) {
     parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
+  } else if (["COST", "WITNESS_BATTA"]?.includes(type)) {
+    parties = [orderSchema?.orderDetails?.paymentToBeMadeBy, orderSchema?.orderDetails.paymentToBeMadeTo];
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;
   }
   const updatedParties = parties?.map((party) => {
-    const matchingParty = allParties?.find((p) => p?.code?.trim() === party?.trim());
+    const matchingParty = allParties?.find((p) => [p?.code?.trim(), p?.name?.trim()]?.includes(party?.trim()));
     if (matchingParty) {
       return {
         partyName: matchingParty?.name,
