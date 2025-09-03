@@ -182,7 +182,7 @@ export const getParties = (type, orderSchema, allParties) => {
     return parties;
   }
   const updatedParties = parties?.map((party) => {
-    const matchingParty = allParties?.find((p) => p?.code?.trim() === party?.trim());
+    const matchingParty = allParties?.find((p) => [p?.code?.trim(), p?.name?.trim()]?.includes(party?.trim()));
     if (matchingParty) {
       return {
         partyName: matchingParty?.name,
