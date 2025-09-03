@@ -231,26 +231,24 @@ export const editCheckDuplicateMobileEmailValidation = ({
       }) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber.length !== 0) {
           return true;
         } else return false;
       })
       .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+        return data?.phonenumbers?.mobileNumber;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId.length !== 0) {
           return true;
         } else return false;
       })
       .map((data) => {
-        return data?.data?.emails?.emailId;
+        return data?.emails?.emailId;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
