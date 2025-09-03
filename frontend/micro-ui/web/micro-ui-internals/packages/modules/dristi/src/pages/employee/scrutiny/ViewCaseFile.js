@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -274,6 +274,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
+  const transformedData = useCallback(
+    (input) => {
+      if (input?.key === "witnessDetails") {
+        return (caseDetails?.witnessDetails || [])?.map((details) => ({
+          data: { ...(details || {}) },
+        }));
+      }
+      return caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+    },
+    [caseDetails]
+  );
+
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
@@ -420,7 +432,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                     } else
                       return {
                         ...input,
-                        data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
+                        data: transformedData(input),
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                   }),
@@ -430,7 +442,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
+  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
 
   const primaryButtonLabel = useMemo(() => {
     if (isScrutiny) {
