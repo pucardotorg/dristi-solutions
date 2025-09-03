@@ -65,7 +65,7 @@ const BailBondLoginPage = () => {
         <div className="citizen-form-wrapper">
           <div className="login-form responsive-container">
             <Card>
-              <CardHeader>{t("Sign Bail Bond")}</CardHeader>
+              <CardHeader>{t("SIGN_BAIL_BOND")}</CardHeader>
               <div className="form-section">
                 <CardLabel>{t(config.label)}</CardLabel>
                 <div className="text-input-width-size field-container">
