@@ -312,7 +312,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
-              referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
+              referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber || orderData?.list[0]?.scheduledHearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
               assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE", "COURT_ROOM_MANAGER"], //checkForCourtRoomManager?
