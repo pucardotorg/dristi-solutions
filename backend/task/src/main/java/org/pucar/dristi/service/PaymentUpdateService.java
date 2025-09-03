@@ -87,7 +87,9 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equals(config.getTaskGenericBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                if (paymentDetail.getBusinessService().equals(config.getTaskGenericBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) ||
+                        paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName())
+                        || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskProclamationBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskAttachmentBusinessServiceName())) {
                     updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
