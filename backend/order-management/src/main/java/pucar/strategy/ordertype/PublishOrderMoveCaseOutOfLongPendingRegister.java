@@ -9,10 +9,7 @@ import pucar.util.CaseUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.courtCase.CaseCriteria;
-import pucar.web.models.courtCase.CaseRequest;
-import pucar.web.models.courtCase.CaseSearchRequest;
-import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,9 +48,11 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
         Order order = orderRequest.getOrder();
 
         //update the case out of long pending register
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
 
         if (cases.isEmpty()) {
             log.info("No cases found : {}", order.getFilingNumber());
