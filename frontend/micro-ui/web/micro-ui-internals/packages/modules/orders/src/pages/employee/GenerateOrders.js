@@ -2583,10 +2583,6 @@ const GenerateOrders = () => {
         orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails },
       });
       orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
-      console.log('first', {
-                    ...order?.additionalDetails,
-                    ...(taskDetails && { taskDetails }),
-                  })
       return await ordersService
         .updateOrder(
           {
