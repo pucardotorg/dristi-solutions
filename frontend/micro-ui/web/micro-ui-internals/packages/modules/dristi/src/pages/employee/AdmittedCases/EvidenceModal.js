@@ -916,6 +916,7 @@ const EvidenceModal = ({
                     ...(parties || {}),
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+                    applicationNumber: refApplicationId,
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -965,6 +966,7 @@ const EvidenceModal = ({
                     ...(parties || {}),
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+                    applicationNumber: refApplicationId,
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -1056,6 +1058,7 @@ const EvidenceModal = ({
               ...(parties || {}),
               ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
               applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+              applicationNumber: refApplicationId,
             },
             ...(hearingNumber && {
               hearingNumber: hearingNumber,
