@@ -2204,6 +2204,13 @@ const GenerateOrdersV2 = () => {
               ...((currentInProgressHearing || hearingId) && {
                 hearingSummary: order?.itemText,
               }),
+              ...(order?.orderCategory === "INTERMEDIATE"
+                ? {
+                    orderTitle: t(order?.orderType) || t("DEFAULT_ORDER_TITLE"),
+                  }
+                : {
+                    orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
+                  }),
               additionalDetails: {
                 ...order?.additionalDetails,
                 ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
@@ -2262,6 +2269,7 @@ const GenerateOrdersV2 = () => {
             itemText: itemTextNull ? null : updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
+            t,
             updatedOrder,
             OrderWorkflowAction.SAVE_DRAFT,
             tenantId,
@@ -2286,6 +2294,7 @@ const GenerateOrdersV2 = () => {
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
             updatedOrder.compositeItems = enabledCompositeItems;
             updateOrderResponse = await addOrderItem(
+              t,
               updatedOrder,
               OrderWorkflowAction.SAVE_DRAFT,
               tenantId,
