@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models.v2;
+package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

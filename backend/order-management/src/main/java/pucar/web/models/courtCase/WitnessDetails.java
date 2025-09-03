@@ -3,10 +3,14 @@ package pucar.web.models.courtCase;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -32,7 +36,7 @@ public class WitnessDetails {
     private Object phoneNumbers;
 
     @JsonProperty("addressDetails")
-    List<Object> addressDetails = new ArrayList<>();
+    List<WitnessAddress> addressDetails = new ArrayList<>();
 
     @JsonProperty("witnessDesignation")
     private String witnessDesignation;
@@ -54,4 +58,9 @@ public class WitnessDetails {
 
     @JsonProperty("createdTime")
     private Long createdTime;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @JsonProperty("uiData")
+    private Map<String, Object> uiData = new HashMap<>();
 }
