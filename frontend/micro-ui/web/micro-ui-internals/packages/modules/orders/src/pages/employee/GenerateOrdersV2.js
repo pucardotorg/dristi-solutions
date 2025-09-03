@@ -1894,7 +1894,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1941,7 +1941,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1991,7 +1991,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -2036,7 +2036,7 @@ const GenerateOrdersV2 = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType,
             tenantId
           );
 
