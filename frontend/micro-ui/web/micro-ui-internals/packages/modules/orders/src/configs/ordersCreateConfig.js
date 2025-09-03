@@ -5640,6 +5640,25 @@ export const nextDateOfHearing = {
   },
 };
 
+export const itemTextConfig = {
+  key: "itemText",
+  populators: {
+    inputs: [
+      {
+        name: "itemText",
+        rows: 10,
+        isOptional: false,
+        style: {
+          width: "100%",
+          minHeight: "30vh",
+          fontSize: "large",
+        },
+      },
+    ],
+  },
+  disableScrutinyHeader: true,
+};
+
 export const configsCost = [
   {
     body: [
