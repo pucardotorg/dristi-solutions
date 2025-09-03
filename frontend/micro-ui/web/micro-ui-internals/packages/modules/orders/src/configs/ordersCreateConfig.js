@@ -637,7 +637,7 @@ export const configsOrderMandatorySubmissions = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
     ],
-  }
+  },
 ];
 
 export const configsOrderSubmissionExtension = [
@@ -5599,6 +5599,25 @@ export const nextDateOfHearing = {
     name: "nextHearingDate",
     error: "CORE_REQUIRED_FIELD_ERROR",
   },
+};
+
+export const itemTextConfig = {
+  key: "itemText",
+  populators: {
+    inputs: [
+      {
+        name: "itemText",
+        rows: 10,
+        isOptional: false,
+        style: {
+          width: "100%",
+          minHeight: "30vh",
+          fontSize: "large",
+        },
+      },
+    ],
+  },
+  disableScrutinyHeader: true,
 };
 
 export const configsCost = [

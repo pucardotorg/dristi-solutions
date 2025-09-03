@@ -244,13 +244,13 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber,
+        hearingId: orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber && caseCourtId)
+    orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+    Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
   const getBusinessService = (orderType) => {
@@ -339,7 +339,11 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(() => ((orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(
+    () =>
+      orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE,
+    [orderType]
+  );
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -440,7 +444,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         if (type !== "EPOST") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? `PAYMENT_PENDING_FOR_${orderType}` : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -459,7 +466,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? `PAYMENT_PENDING_FOR_${orderType}` : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -622,7 +632,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
       (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
       (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
-      formdata?.warrantFor ||  formdata?.proclamationFor || formdata?.attachmentFor ||
+      formdata?.warrantFor ||
+      formdata?.proclamationFor ||
+      formdata?.attachmentFor ||
       "";
 
     const task = filteredTasks?.[0];

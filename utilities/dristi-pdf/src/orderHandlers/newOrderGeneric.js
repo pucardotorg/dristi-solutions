@@ -11,6 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
   const cnrNumber = req.query.cnrNumber;
@@ -220,6 +221,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
         hearingInProgress) ||
       hearingScheduled
     );
+    const itemText = htmlToFormattedText(order?.itemText || "");
 
     const data = {
       Data: [
@@ -234,7 +236,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           isHearingInProgress,
           listOfPresentAttendees,
           listOfAbsentAttendees,
-          itemText: order?.itemText || "",
+          itemText,
           isNextHearing,
           purposeOfNextHearing,
           nextHearingDate,
