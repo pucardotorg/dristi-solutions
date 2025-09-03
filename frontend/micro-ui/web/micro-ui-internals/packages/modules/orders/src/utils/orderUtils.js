@@ -175,6 +175,8 @@ export const getParties = (type, orderSchema, allParties) => {
     ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
   ) {
     parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
+  } else if (["COST", "WITNESS_BATTA"]?.includes(type)) {
+    parties = [orderSchema?.orderDetails?.paymentToBeMadeBy, orderSchema?.orderDetails.paymentToBeMadeTo];
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;
