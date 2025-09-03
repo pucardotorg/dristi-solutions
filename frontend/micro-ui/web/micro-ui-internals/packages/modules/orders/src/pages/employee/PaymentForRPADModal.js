@@ -244,13 +244,13 @@ const PaymentForRPADModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber,
+        hearingId: orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber && caseCourtId)
+    orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+    Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {
