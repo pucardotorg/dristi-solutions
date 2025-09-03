@@ -63,6 +63,7 @@ import {
   nextDateOfHearing,
   configsCost,
   configsWitnessBatta,
+  itemTextConfig,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -195,7 +196,7 @@ const GenerateOrdersV2 = () => {
   const [presentAttendees, setPresentAttendees] = useState([]);
   const [absentAttendees, setAbsentAttendees] = useState([]);
   const [purposeOfHearing, setPurposeOfHearing] = useState("");
-  const [nextHearingDate, setNextHearingDate] = useState("");
+  const [nextHearingDate, setNextHearingDate] = useState(null);
   const [skipScheduling, setSkipScheduling] = useState(false);
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
@@ -261,6 +262,7 @@ const GenerateOrdersV2 = () => {
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const [itemTextNull, setItemTextNull] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
   const fetchCaseDetails = async () => {
     try {
@@ -403,6 +405,8 @@ const GenerateOrdersV2 = () => {
   const currentInProgressHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
     hearingsData?.HearingList,
   ]);
+
+  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
 
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
@@ -571,9 +575,9 @@ const GenerateOrdersV2 = () => {
 
   const witnesses = useMemo(() => {
     return (
-      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
-        const fullName = getFormattedName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName, data?.data?.witnessDesignation, null);
-        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
+      caseDetails?.witnessDetails?.map((data) => {
+        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
+        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.uuid, partyType: "witness" };
       }) || []
     );
   }, [caseDetails]);
@@ -1308,6 +1312,12 @@ const GenerateOrdersV2 = () => {
     }
   }, [currentOrder]);
 
+  const isAddItemDisabled = useMemo(
+    () =>
+      currentOrder?.orderCategory === "INTERMEDIATE" ? !currentOrder?.orderType : currentOrder?.compositeItems?.some((item) => !item?.orderType),
+    [currentOrder]
+  );
+
   const getDefaultValue = useCallback(
     (index) => {
       if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
@@ -1888,7 +1898,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1935,7 +1945,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -1985,7 +1995,7 @@ const GenerateOrdersV2 = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              orderType,
               tenantId
             ),
             feesStatus: "",
@@ -2030,7 +2040,7 @@ const GenerateOrdersV2 = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType,
             tenantId
           );
 
@@ -2159,7 +2169,9 @@ const GenerateOrdersV2 = () => {
             }
           : null;
       const updatedDocuments = mockESignEnabled
-        ? [documentsFile]
+        ? documentsFile
+          ? [documentsFile]
+          : []
         : getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
       let orderSchema = {};
       try {
@@ -2189,16 +2201,32 @@ const GenerateOrdersV2 = () => {
               ...order,
               ...orderSchema,
               ...(isSigning && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
-              ...(isSigning &&
-                order?.orderCategory === "INTERMEDIATE" && {
-                  additionalDetails: {
-                    ...order?.additionalDetails,
-                    ...(taskDetails && { taskDetails }),
-                  },
-                }),
-              ...((hearingNumber || hearingDetails?.hearingId) && {
-                hearingNumber: hearingNumber || hearingDetails?.hearingId,
+              ...((currentInProgressHearing || hearingId) && {
+                hearingSummary: order?.itemText,
               }),
+              ...(order?.orderCategory === "INTERMEDIATE"
+                ? {
+                    orderTitle: t(order?.orderType) || t("DEFAULT_ORDER_TITLE"),
+                  }
+                : {
+                    orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
+                  }),
+              additionalDetails: {
+                ...order?.additionalDetails,
+                ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
+                ...((currentInProgressHearing || hearingId) &&
+                  !skipScheduling && {
+                    formdata: {
+                      ...(order?.additionalDetails?.formdata || {}),
+                      attendees: attendeeOptions,
+                      refHearingId: order?.hearingNumber,
+                      namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  }),
+                ...(currentScheduledHearing && {
+                  scheduledHearingNumber: currentScheduledHearing?.hearingId,
+                }),
+              },
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
@@ -2226,15 +2254,12 @@ const GenerateOrdersV2 = () => {
       let updatedOrder;
       let updateOrderResponse = {};
       if (updatedOrderData?.orderCategory === "INTERMEDIATE") {
-        if (updatedOrderData?.orderType) {
-          updatedOrder = structuredClone(updatedOrderData);
-          updatedOrder.orderTitle = t(updatedOrderData?.orderTitle);
-
-          if (updatedOrder?.orderNumber) {
-            updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
-          } else {
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
-          }
+        updatedOrder = structuredClone(updatedOrderData);
+        updatedOrder.orderTitle = t(updatedOrderData?.orderTitle);
+        if (updatedOrder?.orderNumber) {
+          updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+        } else {
+          updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
         }
       } else {
         if (updatedOrderData?.orderNumber) {
@@ -2244,6 +2269,7 @@ const GenerateOrdersV2 = () => {
             itemText: itemTextNull ? null : updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
+            t,
             updatedOrder,
             OrderWorkflowAction.SAVE_DRAFT,
             tenantId,
@@ -2268,6 +2294,7 @@ const GenerateOrdersV2 = () => {
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
             updatedOrder.compositeItems = enabledCompositeItems;
             updateOrderResponse = await addOrderItem(
+              t,
               updatedOrder,
               OrderWorkflowAction.SAVE_DRAFT,
               tenantId,
@@ -2340,7 +2367,7 @@ const GenerateOrdersV2 = () => {
       setAddOrderModal(false);
       setEditOrderModal(false);
 
-      if (!orderNumber) {
+      if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
           `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
@@ -2674,11 +2701,11 @@ const GenerateOrdersV2 = () => {
 
   const handleAddForm = () => {
     const updatedCompositeItems = (obj) => {
-      let orderTitleNew = obj?.orderTitle;
+      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
       let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
       const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
 
-      if (compositeItemsNew.length === 0) {
+      if (compositeItemsNew.length === 0 && obj?.orderType) {
         compositeItemsNew = [
           {
             orderType: obj?.orderType,
@@ -2689,7 +2716,7 @@ const GenerateOrdersV2 = () => {
             displayindex: 0,
           },
         ];
-        orderTitleNew = `${t(obj?.orderType)} and Other Items`;
+        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
         setItemTextNull(true);
       } else {
         setItemTextNull(false);
@@ -2711,7 +2738,7 @@ const GenerateOrdersV2 = () => {
     setCurrentOrder({
       ...currentOrder,
       orderCategory: "COMPOSITE",
-      orderTitle: updatedItems.orderTitle,
+      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
       compositeItems: updatedItems.compositeItems,
     });
 
@@ -2803,7 +2830,7 @@ const GenerateOrdersV2 = () => {
           } else {
             setCurrentOrder({
               ...currentOrder,
-              compositeItems: updatedCompositeItems?.filter((o) => o?.orderType),
+              compositeItems: updatedCompositeItems?.filter((o) => o?.isEnabled),
             });
           }
         }
@@ -3128,6 +3155,19 @@ const GenerateOrdersV2 = () => {
     });
   };
 
+  const onItemTextSelect = (key, value) => {
+    if (key === "itemText" && value?.["itemText"] !== undefined) {
+      setCurrentOrder({ ...currentOrder, itemText: value[key] });
+      if (value[key]) {
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          delete newErrors["itemText"];
+          return newErrors;
+        });
+      }
+    }
+  };
+
   if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
   }
@@ -3166,7 +3206,7 @@ const GenerateOrdersV2 = () => {
               isApplicationCompositeOrder={true}
               compositeOrderObj={currentOrder}
             />
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>
                   <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_PRESENT")}</CardHeader>
@@ -3307,11 +3347,12 @@ const GenerateOrdersV2 = () => {
                   icon={<CustomAddIcon width="16px" height="16px" />}
                   label={t("ADD_ITEM")}
                   style={{ border: "none" }}
+                  isDisabled={isAddItemDisabled}
                 ></Button>
               </div>
             </LabelFieldPair>
 
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
                 <div className="checkbox-item">
                   <input
@@ -3323,7 +3364,7 @@ const GenerateOrdersV2 = () => {
                       setSkipScheduling(newSkipValue);
                       if (newSkipValue) {
                         // Clear purpose and date when skipping
-                        setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: "" });
+                        setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: null });
                         setPurposeOfHearing("");
                         setNextHearingDate("");
                         setErrors((prevErrors) => {
@@ -3373,8 +3414,8 @@ const GenerateOrdersV2 = () => {
                     config={nextDateOfHearing}
                     formData={{ nextHearingDate: nextHearingDate || currentOrder?.nextHearingDate }}
                     onDateChange={(date) => {
-                      setCurrentOrder({ ...currentOrder, nextHearingDate: new Date(date).setHours(0, 0, 0, 0) });
-                      setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));
+                      setCurrentOrder({ ...currentOrder, nextHearingDate: date ? new Date(date).setHours(0, 0, 0, 0) : null });
+                      setNextHearingDate(date ? new Date(date).setHours(0, 0, 0, 0) : null);
                       setErrors((prevErrors) => {
                         const newErrors = { ...prevErrors };
                         delete newErrors["nextHearingDate"];
@@ -3413,7 +3454,7 @@ const GenerateOrdersV2 = () => {
           {/* Right Column */}
           <div className="generate-orders-v2-column">
             <div className="section-header">{t("ORDER_TEXT")}</div>
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ORDER_ATTENDANCE")}</div>
                 <textarea
@@ -3457,35 +3498,34 @@ const GenerateOrdersV2 = () => {
 
             <div>
               <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ITEM_TEXT")}</div>
-              <textarea
-                value={currentOrder?.itemText}
-                onChange={(data) => {
-                  setCurrentOrder({ ...currentOrder, itemText: data.target.value });
-                  if (data.target.value) {
-                    setErrors((prevErrors) => {
-                      const newErrors = { ...prevErrors };
-                      delete newErrors["itemText"];
-                      return newErrors;
-                    });
-                  }
-                }}
-                rows={currentInProgressHearing ? 8 : 20}
-                maxLength={1000}
-                className={`custom-textarea-style`}
-              ></textarea>
+              <SelectCustomFormatterTextArea
+                t={t}
+                config={itemTextConfig}
+                formData={{ itemText: { itemText: currentOrder?.itemText || "" } }}
+                onSelect={onItemTextSelect}
+                errors={{}}
+              />
               {errors["itemText"] && <CardLabelError>{t(errors["itemText"]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
             </div>
 
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("NEXT_HEARING_TEXT")}</div>
                 <textarea
                   value={
                     skipScheduling
                       ? `${t("NO_NEXT_HEARING")}`
-                      : `${purposeOfHearing ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing)}` : ``}${
-                          purposeOfHearing && nextHearingDate ? "\n" : ""
-                        }${nextHearingDate ? `${t("DATE_TEXT")} ${new Date(nextHearingDate).toLocaleDateString()}` : ``}`
+                      : `${
+                          purposeOfHearing || currentOrder?.purposeOfNextHearing
+                            ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing || currentOrder?.purposeOfNextHearing)}`
+                            : ``
+                        }${
+                          (purposeOfHearing || currentOrder?.purposeOfNextHearing) && (nextHearingDate || currentOrder?.nextHearingDate) ? "\n" : ""
+                        }${
+                          nextHearingDate || currentOrder?.nextHearingDate
+                            ? `${t("DATE_TEXT")} ${new Date(nextHearingDate || currentOrder?.nextHearingDate).toLocaleDateString()}`
+                            : ``
+                        }`
                   }
                   rows={3}
                   maxLength={1000}
@@ -3509,14 +3549,14 @@ const GenerateOrdersV2 = () => {
             borderTop: "1px solid #BBBBBD",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
             <Button
-              label={t("SAVE_AS_DRAFT")}
+              label={t("CS_COMMON_BACK")}
               variation={"secondary"}
               onButtonClick={() => {
-                handleSaveDraft(currentOrder);
+                history.goBack();
               }}
-              style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+              style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
               textStyles={{
                 fontFamily: "Roboto",
                 fontSize: "16px",
@@ -3526,7 +3566,25 @@ const GenerateOrdersV2 = () => {
                 color: "#007E7E",
               }}
             />
-            <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+              <Button
+                label={t("SAVE_AS_DRAFT")}
+                variation={"secondary"}
+                onButtonClick={() => {
+                  handleSaveDraft(currentOrder);
+                }}
+                style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                textStyles={{
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+              />
+              <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+            </div>
           </div>
         </ActionBar>
       </div>
@@ -3562,9 +3620,7 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
           }}
-          headerLabel={
-            showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)} ${t("CS_ORDER")}` : `${t("ADD")} ${t(orderType?.code)} ${t("CS_ORDER")}`
-          }
+          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)}` : `${t("ADD")} ${t(orderType?.code)}`}
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}

@@ -57,6 +57,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .orderNumber(rs.getString("ordernumber"))
                             .linkedOrderNumber(rs.getString("linkedordernumber"))
                             .hearingNumber(rs.getString("hearingnumber"))
+                            .scheduledHearingNumber(rs.getString("scheduledhearingnumber"))
                             .cnrNumber(rs.getString("cnrnumber"))
                             .orderCategory(rs.getString("ordercategory"))
                             .isActive(rs.getBoolean("isactive"))
@@ -64,7 +65,6 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .courtId(rs.getString("courtId"))
                             .itemText(rs.getString("itemtext"))
                             .purposeOfNextHearing(rs.getString("purposeofnexthearing"))
-                            .nextHearingDate(rs.getLong("nexthearingdate"))
                             .createdDate(rs.getLong("createddate"))
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
@@ -74,6 +74,13 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .status(rs.getString("status"))
                             .auditDetails(auditdetails)
                             .build();
+                }
+                long nextHearingDate = rs.getLong("nexthearingdate");
+
+                if (rs.wasNull()) {
+                    order.setNextHearingDate(null);
+                } else {
+                    order.setNextHearingDate(nextHearingDate);
                 }
                 PGobject pgObject1 = (PGobject) rs.getObject("applicationnumber");
                 if(pgObject1!=null)

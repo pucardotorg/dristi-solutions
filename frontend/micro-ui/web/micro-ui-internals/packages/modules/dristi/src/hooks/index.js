@@ -61,6 +61,7 @@ export const Urls = {
     searchHearings: "/hearing/v1/search",
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
+    getDraftOrder: "/order-management/v1/getDraftOrder",
     demandCreate: "/billing-service/demand/_create",
     ordersSearch: "/order/v1/search",
     ordersCreate: "/order/v1/create",
@@ -97,7 +98,7 @@ export const Urls = {
     createProfileRequest: "/case/v2/profilerequest/create",
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
-    taskSearch: "/task/v1/search"
+    taskSearch: "/task/v1/search",
   },
   case: {
     addWitness: "/case/v1/add/witness",

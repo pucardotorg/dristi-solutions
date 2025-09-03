@@ -198,6 +198,24 @@ export const DRISTIService = {
       params,
     });
   },
+  getDraftOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.getDraftOrder,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  createOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.ordersCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   searchOrders: (data, params) => {
     return Request({
       url: Urls.dristi.ordersSearch,

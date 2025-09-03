@@ -92,7 +92,7 @@ function ReIssueSummonsModal() {
             hearingDate: formatDate(new Date(hearingDetails?.startTime)),
           },
         },
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
       },
     };
     const res = await ordersService.createOrder(reqbody, { tenantId });

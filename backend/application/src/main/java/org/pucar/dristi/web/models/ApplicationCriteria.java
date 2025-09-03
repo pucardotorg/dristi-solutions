@@ -57,4 +57,7 @@ public class ApplicationCriteria {
     @Valid
     private String referenceId = null;
 
+    @JsonProperty("isFuzzySearch")
+    private Boolean isFuzzySearch = false;
+
 }

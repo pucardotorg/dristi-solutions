@@ -24,7 +24,7 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
+export const addOrderItem = async (t, order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
   const compositeItems = [];
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
@@ -79,6 +79,7 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
       orderDetails: null,
       orderType: null,
       orderCategory: "COMPOSITE",
+      orderTitle: `${t(compositeItems?.[0]?.orderType)} and Other Items`,
       compositeItems,
       workflow: { ...order.workflow, action, documents: [{}] },
     },

@@ -47,7 +47,6 @@ import Button from "../../../components/Button";
 import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
-import AddParty from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddParty";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -492,6 +491,9 @@ const AdmittedCaseV2 = () => {
         ?.map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          const complainantDetails = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+            (obj) => obj?.data?.complainantVerification?.individualDetails?.individualId === item?.individualId
+          )?.data;
           if (poaHolder) {
             return {
               additionalDetails: item?.additionalDetails,
@@ -514,6 +516,7 @@ const AdmittedCaseV2 = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "complainant",
+            poaUuid: complainantDetails?.poaVerification?.individualDetails?.userUuid,
           };
         }) || []
     );
@@ -525,9 +528,10 @@ const AdmittedCaseV2 = () => {
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
-          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+          const respondentDetails = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
             (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
-          )?.uniqueId;
+          );
+          const respondentPoaDetails = respondentDetails?.data?.poaVerification?.individualDetails?.userUuid;
           return {
             additionalDetails: item?.additionalDetails,
             code: fullName,
@@ -537,7 +541,8 @@ const AdmittedCaseV2 = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
-            uniqueId,
+            uniqueId: respondentDetails?.uniqueId,
+            poaUuid: respondentPoaDetails,
           };
         }) || []
     );
@@ -1782,11 +1787,9 @@ const AdmittedCaseV2 = () => {
 
   const updateCaseDetails = useCallback(
     async (action, data = {}) => {
-      let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-      let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
       const newcasedetails = {
         ...caseDetails,
-        additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+        additionalDetails: { ...caseDetails.additionalDetails, judge: data },
       };
       const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
       let assignees = [];
@@ -2579,34 +2582,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "GENERATE_ORDER") {
         handleSelect("GENERATE_ORDER");
       } else if (option.value === "END_HEARING") {
-        try {
-          setApiCalled(true);
-          const orderResponse = await ordersService.searchOrder(
-            {
-              tenantId: caseDetails?.tenantId,
-              criteria: {
-                tenantID: caseDetails?.tenantId,
-                filingNumber: caseDetails?.filingNumber,
-                orderType: "SCHEDULING_NEXT_HEARING",
-                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                ...(caseCourtId && { courtId: caseCourtId }),
-              },
-            },
-            { tenantId: caseDetails?.tenantId }
-          );
-          if (
-            orderResponse?.list?.length > 0 &&
-            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === currentInProgressHearing?.hearingId)
-          ) {
-            setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
-          } else {
-            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
-          }
-        } catch (error) {
-          console.error("Error fetching order", error);
-        } finally {
-          setApiCalled(false);
-        }
+        setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
@@ -2641,7 +2617,7 @@ const AdmittedCaseV2 = () => {
   }, [isCaseAdmitted]);
 
   const handleSelect = useCallback(
-    (option) => {
+    async (option) => {
       if (option === t("MAKE_SUBMISSION")) {
         history.push(`/${window?.contextPath}/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
         return;
@@ -2750,9 +2726,71 @@ const AdmittedCaseV2 = () => {
         setShowMenu(false);
         return;
       }
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
+
+      try {
+        setApiCalled(true);
+
+        let response;
+
+        if (currentInProgressHearing) {
+          response = await DRISTIService.getDraftOrder(
+            {
+              hearingDraftOrder: {
+                cnrNumber,
+                filingNumber,
+                tenantId,
+                hearingNumber: currentInProgressHearing?.hearingId,
+              },
+            },
+            {}
+          );
+        } else {
+          response = await DRISTIService.createOrder(
+            {
+              order: {
+                tenantId,
+                cnrNumber,
+                filingNumber,
+                statuteSection: { tenantId },
+                status: "",
+                orderTitle: t("DEFAULT_ORDER_TITLE"),
+                orderType: "",
+                orderCategory: "INTERMEDIATE",
+                isActive: true,
+                workflow: {
+                  action: "SAVE_DRAFT",
+                  documents: [{}],
+                },
+              },
+            },
+            { tenantId }
+          );
+        }
+
+        history.push(
+          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`,
+          { caseId, tab: "Orders" }
+        );
+      } catch (error) {
+        console.error("Error fetching order", error);
+      } finally {
+        setApiCalled(false);
+      }
     },
-    [t, history, filingNumber, caseId, openHearingModule, tenantId, cnrNumber, OrderWorkflowAction.SAVE_DRAFT, ordersService, activeTab, showToast]
+    [
+      t,
+      currentInProgressHearing,
+      history,
+      filingNumber,
+      openHearingModule,
+      tenantId,
+      cnrNumber,
+      OrderWorkflowAction.SAVE_DRAFT,
+      ordersService,
+      caseId,
+      activeTab,
+      showToast,
+    ]
   );
 
   const handleDownload = useCallback(
@@ -3957,7 +3995,6 @@ const AdmittedCaseV2 = () => {
             />
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
-          hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           isBackButtonDisabled={apiCalled}
           isCustomButtonDisabled={apiCalled}
           isDisabled={apiCalled}
@@ -4026,18 +4063,14 @@ const AdmittedCaseV2 = () => {
           className={"confirm-end-hearing-modal"}
         >
           <div style={{ margin: "16px 0px" }}>
-            {!showEndHearingModal.isNextHearingDrafted ? (
-              <p>{t("CS_CASE_AN_ORDER_BOTD_FIRST")}</p>
-            ) : (
-              <CheckBox
-                onChange={(e) => {
-                  setPassOver(e.target.checked);
-                }}
-                label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
-                checked={passOver}
-                disable={false}
-              />
-            )}
+            <CheckBox
+              onChange={(e) => {
+                setPassOver(e.target.checked);
+              }}
+              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+              checked={passOver}
+              disable={false}
+            />
           </div>
         </Modal>
       )}

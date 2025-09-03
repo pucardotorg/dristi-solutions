@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { TextInput } from "@egovernments/digit-ui-react-components";
+import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -61,33 +61,22 @@ const BailBondLoginPage = () => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-      .text-Input .text-input-width {
-      max-width : none
-      }
-      .citizen-card-input--front {
-          background-color : #E0E0E0 !important;
-          margin-bottom:5px;
-      }
-      `}
-      </style>
-      <div className="user-registration" style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: "40px", fontWeight: 700, height: "5vw" }}>Sign Bail Bond</div>
-        <div style={{ width: "100%", height: "20vw" }}>
-          <div className="citizen-form-wrapper" style={{ width: "100%" }}>
-            <div className="login-form" style={{ width: "35vw" }}>
-              <div>
-                <div style={{ marginBottom: "8px" }}>{t(config.label)}</div>
-                <div style={{ display: "flex" }}>
+      <div className="user-registration bail-bond-login-page">
+        <div className="citizen-form-wrapper">
+          <div className="login-form responsive-container">
+            <Card>
+              <CardHeader>{t("SIGN_BAIL_BOND")}</CardHeader>
+              <div className="form-section">
+                <CardLabel>{t(config.label)}</CardLabel>
+                <div className="text-input-width-size field-container">
                   {config?.componentInFront ? (
-                    <span className="citizen-card-input citizen-card-input--front bailbondloginPage" style={error ? { borderColor: "#BB2C2F" } : {}}>
+                    <span className={`citizen-card-input citizen-card-input--front bailbondloginPage ${error ? "error-border" : ""}`}>
                       {config?.componentInFront}
                     </span>
                   ) : null}
                   <TextInput
                     t={t}
-                    className="field desktop-w-full"
+                    className={`field desktop-w-full ${error ? "error-border" : ""}`}
                     key={config?.key}
                     name={config.name}
                     value={mobileNumber}
@@ -104,15 +93,15 @@ const BailBondLoginPage = () => {
                     errMsg={config?.validation?.errMsg}
                     maxlength={config?.validation?.maxLength}
                     minlength={config?.validation?.minLength}
-                    textInputStyle={{ maxHeight: "max-content" }}
                     style={error ? { borderColor: "#BB2C2F" } : {}}
                   />
                 </div>
+
                 {error && (
-                  <div style={{ color: "#BB2C2F", marginBottom: "8px", display: "flex", gap: "4px" }}>
+                  <div className="error-message">
                     <div>
                       <svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#clip0_7308_19146)">
+                        <g clipPath="url(#clip0_7308_19146)">
                           <path
                             d="M7.54131 1.33301C4.41728 1.33301 1.88184 4.31967 1.88184 7.99967C1.88184 11.6797 4.41728 14.6663 7.54131 14.6663C10.6653 14.6663 13.2008 11.6797 13.2008 7.99967C13.2008 4.31967 10.6653 1.33301 7.54131 1.33301ZM8.10726 11.333H6.97536V7.33301H8.10726V11.333ZM8.10726 5.99967H6.97536V4.66634H8.10726V5.99967Z"
                             fill="#BB2C2F"
@@ -128,16 +117,10 @@ const BailBondLoginPage = () => {
                     {t("ERROR_BAIL_BOND_LOGIN_NUMBER")}
                   </div>
                 )}
-                <div style={{ display: "flex", justifyContent: "center", paddingTop: "20px" }}>
-                  <Button
-                    label={t("CONFIRM")}
-                    style={{ boxShadow: "none", padding: "10px 24px", width: "150px", gap: "4px" }}
-                    onButtonClick={handleSubmit}
-                    isDisabled={isDisabled}
-                  />
-                </div>
+
+                <SubmitBar label={t("CONFIRM")} onSubmit={handleSubmit} disabled={isDisabled} />
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </div>

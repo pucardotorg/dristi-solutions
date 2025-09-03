@@ -11,6 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
   const cnrNumber = req.query.cnrNumber;
@@ -102,7 +103,9 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
     const litigants = courtCase?.litigants?.map((litigant) => ({
       ...litigant,
@@ -139,31 +142,60 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       };
     });
 
-    const accuseds =
-      litigants?.filter((litigant) =>
-        litigant.partyType.includes("respondent")
-      ) || [];
-
-    const accusedList = accuseds?.map((accused) => {
-      const accusedInAdditionalDetails =
-        courtCase?.additionalDetails?.respondentDetails?.formdata?.find(
-          (comp) =>
-            comp?.data?.respondentVerification?.individualDetails
-              ?.individualId === accused?.individualId
-        );
-      const addresses = (
-        accusedInAdditionalDetails?.data?.addressDetails || []
-      )?.map((addressDetail) => {
-        return getStringAddressDetails(addressDetail.addressDetails);
+    const joinedAccuseds = litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.map((accused) => {
+        const accusedInAdditionalDetails =
+          courtCase?.additionalDetails?.respondentDetails?.formdata?.find(
+            (comp) =>
+              comp?.data?.respondentVerification?.individualDetails
+                ?.individualId === accused?.individualId
+          );
+        const addresses = (
+          accusedInAdditionalDetails?.data?.addressDetails || []
+        )?.map((addressDetail) => {
+          return getStringAddressDetails(addressDetail.addressDetails);
+        });
+        return {
+          individualId: accused?.individualId,
+          name: accused?.additionalDetails?.fullName,
+          address: addresses?.join(", ") || "",
+          listOfAdvocatesRepresenting: accused?.representatives
+            ?.map((rep) => rep?.additionalDetails?.advocateName)
+            ?.join(", "),
+        };
       });
-      return {
-        name: accused?.additionalDetails?.fullName,
-        address: addresses?.join(", ") || "",
-        listOfAdvocatesRepresenting: accused?.representatives
-          ?.map((rep) => rep?.additionalDetails?.advocateName)
-          ?.join(", "),
-      };
-    });
+
+    const unJoinedAccuseds =
+      courtCase.additionalDetails.respondentDetails.formdata
+        ?.map((formData) => {
+          const data = formData?.data;
+          const firstName = data?.respondentFirstName || "";
+          const middleName = data?.respondentMiddleName || "";
+          const lastName = data?.respondentLastName || "";
+          const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
+          });
+          return {
+            individualId:
+              data?.respondentVerification?.individualDetails?.individualId ||
+              null,
+            name: `${firstName} ${middleName} ${lastName}` || "",
+            address: addresses?.join(", ") || "",
+            listOfAdvocatesRepresenting: [],
+          };
+        })
+        ?.filter(
+          (unJoined) =>
+            !joinedAccuseds.some(
+              (joined) =>
+                joined?.individualId &&
+                unJoined?.individualId &&
+                joined?.individualId === unJoined?.individualId
+            )
+        ) || [];
+
+    const accusedList = [...joinedAccuseds, ...unJoinedAccuseds];
 
     const listOfPresentAttendees =
       order?.attendance?.Present?.map(
@@ -189,6 +221,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
         hearingInProgress) ||
       hearingScheduled
     );
+    const itemText = htmlToFormattedText(order?.itemText || "");
 
     const data = {
       Data: [
@@ -203,7 +236,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           isHearingInProgress,
           listOfPresentAttendees,
           listOfAbsentAttendees,
-          itemText: order?.itemText || "",
+          itemText,
           isNextHearing,
           purposeOfNextHearing,
           nextHearingDate,

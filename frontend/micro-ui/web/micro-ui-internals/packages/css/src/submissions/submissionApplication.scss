@@ -81,6 +81,102 @@
   }
 }
 
+.responsive-signature-modal {
+  &.popup-module {
+    @media (max-width: 1024px) {
+      width: 60vw;
+      height: fit-content;
+      .popup-module-main {
+        max-height: calc(88vh - 120px);
+        overflow: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      width: 95vw;
+      height: fit-content;
+      max-height: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      .header-wrap {
+        padding: 0 12px !important;
+      }
+      .popup-module-main {
+        padding: 16px !important;
+        overflow: auto;
+        .add-signature-main-div {
+          flex-direction: column;
+          .not-signed {
+            h1 {
+              font-size: 20px;
+            }
+            .buttons-div {
+              flex-direction: column;
+              gap: 12px;
+              height: auto;
+            }
+          }
+        }
+      }
+      .popup-module-action-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        padding: 0px !important;
+        button,
+        .selector-button-border,
+        .selector-button-primary,
+        .selector-button-primary-disabled {
+          width: 100% !important;
+        }
+      }
+    }
+
+    @media (max-width: 400px) {
+      width: 95vw;
+      max-height: 86vh;
+      height: auto;
+      .header-wrap {
+        padding: 0 12px !important;
+      }
+      .popup-module-main {
+        padding: 16px !important;
+        max-height: calc(86vh - 112px);
+        overflow: auto;
+        .add-signature-main-div {
+          flex-direction: column;
+          .not-signed {
+            h1 {
+              font-size: 20px;
+            }
+            .buttons-div {
+              flex-direction: column;
+              gap: 12px;
+              height: auto;
+            }
+          }
+        }
+      }
+      .popup-module-action-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        padding: 0px !important;
+        button,
+        .selector-button-border,
+        .selector-button-primary,
+        .selector-button-primary-disabled {
+          width: 100% !important;
+        }
+      }
+    }
+  }
+}
+
 .submission-payment-modal {
   &.popup-module {
     width: 536px;
@@ -288,7 +384,7 @@
         box-shadow: none !important;
         border: 1px #007e7e solid;
         margin-top: 24px;
-    
+
         h2 {
           font-family: Roboto;
           font-size: 16px !important;
@@ -395,7 +491,7 @@
   }
 }
 
-.bailbond {
+.bail-bond {
   .card {
     .label-field-pair {
       .card-label {
@@ -494,3 +590,257 @@
 .citizen-bail-bond {
   background-color: #e0e0e0 !important;
 }
+
+.bail-bond-signature-page {
+  .header {
+    font-size: 26px;
+    padding: 12px 40px;
+    font-weight: 700;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 50px;
+    padding: 0 24px;
+    height: 100%;
+  }
+
+  .details {
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 18px;
+    padding-bottom: 22px;
+  }
+
+  .details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .left-panel {
+    width: 350px;
+    padding: 30px 0 16px 16px;
+    border-right: 1px solid #e8e8e8;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    padding: 24px;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-viewer {
+    flex: 1;
+    margin-top: 24px;
+    border: 1px solid #e0e0e0;
+    overflow: auto;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+
+  .litigant-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e8e8e8;
+    color: #77787b;
+    padding: 8px 16px 20px 0;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 5px;
+  }
+
+  .signed-label {
+    padding: 6px 8px;
+    border-radius: 999px;
+    color: #00703c;
+    background-color: #e4f2e4;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .unsigned-label {
+    padding: 6px 8px;
+    border-radius: 999px;
+    color: #9e400a;
+    background-color: #fff6e8;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .action-bar {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .submit-btn {
+    box-shadow: none;
+    background-color: #008080;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+
+    span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+  }
+
+  .edit-btn {
+    background-color: #fff;
+    border: #007e7e solid;
+    color: #007e7e;
+    cursor: pointer;
+    padding: 10px;
+    width: 90px;
+    margin-right: 20px;
+    font-family: Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 18.75px;
+    text-align: center;
+  }
+
+  .submit-loader {
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999999;
+    position: fixed;
+    right: 0;
+    top: 0;
+    background: rgba(234, 234, 245, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .bail-bond-signature-page {
+    .header {
+      font-size: 22px;
+      padding: 12px 16px;
+    }
+
+    .container {
+      flex-direction: column;
+      padding: 0 16px;
+      gap: 16px;
+    }
+
+    .left-panel {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e8e8e8;
+      padding-left: 0;
+      padding-top: 20px;
+      padding-bottom: 12px;
+    }
+
+    .right-panel {
+      padding: 0;
+      height: auto;
+    }
+
+    .doc-viewer {
+      margin-top: 16px;
+      height: 60vh;
+      flex: unset;
+    }
+
+    .litigant-details {
+      padding-right: 0;
+      font-size: 14px;
+    }
+
+    .action-bar-buttons {
+      min-width: 100%;
+    }
+
+    .action-bar {
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 800px) {
+  .bail-bond-signature-page {
+    .header {
+      font-size: 24px;
+      padding: 12px 24px;
+    }
+
+    .container {
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .left-panel {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e8e8e8;
+      padding-left: 0;
+    }
+
+    .right-panel {
+      padding: 16px 0;
+      height: auto;
+    }
+
+    .doc-viewer {
+      margin-top: 16px;
+      height: 70vh;
+      flex: unset;
+    }
+
+    .litigant-details {
+      font-size: 15px;
+    }
+
+    .action-bar-buttons {
+      min-width: 100%;
+    }
+
+    .action-bar {
+      justify-content: flex-end;
+      min-width: 100%;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .bail-bond-signature-page {
+    .container {
+      padding: 0 16px;
+    }
+
+    .right-panel {
+      padding: 16px;
+    }
+  }
+}
+
+.centered-success-modal {
+  width: 700px;
+  max-width: 90%;
+}
+
+@media (max-width: 768px) {
+  .centered-success-modal {
+    width: 90% !important;
+  }
+}
+
