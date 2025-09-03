@@ -54,7 +54,7 @@ import {
   showDemandNoticeModal,
   showToastForComplainant,
   signatureValidation,
-  transformCaseDataForEfilingLogic,
+  transformCaseDataForFetching,
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
@@ -387,7 +387,7 @@ function EFilingCases({ path }) {
 
   const caseDetails = useMemo(() => {
     const caseDetails = structuredClone(caseData?.criteria?.[0]?.responseList?.[0] || {});
-    const updatedCaseData = transformCaseDataForEfilingLogic(caseDetails, "witnessDetails");
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
     return updatedCaseData;
   }, [caseData]);
 

@@ -231,26 +231,28 @@ export const editCheckDuplicateMobileEmailValidation = ({
       }) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.witnessDetails?.filter((data) => {
-        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
+      ?.map((data) => {
         return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.witnessDetails?.filter((data) => {
-        if (data?.emails?.emailId && data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
+      ?.map((data) => {
         return data?.emails?.emailId;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   if (selected === "respondentDetails") {
     const currentMobileNumber = formData?.phonenumbers?.textfieldValue;
