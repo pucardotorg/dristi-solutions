@@ -1308,6 +1308,12 @@ const GenerateOrdersV2 = () => {
     }
   }, [currentOrder]);
 
+  const isAddItemDisabled = useMemo(
+    () =>
+      currentOrder?.orderCategory === "INTERMEDIATE" ? !currentOrder?.orderType : currentOrder?.compositeItems?.some((item) => !item?.orderType),
+    [currentOrder]
+  );
+
   const getDefaultValue = useCallback(
     (index) => {
       if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
@@ -2197,9 +2203,7 @@ const GenerateOrdersV2 = () => {
               }),
               additionalDetails: {
                 ...order?.additionalDetails,
-                ...(isSigning &&
-                  order?.orderCategory === "INTERMEDIATE" &&
-                  taskDetails && { taskDetails }),
+                ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
                 ...((currentInProgressHearing || hearingId) &&
                   !skipScheduling && {
                     formdata: {
@@ -2682,11 +2686,11 @@ const GenerateOrdersV2 = () => {
 
   const handleAddForm = () => {
     const updatedCompositeItems = (obj) => {
-      let orderTitleNew = obj?.orderTitle;
+      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
       let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
       const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
 
-      if (compositeItemsNew.length === 0) {
+      if (compositeItemsNew.length === 0 && obj?.orderType) {
         compositeItemsNew = [
           {
             orderType: obj?.orderType,
@@ -2697,7 +2701,7 @@ const GenerateOrdersV2 = () => {
             displayindex: 0,
           },
         ];
-        orderTitleNew = `${t(obj?.orderType)} and Other Items`;
+        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
         setItemTextNull(true);
       } else {
         setItemTextNull(false);
@@ -2719,7 +2723,7 @@ const GenerateOrdersV2 = () => {
     setCurrentOrder({
       ...currentOrder,
       orderCategory: "COMPOSITE",
-      orderTitle: updatedItems.orderTitle,
+      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
       compositeItems: updatedItems.compositeItems,
     });
 
@@ -2811,7 +2815,7 @@ const GenerateOrdersV2 = () => {
           } else {
             setCurrentOrder({
               ...currentOrder,
-              compositeItems: updatedCompositeItems?.filter((o) => o?.orderType),
+              compositeItems: updatedCompositeItems?.filter((o) => o?.isEnabled),
             });
           }
         }
@@ -3315,6 +3319,7 @@ const GenerateOrdersV2 = () => {
                   icon={<CustomAddIcon width="16px" height="16px" />}
                   label={t("ADD_ITEM")}
                   style={{ border: "none" }}
+                  isDisabled={isAddItemDisabled}
                 ></Button>
               </div>
             </LabelFieldPair>
@@ -3466,7 +3471,7 @@ const GenerateOrdersV2 = () => {
             <div>
               <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ITEM_TEXT")}</div>
               <textarea
-                value={currentOrder?.itemText}
+                value={currentOrder?.itemText || ""}
                 onChange={(data) => {
                   setCurrentOrder({ ...currentOrder, itemText: data.target.value });
                   if (data.target.value) {

@@ -285,7 +285,7 @@ const HomeHearingsTab = ({
             showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
           }
         } else if ((isBenchClerk || isCourtRoomManager) && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
-          setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+          setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
         }
       }
     },
@@ -350,7 +350,7 @@ const HomeHearingsTab = ({
           label: "End Hearing",
           id: "end_hearing",
           action: async () => {
-            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
           },
         });
       }
@@ -383,6 +383,7 @@ const HomeHearingsTab = ({
                 (orderResponse?.list?.length > 0 &&
                   orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber))
               ) {
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
                 await hearingService
                   ?.searchHearings(
                     {
