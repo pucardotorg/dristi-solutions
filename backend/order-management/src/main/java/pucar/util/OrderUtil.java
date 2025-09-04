@@ -1,5 +1,6 @@
 package pucar.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ import pucar.web.models.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -142,7 +144,7 @@ public class OrderUtil {
                 .map(map -> (Map<?, ?>) map)
                 .map(map -> map.get("applicationStatus"))
                 .filter(String.class::isInstance)
-                .map(String.class::cast).orElseThrow(()->new CustomException("",""));
+                .map(String.class::cast).orElseThrow(() -> new CustomException("", ""));
 
         return applicationStatusType(applicationStatus);
 
@@ -164,8 +166,22 @@ public class OrderUtil {
         try {
             // Attendance
             if (order.getAttendance() != null) {
-                String attendanceStr = objectMapper.writeValueAsString(order.getAttendance());
-                sb.append(attendanceStr).append("\n");
+
+                Object attendanceObj = order.getAttendance();
+
+                Map<String, List<String>> attendanceMap = objectMapper.convertValue(
+                        attendanceObj, new TypeReference<Map<String, List<String>>>() {
+                        }
+                );
+
+                // Format and append
+                for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
+                    String status = entry.getKey(); // "Present", "Absent"
+                    List<String> roles = entry.getValue();
+
+                    String line = status + ": " + String.join(", ", roles);
+                    sb.append(line).append("\n");
+                }
             }
 
             // Item Text
@@ -177,8 +193,8 @@ public class OrderUtil {
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null) {
-                sb.append("Purpose of Next Hearing: [")
-                        .append(order.getPurposeOfNextHearing()).append("]\n");
+                sb.append("Purpose of Next Hearing: ")
+                        .append(order.getPurposeOfNextHearing()).append("\n");
             }
 
             // Next Hearing Date
@@ -187,8 +203,8 @@ public class OrderUtil {
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
                         .toString();
-                sb.append("Date of Next Hearing: [")
-                        .append(dateStr).append("]\n");
+                sb.append("Date of Next Hearing: ")
+                        .append(dateStr).append("\n");
             }
 
             return sb.toString().trim();
@@ -200,7 +216,7 @@ public class OrderUtil {
     }
 
 
-    public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
+    public OrderResponse removeOrderItem(@Valid OrderRequest request) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getRemoveOrderItemEndPoint());
