@@ -70,13 +70,22 @@ public class PendingTaskService {
             log.info("operation=updatePendingTask, result=IN_PROGRESS, topic={}", topic);
             String filingNumber = joinCaseJson.get("filingNumber").toString();
             JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(filingNumber);
-            if(Objects.equals(topic, LITIGANT_JOIN_CASE_TOPIC) && joinCaseJson.get("litigant") != null) {
-                updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
-            } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) || Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
-                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
-            } else if (Objects.equals(topic, POA_JOIN_CASE_TOPIC) && joinCaseJson.get("poaHolders") != null) {
-                updatePendingTaskForPOA(joinCaseJson, pendingTaskNode);
+
+            switch (topic) {
+                case LITIGANT_JOIN_CASE_TOPIC -> {
+                    if (joinCaseJson.get("litigant") != null) {
+                        updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
+                    }
+                }
+                case REPRESENTATIVE_JOIN_CASE_TOPIC, REPRESENTATIVE_REPLACE_JOIN_CASE ->
+                        updatePendingTaskForAdvocateOrPOA(joinCaseJson, pendingTaskNode, true);
+                case POA_JOIN_CASE_TOPIC -> {
+                    if (joinCaseJson.get("poaHolders") != null) {
+                        updatePendingTaskForAdvocateOrPOA(joinCaseJson, pendingTaskNode, false);
+                    }
+                }
             }
+
             log.info("operation=updatePendingTask, result=SUCCESS, topic={}, filingNumber={}", topic, filingNumber);
         } catch (Exception e) {
             log.error(ERROR_UPDATING_PENDING_TASK, e);
@@ -84,106 +93,141 @@ public class PendingTaskService {
         }
     }
 
-    public void updatePendingTaskForPOA(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
+    // ------------------- Unified update for Advocate & POA -------------------
+    private void updatePendingTaskForAdvocateOrPOA(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode, boolean isAdvocate) {
         try {
-            log.info("operation=updatePendingTaskForPOA, status=IN_PROGRESS");
-            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-            JsonNode poaHolders = objectMapper.convertValue(joinCaseJson.get("poaHolders"), JsonNode.class);
-            for(JsonNode poaHolder: poaHolders) {
-                JsonNode additionalDetails = poaHolder.get("additionalDetails");
-                if (additionalDetails == null || additionalDetails.get("uuid") == null) {
-                    log.warn("POA holder missing additionalDetails.uuid, skipping");
-                    continue;
-                }
-                String poaUuid = additionalDetails.get("uuid").textValue();
+            log.info("operation=updatePendingTaskFor{}, status=IN_PROGRESS", isAdvocate ? "Advocate" : "POA");
 
-                List<JsonNode> updatedTasks = new ArrayList<>();
-                if(poaHolder.get("isActive").asBoolean()) {
-                    updatedTasks = updatePendingTaskPoa(hitsNode, poaHolder, poaUuid);
+            JsonNode holdersNode = isAdvocate ?
+                    objectMapper.convertValue(joinCaseJson.get("representatives"), JsonNode.class).get(0)
+                    : null;
+
+            JsonNode poaHolders = !isAdvocate ? objectMapper.convertValue(joinCaseJson.get("poaHolders"), JsonNode.class) : null;
+            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
+
+            List<JsonNode> updatedTasks = new ArrayList<>();
+
+            if (isAdvocate) {
+                JsonNode representing = holdersNode.get("representing");
+                String advocateUuid = holdersNode.get("additionalDetails").get("uuid").textValue();
+
+                if (holdersNode.get("isActive").asBoolean()) {
+                    updatedTasks.addAll(updatePendingTasks(hitsNode, representing, advocateUuid));
                 } else {
-                    updatedTasks = removePoaPendingTask(hitsNode, poaUuid);
+                    Set<String> inactiveLitigants = getLitigantsByStatus(representing, false);
+                    Set<String> activeLitigants = getLitigantsByStatus(representing, true);
+                    updatedTasks.addAll(removeAssigneePendingTask(hitsNode, advocateUuid, inactiveLitigants, activeLitigants));
                 }
-                if (updatedTasks != null) {
-                    pendingTaskUtil.updatePendingTask(updatedTasks);
+
+            } else { // POA
+                for (JsonNode poaHolder : poaHolders) {
+                    JsonNode additionalDetails = poaHolder.get("additionalDetails");
+                    if (additionalDetails == null || additionalDetails.get("uuid") == null) {
+                        log.warn("POA holder missing additionalDetails.uuid, skipping");
+                        continue;
+                    }
+                    String poaUuid = additionalDetails.get("uuid").textValue();
+                    JsonNode representingLitigants = poaHolder.get("representingLitigants");
+
+                    if (poaHolder.get("isActive").asBoolean()) {
+                        updatedTasks.addAll(updatePendingTasks(hitsNode, representingLitigants, poaUuid));
+                    } else {
+                        Set<String> inactiveLitigants = getLitigantsByStatus(representingLitigants, false);
+                        Set<String> activeLitigants = getLitigantsByStatus(representingLitigants, true);
+                        updatedTasks.addAll(removeAssigneePendingTask(hitsNode, poaUuid, inactiveLitigants, activeLitigants));
+                    }
                 }
             }
-            log.info("operation=updatePendingTaskForPOA, status=SUCCESS");
-        }  catch (Exception e) {
+
+            if (!updatedTasks.isEmpty()) {
+                pendingTaskUtil.updatePendingTask(updatedTasks);
+            }
+
+            log.info("operation=updatePendingTaskFor{}, status=SUCCESS", isAdvocate ? "Advocate" : "POA");
+
+        } catch (Exception e) {
             log.error(ERROR_UPDATING_PENDING_TASK, e);
             throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
         }
     }
 
-    private List<JsonNode> updatePendingTaskPoa(JsonNode hitsNode, JsonNode poaHolder, String poaUuid) {
-        log.info("Joining pending task for poa with id :: {}", poaUuid);
-        JsonNode representingLitigants = poaHolder.get("representingLitigants");
+    // ------------------- Common methods -------------------
+    private List<JsonNode> updatePendingTasks(JsonNode hitsNode, JsonNode parties, String assigneeUuid) {
+        log.info("Joining pending task for assignee with id :: {}", assigneeUuid);
         List<JsonNode> filteredTasks = new ArrayList<>();
-        for(JsonNode representing : representingLitigants){
-            String individualId = representing.get("individualId").textValue();
-            filteredTasks = filterPendingTask(hitsNode, Collections.singletonList(individualId));
-            if(representing.get("isActive").asBoolean()){
-                addAssigneeToPendingTask(filteredTasks, poaUuid);
-            } else {
-                removeAssignedToPendingTask(filteredTasks, poaUuid);
-            }
-        }
-        return filteredTasks;
-    }
-
-    public void updatePendingTaskForLitigant(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
-        try {
-            log.info("operation=updatePendingTaskForLitigant, status=IN_PROGRESS");
-            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-            List<JsonNode> filteredTask = filterPendingTaskLitigant(hitsNode);
-            filteredTask = checkComplainantJoinCase(filteredTask, joinCaseJson);
-
-            if(filteredTask != null){
-                JsonNode auditDetails = objectMapper.convertValue(joinCaseJson.get("auditDetails"), JsonNode.class);
-                addAssigneeToPendingTask(filteredTask, auditDetails.get("createdBy").asText());
-                pendingTaskUtil.updatePendingTask(filteredTask);
-            }
-            log.info("operation=updatePendingTaskLitigant, status=SUCCESS");
-        } catch (Exception e){
-            log.error(ERROR_UPDATING_PENDING_TASK, e);
-            throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
-        }
-
-    }
-
-    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
-        try {
-            log.info("operation=updatePendingTaskForAdvocate, status=IN_PROGRESS");
-            JsonNode representative = objectMapper.convertValue(joinCaseJson.get("representatives"), JsonNode.class).get(0);
-            JsonNode representing = representative.get("representing");
-            String advocateUuid = representative.get("additionalDetails").get("uuid").textValue();
-            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-            List<JsonNode> updatedTasks;
-            if(representative.get("isActive").asBoolean()){
-                updatedTasks = updatePendingTasksAdvocate(hitsNode, representing, advocateUuid);
-            } else {
-                updatedTasks = removeAdvocatePendingTask(hitsNode,  advocateUuid);
-            }
-            pendingTaskUtil.updatePendingTask(updatedTasks);
-            log.info("operation=updatePendingTaskAdvocate, status=SUCCESS");
-        } catch (Exception e){
-            log.error(ERROR_UPDATING_PENDING_TASK, e);
-            throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
-        }
-    }
-
-    private List<JsonNode> updatePendingTasksAdvocate(JsonNode hitsNode, JsonNode parties, String advocateUuid) {
-        log.info("Joining pending task for advocate with id :: {}", advocateUuid);
-        List<JsonNode> filteredTasks = new ArrayList<>();
-        for(JsonNode litigant: parties) {
+        for (JsonNode litigant : parties) {
             List<JsonNode> tasks = filterPendingTask(hitsNode, Collections.singletonList(litigant.get("individualId").asText()));
-            if(litigant.get("isActive").asBoolean()){
-                addAssigneeToPendingTask(tasks, advocateUuid);
+            if (litigant.get("isActive").asBoolean()) {
+                addAssigneeToPendingTask(tasks, assigneeUuid);
             } else {
-                removeAssignedToPendingTask(tasks, advocateUuid);
+                // Collect inactive litigants for removal if needed
+                Set<String> inactiveLitigants = Set.of(litigant.get("individualId").asText());
+                Set<String> activeLitigants = Collections.emptySet();
+                tasks = removeAssigneePendingTask(hitsNode, assigneeUuid, inactiveLitigants, activeLitigants);
             }
             filteredTasks.addAll(tasks);
         }
         return filteredTasks;
+    }
+
+    private Set<String> getLitigantsByStatus(JsonNode parties, boolean active) {
+        Set<String> litigants = new HashSet<>();
+        for (JsonNode litigant : parties) {
+            if (litigant.get("isActive").asBoolean() == active) {
+                litigants.add(litigant.get("individualId").asText());
+            }
+        }
+        return litigants;
+    }
+
+    private List<JsonNode> removeAssigneePendingTask(JsonNode hitsNode, String assigneeUuid, Set<String> inactiveLitigants, Set<String> activeLitigants) {
+        List<JsonNode> tasks = new ArrayList<>();
+        for (JsonNode hit : hitsNode) {
+            JsonNode dataNode = hit.path("_source").path("Data");
+            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
+            ArrayNode litigantsArray = (ArrayNode) dataNode.withArray("litigants");
+
+            Set<String> taskLitigants = new HashSet<>();
+            litigantsArray.forEach(l -> taskLitigants.add(l.asText()));
+
+            boolean shouldRemove = taskLitigants.stream().anyMatch(inactiveLitigants::contains) &&
+                    taskLitigants.stream().noneMatch(activeLitigants::contains);
+
+            if (shouldRemove) {
+                boolean isRemoved = false;
+                for (int i = assignedToArray.size() - 1; i >= 0; i--) {
+                    JsonNode node = assignedToArray.get(i);
+                    if (node.has("uuid") && node.get("uuid").asText().equals(assigneeUuid)) {
+                        assignedToArray.remove(i);
+                        isRemoved = true;
+                    }
+                }
+                if (isRemoved) {
+                    tasks.add(hit);
+                }
+            }
+        }
+        return tasks;
+    }
+
+    //Common methods
+    private void addAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid) {
+        log.info("Joining assignee to pending task with uuid :: {}", uuid);
+        for (JsonNode task : filteredTasks) {
+            JsonNode dataNode = task.path("_source").path("Data");
+            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
+            boolean uuidExists = false;
+            for (JsonNode node : assignedToArray) {
+                if (node.has("uuid") && node.get("uuid").asText().equals(uuid)) {
+                    uuidExists = true;
+                    break;
+                }
+            }
+            if (!uuidExists) {
+                ObjectNode uuidNode = assignedToArray.addObject();
+                uuidNode.put("uuid", uuid);
+            }
+        }
     }
 
     private void removeAssignedToPendingTask(List<JsonNode> tasks, String uuid) {
@@ -205,73 +249,6 @@ public class PendingTaskService {
                 assignedToArray.remove(indexToRemove);
             }
         }
-    }
-    private List<JsonNode> removeAdvocatePendingTask(JsonNode hitsNode,  String advocateUuid) {
-        List<JsonNode> tasks = new ArrayList<>();
-        for (JsonNode hit : hitsNode) {
-            JsonNode dataNode = hit.path("_source").path("Data");
-            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            boolean isRemoved = false;
-            for (int i = assignedToArray.size() - 1; i >= 0; i--) {
-                JsonNode node = assignedToArray.get(i);
-                if (node.has("uuid") && node.get("uuid").asText().equals(advocateUuid)) {
-                    assignedToArray.remove(i);
-                    isRemoved=true;
-                }
-            }
-            if(isRemoved) {
-                tasks.add(hit);
-            }
-        }
-        return tasks;
-    }
-
-    private List<JsonNode> removePoaPendingTask(JsonNode hitsNode, String poaUuid) {
-        List<JsonNode> tasks = new ArrayList<>();
-        for (JsonNode hit : hitsNode) {
-            JsonNode dataNode = hit.path("_source").path("Data");
-            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            boolean isRemoved = false;
-            for (int i = assignedToArray.size() - 1; i >= 0; i--) {
-                JsonNode node = assignedToArray.get(i);
-                if (node.has("uuid") && node.get("uuid").asText().equals(poaUuid)) {
-                    assignedToArray.remove(i);
-                    isRemoved=true;
-                }
-            }
-            if(isRemoved) {
-                tasks.add(hit);
-            }
-        }
-        return tasks;
-    }
-
-    private void addAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid) {
-        log.info("Joining assignee to pending task with uuid :: {}", uuid);
-        for (JsonNode task : filteredTasks) {
-            JsonNode dataNode = task.path("_source").path("Data");
-            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            boolean uuidExists = false;
-            for (JsonNode node : assignedToArray) {
-                if (node.has("uuid") && node.get("uuid").asText().equals(uuid)) {
-                    uuidExists = true;
-                    break;
-                }
-            }
-            if (!uuidExists) {
-                ObjectNode uuidNode = assignedToArray.addObject();
-                uuidNode.put("uuid", uuid);
-            }
-        }
-    }
-
-    private List<String> getLitigantUuids(JsonNode parties, RequestInfo requestInfo) {
-        List<String> userUuids = new ArrayList<>();
-        for (JsonNode party : parties) {
-            List<Individual> individual = individualService.getIndividualsByIndividualId(requestInfo, party.get("individualId").asText());
-            userUuids.add(individual.get(0).getUserUuid());
-        }
-        return userUuids;
     }
 
     private List<JsonNode> filterPendingTask(JsonNode hitsNode, List<String> individualIds) {
@@ -295,6 +272,34 @@ public class PendingTaskService {
         return filteredTasks;
     }
 
+    //Litigant
+    public void updatePendingTaskForLitigant(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
+        try {
+            log.info("operation=updatePendingTaskForLitigant, status=IN_PROGRESS");
+            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
+            List<JsonNode> filteredTask = filterPendingTaskLitigant(hitsNode);
+            filteredTask = checkComplainantJoinCase(filteredTask, joinCaseJson);
+
+            if(filteredTask != null){
+                JsonNode auditDetails = objectMapper.convertValue(joinCaseJson.get("auditDetails"), JsonNode.class);
+                addAssigneeToPendingTask(filteredTask, auditDetails.get("createdBy").asText());
+                pendingTaskUtil.updatePendingTask(filteredTask);
+            }
+            log.info("operation=updatePendingTaskLitigant, status=SUCCESS");
+        } catch (Exception e){
+            log.error(ERROR_UPDATING_PENDING_TASK, e);
+            throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
+        }
+
+    }
+    private List<String> getLitigantUuids(JsonNode parties, RequestInfo requestInfo) {
+        List<String> userUuids = new ArrayList<>();
+        for (JsonNode party : parties) {
+            List<Individual> individual = individualService.getIndividualsByIndividualId(requestInfo, party.get("individualId").asText());
+            userUuids.add(individual.get(0).getUserUuid());
+        }
+        return userUuids;
+    }
     private List<JsonNode> filterPendingTaskLitigant(JsonNode hitsNode) {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(JsonNode hit: hitsNode) {
