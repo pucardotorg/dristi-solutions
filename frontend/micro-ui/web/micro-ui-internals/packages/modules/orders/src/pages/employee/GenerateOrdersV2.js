@@ -1901,12 +1901,7 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee(
-              "POLICE",
-              respondentAddress?.[0]?.pincode,
-              orderType,
-              tenantId
-            ),
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
             feesStatus: "",
           },
         };
@@ -1948,12 +1943,7 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee(
-              "POLICE",
-              respondentAddress?.[0]?.pincode,
-              orderType,
-              tenantId
-            ),
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
             feesStatus: "",
           },
         };
@@ -1998,12 +1988,7 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee(
-              "POLICE",
-              respondentAddress?.[0]?.pincode,
-              orderType,
-              tenantId
-            ),
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
             feesStatus: "",
           },
         };
@@ -2043,12 +2028,7 @@ const GenerateOrdersV2 = () => {
             ? item?.value?.pincode
             : clonedPayload?.respondentDetails?.address?.pincode;
 
-          let courtFees = await getCourtFee(
-            item?.code,
-            pincode,
-            orderType,
-            tenantId
-          );
+          let courtFees = await getCourtFee(item?.code, pincode, orderType, tenantId);
 
           if ("deliveryChannels" in clonedPayload) {
             clonedPayload.deliveryChannels = {
@@ -2204,9 +2184,21 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
+
+      const caseNumber =
+        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        caseDetails?.courtCaseNumber ||
+        caseDetails?.cmpNumber ||
+        caseDetails?.filingNumber;
       orderSchema = {
         ...orderSchema,
-        orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties, ...(actionResponse && { action: actionResponse }) },
+        orderDetails: {
+          ...(order?.orderDetails || {}),
+          ...orderSchema?.orderDetails,
+          parties: parties,
+          caseNumber: caseNumber,
+          ...(actionResponse && { action: actionResponse }),
+        },
       };
       return await ordersService
         .updateOrder(
