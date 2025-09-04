@@ -1349,7 +1349,7 @@ const AdmittedCaseV2 = () => {
               ...documentSubmission?.[0].artifactList,
               filingNumber: filingNumber,
               isVoid,
-              isEvidence: false,
+              // isEvidence: false,
               reason: isVoid ? voidReason : "",
               workflow: null,
             },
