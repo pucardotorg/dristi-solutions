@@ -2204,9 +2204,21 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
+      const caseNumber =
+        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        caseDetails?.courtCaseNumber ||
+        caseDetails?.cmpNumber ||
+        caseDetails?.filingNumber;
+
       orderSchema = {
         ...orderSchema,
-        orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties, ...(actionResponse && { action: actionResponse }) },
+        orderDetails: {
+          ...(order?.orderDetails || {}),
+          ...orderSchema?.orderDetails,
+          parties: parties,
+          caseNumber: caseNumber,
+          ...(actionResponse && { action: actionResponse }),
+        },
       };
       return await ordersService
         .updateOrder(
