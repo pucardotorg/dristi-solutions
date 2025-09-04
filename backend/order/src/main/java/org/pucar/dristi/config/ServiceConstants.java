@@ -75,7 +75,7 @@ public class ServiceConstants {
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
 
-    public static final String MODULE_CODE = "rainmaker-common%2Crainmaker-home%2Crainmaker-case%2Crainmaker-orders%2Crainmaker-hearings%2Crainmaker-submission";
+    public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
 
     public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
     public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
