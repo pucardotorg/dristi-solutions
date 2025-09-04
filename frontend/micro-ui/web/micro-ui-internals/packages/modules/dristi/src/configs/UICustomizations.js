@@ -603,12 +603,11 @@ export const UICustomizations = {
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
           }
+          const tooltipId = `hearing-list-${row?.businessObject?.orderNotification?.id}`;
           return (
             <div>
-              {value?.length > 2 && (
-                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
-              )}
-              <span data-tip data-for={`hearing-list`}>{`${value
+              {value?.length > 2 && <ReactTooltip id={tooltipId}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>}
+              <span data-tip data-for={tooltipId}>{`${value
                 ?.slice(0, 2)
                 ?.map((party) => party?.partyName || party?.name)
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
