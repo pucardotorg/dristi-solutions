@@ -71,12 +71,14 @@ public class ServiceConstants {
 
     public static final String ADMISSION_HEARING_SCHEDULED = "ADMISSION_HEARING_SCHEDULED";
 
-    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String ENG_LOCALE_CODE = "en_IN";
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
 
-    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
-    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String MODULE_CODE = "rainmaker-common%2Crainmaker-home%2Crainmaker-case%2Crainmaker-orders%2Crainmaker-hearings%2Crainmaker-submission";
+
+    public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
     public static final String ORDER_ISSUED = "ORDER_ISSUED";
 
