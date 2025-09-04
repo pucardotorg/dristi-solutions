@@ -2506,6 +2506,14 @@ const GenerateOrdersV2 = () => {
           break;
         }
 
+        if (["JUDGEMENT"].includes(orderType) && caseDetails?.isLPRCase) {
+          setShowErrorToast({
+            label: t("JUDGEMENT_NOT_ALLOWED_FOR_LPR_CASE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
         if (
           formData?.refApplicationId &&
           ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(newApplicationDetails?.status)
