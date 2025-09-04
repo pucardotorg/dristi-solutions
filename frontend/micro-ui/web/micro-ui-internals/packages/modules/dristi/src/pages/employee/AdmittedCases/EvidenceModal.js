@@ -14,14 +14,14 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Util
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
-import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
+import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
+import CustomChip from "../../../components/CustomChip";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -41,6 +41,7 @@ const EvidenceModal = ({
   setIsDelayApplicationPending,
   currentDiaryEntry,
   artifact,
+  setShowMakeAsEvidenceModal,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -49,6 +50,7 @@ const EvidenceModal = ({
   const history = useHistory();
   const filingNumber = useMemo(() => caseData?.filingNumber, [caseData]);
   const cnrNumber = useMemo(() => caseData?.cnrNumber, [caseData]);
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case), [caseData]);
   const createdBy = useMemo(() => documentSubmission?.[0]?.details?.auditDetails?.createdBy, [documentSubmission]);
   const applicationStatus = useMemo(() => documentSubmission?.[0]?.status, [documentSubmission]);
@@ -66,7 +68,7 @@ const EvidenceModal = ({
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isDisabled, setIsDisabled] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -90,15 +92,20 @@ const EvidenceModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
+        {props?.evidenceMarkedStatus && (
+          <CustomChip
+            text={props?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(props?.evidenceMarkedStatus) || ""}
+            shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+          />
+        )}
+
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
       </div>
     );
   };
 
   const computeDefaultBOTD = useMemo(() => {
-    return `${documentSubmission?.[0]?.artifactList?.artifactNumber} ${
-      documentSubmission?.[0]?.artifactList?.isEvidence ? "unmarked" : "marked"
-    } as evidence`;
+    return `Document marked as evidence exhibit number ${documentSubmission?.[0]?.artifactList?.artifactNumber}`;
   }, [documentSubmission]);
 
   useEffect(() => {
@@ -111,9 +118,26 @@ const EvidenceModal = ({
     return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
   }, [documentSubmission]);
 
+  const isBail = useMemo(() => {
+    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
+  }, [documentSubmission]);
+
+  // No need to show submit, cancel and set term of bail buttons for bail applications
+
   const showSubmit = useMemo(() => {
     if (userType === "employee") {
       if (!isJudge) {
+        if (
+          modalType === "Documents" &&
+          !(
+            documentSubmission?.[0]?.artifactList?.isEvidence ||
+            documentSubmission?.[0]?.artifactList?.isVoid ||
+            documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+          )
+        ) {
+          return true;
+        }
+
         return false;
       }
       if (modalType === "Documents") {
@@ -122,7 +146,8 @@ const EvidenceModal = ({
       }
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
-        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
+        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
+        !isBail
       );
     } else {
       if (modalType === "Documents") {
@@ -142,7 +167,7 @@ const EvidenceModal = ({
       }
       return false;
     }
-  }, [userType, modalType, userRoles, applicationStatus, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
+  }, [userType, isJudge, modalType, userRoles, applicationStatus, isBail, documentSubmission, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
@@ -163,7 +188,15 @@ const EvidenceModal = ({
         }
       }
     } else {
-      label = !documentSubmission?.[0]?.artifactList?.isEvidence ? t("MARK_AS_EVIDENCE") : t("UNMARK_AS_EVIDENCE");
+      if (
+        documentSubmission?.[0]?.artifactList?.isEvidence ||
+        documentSubmission?.[0]?.artifactList?.isVoid ||
+        documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+      ) {
+        label = false;
+      } else {
+        label = t("MARK_AS_EVIDENCE");
+      }
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
@@ -180,7 +213,8 @@ const EvidenceModal = ({
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions"
+      modalType === "Submissions" &&
+      !isBail
     ) {
       return t("REJECT");
     }
@@ -535,12 +569,13 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -553,12 +588,13 @@ const EvidenceModal = ({
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: filingNumber,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
         },
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+      const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {
@@ -602,9 +638,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
       case "TRANSFER":
-        return "CASE_TRANSFER";
+        return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "SETTLEMENT";
+        return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
       case "BAIL_BOND":
         return "BAIL";
       case "SURETY":
@@ -630,9 +666,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
       case "TRANSFER":
-        return "ORDER_FOR_CASE_TRANSFER";
+        return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "ORDER_FOR_SETTLEMENT";
+        return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
       case "BAIL_BOND":
         return "ORDER_FOR_BAIL";
       case "SURETY":
@@ -662,6 +698,7 @@ const EvidenceModal = ({
       "SURETY",
       "EXTENSION_SUBMISSION_DEADLINE",
       "CHECKOUT_REQUEST",
+      "ADDING_WITNESSES",
     ];
     if (type === "reject") {
       return false;
@@ -669,22 +706,42 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-  const isBail = useMemo(() => {
-    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
-  }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
         {modalType !== "Submissions" ? (
           currentDiaryEntry && artifact ? (
             <div className="application-view">
-              <DocViewerWrapper
+              <React.Fragment>
+                <DocViewerWrapper
+                  key={"selectedFileStoreId"}
+                  tenantId={tenantId}
+                  fileStoreId={artifact?.file?.fileStore}
+                  showDownloadOption={false}
+                  docHeight="100%"
+                  docWidth="100%"
+                  docViewerStyle={{ maxWidth: "100%" }}
+                />
+
+                {artifact?.seal?.fileStore && artifact?.evidenceMarkedStatus === "COMPLETED" && (
+                  <DocViewerWrapper
+                    key={"selectedFileStoreId"}
+                    tenantId={tenantId}
+                    fileStoreId={artifact?.seal?.fileStore}
+                    showDownloadOption={false}
+                    docHeight="100%"
+                    docWidth="100%"
+                    docViewerStyle={{ maxWidth: "100%" }}
+                  />
+                )}
+              </React.Fragment>
+              {/* <DocViewerWrapper
                 fileStoreId={artifact?.file?.fileStore}
                 tenantId={tenantId}
                 docWidth={"calc(80vw * 62 / 100)"}
                 docHeight={"unset"}
                 showDownloadOption={false}
-              />
+              /> */}
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (
@@ -700,6 +757,19 @@ const EvidenceModal = ({
                       showDownloadOption={false}
                       documentName={docSubmission.applicationContent.fileName}
                     />
+                    <React.Fragment>
+                      {docSubmission?.artifactList?.seal?.fileStore && docSubmission?.artifactList?.evidenceMarkedStatus === "COMPLETED" && (
+                        <DocViewerWrapper
+                          key={"selectedFileStoreId"}
+                          tenantId={tenantId}
+                          fileStoreId={docSubmission?.artifactList?.seal?.fileStore}
+                          showDownloadOption={false}
+                          docHeight="100%"
+                          docWidth="100%"
+                          docViewerStyle={{ maxWidth: "100%" }}
+                        />
+                      )}
+                    </React.Fragment>
                   </div>
                 )}
               </React.Fragment>
@@ -726,7 +796,7 @@ const EvidenceModal = ({
         )}
       </React.Fragment>
     );
-  }, [allCombineDocs, documentSubmission, modalType, tenantId, isLoading, t]);
+  }, [modalType, currentDiaryEntry, artifact, tenantId, documentSubmission, allCombineDocs, isLoading, t]);
 
   const setApplicationStatus = (type, applicationType) => {
     if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
@@ -983,7 +1053,14 @@ const EvidenceModal = ({
           const res = await ordersService.createOrder(reqbody, { tenantId });
           const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
+              actionCategory:
+                name === "ORDER_EXTENSION_SUBMISSION_DEADLINE"
+                  ? "View Application"
+                  : name === "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE"
+                  ? "Schedule Hearing"
+                  : null,
               name: t(name),
               entityType: "order-default",
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
@@ -1072,7 +1149,16 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
         await handleApplicationAction(true, "accept");
-      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      } else {
+        if (modalType === "Documents") {
+          //need to add logic for bitd save
+          setShow(false);
+          setShowMakeAsEvidenceModal(true);
+        } else {
+          setShowConfirmationModal({ type: "accept" });
+        }
+        // modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) :;
+      }
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -1213,15 +1299,15 @@ const EvidenceModal = ({
     }
   }, [artifact, currentDiaryEntry, documentSubmission, fetchRecursiveData]);
 
-  const customLabelShow = useMemo(() => {
-    return (
-      isJudge &&
-      ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
-      userRoles.includes("SUBMISSION_APPROVER") &&
-      [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions"
-    );
-  }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
+  // const customLabelShow = useMemo(() => {
+  //   return (
+  //     isJudge &&
+  //     ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
+  //     userRoles.includes("SUBMISSION_APPROVER") &&
+  //     [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
+  //     modalType === "Submissions"
+  //   );
+  // }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
 
   return (
     <React.Fragment>
@@ -1231,7 +1317,32 @@ const EvidenceModal = ({
         }
         .popup-module.evidence-modal .popup-module-main .selector-button-border h2 {
           color: #BB2C2F !important;
-        }`}
+        }
+        .popup-module.evidence-modal .info-value p {
+          margin-top: 0;
+        }
+        .popup-module.evidence-modal .info-value ul {
+          list-style-type: disc;
+          margin-top: 0;
+        }
+       .popup-module.evidence-modal .info-value ol {
+          list-style-type: decimal;
+          margin-top: 0;
+        }
+        .confirm-submission-checkbox {
+          .checkbox-wrap {
+            .label {
+              margin-left: 32px;
+            }
+          .custom-checkbox {
+              height: 20px;
+              width: 20px;
+            }
+          }
+        }
+      .popup-module.evidence-modal .info-value li {
+        margin: 0;
+      }`}
       </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
@@ -1243,7 +1354,7 @@ const EvidenceModal = ({
           actionCancelLabel={
             documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry || !isJudge ? false : actionCancelLabel
           } // Not allowing cancel action for court room manager
-          actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
+          // actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
@@ -1257,6 +1368,11 @@ const EvidenceModal = ({
                     : "Action Pending"
                   : t(applicationStatus)
               }
+              evidenceMarkedStatus={
+                (modalType === "Documents" && documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus === "COMPLETED") || userType === "employee"
+                  ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus
+                  : null
+              }
               showStatus={modalType === "Documents" ? false : true}
               isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
@@ -1268,15 +1384,50 @@ const EvidenceModal = ({
           textStyle={{
             color: "#fff",
           }}
-          actionCancelTextStyle={
-            customLabelShow
-              ? {
-                  color: "#BB2C2F",
-                }
-              : {}
-          }
+          // actionCancelTextStyle={
+          //   customLabelShow
+          //     ? {
+          //         color: "#BB2C2F",
+          //       }
+          //     : {}
+          // }
         >
-          <div className="evidence-modal-main">
+          {(documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence) &&
+            userType === "employee" && (
+              <div style={{ margin: "16px 24px" }}>
+                <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
+                    <div className="custom-note-heading-div">
+                      <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+                    </div>
+                    <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
+                      {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      className="custom-note-close-button"
+                      style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
+                      onClick={() => {
+                        setShow(false);
+                        setShowMakeAsEvidenceModal(true);
+                      }}
+                    >
+                      {t("VIEW_DETAILS")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          <div
+            className="evidence-modal-main "
+            style={
+              documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence
+                ? { height: "calc(100% - 140px)" }
+                : {}
+            }
+          >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
@@ -1361,15 +1512,18 @@ const EvidenceModal = ({
                       <div className="info-key">
                         <h3>{t("REASON_FOR_FILING")}</h3>
                       </div>
-                      <div className="info-value">
-                        <h3>{documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text}</h3>
-                      </div>
+                      <div
+                        className="info-value"
+                        dangerouslySetInnerHTML={{
+                          __html: documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || "",
+                        }}
+                      ></div>
                     </div>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {modalType === "Documents" && isJudge && (
+              {/* {modalType === "Documents" && isJudge && (
                 <div>
                   <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
                   <div style={{ display: "flex", gap: "10px" }}>
@@ -1395,7 +1549,7 @@ const EvidenceModal = ({
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
               <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>

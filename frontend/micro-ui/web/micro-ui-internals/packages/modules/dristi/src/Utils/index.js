@@ -112,10 +112,16 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
-export const modifiedEvidenceNumber = (value) => {
-  return value && typeof value === "string" ? value.split("-").pop() : value;
+export const modifiedEvidenceNumber = (value, filingNumber = null) => {
+  if (value && typeof value === "string") {
+    if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {
+      return value.slice(filingNumber.length + 1).trim();
+    } else {
+      return value.split("-").pop();
+    }
+  }
+  return value;
 };
-
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
@@ -194,6 +200,20 @@ export const documentLabels = {
   VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
   SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
+};
+
+export const caseFileLabels = {
+  "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
+  "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
+  "case.cheque": "DISHONORED_CHEQUE",
+  "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",
+  "case.cheque.returnmemo": "CHEQUE_RETURN_MEMO",
+  "case.demandnotice": "LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.proof": "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
+  "case.replynotice": "PROOF_OF_REPLY",
+  "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
+  "case.docs": "OTHERS_DOCUMENT",
 };
 
 export const getFileByFileStoreId = async (uri) => {

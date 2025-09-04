@@ -3,13 +3,17 @@ package org.pucar.dristi.repository.rowmapper.v2;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
+import org.postgresql.util.PGobject;
+import org.pucar.dristi.web.models.POAHolder;
 import org.pucar.dristi.web.models.PoaParty;
 import org.pucar.dristi.web.models.v2.POAHolderV2;
 import org.pucar.dristi.web.models.v2.PoaPartyV2;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
 

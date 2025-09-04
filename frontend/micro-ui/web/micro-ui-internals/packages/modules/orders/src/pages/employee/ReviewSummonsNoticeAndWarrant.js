@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig, SummonsTabsConfigJudge } from "../../configs/SuumonsConfig";
+import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -37,10 +37,20 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
-export const getJudgeDefaultConfig = () => {
+export const getJudgeDefaultConfig = (courtId) => {
   return SummonsTabsConfig?.SummonsTabsConfig?.map((item, index) => {
     return {
       ...item,
+      apiDetails: {
+        ...item?.apiDetails,
+        requestBody: {
+          ...item?.apiDetails?.requestBody,
+          criteria: {
+            ...item?.apiDetails?.requestBody?.criteria,
+            ...(courtId && { courtId }),
+          },
+        },
+      },
       sections: {
         ...item?.sections,
         search: {
@@ -55,7 +65,6 @@ export const getJudgeDefaultConfig = () => {
   });
 };
 
-
 function getAction(selectedDelievery, orderType) {
   const key = selectedDelievery?.key;
 
@@ -64,24 +73,26 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === "WARRANT" ? "DELIVERED" : "SERVED";
+    return (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
+  return (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? "NOT_DELIVERED" : "NOT_SERVED";
 }
-
 
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
-  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig()?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
+  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const courtId = localStorage.getItem("courtId");
+  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig(courtId)?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -100,10 +111,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
 
   const [tabData, setTabData] = useState(
     isJudge
-      ? getJudgeDefaultConfig()?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
+      ? getJudgeDefaultConfig(courtId)?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
       : SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({
           key: index,
           label: configItem.label,
@@ -153,11 +166,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       criteria: {
         tenantId: tenantId,
         taskNumber: rowData?.taskNumber,
+        ...(courtId && { courtId }),
       },
     },
     {},
     rowData?.taskNumber,
-    Boolean(showActionModal || step)
+    Boolean((showActionModal || step) && courtId)
   );
 
   const getTaskDetailsByTaskNumber = useCallback(
@@ -166,11 +180,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
         criteria: {
           searchText: taskNumber,
           tenantId,
+          ...(courtId && { courtId }),
         },
       });
       handleRowClick({ original: response?.list?.[0] });
     },
-    [taskNumber, tenantId]
+    [taskNumber, tenantId, courtId]
   );
 
   useEffect(() => {
@@ -180,10 +195,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [fetchedTasksData, tasksData]);
 
   const { data: orderData } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: tasksData?.list[0]?.orderId } },
+    { tenantId, criteria: { id: tasksData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     tasksData?.list[0]?.orderId,
-    Boolean(tasksData)
+    Boolean(tasksData && courtId)
   );
 
   const compositeItem = useMemo(
@@ -208,6 +223,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [history, reload, taskNumber]);
 
   const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
     const { data: tasksData } = await refetch();
     if (tasksData) {
@@ -238,6 +254,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         console.error("Error updating task data:", error);
       }
     }
+    setIsSubmitting(false);
   }, [refetch, reload, tasksData, tenantId]);
 
   const handleUpdateStatus = useCallback(async () => {
@@ -269,7 +286,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         };
         await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && orderType !== "WARRANT") {
+          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")) {
             await taskService.updateTask(
               {
                 task: {
@@ -287,12 +304,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
+              actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
               caseId: tasksData?.list[0]?.caseId,
@@ -354,6 +372,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: rowData?.filingNumber,
+            ...(courtId && userType === "employee" && { courtId }),
           },
         },
         {}
@@ -465,6 +484,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
       } else if (orderType === "WARRANT") {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
@@ -473,6 +496,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_NOTICE_VIA");
       } else if (orderType === "WARRANT") {
         msg = t("SENT_WARRANT_VIA");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SENT_PROCLAMATION_VIA");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SENT_ATTACHMENT_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
@@ -564,7 +591,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
+          hideSubmit: isTypist || ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") && rowData?.documentStatus === "SIGN_PENDING" && !isJudge),
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -632,6 +659,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      isSubmitting={isSubmitting}
                     />
                   ),
               },
@@ -669,6 +697,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
+      hideSubmit: isTypist,
       modalBody: (
         <PrintAndSendDocumentComponent
           infos={infos}
@@ -706,6 +735,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
+      hideSubmit: isTypist,
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 

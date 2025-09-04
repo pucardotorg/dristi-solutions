@@ -16,6 +16,7 @@ import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
+import AdmittedCaseV2 from "./AdmittedCases/AdmittedCaseV2";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -25,17 +26,20 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
   const roles = window?.Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
+  const isJudge = roles?.some((role) => role.code === "CASE_APPROVER");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
+  const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"].includes(role.code));
+  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
+      homeActiveTab: homeActiveTab,
       isLast: false,
     },
     {
@@ -75,9 +79,17 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
   ];
-  const showBreadCrumbs = useMemo(() => location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true, [
-    location.pathname,
-  ]);
+  const showBreadCrumbs = useMemo(
+    () =>
+      location.pathname.includes("/review-litigant-details")
+        ? true
+        : location.pathname.includes("/view-case")
+        ? false
+        : location.pathname.includes("/admission")
+        ? false
+        : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
+    [location.pathname]
+  );
   if (result) {
     sessionStorage.setItem("isSignSuccess", result);
   }
@@ -117,7 +129,11 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases />} />
+          <PrivateRoute
+            exact
+            path={`${path}/home/view-case`}
+            component={isJudgeView ? (props) => <AdmittedCaseV2 /> : (props) => <AdmittedCases />}
+          />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

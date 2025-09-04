@@ -13,6 +13,7 @@ const {
 } = require("../utils/orderUtils");
 
 const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
+const {logger} = require("../logger");
 
 router.post(
   "",
@@ -21,6 +22,7 @@ router.post(
     const tenantId = req.query.tenantId;
     const requestInfo = req.body.RequestInfo;
     const orderId = req.query.orderId;
+    const courtId = req.query.courtId;
 
     // Set qrCode to false if it is undefined, null, or empty
     if (!qrCode) {
@@ -37,7 +39,7 @@ router.post(
     try {
       const resOrder = await handleApiCall(
         res,
-        () => search_order(tenantId, orderId, requestInfo),
+        () => search_order(tenantId, orderId, requestInfo, courtId),
         "Failed to query order service"
       );
       let order = resOrder?.data?.list[0];
@@ -46,7 +48,7 @@ router.post(
         res,
         tenantId,
         "Judge",
-        order?.courtId,
+        courtId || order?.courtId,
         requestInfo
       );
 
@@ -63,10 +65,12 @@ router.post(
           order?.additionalDetails?.applicationStatus
         );
         const orderType = order?.orderType;
+        logger.info("orderType", orderType);
         const orderPreviewKey =
           OrderPreviewOrderTypeMap[
             orderPDFMap?.[orderType]?.[applicationStatus] || orderType
           ];
+        logger.info("orderPreviewKey", orderPreviewKey);
         await processOrder(
           req,
           res,

@@ -98,7 +98,7 @@ public class HearingProcessor {
                     .requestInfo(requestInfo)
                     .hearings(Collections.singletonList(hearing))
                     .build();
-            log.debug("updating hearing in hearing module,hearingId={}", hearing.getHearingId());
+            log.info("updating hearing in hearing module,hearingId={}, hearing={}", hearing.getHearingId(), hearing);
             hearingUtil.callHearing(updateHearingRequest, isRetryRequired);
 
             producer.push(config.getScheduleHearingTopic(), ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(scheduledHearings).build());

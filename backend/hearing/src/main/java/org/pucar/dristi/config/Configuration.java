@@ -191,6 +191,9 @@ public class Configuration {
     @Value("${dristi.scheduler.create.endpoint}")
     private String schedulerCreateEndPoint;
 
+    @Value("${dristi.scheduler.calendar.update.endpoint}")
+    private String judgeCalendarUpdateEndPoint;
+
     @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
 
@@ -203,7 +206,81 @@ public class Configuration {
     @Value("${bulk.reschedule.topic}")
     private String bulkRescheduleTopic;
 
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.bulk.index}")
+    private String index;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+
     // template for generic message of hearing types
     @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
     private String smsNotificationVariableHearingScheduled;
+
+    // Order service
+
+    @Value("${dristi.order.host}")
+    private String orderHost;
+
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
+
+    // Task Config
+    @Value("${dristi.task.host}")
+    private String taskServiceHost;
+
+    @Value("${dristi.task.search.endpoint}")
+    private String taskSearchEndpoint;
+
+    @Value("${dristi.task.update.endpoint}")
+    private String taskUpdateEndpoint;
+
+    // Billing Config
+    @Value("${egov.billingservice.host}")
+    private String billingServiceHost;
+
+    @Value("${egov.billingservice.search.bill}")
+    private String searchBillEndpoint;
+
+    @Value("${egov.billingservice.demand.search.endpoint}")
+    private String searchDemandEndpoint;
+
+    @Value("${egov.billingservice.demand.update.endpoint}")
+    private String updateDemandEndpoint;
+
+    @Value("${egov.mdms.payment.business.service.name}")
+    private String paymentBusinessServiceName;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    @Value("${dristi.pending.task.name}")
+    private String pendingTaskName;
+
+    @Value("${order.businessservice}")
+    private String orderEntityType;
+
+    @Value("${schedule.hearing.sla}")
+    private int scheduleHearingSla;
 }

@@ -102,26 +102,54 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   }, [caseDetails]);
 
-  const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
-    {
-      EFillingCalculationCriteria: [
-        {
-          checkAmount: chequeDetails?.totalAmount,
-          numberOfApplication: 1,
-          tenantId: tenantId,
-          caseId: caseId,
-          isDelayCondonation: isDelayCondonation,
-          filingNumber: caseDetails?.filingNumber,
-        },
-      ],
-    },
-    {},
-    "dristi",
-    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
-  );
-
+  // const { data: calculationResponse1, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
+  //   {
+  //     EFillingCalculationCriteria: [
+  //       {
+  //         checkAmount: chequeDetails?.totalAmount,
+  //         numberOfApplication: 1,
+  //         tenantId: tenantId,
+  //         caseId: caseId,
+  //         isDelayCondonation: isDelayCondonation,
+  //         filingNumber: caseDetails?.filingNumber,
+  //       },
+  //     ],
+  //   },
+  //   {},
+  //   "dristi",
+  //   Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
+  // );
   const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "case-default"), [paymentTypeData]);
+  const [calculationResponse, setCalculationResponse] = useState(null);
+  const [ispaymentLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchCalculation = async () => {
+      if (caseDetails?.filingNumber && suffix) {
+        setIsLoading(true);
+        try {
+          const response = await DRISTIService.getTreasuryPaymentBreakup(
+            { tenantId: tenantId },
+            {
+              consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+                ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+                : caseDetails?.filingNumber + `_${suffix}`,
+            },
+            "dristi",
+            true
+          );
+          setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        } catch (error) {
+          console.error("Error fetching payment calculation:", error);
+          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchCalculation();
+  }, [tenantId, caseDetails, suffix]);
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
@@ -146,7 +174,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
     tenantId,
-    consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+    consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+      ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+      : caseDetails?.filingNumber + `_${suffix}`,
     service: "case-default",
     path,
     caseDetails,
@@ -177,7 +207,13 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
   const onSubmitCase = async () => {
     try {
-      const bill = await fetchBill(caseDetails?.filingNumber + `_${suffix}`, tenantId, "case-default");
+      const bill = await fetchBill(
+        caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+          ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+          : caseDetails?.filingNumber + `_${suffix}`,
+        tenantId,
+        "case-default"
+      );
       if (!bill?.Bill?.length) {
         showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
         setIsCaseLocked(true);
@@ -252,7 +288,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   };
 
-  if (isLoading || isPaymentLoading || isPaymentTypeLoading) {
+  if (isLoading || ispaymentLoading || isPaymentTypeLoading) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {

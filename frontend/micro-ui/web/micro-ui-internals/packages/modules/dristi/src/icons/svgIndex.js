@@ -174,9 +174,9 @@ const CustomDeleteIcon = () => (
     />
   </svg>
 );
-const CustomAddIcon = () => (
-  <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4.33203 6.16732H0.332031V4.83398H4.33203V0.833984H5.66536V4.83398H9.66536V6.16732H5.66536V10.1673H4.33203V6.16732Z" fill="#007E7E" />
+const CustomAddIcon = ({ width = "10", height = "11", fill = "#007E7E" }) => (
+  <svg width={width} height={height} viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.33203 6.16732H0.332031V4.83398H4.33203V0.833984H5.66536V4.83398H9.66536V6.16732H5.66536V10.1673H4.33203V6.16732Z" fill={fill} />
   </svg>
 );
 
@@ -702,9 +702,9 @@ const RightArrow = () => (
   </svg>
 );
 
-const LeftArrow = () => (
+const LeftArrow = ({ color = "white" }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M16 7H3.83L9.42 1.41L8 0L0 8L8 16L9.41 14.59L3.83 9H16V7Z" fill="white" />
+    <path d="M16 7H3.83L9.42 1.41L8 0L0 8L8 16L9.41 14.59L3.83 9H16V7Z" fill={color} />
   </svg>
 );
 
@@ -1708,13 +1708,13 @@ const TriangleIcon = () => {
   );
 };
 
-const BlackTickIcon = () => {
+const BlackTickIcon = ({ color = "#0A0A0A" }) => {
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g clip-path="url(#clip0_2568_2741)">
         <path
           d="M24 4C12.96 4 4 12.96 4 24C4 35.04 12.96 44 24 44C35.04 44 44 35.04 44 24C44 12.96 35.04 4 24 4ZM20 34L10 24L12.82 21.18L20 28.34L35.18 13.16L38 16L20 34Z"
-          fill="#0A0A0A"
+          fill={color}
         />
       </g>
       <defs>

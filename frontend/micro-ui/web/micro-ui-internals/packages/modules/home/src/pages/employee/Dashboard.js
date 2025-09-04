@@ -167,8 +167,8 @@ const DashboardPage = () => {
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
     console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
-    const username = process.env.REACT_APP_KIBANA_USERNAME || "michaelGeorge";
-    const password = process.env.REACT_APP_KIBANA_PASSWORD || "ONcourts*247";
+    const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
+    const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
     const config = {
       headers: {
@@ -245,10 +245,16 @@ const DashboardPage = () => {
     const { t } = useTranslation();
     const userInfo = window?.Digit?.UserService?.getUser()?.info;
     const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+    const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
+    const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+    const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+    const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+    let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+    if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
     const crumbs = [
       {
-        path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+        path: homePath,
         content: t("ES_COMMON_HOME"),
         show: true,
       },
