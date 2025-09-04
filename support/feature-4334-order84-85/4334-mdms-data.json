@@ -630,5 +630,79 @@
       "isActive": true
     },
     "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": 5,
+      "type": "ATTACHMENT",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": 4,
+      "type": "PROCLAMATION",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
+    },
+    "isActive": true
   }
 ]
