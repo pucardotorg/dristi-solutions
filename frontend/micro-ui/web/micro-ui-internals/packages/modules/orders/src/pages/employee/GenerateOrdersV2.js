@@ -575,9 +575,9 @@ const GenerateOrdersV2 = () => {
 
   const witnesses = useMemo(() => {
     return (
-      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
-        const fullName = getFormattedName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName, data?.data?.witnessDesignation, null);
-        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
+      caseDetails?.witnessDetails?.map((data) => {
+        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
+        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.uuid, partyType: "witness" };
       }) || []
     );
   }, [caseDetails]);
