@@ -848,6 +848,12 @@ const GenerateOrdersV2 = () => {
     }
   }, [currentOrder?.attendance]);
 
+  const hideNextHearingButton = useMemo(() => {
+    const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+    return index === -1 || validData?.length === 1;
+  }, [data, currentInProgressHearing]);
+
   const nextHearing = useCallback(
     (isStartHearing) => {
       if (data?.length === 0) {
@@ -2223,10 +2229,10 @@ const GenerateOrdersV2 = () => {
                       namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   }),
-                ...(currentScheduledHearing && {
-                  scheduledHearingNumber: currentScheduledHearing?.hearingId,
-                }),
               },
+              ...(currentScheduledHearing && {
+                scheduledHearingNumber: currentScheduledHearing?.hearingId,
+              }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
@@ -3177,16 +3183,15 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {currentInProgressHearing && (
+          {currentInProgressHearing && (isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
-              label={t(isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+              label={t("CS_CASE_NEXT_HEARING")}
+              children={<RightArrow />}
               isSuffix={true}
               onButtonClick={() => nextHearing(false)}
               style={{
                 boxShadow: "none",
-                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
               }}
             ></Button>
           )}
