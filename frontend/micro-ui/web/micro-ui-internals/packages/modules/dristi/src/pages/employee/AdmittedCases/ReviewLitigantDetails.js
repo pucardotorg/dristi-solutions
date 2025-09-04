@@ -76,6 +76,24 @@ const ReviewLitigantDetails = ({ path }) => {
     [caseData]
   );
 
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        applicationNumber: refApplicationNUmber,
+        tenantId,
+        courtId,
+      },
+      tenantId,
+    },
+    {},
+    refApplicationNUmber,
+    Boolean(refApplicationNUmber)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData?.applicationList]);
+
   const profileRequest = useMemo(() => {
     return caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
   }, [caseDetails?.additionalDetails?.profileRequests, referenceId]);
@@ -231,6 +249,7 @@ const ReviewLitigantDetails = ({ path }) => {
           orderDetails: {
             applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
             applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+            applicationCMPNumber: applicationDetails?.applicationCMPNumber,
           },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
