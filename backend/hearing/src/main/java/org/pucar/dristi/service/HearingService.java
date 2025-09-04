@@ -20,6 +20,7 @@ import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -758,4 +759,53 @@ public class HearingService {
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }
+
+    public List<Integer> getAvgNoOfDaysToHearingForEachCase() {
+        try {
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=IN_PROGRESS");
+
+            List<Hearing> hearings = hearingRepository.getHearingsWithMultipleHearings();
+
+            Map<String, List<Hearing>> hearingsGroupedByFilingNumber = hearings.stream()
+                    .filter(h -> h.getFilingNumber() != null && !h.getFilingNumber().isEmpty())
+                    .collect(Collectors.groupingBy(h -> h.getFilingNumber().get(0)));
+
+            List<Integer> averages = computeAverageDaysBetweenHearings(hearingsGroupedByFilingNumber);
+
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=SUCCESS");
+            return averages;
+
+        } catch (Exception e) {
+            log.error("operation=getAvgNoOfDaysToHearingForEachCase, status=FAILURE, message={}", e.getMessage());
+            throw new CustomException("Error occurred while getting avg no of days to hearing for each case: ", e.getMessage());
+        }
+    }
+
+    private static List<Integer> computeAverageDaysBetweenHearings(Map<String, List<Hearing>> groupedHearings) {
+        List<Integer> averageDaysList = new ArrayList<>();
+
+        for (List<Hearing> hearings : groupedHearings.values()) {
+            // Sort hearings chronologically by startTime
+            List<Hearing> sortedHearings = hearings.stream()
+                    .filter(h -> h.getStartTime() != null)
+                    .sorted(Comparator.comparingLong(Hearing::getStartTime))
+                    .toList();
+
+            List<Long> differences = new ArrayList<>();
+
+            for (int i = 0; i < sortedHearings.size() - 1; i++) {
+                long start = sortedHearings.get(i).getStartTime();
+                long nextStart = sortedHearings.get(i + 1).getStartTime();
+                differences.add(Duration.ofMillis(nextStart - start).toDays());
+            }
+
+            if (!differences.isEmpty()) {
+                double average = differences.stream().mapToLong(Long::longValue).average().orElse(0);
+                averageDaysList.add((int) average);
+            }
+        }
+
+        return averageDaysList;
+    }
+
 }

@@ -16,10 +16,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -131,5 +129,35 @@ public class CaseUtil {
             log.error("Error while editing case", e);
             throw new CustomException(ERROR_FROM_CASE, e.getMessage());
         }
+    }
+
+    public List<Party> getRespondentOrComplainant(CourtCase caseDetails, String type) {
+        return caseDetails.getLitigants()
+                .stream()
+                .filter(item -> item.getPartyType().contains(type))
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, List<POAHolder>> getLitigantPoaMapping(CourtCase cases) {
+        List<String> litigantIds = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).map(Party::getIndividualId).filter(Objects::nonNull).toList();
+        Map<String, List<POAHolder>> litigantPoaMapping = Optional.ofNullable(cases.getPoaHolders())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(POAHolder::getIsActive)
+                .flatMap(poa -> {
+                    // Create pairs of (litigantId, poa) for each litigant this POA represents
+                    return poa.getRepresentingLitigants().stream()
+                            .filter(party -> party.getIndividualId() != null)
+                            .map(party -> new AbstractMap.SimpleEntry<>(party.getIndividualId(), poa));
+                })
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,  // Group by litigant ID
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                ));
+
+        for (String id : litigantIds) {
+            litigantPoaMapping.putIfAbsent(id, new ArrayList<>()); // fill in missing ones with empty list
+        }
+        return litigantPoaMapping;
     }
 }

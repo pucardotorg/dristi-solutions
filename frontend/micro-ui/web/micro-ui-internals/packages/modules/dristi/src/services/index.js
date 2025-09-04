@@ -257,6 +257,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  addNewWitness: (data, params) =>
+    Request({
+      url: Urls.case.addNewWitness,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   getPendingTaskService: (data, params) =>
     Request({
       url: Urls.dristi.getPendingTaskFields,
@@ -274,9 +282,26 @@ export const DRISTIService = {
       params,
     });
   },
+  eSignOpenService: (url, data, params) => {
+    return Request({
+      url: url,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   getPaymentBreakup: (data, params) =>
     Request({
       url: Urls.dristi.paymentCalculator,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getTreasuryPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.dristi.getTreasuryPaymentBreakup,
       useCache: false,
       userService: false,
       data,
@@ -454,6 +479,14 @@ export const DRISTIService = {
   etreasuryCreateDemand: (data, params) =>
     Request({
       url: Urls.dristi.etreasuryCreateDemand,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getMarkAsEvidencePdf: (data, params) =>
+    Request({
+      url: Urls.dristi.getMarkAsEvidencePdf,
       useCache: false,
       userService: false,
       data,

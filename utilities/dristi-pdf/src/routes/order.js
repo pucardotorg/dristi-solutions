@@ -13,6 +13,7 @@ const {
 } = require("../utils/orderUtils");
 
 const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
+const {logger} = require("../logger");
 
 router.post(
   "",
@@ -64,10 +65,12 @@ router.post(
           order?.additionalDetails?.applicationStatus
         );
         const orderType = order?.orderType;
+        logger.info("orderType", orderType);
         const orderPreviewKey =
           OrderPreviewOrderTypeMap[
             orderPDFMap?.[orderType]?.[applicationStatus] || orderType
           ];
+        logger.info("orderPreviewKey", orderPreviewKey);
         await processOrder(
           req,
           res,

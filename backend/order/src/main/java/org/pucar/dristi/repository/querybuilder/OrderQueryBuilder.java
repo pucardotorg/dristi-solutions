@@ -110,6 +110,7 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getOrderCategory(), query, firstCriteria, "orders.orderCategory = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
              addCriteria(criteria.getOrderNumber() == null? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             return query.toString();

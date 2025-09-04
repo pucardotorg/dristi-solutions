@@ -6,9 +6,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.inbox.util.ErrorConstants;
 import org.egov.inbox.util.MDMSUtil;
-import org.egov.inbox.web.model.InboxRequest;
-import org.egov.inbox.web.model.InboxSortConfiguration;
-import org.egov.inbox.web.model.SortOrder;
+import org.egov.inbox.web.model.*;
 import org.egov.inbox.web.model.V2.InboxQueryConfiguration;
 import org.egov.inbox.web.model.V2.SearchParam;
 import org.egov.inbox.web.model.V2.SearchRequest;
@@ -25,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -58,7 +57,20 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder());
             }else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))){
                 addIndexSort(baseEsQuery, configuration.getIndex());
-            }else {
+            }else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
+                List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
+
+                for (OrderBy orderBy : sortOrders) {
+                    String sortField = orderBy.getCode();
+                    String sortDirection = orderBy.getOrder().toString(); // Expected to be "ASC" or "DESC"
+
+                    SortParam.Order orderEnum = SortParam.Order.fromValue(sortDirection);
+                    if (orderEnum != null && sortField != null && !sortField.isEmpty()) {
+                        addSortClauseToBaseQuery(baseEsQuery, sortField, orderEnum);
+                    }
+                }
+            }
+            else {
                 addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
             }
 
@@ -405,12 +417,19 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
         SearchParam.Operator operator = nameToOperatorMap.get(key);
         if (operator == null || operator.equals(SearchParam.Operator.EQUAL)) {
+            Object value = params.get(key);
+
+            // Handle null or empty values
+            if (isNullOrEmpty(value)) {
+                return createNotExistsQuery(key, nameToPathMap);
+            }
+
             // Add terms clause in case the search criteria has a list of values
-            if (params.get(key) instanceof List) {
+            if (value instanceof List) {
                 Map<String, Object> termsClause = new HashMap<>();
                 termsClause.put("terms", new HashMap<>());
                 Map<String, Object> innerTermsClause = (Map<String, Object>) termsClause.get("terms");
-                innerTermsClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
+                innerTermsClause.put(addDataPathToSearchParamKey(key, nameToPathMap), value);
                 return termsClause;
             }
             // Add term clause in case the search criteria has a single value
@@ -418,7 +437,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 Map<String, Object> termClause = new HashMap<>();
                 termClause.put("term", new HashMap<>());
                 Map<String, Object> innerTermClause = (Map<String, Object>) termClause.get("term");
-                innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
+                innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), value);
                 return termClause;
             }
         } else if (operator.equals(SearchParam.Operator.LTE) || operator.equals(SearchParam.Operator.GTE)) {
@@ -436,7 +455,36 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             return rangeClause;
         } else
             throw new CustomException(ErrorConstants.INVALID_OPERATOR_DATA, " Unsupported Operator : " + operator);
+    }
 
+    // Helper method to check if value is null or empty
+    private boolean isNullOrEmpty(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof List) {
+            return ((List<?>) value).isEmpty();
+        }
+        return false;
+    }
+
+    // Helper method to create not exists query
+    private Map<String, Object> createNotExistsQuery(String key, Map<String, String> nameToPathMap) {
+        Map<String, Object> boolClause = new HashMap<>();
+        boolClause.put("bool", new HashMap<>());
+        Map<String, Object> boolInner = (Map<String, Object>) boolClause.get("bool");
+
+        Map<String, Object> existsClause = new HashMap<>();
+        Map<String, Object> existsInner = new HashMap<>();
+        String path = addDataPathToSearchParamKey(key, nameToPathMap);
+        if (path.endsWith(".keyword")) path = path.substring(0, path.length() - ".keyword".length());
+        existsInner.put("field", path);
+        existsClause.put("exists", existsInner);
+
+        List<Object> mustNot = new ArrayList<>();
+        mustNot.add(existsClause);
+        boolInner.put("must_not", mustNot);
+        return boolClause;
     }
 
     private List<Map<String, Object>> prepareMustClauseWildCardChild(Map<String, Object> params, String key,

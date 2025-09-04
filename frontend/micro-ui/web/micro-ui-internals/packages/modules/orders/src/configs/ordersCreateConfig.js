@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -2897,6 +2897,7 @@ export const configsIssueSummons = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: true,
             },
             {
               name: "select deleivery channels",
@@ -3047,6 +3048,7 @@ export const configsIssueNotice = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: false,
             },
             {
               name: "select deleivery channels",
@@ -4431,6 +4433,7 @@ export const configsJudgement = [
         key: "sentence",
         schemaKeyPath: "caseDetails.sentence",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4511,25 +4514,20 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        schemaKeyPath: "orderDetails.refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
         label: "BAIL_PARTY",
-        disable: true,
+        disable: false,
         schemaKeyPath: "orderDetails.bailParty",
         populators: {
+          required: true,
+          isMandatory: true,
           name: "bailParty",
+          optionsKey: "name",
           styles: { maxWidth: "100%" },
           error: "required ",
+          options: [],
         },
       },
       {
@@ -4602,28 +4600,6 @@ export const configsIssueBailAcceptance = [
               placeholder: "TYPE_HERE_PLACEHOLDER",
               isOptional: true,
               type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        key: "submissionDocuments",
-        component: "SelectMultiUpload",
-        disable: true,
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "uploadedDocs",
-              isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT_ATTACHED",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: "8px",
-              },
             },
           ],
         },
@@ -5234,6 +5210,222 @@ export const configsApproveRejectLitigantDetailsChange = [
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsCreateOrderProclamation = [
+  {
+    defaultValues: {
+      orderType: {
+        id: 43,
+        type: "PROCLAMATION",
+        isactive: true,
+        code: "PROCLAMATION",
+      },
+    },
+    body: [
+      {
+        isMandatory: true,
+        key: "Order Type",
+        type: "dropdown",
+        label: "ORDER_TYPE",
+        disable: true,
+        populators: {
+          name: "orderType",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          mdmsConfig: {
+            masterName: "OrderType",
+            moduleName: "Order",
+            localePrefix: "ORDER_TYPE",
+          },
+        },
+      },
+      {
+        label: "DATE_OF_HEARING",
+        isMandatory: true,
+        key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        type: "date",
+        disable: true,
+        populators: {
+          name: "dateOfHearing",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "WarrantOrderComponent",
+        key: "proclamationFor",
+        schemaKeyPath: "orderDetails.respondentName",
+        transformer: "summonsOrderPartyName",
+        label: "PROCLAMATION_FOR_PARTY",
+        populators: {
+          inputs: [
+            {
+              name: "select party",
+              type: "dropdown",
+            },
+            {
+              name: "select deleivery channels",
+              type: "checkbox",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "proclamationText",
+        // isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "proclamationText",
+              isOptional: true,
+              textAreaSubHeader: "Comments",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsCreateOrderAttachment = [
+  {
+    defaultValues: {
+      orderType: {
+        id: 43,
+        type: "ATTACHMENT",
+        isactive: true,
+        code: "ATTACHMENT",
+      },
+    },
+    body: [
+      {
+        isMandatory: true,
+        key: "Order Type",
+        type: "dropdown",
+        label: "ORDER_TYPE",
+        disable: true,
+        populators: {
+          name: "orderType",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          mdmsConfig: {
+            masterName: "OrderType",
+            moduleName: "Order",
+            localePrefix: "ORDER_TYPE",
+          },
+        },
+      },
+      {
+        label: "DATE_OF_HEARING",
+        isMandatory: true,
+        key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        type: "date",
+        disable: true,
+        populators: {
+          name: "dateOfHearing",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "WarrantOrderComponent",
+        key: "attachmentFor",
+        schemaKeyPath: "orderDetails.respondentName",
+        transformer: "summonsOrderPartyName",
+        label: "ATTACHMENT_FOR_PARTY",
+        populators: {
+          inputs: [
+            {
+              name: "select party",
+              type: "dropdown",
+            },
+            {
+              name: "select deleivery channels",
+              type: "checkbox",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "chargeDays",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "chargeDays",
+              textAreaSubHeader: "Number of Days for Answering Charge",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "district",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "district",
+              textAreaSubHeader: "Name of Accused District",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "village",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "village",
+              textAreaSubHeader: "Name of Accused Village",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "attachmentText",
+        // isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "attachmentText",
+              isOptional: true,
+              textAreaSubHeader: "Comments",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
             },
           ],
         },

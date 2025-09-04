@@ -20,6 +20,8 @@ const orderAcceptCheckout = require("../orderHandlers/orderAcceptCheckout");
 const orderRejectCheckout = require("../orderHandlers/orderRejectCheckout");
 const orderNotice = require("../orderHandlers/orderNotice");
 const orderWarrant = require("../orderHandlers/orderWarrant");
+const orderProclamation = require("../orderHandlers/orderProclamation");
+const orderAttachment = require("../orderHandlers/orderAttachment");
 const orderWithdrawalAccept = require("../orderHandlers/orderWithdrawalAccept");
 const orderWithdrawalReject = require("../orderHandlers/orderWithdrawalReject");
 const orderSection202Crpc = require("../orderHandlers/orderSection202crpc");
@@ -55,6 +57,8 @@ const OrderPreviewOrderTypeMap = {
   BAIL_APPROVED: "order-bail-acceptance",
   BAIL_REJECT: "order-bail-rejection",
   WARRANT: "order-warrant",
+  PROCLAMATION: "order-proclamation",
+  ATTACHMENT: "order-attachment",
   WITHDRAWAL_ACCEPT: "order-case-withdrawal-acceptance",
   WITHDRAWAL_REJECT: "order-case-withdrawal-rejected",
   APPROVE_VOLUNTARY_SUBMISSIONS: "order-accept-voluntary",
@@ -303,6 +307,24 @@ async function processOrder(
         order,
         compositeOrder,
         courtCaseJudgeDetails
+      );
+    case "order-proclamation":
+      return await orderProclamation(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
+    case "order-attachment":
+      return await orderAttachment(
+          req,
+          res,
+          qrCode,
+          order,
+          compositeOrder,
+          courtCaseJudgeDetails
       );
     case "order-case-withdrawal-acceptance":
       return await orderWithdrawalAccept(

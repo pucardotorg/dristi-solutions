@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -128,10 +129,12 @@ const applicationBailBond = async (
               messagesMap?.[item?.documentType] || item?.documentType,
           }))
         : [{ documentType: "" }];
-    const additionalComments =
-      application?.applicationDetails?.additionalInformation || "";
-    const reasonForApplication =
-      application?.applicationDetails?.reasonForApplicationOfBail || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalInformation || ""
+    );
+    const reasonForApplication = htmlToFormattedText(
+      application?.applicationDetails?.reasonForApplicationOfBail || ""
+    );
     const prayer = application?.applicationDetails?.prayer;
     // Handle QR code if enabled
     let base64Url = "";
