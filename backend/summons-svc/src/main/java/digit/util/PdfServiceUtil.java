@@ -94,7 +94,36 @@ public class PdfServiceUtil {
                 }
             }
 
-            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT)) {
+            if (PROCLAMATION.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                String executorName = getExecutorName(taskRequest);
+                var proclamationDetails = taskRequest.getTask().getTaskDetails().getProclamationDetails();
+                summonsPdf.setExecutorName(executorName);
+
+                if(GENERIC.equals(proclamationDetails.getTemplateType())){
+                    summonsPdf.setProclamationText(proclamationDetails.getProclamationText());
+                    summonsPdf.setPartyType(proclamationDetails.getPartyType());
+                }
+            }
+
+            if (ATTACHMENT.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                String executorName = getExecutorName(taskRequest);
+                var attachmentDetails = taskRequest.getTask().getTaskDetails().getAttachmentDetails();
+                summonsPdf.setExecutorName(executorName);
+
+                if(GENERIC.equals(attachmentDetails.getTemplateType())){
+                    summonsPdf.setAttachmentText(attachmentDetails.getAttachmentText());
+                    summonsPdf.setPartyType(attachmentDetails.getPartyType());
+                    summonsPdf.setVillage(attachmentDetails.getVillage());
+                    summonsPdf.setDistrict(attachmentDetails.getDistrict());
+                    summonsPdf.setChargeDays(attachmentDetails.getChargeDays());
+                }
+            }
+
+            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(PROCLAMATION) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(ATTACHMENT)) {
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), taskRequest.getTask());
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                 String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
@@ -178,6 +207,15 @@ public class PdfServiceUtil {
             issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
             docSubType = task.getTaskDetails().getWarrantDetails().getDocSubType();
         }
+        else if(PROCLAMATION.equals(task.getTaskType())){
+            issueDate = task.getTaskDetails().getProclamationDetails().getIssueDate();
+            docSubType = task.getTaskDetails().getProclamationDetails().getDocSubType();
+        }
+        else if(ATTACHMENT.equals(task.getTaskType())){
+            issueDate = task.getTaskDetails().getAttachmentDetails().getIssueDate();
+            docSubType = task.getTaskDetails().getAttachmentDetails().getDocSubType();
+        }
+
         String issueDateString = Optional.ofNullable(issueDate)
                 .map(this::formatDateFromMillis)
                 .orElse("");

@@ -49,7 +49,7 @@ export const SummonsTabsConfig = {
         requestBody: {
           apiOperation: "SEARCH",
           criteria: {
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT"], // have to do changes
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"], // have to do changes
           },
         },
         masterName: "commonUiConfig",

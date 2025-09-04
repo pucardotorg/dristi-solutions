@@ -87,7 +87,9 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equals(config.getTaskGenericBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                if (paymentDetail.getBusinessService().equals(config.getTaskGenericBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) ||
+                        paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName())
+                        || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskProclamationBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskAttachmentBusinessServiceName())) {
                     updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
@@ -199,12 +201,38 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case WARRANT -> {
+                case WARRANT-> {
                     WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+                    task.setStatus(status);
+                    updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
+                case PROCLAMATION -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
+                    task.setStatus(status);
+                    updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
+                case ATTACHMENT -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
@@ -446,7 +474,7 @@ public class PaymentUpdateService {
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
-                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
             createPendingTaskForEnvelope(task, requestInfo);
         }
     }
@@ -575,6 +603,8 @@ public class PaymentUpdateService {
         return switch (taskType) {
             case SUMMON -> "task-summons";
             case WARRANT -> "task-warrant";
+            case PROCLAMATION -> "task-proclamation";
+            case ATTACHMENT -> "task-attachment";
             case NOTICE -> "task-notice";
             default -> null;
         };

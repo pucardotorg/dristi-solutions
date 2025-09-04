@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import {  Header,Loader } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 //TODO: Some dropdown data is static, pls update these configs once data comes from previous flows
-import { configsCreateOrderSchedule,configsCreateOrderWarrant,configsCreateOrderSummon } from "../../configs/ordersCreateConfig";
+import { configsCreateOrderSchedule,configsCreateOrderWarrant,configsCreateOrderSummon, configsCreateOrderProclamation, configsCreateOrderAttachment } from "../../configs/ordersCreateConfig";
 import { transformCreateData } from "../../utils/createUtils";
 
 const fieldStyle={ marginRight: 0 };
@@ -45,6 +45,12 @@ const OrdersCreate = () => {
     switch (OrderType) {
       case "WARRANT":
         setConfigs(()=> configsCreateOrderWarrant)
+        break;
+      case "PROCLAMATION":
+        setConfigs(()=> configsCreateOrderProclamation)
+        break;
+      case "ATTACHMENT":
+        setConfigs(()=> configsCreateOrderAttachment)
         break;
       case "SCHEDULE":
         setConfigs(()=> configsCreateOrderSchedule)

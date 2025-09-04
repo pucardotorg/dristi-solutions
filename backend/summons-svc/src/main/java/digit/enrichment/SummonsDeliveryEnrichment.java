@@ -35,10 +35,11 @@ public class SummonsDeliveryEnrichment {
         SummonsDetails summonDetails = taskDetails.getSummonDetails();
         NoticeDetails noticeDetails = taskDetails.getNoticeDetails();
         WarrantDetails warrantDetails = taskDetails.getWarrantDetails();
+        ProclamationDetails proclamationDetails = taskDetails.getProclamationDetails();
 
-        String docType;
-        String docSubType;
-        String partyType;
+        String docType = null;
+        String docSubType = null;
+        String partyType = null;
 
         switch (task.getTaskType()) {
             case NOTICE:
@@ -51,7 +52,7 @@ public class SummonsDeliveryEnrichment {
                 docSubType = warrantDetails.getDocSubType();
                 partyType = warrantDetails.getPartyType();
                 break;
-            default:
+            case SUMMON:
                 docType = summonDetails.getDocType();
                 docSubType = summonDetails.getDocSubType();
                 partyType = summonDetails.getPartyType();

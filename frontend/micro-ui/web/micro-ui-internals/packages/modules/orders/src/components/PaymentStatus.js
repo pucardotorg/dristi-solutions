@@ -37,10 +37,15 @@ const PaymentStatus = ({ path }) => {
         message: t("CS_PAYMENT_FAILED"),
       };
 
-  const statusMessage = `${orderType === "SUMMONS" ? t("THE_SUMMON") : orderType === "NOTICE" ? t("THE_NOTICE") : t("THE_WARRANT")} ${t(
-    "WOULD_BE_SENT_TO_PARTY"
-  )}`;
+  const orderTypeMap = {
+    SUMMONS: "THE_SUMMON",
+    NOTICE: "THE_NOTICE",
+    WARRANT: "THE_WARRANT",
+    PROCLAMATION: "THE_PROCLAMATION",
+    ATTACHMENT: "THE_ATTACHMENT",
+  };
 
+  const statusMessage = `${t(orderTypeMap[orderType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>

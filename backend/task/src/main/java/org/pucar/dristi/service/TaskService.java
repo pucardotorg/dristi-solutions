@@ -90,7 +90,9 @@ public class TaskService {
             workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
-             || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
+                    || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
+                    || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")
+                    || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
                 updateCase(body);
             }
             producer.push(config.getTaskCreateTopic(), body);
@@ -322,6 +324,10 @@ public class TaskService {
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
             case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+            case PROCLAMATION-> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
+            case ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
             case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
@@ -382,8 +388,8 @@ public class TaskService {
 
     public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
         Task task = taskRequest.getTask();
-        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
-                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT) || task.getTaskType().equalsIgnoreCase(PROCLAMATION)
+                || task.getTaskType().equalsIgnoreCase(ATTACHMENT) || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
             closeEnvelopePendingTask(taskRequest);
         }
     }
@@ -549,16 +555,17 @@ public class TaskService {
         if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
             return SUMMONS_NOT_DELIVERED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
+        boolean b = WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType);
+        if (b && PENDING_PAYMENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && WARRANT_SENT.equalsIgnoreCase(status)) {
+        if (b && WARRANT_SENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUE_SUCCESS;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && EXECUTED.equalsIgnoreCase(status)) {
+        if (b && EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_DELIVERED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && NOT_EXECUTED.equalsIgnoreCase(status)) {
+        if (b && NOT_EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_NOT_DELIVERED;
         }
         return null;

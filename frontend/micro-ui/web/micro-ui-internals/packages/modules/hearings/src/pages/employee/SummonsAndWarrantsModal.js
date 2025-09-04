@@ -250,7 +250,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return order?.compositeItems
           ?.filter(
             (item) =>
-              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(item?.orderType)) &&
+              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
               order?.hearingNumber === hearingId
           )
           ?.map((item) => ({
@@ -261,7 +261,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             itemId: item?.id,
           }));
       } else {
-        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(order?.orderType)) &&
+        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
           order?.hearingNumber === hearingId
           ? [order]
           : [];
@@ -398,7 +398,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = ["SUMMONS", "WARRANT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");

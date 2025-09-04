@@ -40,6 +40,8 @@ import {
   configsDismissCase,
   configsApproveRejectLitigantDetailsChange,
   replaceAdvocateConfig,
+  configsCreateOrderProclamation,
+  configsCreateOrderAttachment,
 } from "../../configs/ordersCreateConfig";
 import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
@@ -81,7 +83,7 @@ export const compositeOrderAllowedTypes = [
   },
   {
     key: "no_restriction",
-    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL"],
+    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL","PROCLAMATION", "ATTACHMENT"],
     unAllowedOrderTypes: [],
   },
   {
@@ -118,6 +120,8 @@ const configKeys = {
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
   WARRANT: configsCreateOrderWarrant,
+  PROCLAMATION: configsCreateOrderProclamation,
+  ATTACHMENT: configsCreateOrderAttachment,
   WITHDRAWAL_ACCEPT: configsCaseWithdrawalAccept,
   WITHDRAWAL_REJECT: configsCaseWithdrawalReject,
   OTHERS: configsOthers,
@@ -200,6 +204,8 @@ const stateSlaMap = {
   NOTICE: 3,
   BAIL: 3,
   WARRANT: 3,
+  PROCLAMATION: 3,
+  ATTACHMENT: 3,
   WITHDRAWAL_ACCEPT: 3,
   WITHDRAWAL_REJECT: 3,
   OTHERS: 3,
@@ -446,10 +452,10 @@ const GenerateOrders = () => {
 
       if (isDelayApplicationPending) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -1882,7 +1888,7 @@ const GenerateOrders = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (orderType === "WARRANT") {
+      if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -2101,6 +2107,38 @@ const GenerateOrders = () => {
       }
     }
 
+    if (orderType && ["ATTACHMENT"].includes(orderType)) {
+      if (formData?.village && Object.keys(formState?.errors).includes("village")) {
+        clearFormErrors?.current?.[index]?.("village");
+      } else if (
+        formState?.submitCount &&
+        !formData?.village &&
+        !Object.keys(formState?.errors).includes("village")
+      ) {
+        setFormErrors?.current?.[index]?.("village", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.district && Object.keys(formState?.errors).includes("district")) {
+        clearFormErrors?.current?.[index]?.("district");
+      } else if (
+        formState?.submitCount &&
+        !formData?.district &&
+        !Object.keys(formState?.errors).includes("district")
+      ) {
+        setFormErrors?.current?.[index]?.("district", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.chargeDays && Object.keys(formState?.errors).includes("chargeDays")) {
+        clearFormErrors?.current?.[index]?.("chargeDays");
+      } else if (
+        formState?.submitCount &&
+        !formData?.chargeDays &&
+        !Object.keys(formState?.errors).includes("chargeDays")
+      ) {
+        setFormErrors?.current?.[index]?.("chargeDays", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+    }
+
     if (
       formData?.orderType?.code &&
       !isEqual(
@@ -2182,7 +2220,7 @@ const GenerateOrders = () => {
         ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
         ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
       ];
-    } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
+    } else if (["WARRANT", "SUMMONS", "NOTICE", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName?.name
         ? [orderSchema?.orderDetails?.respondentName?.name]
         : orderSchema?.orderDetails?.respondentName
@@ -2361,6 +2399,10 @@ const GenerateOrders = () => {
         return "Bail";
       case "WARRANT":
         return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
+      case "PROCLAMATION":
+        return `Issue Proclamation to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
+      case "ATTACHMENT":
+        return `Issue Attachment to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "WITHDRAWAL_ACCEPT":
         return "The application to withdraw the case has been accepted. Case closed";
       case "WITHDRAWAL_REJECT":
@@ -2468,7 +2510,7 @@ const GenerateOrders = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(item?.order?.orderType)) {
+            if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -2487,7 +2529,7 @@ const GenerateOrders = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(order?.orderType)) {
+        } else if (["NOTICE", "SUMMONS", "WARRANT","PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -2834,13 +2876,15 @@ const GenerateOrders = () => {
       SUMMONS: "SummonsOrder",
       WARRANT: "warrantFor",
       NOTICE: "noticeOrder",
+      PROCLAMATION: "proclamationFor",
+      ATTACHMENT: "attachmentFor",
     };
     const formDataKey = formDataKeyMap[orderType];
     return order?.additionalDetails?.formdata?.[formDataKey];
   };
 
   const getOrderData = (orderType, orderFormData) => {
-    return ["SUMMONS", "NOTICE", "WARRANT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+    return ["SUMMONS", "NOTICE", "WARRANT","PROCLAMATION", "ATTACHMENT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
   };
 
   const getCourtFee = async (channelId, receiverPincode, taskType) => {
@@ -2882,9 +2926,16 @@ const GenerateOrders = () => {
     const orderFormData = getFormData(orderType, orderData);
     const orderFormValue = orderDetails?.order?.additionalDetails?.formdata;
     const respondentNameData = getOrderData(orderType, orderFormData);
+    const formDataKeyMap = {
+      NOTICE: "noticeOrder",
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      PROCLAMATION: "proclamationFor",
+      ATTACHMENT: "attachmentFor",
+      // Add more types here easily in future
+    };
     const selectedChannel =
-      orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : orderType === "SUMMONS" ? "SummonsOrder" : "warrantFor"]
-        ?.selectedChannels;
+      orderData?.additionalDetails?.formdata?.[formDataKeyMap[orderType]]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
@@ -3048,7 +3099,106 @@ const GenerateOrders = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType),
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType
+            ),
+            feesStatus: "",
+          },
+        };
+        break;
+      case "PROCLAMATION":
+        payload = {
+          proclamationDetails: {
+            issueDate: orderData?.auditDetails?.lastModifiedTime,
+            caseFilingDate: caseDetails?.filingDate,
+            docSubType: "Proclamation requiring the appearance of a person accused",
+            templateType: "GENERIC",
+            proclamationText: orderFormValue?.proclamationText?.proclamationText || "",
+            partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
+          },
+          respondentDetails: {
+            name: respondentName,
+            address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
+            phone: respondentPhoneNo?.[0] || "",
+            email: respondentEmail?.[0] || "",
+            age: "",
+            gender: "",
+            ...(ownerType && { ownerType: ownerType }),
+          },
+          caseDetails: {
+            caseTitle: caseDetails?.caseTitle,
+            year: new Date(caseDetails).getFullYear(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
+            judgeName: judgeName,
+            courtName: courtDetails?.name,
+            courtAddress: courtDetails?.address,
+            courtPhone: courtDetails?.phone,
+            courtId: caseDetails?.courtId,
+          },
+          deliveryChannels: {
+            channelName: "Police",
+            name: "",
+            address: "",
+            phone: "",
+            email: "",
+            status: "",
+            statusChangeDate: "",
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType
+            ),
+            feesStatus: "",
+          },
+        };
+        break;
+      case "ATTACHMENT":
+        payload = {
+          attachmentDetails: {
+            issueDate: orderData?.auditDetails?.lastModifiedTime,
+            caseFilingDate: caseDetails?.filingDate,
+            docSubType: "Attachment requiring the apperance of a person accused",
+            templateType: "GENERIC",
+            attachmentText: orderFormValue?.attachmentText?.attachmentText || "",
+            district: orderFormValue?.district?.district || "",
+            village: orderFormValue?.village?.village || "",
+            chargeDays: orderFormValue?.chargeDays?.chargeDays || "",
+            partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
+          },
+          respondentDetails: {
+            name: respondentName,
+            address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
+            phone: respondentPhoneNo?.[0] || "",
+            email: respondentEmail?.[0] || "",
+            age: "",
+            gender: "",
+            ...(ownerType && { ownerType: ownerType }),
+          },
+          caseDetails: {
+            caseTitle: caseDetails?.caseTitle,
+            year: new Date(caseDetails).getFullYear(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
+            judgeName: judgeName,
+            courtName: courtDetails?.name,
+            courtAddress: courtDetails?.address,
+            courtPhone: courtDetails?.phone,
+            courtId: caseDetails?.courtId,
+          },
+          deliveryChannels: {
+            channelName: "Police",
+            name: "",
+            address: "",
+            phone: "",
+            email: "",
+            status: "",
+            statusChangeDate: "",
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType
+            ),
             feesStatus: "",
           },
         };
@@ -3088,7 +3238,11 @@ const GenerateOrders = () => {
             ? item?.value?.pincode
             : clonedPayload?.respondentDetails?.address?.pincode;
 
-          let courtFees = await getCourtFee(item?.code, pincode, orderType);
+          let courtFees = await getCourtFee(
+            item?.code,
+            pincode,
+            orderType
+          );
 
           if ("deliveryChannels" in clonedPayload) {
             clonedPayload.deliveryChannels = {
@@ -3099,7 +3253,7 @@ const GenerateOrders = () => {
             };
 
             let address = {};
-            if (orderType === "WARRANT" || item?.type === "Via Police") {
+            if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" || item?.type === "Via Police") {
               address = {
                 ...item?.value,
                 locality: item?.value?.locality || "",
@@ -3782,6 +3936,46 @@ const GenerateOrders = () => {
 
           if (
             formData?.warrantFor?.selectedChannels?.some(
+              (channel) =>
+                (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+            )
+          ) {
+            setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+            hasError = true;
+            break;
+          }
+        }
+
+        if (orderType === "PROCLAMATION") {
+          if (formData?.proclamationFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+            hasError = true;
+            break;
+          }
+
+          if (
+            formData?.proclamationFor?.selectedChannels?.some(
+              (channel) =>
+                (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+            )
+          ) {
+            setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+            hasError = true;
+            break;
+          }
+        }
+
+        if (orderType === "ATTACHMENT") {
+          if (formData?.attachmentFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+            hasError = true;
+            break;
+          }
+
+          if (
+            formData?.attachmentFor?.selectedChannels?.some(
               (channel) =>
                 (channel?.code === "RPAD" || channel?.code === "POLICE") &&
                 (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)

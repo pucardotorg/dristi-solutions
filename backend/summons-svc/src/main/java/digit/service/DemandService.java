@@ -423,6 +423,8 @@ public class DemandService {
         return switch (taskType.toUpperCase()) {
             case SUMMON -> config.getTaskSummonBusinessService();
             case WARRANT -> config.getTaskWarrantBusinessService();
+            case PROCLAMATION -> config.getTaskProclamationBusinessService();
+            case ATTACHMENT -> config.getTaskAttachmentBusinessService();
             case NOTICE -> config.getTaskNoticeBusinessService();
             default -> throw new IllegalArgumentException("Unsupported task type: " + taskType);
         };
