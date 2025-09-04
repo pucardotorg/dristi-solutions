@@ -71,9 +71,11 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         // case search and update
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
 
         // add validation here
         CourtCase courtCase = cases.get(0);
