@@ -383,8 +383,8 @@ public class CauseListService {
                           return HearingListPriority.builder()
                                  .slotName(entry.getKey())
                                  .slotList(slotList)
-                                 .slotStartTime(slotList.get(0).getSlotStartTime())
-                                 .slotEndTime(slotList.get(0).getSlotEndTime())
+                                 .slotStartTime(SLOT_START_TIME)
+                                 .slotEndTime(SLOT_END_TIME)
                                  .build();
                    })
                    .toList();
