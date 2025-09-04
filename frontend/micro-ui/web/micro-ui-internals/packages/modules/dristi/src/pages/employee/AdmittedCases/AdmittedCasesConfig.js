@@ -1017,6 +1017,11 @@ export const TabSearchconfigNew = {
                 jsonPath: "businessObject.orderNotification.date",
                 additionalCustomization: true,
               },
+              {
+                label: "CS_ACTIONS",
+                jsonPath: "businessObject.orderNotification",
+                additionalCustomization: true,
+              },
             ],
 
             enableColumnSort: true,

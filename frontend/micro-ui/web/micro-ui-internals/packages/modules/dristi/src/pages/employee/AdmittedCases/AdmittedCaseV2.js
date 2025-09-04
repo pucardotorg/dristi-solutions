@@ -244,6 +244,8 @@ const AdmittedCaseV2 = () => {
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
+  const EditSendBackModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EditSendBackModal") || {}, []);
+  const [loader, setLoader] = useState(false);
   const NoticeProcessModal = useMemo(
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
@@ -259,6 +261,7 @@ const AdmittedCaseV2 = () => {
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
+  const [deleteOrder, setDeleteOrder] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -864,6 +867,30 @@ const AdmittedCaseV2 = () => {
       }
     };
 
+    const orderDeleteFunc = async (history, column, row, item) => {
+      try {
+        const orderResponse = await ordersService.searchOrder(
+          {
+            criteria: {
+              tenantId: tenantId,
+              filingNumber: filingNumber,
+              orderNumber: row?.businessObject?.orderNotification?.id,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
+          },
+          { tenantId }
+        );
+        row = orderResponse?.list?.[0];
+        setDeleteOrder(row);
+      } catch (error) {
+        console.error(error);
+        showToast({
+          isError: true,
+          message: t("SOMETHING_WENT_WRONG"),
+        });
+      }
+    };
+
     const takeActionFunc = (hearingData) => {
       setCurrentHearing(hearingData);
       setShowHearingTranscriptModal(true);
@@ -990,6 +1017,11 @@ const AdmittedCaseV2 = () => {
                       ? {
                           ...column,
                           clickFunc: orderSetFunc,
+                        }
+                      : column.label === "CS_ACTIONS"
+                      ? {
+                          ...column,
+                          clickFunc: orderDeleteFunc,
                         }
                       : column;
                   }),
@@ -3311,6 +3343,49 @@ const AdmittedCaseV2 = () => {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    try {
+      setLoader(true);
+      await ordersService?.updateOrder(
+        {
+          order: {
+            ...deleteOrder,
+            workflow: { ...deleteOrder?.workflow, action: OrderWorkflowAction.DELETE, documents: [{}] },
+          },
+        },
+        { tenantId }
+      );
+      await ordersService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: "Completed",
+          entityType: "order-default",
+          referenceId: `MANUAL_${deleteOrder?.orderNumber}`,
+          status: "DRAFT_IN_PROGRESS",
+          assignedTo: [],
+          assignedRole: [],
+          cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: true,
+          stateSla: null,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
+      setDeleteOrder(null);
+    } catch (error) {
+      console.error(error);
+      showToast({
+        isError: true,
+        message: t("SOMETHING_WENT_WRONG"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -4199,6 +4274,20 @@ const AdmittedCaseV2 = () => {
             setShowAddWitnessModal(false);
           }}
         ></AddWitnessModal>
+      )}
+      {deleteOrder !== null && (
+        <EditSendBackModal
+          t={t}
+          handleCancel={() => !loader && setDeleteOrder(null)}
+          handleSubmit={() => handleDeleteOrder()}
+          headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          saveLabel={"GENERATE_ORDER_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={"ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER"}
+          className={"edit-send-back-modal"}
+          submitButtonStyle={{ backgroundColor: "#C7222A" }}
+          loader={loader}
+        />
       )}
     </div>
   );

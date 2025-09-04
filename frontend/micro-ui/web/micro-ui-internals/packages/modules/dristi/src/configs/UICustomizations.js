@@ -639,9 +639,25 @@ export const UICustomizations = {
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          if (value?.status !== OrderWorkflowState.DRAFT_IN_PROGRESS || value?.entityType === "Notification") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="orderInboxConfig" />;
         default:
           break;
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_order_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   litigantInboxConfig: {
