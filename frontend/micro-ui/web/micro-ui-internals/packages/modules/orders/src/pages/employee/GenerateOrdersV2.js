@@ -2199,7 +2199,15 @@ const GenerateOrdersV2 = () => {
         },
         allParties
       );
-      orderSchema = { ...orderSchema, orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties } };
+      let actionResponse = null;
+      if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+        const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
+        actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
+      }
+      orderSchema = {
+        ...orderSchema,
+        orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties, ...(actionResponse && { action: actionResponse }) },
+      };
       return await ordersService
         .updateOrder(
           {
