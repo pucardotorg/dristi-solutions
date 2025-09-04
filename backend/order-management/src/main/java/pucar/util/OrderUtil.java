@@ -180,9 +180,7 @@ public class OrderUtil {
                     List<String> roles = entry.getValue();
                     List<String> rolesLocalized = new ArrayList<>();
                     if (roles != null) {
-                        {
-                            roles.forEach(role -> rolesLocalized.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
-                        }
+                        roles.forEach(role -> rolesLocalized.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
                         String line = status + ": " + String.join(", ", rolesLocalized);
                         sb.append(line).append("\n");
                     }
