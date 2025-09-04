@@ -122,5 +122,7 @@ public class ServiceConstants {
     public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
 
     public static final String EXPIRED = "EXPIRED";
+    public static final String SLOT_START_TIME = "11:00:00";
+    public static final String SLOT_END_TIME = "17:00:00";
 
 }
