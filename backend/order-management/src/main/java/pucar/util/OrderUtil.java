@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
+import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -169,7 +170,9 @@ public class OrderUtil {
 
             // Item Text
             if (order.getItemText() != null) {
-                sb.append(order.getItemText()).append("\n");
+                String html = order.getItemText();
+                String plainText = Jsoup.parse(html).text();
+                sb.append(plainText).append("\n");
             }
 
             // Purpose of Next Hearing
