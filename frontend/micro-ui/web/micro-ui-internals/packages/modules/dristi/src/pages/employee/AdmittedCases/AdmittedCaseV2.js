@@ -2524,6 +2524,12 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  const hideNextHearingButton = useMemo(() => {
+    const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+    return index === -1 || validData?.length === 1;
+  }, [data, currentInProgressHearing]);
+
   const nextHearing = useCallback(
     (isStartHearing) => {
       if (data?.length === 0) {
@@ -3487,23 +3493,25 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            <Button
-                              variation={"primary"}
-                              label={t(
-                                isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
-                              )}
-                              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
-                              isSuffix={true}
-                              onButtonClick={() =>
-                                handleEmployeeAction({
-                                  value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
-                                })
-                              }
-                              style={{
-                                boxShadow: "none",
-                                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
-                              }}
-                            ></Button>
+                            {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
+                              <Button
+                                variation={"primary"}
+                                label={t(
+                                  isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                                )}
+                                children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+                                isSuffix={true}
+                                onButtonClick={() =>
+                                  handleEmployeeAction({
+                                    value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                  })
+                                }
+                                style={{
+                                  boxShadow: "none",
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                }}
+                              ></Button>
+                            )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
