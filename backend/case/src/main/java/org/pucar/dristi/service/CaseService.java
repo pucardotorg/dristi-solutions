@@ -5845,6 +5845,8 @@ public class CaseService {
                 enrichmentUtil.enrichLPRNumber(caseRequest);
                 courtCase.setStageBackup(courtCase.getStage());
                 courtCase.setSubstageBackup(courtCase.getSubstage());
+                courtCase.setStage(config.getLprStage());
+                courtCase.setSubstage(config.getLprSubStage());
             } else {
                 // moving the case out of LPR
                 String courtCaseNumber = courtCase.getCourtCaseNumber();

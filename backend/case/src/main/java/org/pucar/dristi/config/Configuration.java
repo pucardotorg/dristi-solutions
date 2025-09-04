@@ -425,4 +425,10 @@ public class Configuration {
 	@Value("${lpr.case.details.update.kafka.topic}")
 	private String lprCaseDetailsUpdateTopic;
 
+    @Value("${lpr.stage}")
+    private String lprStage;
+
+    @Value("${lpr.sub.stage}")
+    private String lprSubStage;
+
 }
