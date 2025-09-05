@@ -24,6 +24,7 @@ export const CaseWorkflowAction = {
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
+const LITIGANT_REVIEW_TASK_NAME = "Review Litigant Details Change";
 const TasksComponent = ({
   taskType,
   setTaskType,
@@ -411,11 +412,17 @@ const TasksComponent = ({
     });
 
     const filteredTasks = tasks.filter((task) => {
-      if (isCourtRoomManager) {
-        // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
+      // if (isCourtRoomManager) {
+      //   // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
 
-        return task?.entityType === "bail bond" ? true : false;
-      } else return true;
+      //   return task?.entityType === "bail bond" ? true : false;
+      // } else return true;
+
+      const passesRoleFilter = isCourtRoomManager ? task?.entityType === "bail bond" : true;
+      const excludeForComposite = isApplicationCompositeOrder
+        ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
+        : true;
+      return passesRoleFilter && excludeForComposite;
     });
     if (taskType?.code)
       return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
@@ -433,6 +440,7 @@ const TasksComponent = ({
     taskTypeCode,
     todayDate,
     userType,
+    isApplicationCompositeOrder,
   ]);
 
   const submitResponse = useCallback(
