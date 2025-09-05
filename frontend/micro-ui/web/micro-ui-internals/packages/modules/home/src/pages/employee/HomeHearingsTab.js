@@ -10,6 +10,7 @@ import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/se
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import useInboxSearch from "../../hooks/useInboxSearch";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -242,7 +243,19 @@ const HomeHearingsTab = ({
             { homeFilteredData: filters }
           );
         } else {
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}`);
+          const response = await DRISTIService.getDraftOrder(
+            {
+              hearingDraftOrder: {
+                filingNumber: hearingDetails?.filingNumber,
+                tenantId: hearingDetails?.tenantId,
+                hearingNumber: hearingDetails?.hearingNumber,
+              },
+            },
+            {}
+          );
+          history.push(
+            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+          );
         }
         return;
       } else if (isBenchClerk || isCourtRoomManager) {
