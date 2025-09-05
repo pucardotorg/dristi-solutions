@@ -125,16 +125,16 @@ public class PendingTaskService {
             if(representing.get("isActive").asBoolean()){
                 addAssigneeToPendingTask(filteredTasks, poaUuid);
             } else {
-                filteredTasks = filterTasksForLitigant(hitsNode, activeLitigants);
+                filteredTasks = filterTasksForLitigant(filteredTasks, activeLitigants);
                 removeAssignedToPendingTask(filteredTasks, poaUuid);
             }
         }
         return filteredTasks;
     }
 
-    private List<JsonNode> filterTasksForLitigant(JsonNode hitsNode, List<String> activeLitigants) {
+    private List<JsonNode> filterTasksForLitigant(List<JsonNode> tasks, List<String> activeLitigants) {
         List<JsonNode> filteredTasks = new ArrayList<>();
-        for (JsonNode hit : hitsNode) {
+        for (JsonNode hit : tasks) {
             JsonNode dataNode = hit.path("_source").path("Data");
             JsonNode litigantIds = dataNode.path("additionalDetails").path("litigants");
 
