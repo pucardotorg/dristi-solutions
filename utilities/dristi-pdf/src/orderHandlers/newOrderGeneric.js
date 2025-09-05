@@ -206,19 +206,42 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
         (attendee) => messagesMap[attendee] || attendee
       )?.join(", ") || "";
     const isHearingInProgress = !!hearingInProgress;
+
+    const scheduleHearingItem = (() => {
+      if (order?.orderCategory === "INTERMEDIATE") return order;
+
+      const scheduleItem = order?.compositeItems?.find(
+        (item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+      );
+
+      return {
+        ...order,
+        orderDetails: scheduleItem?.orderSchema?.orderDetails,
+        additionalDetails: scheduleItem?.orderSchema?.additionalDetails,
+        orderType: scheduleItem?.orderType,
+      };
+    })();
+
     const nextHearingDate = order?.nextHearingDate
       ? formatDate(new Date(order?.nextHearingDate), "DD-MM-YYYY")
       : hearingScheduled?.startTime
       ? formatDate(new Date(hearingScheduled?.startTime), "DD-MM-YYYY")
+      : scheduleHearingItem?.orderDetails?.hearingDate
+      ? formatDate(
+          new Date(scheduleHearingItem?.orderDetails?.hearingDate),
+          "DD-MM-YYYY"
+        )
       : "";
     const purposeOfNextHearing =
       messagesMap[order?.purposeOfNextHearing || ""] ||
       messagesMap[hearingScheduled?.hearingType || ""] ||
+      messagesMap[scheduleHearingItem?.orderDetails?.purposeOfHearing] ||
       "";
     const isNextHearing = !!(
       (order?.nextHearingDate &&
         order?.purposeOfNextHearing &&
         hearingInProgress) ||
+      scheduleHearingItem ||
       hearingScheduled
     );
     const itemText = htmlToFormattedText(order?.itemText || "");
