@@ -203,7 +203,7 @@ export const configsOrderSection202CRPC = [
         key: "refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", hideInForm: true },
       },
       {
         label: "COURT_NAME",
@@ -826,7 +826,7 @@ export const configsOrderTranferToADR = [
         key: "refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", hideInForm: true },
       },
       {
         label: "COURT_NAME",
@@ -1038,7 +1038,7 @@ export const configsScheduleHearingDate = [
       },
       {
         label: "NAMES_OF_PARTIES_REQUIRED",
-        isMandatory: true,
+        isMandatory: false,
         key: "namesOfPartiesRequired",
         schemaKeyPath: "orderDetails.partyName",
         transformer: "customDropdown",
@@ -1057,6 +1057,7 @@ export const configsScheduleHearingDate = [
               name: "PARTY_1",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2083,8 +2084,9 @@ export const configRejectSubmission = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "comments",
-        isMandatory: true,
+        isMandatory: false,
         populators: {
+          hideInForm: true,
           inputs: [
             {
               name: "text",
