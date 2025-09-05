@@ -1038,7 +1038,7 @@ export const configsScheduleHearingDate = [
       },
       {
         label: "NAMES_OF_PARTIES_REQUIRED",
-        isMandatory: true,
+        isMandatory: false,
         key: "namesOfPartiesRequired",
         schemaKeyPath: "orderDetails.partyName",
         transformer: "customDropdown",
@@ -2084,7 +2084,7 @@ export const configRejectSubmission = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "comments",
-        isMandatory: true,
+        isMandatory: false,
         populators: {
           hideInForm: true,
           inputs: [
