@@ -2532,9 +2532,21 @@ const GenerateOrdersV2 = () => {
           break;
         }
 
-        if (["JUDGEMENT"].includes(orderType) && caseDetails?.isLPRCase) {
+        if (
+          [
+            "JUDGEMENT",
+            "DISMISS_CASE",
+            "SETTLEMENT_REJECT",
+            "SETTLEMENT_ACCEPT",
+            "CASE_TRANSFER_REJECT",
+            "CASE_TRANSFER_ACCEPT",
+            "WITHDRAWAL_REJECT",
+            "WITHDRAWAL_ACCEPT",
+          ].includes(orderType) &&
+          caseDetails?.isLPRCase
+        ) {
           setShowErrorToast({
-            label: t("JUDGEMENT_NOT_ALLOWED_FOR_LPR_CASE"),
+            label: t("ORDER_NOT_ALLOWED_FOR_LPR_CASE"),
             error: true,
           });
           hasError = true;
