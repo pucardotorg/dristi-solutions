@@ -185,7 +185,7 @@ public class PendingTaskService {
         for (JsonNode hit : hitsNode) {
             JsonNode dataNode = hit.path("_source").path("Data");
             ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            ArrayNode litigantsArray = (ArrayNode) dataNode.withArray("litigants");
+            ArrayNode litigantsArray = (ArrayNode) dataNode.get("additionalDetails").withArray("litigants");
 
             Set<String> taskLitigants = new HashSet<>();
             litigantsArray.forEach(l -> taskLitigants.add(l.asText()));
