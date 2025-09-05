@@ -30,19 +30,23 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        return false;
+    }
+
+    @Override
+    public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
         return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
-    public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+    public OrderRequest preProcess(OrderRequest orderRequest) {
+        return null;
     }
 
     @Override
-    public OrderRequest preProcess(OrderRequest orderRequest) {
-
+    public OrderRequest postProcess(OrderRequest orderRequest) {
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
         Order order = orderRequest.getOrder();
@@ -65,11 +69,6 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
         caseUtil.updateLprDetailsInCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
 
         return orderRequest;
-    }
-
-    @Override
-    public OrderRequest postProcess(OrderRequest orderRequest) {
-        return null;
     }
 
     @Override
