@@ -847,6 +847,11 @@ const EvidenceModal = ({
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const caseNumber =
+        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        caseData?.courtCaseNumber ||
+        caseData?.cmpNumber ||
+        caseData?.filingNumber;
       const formdata = {
         orderType: {
           code: orderType,
@@ -921,6 +926,7 @@ const EvidenceModal = ({
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                     applicationNumber: refApplicationId,
                     applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
                     ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
                   ...(hearingNumber && {
@@ -973,6 +979,7 @@ const EvidenceModal = ({
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                     applicationNumber: refApplicationId,
                     applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -1066,6 +1073,7 @@ const EvidenceModal = ({
               applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
               applicationNumber: refApplicationId,
               applicationCMPNumber: applicationCMPNumber,
+              caseNumber: caseNumber,
               ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
             },
             ...(hearingNumber && {
