@@ -203,7 +203,7 @@ export const configsOrderSection202CRPC = [
         key: "refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", hideInForm: true },
       },
       {
         label: "COURT_NAME",
@@ -826,7 +826,7 @@ export const configsOrderTranferToADR = [
         key: "refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", hideInForm: true },
       },
       {
         label: "COURT_NAME",
@@ -1057,6 +1057,7 @@ export const configsScheduleHearingDate = [
               name: "PARTY_1",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2085,6 +2086,7 @@ export const configRejectSubmission = [
         key: "comments",
         isMandatory: true,
         populators: {
+          hideInForm: true,
           inputs: [
             {
               name: "text",
