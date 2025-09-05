@@ -24,6 +24,7 @@ export const CaseWorkflowAction = {
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
+const LITIGANT_REVIEW_TASK_NAME = "Review Litigant Details Change";
 const TasksComponent = ({
   taskType,
   setTaskType,
@@ -418,7 +419,9 @@ const TasksComponent = ({
       // } else return true;
 
       const passesRoleFilter = isCourtRoomManager ? task?.entityType === "bail bond" : true;
-      const excludeForComposite = isApplicationCompositeOrder ? task?.actionName !== "Review Litigant Details Change" : true;
+      const excludeForComposite = isApplicationCompositeOrder
+        ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
+        : true;
       return passesRoleFilter && excludeForComposite;
     });
     if (taskType?.code)
