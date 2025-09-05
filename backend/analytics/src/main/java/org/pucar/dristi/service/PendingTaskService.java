@@ -97,7 +97,7 @@ public class PendingTaskService {
                 }
                 String poaUuid = additionalDetails.get("uuid").textValue();
 
-                List<JsonNode> updatedTasks = new ArrayList<>();
+                List<JsonNode> updatedTasks;
                 if(poaHolder.get("isActive").asBoolean()) {
                     updatedTasks = updatePendingTaskPoa(hitsNode, poaHolder, poaUuid);
                 } else {
@@ -118,16 +118,49 @@ public class PendingTaskService {
         log.info("Joining pending task for poa with id :: {}", poaUuid);
         JsonNode representingLitigants = poaHolder.get("representingLitigants");
         List<JsonNode> filteredTasks = new ArrayList<>();
+        List<String> activeLitigants = getActiveLitigants(representingLitigants);
         for(JsonNode representing : representingLitigants){
             String individualId = representing.get("individualId").textValue();
             filteredTasks = filterPendingTask(hitsNode, Collections.singletonList(individualId));
             if(representing.get("isActive").asBoolean()){
                 addAssigneeToPendingTask(filteredTasks, poaUuid);
             } else {
+                filteredTasks = filterTasksForLitigant(hitsNode, activeLitigants);
                 removeAssignedToPendingTask(filteredTasks, poaUuid);
             }
         }
         return filteredTasks;
+    }
+
+    private List<JsonNode> filterTasksForLitigant(JsonNode hitsNode, List<String> activeLitigants) {
+        List<JsonNode> filteredTasks = new ArrayList<>();
+        for (JsonNode hit : hitsNode) {
+            JsonNode dataNode = hit.path("_source").path("Data");
+            JsonNode litigantIds = dataNode.path("additionalDetails").path("litigants");
+
+            boolean isAssigned = true;
+            for (JsonNode assigned : litigantIds) {
+                String individualId = assigned.asText();
+                if (activeLitigants.contains(individualId)) {
+                    isAssigned = false;
+                    break;
+                }
+            }
+            if (isAssigned) {
+                filteredTasks.add(hit);
+            }
+        }
+        return filteredTasks;
+    }
+
+    private List<String> getActiveLitigants(JsonNode representingLitigants) {
+        List<String> activeLitigants = new ArrayList<>();
+        for(JsonNode representing : representingLitigants){
+            if(representing.get("isActive").asBoolean()){
+                activeLitigants.add(representing.get("individualId").textValue());
+            }
+        }
+        return activeLitigants;
     }
 
     public void updatePendingTaskForLitigant(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
