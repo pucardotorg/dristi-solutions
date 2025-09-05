@@ -195,7 +195,7 @@ public class OrderUtil {
             }
 
             // Purpose of Next Hearing
-            if (order.getPurposeOfNextHearing() != null) {
+            if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
                 sb.append("Purpose of Next Hearing: ")
                         .append(order.getPurposeOfNextHearing()).append("\n");
             }
