@@ -155,14 +155,15 @@ public class PendingTaskService {
     private List<JsonNode> updatePendingTasks(JsonNode hitsNode, JsonNode parties, String assigneeUuid) {
         log.info("Joining pending task for assignee with id :: {}", assigneeUuid);
         List<JsonNode> filteredTasks = new ArrayList<>();
+        Set<String> activeLitigants = new HashSet<>();
         for (JsonNode litigant : parties) {
             List<JsonNode> tasks = filterPendingTask(hitsNode, Collections.singletonList(litigant.get("individualId").asText()));
             if (litigant.get("isActive").asBoolean()) {
                 addAssigneeToPendingTask(tasks, assigneeUuid);
+                activeLitigants.add(litigant.get("individualId").asText());
             } else {
                 // Collect inactive litigants for removal if needed
                 Set<String> inactiveLitigants = Set.of(litigant.get("individualId").asText());
-                Set<String> activeLitigants = Collections.emptySet();
                 tasks = removeAssigneePendingTask(hitsNode, assigneeUuid, inactiveLitigants, activeLitigants);
             }
             filteredTasks.addAll(tasks);
