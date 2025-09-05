@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,7 @@ import pucar.web.models.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -31,12 +29,14 @@ public class OrderUtil {
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final LocalizationUtil localizationUtil;
 
     @Autowired
-    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
+    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, LocalizationUtil localizationUtil) {
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.localizationUtil = localizationUtil;
     }
 
     public Boolean fetchOrderDetails(OrderExistsRequest orderExistsRequest) {
@@ -160,7 +160,7 @@ public class OrderUtil {
         };
     }
 
-    public String getBusinessOfTheDay(Order order) {
+    public String getBusinessOfTheDay(Order order, RequestInfo requestInfo) {
         StringBuilder sb = new StringBuilder();
 
         try {
@@ -178,9 +178,12 @@ public class OrderUtil {
                 for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
                     String status = entry.getKey(); // "Present", "Absent"
                     List<String> roles = entry.getValue();
-
-                    String line = status + ": " + String.join(", ", roles);
-                    sb.append(line).append("\n");
+                    List<String> rolesLocalized = new ArrayList<>();
+                    if (roles != null) {
+                        roles.forEach(role -> rolesLocalized.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        String line = status + ": " + String.join(", ", rolesLocalized);
+                        sb.append(line).append("\n");
+                    }
                 }
             }
 
@@ -208,7 +211,6 @@ public class OrderUtil {
             }
 
             return sb.toString().trim();
-
         } catch (Exception e) {
             log.error("Error extracting order text", e);
             throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
