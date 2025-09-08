@@ -1,0 +1,327 @@
+[
+  {
+    "tenantId": "kl",
+    "code": "NJDG.CaseType",
+    "description": "Schema for Case Type master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "caseType",
+        "caseTypeCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "caseType": {
+          "type": "string"
+        },
+        "caseTypeCode": {
+          "type": "string"
+        },
+        "nationalCode": {
+          "type": ["number", "string"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.PurposeOfListing",
+    "description": "Schema for Purpose Of Listing master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "hearingPurpose",
+        "purposeDetails",
+        "purposeCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "hearingPurpose": {
+          "type": "string"
+        },
+        "purposeDetails": {
+          "type": "string"
+        },
+        "purposeCode": {
+          "type": ["string", "number"]
+        },
+        "nationalCode": {
+          "type": ["string", "number"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.DisposalType",
+    "description": "Schema for Disposal Type master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "name",
+        "DisposalTypeCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "DisposalTypeCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": ["number", "string"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "District",
+    "description": "Schema for District master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "code",
+        "name",
+        "districtCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "code"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "districtCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.Act",
+    "description": "Schema for Act master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "code",
+        "name",
+        "actMasterCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "code"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "actMasterCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.PoliceStation",
+    "description": "Schema for Police Station master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "code",
+        "name",
+        "policeStationCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "policeStationCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.DocumentType",
+    "description": "Schema for Document Type master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "type",
+        "documentTypesCode",
+        "nationalCode"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        },
+        "documentTypesCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": ["number", "string"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.ShortOrders",
+    "description": "Schema for Short Orders master",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "code",
+        "type",
+        "listOfShortOrders",
+        "shortOrdersCode"
+      ],
+      "x-unique": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "listOfShortOrders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "shortOrdersCode": {
+          "type": "number"
+        },
+        "nationalCode": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "code": "NJDG.Judge",
+    "description": "Schema for Judges master data",
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "name",
+        "judicialOfficerCode",
+        "joiningDate"
+      ],
+      "x-unique": [
+        "judicialOfficerCode"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "judicialOfficerCode": {
+          "type": "string"
+        },
+        "joiningDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "relievingDate": {
+          "type": ["string", "null"],
+          "format": "date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true
+  }
+]

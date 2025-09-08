@@ -1,0 +1,114 @@
+{
+  "cino": "KLKM520000422025",
+  "date_of_filing": "2025-09-01",
+  "dt_regis": "2025-09-04",
+  "case_type": "6007",
+  "fil_no": "5131",
+  "fil_year": "2018",
+  "reg_no": "22",
+  "reg_year": "2019",
+  "date_first_list": "2019-01-04",
+  "date_next_list": "2019-03-25",
+  "pend_disp": "P",
+  "date_of_decision": "2019-03-25",
+  "disp_reason": "1",
+  "disp_nature": "1",
+  "desgname": "3",
+  "court_no": "1",
+  "est_code": "KLKM01",
+  "state_code": "32",
+  "dist_code": "2",
+  "purpose_code": "6",
+  "pet_name": "Ravinder",
+  "pet_adv": "Adv. Sasi",
+  "pet_adv_cd": "23",
+  "res_name": "Syam",
+  "res_adv": "Adv. Ram",
+  "res_adv_cd": "12",
+  "pet_adv_bar_reg": "K/1234/2021",
+  "res_adv_bar_reg": "K/3241/2020",
+  "police_st_code": "120",
+  "police_ncode": "19375022",
+  "fir_no": "67",
+  "police_station": "Azhokide",
+  "fir_year": "2009",
+  "date_last_list": "2019-01-04",
+  "main_matter_cino": "KLKM010000452015",
+  "pet_extra_party": [
+    {
+      "party_name": "Kishor",
+      "party_no": "1",
+      "party_address": "Sample Address 1",
+      "party_age": "35"
+    },
+    {
+      "party_name": "Anil",
+      "party_no": "2",
+      "party_address": "Sample Address 2",
+      "party_age": "40"
+    }
+  ],
+  "res_extra_party": [
+    {
+      "party_name": "Reshma",
+      "party_no": "1",
+      "party_address": "Sample Address 3",
+      "party_age": "30"
+    }
+  ],
+  "pet_age": "45",
+  "res_age": "50",
+  "pet_address": "Petitioner Address",
+  "res_address": "Respondent Address",
+  "jocode": "KL0012",
+  "cicri_type": "2",
+  "act": [
+    {
+      "act_code": "12",
+      "act_name": "Indian Penal Code",
+      "act_section": "420"
+    },
+    {
+      "act_code": "23",
+      "act_name": "CrPC",
+      "act_section": "125"
+    }
+  ],
+  "historyofcasehearing": [
+    {
+      "sr_no": "1",
+      "desg_name": "Additional District Judge",
+      "hearing_date": "2019-09-01",
+      "next_date": "2019-09-12",
+      "purpose_of_listing": "4",
+      "judge_code": "7",
+      "jocode": "KL0012",
+      "desg_code": "2"
+    }
+  ],
+  "interimorder": [
+    {
+      "sr_no": "1",
+      "order_no": "1",
+      "order_date": "2019-09-12",
+      "order_details": "base64pdf=="
+    }
+  ],
+  "iafiling": [
+    {
+      "sr_no": "1",
+      "ia_type": "IA",
+      "ia_no": "3",
+      "ia_year": "2022",
+      "status": "P",
+      "date_of_filing": "2019-09-12",
+      "objections": [
+        {
+          "objection": "Petition is not proper",
+          "scrutiny_date": "2019-09-12",
+          "obj_receipt_date": "2019-09-01"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,691 @@
+[
+  {
+    "moduleName": "NJDG",
+    "masterName": "CaseType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.CaseType",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "caseType": "CMP",
+          "caseTypeCode": "Misc. Criminal Applications",
+          "nationalCode": 6007
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.CaseType",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "caseType": "ST",
+          "caseTypeCode": "Misc. Civil Cases",
+          "nationalCode": 5014
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.CaseType",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "caseType": "LP",
+          "caseTypeCode": "Pre-trial",
+          "nationalCode": 6008
+        },
+        "tenantId": "kl",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "PurposeofListing",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "hearingPurpose": "Notice",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "hearingPurpose": "Delay Condonation and Cognizance",
+          "purposeDetails": "FOR ADMISSION",
+          "purposeCode": 19,
+          "nationalCode": 5001
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "hearingPurpose": "Cognizance",
+          "purposeDetails": "FOR ADMISSION",
+          "purposeCode": 19,
+          "nationalCode": 5001
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": 4,
+          "hearingPurpose": "Enquiry u/s 225",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": 5,
+          "hearingPurpose": "Summons",
+          "purposeDetails": "Issue Summons",
+          "purposeCode": 42,
+          "nationalCode": 4002
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": 6,
+          "hearingPurpose": "Warrant",
+          "purposeDetails": "Issue Arrest Warrant",
+          "purposeCode": 256,
+          "nationalCode": 4002
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "7",
+        "data": {
+          "id": 7,
+          "hearingPurpose": "84-85 Steps",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "8",
+        "data": {
+          "id": 8,
+          "hearingPurpose": "Moving Case to LPR",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": 9,
+          "hearingPurpose": "Moving Case out of LPR",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "10",
+        "data": {
+          "id": 10,
+          "hearingPurpose": "Appearance of Accused",
+          "purposeDetails": "Appearance of Accused",
+          "purposeCode": 20,
+          "nationalCode": 4001
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "11",
+        "data": {
+          "id": 11,
+          "hearingPurpose": "Bail",
+          "purposeDetails": "For Bail",
+          "purposeCode": 18,
+          "nationalCode": 4010
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "12",
+        "data": {
+          "id": 12,
+          "hearingPurpose": "Interlocutary Application",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "13",
+        "data": {
+          "id": 13,
+          "hearingPurpose": "Evidence of Complainant",
+          "purposeDetails": "Plaintiff/Petitioner Evidence",
+          "purposeCode": 4,
+          "nationalCode": 5003
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": 14,
+          "hearingPurpose": "Examination of Accused",
+          "purposeDetails": "Examination of the Accused U/S 313 Cr.PC",
+          "purposeCode": 26,
+          "nationalCode": 4011
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": 15,
+          "hearingPurpose": "Evidence of Accused",
+          "purposeDetails": "Defendant/Respondent Evidence",
+          "purposeCode": 5,
+          "nationalCode": 5003
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": 16,
+          "hearingPurpose": "Plea",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "17",
+        "data": {
+          "id": 17,
+          "hearingPurpose": "Arguments",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "18",
+        "data": {
+          "id": 18,
+          "hearingPurpose": "Judgement",
+          "purposeDetails": "Order/Judgement",
+          "purposeCode": 8,
+          "nationalCode": 5006
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": 19,
+          "hearingPurpose": "Reports (Forensics)",
+          "purposeDetails": "For reports",
+          "purposeCode": 81,
+          "nationalCode": 5007
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "20",
+        "data": {
+          "id": 20,
+          "hearingPurpose": "Mediation Report",
+          "purposeDetails": "Report on mediation",
+          "purposeCode": 44,
+          "nationalCode": 5010
+        },
+        "tenantId": "kl",
+        "isActive": true
+      },
+      {
+        "schemaCode": "NJDG.PurposeofListing",
+        "uniqueIdentifier": "21",
+        "data": {
+          "id": 21,
+          "hearingPurpose": "Execution",
+          "purposeDetails": "",
+          "purposeCode": "",
+          "nationalCode": ""
+        },
+        "tenantId": "kl",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "DisposalType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "1",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 1,
+          "name": "DISMISSED",
+          "DisposalTypeCode": 6,
+          "nationalCode": 3016
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "2",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 2,
+          "name": "ALLOWED",
+          "DisposalTypeCode": 31,
+          "nationalCode": 3013
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "3",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 3,
+          "name": "PARTIALLYALLOWED",
+          "DisposalTypeCode": 31,
+          "nationalCode": 3013
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "4",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 4,
+          "name": "CONVICTED",
+          "DisposalTypeCode": 2,
+          "nationalCode": 3033
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "5",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 5,
+          "name": "PARTIALLYCONVICTED",
+          "DisposalTypeCode": 2,
+          "nationalCode": 3033
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "6",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 6,
+          "name": "WITHDRAWN",
+          "DisposalTypeCode": 5,
+          "nationalCode": 3003
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "7",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 7,
+          "name": "ABATED",
+          "DisposalTypeCode": 10,
+          "nationalCode": 3044
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "8",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 8,
+          "name": "SETTELED",
+          "DisposalTypeCode": "",
+          "nationalCode": ""
+        }
+      },
+      {
+        "schemaCode": "NJDG.DisposalType",
+        "uniqueIdentifier": "9",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 9,
+          "name": "TRANSFERED",
+          "DisposalTypeCode": "",
+          "nationalCode": ""
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "District",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.District",
+        "uniqueIdentifier": "KOLLAM",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 1,
+          "code": "KOLLAM",
+          "name": "Kollam",
+          "districtCode": 2,
+          "nationalCode": 600
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "Act",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.Act",
+        "uniqueIdentifier": "C.1881.026",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 1,
+          "code": "C.1881.026",
+          "name": "Negotiable Instruments Act, 1881",
+          "actMasterCode": 18,
+          "nationalCode": 18810260099001
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "PoliceStation",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293001",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293001,
+          "name": "EAST KALLADA",
+          "policeStationCode": 11,
+          "nationalCode": 15293001
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293003",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293003,
+          "name": "ANCHAL",
+          "policeStationCode": 28,
+          "nationalCode": 15293003
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293007",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293007,
+          "name": "CHADAYAMANGALAM",
+          "policeStationCode": 34,
+          "nationalCode": 15293007
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293016",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293016,
+          "name": "KADAKKAL",
+          "policeStationCode": 25,
+          "nationalCode": 15293016
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293019",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293019,
+          "name": "KOTTARAKARA",
+          "policeStationCode": 22,
+          "nationalCode": 15293019
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293020",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293020,
+          "name": "KULATHUPUZHA",
+          "policeStationCode": 26,
+          "nationalCode": 15293020
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293021",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293021,
+          "name": "KUNDARA",
+          "policeStationCode": 10,
+          "nationalCode": 15293021
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293032",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293032,
+          "name": "PATHANAPURAM",
+          "policeStationCode": 20,
+          "nationalCode": 15293032
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293034",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293034,
+          "name": "POOYAPPALLY",
+          "policeStationCode": 24,
+          "nationalCode": 15293034
+        }
+      },
+      {
+        "schemaCode": "NJDG.PoliceStation",
+        "uniqueIdentifier": "15293035",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": 15293035,
+          "name": "PUNALOOR",
+          "policeStationCode": 19,
+          "nationalCode": 15293035
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "DocumentType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.DocumentType",
+        "uniqueIdentifier": "1",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "id": 1,
+          "type": "POWER_OF_ATTORNEY",
+          "documentTypesCode": 27,
+          "nationalCode": 0
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "ShortOrders",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.ShortOrders",
+        "uniqueIdentifier": "NOTICE",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": "NOTICE",
+          "type": "NOTICE",
+          "listOfShortOrders": ["Notice"],
+          "shortOrdersCode": 1,
+          "nationalCode": ""
+        }
+      },
+      {
+        "schemaCode": "NJDG.ShortOrders",
+        "uniqueIdentifier": "DISMISS_CASE",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "code": "DISMISS_CASE",
+          "type": "DISMISS_CASE",
+          "listOfShortOrders": ["Dismissed"],
+          "shortOrdersCode": 4,
+          "nationalCode": ""
+        }
+      }
+    ]
+  },
+  {
+    "moduleName": "NJDG",
+    "masterName": "Judges",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "schemaCode": "NJDG.Judges",
+        "uniqueIdentifier": "KL00762",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "name": "Soorya.S.Sukumaran",
+          "judicialOfficerCode": "KL00762",
+          "joiningDate": "2024-11-20",
+          "relievingDate": "2025-03-03"
+        }
+      },
+      {
+        "schemaCode": "NJDG.Judges",
+        "uniqueIdentifier": "KL01002",
+        "tenantId": "kl",
+        "isActive": true,
+        "data": {
+          "name": "Michael George",
+          "judicialOfficerCode": "KL01002",
+          "joiningDate": "2025-03-04",
+          "relievingDate": null
+        }
+      }
+    ]
+  }
+
+]
