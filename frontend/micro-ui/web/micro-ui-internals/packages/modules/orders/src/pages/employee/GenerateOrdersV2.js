@@ -2588,6 +2588,12 @@ const GenerateOrdersV2 = () => {
         if (key === "absentAttendees" && !presentAttendeesComplete && !absentAttendeesComplete && (!value || value.length === 0)) {
           allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
         }
+      } else if (key === "itemText") {
+        // Special handling for itemText to check for empty HTML content
+        const isEmptyHtml = !value || (typeof value === "string" && value.replace(/<[^>]*>/g, "").trim() === "");
+        if (isEmptyHtml) {
+          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        }
       } else if (!value || (Array?.isArray(value) && value?.length === 0)) {
         // Format errors according to the expected structure
         // The component expects an object with msg property
@@ -3198,7 +3204,8 @@ const GenerateOrdersV2 = () => {
   const onItemTextSelect = (key, value) => {
     if (key === "itemText" && value?.["itemText"] !== undefined) {
       setCurrentOrder({ ...currentOrder, itemText: value[key] });
-      if (value[key]) {
+      const isEmptyHtml = !value[key] || value[key].replace(/<[^>]*>/g, "").trim() === "";
+      if (!isEmptyHtml) {
         setErrors((prevErrors) => {
           const newErrors = { ...prevErrors };
           delete newErrors["itemText"];
