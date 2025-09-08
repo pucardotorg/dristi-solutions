@@ -5047,7 +5047,7 @@ export const replaceAdvocateConfig = [
         key: "reasonForWithdrawal",
         schemaKeyPath: "orderDetails.reasonForWithdrawal",
         transformer: "customTextArea",
-        isMandatory: true,
+        isMandatory: false,
         populators: {
           inputs: [
             {
@@ -5057,6 +5057,7 @@ export const replaceAdvocateConfig = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
