@@ -56,7 +56,7 @@ const BailEsignModal = ({
       actionSaveOnSubmit={() => {
         handleProceed();
       }}
-      className={"submission-add-signature-modal"}
+      className={"submission-add-signature-modal responsive-signature-modal"}
     >
       <div style={{ paddingTop: "10px" }}>
         <InfoCard

@@ -23,7 +23,9 @@ async function processTitlePageSection(
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
     const coverCaseNumber =
-      (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase.courtCaseNumber) ||
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase.courtCaseNumber) ||
       courtCase.cmpNumber ||
       courtCase.filingNumber;
     const coverYear = (
