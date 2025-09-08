@@ -1242,6 +1242,7 @@ export const configsScheduleNextHearingDate = [
               name: "PARTY_1",
             },
           ],
+          hideInForm: true,
         },
       },
     ],

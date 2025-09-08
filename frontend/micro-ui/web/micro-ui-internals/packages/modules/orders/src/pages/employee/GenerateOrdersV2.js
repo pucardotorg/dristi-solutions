@@ -2668,6 +2668,9 @@ const GenerateOrdersV2 = () => {
   );
 
   const handleOrderTypeChange = (index, orderType) => {
+    if(!orderType){
+      return;
+    }
     const orderTypeValidationObj = checkOrderValidation(orderType?.code, index);
     if (orderTypeValidationObj?.showModal) {
       setShowOrderValidationModal(orderTypeValidationObj);
