@@ -37,4 +37,80 @@
                 "lastModifiedTime": 1757350143276
             }
         },
+  {
+            "id": "37755573-0c29-4d27-b180-c13d2880619d",
+            "tenantId": "kl",
+            "schemaCode": "Order.OrderType",
+            "uniqueIdentifier": "39",
+            "data": {
+                "id": 39,
+                "code": "SETTLEMENT_REJECT",
+                "type": "SETTLEMENT_REJECT",
+                "isactive": true
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "lastModifiedBy": "12cafab4-42bf-4d7f-b5fb-dfdc35d6384e",
+                "createdTime": 1750668237910,
+                "lastModifiedTime": 1757352168924
+            }
+        },
+        {
+            "id": "e7aace34-f05d-4280-9959-a89d476596fa",
+            "tenantId": "kl",
+            "schemaCode": "Order.OrderType",
+            "uniqueIdentifier": "38",
+            "data": {
+                "id": 38,
+                "code": "SETTLEMENT_ACCEPT",
+                "type": "SETTLEMENT_ACCEPT",
+                "isactive": true
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "lastModifiedBy": "12cafab4-42bf-4d7f-b5fb-dfdc35d6384e",
+                "createdTime": 1750666663592,
+                "lastModifiedTime": 1757352182722
+            }
+        },
+        {
+            "id": "04549164-49f2-4462-8f1d-c00c995573ee",
+            "tenantId": "kl",
+            "schemaCode": "Order.OrderType",
+            "uniqueIdentifier": "37",
+            "data": {
+                "id": 37,
+                "code": "CASE_TRANSFER_REJECT",
+                "type": "CASE_TRANSFER_REJECT",
+                "isactive": true
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "lastModifiedBy": "12cafab4-42bf-4d7f-b5fb-dfdc35d6384e",
+                "createdTime": 1750666646568,
+                "lastModifiedTime": 1757352094425
+            }
+        },
+        {
+            "id": "75598280-0def-458e-ac75-8a7f87ee2268",
+            "tenantId": "kl",
+            "schemaCode": "Order.OrderType",
+            "uniqueIdentifier": "36",
+            "data": {
+                "id": 36,
+                "code": "CASE_TRANSFER_ACCEPT",
+                "type": "CASE_TRANSFER_ACCEPT",
+                "isactive": true
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "lastModifiedBy": "12cafab4-42bf-4d7f-b5fb-dfdc35d6384e",
+                "createdTime": 1750666628716,
+                "lastModifiedTime": 1757352197900
+            }
+        },
 ]
