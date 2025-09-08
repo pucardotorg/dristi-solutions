@@ -331,7 +331,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             email: item?.data?.emails?.emailId || [],
             uuid: item?.data?.uuid,
             partyIndex: `Witness_${index}`,
-            ownerType: item?.data?.ownerType
+            ownerType: item?.data?.ownerType,
           },
         }));
         users = [...updatedRespondentData, ...updatedWitnessData];

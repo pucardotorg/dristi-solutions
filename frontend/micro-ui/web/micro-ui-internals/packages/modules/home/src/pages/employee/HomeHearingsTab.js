@@ -73,7 +73,6 @@ const HomeHearingsTab = ({
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  console.log("check-here");
   const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 

@@ -587,7 +587,6 @@ const ComplainantSignature = ({ path }) => {
           tenantId: tenantId,
         }
       );
-
       if (caseLockStatus?.Lock?.isLocked) {
         toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
         setLoader(false);
