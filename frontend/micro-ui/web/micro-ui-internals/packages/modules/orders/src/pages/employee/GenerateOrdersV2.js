@@ -2574,7 +2574,22 @@ const GenerateOrdersV2 = () => {
     const allErrors = {};
     mandatoryOrderFields?.forEach((field) => {
       const [key, value] = Object?.entries(field)[0];
-      if (!value || (Array?.isArray(value) && value?.length === 0)) {
+
+      // Special handling for presentAttendees and absentAttendees
+      if (key === "presentAttendees" || key === "absentAttendees") {
+        // If presentAttendees has all four options, absentAttendees can be empty
+        const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
+        // If absentAttendees has all four options, presentAttendees can be empty
+        const absentAttendeesComplete = currentOrder?.attendance?.Absent?.length === 4;
+
+        if (key === "presentAttendees" && !presentAttendeesComplete && !absentAttendeesComplete && (!value || value.length === 0)) {
+          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        }
+
+        if (key === "absentAttendees" && !presentAttendeesComplete && !absentAttendeesComplete && (!value || value.length === 0)) {
+          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        }
+      } else if (!value || (Array?.isArray(value) && value?.length === 0)) {
         // Format errors according to the expected structure
         // The component expects an object with msg property
         allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
