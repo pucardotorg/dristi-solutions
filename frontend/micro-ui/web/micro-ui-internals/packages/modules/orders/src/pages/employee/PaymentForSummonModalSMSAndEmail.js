@@ -339,11 +339,17 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(
-    () =>
-      orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE,
-    [orderType]
-  );
+  const service = useMemo(() => {
+    if (orderType === "WARRANT") {
+      return paymentType.TASK_WARRANT;
+    } else if (orderType === "PROCLAMATION") {
+      return paymentType.TASK_PROCLAMATION;
+    } else if (orderType === "ATTACHMENT") {
+      return paymentType.TASK_ATTACHMENT;
+    } else {
+      return paymentType.TASK_NOTICE;
+    }
+  }, [orderType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},

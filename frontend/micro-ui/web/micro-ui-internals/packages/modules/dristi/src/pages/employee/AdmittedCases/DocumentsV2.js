@@ -23,8 +23,8 @@ const DocumentsV2 = ({
   setShowVoidModal,
   setSelectedRow,
   setSelectedItem,
-  setShowWitnessDepositionDoc,
   counter,
+  setShowWitnessDepositionDoc,
   setShowWitnessModal,
   setEditWitnessDepositionArtifact,
 }) => {

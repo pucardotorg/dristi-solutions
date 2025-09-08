@@ -1012,3 +1012,63 @@ body {
     }
   }
 }
+
+.bail-bond-login-page {
+  .citizen-form-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .login-form.responsive-container {
+    width: 35vw;
+
+    @media (max-width: 1024px) {
+      width: 60vw;
+    }
+
+    @media (max-width: 768px) {
+      width: 80vw;
+    }
+
+    @media (max-width: 480px) {
+      width: 95vw;
+    }
+  }
+
+  .form-section {
+    margin-top: 10px;
+
+    .field-container {
+      max-width: none !important;
+
+      .text-input {
+        max-width: none !important;
+      }
+    }
+  }
+
+  .text-input-width-size {
+    max-width: none !important;
+
+    .text-input {
+      max-width: none !important;
+    }
+  }
+
+  .citizen-card-input--front {
+    background-color: #e0e0e0 !important;
+    margin-bottom: 5px;
+  }
+
+  .error-border {
+    border-color: #bb2c2f !important;
+  }
+
+  .error-message {
+    color: #bb2c2f;
+    margin: 4px 0 8px 0;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+}

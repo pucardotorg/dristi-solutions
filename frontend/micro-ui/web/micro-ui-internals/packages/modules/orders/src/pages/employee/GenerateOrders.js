@@ -1568,7 +1568,6 @@ const GenerateOrders = () => {
             };
           });
         }
-
         newConfig = [...newConfig, ...orderTypeForm];
       }
       const updatedConfig = newConfig.map((config) => {
