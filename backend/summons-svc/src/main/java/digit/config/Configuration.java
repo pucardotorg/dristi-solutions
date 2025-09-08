@@ -204,6 +204,12 @@ public class Configuration {
     @Value("${task.warrant.business.service}")
     private String taskWarrantBusinessService;
 
+    @Value("${task.proclamation.business.service}")
+    private String taskProclamationBusinessService;
+
+    @Value("${task.attachment.business.service}")
+    private String taskAttachmentBusinessService;
+
     @Value("${task.notice.business.service}")
     private String taskNoticeBusinessService;
 
