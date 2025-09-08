@@ -83,7 +83,17 @@ export const compositeOrderAllowedTypes = [
   },
   {
     key: "no_restriction",
-    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL","PROCLAMATION", "ATTACHMENT"],
+    orderTypes: [
+      "NOTICE",
+      "OTHERS",
+      "WARRANT",
+      "SUMMONS",
+      "MANDATORY_SUBMISSIONS_RESPONSES",
+      "SECTION_202_CRPC",
+      "ACCEPT_BAIL",
+      "PROCLAMATION",
+      "ATTACHMENT",
+    ],
     unAllowedOrderTypes: [],
   },
   {
@@ -605,6 +615,7 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
+        orderNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
@@ -2107,34 +2118,36 @@ const GenerateOrders = () => {
       }
     }
 
+    if (orderType && ["PROCLAMATION"].includes(orderType)) {
+      if (formData?.proclamationText && Object.keys(formState?.errors).includes("proclamationText")) {
+        clearFormErrors?.current?.[index]?.("proclamationText");
+      } else if (formState?.submitCount && !formData?.proclamationText && !Object.keys(formState?.errors).includes("proclamationText")) {
+        setFormErrors?.current?.[index]?.("proclamationText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+    }
+
     if (orderType && ["ATTACHMENT"].includes(orderType)) {
+      if (formData?.attachmentText && Object.keys(formState?.errors).includes("attachmentText")) {
+        clearFormErrors?.current?.[index]?.("attachmentText");
+      } else if (formState?.submitCount && !formData?.attachmentText && !Object.keys(formState?.errors).includes("attachmentText")) {
+        setFormErrors?.current?.[index]?.("attachmentText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
       if (formData?.village && Object.keys(formState?.errors).includes("village")) {
         clearFormErrors?.current?.[index]?.("village");
-      } else if (
-        formState?.submitCount &&
-        !formData?.village &&
-        !Object.keys(formState?.errors).includes("village")
-      ) {
+      } else if (formState?.submitCount && !formData?.village && !Object.keys(formState?.errors).includes("village")) {
         setFormErrors?.current?.[index]?.("village", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       }
 
       if (formData?.district && Object.keys(formState?.errors).includes("district")) {
         clearFormErrors?.current?.[index]?.("district");
-      } else if (
-        formState?.submitCount &&
-        !formData?.district &&
-        !Object.keys(formState?.errors).includes("district")
-      ) {
+      } else if (formState?.submitCount && !formData?.district && !Object.keys(formState?.errors).includes("district")) {
         setFormErrors?.current?.[index]?.("district", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       }
 
       if (formData?.chargeDays && Object.keys(formState?.errors).includes("chargeDays")) {
         clearFormErrors?.current?.[index]?.("chargeDays");
-      } else if (
-        formState?.submitCount &&
-        !formData?.chargeDays &&
-        !Object.keys(formState?.errors).includes("chargeDays")
-      ) {
+      } else if (formState?.submitCount && !formData?.chargeDays && !Object.keys(formState?.errors).includes("chargeDays")) {
         setFormErrors?.current?.[index]?.("chargeDays", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       }
     }
@@ -2529,7 +2542,7 @@ const GenerateOrders = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["NOTICE", "SUMMONS", "WARRANT","PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -2884,7 +2897,7 @@ const GenerateOrders = () => {
   };
 
   const getOrderData = (orderType, orderFormData) => {
-    return ["SUMMONS", "NOTICE", "WARRANT","PROCLAMATION", "ATTACHMENT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+    return ["SUMMONS", "NOTICE", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
   };
 
   const getCourtFee = async (channelId, receiverPincode, taskType) => {
@@ -2934,8 +2947,7 @@ const GenerateOrders = () => {
       ATTACHMENT: "attachmentFor",
       // Add more types here easily in future
     };
-    const selectedChannel =
-      orderData?.additionalDetails?.formdata?.[formDataKeyMap[orderType]]?.selectedChannels;
+    const selectedChannel = orderData?.additionalDetails?.formdata?.[formDataKeyMap[orderType]]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
@@ -3102,7 +3114,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3148,7 +3160,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3159,7 +3171,7 @@ const GenerateOrders = () => {
           attachmentDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docSubType: "Attachment requiring the apperance of a person accused",
+            docSubType: "Order authorising an attachment by the district magistrate or collector",
             templateType: "GENERIC",
             attachmentText: orderFormValue?.attachmentText?.attachmentText || "",
             district: orderFormValue?.district?.district || "",
@@ -3197,7 +3209,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3241,7 +3253,7 @@ const GenerateOrders = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType
+            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
           );
 
           if ("deliveryChannels" in clonedPayload) {

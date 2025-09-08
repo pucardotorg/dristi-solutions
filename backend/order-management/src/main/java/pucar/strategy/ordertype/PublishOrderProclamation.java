@@ -143,7 +143,7 @@ public class PublishOrderProclamation implements OrderUpdateStrategy {
                 // create pending task
 
                 if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
-                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
+                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_PROCLAMATION)

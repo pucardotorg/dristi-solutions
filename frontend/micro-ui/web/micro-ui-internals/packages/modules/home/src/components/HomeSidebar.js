@@ -81,7 +81,6 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
           active={activeTab === "BULK_BAIL_BOND_SIGN"}
           onClick={() => onTabChange("BULK_BAIL_BOND_SIGN")}
         />
-
         <SidebarItem
           t={t}
           label="BULK_WITNESS_DEPOSITION_SIGN"

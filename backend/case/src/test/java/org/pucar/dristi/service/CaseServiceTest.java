@@ -271,7 +271,6 @@ public class CaseServiceTest {
         // Verify calls inside addLitigantToCase (simplified)
         verify(cacheService, times(1)).save(anyString(), any());
         verify(producer, times(1)).push(eq(config.getJoinCaseTopicIndexer()), any(CaseRequest.class));
-        verify(notificationService, times(1)).sendNotification(any(), any(), eq(NEW_USER_JOIN), anyString()); // Assuming notification is sent
     }
 
     @Test

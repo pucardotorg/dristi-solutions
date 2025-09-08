@@ -52,6 +52,7 @@ function SuccessModal({
   makePayment,
   paymentStatus,
   headerBarEndClose,
+  bannerlabel,
 }) {
   const submissionData = [
     { key: "SUBMISSION_DATE", value: createdDate, copyData: false },
@@ -70,7 +71,7 @@ function SuccessModal({
         <Banner
           whichSvg={"tick"}
           successful={true}
-          message={t("SUBMISSION_SUCCESSFUL")}
+          message={bannerlabel}
           headerStyles={{ fontSize: "32px" }}
           style={{ minWidth: "100%", ...(!headerBarEndClose && { marginTop: "10px" }) }}
         ></Banner>

@@ -18,6 +18,7 @@ import {
   requestForBail,
   submitDocsForBail,
   submitDelayCondonation,
+  poaClaimingConfig,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -136,6 +137,7 @@ const SubmissionsCreate = ({ path }) => {
   const clearFormDataErrors = useRef(null);
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -352,7 +354,11 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber && filingNumber && caseCourtId)
+    Boolean(
+      applicationTypeParam === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS"
+        ? applicationNumber && filingNumber
+        : applicationNumber && filingNumber && caseCourtId
+    )
   );
 
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -415,7 +421,10 @@ const SubmissionsCreate = ({ path }) => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
-    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
+    if (
+      (caseDetails || applicationTypeParam === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") &&
+      Array.isArray(submissionConfigKeys[submissionType])
+    ) {
       if (orderNumber || (hearingId && applicationTypeUrl) || !isCitizen) {
         const tempData = submissionConfigKeys[submissionType]?.map((item) => {
           return {
@@ -437,7 +446,7 @@ const SubmissionsCreate = ({ path }) => {
                   ...input.populators,
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
-                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS",${
+                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
@@ -451,7 +460,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
     return [];
-  }, [caseDetails, submissionType, isDelayApplicationPending, orderNumber, hearingId, applicationTypeUrl, isCitizen]);
+  }, [caseDetails, applicationTypeParam, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, isDelayApplicationPending]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
@@ -476,6 +485,7 @@ const SubmissionsCreate = ({ path }) => {
         applicationDetails?.additionalDetails?.profileEditType === "respondentDetails"
           ? getModifiedForm(editRespondentConfig.formconfig, formdata)
           : getModifiedForm(editComplainantDetailsConfig.formconfig, formdata),
+      APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: poaClaimingConfig,
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -571,7 +581,7 @@ const SubmissionsCreate = ({ path }) => {
     if (signedDoucumentUploadedID && !fileStoreIds?.has(signedDoucumentUploadedID)) {
       setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, signedDoucumentUploadedID]));
     }
-    if (applicationData && !fileStoreIds?.has(applicationPdfFileStoreId))
+    if (applicationPdfFileStoreId && applicationData && !fileStoreIds?.has(applicationPdfFileStoreId))
       setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, applicationPdfFileStoreId]));
   }, [applicationPdfFileStoreId, signedDoucumentUploadedID]);
 
@@ -873,6 +883,7 @@ const SubmissionsCreate = ({ path }) => {
         "DELAY_CONDONATION",
         "CORRECTION_IN_COMPLAINANT_DETAILS",
         "ADDING_WITNESSES",
+        "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {
@@ -975,13 +986,15 @@ const SubmissionsCreate = ({ path }) => {
         status,
         assignedTo: assignes?.map((uuid) => ({ uuid })),
         assignedRole: assignedRole,
-        cnrNumber: caseDetails?.cnrNumber,
+        cnrNumber: caseDetails?.cnrNumber || applicationDetails?.cnrNumber,
         filingNumber: filingNumber,
-        caseId: caseDetails?.id,
-        caseTitle: caseDetails?.caseTitle,
+        caseId: caseDetails?.id || applicationDetails?.cnrNumber,
+        caseTitle: caseDetails?.caseTitle || applicationDetails?.additionalDetails?.caseTitle || "",
         isCompleted,
         stateSla,
-        additionalDetails: {},
+        additionalDetails: {
+          ...(applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && { applicationType }),
+        },
         tenantId,
       },
     });
@@ -1170,7 +1183,12 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      const newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      let newFileStoreId = "";
+      if (mockESignEnabled) {
+        newFileStoreId = applicationPdfFileStoreId;
+      } else {
+        newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      }
       fileStoreIds.delete(newFileStoreId);
 
       const documentsFile =
@@ -1218,7 +1236,10 @@ const SubmissionsCreate = ({ path }) => {
         }
 
         await createPendingTask({
-          name: t("MAKE_PAYMENT_SUBMISSION"),
+          name:
+            applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS"
+              ? t("MAKE_PAYMENT_SUBMISSION_FOR_POA")
+              : t("MAKE_PAYMENT_SUBMISSION"),
           status: "MAKE_PAYMENT_SUBMISSION",
           stateSla: todayDate + stateSla.MAKE_PAYMENT_SUBMISSION,
           ...(hasSubmissionRole && { isAssignedRole: true, assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"] }),
@@ -1356,9 +1377,13 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleBack = () => {
     if (!paymentLoader) {
-      history.replace(
-        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
-      );
+      if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+        history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
+      } else {
+        history.replace(
+          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+        );
+      }
     }
   };
 
@@ -1485,7 +1510,7 @@ const SubmissionsCreate = ({ path }) => {
       await DRISTIService.etreasuryCreateDemand({
         tenantId,
         entityType,
-        filingNumber: caseDetails?.filingNumber,
+        filingNumber: caseDetails?.filingNumber || filingNumber,
         consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
         calculation: [
           {
@@ -1585,6 +1610,7 @@ const SubmissionsCreate = ({ path }) => {
           handleCloseSignaturePopup={handleCloseSignaturePopup}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           applicationPdfFileStoreId={applicationPdfFileStoreId}
+          applicationType={applicationType}
         />
       )}
       {showPaymentModal && (
@@ -1612,6 +1638,9 @@ const SubmissionsCreate = ({ path }) => {
           createdDate={getFormattedDate(applicationDetails?.createdDate)}
           makePayment={makePaymentLabel}
           paymentStatus={paymentStatus}
+          bannerlabel={
+            applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" ? t("SUBMISSION_SUCCESSFUL_POA") : t("SUBMISSION_SUCCESSFUL")
+          }
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import Modal from "./Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -24,7 +24,18 @@ const CloseBtn = (props) => {
   );
 };
 
-const EditSendBackModal = ({ t, handleCancel, handleSubmit, headerLabel, saveLabel, cancelLabel, contentText }) => {
+const EditSendBackModal = ({
+  t,
+  handleCancel,
+  handleSubmit,
+  headerLabel,
+  saveLabel,
+  cancelLabel,
+  contentText,
+  className,
+  submitButtonStyle = { backgroundColor: "#007E7E" },
+  loader = false,
+}) => {
   return (
     <Modal
       headerBarMain={<Heading label={t(headerLabel)} />}
@@ -32,11 +43,20 @@ const EditSendBackModal = ({ t, handleCancel, handleSubmit, headerLabel, saveLab
       actionSaveLabel={t(saveLabel)}
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
-      style={{
-        backgroundColor: "#007E7E",
-      }}
-      children={<div style={{ margin: "16px 0px" }}>{t(contentText)}</div>}
+      style={submitButtonStyle}
+      isDisabled={loader}
+      isBackButtonDisabled={loader}
+      children={
+        loader ? (
+          <Loader />
+        ) : (
+          <div className={"popup-module-content"} style={{ margin: "16px 0px" }}>
+            {t(contentText)}
+          </div>
+        )
+      }
       actionSaveOnSubmit={handleSubmit}
+      className={className}
     ></Modal>
   );
 };

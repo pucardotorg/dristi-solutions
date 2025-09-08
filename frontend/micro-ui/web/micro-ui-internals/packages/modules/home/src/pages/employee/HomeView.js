@@ -47,9 +47,10 @@ const ProjectBreadCrumb = ({ location, t }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
       path: homePath,
@@ -95,6 +96,7 @@ const HomeView = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
@@ -483,7 +485,7 @@ const HomeView = () => {
   };
   return (
     <React.Fragment>
-      {(isJudge || isBenchClerk || isTypist) && <ProjectBreadCrumb location={window.location} t={t} />}
+      {(isJudge || isBenchClerk || isTypist || isCourtRoomManager) && <ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
           <LitigantHomePage isApprovalPending={isApprovalPending} />
@@ -502,7 +504,7 @@ const HomeView = () => {
                   advocateId={advocateId}
                   t={t}
                 />
-                {(isJudge || isClerk || isTypist) && (
+                {(isJudge || isClerk || isTypist || isCourtRoomManager) && (
                   <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                     {isJudge && (
                       <React.Fragment>

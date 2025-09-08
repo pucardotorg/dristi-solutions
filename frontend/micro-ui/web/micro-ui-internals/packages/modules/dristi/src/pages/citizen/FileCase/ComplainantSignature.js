@@ -208,6 +208,7 @@ const ComplainantSignature = ({ path }) => {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -571,6 +572,11 @@ const ComplainantSignature = ({ path }) => {
     return getUniqueAcronym(placeholder);
   };
 
+  const handleCaseUnlockingWhenMockESign = async () => {
+    await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+    setEsignSuccess(true);
+  };
+
   const handleEsignAction = async () => {
     setLoader(true);
     try {
@@ -585,11 +591,21 @@ const ComplainantSignature = ({ path }) => {
         toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
         setLoader(false);
         return;
+      }
+
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {});
+
+      setLoader(false);
+
+      if (mockESignEnabled) {
+        try {
+          await handleCaseUnlockingWhenMockESign();
+        } catch (error) {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
       } else {
-        await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {}).then(() => {
-          setLoader(false);
-          handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
-        });
+        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
       }
     } catch (error) {
       console.error("Error:", error);

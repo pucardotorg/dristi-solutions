@@ -132,7 +132,7 @@ public class SummonsService {
 
         ChannelMessage channelMessage = externalChannelUtil.sendSummonsByDeliveryChannel(taskRequest, summonsDelivery);
 
-        if (channelMessage.getAcknowledgementStatus().equalsIgnoreCase("success")) {
+        if (SUCCESS.equalsIgnoreCase(channelMessage.getAcknowledgementStatus())) {
             summonsDelivery.setIsAcceptedByChannel(Boolean.TRUE);
             if (summonsDelivery.getChannelName() == ChannelName.SMS || summonsDelivery.getChannelName() == ChannelName.EMAIL) {
                 summonsDelivery.setDeliveryStatus(DeliveryStatus.DELIVERED);

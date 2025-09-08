@@ -16,9 +16,14 @@ import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.cases.CaseRequest;
+import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
+import org.pucar.dristi.web.models.orders.*;
+import org.pucar.dristi.web.models.orders.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -53,6 +58,7 @@ public class HearingService {
     private final InboxUtil inboxUtil;
     private final JsonUtil jsonUtil;
     private final EsUtil esUtil;
+    private final OrderUtil orderUtil;
 
     @Autowired
     public HearingService(
@@ -61,7 +67,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil, OrderUtil orderUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -79,6 +85,7 @@ public class HearingService {
         this.inboxUtil = inboxUtil;
         this.jsonUtil = jsonUtil;
         this.esUtil = esUtil;
+        this.orderUtil = orderUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -760,6 +767,42 @@ public class HearingService {
         }
     }
 
+    public void updateCaseReferenceHearingAfterLpr(CaseRequest caseRequest) {
+        try {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=IN_PROGRESS");
+            RequestInfo requestInfo = caseRequest.getRequestInfo();
+            CourtCase courtCase = caseRequest.getCases();
+            String filingNumber = courtCase.getFilingNumber();
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().filingNumber(filingNumber).build())
+                    .build();
+            List<Hearing> hearingList = searchHearing(request);
+            for (Hearing hearing : hearingList) {
+                hearing.setCourtCaseNumber(courtCase.getCourtCaseNumber());
+                hearing.setCmpNumber(courtCase.getCmpNumber());
+                if ((courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getLprNumber());
+                } else if (courtCase.getCourtCaseNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCourtCaseNumber());
+                } else if (courtCase.getCmpNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCmpNumber());
+                } else {
+                    hearing.setCaseReferenceNumber(filingNumber);
+                }
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+                updateHearing(hearingRequest);
+            }
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=SUCCESS");
+        } catch (Exception e) {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=FAILURE, filingNumber={}", caseRequest.getCases().getFilingNumber());
+            throw new CustomException("Error updating case reference number: {}", e.getMessage());
+        }
+    }
+
     public List<Integer> getAvgNoOfDaysToHearingForEachCase() {
         try {
             log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=IN_PROGRESS");
@@ -807,5 +850,51 @@ public class HearingService {
 
         return averageDaysList;
     }
+
+    public void createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+        OrderCriteria criteria = OrderCriteria.builder()
+                .filingNumber(filingNumber)
+                .status("DRAFT_IN_PROGRESS")
+                .hearingNumber(hearingNumber)
+                .tenantId(tenantId)
+                .build();
+
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .build();
+
+                OrderResponse orderResponse;
+
+        OrderListResponse response = orderUtil.getOrders(searchRequest);
+        if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+        } else {
+            org.pucar.dristi.web.models.orders.Order order = Order.builder()
+                    .hearingNumber(hearingNumber)
+                    .filingNumber(filingNumber)
+                    .cnrNumber(cnrNumber)
+                    .tenantId(tenantId)
+                    .orderCategory("INTERMEDIATE")
+                    .orderTitle("Schedule of Next Hearing Date")
+                    .orderType("SCHEDULING_NEXT_HEARING")
+                    .isActive(true)
+                    .status("")
+                    .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
+                    .build();
+
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction("SAVE_DRAFT");
+            workflow.setDocuments(List.of(new org.egov.common.contract.models.Document()));
+            order.setWorkflow(workflow);
+
+            OrderRequest orderRequest = OrderRequest.builder()
+                    .requestInfo(requestInfo).order(order).build();
+            orderResponse = orderUtil.createOrder(orderRequest);
+            log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
+        }
+
+    }
+
 
 }

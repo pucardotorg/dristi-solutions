@@ -145,6 +145,8 @@ public class ServiceConstants {
     public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ATTACHMENT = "ATTACHMENT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
+    public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
+    public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
 
     public static final String SMS = "SMS";
 
@@ -158,4 +160,11 @@ public class ServiceConstants {
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION = "MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION";
 
     public static final String SCHEDULE_HEARING_SUFFIX = "_SCHEDULE_HEARING";
+
+    public static final String ENG_LOCALE_CODE = "en_IN";
+
+    public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
+
+    public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 }

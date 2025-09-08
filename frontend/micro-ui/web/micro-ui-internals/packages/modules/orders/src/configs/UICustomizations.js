@@ -64,6 +64,32 @@ export const UICustomizations = {
           }
         },
       },
+      adrDropDown: {
+        formToSchema: (option) => {
+          return option?.name;
+        },
+        schemaToForm: async (value, mdmsConfig) => {
+          if (mdmsConfig && mdmsConfig.moduleName && mdmsConfig.masterName) {
+            // fetch mdms by criteria
+            const mdmsData = await Digit.MDMSService.getDataByCriteria(
+              Digit.ULBService.getCurrentTenantId(),
+              { details: { moduleDetails: [{ moduleName: mdmsConfig.moduleName, masterDetails: [{ name: mdmsConfig.masterName }] }] } },
+              mdmsConfig.moduleName
+            );
+
+            const select = mdmsConfig?.select
+              ? Digit.Utils.createFunction(mdmsConfig?.select)
+              : (data) => {
+                  const optionsData = get(data, `${mdmsConfig?.moduleName}.${mdmsConfig?.masterName}`, []);
+                  return optionsData
+                    .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
+                    .map((opt) => ({ ...opt, name: `${mdmsConfig?.localePrefix}_${Digit.Utils.locale.getTransformedLocale(opt.code)}` }));
+                };
+
+            return select(mdmsData).find((option) => option.name === value);
+          }
+        },
+      },
       date: {
         formToSchema: (dateString) => {
           return dateString ? new Date(dateString).getTime() : null;
@@ -98,7 +124,7 @@ export const UICustomizations = {
               value?.party?.data?.middleName,
               value?.party?.data?.lastName,
               isWitness ? value?.party?.data?.witnessDesignation : null,
-              partyTypeLabel,
+              partyTypeLabel
             );
           } catch (error) {
             console.error("Error in parsing party name", error);

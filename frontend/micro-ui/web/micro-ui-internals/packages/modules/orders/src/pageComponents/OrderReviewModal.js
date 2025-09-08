@@ -41,7 +41,7 @@ function OrderReviewModal({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
-  const [businessDay, setBusinessDay] = useState(businessOfDay);
+  // const [businessDay, setBusinessDay] = useState(businessOfDay);
   const [isUpdateLoading, setUpdateLoading] = useState(false);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
@@ -73,6 +73,7 @@ function OrderReviewModal({
           cnrNumber: order?.cnrNumber,
           qrCode: false,
           courtId: courtId,
+          orderPreviewKey: "new-order-generic",
         },
         data: {
           RequestInfo: {
@@ -140,8 +141,8 @@ function OrderReviewModal({
       >
         {orderPreviewPdf || orderFileStore ? (
           <DocViewerWrapper
-            docWidth={"calc(80vw* 62/ 100)"}
-            docHeight={"50vh"}
+            docWidth={"100%"}
+            docHeight={"100%"}
             selectedDocs={[orderPreviewPdf]}
             fileStoreId={orderFileStore}
             tenantId={tenantId}
@@ -191,7 +192,7 @@ function OrderReviewModal({
           ...order,
           additionalDetails: {
             ...order.additionalDetails,
-            businessOfTheDay: businessDay,
+            // businessOfTheDay: businessDay,
           },
         };
         await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
@@ -212,14 +213,14 @@ function OrderReviewModal({
   return (
     <React.Fragment>
       <Modal
-        headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
+        headerBarMain={<Heading label={t("CS_PREVIEW_ORDER")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("BULK_EDIT")}
         actionCustomLabel={showActions && t("ADD_SIGNATURE")}
         actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
-        isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
-        isCustomButtonDisabled={isLoading || isUpdateLoading || !businessDay}
-        isDisabled={isLoading || isUpdateLoading || !businessDay}
+        isBackButtonDisabled={isLoading || isUpdateLoading}
+        isCustomButtonDisabled={isLoading || isUpdateLoading}
+        isDisabled={isLoading || isUpdateLoading}
         actionCancelOnSubmit={handleReviewGoBack}
         actionCustomLabelSubmit={handleAddSignature}
         customActionStyle={{ border: "1px solid #007E7E", backgroundColor: "white" }}
@@ -228,14 +229,14 @@ function OrderReviewModal({
         className={"review-order-modal"}
       >
         <div className="review-order-body-main">
-          <div className="review-order-modal-list-div">
+          {/* <div className="review-order-modal-list-div">
             <div className="review-order-type-side-stepper">
               <h1> {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)} </h1>
             </div>
-          </div>
+          </div> */}
           <div className="review-order-modal-document-div" style={{ padding: 0, overflow: "auto" }}>
             {showDocument}
-            <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+            {/* <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
             <div style={{ display: "flex", gap: "10px" }}>
               <TextInput
                 className="field desktop-w-full"
@@ -257,7 +258,7 @@ function OrderReviewModal({
                   onButtonClick={handleUpdateBusinessOfDayEntry}
                 />
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {showErrorToast && (

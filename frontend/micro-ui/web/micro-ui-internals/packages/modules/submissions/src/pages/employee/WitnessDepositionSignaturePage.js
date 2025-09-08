@@ -197,6 +197,29 @@ const WitnessDepositionSignaturePage = () => {
     }
   }, [showErrorToast]);
 
+  const handleMockESign = async () => {
+    try {
+      setLoader(true);
+
+      const payload = {
+        tenantId,
+        artifactNumber: artifactNumber,
+        partyType: witnessDepositionDetails?.sourceType,
+        mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
+        fileStoreId: fileStoreId,
+      };
+      sessionStorage.removeItem("fileStoreId");
+      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      setShowSignatureModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating witness deposition:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
   }
@@ -217,6 +240,7 @@ const WitnessDepositionSignaturePage = () => {
             alignItems: "center",
             justifyContent: "center",
           }}
+          className="submit-loader"
         >
           <Loader />
         </div>
@@ -279,6 +303,7 @@ const WitnessDepositionSignaturePage = () => {
           signPlaceHolder={"Deponent"}
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
+          handleMockESign={handleMockESign}
         />
       )}
       {showSuccessModal && (

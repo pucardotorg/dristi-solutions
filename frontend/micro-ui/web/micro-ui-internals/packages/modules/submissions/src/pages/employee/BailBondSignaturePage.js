@@ -246,6 +246,27 @@ const BailBondSignaturePage = () => {
     }
   }, [showErrorToast]);
 
+  const handleMockESign = async () => {
+    try {
+      setLoader(true);
+      const payload = {
+        tenantId,
+        bailId: bailbondId,
+        mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
+        fileStoreId: fileStoreId,
+      };
+      sessionStorage.removeItem("fileStoreId");
+      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
+      setShowSignatureModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   if (isBailDataLoading || isBailBondLoading) {
     return <Loader />;
   }
@@ -327,6 +348,7 @@ const BailBondSignaturePage = () => {
           fileStoreId={fileStoreId}
           signPlaceHolder={signingUserDetails?.placeHolder}
           mobileNumber={signingUserDetails?.mobileNumber}
+          handleMockESign={handleMockESign}
         />
       )}
       {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}

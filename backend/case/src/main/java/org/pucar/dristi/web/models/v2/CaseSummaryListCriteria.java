@@ -91,4 +91,7 @@ public class CaseSummaryListCriteria {
     @Valid
     private Pagination pagination = null;
 
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = null;
+
 }

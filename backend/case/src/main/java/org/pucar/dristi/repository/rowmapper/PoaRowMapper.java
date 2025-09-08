@@ -8,12 +8,14 @@ import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.POAHolder;
 import org.pucar.dristi.web.models.PoaParty;
+import org.pucar.dristi.web.models.v2.PoaPartyV2;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -43,7 +45,7 @@ public class PoaRowMapper implements ResultSetExtractor<Map<UUID, List<POAHolder
                         .caseId(rs.getString("case_id"))
                         .poaType(rs.getString("poa_type"))
                         .name(rs.getString("name"))
-                        .representingLitigants(getObjectListFromJson(rs.getString("representing_litigants"), new TypeReference<List<PoaParty>>() {}))
+                        .representingLitigants(getObjectListFromJson(rs.getString("representing_litigants")))
                         .hasSigned(rs.getBoolean("hasSigned"))
                         .auditDetails(auditdetails)
                         .build();
@@ -70,18 +72,17 @@ public class PoaRowMapper implements ResultSetExtractor<Map<UUID, List<POAHolder
         return poaHolderMap;
     }
 
-    public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {
+    public List<PoaParty> getObjectListFromJson(String json) {
         if (json == null || json.trim().isEmpty()) {
-            try {
-                return objectMapper.readValue("[]", typeRef); // Return an empty object of the specified type
-            } catch (IOException e) {
-                throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
-            }
+            return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(json, typeRef);
+            List<PoaParty> poaPartyList = objectMapper.readValue(json, new TypeReference<List<PoaParty>>() {});
+            return poaPartyList.stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getIsActive()))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
-            throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+            throw new CustomException("Failed to convert JSON to List<PoaParty>: {}" , e.getMessage());
         }
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.service.HearingService;
@@ -12,6 +13,8 @@ import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.cases.CaseRequest;
+import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
 import org.pucar.dristi.web.models.pendingtask.PendingTask;
@@ -63,6 +66,19 @@ public class HearingUpdateConsumer {
 
     }
 
+    @KafkaListener(topics = {"${lpr.case.details.update.kafka.topic}"})
+    public void updateCaseReferenceConsumerLpr(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received case reference number details on lpr update topic: {}", topic);
+            CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
+            hearingService.updateCaseReferenceHearingAfterLpr(caseRequest);
+            log.info("Updated case reference number for hearings after lpr update");
+        } catch (IllegalArgumentException e) {
+            log.error("Error while listening to case reference number details topic: {}: {}", topic, e.getMessage());
+        }
+
+    }
+
     @KafkaListener(topics = {"${kafka.topics.hearing.update}"})
     public void updateHearingConsumer(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
@@ -73,6 +89,13 @@ public class HearingUpdateConsumer {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
             }
             if (hearingStatus.equalsIgnoreCase(COMPLETED)) {
+                String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
+                        ? hearingRequest.getHearing().getFilingNumber().get(0)
+                        : null;
+                String cnrNumber = hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
+                        ? hearingRequest.getHearing().getCnrNumbers().get(0)
+                        : null;
+                hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
                 checkAndCreatePendingTasks(hearingRequest);
             }
             log.info("Updated hearings");

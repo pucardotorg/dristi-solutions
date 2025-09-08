@@ -295,4 +295,12 @@ public class CaseApiController {
         CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v1/_updateLPRDetails")
+    public ResponseEntity<CaseResponse> updateLPRDetails(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
+        CourtCase cases = caseService.updateLPRDetails(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
 }

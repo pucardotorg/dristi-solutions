@@ -71,9 +71,11 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         // case search and update
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
 
         // add validation here
         CourtCase courtCase = cases.get(0);
@@ -146,7 +148,8 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
 
                 // create pending task
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
+                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_WARRANT)
@@ -178,16 +181,6 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         return null;
     }
 
-    @Override
-    public boolean supportsCommon(OrderRequest orderRequest) {
-        return false;
-    }
-
-    @Override
-    public CaseDiaryEntry execute(OrderRequest request) {
-        return null;
-    }
-
     private boolean isWarrantForAccusedWitness(Order order) {
         String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
         try {
@@ -204,6 +197,17 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
 
         return false;
     }
+
+    @Override
+    public boolean supportsCommon(OrderRequest orderRequest) {
+        return false;
+    }
+
+    @Override
+    public CaseDiaryEntry execute(OrderRequest request) {
+        return null;
+    }
+
 }
 
 

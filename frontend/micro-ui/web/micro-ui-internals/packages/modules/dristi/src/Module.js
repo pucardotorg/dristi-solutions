@@ -93,6 +93,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isLoading) {
     return <Loader />;
@@ -107,7 +108,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    if (isJudge || isTypist || isBenchClerk) {
+    if (isJudge || isTypist || isBenchClerk || isCourtStaff) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }

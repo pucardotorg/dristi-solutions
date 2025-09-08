@@ -207,7 +207,7 @@ const PaymentDemandModal = ({
           status: "",
           filingNumber: caseDetails?.filingNumber,
           cmpNumber: caseDetails?.cmpNumber,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber,
           taskDescription: comments || null,
           taskType: "GENERIC",
           duedate: dueDateTimestamp,
@@ -222,7 +222,7 @@ const PaymentDemandModal = ({
               },
             },
           },
-          assignedTo: [{ uuid: selectedParty?.partyUuid }],
+          assignedTo: [{ uuid: selectedParty?.partyUuid }, ...(selectedParty?.poaUuid ? [{ uuid: selectedParty?.poaUuid }] : [])],
         },
         tenantId,
       });

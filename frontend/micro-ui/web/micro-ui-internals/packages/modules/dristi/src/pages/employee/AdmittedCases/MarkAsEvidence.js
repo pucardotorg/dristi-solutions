@@ -44,20 +44,6 @@ const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t)
 
 const handleUpdateBusinessOfDayEntry = async (evidenceDetails, currentDiaryEntry, businessOfTheDay, history) => {
   try {
-    let oldAdiaryEntry = currentDiaryEntry;
-    if (!currentDiaryEntry) {
-      oldAdiaryEntry = await DRISTIService.aDiaryEntrySearch(
-        {
-          criteria: {
-            referenceId: evidenceDetails?.artifactNumber,
-            tenantId: evidenceDetails?.tenantId,
-            courtId: evidenceDetails?.courtId,
-            caseId: evidenceDetails?.caseId,
-          },
-        },
-        {}
-      );
-    }
     await DRISTIService.aDiaryEntryUpdate(
       {
         diaryEntry: {
@@ -172,6 +158,8 @@ const MarkAsEvidence = ({
   const history = useHistory();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [witnessTag, setWitnessTag] = useState(null);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
   const isFormValid = useMemo(() => {
     return witnessTag !== null && evidenceNumber?.trim().length > 0;
   }, [witnessTag, evidenceNumber]);
@@ -265,7 +253,11 @@ const MarkAsEvidence = ({
           Evidence: {
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
-            caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+            caseNumber:
+              (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+              caseDetails?.courtCaseNumber ||
+              caseDetails?.cmpNumber ||
+              caseDetails?.filingNumber,
             markedThrough: witnessTag?.code,
           },
         },
@@ -667,13 +659,19 @@ const MarkAsEvidence = ({
           });
         }
       } else if (stepper === 1 && isSigned) {
-        if (sessionStorage.getItem("fileStoreId") === null) {
+        if (!mockESignEnabled && sessionStorage.getItem("fileStoreId") === null) {
           showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
           return;
         }
+        let fileStore = "";
+        if (mockESignEnabled) {
+          fileStore = sealFileStoreId;
+        } else {
+          fileStore = sessionStorage.getItem("fileStoreId");
+        }
         const seal = {
           documentType: "SIGNED",
-          fileStore: sessionStorage.getItem("fileStoreId"),
+          fileStore: fileStore,
           additionalDetails: {
             documentName: "markAsEvidenceSigned.pdf",
           },
@@ -698,7 +696,11 @@ const MarkAsEvidence = ({
                   businessOfDay: businessOfDay,
                   tenantId: tenantId,
                   entryDate: new Date().setHours(0, 0, 0, 0),
-                  caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+                  caseNumber:
+                    (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    caseDetails?.courtCaseNumber ||
+                    caseDetails?.cmpNumber ||
+                    caseDetails?.filingNumber,
                   referenceId: artifactNumber,
                   referenceType: "Documents",
                   hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
@@ -774,6 +776,13 @@ const MarkAsEvidence = ({
         if (!file) {
           throw new Error("Failed to generate PDF file store ID");
         }
+      }
+
+      if (mockESignEnabled) {
+        setIsSigned(true);
+        setLoader(false);
+        setSealFileStoreId(file);
+        return;
       }
 
       const updatedEvidenceDetails = {

@@ -28,7 +28,7 @@ async function processTaskProcesses(
           "ISSUE_SUMMON",
           "ISSUE_NOTICE",
           "ISSUE_WARRANT",
-          "ISSUE_PROCLAMATION", 
+          "ISSUE_PROCLAMATION",
           "ISSUE_ATTACHMENT",
           "OTHER",
           "ABATED",
@@ -45,7 +45,9 @@ async function processTaskProcesses(
         searchText:
           courtCase.cnrNumber ||
           courtCase.cmpNumber ||
-          courtCase.courtCaseNumber,
+          (courtCase?.isLPRCase
+            ? courtCase?.lprNumber
+            : courtCase.courtCaseNumber),
         courtId: courtCase.courtId,
         tenantId,
       },
@@ -70,11 +72,17 @@ async function processTaskProcesses(
       (task) => task.orderType === "PROCLAMATION"
     );
     const attachmentTasks = taskList.filter(
-        (task) => task.orderType === "ATTACHMENT"
+      (task) => task.orderType === "ATTACHMENT"
     );
 
     // Concatenate groups to get final ordered list
-    const orderedTaskList = [...noticeTasks, ...summonsTasks, ...warrantsTasks, ...proclamationTasks, ...attachmentTasks];
+    const orderedTaskList = [
+      ...noticeTasks,
+      ...summonsTasks,
+      ...warrantsTasks,
+      ...proclamationTasks,
+      ...attachmentTasks,
+    ];
 
     if (orderedTaskList.length !== 0) {
       const processesLineItems = await Promise.all(

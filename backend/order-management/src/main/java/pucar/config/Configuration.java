@@ -117,6 +117,9 @@ public class Configuration {
     @Value("${dristi.case.add.witness.endpoint}")
     private String addWitnessEndPoint;
 
+    @Value("${dristi.case.update.lpr.details.endpoint}")
+    private String updateLprDetailsEndPoint;
+
     //Hearing config
     @Value("${dristi.hearing.host}")
     private String HearingHost;
@@ -194,4 +197,14 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
 }

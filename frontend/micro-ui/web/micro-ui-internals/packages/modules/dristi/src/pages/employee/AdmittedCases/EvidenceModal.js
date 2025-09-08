@@ -18,10 +18,10 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -42,6 +42,7 @@ const EvidenceModal = ({
   currentDiaryEntry,
   artifact,
   setShowMakeAsEvidenceModal,
+  isApplicationAccepted,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -76,6 +77,7 @@ const EvidenceModal = ({
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
+  const [reasonOfApplication, setReasonOfApplication] = useState("");
 
   const setData = (data) => {
     setFormData(data);
@@ -844,6 +846,12 @@ const EvidenceModal = ({
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const caseNumber =
+        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        caseData?.courtCaseNumber ||
+        caseData?.cmpNumber ||
+        caseData?.filingNumber;
       const formdata = {
         orderType: {
           code: orderType,
@@ -903,6 +911,8 @@ const EvidenceModal = ({
                     hearingNumber: compositeOrderObj?.hearingNumber,
                     linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
                     applicationNumber: compositeOrderObj?.applicationNumber,
+                    applicationCMPNumber: applicationCMPNumber,
+                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
                 },
               },
@@ -910,7 +920,15 @@ const EvidenceModal = ({
                 orderType: orderType,
                 orderSchema: {
                   additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
+                  orderDetails: {
+                    ...(parties || {}),
+                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+                    applicationNumber: refApplicationId,
+                    applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
+                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
+                  },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
                   }),
@@ -955,7 +973,14 @@ const EvidenceModal = ({
                 orderType: orderType,
                 orderSchema: {
                   additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
+                  orderDetails: {
+                    ...(parties || {}),
+                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+                    applicationNumber: refApplicationId,
+                    applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
+                  },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
                   }),
@@ -1042,7 +1067,15 @@ const EvidenceModal = ({
             },
             documents: [],
             additionalDetails: additionalDetails,
-            ...(parties && { orderDetails: parties }),
+            orderDetails: {
+              ...(parties || {}),
+              ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+              applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+              applicationNumber: refApplicationId,
+              applicationCMPNumber: applicationCMPNumber,
+              caseNumber: caseNumber,
+              ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
+            },
             ...(hearingNumber && {
               hearingNumber: hearingNumber,
             }),
@@ -1298,6 +1331,12 @@ const EvidenceModal = ({
       fetchRecursiveData(documentSubmission?.[0]?.applicationList);
     }
   }, [artifact, currentDiaryEntry, documentSubmission, fetchRecursiveData]);
+
+  useEffect(() => {
+    if (isApplicationAccepted && documentSubmission?.[0]?.applicationList?.applicationType !== "CORRECTION_IN_COMPLAINANT_DETAILS") {
+      setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
+    }
+  }, [documentSubmission, isApplicationAccepted]);
 
   // const customLabelShow = useMemo(() => {
   //   return (
@@ -1699,6 +1738,10 @@ const EvidenceModal = ({
           setShow={setShow}
           handleAction={handleApplicationAction}
           disableCheckBox={isMandatoryOrderCreation}
+          setReasonOfApplication={setReasonOfApplication}
+          reasonOfApplication={reasonOfApplication}
+          handleBack={handleBack}
+          applicationType={documentSubmission?.[0]?.applicationList?.applicationType}
         />
       )}
       {showConfirmationModal && !showSuccessModal && modalType === "Documents" && (

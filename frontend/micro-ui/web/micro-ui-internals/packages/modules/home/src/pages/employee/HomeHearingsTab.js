@@ -10,6 +10,7 @@ import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/se
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import useInboxSearch from "../../hooks/useInboxSearch";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -72,6 +73,7 @@ const HomeHearingsTab = ({
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 
   const userType = useMemo(() => {
@@ -240,13 +242,22 @@ const HomeHearingsTab = ({
             { homeFilteredData: filters }
           );
         } else {
+          const response = await DRISTIService.getDraftOrder(
+            {
+              hearingDraftOrder: {
+                filingNumber: hearingDetails?.filingNumber,
+                tenantId: hearingDetails?.tenantId,
+                hearingNumber: hearingDetails?.hearingNumber,
+              },
+            },
+            {}
+          );
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            { openOrder: true, homeFilteredData: filters }
+            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         }
         return;
-      } else if (isBenchClerk) {
+      } else if (isBenchClerk || isCourtRoomManager) {
         if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
           try {
             setLoader(true);
@@ -285,42 +296,12 @@ const HomeHearingsTab = ({
             setLoader(false);
             showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
           }
-        } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
-          //for bench clerk action he will have end hearing instead of edit icon
-          try {
-            setLoader(true);
-            const orderResponse = await ordersService.searchOrder(
-              {
-                tenantId: hearingDetails?.tenantId,
-                criteria: {
-                  tenantID: hearingDetails?.tenantId,
-                  filingNumber: hearingDetails?.filingNumber,
-                  orderType: "SCHEDULING_NEXT_HEARING",
-                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                  ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
-                },
-              },
-              { tenantId: hearingDetails?.tenantId }
-            );
-            if (
-              orderResponse?.list?.length > 0 &&
-              orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
-            ) {
-              setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
-              setLoader(false);
-            } else {
-              setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
-              setLoader(false);
-            }
-          } catch (e) {
-            console.log(e);
-            setLoader(false);
-            showToast("error", t("ISSUE_IN_UPDATE_HEARING"), 5000);
-          }
+        } else if ((isBenchClerk || isCourtRoomManager) && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+          setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
         }
       }
     },
-    [history, isBenchClerk, isJudge, isTypist, t]
+    [history, isBenchClerk, isCourtRoomManager, isJudge, isTypist, t]
   );
 
   const tableRows = useMemo(() => {
@@ -381,36 +362,7 @@ const HomeHearingsTab = ({
           label: "End Hearing",
           id: "end_hearing",
           action: async () => {
-            try {
-              setLoader(true);
-              const orderResponse = await ordersService.searchOrder(
-                {
-                  tenantId: hearingDetails?.tenantId,
-                  criteria: {
-                    tenantID: hearingDetails?.tenantId,
-                    filingNumber: hearingDetails?.filingNumber,
-                    orderType: "SCHEDULING_NEXT_HEARING",
-                    status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                    ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
-                  },
-                },
-                { tenantId: hearingDetails?.tenantId }
-              );
-              if (
-                orderResponse?.list?.length > 0 &&
-                orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
-              ) {
-                setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
-                setLoader(false);
-              } else {
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
-                setLoader(false);
-              }
-            } catch (e) {
-              console.log(e);
-              setLoader(false);
-              showToast("error", t("ISSUE_IN_END_HEARING"), 5000);
-            }
+            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
           },
         });
       }
@@ -443,8 +395,7 @@ const HomeHearingsTab = ({
                 (orderResponse?.list?.length > 0 &&
                   orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber))
               ) {
-                setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: false, currentHearing: hearingDetails });
-
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
                 await hearingService
                   ?.searchHearings(
                     {
@@ -606,7 +557,7 @@ const HomeHearingsTab = ({
                     }}
                     className="edit-icon"
                   >
-                    {isBenchClerk ? (
+                    {isBenchClerk || isCourtRoomManager ? (
                       hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
                         <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
                       ) : (
@@ -617,7 +568,7 @@ const HomeHearingsTab = ({
                     )}
                   </div>
                 )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && (isBenchClerk || isCourtRoomManager) && (
                   <div
                     style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
                     onClick={() => {
@@ -919,7 +870,6 @@ const HomeHearingsTab = ({
             />
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
-          hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
             try {
               setLoader(true);
@@ -1033,18 +983,14 @@ const HomeHearingsTab = ({
           className={"confirm-end-hearing-modal"}
         >
           <div style={{ margin: "16px 0px" }}>
-            {!showEndHearingModal.isNextHearingDrafted ? (
-              <p>{t("CS_CASE_AN_ORDER_BOTD_FIRST")}</p>
-            ) : (
-              <CheckBox
-                onChange={(e) => {
-                  setPassOver(e.target.checked);
-                }}
-                label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
-                checked={passOver}
-                disable={false}
-              />
-            )}
+            <CheckBox
+              onChange={(e) => {
+                setPassOver(e.target.checked);
+              }}
+              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+              checked={passOver}
+              disable={false}
+            />
           </div>
         </Modal>
       )}

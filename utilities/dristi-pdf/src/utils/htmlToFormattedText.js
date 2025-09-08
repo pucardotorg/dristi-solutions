@@ -41,10 +41,12 @@ function htmlToFormattedText(input) {
       ],
     });
 
-    return result;
+    // Trim trailing whitespace and empty lines
+    return result.replace(/\s+$/g, "");
   }
 
-  return input;
+  // Trim trailing whitespace and empty lines for plain text as well
+  return input.replace(/\s+$/g, "");
 }
 
 module.exports = {

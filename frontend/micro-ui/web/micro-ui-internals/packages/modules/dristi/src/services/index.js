@@ -198,6 +198,24 @@ export const DRISTIService = {
       params,
     });
   },
+  getDraftOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.getDraftOrder,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  createOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.ordersCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   searchOrders: (data, params) => {
     return Request({
       url: Urls.dristi.ordersSearch,
@@ -489,6 +507,14 @@ export const DRISTIService = {
       url: Urls.dristi.getMarkAsEvidencePdf,
       useCache: false,
       userService: false,
+      data,
+      params,
+    }),
+  searchTask: (data, params) =>
+    Request({
+      url: Urls.dristi.taskSearch,
+      useCache: true,
+      userService: true,
       data,
       params,
     }),

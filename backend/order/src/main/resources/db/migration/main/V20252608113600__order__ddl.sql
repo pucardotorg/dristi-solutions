@@ -1,0 +1,2 @@
+ALTER TABLE dristi_orders
+ALTER COLUMN itemText TYPE VARCHAR;

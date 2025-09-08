@@ -1,0 +1,54 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "INBOX.InboxSortConfiguration",
+  "uniqueIdentifier": "open-hearing-index",
+  "data": {
+    "sortBy": [
+      {
+        "code": "STATUS_ORDER",
+        "path": "Data.hearingDetails.statusOrder",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 0
+      },
+      {
+        "code": "TYPE_SORTING_SCRIPT",
+        "script": "{\"_script\": {\"type\": \"string\",\"script\": {\"source\": \"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { def prefix = parts[0]; if (prefix == 'ST') { return '1_ST'; } else if (prefix == 'CMP') { return '2_CMP'; } else if (prefix == 'LP') { return '3_LP'; } else { return '9_' + prefix; } } else { return 'z_empty'; } } else { return 'z_null'; }\"},\"order\": \"asc\"}}",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 0
+      },
+      {
+        "code": "YEAR_SORTING_SCRIPT",
+        "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 1
+      },
+      {
+        "code": "NUMBER_SORTING_SCRIPT",
+        "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 2
+      },
+      {
+        "code": "CASE_FILING_DATE_SCRIPT",
+        "script": "{ \"Data.hearingDetails.caseFilingDate\": { \"order\": \"desc\" } }",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 3
+      },
+      {
+        "code": "HEARING_TYPE_ORDER_SCRIPT",
+        "script": "{ \"Data.hearingDetails.hearingTypeOrder\": { \"order\": \"asc\" } }",
+        "isActive": true,
+        "orderType": "ASC",
+        "orderPriority": 4
+      }
+    ],
+    "index": "open-hearing-index",
+    "module": "Hearing Service"
+  },
+  "isActive": true
+}

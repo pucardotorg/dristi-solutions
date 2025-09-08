@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -221,7 +220,7 @@ public class OrderUtil {
         log.info("Updated demand status to CANCELLED for consumer codes: {}", consumerCodes);
     }
 
-    private OrderListResponse getOrders(OrderSearchRequest searchRequest) {
+    public OrderListResponse getOrders(OrderSearchRequest searchRequest) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getOrderSearchEndPoint());
         try {
@@ -232,6 +231,22 @@ public class OrderUtil {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
             return null;
         }
+    }
+
+    public OrderResponse createOrder(OrderRequest orderRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderCreateEndPoint());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, orderRequest);
+            orderResponse = mapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
     }
 
     public List<String> extractConsumerCode(Task task, RequestInfo requestInfo) {

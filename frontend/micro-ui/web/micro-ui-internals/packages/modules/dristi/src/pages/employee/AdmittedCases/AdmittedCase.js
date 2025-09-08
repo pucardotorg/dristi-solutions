@@ -770,7 +770,7 @@ const AdmittedCases = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber, caseDetails?.lprNumber]?.filter(Boolean),
                     ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
@@ -1435,7 +1435,7 @@ const AdmittedCases = () => {
     if (newWitnesToast) {
       showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
     }
-  }, [newWitnesToast, t, showToast]);
+  }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
     if (applicationData && applicationNumber) {
@@ -1611,7 +1611,7 @@ const AdmittedCases = () => {
       },
       {
         key: "CS_CCST",
-        value: getDefaultValue(caseDetails?.courtCaseNumber),
+        value: getDefaultValue(caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber),
       },
       {
         key: "SUBMITTED_ON",
@@ -1680,6 +1680,11 @@ const AdmittedCases = () => {
           },
         };
         if (generateOrder) {
+          const caseNumber =
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            caseDetails?.courtCaseNumber ||
+            caseDetails?.cmpNumber ||
+            caseDetails?.filingNumber;
           const reqbody = {
             order: {
               createdDate: null,
@@ -1706,7 +1711,10 @@ const AdmittedCases = () => {
                 formdata,
               },
               ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-                orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
+                orderDetails: {
+                  parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+                  caseNumber: caseNumber,
+                },
               }),
             },
           };
@@ -1766,7 +1774,7 @@ const AdmittedCases = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.courtCaseNumber,
+            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
@@ -2207,7 +2215,7 @@ const AdmittedCases = () => {
           order: {
             createdDate: null,
             tenantId: tenantId,
-            hearingNumber: hearingNumber,
+            // hearingNumber: hearingNumber,
             filingNumber: filingNumber,
             cnrNumber: cnrNumber,
             statuteSection: {

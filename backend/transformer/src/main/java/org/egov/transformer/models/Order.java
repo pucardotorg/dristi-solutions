@@ -54,6 +54,10 @@ public class Order {
     @Valid
     private String hearingNumber = null;
 
+    @JsonProperty("scheduledHearingNumber")
+    @Valid
+    private String scheduledHearingNumber = null;
+
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
@@ -105,6 +109,18 @@ public class Order {
 
     @JsonProperty("compositeItems")
     private Object compositeItems = null;
+
+    @JsonProperty("attendance")
+    private Object attendance = null;
+
+    @JsonProperty("itemText")
+    private String itemText = null;
+
+    @JsonProperty("purposeOfNextHearing")
+    private String purposeOfNextHearing = null;
+
+    @JsonProperty("nextHearingDate")
+    private Long nextHearingDate = null;
 
     @JsonProperty("orderTitle")
     private String orderTitle = null;

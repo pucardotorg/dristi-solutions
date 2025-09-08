@@ -120,6 +120,9 @@ public class ApplicationEnrichment {
         caseSearchRequest.setRequestInfo(requestInfo);
         CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
+        if(APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS.equalsIgnoreCase(application.getApplicationType())){
+            caseSearchRequest.setFlow(FLOW_JAC);
+        }
         return caseSearchRequest;
     }
 

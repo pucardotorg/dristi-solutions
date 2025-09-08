@@ -9,7 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
-const {logger} = require("../logger");
+const { logger } = require("../logger");
 
 function formatToIndianCurrency(number) {
   if (!number) return "";
@@ -68,7 +68,8 @@ async function orderProclamation(
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const reasonForProclamation =
-      order?.additionalDetails?.formdata?.proclamationText?.proclamationText || "";
+      order?.additionalDetails?.formdata?.proclamationText?.proclamationText ||
+      "";
     const personName =
       order?.orderDetails?.respondentName?.name ||
       order?.orderDetails?.respondentName ||
@@ -103,7 +104,13 @@ async function orderProclamation(
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     // Prepare data for PDF generation
     const data = {
       Data: [
@@ -165,7 +172,12 @@ async function orderProclamation(
         return renderError(res, "Failed to send PDF response", 500, err);
       });
   } catch (ex) {
-    return renderError(res, "Failed to create PDF for proclamation order", 500, ex);
+    return renderError(
+      res,
+      "Failed to create PDF for proclamation order",
+      500,
+      ex
+    );
   }
 }
 

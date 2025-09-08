@@ -402,6 +402,9 @@ public class Configuration {
 	@Value("${kafka.case.update.last.modified.time}")
 	private String caseUpdateLastModifiedTimeTopic;
 
+	@Value("${egov.poa.join.case.kafka.topic}")
+	private String poaJoinCaseKafkaTopic;
+
 	// evidence
 	@Value("${egov.evidence.host}")
 	private String evidenceServiceHost;
@@ -411,5 +414,21 @@ public class Configuration {
 
 	@Value("${egov.evidence.search.path}")
 	private String evidenceServiceSearchPath;
+
+	// LPR config
+	@Value("${egov.idgen.lprConfig}")
+	private String lprConfig;
+
+	@Value("${egov.idgen.lprFormat}")
+	private String lprFormat;
+
+	@Value("${lpr.case.details.update.kafka.topic}")
+	private String lprCaseDetailsUpdateTopic;
+
+    @Value("${lpr.stage}")
+    private String lprStage;
+
+    @Value("${lpr.sub.stage}")
+    private String lprSubStage;
 
 }

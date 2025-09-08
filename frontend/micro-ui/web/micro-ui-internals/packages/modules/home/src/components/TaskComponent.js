@@ -24,6 +24,7 @@ export const CaseWorkflowAction = {
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
+const LITIGANT_REVIEW_TASK_NAME = "Review Litigant Details Change";
 const TasksComponent = ({
   taskType,
   setTaskType,
@@ -54,7 +55,9 @@ const TasksComponent = ({
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudgeOrBenchClerk = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK");
+  const isJudgeOrBenchClerk = userInfo?.roles?.some(
+    (role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK" || role.code === "COURT_ROOM_MANAGER"
+  );
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
@@ -177,7 +180,7 @@ const TasksComponent = ({
   );
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -233,6 +236,7 @@ const TasksComponent = ({
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
           compositeOrderObj: compositeOrderObj,
+          isApplicationAccepted: isApplicationAccepted,
         });
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
@@ -332,9 +336,17 @@ const TasksComponent = ({
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
+      const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
-      const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
+      const defaultObj = {
+        referenceId: updateReferenceId,
+        id: caseId,
+        cnrNumber,
+        filingNumber,
+        caseTitle,
+        ...(applicationType && { applicationType }),
+      };
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
@@ -357,6 +369,10 @@ const TasksComponent = ({
       pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
       });
+
+      if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+        searchParams.set("applicationType", applicationType);
+      }
       const redirectUrl = isCustomFunction
         ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
         : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
@@ -387,6 +403,7 @@ const TasksComponent = ({
           litigantIndId,
           dateOfApplication,
           uniqueId,
+          applicationType,
         },
         isCustomFunction,
         referenceId,
@@ -395,11 +412,17 @@ const TasksComponent = ({
     });
 
     const filteredTasks = tasks.filter((task) => {
-      if (isCourtRoomManager) {
-        // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
+      // if (isCourtRoomManager) {
+      //   // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
 
-        return task?.entityType === "bail bond" ? true : false;
-      } else return true;
+      //   return task?.entityType === "bail bond" ? true : false;
+      // } else return true;
+
+      const passesRoleFilter = isCourtRoomManager ? task?.entityType === "bail bond" : true;
+      const excludeForComposite = isApplicationCompositeOrder
+        ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
+        : true;
+      return passesRoleFilter && excludeForComposite;
     });
     if (taskType?.code)
       return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
@@ -417,6 +440,7 @@ const TasksComponent = ({
     taskTypeCode,
     todayDate,
     userType,
+    isApplicationCompositeOrder,
   ]);
 
   const submitResponse = useCallback(
@@ -652,6 +676,29 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
+
+  if (isApplicationCompositeOrder) {
+    if (pendingTasks?.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="task-section">
+        <PendingTaskAccordion
+          pendingTasks={pendingTasks}
+          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+          accordionHeader={"ALL_OTHER_TASKS"}
+          t={t}
+          totalCount={pendingTasks?.length}
+          setShowSubmitResponseModal={setShowSubmitResponseModal}
+          setResponsePendingTask={setResponsePendingTask}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          isApplicationCompositeOrder={isApplicationCompositeOrder}
+        />
+      </div>
+    );
+  }
+
   return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>

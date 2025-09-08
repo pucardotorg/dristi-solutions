@@ -21,8 +21,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-    const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-    const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -42,20 +43,19 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     setPurposeModalData(caseDetails);
     setPurposeModalOpen(true);
   };
-  
+
   const updatedPreHearingConfig = useMemo(() => {
     const configCopy = structuredClone(preHearingConfig);
-    
+
     // Filter out Actions column for judge, bench clerk, and typist
-    if (isJudge || isBenchClerk || isTypist) {
+    if (isJudge || isBenchClerk || isTypist || isCourtRoomManager) {
       configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
-        column => column.label !== "Actions"
+        (column) => column.label !== "Actions"
       );
     }
-    
-    return configCopy;
-  }, [isJudge, isBenchClerk, isTypist]);
 
+    return configCopy;
+  }, [isJudge, isBenchClerk, isTypist, isCourtRoomManager]);
 
   const updatedConfig = useMemo(() => {
     const configCopy = structuredClone(updatedPreHearingConfig);

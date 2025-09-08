@@ -195,7 +195,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
               options: ["inline", "list"],
               inline: {
                 inDropdown: false,
-                options: ["bold", "italic", "underline"],
+                options: ["bold", "italic"],
               },
               list: {
                 inDropdown: false,

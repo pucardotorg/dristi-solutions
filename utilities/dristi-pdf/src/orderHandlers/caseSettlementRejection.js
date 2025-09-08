@@ -156,7 +156,13 @@ async function caseSettlementRejection(
       order.orderDetails.isSettlementImplemented === "ES_COMMON_YES"
         ? "Yes"
         : "No";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {
