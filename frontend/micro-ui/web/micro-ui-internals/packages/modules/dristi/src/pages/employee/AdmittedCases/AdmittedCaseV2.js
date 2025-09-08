@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -2212,9 +2212,17 @@ const AdmittedCaseV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
-  const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
-    hearingDetails?.HearingList,
-  ]);
+  // const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
+  //   hearingDetails?.HearingList,
+  // ]);
+
+  const lastInProgressHearing = useRef(null);
+
+  const currentInProgressHearing = useMemo(() => {
+    const found = hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS");
+    if (found) lastInProgressHearing.current = found;
+    return found || lastInProgressHearing.current;
+  }, [hearingDetails?.HearingList]);
 
   const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
     hearingDetails?.HearingList,
@@ -2556,6 +2564,9 @@ const AdmittedCaseV2 = () => {
   }, [filingNumber, history]);
 
   const hideNextHearingButton = useMemo(() => {
+    if (!data || data.length === 0 || !currentInProgressHearing) {
+      return false;
+    }
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
     return index === -1 || validData?.length === 1;
@@ -2611,6 +2622,33 @@ const AdmittedCaseV2 = () => {
     [currentInProgressHearing?.hearingId, data, history, userType]
   );
 
+  const handleCaseTransition = async (actionType) => {
+    try {
+      setApiCalled(true);
+
+      await hearingService.updateHearings(
+        {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          hearing: {
+            ...currentInProgressHearing,
+            workflow: {
+              action: actionType === "PASS_OVER_START_NEXT_HEARING" ? "PASS_OVER" : "CLOSE",
+            },
+          },
+          hearingType: "",
+          status: "",
+        },
+        { applicationNumber: "", cnrNumber: "" }
+      );
+
+      nextHearing(true);
+    } catch (error) {
+      console.error("Error in updating hearing status", error);
+    } finally {
+      setApiCalled(false);
+    }
+  };
+
   const handleEmployeeAction = useCallback(
     async (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
@@ -2635,6 +2673,8 @@ const AdmittedCaseV2 = () => {
         setShowBailBondModal(true);
       } else if (option.value === "ADD_WITNESS") {
         setShowAddWitnessModal(true);
+      } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
+        handleCaseTransition(option.value);
       }
     },
     [
@@ -3567,17 +3607,36 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {(isBenchClerk || isCourtRoomManager) && (
+                              <Button
+                                variation={"primary"}
+                                label={t("CS_CASE_PASS_OVER_START_NEXT_HEARING")}
+                                onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
+                                style={{ boxShadow: "none" }}
+                                isDisabled={apiCalled}
+                              ></Button>
+                            )}
                             {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
                               <Button
                                 variation={"primary"}
+                                isDisabled={apiCalled}
                                 label={t(
-                                  isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                                  isBenchClerk || isCourtRoomManager
+                                    ? "CS_CASE_END_START_NEXT_HEARING"
+                                    : isJudge || isTypist
+                                    ? "CS_CASE_NEXT_HEARING"
+                                    : ""
                                 )}
                                 children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value:
+                                      isBenchClerk || isCourtRoomManager
+                                        ? "CS_CASE_END_START_NEXT_HEARING"
+                                        : isJudge || isTypist
+                                        ? "NEXT_HEARING"
+                                        : "",
                                   })
                                 }
                                 style={{
