@@ -260,7 +260,6 @@ const GenerateOrdersV2 = () => {
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const [itemTextNull, setItemTextNull] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
@@ -2292,7 +2291,7 @@ const GenerateOrdersV2 = () => {
           updatedOrder = {
             ...updatedOrderData,
             compositeItems: updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled),
-            itemText: itemTextNull ? null : updatedOrderData?.itemText,
+            itemText: updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
             t,
@@ -2683,7 +2682,7 @@ const GenerateOrdersV2 = () => {
   );
 
   const handleOrderTypeChange = (index, orderType) => {
-    if(!orderType){
+    if (!orderType) {
       return;
     }
     const orderTypeValidationObj = checkOrderValidation(orderType?.code, index);
@@ -2781,9 +2780,6 @@ const GenerateOrdersV2 = () => {
           },
         ];
         orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
-        setItemTextNull(true);
-      } else {
-        setItemTextNull(false);
       }
 
       return {
