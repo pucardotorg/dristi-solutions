@@ -184,7 +184,7 @@ public class OrderRegistrationEnrichment {
             String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString(),orderRequest.getRequestInfo(),orderRequest.getOrder().getTenantId());
             if (itemTextMdms != null) {
                 String itemText = orderRequest.getOrder().getItemText();
-                if ("<p></p>\n".equalsIgnoreCase(itemText))
+                if (itemText==null)
                  orderRequest.getOrder().setItemText(itemTextMdms);
             }
         }
