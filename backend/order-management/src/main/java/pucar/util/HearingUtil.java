@@ -262,7 +262,7 @@ public class HearingUtil {
                 .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(order.getNextHearingDate())
                 .endTime(order.getNextHearingDate())
-                .hearingSummary(orderUtil.getBusinessOfTheDay(order))
+                .hearingSummary(orderUtil.getBusinessOfTheDay(order,requestInfo))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -362,7 +362,7 @@ public class HearingUtil {
         log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
         Order order = orderRequest.getOrder();
 
-        hearing.setHearingSummary(orderUtil.getBusinessOfTheDay(order));
+        hearing.setHearingSummary(orderUtil.getBusinessOfTheDay(order,orderRequest.getRequestInfo()));
         List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
         List<Attendee> attendees = hearing.getAttendees();
 
