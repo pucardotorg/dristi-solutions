@@ -1358,7 +1358,7 @@ const GenerateOrdersV2 = () => {
                     ...field,
                     populators: {
                       ...field.populators,
-                      options: [...complainants, ...respondents],
+                      options: [...complainants, ...respondents, ...unJoinedLitigant],
                     },
                   };
                 }
