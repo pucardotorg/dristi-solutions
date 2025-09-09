@@ -161,7 +161,7 @@ public class OrderService {
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
                     .orderCategory("INTERMEDIATE")
-                    .orderTitle("Draft Order")
+                    .orderTitle("Schedule of Next Hearing Date")
                     .orderType("")
                     .isActive(true)
                     .status("")
