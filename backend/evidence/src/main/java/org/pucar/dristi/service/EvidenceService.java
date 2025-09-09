@@ -280,51 +280,6 @@ public class EvidenceService {
         }
     }
 
-    public JsonNode extractWitnessFormData(JsonNode courtCase, String filingNumber) {
-        JsonNode additionalDetails = courtCase.get("additionalDetails");
-        JsonNode witnessDetails = additionalDetails.get("witnessDetails");
-        JsonNode formdata = witnessDetails.get("formdata");
-
-        if (formdata == null || !formdata.isArray()) {
-            log.warn("No witness formdata found or invalid format for filing number: {}", filingNumber);
-            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
-                    "No witness formdata found for filing number: " + filingNumber);
-        }
-
-        return formdata;
-    }
-
-    @Deprecated
-    private boolean processWitnessRecords(EvidenceRequest body, String filingNumber, String uniqueId, JsonNode formdata) {
-        boolean witnessFound = false;
-        for (int i = 0; i < formdata.size(); i++) {
-            JsonNode data = formdata.get(i);
-            try {
-                if (data == null || data.get("uniqueId") == null) {
-                    log.warn("Skipping witness record at index {} - missing uniqueId for filing number: {}",
-                            i, filingNumber);
-                    continue;
-                }
-                String witnessUniqueId = data.get("uniqueId").textValue();
-                if (witnessUniqueId != null && witnessUniqueId.equals(uniqueId)) {
-                    witnessFound = true;
-                    break;
-                }
-            } catch (CustomException e) {
-                log.error("Unexpected error processing witness record at index {} for filing number: {}",
-                        i, filingNumber, e);
-                throw new CustomException(UPDATE_CASE_WITNESS_ERR,
-                        "Unexpected error processing witness record at index " + i +
-                                " for filing number: " + filingNumber);
-            }
-        }
-
-        if (!witnessFound) {
-            log.warn("No witness found with uniqueId: {} in filing number: {}", uniqueId, filingNumber);
-        }
-        return witnessFound;
-    }
-
     private void updateWitnessRecord(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());

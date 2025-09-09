@@ -16,7 +16,9 @@ import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.Emails;
 import org.pucar.dristi.web.models.v2.PartyType;
+import org.pucar.dristi.web.models.v2.PhoneNumbers;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -452,10 +454,11 @@ public class CaseRegistrationValidator {
         try {
             log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            List<WitnessDetails> existingWitnesses = courtCase.getWitnessDetails();
             validateMobileNumbersInRequest(body.getWitnessDetails());
-            for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
-                validateMobileNumbers(additionalDetails, witnessDetails);
-                validateEmail(additionalDetails, witnessDetails);
+            for(WitnessDetails newWitness : body.getWitnessDetails()) {
+                validateMobileNumbers(additionalDetails, newWitness, existingWitnesses);
+                validateEmail(additionalDetails, newWitness, existingWitnesses);
             }
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
         } catch (Exception e) {
@@ -490,31 +493,27 @@ public class CaseRegistrationValidator {
                 .collect(Collectors.toList());
     }
 
-    private boolean doesWitnessExists(JsonNode additionalDetails, WitnessDetails witnessDetails) {
-        JsonNode witnessDetailsNode = additionalDetails.get("witnessDetails");
-        if (witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+    private boolean doesWitnessExist(List<WitnessDetails> existingWitnesses, WitnessDetails newWitness) {
+        if(existingWitnesses == null || existingWitnesses.isEmpty()) {
             return false;
         }
-        for(JsonNode witness : witnessDetailsNode.get("formdata")) {
-            if(witnessDetails.getUniqueId().equalsIgnoreCase(witness.get("uniqueId").textValue())){
-                return true;
-            }
-        }
-        return false;
+        return existingWitnesses.stream()
+                .map(WitnessDetails::getUniqueId)
+                .anyMatch(uniqueId -> newWitness.getUniqueId().equals(uniqueId));
     }
 
-    private void validateEmail(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+    private void validateEmail(JsonNode additionalDetails, WitnessDetails newWitness, List<WitnessDetails> existingWitnesses) {
         List<String> emailIds = new ArrayList<>();
         emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("respondentDetails")));
-        emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("witnessDetails")));
+        emailIds.addAll(extractWitnessEmailIds(existingWitnesses));
 
-        if (witnessDetails.getEmails() == null || witnessDetails.getEmails().getEmailId().isEmpty()) {
+        if (newWitness.getEmails() == null || newWitness.getEmails().getEmailId().isEmpty()) {
             return;
         }
-        List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
+        List<String> witnessEmailIds = newWitness.getEmails().getEmailId();
         Set<String> emailIdSet = new HashSet<>(emailIds);
         for(String emailId : witnessEmailIds) {
-            boolean witnessExist = !doesWitnessExists(additionalDetails, witnessDetails);
+            boolean witnessExist = !doesWitnessExist(existingWitnesses, newWitness);
             if(emailIdSet.contains(emailId) && !witnessExist) {
                 throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness email id should not be same as existing parties email id");
@@ -548,22 +547,35 @@ public class CaseRegistrationValidator {
         return emailIds;
     }
 
-    private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+    public static List<String> extractWitnessEmailIds(List<WitnessDetails> witnesses) {
+        if(witnesses == null || witnesses.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return witnesses.stream()
+                .map(WitnessDetails::getEmails)
+                .filter(Objects::nonNull)
+                .map(Emails::getEmailId)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .toList();
+    }
 
-        if(witnessDetails.getPhoneNumbers() == null || witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+    private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails newWitness, List<WitnessDetails> existingWitnesses) {
+
+        if(newWitness.getPhoneNumbers() == null || newWitness.getPhoneNumbers().getMobileNumber().isEmpty()) {
             return;
         }
         List<String> mobileNumberList = new ArrayList<>();
 
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), PartyType.COMPLAINANT));
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("witnessDetails"), PartyType.WITNESS));
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), PartyType.RESPONDENT));
+        mobileNumberList.addAll(extractWitnessMobileNumbers(existingWitnesses));
 
-        List<String> witnessMobileNumber = witnessDetails.getPhoneNumbers().getMobileNumber();
+        List<String> witnessMobileNumber = newWitness.getPhoneNumbers().getMobileNumber();
         Set<String> mobileNumberSet = new HashSet<>(mobileNumberList);
         for (String witnessNumber : witnessMobileNumber) {
-            boolean isWitnessExists = doesWitnessExists(additionalDetails, witnessDetails);
+            boolean isWitnessExists = doesWitnessExist(existingWitnesses, newWitness);
             if (mobileNumberSet.contains(witnessNumber) && !isWitnessExists) {
                 throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness mobile number should not be same as existing parties mobile number");
@@ -592,7 +604,6 @@ public class CaseRegistrationValidator {
                     }
                     break;
 
-                case WITNESS:
                 case RESPONDENT:
                     JsonNode mobileNode = dataNode.at("/phonenumbers/mobileNumber");
                     if (!mobileNode.isMissingNode() && mobileNode.isArray()) {
@@ -625,6 +636,20 @@ public class CaseRegistrationValidator {
         }
 
         return mobileNumbers;
+    }
+
+    public static List<String> extractWitnessMobileNumbers(List<WitnessDetails> witnesses){
+        if(witnesses == null || witnesses.isEmpty()){
+            return Collections.emptyList();
+        }
+
+        return witnesses.stream()
+                .map(WitnessDetails::getPhoneNumbers)
+                .filter(Objects::nonNull)
+                .map(PhoneNumbers::getMobileNumber)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .toList();
     }
 
     public void validateUpdateLPRDetails(CaseRequest caseRequest) {
