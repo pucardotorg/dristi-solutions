@@ -305,7 +305,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
   return hasError;
 };
 
-export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder) => {
+export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling) => {
   let errors = [];
 
   if (currentOrder?.orderCategory === "COMPOSITE") {
@@ -345,14 +345,31 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder) =>
   } else {
     const formdata = currentOrder?.additionalDetails?.formdata;
     const orderType = currentOrder?.orderType;
+    const isHearing = Boolean(currentInProgressHearing) || Boolean(currentOrder?.hearingNumber);
+    const applySkipRules = isHearing && Boolean(skipScheduling);
 
     const configForThisItem = getModifiedFormConfig(0);
     const itemErrors = [];
 
-    if (!formdata) {
-      itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
-      errors.push({ index: 0, orderType: "NOT_PRESENT", errors: itemErrors });
-      return errors;
+    if (isHearing) {
+      if (applySkipRules) {
+        if (!orderType || !formdata) {
+          if (!orderType) itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+          if (!formdata) itemErrors.push({ key: "ORDER_FORM", errorMessage: "THIS_IS_MANDATORY_FIELD" });
+          errors.push({ index: 0, orderType: orderType || "NOT_PRESENT", errors: itemErrors });
+          return errors;
+        }
+      } else {
+        if (!orderType || !formdata) {
+          return errors;
+        }
+      }
+    } else {
+      if (!formdata) {
+        itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+        errors.push({ index: 0, orderType: orderType || "NOT_PRESENT", errors: itemErrors });
+        return errors;
+      }
     }
 
     for (let p = 0; p < configForThisItem?.length; p++) {
