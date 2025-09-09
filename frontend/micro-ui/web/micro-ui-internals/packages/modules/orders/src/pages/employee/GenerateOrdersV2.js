@@ -2734,7 +2734,7 @@ const GenerateOrdersV2 = () => {
     }
 
     // ✅ Works for both COMPOSITE and Non-COMPOSITE
-    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder);
+    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling);
 
     if (errors?.some((obj) => obj?.errors?.length > 0)) {
       setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
@@ -2743,7 +2743,7 @@ const GenerateOrdersV2 = () => {
 
     const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
 
-    if (currentInProgressHearing) {
+    if (currentInProgressHearing || currentOrder?.hearingNumber) {
       mandatoryOrderFields?.push({ presentAttendees: currentOrder?.attendance?.Present }, { absentAttendees: currentOrder?.attendance?.Absent });
       if (!skipScheduling) {
         mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
