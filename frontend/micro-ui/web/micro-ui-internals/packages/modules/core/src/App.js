@@ -119,9 +119,9 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   };
 
   const { t } = useTranslation();
-
-  const openMobileViewRoutes = [`home/login`, `/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
-  if (isMobileView && !openMobileViewRoutes.some((path) => pathname.includes(path))) {
+  const openMobileViewRoutes = [`/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
+  const mobileResponsive = openMobileViewRoutes.some((path) => pathname.includes(path)) || pathname === "/ui/citizen/dristi";
+  if (isMobileView && !mobileResponsive) {
     return (
       <div style={styles.container}>
         <TopBarSideBar
