@@ -141,6 +141,7 @@ public class CaseApiController {
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
 
+    @Deprecated
     @PostMapping(value = "/v1/add/witness")
     public ResponseEntity<AddWitnessResponse> caseV1AddWitnessPost(
             @Parameter(in = ParameterIn.DEFAULT, description = "Details for adding witness details in the court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody AddWitnessRequest body) {
