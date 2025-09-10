@@ -1,5 +1,5 @@
 import { CardLabelError } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isEmptyObject } from "../Utils";
 import isEqual from "lodash/isEqual";
 import { Editor } from "react-draft-wysiwyg";
@@ -73,18 +73,18 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
   const inputName = inputs?.[0]?.name;
   const configKey = config?.key;
 
+  const isLocalEditRef = useRef(false);
+  const debounceTimerRef = useRef(null);
+
   useEffect(() => {
     const rawHtml = formData?.[configKey]?.[inputName] || "";
     const sanitizedIncomingHtml = DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
 
-    const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
-    const normalize = (str) => str.replace(/\s/g, "");
-
-    if (normalize(sanitizedIncomingHtml) === normalize(currentHtml)) return;
+    if (isLocalEditRef.current) return;
 
     try {
       const isHtml = /<\/?[a-z][\s\S]*>/i?.test(sanitizedIncomingHtml);
-      const safeHtml = isHtml ? sanitizedIncomingHtml : `<p>${sanitizedIncomingHtml}</p>`;
+      const safeHtml = isHtml ? sanitizedIncomingHtml : sanitizedIncomingHtml ? `<p>${sanitizedIncomingHtml}</p>` : "<p></p>";
 
       const contentBlock = htmlToDraft(safeHtml);
       if (contentBlock && Array.isArray(contentBlock.contentBlocks)) {
@@ -98,7 +98,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       console.error("Error parsing draft content:", err);
       setEditorState(EditorState.createEmpty());
     }
-  }, [formData, configKey, inputName]);
+  }, [configKey, inputName]);
 
   useEffect(() => {
     if (!isEqual(formdata, formData)) {
@@ -123,7 +123,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       updatedValue[input] = value;
     }
 
-    if (!value) {
+    if (!value || value === "<p></p>" || value === "<p><br></p>") {
       updatedValue = null;
     }
 
@@ -135,33 +135,37 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       },
     }));
 
-    onSelect(config.key, isEmptyObject(updatedValue) ? null : updatedValue, { shouldValidate: true });
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      onSelect(config.key, isEmptyObject(updatedValue) ? null : updatedValue, { shouldValidate: true });
+    }, 150);
   }
 
   const handleChange = (state, input) => {
+    isLocalEditRef.current = true;
     setEditorState(state);
     const rawContent = convertToRaw(state.getCurrentContent());
     const html = draftToHtml(rawContent);
     const sanitizedHtml = DOMPurify.sanitize(html, defaultSanitizeOptions);
     setValue(sanitizedHtml, input?.name);
+    setTimeout(() => {
+      isLocalEditRef.current = false;
+    }, 0);
   };
 
   const handleKeyCommand = (command, editorState) => {
-    // Let Draft.js handle the command first
     return "not-handled";
   };
 
   const handleReturn = (e, editorState) => {
-    // Let Draft.js handle the return first, then scroll
     setTimeout(() => {
       const editorContainer = document.querySelector(".custom-editor-wrapper .DraftEditor-root");
       if (editorContainer) {
-        // Scroll to bottom of container to follow the cursor
         editorContainer.scrollTop = editorContainer.scrollHeight;
       }
     }, 10);
 
-    return "not-handled"; // Let Draft.js handle the return normally
+    return "not-handled";
   };
 
   return (
@@ -185,6 +189,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
           </div>
 
           <Editor
+            key={`${configKey}-${inputName}`}
             editorState={editorState}
             onEditorStateChange={(state) => handleChange(state, input)}
             handleKeyCommand={handleKeyCommand}

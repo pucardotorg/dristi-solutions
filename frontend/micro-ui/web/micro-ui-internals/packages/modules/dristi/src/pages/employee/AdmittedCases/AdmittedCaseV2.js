@@ -2568,9 +2568,9 @@ const AdmittedCaseV2 = () => {
       return false;
     }
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearingId);
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing]);
+  }, [data, currentHearingId]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2578,7 +2578,7 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearingId);
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -2619,7 +2619,7 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, userType]
+    [currentHearingId, data, history, userType]
   );
 
   const handleCaseTransition = async (actionType) => {
@@ -3609,10 +3609,14 @@ const AdmittedCaseV2 = () => {
                             ></Button>
                             {(isBenchClerk || isCourtRoomManager) && (
                               <Button
-                                variation={"primary"}
-                                label={t("CS_CASE_PASS_OVER_START_NEXT_HEARING")}
+                                variation={"outlined"}
+                                label={t("CS_CASE_PASS_OVER")}
                                 onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
-                                style={{ boxShadow: "none" }}
+                                style={{
+                                  boxShadow: "none",
+                                  border: "1px solid rgb(187, 44, 47)",
+                                  color: "rgb(187, 44, 47)",
+                                }}
                                 isDisabled={apiCalled}
                               ></Button>
                             )}
@@ -3641,13 +3645,32 @@ const AdmittedCaseV2 = () => {
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
+                            {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
+                              <Button
+                                variation={"primary"}
+                                label={t(
+                                  isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                                )}
+                                children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+                                isSuffix={true}
+                                onButtonClick={() =>
+                                  handleEmployeeAction({
+                                    value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                  })
+                                }
+                                style={{
+                                  boxShadow: "none",
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                }}
+                              ></Button>
+                            )}
                             <ActionButton
                               variation={"primary"}
                               label={t("TAKE_ACTION_LABEL")}
