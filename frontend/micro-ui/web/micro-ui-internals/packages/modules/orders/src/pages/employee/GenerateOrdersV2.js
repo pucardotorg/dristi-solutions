@@ -2791,7 +2791,7 @@ const GenerateOrdersV2 = () => {
       const [key, value] = Object?.entries(field)[0];
 
       // Special handling for presentAttendees and absentAttendees
-      if (key === "presentAttendees" || key === "absentAttendees") {
+      if (key === "absentAttendees") {
         // If presentAttendees has all four options, absentAttendees can be empty
         // const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
         // If absentAttendees has all four options, presentAttendees can be empty
@@ -2801,11 +2801,7 @@ const GenerateOrdersV2 = () => {
         const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
         const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
 
-        if (key === "presentAttendees" && !requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
-          allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
-        }
-
-        if (key === "absentAttendees" && !requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
+        if (!requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
           allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
         }
       } else if (key === "itemText") {
