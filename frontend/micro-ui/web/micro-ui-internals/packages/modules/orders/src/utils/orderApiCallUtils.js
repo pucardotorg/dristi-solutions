@@ -148,6 +148,7 @@ export const deleteOrderItem = async (order, itemID, tenantId) => {
           tenantId: order?.tenantId,
           itemID: itemID,
           orderNumber: order?.orderNumber,
+          itemText: order?.itemText,
         },
       },
       { tenantId }
