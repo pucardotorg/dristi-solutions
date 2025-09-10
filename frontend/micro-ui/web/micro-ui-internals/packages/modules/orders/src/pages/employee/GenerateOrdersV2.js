@@ -1030,7 +1030,9 @@ const GenerateOrdersV2 = () => {
 
   const hideNextHearingButton = useMemo(() => {
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+    const index = validData?.findIndex(
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
+    );
     return index === -1 || validData?.length === 1;
   }, [data, currentInProgressHearing]);
 
@@ -1040,7 +1042,10 @@ const GenerateOrdersV2 = () => {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        const index = validData?.findIndex(
+          (item) =>
+            item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
+        );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -1348,7 +1353,36 @@ const GenerateOrdersV2 = () => {
           });
         }
 
-        if (["COST", "WITNESS_BATTA"]?.includes(selectedOrderType)) {
+        if (["COST"]?.includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "paymentToBeMadeBy") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "paymentToBeMadeTo") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (["WITNESS_BATTA"]?.includes(selectedOrderType)) {
           orderTypeForm = orderTypeForm?.map((section) => {
             return {
               ...section,
@@ -2392,7 +2426,7 @@ const GenerateOrdersV2 = () => {
               }),
               ...(order?.orderCategory === "INTERMEDIATE"
                 ? {
-                    orderTitle: t(order?.orderType) || t("DEFAULT_ORDER_TITLE"),
+                    orderTitle: t(order?.orderType) || order?.orderTitle || t("DEFAULT_ORDER_TITLE"),
                   }
                 : {
                     orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
@@ -3405,7 +3439,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {currentInProgressHearing && (isJudge || isTypist) && !hideNextHearingButton && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}
