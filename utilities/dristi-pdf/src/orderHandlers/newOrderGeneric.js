@@ -254,6 +254,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           judgeDesignation: judgeDetails.judgeDesignation,
           date: formattedToday,
           caseNumber,
+          caseName: courtCase.caseTitle,
           complainantList,
           accusedList,
           isHearingInProgress,

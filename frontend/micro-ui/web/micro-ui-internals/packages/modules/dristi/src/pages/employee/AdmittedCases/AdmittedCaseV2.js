@@ -2222,6 +2222,14 @@ const AdmittedCaseV2 = () => {
     return found || lastInProgressHearing.current;
   }, [hearingDetails?.HearingList]);
 
+  const todayScheduledHearing = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+    const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+    return hearingDetails?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
+  }, [hearingDetails?.HearingList]);
+
   const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
     hearingDetails?.HearingList,
     currentHearingId,
@@ -2566,9 +2574,11 @@ const AdmittedCaseV2 = () => {
       return false;
     }
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearingId);
+    const index = validData?.findIndex(
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+    );
     return index === -1 || validData?.length === 1;
-  }, [data, currentHearingId]);
+  }, [data, currentInProgressHearing?.hearingId, todayScheduledHearing?.hearingId]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2576,7 +2586,9 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearingId);
+        const index = validData?.findIndex(
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+        );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -2617,7 +2629,7 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentHearingId, data, history, userType]
+    [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
   );
 
   const handleCaseTransition = async (actionType) => {
