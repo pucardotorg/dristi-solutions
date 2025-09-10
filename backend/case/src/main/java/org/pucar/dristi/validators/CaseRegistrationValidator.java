@@ -512,7 +512,7 @@ public class CaseRegistrationValidator {
         List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
         Set<String> emailIdSet = new HashSet<>(emailIds);
         for(String emailId : witnessEmailIds) {
-            boolean witnessExist = !doesWitnessExists(existingWitnesses, witnessDetails);
+            boolean witnessExist = doesWitnessExists(existingWitnesses, witnessDetails);
             if(emailIdSet.contains(emailId) && !witnessExist) {
                 throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness email id should not be same as existing parties email id");
