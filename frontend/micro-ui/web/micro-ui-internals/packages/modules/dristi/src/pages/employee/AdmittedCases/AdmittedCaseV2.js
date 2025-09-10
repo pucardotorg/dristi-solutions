@@ -3607,10 +3607,14 @@ const AdmittedCaseV2 = () => {
                             ></Button>
                             {(isBenchClerk || isCourtRoomManager) && (
                               <Button
-                                variation={"primary"}
-                                label={t("CS_CASE_PASS_OVER_START_NEXT_HEARING")}
+                                variation={"outlined"}
+                                label={t("CS_CASE_PASS_OVER")}
                                 onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
-                                style={{ boxShadow: "none" }}
+                                style={{
+                                  boxShadow: "none",
+                                  border: "1px solid rgb(187, 44, 47)",
+                                  color: "rgb(187, 44, 47)",
+                                }}
                                 isDisabled={apiCalled}
                               ></Button>
                             )}
@@ -3639,7 +3643,7 @@ const AdmittedCaseV2 = () => {
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
