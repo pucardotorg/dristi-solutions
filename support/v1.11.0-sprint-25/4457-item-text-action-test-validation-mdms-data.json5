@@ -577,10 +577,9 @@
           "data": {
             "id": 11,
             "path": [
-              "LOCALIZATION$.orderDetails.warrantType",
               "$.orderDetails.parties[0].partyName"
             ],
-            "itemText": "Issue [LOCALIZATION$.orderDetails.warrantType] warrant to [$.orderDetails.parties[0].partyName]. Complainant is directed to take steps to issue warrant.",
+            "itemText": "Issue warrant to [$.orderDetails.parties[0].partyName]. Complainant is directed to take steps to issue warrant.",
             "orderType": "WARRANT"
           },
           "isActive": true,
