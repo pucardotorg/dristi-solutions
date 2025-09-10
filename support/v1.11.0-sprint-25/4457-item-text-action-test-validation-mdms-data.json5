@@ -50,6 +50,27 @@
     "masterName": "Order",
     "moduleName": "ItemText",
     "mdmsPayload": [
+      {
+        "id": "5fb2c32e-2da0-4a1b-873e-8ba562aa9d9e",
+        "tenantId": "kl",
+        "schemaCode": "Order.ItemText",
+        "uniqueIdentifier": "32",
+        "data": {
+          "id": 32,
+          "path": [
+            "$.orderDetails.action"
+          ],
+          "itemText": "Request for advocate replacement is [$.orderDetails.action]",
+          "orderType": "ADVOCATE_REPLACEMENT_APPROVAL"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1757487999957,
+          "lastModifiedTime": 1757487999957
+        }
+      },
         {
           "id": "1f098466-7858-4358-b030-4f8e86b41187",
           "tenantId": "kl",
