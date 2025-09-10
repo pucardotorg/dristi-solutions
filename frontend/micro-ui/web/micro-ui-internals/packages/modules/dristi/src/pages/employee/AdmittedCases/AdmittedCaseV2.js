@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -2212,9 +2212,17 @@ const AdmittedCaseV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
-  const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
-    hearingDetails?.HearingList,
-  ]);
+  // const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
+  //   hearingDetails?.HearingList,
+  // ]);
+
+  const lastInProgressHearing = useRef(null);
+
+  const currentInProgressHearing = useMemo(() => {
+    const found = hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS");
+    if (found) lastInProgressHearing.current = found;
+    return found || lastInProgressHearing.current;
+  }, [hearingDetails?.HearingList]);
 
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
@@ -2564,6 +2572,9 @@ const AdmittedCaseV2 = () => {
   }, [filingNumber, history]);
 
   const hideNextHearingButton = useMemo(() => {
+    if (!data || data.length === 0 || !currentInProgressHearing) {
+      return false;
+    }
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
@@ -2623,6 +2634,33 @@ const AdmittedCaseV2 = () => {
     [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
   );
 
+  const handleCaseTransition = async (actionType) => {
+    try {
+      setApiCalled(true);
+
+      await hearingService.updateHearings(
+        {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          hearing: {
+            ...currentInProgressHearing,
+            workflow: {
+              action: actionType === "PASS_OVER_START_NEXT_HEARING" ? "PASS_OVER" : "CLOSE",
+            },
+          },
+          hearingType: "",
+          status: "",
+        },
+        { applicationNumber: "", cnrNumber: "" }
+      );
+
+      nextHearing(true);
+    } catch (error) {
+      console.error("Error in updating hearing status", error);
+    } finally {
+      setApiCalled(false);
+    }
+  };
+
   const handleEmployeeAction = useCallback(
     async (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
@@ -2647,6 +2685,8 @@ const AdmittedCaseV2 = () => {
         setShowBailBondModal(true);
       } else if (option.value === "ADD_WITNESS") {
         setShowAddWitnessModal(true);
+      } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
+        handleCaseTransition(option.value);
       }
     },
     [
@@ -3579,22 +3619,45 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {(isBenchClerk || isCourtRoomManager) && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_PASS_OVER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
+                                style={{
+                                  boxShadow: "none",
+                                  border: "1px solid rgb(187, 44, 47)",
+                                  color: "rgb(187, 44, 47)",
+                                }}
+                                isDisabled={apiCalled}
+                              ></Button>
+                            )}
                             {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
                               <Button
                                 variation={"primary"}
+                                isDisabled={apiCalled}
                                 label={t(
-                                  isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                                  isBenchClerk || isCourtRoomManager
+                                    ? "CS_CASE_END_START_NEXT_HEARING"
+                                    : isJudge || isTypist
+                                    ? "CS_CASE_NEXT_HEARING"
+                                    : ""
                                 )}
                                 children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value:
+                                      isBenchClerk || isCourtRoomManager
+                                        ? "CS_CASE_END_START_NEXT_HEARING"
+                                        : isJudge || isTypist
+                                        ? "NEXT_HEARING"
+                                        : "",
                                   })
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
