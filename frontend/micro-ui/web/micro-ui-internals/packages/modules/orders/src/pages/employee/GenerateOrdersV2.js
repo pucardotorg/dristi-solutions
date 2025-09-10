@@ -188,6 +188,7 @@ const stateSlaMap = {
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
+const ErrorAttendeesKey = "attendees";
 
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
@@ -2792,16 +2793,20 @@ const GenerateOrdersV2 = () => {
       // Special handling for presentAttendees and absentAttendees
       if (key === "presentAttendees" || key === "absentAttendees") {
         // If presentAttendees has all four options, absentAttendees can be empty
-        const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
+        // const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
         // If absentAttendees has all four options, presentAttendees can be empty
-        const absentAttendeesComplete = currentOrder?.attendance?.Absent?.length === 4;
+        // const absentAttendeesComplete = currentOrder?.attendance?.Absent?.length === 4;
 
-        if (key === "presentAttendees" && !presentAttendeesComplete && !absentAttendeesComplete && (!value || value.length === 0)) {
-          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        const requiredAttendees = ["COMPLAINANT", "ACCUSED"];
+        const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
+        const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
+
+        if (key === "presentAttendees" && !requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
+          allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
         }
 
-        if (key === "absentAttendees" && !presentAttendeesComplete && !absentAttendeesComplete && (!value || value.length === 0)) {
-          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        if (key === "absentAttendees" && !requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
+          allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
         }
       } else if (key === "itemText") {
         // Special handling for itemText to check for empty HTML content
@@ -3492,7 +3497,7 @@ const GenerateOrdersV2 = () => {
                               setAbsentAttendees(updatedAbsentAttendees);
                               setErrors((prevErrors) => {
                                 const newErrors = { ...prevErrors };
-                                delete newErrors["presentAttendees"];
+                                delete newErrors[ErrorAttendeesKey];
                                 return newErrors;
                               });
                             } else {
@@ -3519,9 +3524,9 @@ const GenerateOrdersV2 = () => {
                       </div>
                     ))}
                   </div>
-                  {errors["presentAttendees"] && (
+                  {/* {errors["presentAttendees"] && (
                     <CardLabelError> {t(errors["presentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
-                  )}
+                  )} */}
                 </LabelFieldPair>
 
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
@@ -3548,7 +3553,7 @@ const GenerateOrdersV2 = () => {
                               setPresentAttendees(updatedPresentAttendees);
                               setErrors((prevErrors) => {
                                 const newErrors = { ...prevErrors };
-                                delete newErrors["absentAttendees"];
+                                delete newErrors[ErrorAttendeesKey];
                                 return newErrors;
                               });
                             } else {
@@ -3575,7 +3580,7 @@ const GenerateOrdersV2 = () => {
                       </div>
                     ))}
                   </div>
-                  {errors["absentAttendees"] && <CardLabelError> {t(errors["absentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>}
+                  {errors[ErrorAttendeesKey] && <CardLabelError> {t(errors[ErrorAttendeesKey]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>}
                 </LabelFieldPair>
               </React.Fragment>
             )}
