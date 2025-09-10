@@ -556,10 +556,9 @@
           "data": {
             "id": 11,
             "path": [
-              "LOCALIZATION$.orderDetails.warrantType",
               "$.orderDetails.parties[0].partyName"
             ],
-            "itemText": "Issue [LOCALIZATION$.orderDetails.warrantType] warrant to [$.orderDetails.parties[0].partyName]. Complainant is directed to take steps to issue warrant.",
+            "itemText": "Issue warrant to [$.orderDetails.parties[0].partyName]. Complainant is directed to take steps to issue warrant.",
             "orderType": "WARRANT"
           },
           "isActive": true,
@@ -602,7 +601,7 @@
               "$.orderDetails.noticeType",
               "$.orderDetails.parties[0].partyName"
             ],
-            "itemText": "Issue [$.orderDetails.noticeType] notice to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+            "itemText": "Issue [$.orderDetails.noticeType] to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
             "orderType": "NOTICE"
           },
           "isActive": true,
