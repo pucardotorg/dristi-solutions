@@ -120,7 +120,7 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
 
   const { t } = useTranslation();
 
-  const openMobileViewRoutes = [`home/login`, `/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
+  const openMobileViewRoutes = [`/home/login`, `/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
   if (isMobileView && !openMobileViewRoutes.some((path) => pathname.includes(path))) {
     return (
       <div style={styles.container}>
