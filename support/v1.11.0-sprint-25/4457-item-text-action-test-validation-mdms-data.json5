@@ -623,7 +623,7 @@
               "$.orderDetails.noticeType",
               "$.orderDetails.parties[0].partyName"
             ],
-            "itemText": "Issue [$.orderDetails.noticeType] notice to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+            "itemText": "Issue [$.orderDetails.noticeType] to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
             "orderType": "NOTICE"
           },
           "isActive": true,
