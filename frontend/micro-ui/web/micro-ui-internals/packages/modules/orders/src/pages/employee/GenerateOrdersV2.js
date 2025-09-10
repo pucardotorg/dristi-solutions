@@ -408,6 +408,14 @@ const GenerateOrdersV2 = () => {
 
   const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
 
+  const todayScheduledHearing = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+    const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+    return hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
+  }, [hearingsData?.HearingList]);
+
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
@@ -1032,10 +1040,10 @@ const GenerateOrdersV2 = () => {
   const hideNextHearingButton = useMemo(() => {
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
-      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -1044,8 +1052,7 @@ const GenerateOrdersV2 = () => {
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
         const index = validData?.findIndex(
-          (item) =>
-            item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
         );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
@@ -1087,7 +1094,7 @@ const GenerateOrdersV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, userType]
+    [currentInProgressHearing, todayScheduledHearing, data, history, userType]
   );
 
   // TODO: temporary Form Config, need to be replaced with the actual config
@@ -3431,6 +3438,16 @@ const GenerateOrdersV2 = () => {
     }
   };
 
+  const handleNextHearingClick = async () => {
+    await handleSaveDraft(currentOrder);
+    nextHearing(false);
+  };
+
+  const handleGoBack = async () => {
+    await handleSaveDraft(currentOrder);
+    history.goBack();
+  };
+
   if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
   }
@@ -3446,7 +3463,7 @@ const GenerateOrdersV2 = () => {
               label={t("CS_CASE_NEXT_HEARING")}
               children={<RightArrow />}
               isSuffix={true}
-              onButtonClick={() => nextHearing(false)}
+              onButtonClick={handleNextHearingClick}
               style={{
                 boxShadow: "none",
               }}
@@ -3815,9 +3832,7 @@ const GenerateOrdersV2 = () => {
             <Button
               label={t("CS_COMMON_BACK")}
               variation={"secondary"}
-              onButtonClick={() => {
-                history.goBack();
-              }}
+              onButtonClick={handleGoBack}
               style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
               textStyles={{
                 fontFamily: "Roboto",
