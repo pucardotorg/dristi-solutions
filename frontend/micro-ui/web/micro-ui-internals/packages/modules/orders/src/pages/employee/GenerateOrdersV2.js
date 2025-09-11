@@ -416,6 +416,15 @@ const GenerateOrdersV2 = () => {
     return hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
   }, [hearingsData?.HearingList]);
 
+  const lastCompletedHearing = useMemo(() => {
+    if (!hearingsData?.HearingList) return null;
+
+    return hearingsData.HearingList.filter((list) => list?.status === "COMPLETED").reduce(
+      (latest, current) => (!latest || (current?.endTime || 0) > (latest?.endTime || 0) ? current : latest),
+      null
+    );
+  }, [hearingsData?.HearingList]);
+
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
@@ -2442,15 +2451,21 @@ const GenerateOrdersV2 = () => {
               additionalDetails: {
                 ...order?.additionalDetails,
                 ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
-                ...((currentInProgressHearing || hearingId) &&
-                  !skipScheduling && {
-                    formdata: {
-                      ...(order?.additionalDetails?.formdata || {}),
-                      attendees: attendeeOptions,
-                      refHearingId: order?.hearingNumber,
-                      namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
-                    },
-                  }),
+                ...((currentInProgressHearing || hearingId) && !skipScheduling
+                  ? {
+                      formdata: {
+                        ...(order?.additionalDetails?.formdata || {}),
+                        attendees: attendeeOptions,
+                        refHearingId: order?.hearingNumber,
+                        namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                      },
+                    }
+                  : {
+                      formdata: {
+                        ...(order?.additionalDetails?.formdata || {}),
+                        refHearingId: lastCompletedHearing?.hearingId,
+                      },
+                    }),
               },
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
