@@ -1185,7 +1185,7 @@ const SubmissionsCreate = ({ path }) => {
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
       let newFileStoreId = "";
       if (mockESignEnabled) {
-        newFileStoreId = applidocumentsFilecationPdfFileStoreId;
+        newFileStoreId = applicationPdfFileStoreId;
       } else {
         newFileStoreId = localStorageID || signedDoucumentUploadedID;
       }
