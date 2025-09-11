@@ -196,8 +196,9 @@ public class OrderUtil {
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
+                String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
                 sb.append("Purpose of Next Hearing: ")
-                        .append(order.getPurposeOfNextHearing()).append("\n");
+                        .append(purpose).append("\n");
             }
 
             // Next Hearing Date
