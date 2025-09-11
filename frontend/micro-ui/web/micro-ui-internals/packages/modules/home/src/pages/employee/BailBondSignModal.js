@@ -27,7 +27,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
 
   const canSignBailBond = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_APPROVER"), [roles]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
