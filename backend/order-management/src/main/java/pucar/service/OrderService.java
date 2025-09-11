@@ -66,7 +66,7 @@ public class OrderService {
         if (order.getNextHearingDate() != null) {
             String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+                    .criteria(HearingCriteria.builder().hearingId(order.getHearingNumber()).tenantId(order.getTenantId()).build()).build());
             Hearing hearing = hearings.get(0);
             hearingUtil.updateHearingSummary(request, hearing);
         }
