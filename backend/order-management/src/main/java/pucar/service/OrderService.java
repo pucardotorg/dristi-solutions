@@ -88,10 +88,6 @@ public class OrderService {
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
-            hearingUtil.updateHearingStatus(request);
-        }
-
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
 
         orderProcessor.postProcessOrder(request);
