@@ -116,6 +116,7 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+            enrichmentUtil.enrichItemTextForIntermediateOrder(body);
 
             workflowUpdate(body);
 
@@ -213,6 +214,7 @@ public class OrderRegistrationService {
 
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setRequestInfo(body.getRequestInfo());
+            order.setItemText(body.getOrder().getItemText());
             orderRequest.setOrder(order);
             enrichmentUtil.enrichAuditDetails(orderRequest);
 

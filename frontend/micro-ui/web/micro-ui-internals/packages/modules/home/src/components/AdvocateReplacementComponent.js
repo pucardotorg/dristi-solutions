@@ -170,6 +170,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         orderDetails: {
           advocateName: getFullName(" ", firstName, middleName, lastName),
           applicationStatus: type === "reject" ? "REJECT" : type === "approve" ? "GRANT" : null,
+          action: type === "reject" ? "rejected" : type === "approve" ? "accepted" : null,
         },
       },
     };

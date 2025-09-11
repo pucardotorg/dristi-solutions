@@ -13,42 +13,11 @@ import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenAp
 import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 
 const getStyles = () => ({
-  header: { fontSize: "26px", padding: "12px 40px", fontWeight: 700, borderBottom: "1px solid #E8E8E8" },
-
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
   detailsSection: {
     display: "flex",
     flexDirection: "column",
     gap: "12px",
-  },
-  leftPanel: {
-    width: "350px",
-    paddingTop: "30px",
-    paddingBottom: "16px",
-    paddingLeft: "16px",
-    borderRight: "1px solid #E8E8E8",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  docViewer: {
-    width: "70vw",
-    height: "calc(100vh - 200px)",
-    margin: "24px auto",
-    border: "1px solid #e0e0e0",
-    overflow: "auto",
-    borderRadius: "8px",
-  },
-  litigantDetails: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #E8E8E8",
-    color: "#77787B",
-    paddingTop: "8px",
-    paddingBottom: "20px",
-    paddingRight: "16px",
-    fontWeight: 700,
   },
   signedLabel: {
     padding: "6px 8px",
@@ -256,7 +225,7 @@ const WitnessDepositionSignaturePage = () => {
   }
 
   return (
-    <React.Fragment>
+    <div className="witness-deposition-signature">
       {loader && (
         <div
           style={{
@@ -276,11 +245,11 @@ const WitnessDepositionSignaturePage = () => {
           <Loader />
         </div>
       )}
-      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
-      <div style={styles.docViewer}>
+      <div className="header">{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
+      <div className="doc-viewer">
         {!isLoading ? (
           <DocViewerWrapper
-            docWidth={"67vw"}
+            docWidth={"100%"}
             docHeight={"100%"}
             selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
             tenantId={tenantId}
@@ -292,7 +261,7 @@ const WitnessDepositionSignaturePage = () => {
         )}
       </div>
       <ActionBar>
-        <div style={styles.actionBar}>
+        <div className="action-bar">
           {
             <Button
               label={t("BACK")}
@@ -300,7 +269,6 @@ const WitnessDepositionSignaturePage = () => {
               onButtonClick={() => {
                 history.goBack();
               }}
-              style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
               textStyles={{
                 fontFamily: "Roboto",
                 fontSize: "16px",
@@ -309,6 +277,7 @@ const WitnessDepositionSignaturePage = () => {
                 textAlign: "center",
                 color: "#007E7E",
               }}
+              className="back-button"
             />
           }
           {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
@@ -341,7 +310,7 @@ const WitnessDepositionSignaturePage = () => {
         <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
-    </React.Fragment>
+    </div>
   );
 };
 

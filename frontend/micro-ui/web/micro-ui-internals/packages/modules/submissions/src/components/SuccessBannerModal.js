@@ -7,7 +7,7 @@ const SuccessBannerModal = ({ t, handleCloseSuccessModal, headerBarEndClose, mes
     <Modal
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleCloseSuccessModal}
-      className={"submission-success-modal"}
+      className={"submission-success-modal responsive-signature-modal centered-success-modal"}
       popupStyles={{ width: "700px", borderRadius: "4px" }}
       style={{ width: "100%" }}
     >

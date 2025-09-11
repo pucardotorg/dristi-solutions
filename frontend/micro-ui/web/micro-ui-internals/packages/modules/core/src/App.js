@@ -25,7 +25,7 @@ const styles = {
     paddingLeft: "2rem",
     marginTop: "1rem",
     listStyleType: "decimal",
-  }
+  },
 };
 
 export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, defaultLanding = "citizen" }) => {
@@ -119,8 +119,9 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   };
 
   const { t } = useTranslation();
-
-  if (isMobileView) {
+  const openMobileViewRoutes = [`/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
+  const mobileResponsive = openMobileViewRoutes.some((path) => pathname.includes(path)) || pathname === "/ui/citizen/dristi";
+  if (isMobileView && !mobileResponsive) {
     return (
       <div style={styles.container}>
         <TopBarSideBar

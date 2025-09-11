@@ -37,7 +37,7 @@ export const WitnessDepositionSignModal = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkWitnessDepositionSignSelectedItem = sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem");

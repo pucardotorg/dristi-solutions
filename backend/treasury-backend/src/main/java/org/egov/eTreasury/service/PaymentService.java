@@ -486,7 +486,7 @@ public class PaymentService {
     }
 
     private Long getBillExpiryTime(String entityType) {
-        if(entityType.equalsIgnoreCase("task-summons") || entityType.equalsIgnoreCase("task-notice") || entityType.equalsIgnoreCase("task-warrant")) {
+        if(entityType.equalsIgnoreCase("task-summons") || entityType.equalsIgnoreCase("task-notice") || entityType.equalsIgnoreCase("task-warrant") || entityType.equalsIgnoreCase("task-proclamation") || entityType.equalsIgnoreCase("task-attachment")) {
             return TWO_YEARS_IN_MILLISECOND;
         }
         return null;

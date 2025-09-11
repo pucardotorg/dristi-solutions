@@ -6,6 +6,22 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 /**
+ * Removes hidden Unicode characters that pdfmake can't render
+ * (avoids tofu boxes in PDF)
+ *
+ * @param {string} str - Input text
+ * @returns {string} Clean text
+ */
+function cleanUnsupportedChars(str) {
+  return str
+    .replace(/\uFFFC/g, "")     // object replacement char
+    .replace(/\u2028/g, "\n")   // line separator → newline
+    .replace(/\u2029/g, "\n")   // paragraph separator → newline
+    .replace(/\u00A0/g, " ")    // non-breaking space → normal space
+    .replace(/[^\S\n]+/g, " "); // collapse weird spaces but keep \n
+}
+
+/**
  * Converts HTML or plain text to safe formatted text
  * Supports **bold**, *italic*, and keeps bullet points for unordered lists
  *
@@ -22,7 +38,7 @@ function htmlToFormattedText(input) {
       wordwrap: false,
       format: {
         strong: "asterisk", // **bold**
-        em: "underscore", // _italic_
+        em: "underscore",   // _italic_
       },
       selectors: [
         { selector: "a", options: { ignoreHref: true } },
@@ -41,10 +57,15 @@ function htmlToFormattedText(input) {
       ],
     });
 
-    return result;
+    // Trim trailing whitespace and empty lines
+    result = result.replace(/\s+$/g, "");
+
+    // ✅ Clean unsupported characters (fixes PDF boxes)
+    return cleanUnsupportedChars(result);
   }
 
-  return input;
+  // Plain text path → also clean it
+  return cleanUnsupportedChars(input.replace(/\s+$/g, ""));
 }
 
 module.exports = {

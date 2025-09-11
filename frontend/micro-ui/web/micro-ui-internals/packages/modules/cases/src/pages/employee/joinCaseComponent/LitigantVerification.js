@@ -19,7 +19,7 @@ const LitigantVerification = ({
   selectPartyData,
   isApiCalled,
   poa,
-  userInfo
+  userInfo,
 }) => {
   const modalRef = useRef(null);
   const [index, setIndex] = useState(0);
@@ -67,7 +67,11 @@ const LitigantVerification = ({
       ...config,
       head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
       body: config?.body
-        ?.filter((body) => (litigants?.[index]?.isPoaAvailable?.code === "YES" && litigants?.[index]?.uuid === userInfo?.uuid ? true : !["poaCustomInfo"].includes(body?.key)))
+        ?.filter((body) =>
+          litigants?.[index]?.isPoaAvailable?.code === "YES" && litigants?.[index]?.uuid === userInfo?.uuid
+            ? true
+            : !["poaCustomInfo"].includes(body?.key)
+        )
         ?.map((body) => {
           let tempBody = {
             ...body,

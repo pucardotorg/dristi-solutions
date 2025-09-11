@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -243,6 +243,8 @@ const AdmittedCaseV2 = () => {
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
+  const EditSendBackModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EditSendBackModal") || {}, []);
+  const [loader, setLoader] = useState(false);
   const NoticeProcessModal = useMemo(
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
@@ -258,6 +260,7 @@ const AdmittedCaseV2 = () => {
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
+  const [deleteOrder, setDeleteOrder] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -863,6 +866,30 @@ const AdmittedCaseV2 = () => {
       }
     };
 
+    const orderDeleteFunc = async (history, column, row, item) => {
+      try {
+        const orderResponse = await ordersService.searchOrder(
+          {
+            criteria: {
+              tenantId: tenantId,
+              filingNumber: filingNumber,
+              orderNumber: row?.businessObject?.orderNotification?.id,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
+          },
+          { tenantId }
+        );
+        row = orderResponse?.list?.[0];
+        setDeleteOrder(row);
+      } catch (error) {
+        console.error(error);
+        showToast({
+          isError: true,
+          message: t("SOMETHING_WENT_WRONG"),
+        });
+      }
+    };
+
     const takeActionFunc = (hearingData) => {
       setCurrentHearing(hearingData);
       setShowHearingTranscriptModal(true);
@@ -989,6 +1016,11 @@ const AdmittedCaseV2 = () => {
                       ? {
                           ...column,
                           clickFunc: orderSetFunc,
+                        }
+                      : column.label === "CS_ACTIONS"
+                      ? {
+                          ...column,
+                          clickFunc: orderDeleteFunc,
                         }
                       : column;
                   }),
@@ -1316,7 +1348,7 @@ const AdmittedCaseV2 = () => {
               ...documentSubmission?.[0].artifactList,
               filingNumber: filingNumber,
               isVoid,
-              isEvidence: false,
+              // isEvidence: false,
               reason: isVoid ? voidReason : "",
               workflow: null,
             },
@@ -1662,7 +1694,6 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
-
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
@@ -2182,6 +2213,14 @@ const AdmittedCaseV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
+  const todayScheduledHearing = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+    const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+    return hearingDetails?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
+  }, [hearingDetails?.HearingList]);
+
   const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
     hearingDetails?.HearingList,
     currentHearingId,
@@ -2521,13 +2560,23 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  const hideNextHearingButton = useMemo(() => {
+    const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+    const index = validData?.findIndex(
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+    );
+    return index === -1 || validData?.length === 1;
+  }, [data, currentInProgressHearing?.hearingId, todayScheduledHearing?.hearingId]);
+
   const nextHearing = useCallback(
     (isStartHearing) => {
       if (data?.length === 0) {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        const index = validData?.findIndex(
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+        );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -2568,8 +2617,35 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, userType]
+    [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
   );
+
+  const handleCaseTransition = async (actionType) => {
+    try {
+      setApiCalled(true);
+
+      await hearingService.updateHearings(
+        {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          hearing: {
+            ...currentInProgressHearing,
+            workflow: {
+              action: actionType === "PASS_OVER_START_NEXT_HEARING" ? "PASS_OVER" : "CLOSE",
+            },
+          },
+          hearingType: "",
+          status: "",
+        },
+        { applicationNumber: "", cnrNumber: "" }
+      );
+
+      nextHearing(true);
+    } catch (error) {
+      console.error("Error in updating hearing status", error);
+    } finally {
+      setApiCalled(false);
+    }
+  };
 
   const handleEmployeeAction = useCallback(
     async (option) => {
@@ -2595,6 +2671,8 @@ const AdmittedCaseV2 = () => {
         setShowBailBondModal(true);
       } else if (option.value === "ADD_WITNESS") {
         setShowAddWitnessModal(true);
+      } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
+        handleCaseTransition(option.value);
       }
     },
     [
@@ -3302,6 +3380,49 @@ const AdmittedCaseV2 = () => {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    try {
+      setLoader(true);
+      await ordersService?.updateOrder(
+        {
+          order: {
+            ...deleteOrder,
+            workflow: { ...deleteOrder?.workflow, action: OrderWorkflowAction.DELETE, documents: [{}] },
+          },
+        },
+        { tenantId }
+      );
+      await ordersService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: "Completed",
+          entityType: "order-default",
+          referenceId: `MANUAL_${deleteOrder?.orderNumber}`,
+          status: "DRAFT_IN_PROGRESS",
+          assignedTo: [],
+          assignedRole: [],
+          cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: true,
+          stateSla: null,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
+      setDeleteOrder(null);
+    } catch (error) {
+      console.error(error);
+      showToast({
+        isError: true,
+        message: t("SOMETHING_WENT_WRONG"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -3484,26 +3605,64 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            <Button
-                              variation={"primary"}
-                              label={t(
-                                isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
-                              )}
-                              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
-                              isSuffix={true}
-                              onButtonClick={() =>
-                                handleEmployeeAction({
-                                  value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
-                                })
-                              }
-                              style={{
-                                boxShadow: "none",
-                                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
-                              }}
-                            ></Button>
+                            {(isBenchClerk || isCourtRoomManager) && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_PASS_OVER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
+                                style={{
+                                  boxShadow: "none",
+                                  border: "1px solid rgb(187, 44, 47)",
+                                  color: "rgb(187, 44, 47)",
+                                }}
+                                isDisabled={apiCalled}
+                              ></Button>
+                            )}
+                            {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
+                              <Button
+                                variation={"primary"}
+                                isDisabled={apiCalled}
+                                label={t(
+                                  isBenchClerk || isCourtRoomManager
+                                    ? "CS_CASE_END_START_NEXT_HEARING"
+                                    : isJudge || isTypist
+                                    ? "CS_CASE_NEXT_HEARING"
+                                    : ""
+                                )}
+                                children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+                                isSuffix={true}
+                                onButtonClick={() =>
+                                  handleEmployeeAction({
+                                    value:
+                                      isBenchClerk || isCourtRoomManager
+                                        ? "CS_CASE_END_START_NEXT_HEARING"
+                                        : isJudge || isTypist
+                                        ? "NEXT_HEARING"
+                                        : "",
+                                  })
+                                }
+                                style={{
+                                  boxShadow: "none",
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
+                                }}
+                              ></Button>
+                            )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
+                            {(isJudge || isTypist) && !hideNextHearingButton && (
+                              <Button
+                                variation={"primary"}
+                                label={t(isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
+                                children={isJudge || isTypist ? <RightArrow /> : null}
+                                isSuffix={true}
+                                onButtonClick={() =>
+                                  handleEmployeeAction({
+                                    value: isJudge || isTypist ? "NEXT_HEARING" : "",
+                                  })
+                                }
+                              ></Button>
+                            )}
                             <ActionButton
                               variation={"primary"}
                               label={t("TAKE_ACTION_LABEL")}
@@ -4188,6 +4347,20 @@ const AdmittedCaseV2 = () => {
             setShowAddWitnessModal(false);
           }}
         ></AddWitnessModal>
+      )}
+      {deleteOrder !== null && (
+        <EditSendBackModal
+          t={t}
+          handleCancel={() => !loader && setDeleteOrder(null)}
+          handleSubmit={() => handleDeleteOrder()}
+          headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          saveLabel={"GENERATE_ORDER_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={"ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER"}
+          className={"edit-send-back-modal"}
+          submitButtonStyle={{ backgroundColor: "#C7222A" }}
+          loader={loader}
+        />
       )}
     </div>
   );

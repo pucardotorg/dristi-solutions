@@ -44,6 +44,12 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       console.error("error :>> ", error);
     }
 
+    let actionResponse = null;
+    if (item?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+      const isResponseRequired = item?.orderSchema?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
+      actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
+    }
+
     const parties = getParties(
       item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
       {
@@ -60,7 +66,7 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       caseDetails?.filingNumber;
     const orderSchemaUpdated = {
       ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber },
+      orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber, ...(actionResponse && { action: actionResponse }) },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {
         applicationNumber: [orderSchema.orderDetails.refApplicationId],
@@ -142,6 +148,7 @@ export const deleteOrderItem = async (order, itemID, tenantId) => {
           tenantId: order?.tenantId,
           itemID: itemID,
           orderNumber: order?.orderNumber,
+          itemText: order?.itemText,
         },
       },
       { tenantId }

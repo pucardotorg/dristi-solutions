@@ -188,6 +188,7 @@ const stateSlaMap = {
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
+const ErrorAttendeesKey = "attendees";
 
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
@@ -260,7 +261,6 @@ const GenerateOrdersV2 = () => {
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const [itemTextNull, setItemTextNull] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
@@ -407,6 +407,14 @@ const GenerateOrdersV2 = () => {
   ]);
 
   const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
+
+  const todayScheduledHearing = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+    const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+    return hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
+  }, [hearingsData?.HearingList]);
 
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
@@ -607,23 +615,204 @@ const GenerateOrdersV2 = () => {
       // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
 
       if (isDelayApplicationPending) {
-        updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
+
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
       } else {
-        updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
+
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
       }
     } else if (caseDetails?.courtCaseNumber) {
       if (caseDetails?.isLPRCase) {
-        updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `MANDATORY_SUBMISSIONS_RESPONSES`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+        const orderTypes = currentInProgressHearing
+          ? [
+              `SUMMONS`,
+              `NOTICE`,
+              `MANDATORY_SUBMISSIONS_RESPONSES`,
+              `WARRANT`,
+              `OTHERS`,
+              `ACCEPT_BAIL`,
+              `PROCLAMATION`,
+              `ATTACHMENT`,
+              `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
+              `COST`,
+              `WITNESS_BATTA`,
+            ]
+          : [
+              `SUMMONS`,
+              `NOTICE`,
+              `MANDATORY_SUBMISSIONS_RESPONSES`,
+              `SCHEDULE_OF_HEARING_DATE`,
+              `WARRANT`,
+              `OTHERS`,
+              `ACCEPT_BAIL`,
+              `PROCLAMATION`,
+              `ATTACHMENT`,
+              `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
+              `COST`,
+              `WITNESS_BATTA`,
+            ];
+
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
       } else if (!caseDetails?.lprNumber) {
-        updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `MOVE_CASE_TO_LONG_PENDING_REGISTER`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `MOVE_CASE_TO_LONG_PENDING_REGISTER`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `MOVE_CASE_TO_LONG_PENDING_REGISTER`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
+
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
+      } else {
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `ACCEPT_BAIL`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
+
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
       }
     }
     return updatedConfig;
-  }, [caseDetails, isDelayApplicationPending]);
+  }, [caseDetails, isDelayApplicationPending, currentInProgressHearing]);
 
   const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -848,13 +1037,23 @@ const GenerateOrdersV2 = () => {
     }
   }, [currentOrder?.attendance]);
 
+  const hideNextHearingButton = useMemo(() => {
+    const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+    const index = validData?.findIndex(
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+    );
+    return index === -1 || validData?.length === 1;
+  }, [data, currentInProgressHearing, todayScheduledHearing]);
+
   const nextHearing = useCallback(
     (isStartHearing) => {
       if (data?.length === 0) {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        const index = validData?.findIndex(
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+        );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -895,7 +1094,7 @@ const GenerateOrdersV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, userType]
+    [currentInProgressHearing, todayScheduledHearing, data, history, userType]
   );
 
   // TODO: temporary Form Config, need to be replaced with the actual config
@@ -1162,7 +1361,7 @@ const GenerateOrdersV2 = () => {
           });
         }
 
-        if (["COST", "WITNESS_BATTA"]?.includes(selectedOrderType)) {
+        if (["COST"]?.includes(selectedOrderType)) {
           orderTypeForm = orderTypeForm?.map((section) => {
             return {
               ...section,
@@ -1172,7 +1371,36 @@ const GenerateOrdersV2 = () => {
                     ...field,
                     populators: {
                       ...field.populators,
-                      options: [...complainants, ...respondents],
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "paymentToBeMadeTo") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (["WITNESS_BATTA"]?.includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "paymentToBeMadeBy") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant],
                     },
                   };
                 }
@@ -2193,7 +2421,27 @@ const GenerateOrdersV2 = () => {
         },
         allParties
       );
-      orderSchema = { ...orderSchema, orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties } };
+      let actionResponse = null;
+      if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+        const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
+        actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
+      }
+      const caseNumber =
+        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        caseDetails?.courtCaseNumber ||
+        caseDetails?.cmpNumber ||
+        caseDetails?.filingNumber;
+
+      orderSchema = {
+        ...orderSchema,
+        orderDetails: {
+          ...(order?.orderDetails || {}),
+          ...orderSchema?.orderDetails,
+          parties: parties,
+          caseNumber: caseNumber,
+          ...(actionResponse && { action: actionResponse }),
+        },
+      };
       return await ordersService
         .updateOrder(
           {
@@ -2206,7 +2454,7 @@ const GenerateOrdersV2 = () => {
               }),
               ...(order?.orderCategory === "INTERMEDIATE"
                 ? {
-                    orderTitle: t(order?.orderType) || t("DEFAULT_ORDER_TITLE"),
+                    orderTitle: t(order?.orderType) || order?.orderTitle || t("DEFAULT_ORDER_TITLE"),
                   }
                 : {
                     orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
@@ -2223,10 +2471,10 @@ const GenerateOrdersV2 = () => {
                       namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   }),
-                ...(currentScheduledHearing && {
-                  scheduledHearingNumber: currentScheduledHearing?.hearingId,
-                }),
               },
+              ...(currentScheduledHearing && {
+                scheduledHearingNumber: currentScheduledHearing?.hearingId,
+              }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
@@ -2266,7 +2514,7 @@ const GenerateOrdersV2 = () => {
           updatedOrder = {
             ...updatedOrderData,
             compositeItems: updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled),
-            itemText: itemTextNull ? null : updatedOrderData?.itemText,
+            itemText: updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
             t,
@@ -2507,6 +2755,26 @@ const GenerateOrdersV2 = () => {
         }
 
         if (
+          [
+            "JUDGEMENT",
+            "DISMISS_CASE",
+            "SETTLEMENT_REJECT",
+            "SETTLEMENT_ACCEPT",
+            "CASE_TRANSFER_REJECT",
+            "CASE_TRANSFER_ACCEPT",
+            "WITHDRAWAL_REJECT",
+            "WITHDRAWAL_ACCEPT",
+          ].includes(orderType) &&
+          caseDetails?.isLPRCase
+        ) {
+          setShowErrorToast({
+            label: t("ORDER_NOT_ALLOWED_FOR_LPR_CASE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+        if (
           formData?.refApplicationId &&
           ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(newApplicationDetails?.status)
         ) {
@@ -2528,7 +2796,7 @@ const GenerateOrdersV2 = () => {
     }
 
     // ✅ Works for both COMPOSITE and Non-COMPOSITE
-    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder);
+    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling);
 
     if (errors?.some((obj) => obj?.errors?.length > 0)) {
       setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
@@ -2537,7 +2805,7 @@ const GenerateOrdersV2 = () => {
 
     const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
 
-    if (currentInProgressHearing) {
+    if (currentInProgressHearing || currentOrder?.hearingNumber) {
       mandatoryOrderFields?.push({ presentAttendees: currentOrder?.attendance?.Present }, { absentAttendees: currentOrder?.attendance?.Absent });
       if (!skipScheduling) {
         mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
@@ -2548,7 +2816,28 @@ const GenerateOrdersV2 = () => {
     const allErrors = {};
     mandatoryOrderFields?.forEach((field) => {
       const [key, value] = Object?.entries(field)[0];
-      if (!value || (Array?.isArray(value) && value?.length === 0)) {
+
+      // Special handling for presentAttendees and absentAttendees
+      if (key === "absentAttendees") {
+        // If presentAttendees has all four options, absentAttendees can be empty
+        // const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
+        // If absentAttendees has all four options, presentAttendees can be empty
+        // const absentAttendeesComplete = currentOrder?.attendance?.Absent?.length === 4;
+
+        const requiredAttendees = ["COMPLAINANT", "ACCUSED"];
+        const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
+        const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
+
+        if (!requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
+          allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
+        }
+      } else if (key === "itemText") {
+        // Special handling for itemText to check for empty HTML content
+        const isEmptyHtml = !value || (typeof value === "string" && value.replace(/<[^>]*>/g, "").trim() === "");
+        if (isEmptyHtml) {
+          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        }
+      } else if (!value || (Array?.isArray(value) && value?.length === 0)) {
         // Format errors according to the expected structure
         // The component expects an object with msg property
         allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
@@ -2622,6 +2911,9 @@ const GenerateOrdersV2 = () => {
   );
 
   const handleOrderTypeChange = (index, orderType) => {
+    if (!orderType) {
+      return;
+    }
     const orderTypeValidationObj = checkOrderValidation(orderType?.code, index);
     if (orderTypeValidationObj?.showModal) {
       setShowOrderValidationModal(orderTypeValidationObj);
@@ -2717,9 +3009,6 @@ const GenerateOrdersV2 = () => {
           },
         ];
         orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
-        setItemTextNull(true);
-      } else {
-        setItemTextNull(false);
       }
 
       return {
@@ -3158,7 +3447,8 @@ const GenerateOrdersV2 = () => {
   const onItemTextSelect = (key, value) => {
     if (key === "itemText" && value?.["itemText"] !== undefined) {
       setCurrentOrder({ ...currentOrder, itemText: value[key] });
-      if (value[key]) {
+      const isEmptyHtml = !value[key] || value[key].replace(/<[^>]*>/g, "").trim() === "";
+      if (!isEmptyHtml) {
         setErrors((prevErrors) => {
           const newErrors = { ...prevErrors };
           delete newErrors["itemText"];
@@ -3166,6 +3456,16 @@ const GenerateOrdersV2 = () => {
         });
       }
     }
+  };
+
+  const handleNextHearingClick = async () => {
+    await handleSaveDraft(currentOrder);
+    nextHearing(false);
+  };
+
+  const handleGoBack = async () => {
+    await handleSaveDraft(currentOrder);
+    history.goBack();
   };
 
   if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading || isPurposeOfHearingLoading) {
@@ -3177,16 +3477,15 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {currentInProgressHearing && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
-              label={t(isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+              label={t("CS_CASE_NEXT_HEARING")}
+              children={<RightArrow />}
               isSuffix={true}
-              onButtonClick={() => nextHearing(false)}
+              onButtonClick={handleNextHearingClick}
               style={{
                 boxShadow: "none",
-                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
               }}
             ></Button>
           )}
@@ -3231,7 +3530,7 @@ const GenerateOrdersV2 = () => {
                               setAbsentAttendees(updatedAbsentAttendees);
                               setErrors((prevErrors) => {
                                 const newErrors = { ...prevErrors };
-                                delete newErrors["presentAttendees"];
+                                delete newErrors[ErrorAttendeesKey];
                                 return newErrors;
                               });
                             } else {
@@ -3258,9 +3557,9 @@ const GenerateOrdersV2 = () => {
                       </div>
                     ))}
                   </div>
-                  {errors["presentAttendees"] && (
+                  {/* {errors["presentAttendees"] && (
                     <CardLabelError> {t(errors["presentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
-                  )}
+                  )} */}
                 </LabelFieldPair>
 
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
@@ -3287,7 +3586,7 @@ const GenerateOrdersV2 = () => {
                               setPresentAttendees(updatedPresentAttendees);
                               setErrors((prevErrors) => {
                                 const newErrors = { ...prevErrors };
-                                delete newErrors["absentAttendees"];
+                                delete newErrors[ErrorAttendeesKey];
                                 return newErrors;
                               });
                             } else {
@@ -3314,7 +3613,7 @@ const GenerateOrdersV2 = () => {
                       </div>
                     ))}
                   </div>
-                  {errors["absentAttendees"] && <CardLabelError> {t(errors["absentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>}
+                  {errors[ErrorAttendeesKey] && <CardLabelError> {t(errors[ErrorAttendeesKey]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>}
                 </LabelFieldPair>
               </React.Fragment>
             )}
@@ -3553,9 +3852,7 @@ const GenerateOrdersV2 = () => {
             <Button
               label={t("CS_COMMON_BACK")}
               variation={"secondary"}
-              onButtonClick={() => {
-                history.goBack();
-              }}
+              onButtonClick={handleGoBack}
               style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
               textStyles={{
                 fontFamily: "Roboto",

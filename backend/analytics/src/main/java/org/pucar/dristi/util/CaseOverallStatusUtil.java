@@ -316,6 +316,13 @@ public class CaseOverallStatusUtil {
 			}
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+                String filingNumber = outcome.getFilingNumber();
+                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+                if (isLprCase != null && isLprCase) {
+                    log.info("case is in long pending registration {} not eligible for case outcome update" , filingNumber);
+                    return;
+                }
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());

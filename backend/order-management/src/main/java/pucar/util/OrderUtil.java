@@ -1,11 +1,14 @@
 package pucar.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -15,9 +18,7 @@ import pucar.web.models.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -28,12 +29,14 @@ public class OrderUtil {
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final LocalizationUtil localizationUtil;
 
     @Autowired
-    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
+    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, LocalizationUtil localizationUtil) {
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.localizationUtil = localizationUtil;
     }
 
     public Boolean fetchOrderDetails(OrderExistsRequest orderExistsRequest) {
@@ -141,7 +144,7 @@ public class OrderUtil {
                 .map(map -> (Map<?, ?>) map)
                 .map(map -> map.get("applicationStatus"))
                 .filter(String.class::isInstance)
-                .map(String.class::cast).orElseThrow(()->new CustomException("",""));
+                .map(String.class::cast).orElseThrow(() -> new CustomException("", ""));
 
         return applicationStatusType(applicationStatus);
 
@@ -157,25 +160,45 @@ public class OrderUtil {
         };
     }
 
-    public String getBusinessOfTheDay(Order order) {
+    public String getBusinessOfTheDay(Order order, RequestInfo requestInfo) {
         StringBuilder sb = new StringBuilder();
 
         try {
             // Attendance
             if (order.getAttendance() != null) {
-                String attendanceStr = objectMapper.writeValueAsString(order.getAttendance());
-                sb.append(attendanceStr).append("\n");
+
+                Object attendanceObj = order.getAttendance();
+
+                Map<String, List<String>> attendanceMap = objectMapper.convertValue(
+                        attendanceObj, new TypeReference<Map<String, List<String>>>() {
+                        }
+                );
+
+                // Format and append
+                for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
+                    String status = entry.getKey(); // "Present", "Absent"
+                    List<String> roles = entry.getValue();
+                    List<String> rolesLocalized = new ArrayList<>();
+                    if (roles != null) {
+                        roles.forEach(role -> rolesLocalized.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        String line = status + ": " + String.join(", ", rolesLocalized);
+                        sb.append(line).append("\n");
+                    }
+                }
             }
 
             // Item Text
             if (order.getItemText() != null) {
-                sb.append(order.getItemText()).append("\n");
+                String html = order.getItemText();
+                String plainText = Jsoup.parse(html).text();
+                sb.append(plainText).append("\n");
             }
 
             // Purpose of Next Hearing
-            if (order.getPurposeOfNextHearing() != null) {
-                sb.append("Purpose of Next Hearing: [")
-                        .append(order.getPurposeOfNextHearing()).append("]\n");
+            if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
+                String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
+                sb.append("Purpose of Next Hearing: ")
+                        .append(purpose).append("\n");
             }
 
             // Next Hearing Date
@@ -184,12 +207,11 @@ public class OrderUtil {
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
                         .toString();
-                sb.append("Date of Next Hearing: [")
-                        .append(dateStr).append("]\n");
+                sb.append("Date of Next Hearing: ")
+                        .append(dateStr).append("\n");
             }
 
             return sb.toString().trim();
-
         } catch (Exception e) {
             log.error("Error extracting order text", e);
             throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
@@ -197,7 +219,7 @@ public class OrderUtil {
     }
 
 
-    public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
+    public OrderResponse removeOrderItem(@Valid OrderRequest request) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getRemoveOrderItemEndPoint());

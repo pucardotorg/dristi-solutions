@@ -846,6 +846,12 @@ const EvidenceModal = ({
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const caseNumber =
+        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        caseData?.courtCaseNumber ||
+        caseData?.cmpNumber ||
+        caseData?.filingNumber;
       const formdata = {
         orderType: {
           code: orderType,
@@ -905,6 +911,8 @@ const EvidenceModal = ({
                     hearingNumber: compositeOrderObj?.hearingNumber,
                     linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
                     applicationNumber: compositeOrderObj?.applicationNumber,
+                    applicationCMPNumber: applicationCMPNumber,
+                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
                 },
               },
@@ -917,6 +925,9 @@ const EvidenceModal = ({
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                     applicationNumber: refApplicationId,
+                    applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
+                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -967,6 +978,8 @@ const EvidenceModal = ({
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
                     applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                     applicationNumber: refApplicationId,
+                    applicationCMPNumber: applicationCMPNumber,
+                    caseNumber: caseNumber,
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -1059,6 +1072,9 @@ const EvidenceModal = ({
               ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
               applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
               applicationNumber: refApplicationId,
+              applicationCMPNumber: applicationCMPNumber,
+              caseNumber: caseNumber,
+              ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
             },
             ...(hearingNumber && {
               hearingNumber: hearingNumber,

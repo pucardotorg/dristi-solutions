@@ -16,6 +16,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.util.LocalizationUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.stereotype.Component;
 
@@ -41,13 +42,15 @@ public class OrderRegistrationEnrichment {
     private ObjectMapper objectMapper;
     private CaseUtil caseUtil;
     private final MdmsDataConfig mdmsDataConfig;
+    private final LocalizationUtil localizationUtil;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, LocalizationUtil localizationUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.mdmsDataConfig = mdmsDataConfig;
+        this.localizationUtil = localizationUtil;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -152,7 +155,7 @@ public class OrderRegistrationEnrichment {
 
                                 if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");
-                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString());
+                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString(),orderRequest.getRequestInfo(),orderRequest.getOrder().getTenantId());
                                     if (itemTextMdms != null) {
                                         String itemText = orderRequest.getOrder().getItemText();
                                         if (itemText != null) {
@@ -178,20 +181,16 @@ public class OrderRegistrationEnrichment {
     public void enrichItemTextForIntermediateOrder(OrderRequest orderRequest) {
         if (INTERMEDIATE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
             JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
-            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString());
+            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString(),orderRequest.getRequestInfo(),orderRequest.getOrder().getTenantId());
             if (itemTextMdms != null) {
                 String itemText = orderRequest.getOrder().getItemText();
-                if (itemText != null) {
-                    itemText = itemText + " " + itemTextMdms;
-                } else {
-                    itemText = itemTextMdms;
-                }
-                orderRequest.getOrder().setItemText(itemText);
+                if ("<p></p>\n".equalsIgnoreCase(itemText) || itemText == null)
+                 orderRequest.getOrder().setItemText("<p>"+itemTextMdms+"</p>\n");
             }
         }
     }
 
-    public String processOrderText(String orderType, String orderSchema) {
+    public String processOrderText(String orderType, String orderSchema,RequestInfo requestInfo,String tenantId) {
 
         List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
                 .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
@@ -206,7 +205,7 @@ public class OrderRegistrationEnrichment {
                 if (paths == null || paths.isEmpty()) {
                     return text;
                 }
-                return getText(orderSchema, paths, text);
+                return getText(orderSchema, paths, text,requestInfo,tenantId);
 
             } else if (itemTextMdmsMatches.size() == 2) {
                 String action = JsonPath.read(orderSchema, "$.orderDetails.action");
@@ -216,7 +215,7 @@ public class OrderRegistrationEnrichment {
                 if (paths == null || paths.isEmpty()) {
                     return text;
                 }
-                return getText(orderSchema, paths, text);
+                return getText(orderSchema, paths, text, requestInfo,tenantId);
             }
         } catch (Exception e) {
             log.error("Error enriching item text :: {}", e.toString());
@@ -225,7 +224,7 @@ public class OrderRegistrationEnrichment {
         return null;
     }
 
-    private static String getText(String orderSchema, List<String> paths, String text) {
+    private String getText(String orderSchema, List<String> paths, String text,RequestInfo requestInfo,String tenantId) {
         for (String path : paths) {
             if (path.startsWith("GET_DUE_DATE")) {
                 Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
@@ -246,7 +245,14 @@ public class OrderRegistrationEnrichment {
                     String partyToMakeSubmission = String.join(", ", parties);
                     text = text.replace("[" + path + "]", partyToMakeSubmission);
                 }
-            } else {
+            }else if (path.startsWith("LOCALIZATION")) {
+                String value = JsonPath.read(orderSchema, path.substring("LOCALIZATION".length()));
+                String localizedValue = localizationUtil.callLocalization(requestInfo, tenantId, value);
+                if (value != null && !value.isEmpty()) {
+                    text = text.replace("[" + path + "]", localizedValue);
+                }
+            }
+            else {
                 String pathValue = JsonPath.read(orderSchema, path);
                 if (pathValue != null) {
                     text = text.replace("[" + path + "]", pathValue);
