@@ -217,6 +217,7 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
+    sessionStorage.removeItem("fileStoreId");
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
   };
 
@@ -340,6 +341,7 @@ const SubmissionDocuments = ({ path }) => {
             },
           },
         };
+        sessionStorage.removeItem("fileStoreId");
         evidence = await DRISTIService.updateEvidence(evidenceReqBody);
         await createPendingTask({
           name: t("PENDINGESIGN_SUBMIT_DOCUMENT"),
