@@ -880,7 +880,7 @@ public class HearingService {
                     .orderType("")
                     .isActive(true)
                     .status("")
-                    .additionalDetails(getAdditionalDetails(hearingNumber))
+                 //   .additionalDetails(getAdditionalDetails(hearingNumber))
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
 

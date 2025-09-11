@@ -172,7 +172,7 @@ public class OrderService {
                     .orderTitle("Schedule of Next Hearing Date")
                     .orderType("")
                     .isActive(true)
-                    .additionalDetails(getAdditionalDetails(hearingNumber))
+                    //.additionalDetails(getAdditionalDetails(hearingNumber))
                     .status("")
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
