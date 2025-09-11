@@ -188,10 +188,8 @@
           "uniqueIdentifier": "25",
           "data": {
             "id": 25,
-            "path": [
-              "LOCALIZATION$.orderDetails.plea"
-            ],
-            "itemText": "Accused is released on bail.  Particulars of offences u/s.138 of Negotiable Instruments Act were read over and explained to the Accused to which he pleaded [LOCALIZATION$.orderDetails.plea] and claimed to be tried.",
+            "path": [],
+            "itemText": "Accused is released on bail. Particulars of offences u/s.138 of Negotiable Instruments Act were read over and explained to the Accused.",
             "orderType": "ACCEPT_BAIL"
           },
           "isActive": true,
