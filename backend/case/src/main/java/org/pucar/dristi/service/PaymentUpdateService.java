@@ -180,7 +180,7 @@ public class PaymentUpdateService {
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
-            if(paymentReceipt!=null){
+            if(paymentReceipt!=null && paymentReceipt.getFileStore()!=null){
                 caseRequest.getCases().setDocuments(List.of(paymentReceipt));
             }
             producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
