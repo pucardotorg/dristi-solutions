@@ -23,7 +23,9 @@ import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -66,7 +68,7 @@ public class OrderService {
         if (order.getNextHearingDate() != null) {
             String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(order.getHearingNumber()).tenantId(order.getTenantId()).build()).build());
+                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
             Hearing hearing = hearings.get(0);
             hearingUtil.updateHearingSummary(request, hearing);
         }
@@ -170,6 +172,7 @@ public class OrderService {
                     .orderTitle("Schedule of Next Hearing Date")
                     .orderType("")
                     .isActive(true)
+                    .additionalDetails(getAdditionalDetails(hearingNumber))
                     .status("")
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
@@ -198,5 +201,11 @@ public class OrderService {
         // add validation here
         CourtCase courtCase = cases.get(0);
         return courtCase.getCnrNumber();
+    }
+
+    public Map<String, Object> getAdditionalDetails(String hearingNumber) {
+        Map<String, Object> details = new HashMap<>();
+        details.put("refHearingId", hearingNumber);
+        return details;
     }
 }
