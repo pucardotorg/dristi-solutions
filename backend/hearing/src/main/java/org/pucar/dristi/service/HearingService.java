@@ -880,6 +880,7 @@ public class HearingService {
                     .orderType("")
                     .isActive(true)
                     .status("")
+                    .additionalDetails(getAdditionalDetails(hearingNumber))
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
 
@@ -896,5 +897,10 @@ public class HearingService {
 
     }
 
+    public Map<String, Object> getAdditionalDetails(String hearingNumber) {
+        Map<String, Object> details = new HashMap<>();
+        details.put("refHearingId", hearingNumber);
+        return details;
+    }
 
 }
