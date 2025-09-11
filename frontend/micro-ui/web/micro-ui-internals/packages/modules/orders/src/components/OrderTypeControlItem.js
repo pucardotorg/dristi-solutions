@@ -19,6 +19,7 @@ const OrderTypeControlItem = ({
   index = null,
   style = {},
   handleOrderTypeChange,
+  isCompositeItem = false,
 }) => {
   return (
     <React.Fragment>
@@ -74,6 +75,7 @@ const OrderTypeControlItem = ({
           }}
           label={t("DELETE_ORDER_ITEM")}
           icon={<CustomDeleteIcon color="#BB2C2F" width="20" height="20" />}
+          isDisabled = {!orderType && !isCompositeItem}
         />
       </div>
     </React.Fragment>
