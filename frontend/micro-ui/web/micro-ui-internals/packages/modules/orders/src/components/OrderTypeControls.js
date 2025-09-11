@@ -33,6 +33,7 @@ const OrderTypeControls = ({
                   index={idx}
                   style={{ marginBottom: "10px" }}
                   handleOrderTypeChange={handleOrderTypeChange}
+                  isCompositeItem={true}
                 />
               ))}
           </div>
@@ -48,6 +49,7 @@ const OrderTypeControls = ({
             handleEditOrder={handleEditOrder}
             setDeleteOrderItemIndex={setDeleteOrderItemIndex}
             handleOrderTypeChange={handleOrderTypeChange}
+            isCompositeItem={false}
           />
         )}
       </div>
