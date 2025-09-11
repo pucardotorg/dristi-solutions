@@ -2451,21 +2451,16 @@ const GenerateOrdersV2 = () => {
               additionalDetails: {
                 ...order?.additionalDetails,
                 ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
-                ...((currentInProgressHearing || hearingId) && !skipScheduling
-                  ? {
-                      formdata: {
-                        ...(order?.additionalDetails?.formdata || {}),
-                        attendees: attendeeOptions,
-                        refHearingId: order?.hearingNumber,
-                        namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
-                      },
-                    }
-                  : {
-                      formdata: {
-                        ...(order?.additionalDetails?.formdata || {}),
-                        refHearingId: lastCompletedHearing?.hearingId,
-                      },
-                    }),
+                ...((currentInProgressHearing || hearingId) &&
+                  !skipScheduling && {
+                    formdata: {
+                      ...(order?.additionalDetails?.formdata || {}),
+                      attendees: attendeeOptions,
+                      refHearingId: order?.hearingNumber,
+                      namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  }),
+                refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
               },
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
