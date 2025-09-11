@@ -17,6 +17,7 @@ import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseListResponse;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
@@ -136,6 +137,11 @@ public class OrderService {
     }
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+
+        if(cnrNumber==null){
+            cnrNumber = getCnrNumber(tenantId, filingNumber, requestInfo);
+        }
+
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .status("DRAFT_IN_PROGRESS")
@@ -180,5 +186,17 @@ public class OrderService {
         }
 
         return orderResponse.getOrder();
+    }
+
+    private String getCnrNumber(String tenantId, String filingNumber, RequestInfo requestInfo) {
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).tenantId(tenantId).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+        return courtCase.getCnrNumber();
     }
 }
