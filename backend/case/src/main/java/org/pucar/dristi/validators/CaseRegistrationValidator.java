@@ -536,7 +536,7 @@ public class CaseRegistrationValidator {
             JsonNode emailNode = formDataItem.at("/data/emails/emailId");
             if (!emailNode.isMissingNode() && emailNode.isArray()) {
                 for (JsonNode node : emailNode) {
-                    if (node.isTextual() && !node.asText().trim().isEmpty()) {
+                    if (isNonEmptyText(node)) {
                         emailIds.add(node.asText());
                     }
                 }
@@ -556,6 +556,7 @@ public class CaseRegistrationValidator {
                 .map(Emails::getEmailId)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
+                .filter(emailId -> emailId != null && !emailId.trim().isEmpty())
                 .toList();
     }
 
@@ -582,6 +583,15 @@ public class CaseRegistrationValidator {
         }
     }
 
+    public static boolean isNonEmptyText(JsonNode node) {
+        return node != null &&
+                !node.isMissingNode() &&
+                !node.isNull() &&
+                node.isTextual() &&
+                !node.asText().trim().isEmpty();
+    }
+
+
     public static List<String> extractMobileNumbersFromDetails(JsonNode detailsNode, PartyType type) {
         List<String> mobileNumbers = new ArrayList<>();
         if (detailsNode == null || !detailsNode.has("formdata")) {
@@ -598,7 +608,7 @@ public class CaseRegistrationValidator {
             switch (type) {
                 case COMPLAINANT:
                     JsonNode complainantMobile = dataNode.at("/complainantVerification/mobileNumber");
-                    if (!complainantMobile.isMissingNode() && complainantMobile.isTextual()) {
+                    if (isNonEmptyText(complainantMobile)) {
                         mobileNumbers.add(complainantMobile.asText());
                     }
                     break;
@@ -607,7 +617,7 @@ public class CaseRegistrationValidator {
                     JsonNode mobileNode = dataNode.at("/phonenumbers/mobileNumber");
                     if (!mobileNode.isMissingNode() && mobileNode.isArray()) {
                         for (JsonNode numberNode : mobileNode) {
-                            if (numberNode.isTextual() && !numberNode.asText().trim().isEmpty()) {
+                            if (isNonEmptyText(numberNode)) {
                                 mobileNumbers.add(numberNode.asText());
                             }
                         }
@@ -620,7 +630,7 @@ public class CaseRegistrationValidator {
                             JsonNode advocateNameDetails = advocateEntry.get("advocateNameDetails");
                             if (advocateNameDetails != null) {
                                 JsonNode advocateMobile = advocateNameDetails.get("advocateMobileNumber");
-                                if (advocateMobile != null && advocateMobile.isTextual()) {
+                                if (isNonEmptyText(advocateMobile)) {
                                     mobileNumbers.add(advocateMobile.asText());
                                 }
                             }
@@ -648,6 +658,7 @@ public class CaseRegistrationValidator {
                 .map(PhoneNumbers::getMobileNumber)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
+                .filter(number -> number != null && !number.trim().isEmpty())
                 .toList();
     }
 
