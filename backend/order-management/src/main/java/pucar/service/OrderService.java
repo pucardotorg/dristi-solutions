@@ -137,16 +137,16 @@ public class OrderService {
     }
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
-        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).tenantId(tenantId).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
-
-        // add validation here
-        CourtCase courtCase = cases.get(0);
 
         if(cnrNumber==null){
+            CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                    .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).tenantId(tenantId).defaultFields(false).build()))
+                    .requestInfo(requestInfo).build());
+
+            List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
+
+            // add validation here
+            CourtCase courtCase = cases.get(0);
             cnrNumber = courtCase.getCnrNumber();
         }
 
