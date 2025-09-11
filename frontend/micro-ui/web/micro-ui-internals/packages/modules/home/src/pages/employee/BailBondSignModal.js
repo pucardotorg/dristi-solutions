@@ -29,7 +29,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const canSignBailBond = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_APPROVER"), [roles]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkBailBondSignSelectedItem = sessionStorage.getItem("bulkBailBondSignSelectedItem");
