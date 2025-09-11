@@ -330,9 +330,9 @@ const InsideHearingMainPage = () => {
   useEffect(() => {
     setAdditionalDetails(caseDetails?.additionalDetails);
     const witnessOptions =
-      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-        label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
-        value: witness?.data?.uuid,
+      caseDetails?.witnessDetails?.map((witness) => ({
+        label: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation),
+        value: witness?.uuid,
       })) || [];
 
     const advocateOptions =
@@ -353,7 +353,7 @@ const InsideHearingMainPage = () => {
     setOptions(combinedOptions);
 
     if (isInitialLoad.current) {
-      const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
+      const selectedWitnessDefault = caseDetails?.witnessDetails?.[0] || {};
       setSelectedWitness(selectedWitnessDefault);
       setWitnessDepositionText(
         hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
@@ -471,7 +471,7 @@ const InsideHearingMainPage = () => {
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
 
-    let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
+    let selectedData = caseDetails?.witnessDetails?.find((w) => w.uuid === selectedUUID);
 
     if (!selectedData) {
       const attendee = hearing?.attendees?.find((a) => a.individualId === selectedUUID);

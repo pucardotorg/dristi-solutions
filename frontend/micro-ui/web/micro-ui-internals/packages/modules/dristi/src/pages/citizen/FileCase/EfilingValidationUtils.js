@@ -468,7 +468,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const respondentMobileNumbersArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
@@ -478,21 +478,21 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+      ?.map((data) => {
+        return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const respondentEmailsArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -502,14 +502,14 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
+      ?.map((data) => {
+        return data?.emails?.emailId;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
@@ -3324,6 +3324,7 @@ export const updateCaseDetails = async ({
     }
     return doc;
   });
+  const updatedData = transformCaseDataForUpdate(data, "witnessDetails");
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3331,7 +3332,7 @@ export const updateCaseDetails = async ({
         ...caseDetails,
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-        ...data,
+        ...updatedData,
         documents: updatedTempDocList,
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
@@ -3346,4 +3347,55 @@ export const updateCaseDetails = async ({
     },
     tenantId
   );
+};
+
+export const transformCaseDataForFetching = (caseDetails, key) => {
+  if (key === "witnessDetails" && caseDetails?.witnessDetails?.length > 0) {
+    let updatedCaseData = structuredClone(caseDetails || {});
+    updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+    let isCompleted = true;
+
+    const formdata = (caseDetails?.witnessDetails).map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
+      if (!uiData?.isCompleted) {
+        isCompleted = false;
+      }
+      return {
+        data: witnessFormData,
+        isenabled: uiData?.isenabled,
+        displayindex: uiData?.displayIndex || 0,
+        uniqueId,
+      };
+    });
+
+    updatedCaseData.additionalDetails[key] = {
+      formdata,
+      ...(isCompleted && { isCompleted }),
+    };
+    return updatedCaseData;
+  }
+  return caseDetails;
+};
+
+export const transformCaseDataForUpdate = (caseDetails, key) => {
+  const updatedCaseData = structuredClone(caseDetails || {});
+
+  if (key === "witnessDetails") {
+    const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
+    if (formdata?.length > 0) {
+      const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+        return {
+          ...data,
+          uniqueId,
+          uiData: {
+            isenabled,
+            displayIndex: displayindex,
+            isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
+          },
+        };
+      });
+      delete updatedCaseData.additionalDetails[key];
+      updatedCaseData.witnessDetails = witnessDetails;
+    }
+  }
+  return updatedCaseData;
 };

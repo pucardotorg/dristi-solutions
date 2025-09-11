@@ -1626,11 +1626,9 @@ const AdmittedCases = () => {
 
   const updateCaseDetails = useCallback(
     async (action, data = {}) => {
-      let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-      let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
       const newcasedetails = {
         ...caseDetails,
-        additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+        additionalDetails: { ...caseDetails.additionalDetails, judge: data },
       };
       const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
       let assignees = [];
