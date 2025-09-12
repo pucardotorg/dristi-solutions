@@ -127,7 +127,7 @@ public class OrderService {
 
         HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
-        order.setHearingNumber(newHearing.getHearing().getHearingId());
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
                 log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
