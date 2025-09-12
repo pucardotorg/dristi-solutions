@@ -242,19 +242,25 @@ const HomeHearingsTab = ({
             { homeFilteredData: filters }
           );
         } else {
-          const response = await DRISTIService.getDraftOrder(
-            {
-              hearingDraftOrder: {
-                filingNumber: hearingDetails?.filingNumber,
-                tenantId: hearingDetails?.tenantId,
-                hearingNumber: hearingDetails?.hearingNumber,
+          try {
+            const response = await DRISTIService.getDraftOrder(
+              {
+                hearingDraftOrder: {
+                  filingNumber: hearingDetails?.filingNumber,
+                  tenantId: hearingDetails?.tenantId,
+                  hearingNumber: hearingDetails?.hearingNumber,
+                },
               },
-            },
-            {}
-          );
-          history.push(
-            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
-          );
+              {}
+            );
+            history.push(
+              `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            );
+          } catch (error) {
+            const errorCode = error?.response?.data?.Errors?.[0]?.code;
+            const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
+            showToast("error", errorMsg, 5000);
+          }
         }
         return;
       } else if (isBenchClerk || isCourtRoomManager) {
