@@ -4,18 +4,39 @@ import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
 import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 import { HomeService } from "../hooks/services";
+import HomeHeader from "./HomeHeader";
 
 const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount, showToast = () => {} }) => {
   const [stepper, setStepper] = useState(0);
   return (
-    <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee" }}>
-      <SideBarTitle
-        t={t}
-        title="HEARINGS_TAB"
-        count={hearingCount}
-        onClick={() => onTabChange("HEARINGS_TAB")}
-        active={activeTab === "HEARINGS_TAB"}
-      />
+    <div
+      style={{
+        background: "#fafbfc",
+        borderRight: "1px solid #eee",
+        paddingTop: 24,
+        paddingBottom: 24,
+        paddingLeft: 24,
+        paddingRight: 24,
+        width: "20%",
+      }}
+    >
+      <HomeHeader t={t} />
+      <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
+        <SidebarItem
+          t={t}
+          label={"TOTAL_HEARINGS_TAB"}
+          count={hearingCount}
+          active={activeTab === "TOTAL_HEARINGS_TAB"}
+          onClick={() => onTabChange("TOTAL_HEARINGS_TAB")}
+        />
+        <SidebarItem
+          t={t}
+          label={"CS_HOME_BULK_RESCHEDULE"}
+          count={hearingCount}
+          active={activeTab === "CS_HOME_BULK_RESCHEDULE"}
+          onClick={() => onTabChange("CS_HOME_BULK_RESCHEDULE")}
+        />
+      </HomeAccordian>
 
       <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
         {!isOptionsLoading &&
@@ -89,10 +110,6 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
         />
         <SidebarItem t={t} label="BULK_EVIDENCE_SIGN" active={activeTab === "BULK_EVIDENCE_SIGN"} onClick={() => onTabChange("BULK_EVIDENCE_SIGN")} />
       </HomeAccordian>
-
-      <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => setStepper((prev) => prev + 1)} />
-
-      <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </div>
   );
 };

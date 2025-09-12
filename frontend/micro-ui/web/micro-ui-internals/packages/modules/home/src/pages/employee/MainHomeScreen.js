@@ -1,18 +1,17 @@
 import React, { useMemo, useState, useEffect } from "react";
-import HomeHeader from "../../components/HomeHeader";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom";
-import { Loader, Toast, InboxSearchComposer, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
-import { BailBondSignModal } from "./BailBondSignModal";
 import BailBondModal from "./BailBondModal";
 import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
 import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
+import NewBulkRescheduleTab from "./NewBulkRescheduleTab";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -26,7 +25,7 @@ const MainHomeScreen = () => {
   const history = useHistory();
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
-  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "HEARINGS_TAB";
+  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB";
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
@@ -41,6 +40,7 @@ const MainHomeScreen = () => {
     SCHEDULE_HEARING: 0,
     BAIL_BOND_STATUS: 0,
   });
+  const [stepper, setStepper] = useState(1);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
@@ -107,7 +107,7 @@ const MainHomeScreen = () => {
     }, duration);
   };
   const fetchHearingCount = async (filters, activeTab) => {
-    if (filters && activeTab === "HEARINGS_TAB" && filters.date) {
+    if (filters && activeTab === "TOTAL_HEARINGS_TAB" && filters.date) {
       try {
         let fromDate, toDate;
         if (filters.date) {
@@ -357,7 +357,7 @@ const MainHomeScreen = () => {
 
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
-      if (activeTabTitle === "HEARINGS_TAB") {
+      if (activeTabTitle === "TOTAL_HEARINGS_TAB") {
         fetchHearingCount();
       } else {
         fetchPendingTaskCounts();
@@ -397,8 +397,7 @@ const MainHomeScreen = () => {
           <Loader />
         </div>
       )}
-      <HomeHeader t={t} />
-      <div className="main-home-screen" style={{ display: "flex", width: "100vw", height: "calc(100vh - 173px)" }}>
+      <div className="main-home-screen" style={{ display: "flex", width: "100vw", borderTop: "1px #E6E6E6 solid" }}>
         <HomeSidebar
           t={t}
           onTabChange={handleTabChange}
@@ -409,7 +408,7 @@ const MainHomeScreen = () => {
           pendingTaskCount={pendingTaskCount}
           showToast={showToast}
         />
-        {activeTab === "HEARINGS_TAB" ? (
+        {activeTab === "TOTAL_HEARINGS_TAB" ? (
           <div style={{ width: "100%" }}>
             <HomeHearingsTab
               t={t}
@@ -422,6 +421,10 @@ const MainHomeScreen = () => {
               showToast={showToast}
               hearingCount={hearingCount}
             />
+          </div>
+        ) : activeTab === "CS_HOME_BULK_RESCHEDULE" ? (
+          <div style={{ width: "100%" }}>
+            <NewBulkRescheduleTab stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
           </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>

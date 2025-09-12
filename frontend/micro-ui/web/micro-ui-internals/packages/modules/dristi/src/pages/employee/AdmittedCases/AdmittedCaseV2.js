@@ -404,7 +404,7 @@ const AdmittedCaseV2 = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userType]);
-  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
   useEffect(() => {

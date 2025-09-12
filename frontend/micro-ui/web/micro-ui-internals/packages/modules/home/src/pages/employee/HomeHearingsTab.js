@@ -607,6 +607,7 @@ const HomeHearingsTab = ({
 
   return (
     <div className="full-height-container">
+      <div style={{ fontSize: 24, fontWeight: 700, padding: 26 }}>{t("ALL_HEARINGS")}</div>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>

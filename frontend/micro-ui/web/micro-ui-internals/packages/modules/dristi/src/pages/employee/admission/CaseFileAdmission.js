@@ -233,7 +233,7 @@ function CaseFileAdmission({ t, path }) {
     [hearingDetails?.HearingList]
   );
 
-  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   useEffect(() => {
     const unlisten = history.listen((location, action) => {
       if (action === "POP" && location?.pathname?.includes("home-screen")) {
