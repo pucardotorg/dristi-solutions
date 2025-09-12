@@ -9,6 +9,16 @@ import htmlToDraft from "html-to-draftjs";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import DOMPurify from "dompurify";
 
+const areHtmlContentsEqual = (a = "", b = "") => {
+  const normalize = (str) =>
+    str
+      .replace(/\s+/g, "")
+      .replace(/<p><br><\/p>/g, "<p></p>")
+      .replace(/&nbsp;/g, "");
+
+  return normalize(a) === normalize(b);
+};
+
 const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
     () =>
@@ -80,7 +90,10 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
     const rawHtml = formData?.[configKey]?.[inputName] || "";
     const sanitizedIncomingHtml = DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
 
+    const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+
     if (isLocalEditRef.current) return;
+    if (areHtmlContentsEqual(sanitizedIncomingHtml, currentHtml)) return;
 
     try {
       const isHtml = /<\/?[a-z][\s\S]*>/i?.test(sanitizedIncomingHtml);
@@ -98,7 +111,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       console.error("Error parsing draft content:", err);
       setEditorState(EditorState.createEmpty());
     }
-  }, [configKey, inputName]);
+  }, [configKey, formData, inputName]);
 
   useEffect(() => {
     if (!isEqual(formdata, formData)) {
