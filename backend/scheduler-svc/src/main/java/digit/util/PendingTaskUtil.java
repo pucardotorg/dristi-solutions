@@ -64,7 +64,7 @@ public class PendingTaskUtil {
         pendingTask.setStatus(PENDING_TASK_STATUS);
         pendingTask.setActionCategory(SCHEDULE_HEARING_ACTION_CATEGORY);
         pendingTask.setFilingNumber(reScheduleHearing.getCaseId());
-        pendingTask.setAssignedRole(List.of("JUDGE_ROLE"));
+        pendingTask.setAssignedRole(List.of(HEARING_CREATOR));
         pendingTask.setScreenType(SCREEN_TYPE);
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime slaDate=currentTime.plusDays(configuration.getJudgePendingSla());

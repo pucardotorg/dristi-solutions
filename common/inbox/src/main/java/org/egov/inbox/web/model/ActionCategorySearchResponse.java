@@ -28,4 +28,14 @@ public class ActionCategorySearchResponse {
 
     @JsonProperty("bailBondData")
     private Criteria bailBondData;
+
+    @JsonProperty("scrutinyCasesData")
+    private Criteria scrutinyCasesData;
+
+    @JsonProperty("offlinePaymentsData")
+    private Criteria offlinePaymentsData;
+
+    @JsonProperty("registerUsersData")
+    private Criteria registerUsersData;
+
 }

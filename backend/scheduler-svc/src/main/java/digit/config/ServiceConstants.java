@@ -123,4 +123,6 @@ public class ServiceConstants {
 
     public static final String EXPIRED = "EXPIRED";
 
+    // roles
+    public static final String HEARING_CREATOR = "HEARING_CREATOR";
 }
