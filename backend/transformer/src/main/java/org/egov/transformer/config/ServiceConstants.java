@@ -1,5 +1,8 @@
 package org.egov.transformer.config;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ServiceConstants {
    public static final String CASE_INDEX = "case-index";
    public static final String FILING_NUMBER = "Data.caseDetails.filingNumber";
@@ -28,6 +31,10 @@ public class ServiceConstants {
    public static final String DEFAULT_HEARING_MASTER_NAME = "hearings";
    public static final String HEARING_MODULE_NAME = "Hearing";
    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
+   public static final String COMMON_MASTERS_MASTER = "common-masters";
+   public static final String COURT_ROOMS = "Court_Rooms";
+   public static final String HEARING_COMPLETED_STATUS = "COMPLETED";
+   public static final String HEARING_SCHEDULED_STATUS = "SCHEDULED";
 
    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
 
@@ -44,4 +51,28 @@ public class ServiceConstants {
    public static final String FLOW_JAC = "flow_jac";
 
    public static final String msgId = "1730882648558|en_IN";
+   public static final String ERRORS_PATH = "$.errors";
+
+   public static final String ES_UPDATE_BAIL_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+   public static final String ES_UPDATE_BAIL_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"bailDetails\":{" +
+                                                               "\"caseNumber\":\"%s\"," +
+                                                               "\"searchableFields\":%s" +
+                                                               "}}}}\n";
+
+   public static final String ES_UPDATE_ARTIFACT_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+   public static final String ES_UPDATE_ARTIFACT_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"artifactDetails\":{" +
+           "\"caseNumber\":\"%s\"," +
+           "\"searchableFields\":%s" +
+           "}}}}\n";
+
+   public static final String ARTIFACT_INDEX_BUSINESS_OBJECT_KEY = "artifactDetails";
+   public static final String OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY = "hearingDetails";
+
+   public static final String ENG_LOCALE_CODE = "en_IN";
+
+   public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
+
+   public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+   public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
 }

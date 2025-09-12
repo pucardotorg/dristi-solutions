@@ -232,8 +232,9 @@ function CaseFileAdmission({ t, path }) {
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
   useEffect(() => {
     const unlisten = history.listen((location, action) => {
-      if (action === "POP" && location?.pathname?.includes("home-screen") && !location.state?.homeActiveTab) {
+      if (action === "POP" && location?.pathname?.includes("home-screen")) {
         history.replace(location.pathname, {
+          ...location.state,
           homeActiveTab: homeActiveTab,
         });
       }
@@ -800,7 +801,7 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
           cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)

@@ -512,7 +512,33 @@ paths:
               schema:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
-      
+
+    /case/v2/add/witness:
+      post:
+        tags:
+          - Case
+        summary: API to add a witness to a case
+        requestBody:
+          description: Details for the witness + RequestInfo meta data.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WitnessDetailsRequest'
+          required: true
+        responses:
+          '200':
+            description: ResponseInfo with witness details added to case successfully
+            content:
+              '*/*':
+                schema:
+                  $ref: '#/components/schemas/WitnessDetailsResponse'
+          '400':
+            description: Adding witness to a case failed
+            content:
+              '*/*':
+                schema:
+                  $ref: >- 
+                    https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes  
 
 components:
   schemas:
@@ -1755,3 +1781,109 @@ components:
         paymentTaskNumber:
           type: string
           description: task number for payment, it will be null if payment is not required
+
+    WitnessDetailsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        tenantId:
+          type: string
+        caseFilingNumber:
+          type: string
+        witnessDetails:
+          $ref: "#components/schemas/WitnessDetails"
+
+    WitnessDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        witnessDetails:
+          $ref: "#components/schemas/WitnessDetails"
+
+    WitnessDetails:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        mobileNumber:
+          type: string
+        emails:
+          type: object
+          properties:
+            emailId:
+              type: array
+              items:
+                type: string
+            textfieldValue:
+              type: string
+        phonenumbers:
+          type: object
+          properties:
+            phoneNumber:
+              type: array
+              items:
+                type: string
+            textfieldValue:
+              type: string
+        addressDetails:
+          type: array
+          items:
+            $ref: "#components/schemas/WitnessAddress"
+        witnessDesignation:
+          type: string
+        witnessAge:
+          type: string
+        witnessAdditionalDetails:
+          type: object
+        dateOfService:
+          type: string
+
+    WitnessAddress:
+      type: object
+      properties:
+        addressDetails:
+          $ref: "#components/schemas/AddressDetails"
+        id:
+          type: string
+
+    AddressDetails:
+      type: object
+      properties:
+        locality:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        pincode:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            latitude:
+              type: string
+            longitude:
+              type: string
+        typeOfAddress:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            code:
+              type: string
+            isActive:
+              type: boolean

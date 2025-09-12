@@ -566,6 +566,10 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
+                label: "EVIDENCE_STATUS",
+                additionalCustomization: true,
+              },
+              {
                 label: "REPRESENTATIVES",
                 jsonPath: "sourceType",
                 additionalCustomization: true,
@@ -1011,6 +1015,11 @@ export const TabSearchconfigNew = {
               {
                 label: "DATE_ISSUED",
                 jsonPath: "businessObject.orderNotification.date",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_ACTIONS",
+                jsonPath: "businessObject.orderNotification",
                 additionalCustomization: true,
               },
             ],

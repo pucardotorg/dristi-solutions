@@ -76,6 +76,24 @@ const ReviewLitigantDetails = ({ path }) => {
     [caseData]
   );
 
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        applicationNumber: refApplicationNUmber,
+        tenantId,
+        courtId,
+      },
+      tenantId,
+    },
+    {},
+    refApplicationNUmber,
+    Boolean(refApplicationNUmber)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData?.applicationList]);
+
   const profileRequest = useMemo(() => {
     return caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
   }, [caseDetails?.additionalDetails?.profileRequests, referenceId]);
@@ -196,6 +214,14 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
+  const getPersonNameByUUID = (litigantDetails, representative, uuid) => {
+    const combined = [...(litigantDetails || []), ...(representative || [])];
+
+    const person = combined?.find((item) => item?.additionalDetails?.uuid === uuid);
+
+    return person?.additionalDetails?.fullName || person?.additionalDetails?.advocateName || "";
+  };
+
   const handleApproveReject = async (action) => {
     try {
       const reqBody = {
@@ -220,6 +246,11 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          orderDetails: {
+            applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+            applicationCMPNumber: applicationDetails?.applicationCMPNumber,
+          },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
