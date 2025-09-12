@@ -231,6 +231,10 @@ public class Configuration {
 	@Value("${lpr.sub.stage}")
 	private String lprSubStage;
 
+    // case section and sub section
+    @Value("${case.section.and.sub.section}")
+    private String caseSectionAndSubSection;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));

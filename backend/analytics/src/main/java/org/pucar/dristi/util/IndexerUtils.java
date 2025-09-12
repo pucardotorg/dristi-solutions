@@ -172,6 +172,8 @@ public class IndexerUtils {
         String screenType = pendingTask.getScreenType();
         String caseNumber = filingNumber;
         String actionCategory = pendingTask.getActionCategory();
+        Long filingDate = pendingTask.getFilingDate();
+        String sectionAndSubSection = pendingTask.getSectionAndSubSection();
 
 
         String courtId = null;
@@ -229,7 +231,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate
         );
     }
 
@@ -296,6 +298,8 @@ public class IndexerUtils {
         }
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         Long createdTime = clock.millis();
+        Long filingDate = details.get("filingDate") != null ? Long.parseLong(details.get("filingDate")) : null;
+        String sectionAndSubSection = details.get("sectionAndSubSection");
 
         JsonNode caseDetails = null;
 
@@ -443,7 +447,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate
         );
     }
 
@@ -661,12 +665,17 @@ public class IndexerUtils {
 
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String caseFilingDate = JsonPath.read(caseObject.toString(), CASE_FILING_DATE_PATH);
+        // TODO: Get section and sub-section from case object
+        String sectionAndSubSection = config.getCaseSectionAndSubSection();
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
+        caseDetails.put("filingDate", caseFilingDate);
+        caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
     }

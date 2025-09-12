@@ -148,7 +148,7 @@ public class WorkflowService {
     }
 
     private boolean isJudge(RequestInfo requestInfo) {
-        return requestInfo.getUserInfo().getRoles().stream().anyMatch(role -> JUDGE_ROLE.equalsIgnoreCase(role.getCode()));
+        return requestInfo.getUserInfo().getRoles().stream().anyMatch(role -> DELAY_CONDONATION_SUBMISSION_ROLE.equalsIgnoreCase(role.getCode()));
     }
 
     private boolean isCitizen(RequestInfo requestInfo) {

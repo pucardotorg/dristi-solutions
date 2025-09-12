@@ -161,7 +161,7 @@ public class HearingUpdateConsumer {
                 .actionCategory(ACTION_CATEGORY_SCHEDULE_HEARING)
                 .entityType(configuration.getOrderEntityType())
                 .status(CREATE_ORDER)
-                .assignedRole(List.of(JUDGE_ROLE))
+                .assignedRole(List.of(HEARING_CREATOR))
                 .screenType(SCREEN_TYPE_HOME)
                 .stateSla(dateUtil.getEpochFromLocalDateTime(slaDate))
                 .filingNumber(filingNumber)

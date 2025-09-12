@@ -377,11 +377,31 @@ public class InboxServiceV2 {
         IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
         ActionCategorySearchResponse response = new ActionCategorySearchResponse();
 
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
+        if (indexSearchCriteria.getSearchReviewProcess() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        }
+        if (indexSearchCriteria.getSearchScheduleHearing() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        }
+        if (indexSearchCriteria.getSearchViewApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(), inboxQueryConfiguration, response::setViewApplicationData);
+        }
+        if (indexSearchCriteria.getSearchRegisterCases() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+        }
+        if (indexSearchCriteria.getSearchBailBonds() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
+        }
+        if (indexSearchCriteria.getSearchScrutinyCases() != null) {
+            // Remove courtId filter if searching for scrutiny cases
+            Object courtId = moduleSearchCriteria.get("courtId");
+            moduleSearchCriteria.remove("courtId");
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScrutinyCases(), inboxQueryConfiguration, response::setScrutinyCasesData);
+            // Add courtId back to moduleSearchCriteria for other searches
+            if (courtId != null) {
+                moduleSearchCriteria.put("courtId", courtId);
+            }
+        }
 
         return response;
     }
