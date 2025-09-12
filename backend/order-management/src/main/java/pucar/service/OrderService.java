@@ -3,6 +3,7 @@ package pucar.service;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -140,7 +141,6 @@ public class OrderService {
 
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
-                .status("DRAFT_IN_PROGRESS")
                 .hearingNumber(hearingNumber)
                 .tenantId(tenantId)
                 .build();
@@ -154,7 +154,10 @@ public class OrderService {
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
-            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+            log.info("Found order associated with Hearing Number: {}", hearingNumber);
+            if("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())){
+                throw new CustomException("ORDER_ALREADY_PUBLISHED","Order is already published for hearing number: " + hearingNumber);
+            }
             return response.getList().get(0);
         } else {
                     Order order = Order.builder()
