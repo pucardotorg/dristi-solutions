@@ -42,7 +42,7 @@ class StorageControllerTest {
 
     @Test
     void testGetFile() throws Exception {
-        when(storageService.retrieve((String) any(), (String) any())).thenReturn(
+        when(storageService.retrieve((String) any(), (String) any(), (String) any())).thenReturn(
                 new Resource("text/plain", "foo.txt", new ByteArrayResource("AAAAAAAA".getBytes("UTF-8")), "42", "File Size"));
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get("/v1/files/id")
                 .param("fileStoreId", "foo")
@@ -57,7 +57,7 @@ class StorageControllerTest {
 
     @Test
     void testGetFileContentTypeJson() throws Exception {
-        when(storageService.retrieve((String) any(), (String) any())).thenReturn(
+        when(storageService.retrieve((String) any(), (String) any(), (String) any())).thenReturn(
                 new Resource("", "foo.txt", new ByteArrayResource("AAAAAAAA".getBytes("UTF-8")), "42", "File Size"));
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get("/v1/files/id")
                 .param("fileStoreId", "foo")
@@ -72,7 +72,7 @@ class StorageControllerTest {
 
     @Test
     void testGetMetaData() throws Exception {
-        when(storageService.retrieve((String) any(), (String) any())).thenReturn(
+        when(storageService.retrieve((String) any(), (String) any(), (String) any())).thenReturn(
                 new Resource("text/plain", "foo.txt", new ByteArrayResource("AAAAAAAA".getBytes("UTF-8")), "42", "File Size"));
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get("/v1/files/metadata")
                 .param("fileStoreId", "foo")

@@ -1,15 +1,6 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "../hooks";
 
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
-const presidedBy = {
-  judgeID: [judgeId],
-  benchID: benchId,
-  courtID: courtId,
-};
-
 export const DRISTIService = {
   postIndividualService: (data, tenantId) =>
     Request({
@@ -160,12 +151,11 @@ export const DRISTIService = {
       params,
     }),
   searchEvidence: (data) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.evidenceSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
     });
   },
   searchHearings: (data, params) => {
@@ -173,12 +163,12 @@ export const DRISTIService = {
       url: Urls.dristi.searchHearings,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
   startHearing: ({ hearing }, params) => {
-    const updatedData = { hearing: { ...hearing, presidedBy: presidedBy, workflow: { action: "START" } } };
+    const updatedData = { hearing: { ...hearing, workflow: { action: "START" } } };
     return Request({
       url: Urls.dristi.updateHearings,
       useCache: false,
@@ -188,6 +178,11 @@ export const DRISTIService = {
     });
   },
   createHearings: (data, params) => {
+    const presidedBy = {
+      judgeID: [localStorage.getItem("judgeId")],
+      benchID: window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID",
+      courtID: localStorage.getItem("courtId"),
+    };
     const updatedData = {
       ...data,
       hearing: {
@@ -203,23 +198,39 @@ export const DRISTIService = {
       params,
     });
   },
+  getDraftOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.getDraftOrder,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  createOrder: (data, params) => {
+    return Request({
+      url: Urls.dristi.ordersCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   searchOrders: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.ordersSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
   searchSubmissions: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.submissionsSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
@@ -264,6 +275,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  addNewWitness: (data, params) =>
+    Request({
+      url: Urls.case.addNewWitness,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   getPendingTaskService: (data, params) =>
     Request({
       url: Urls.dristi.getPendingTaskFields,
@@ -281,9 +300,26 @@ export const DRISTIService = {
       params,
     });
   },
+  eSignOpenService: (url, data, params) => {
+    return Request({
+      url: url,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   getPaymentBreakup: (data, params) =>
     Request({
       url: Urls.dristi.paymentCalculator,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getTreasuryPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.dristi.getTreasuryPaymentBreakup,
       useCache: false,
       userService: false,
       data,
@@ -463,6 +499,22 @@ export const DRISTIService = {
       url: Urls.dristi.etreasuryCreateDemand,
       useCache: false,
       userService: false,
+      data,
+      params,
+    }),
+  getMarkAsEvidencePdf: (data, params) =>
+    Request({
+      url: Urls.dristi.getMarkAsEvidencePdf,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchTask: (data, params) =>
+    Request({
+      url: Urls.dristi.taskSearch,
+      useCache: true,
+      userService: true,
       data,
       params,
     }),

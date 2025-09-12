@@ -14,6 +14,7 @@ import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import JudgementViewCard from "./JudgementViewCard";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 const CaseOverview = ({
   caseData,
   openHearingModule,
@@ -27,6 +28,7 @@ const CaseOverview = ({
 }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const history = useHistory();
   const cnrNumber = caseData.cnrNumber;
   const caseId = caseData.caseId;
@@ -39,6 +41,12 @@ const CaseOverview = ({
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
+  const isJudge = useMemo(() => userRoles.some((role) => role.code === "CASE_APPROVER"), [userRoles]);
+  const isBenchClerk = useMemo(() => userRoles.some((role) => role.code === "BENCH_CLERK"), [userRoles]);
+  const isCourtRoomManager = useMemo(() => userRoles.some((role) => role.code === "COURT_ROOM_MANAGER"), [userRoles]);
+  const isTypist = useMemo(() => userRoles.some((role) => role.code === "TYPIST_ROLE"), [userRoles]);
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const advocateIds = caseData?.case?.representatives?.map((representative) => {
     return {
       id: representative?.advocateId,
@@ -80,11 +88,12 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const { data: ordersRes, isLoading: isOrdersLoading } = useGetOrders(
@@ -92,16 +101,17 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(
-    (hearing1, hearing2) => hearing2.endTime - hearing1.endTime
-  );
+  const previousHearing = hearingRes?.HearingList?.filter((hearing) =>
+    [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)
+  ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
 
   const navigateOrdersGenerate = () => {
     history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
@@ -165,9 +175,11 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.transcript?.length
-                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
-                    : "No Transcript available for this hearing"}
+                  {previousHearing?.[0]?.hearingSummary ? (
+                    <div>{previousHearing?.[0]?.hearingSummary}</div>
+                  ) : (
+                    "No Transcript available for this hearing"
+                  )}
                 </div>
               </Card>
             )}
@@ -260,9 +272,11 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.transcript?.length
-                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
-                    : "No Transcript available for this hearing"}
+                  {previousHearing?.[0]?.hearingSummary ? (
+                    <div>{previousHearing?.[0]?.hearingSummary}</div>
+                  ) : (
+                    "No Transcript available for this hearing"
+                  )}
                 </div>
               </Card>
             )}
@@ -320,7 +334,7 @@ const CaseOverview = ({
                               `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`
                             );
                           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-                            history.push(`/${window.contextPath}/employee/home/home-pending-task`, { isBulkEsignSelected: true });
+                            history.push(homePath, { isBulkEsignSelected: true });
                           } else {
                             setShowReviewModal(true);
                             setCurrentOrder(order);

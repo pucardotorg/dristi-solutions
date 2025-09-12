@@ -31,6 +31,9 @@ public class PendingTask {
 
     private String referenceId = null;
 
+    @JsonProperty("actionCategory")
+    private String actionCategory = null;
+
     @JsonProperty("entityType")
     @Valid
     private String entityType = null;

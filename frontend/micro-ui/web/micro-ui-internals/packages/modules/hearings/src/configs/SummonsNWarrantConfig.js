@@ -4,7 +4,7 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }) => {
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, courtId }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -63,6 +63,11 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "Remarks",
               jsonPath: "remarks",
+            },
+            {
+              label: "PROCESS_FEE_PAID_ON",
+              jsonPath: "feePaidDate",
+              additionalCustomization: true,
             },
           ],
 
