@@ -2854,6 +2854,9 @@ const AdmittedCaseV2 = () => {
         );
       } catch (error) {
         console.error("Error fetching order", error);
+        const errorCode = error?.response?.data?.Errors?.[0]?.code;
+        const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
+        showToast({ isError: true, message: errorMsg }, 3000);
       } finally {
         setApiCalled(false);
       }
