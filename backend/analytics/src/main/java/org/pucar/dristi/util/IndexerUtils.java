@@ -665,7 +665,7 @@ public class IndexerUtils {
 
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
-        String caseFilingDate = JsonPath.read(caseObject.toString(), CASE_FILING_DATE_PATH);
+        Long caseFilingDate = JsonPath.read(caseObject.toString(), CASE_FILING_DATE_PATH);
         // TODO: Get section and sub-section from case object
         String sectionAndSubSection = config.getCaseSectionAndSubSection();
 
@@ -674,7 +674,7 @@ public class IndexerUtils {
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("filingDate", caseFilingDate);
+        caseDetails.put("filingDate", String.valueOf(caseFilingDate));
         caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
