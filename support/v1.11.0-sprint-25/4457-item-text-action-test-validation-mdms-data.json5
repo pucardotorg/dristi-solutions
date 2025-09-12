@@ -1,4 +1,13 @@
 [
+
+
+
+  // IMPORTANT : Updation of helm
+  // Order and ORder-Management- have this {"name":"EGOV_LOCALIZATION_SEARCH_ENDPOINT","value":"/localization/messages/v1/_search"}
+  //Task service-  - name: egov.user.search.path  value: /user/v1/_search ,  {"name":"egov.user.search.path","value":"/user/v1/_search"}
+
+// Restarting , order, encryption, accesscontrol, analytics
+
   {
     "id": "5c85437a-ef11-4665-b3b5-0834869bcc83",
     "tenantId": "kl",
@@ -79,7 +88,7 @@
           "data": {
             "id": 31,
             "path": [],
-            "itemText": "<generic application order> Delay is condoned",
+            "itemText": "Delay is condoned",
             "orderType": "ACCEPTANCE_REJECTION_DCA"
           },
           "isActive": true,
@@ -178,28 +187,6 @@
             "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
             "createdTime": 1756903759862,
             "lastModifiedTime": 1756903759862
-          }
-        },
-        {
-          "id": "4fab5259-704d-4fe2-859f-0b669691f4ca",
-          "tenantId": "kl",
-          "schemaCode": "Order.ItemText",
-          "uniqueIdentifier": "26",
-          "data": {
-            "id": 26,
-            "path": [
-              "$.orderDetails.cmpNumber",
-              "$.orderDetails.applicationStatus"
-            ],
-            "itemText": "Application [$.orderDetails.cmpNumber] is [$.orderDetails.applicationStatus].",
-            "orderType": "REJECT_BAIL"
-          },
-          "isActive": false,
-          "auditDetails": {
-            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-            "createdTime": 1756902893825,
-            "lastModifiedTime": 1756977264592
           }
         },
         {
@@ -670,51 +657,6 @@
             "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
             "createdTime": 1756459317842,
             "lastModifiedTime": 1757083546817
-          }
-        },
-        {
-          "id": "70e6368f-5fba-40b5-8f22-567af2296013",
-          "tenantId": "kl",
-          "schemaCode": "Order.ItemText",
-          "uniqueIdentifier": "10",
-          "data": {
-            "id": 10,
-            "path": [
-              "$.orderDetails.applicationCMPNumber",
-              "LOCALIZATION$.orderDetails.applicationStatus"
-            ],
-            "itemText": "Application [$.orderDetails.applicationCMPNumber] is [LOCALIZATION$.orderDetails.applicationStatus].",
-            "orderType": "ADVOCATE_REPLACEMENT_APPROVAL"
-          },
-          "isActive": true,
-          "auditDetails": {
-            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-            "createdTime": 1756459197887,
-            "lastModifiedTime": 1757083572832
-          }
-        },
-        {
-          "id": "f292fdac-1226-4463-950d-847b73b46192",
-          "tenantId": "kl",
-          "schemaCode": "Order.ItemText",
-          "uniqueIdentifier": "17",
-          "data": {
-            "id": 17,
-            "path": [
-              "$.orderDetails.chequeAmount",
-              "$.orderDetails.noOfSureties",
-              "$.orderDetails.plea"
-            ],
-            "itemText": "Accused has filed a bail application. As the offence alleged is a bailable one, the bail offered by the Accused is accepted. Accused is released on bail on executing bond for INR [$.orderDetails.chequeAmount] with [$.orderDetails.noOfSureties] solvent sureties each for the like sum.  Particulars of offences u/s.138 of Negotiable Instruments Act were read over and explained to the Accused to which he pleaded [$.orderDetails.plea] and claimed to be tried. After hearing both parties due to the amount involved in this case the court is of the view that the case is to be tried as Summons case.",
-            "orderType": "ACCEPT_BAIL"
-          },
-          "isActive": false,
-          "auditDetails": {
-            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-            "createdTime": 1756459176128,
-            "lastModifiedTime": 1756977950844
           }
         },
         {
