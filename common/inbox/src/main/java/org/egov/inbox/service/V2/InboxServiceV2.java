@@ -392,6 +392,13 @@ public class InboxServiceV2 {
         if (indexSearchCriteria.getSearchBailBonds() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
         }
+        if (indexSearchCriteria.getSearchOfflinePayments() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchOfflinePayments(), config.getBillingServiceModuleName(), response::setOfflinePaymentsData);
+        }
+        if (indexSearchCriteria.getSearchRegisterUsers() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchRegisterUsers(), config.getAdvocateModuleName(), response::setRegisterUsersData);
+        }
+        // TODO : Any search implementation that requires courtId filter needs to be above this.
         if (indexSearchCriteria.getSearchScrutinyCases() != null) {
             // Remove courtId filter if searching for scrutiny cases
             Object courtId = moduleSearchCriteria.get("courtId");
@@ -404,6 +411,50 @@ public class InboxServiceV2 {
         }
 
         return response;
+    }
+
+    private void populateActionCategoryDataForOtherIndexes(SearchRequest searchRequest, Criteria criteria, String moduleName, Consumer<Criteria> setter) {
+
+        ProcessInstanceSearchCriteria processInstanceSearchCriteria = null;
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("billing"))
+                    .build();
+
+            moduleSearchCriteria.put("billStatus", "ACTIVE");
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+            moduleSearchCriteria.put("sortOrder", "DESC");
+        }
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("user-registration-advocate"))
+                    .build();
+
+            moduleSearchCriteria.put("isActive", false);
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+        }
+
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                .limit(searchRequest.getIndexSearchCriteria().getLimit())
+                .offset(searchRequest.getIndexSearchCriteria().getOffset())
+                .processSearchCriteria(processInstanceSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .build();
+
+        InboxRequest inboxRequest = InboxRequest.builder()
+                .RequestInfo(searchRequest.getRequestInfo())
+                .inbox(inboxSearchCriteria)
+                .build();
+        getIndexResponse(inboxRequest);
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,

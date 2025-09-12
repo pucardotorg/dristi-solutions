@@ -40,6 +40,12 @@ public class IndexSearchCriteria {
     @JsonProperty("searchScrutinyCases")
     private Criteria searchScrutinyCases;
 
+    @JsonProperty("searchOfflinePayments")
+    private Criteria searchOfflinePayments;
+
+    @JsonProperty("searchRegisterUsers")
+    private Criteria searchRegisterUsers;
+
     @JsonProperty("offset")
     private Integer offset;
 

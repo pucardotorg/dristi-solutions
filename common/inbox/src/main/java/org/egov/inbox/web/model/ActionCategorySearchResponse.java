@@ -31,4 +31,11 @@ public class ActionCategorySearchResponse {
 
     @JsonProperty("scrutinyCasesData")
     private Criteria scrutinyCasesData;
+
+    @JsonProperty("offlinePaymentsData")
+    private Criteria offlinePaymentsData;
+
+    @JsonProperty("registerUsersData")
+    private Criteria registerUsersData;
+
 }
