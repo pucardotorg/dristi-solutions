@@ -492,7 +492,7 @@ public class CaseRegistrationValidator {
 
     private boolean doesWitnessExists(JsonNode additionalDetails, WitnessDetails witnessDetails) {
         JsonNode witnessDetailsNode = additionalDetails.get("witnessDetails");
-        if (witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+        if (witnessDetailsNode == null || witnessDetailsNode.get("formdata") == null || !witnessDetailsNode.get("formdata").isArray()) {
             return false;
         }
         for(JsonNode witness : witnessDetailsNode.get("formdata")) {
