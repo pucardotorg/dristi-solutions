@@ -144,7 +144,7 @@ public class OrderUtil {
                 .map(map -> (Map<?, ?>) map)
                 .map(map -> map.get("applicationStatus"))
                 .filter(String.class::isInstance)
-                .map(String.class::cast).orElseThrow(()->new CustomException("",""));
+                .map(String.class::cast).orElseThrow(() -> new CustomException("", ""));
 
         return applicationStatusType(applicationStatus);
 
@@ -235,6 +235,7 @@ public class OrderUtil {
 
     public String getHearingSummary(Order order, RequestInfo requestInfo) {
         StringBuilder sb = new StringBuilder();
+
         try {
             // Item Text
             if (order.getItemText() != null) {
@@ -242,6 +243,7 @@ public class OrderUtil {
                 String plainText = Jsoup.parse(html).text();
                 sb.append(plainText).append("\n");
             }
+
             return sb.toString().trim();
         } catch (Exception e) {
             log.error("Error extracting order text", e);
@@ -250,7 +252,7 @@ public class OrderUtil {
     }
 
 
-    public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
+    public OrderResponse removeOrderItem(@Valid OrderRequest request) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getRemoveOrderItemEndPoint());

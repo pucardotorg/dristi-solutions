@@ -158,12 +158,13 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
     }
 
-    private String getBusinessOfTheDay(Order order,RequestInfo requestInfo) {
+    public String getBusinessOfTheDay(Order order, RequestInfo requestInfo) {
         StringBuilder sb = new StringBuilder();
 
         try {
             // Attendance
             if (order.getAttendance() != null) {
+
                 Object attendanceObj = order.getAttendance();
 
                 Map<String, List<String>> attendanceMap = objectMapper.convertValue(
@@ -178,6 +179,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
                     String status = entry.getKey(); // "Present", "Absent"
                     List<String> roles = entry.getValue();
+
                     if("Present".equalsIgnoreCase(status)) {
                         if (roles != null) {
                             roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
