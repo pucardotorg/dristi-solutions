@@ -193,9 +193,10 @@ public class OrderUtil {
                         }
                     }
                 }
-
-                String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                sb.append(linePresent).append("\n");
+                if (!rolesLocalizedPresent.isEmpty()) {
+                    String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                    sb.append(linePresent).append("\n");
+                }
 
                 if(!rolesLocalizedAbsentee.isEmpty()){
                     String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
