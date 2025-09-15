@@ -174,18 +174,31 @@ public class OrderUtil {
                         }
                 );
 
+                List<String> rolesLocalizedPresent = new ArrayList<>();
+                List<String> rolesLocalizedAbsentee = new ArrayList<>();
+
                 // Format and append
                 for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
                     String status = entry.getKey(); // "Present", "Absent"
                     List<String> roles = entry.getValue();
 
-                    List<String> rolesLocalized = new ArrayList<>();
-                    if (roles != null) {
-                        roles.forEach(role -> rolesLocalized.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
-                        String line = status + ": " + String.join(", ", rolesLocalized);
-                        sb.append(line).append("\n");
+                    if("Present".equalsIgnoreCase(status)) {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
+                    }
+                    else {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedAbsentee.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
                     }
                 }
+
+                String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                sb.append(linePresent).append("\n");
+
+                String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                sb.append(lineAbsent).append("\n");
             }
 
             // Item Text
@@ -197,8 +210,9 @@ public class OrderUtil {
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
+                String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
                 sb.append("Purpose of Next Hearing: ")
-                        .append(order.getPurposeOfNextHearing()).append("\n");
+                        .append(purpose).append("\n");
             }
 
             // Next Hearing Date
@@ -213,6 +227,22 @@ public class OrderUtil {
 
             return sb.toString().trim();
 
+        } catch (Exception e) {
+            log.error("Error extracting order text", e);
+            throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
+        }
+    }
+
+    public String getHearingSummary(Order order, RequestInfo requestInfo) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            // Item Text
+            if (order.getItemText() != null) {
+                String html = order.getItemText();
+                String plainText = Jsoup.parse(html).text();
+                sb.append(plainText).append("\n");
+            }
+            return sb.toString().trim();
         } catch (Exception e) {
             log.error("Error extracting order text", e);
             throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
