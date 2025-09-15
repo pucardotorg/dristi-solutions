@@ -196,7 +196,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
     } finally {

@@ -669,7 +669,7 @@ const AdmittedCases = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
           } else {
@@ -1561,7 +1561,7 @@ const AdmittedCases = () => {
               },
             });
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
               {
                 caseId: caseDetails?.id,
                 tab: "Orders",
@@ -1739,7 +1739,7 @@ const AdmittedCases = () => {
               },
             });
             history.push(
-              `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
+              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
             );
           } catch (error) {}
         }
@@ -1899,7 +1899,7 @@ const AdmittedCases = () => {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -2184,7 +2184,7 @@ const AdmittedCases = () => {
             orderData?.orderType === "NOTICE"
           ) {
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
               {
                 caseId: caseId,
                 tab: "Orders",
@@ -2251,7 +2251,7 @@ const AdmittedCases = () => {
         ordersService
           .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseDetails?.id,
               tab: "Orders",
             });
@@ -2361,7 +2361,7 @@ const AdmittedCases = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2407,7 +2407,7 @@ const AdmittedCases = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2417,7 +2417,7 @@ const AdmittedCases = () => {
           });
         return;
       }
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
     },
     [t, history, filingNumber, caseId, openHearingModule, tenantId, cnrNumber, OrderWorkflowAction.SAVE_DRAFT, ordersService, activeTab, showToast]
   );
@@ -2546,7 +2546,7 @@ const AdmittedCases = () => {
         });
         refetchCaseData();
         revalidateWorkflow();
-        history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {
         showToast({ isError: true, message: "ORDER_CREATION_FAILED" });

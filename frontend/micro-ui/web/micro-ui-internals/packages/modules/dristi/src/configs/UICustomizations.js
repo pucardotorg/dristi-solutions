@@ -925,7 +925,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1761,7 +1761,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1817,7 +1817,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1876,7 +1876,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1932,7 +1932,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",

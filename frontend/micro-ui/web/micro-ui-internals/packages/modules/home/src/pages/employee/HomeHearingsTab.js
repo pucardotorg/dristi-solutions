@@ -254,7 +254,7 @@ const HomeHearingsTab = ({
             {}
           );
           history.push(
-            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         }
         return;

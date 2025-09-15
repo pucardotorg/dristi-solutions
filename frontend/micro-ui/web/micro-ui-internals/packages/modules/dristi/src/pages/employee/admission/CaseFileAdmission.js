@@ -359,7 +359,7 @@ function CaseFileAdmission({ t, path }) {
             },
           });
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",
@@ -965,7 +965,7 @@ function CaseFileAdmission({ t, path }) {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -1093,7 +1093,7 @@ function CaseFileAdmission({ t, path }) {
           },
         });
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {});
