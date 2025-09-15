@@ -4066,11 +4066,11 @@ const GenerateOrders = () => {
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
       await handleIssueSummons(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
       await handleIssueNotice(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
     }
   };
 

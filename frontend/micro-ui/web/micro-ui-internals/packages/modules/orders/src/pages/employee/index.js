@@ -103,7 +103,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
         <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
         <PrivateRoute path={`${path}/orders-home`} component={() => <OrdersHome />} />
-        <PrivateRoute path={`${path}/generate-orders`} component={() => <GenerateOrdersV2 />} />
+        <PrivateRoute path={`${path}/generate-order`} component={() => <GenerateOrdersV2 />} />
         {/* <PrivateRoute path={`${path}/make-submission`} component={() => <MakeSubmission />} /> */}
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />

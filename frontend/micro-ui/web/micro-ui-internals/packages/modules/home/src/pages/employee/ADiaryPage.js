@@ -361,7 +361,7 @@ const ADiaryPage = ({ path }) => {
   const handleRowClick = (entry) => {
     if (entry?.referenceType === "Order") {
       history.push(
-        `/${window?.contextPath}/${userInfoType}/orders/generate-orders?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
+        `/${window?.contextPath}/${userInfoType}/orders/generate-order?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
         { diaryEntry: entry }
       );
     }
