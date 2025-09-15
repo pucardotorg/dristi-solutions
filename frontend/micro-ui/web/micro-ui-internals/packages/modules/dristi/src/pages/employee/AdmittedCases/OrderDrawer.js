@@ -346,7 +346,7 @@ const OrderDrawer = ({
           try {
             const response = await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             history.push(
-              `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+              `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
             console.error("error", error);
@@ -397,7 +397,7 @@ const OrderDrawer = ({
           try {
             const response = await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             history.push(
-              `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+              `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
             console.error("error", error);

@@ -70,7 +70,7 @@ const OrdersHome = () => {
     ordersService
       .createOrder(reqbody, { tenantId })
       .then(() => {
-        history.push(`/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
+        history.push(`/${window?.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}`);
       })
       .catch(() => {});
   };
