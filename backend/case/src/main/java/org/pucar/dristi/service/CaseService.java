@@ -402,7 +402,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -465,7 +465,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-            removeInactiveDocuments(documentToDelete);
+           // removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -4194,6 +4194,8 @@ public class CaseService {
 
         try {
             Set<String> individualIdSet = joinCaseTaskRequest.getIndividualDetails().stream().map(POAIndividualDetails::getIndividualId).collect(Collectors.toSet());
+            individualIdSet.addAll(joinCaseTaskRequest.getIndividualDetails().stream().map(POAIndividualDetails::getExistingPoaIndividualId).toList());
+
             individualIdSet.add(joinCaseTaskRequest.getPoaDetails().getIndividualId());
             individualIdSet.addAll(getPocHolderIndividualIdsOfLitigants(courtCase, individualIdSet));
             individualIdSet.addAll(getLitigantIndividualId(courtCase));

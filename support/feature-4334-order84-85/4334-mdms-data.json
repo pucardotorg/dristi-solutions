@@ -523,7 +523,7 @@
   {
     "tenantId": "kl",
     "schemaCode": "payment.paymentTypeToBreakupMapping",
-    "uniqueIdentifier": "27",
+    "uniqueIdentifier": "28",
     "data": {
       "breakUpList": [
         {
@@ -531,37 +531,7 @@
           "breakUpName": "Court Fee"
         }
       ],
-      "paymentType": "27"
-    },
-    "isActive": true
-  },
-  {
-    "tenantId": "kl",
-    "schemaCode": "payment.paymentTypeToBreakupMapping",
-    "uniqueIdentifier": "27",
-    "data": {
-      "breakUpList": [
-        {
-          "breakUpCode": "COURT_FEE",
-          "breakUpName": "Court Fee"
-        }
-      ],
-      "paymentType": "27"
-    },
-    "isActive": true
-  },
-  {
-    "tenantId": "kl",
-    "schemaCode": "payment.paymentTypeToBreakupMapping",
-    "uniqueIdentifier": "27",
-    "data": {
-      "breakUpList": [
-        {
-          "breakUpCode": "COURT_FEE",
-          "breakUpName": "Court Fee"
-        }
-      ],
-      "paymentType": "27"
+      "paymentType": "28"
     },
     "isActive": true
   },
@@ -640,9 +610,9 @@
   {
     "tenantId": "kl",
     "schemaCode": "Order.SentStatus",
-    "uniqueIdentifier": "9",
+    "uniqueIdentifier": "10",
     "data": {
-      "id": 9,
+      "id": 10,
       "code": "PROCLAMATION_SENT",
       "name": "Proclamation Sent",
       "isActive": true
@@ -652,12 +622,86 @@
   {
     "tenantId": "kl",
     "schemaCode": "Order.SentStatus",
-    "uniqueIdentifier": "10",
+    "uniqueIdentifier": "11",
     "data": {
-      "id": 10,
+      "id": 11,
       "code": "ATTACHMENT_SENT",
       "name": "Attachment Sent",
       "isActive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": 5,
+      "type": "ATTACHMENT",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": 4,
+      "type": "PROCLAMATION",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
     },
     "isActive": true
   }

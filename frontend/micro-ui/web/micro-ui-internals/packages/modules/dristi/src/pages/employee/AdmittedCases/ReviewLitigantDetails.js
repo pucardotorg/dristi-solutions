@@ -279,7 +279,7 @@ const ReviewLitigantDetails = ({ path }) => {
       const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
       if (res.order.orderNumber) {
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       }
     } catch (error) {

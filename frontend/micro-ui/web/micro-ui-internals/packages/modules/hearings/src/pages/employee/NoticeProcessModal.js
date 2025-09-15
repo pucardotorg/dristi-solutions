@@ -449,7 +449,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
           {isButtonVisible && currentHearingId && userType === "employee" && (
             <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
               <Button
-                label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+                label={`Re-Issue ${t(orderType)}`}
                 onButtonClick={() => {
                   handleNavigate();
                 }}

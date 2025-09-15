@@ -240,6 +240,7 @@ const WitnessDepositionSignaturePage = () => {
             alignItems: "center",
             justifyContent: "center",
           }}
+          className="submit-loader"
         >
           <Loader />
         </div>

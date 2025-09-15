@@ -2132,7 +2132,12 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              tenantId
+            ),
             feesStatus: "",
           },
         };
@@ -2174,7 +2179,12 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+              tenantId
+            ),
             feesStatus: "",
           },
         };
@@ -2219,7 +2229,12 @@ const GenerateOrdersV2 = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType, tenantId),
+            fees: await getCourtFee(
+              "POLICE",
+              respondentAddress?.[0]?.pincode,
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+              tenantId
+            ),
             feesStatus: "",
           },
         };
@@ -2259,7 +2274,12 @@ const GenerateOrdersV2 = () => {
             ? item?.value?.pincode
             : clonedPayload?.respondentDetails?.address?.pincode;
 
-          let courtFees = await getCourtFee(item?.code, pincode, orderType, tenantId);
+          let courtFees = await getCourtFee(
+            item?.code,
+            pincode,
+            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            tenantId
+          );
 
           if ("deliveryChannels" in clonedPayload) {
             clonedPayload.deliveryChannels = {
@@ -2415,7 +2435,6 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
-
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
@@ -2607,7 +2626,7 @@ const GenerateOrdersV2 = () => {
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
       } else {
         await refetchOrdersData();
@@ -3410,25 +3429,28 @@ const GenerateOrdersV2 = () => {
     sessionStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
       setShowSuccessModal(false);
-      history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
-        from: "orderSuccessModal",
-      });
+      history.replace(
+        `/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`,
+        {
+          from: "orderSuccessModal",
+        }
+      );
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
       await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
       await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
     }
   };
 
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("fileStoreId");
     setShowSuccessModal(false);
-    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+    history.replace(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",
       needCaseRefetch: true,
     });
@@ -3732,7 +3754,7 @@ const GenerateOrdersV2 = () => {
                     }}
                     checked={isBailBondTaskExists}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    disabled={isBailBondTaskExists || skipScheduling}
+                    disabled={isBailBondTaskExists}
                   />
                   <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
                 </div>

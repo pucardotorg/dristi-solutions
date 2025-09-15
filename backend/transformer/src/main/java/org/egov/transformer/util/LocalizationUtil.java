@@ -1,29 +1,30 @@
-package pucar.util;
+package org.egov.transformer.util;
 
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pucar.config.Configuration;
-import pucar.repository.ServiceRequestRepository;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static pucar.config.ServiceConstants.*;
+import static org.egov.transformer.config.ServiceConstants.*;
+
 
 @Service
 @Slf4j
 public class LocalizationUtil {
 
-    private final Configuration config;
+    private final TransformerProperties config;
     private final ServiceRequestRepository repository;
 
     @Autowired
-    public LocalizationUtil(Configuration config, ServiceRequestRepository repository) {
+    public LocalizationUtil(TransformerProperties config, ServiceRequestRepository repository) {
         this.config = config;
         this.repository = repository;
     }

@@ -75,11 +75,13 @@ public class ApplicationQueryBuilder {
             firstCriteria = addCriteria(applicationCriteria.getReferenceId(), query, firstCriteria, "app.referenceId = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getOwner()!=null?applicationCriteria.getOwner().toString():null, query, firstCriteria, "app.createdBy = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
+
             if (applicationCriteria.getIsFuzzySearch() == null || !applicationCriteria.getIsFuzzySearch()) {
                 addCriteria(applicationCriteria.getApplicationNumber() , query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
             } else {
                 addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             }
+
             return query.toString();
         }
         catch (Exception e) {

@@ -67,7 +67,6 @@ const orderBailAcceptance = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -108,7 +107,13 @@ const orderBailAcceptance = async (
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

@@ -73,7 +73,6 @@ const HomeHearingsTab = ({
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  console.log("check-here");
   const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 
@@ -243,19 +242,25 @@ const HomeHearingsTab = ({
             { homeFilteredData: filters }
           );
         } else {
-          const response = await DRISTIService.getDraftOrder(
-            {
-              hearingDraftOrder: {
-                filingNumber: hearingDetails?.filingNumber,
-                tenantId: hearingDetails?.tenantId,
-                hearingNumber: hearingDetails?.hearingNumber,
+          try {
+            const response = await DRISTIService.getDraftOrder(
+              {
+                hearingDraftOrder: {
+                  filingNumber: hearingDetails?.filingNumber,
+                  tenantId: hearingDetails?.tenantId,
+                  hearingNumber: hearingDetails?.hearingNumber,
+                },
               },
-            },
-            {}
-          );
-          history.push(
-            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
-          );
+              {}
+            );
+            history.push(
+              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            );
+          } catch (error) {
+            const errorCode = error?.response?.data?.Errors?.[0]?.code;
+            const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
+            showToast("error", errorMsg, 5000);
+          }
         }
         return;
       } else if (isBenchClerk || isCourtRoomManager) {

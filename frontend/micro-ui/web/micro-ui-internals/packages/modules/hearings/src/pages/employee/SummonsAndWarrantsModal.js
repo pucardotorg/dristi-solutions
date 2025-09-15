@@ -229,7 +229,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
     } catch (error) {}
   };
 
@@ -512,7 +512,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             )
           )}
           <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+            label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
             }}

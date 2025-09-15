@@ -74,6 +74,7 @@ public class ServiceConstants {
     public static final String ENG_LOCALE_CODE = "en_IN";
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
+
     public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
 
     public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
