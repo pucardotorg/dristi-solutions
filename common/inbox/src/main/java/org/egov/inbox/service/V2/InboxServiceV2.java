@@ -454,7 +454,12 @@ public class InboxServiceV2 {
                 .RequestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
-        getIndexResponse(inboxRequest);
+        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setCount(inboxResponse.getTotalCount());
+            setter.accept(criteria);
+        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,
