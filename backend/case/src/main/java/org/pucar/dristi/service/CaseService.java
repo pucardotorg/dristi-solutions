@@ -5677,7 +5677,6 @@ public class CaseService {
 
                     JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
                     ((ObjectNode) existingNode).set("data", updatedDataNode);
-                    formdataArray.set(i, existingNode);
                     found = true;
                     log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
                     break;
