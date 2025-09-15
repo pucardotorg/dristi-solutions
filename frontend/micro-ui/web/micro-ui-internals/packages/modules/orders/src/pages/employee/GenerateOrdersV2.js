@@ -3754,7 +3754,7 @@ const GenerateOrdersV2 = () => {
                     }}
                     checked={isBailBondTaskExists}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    disabled={isBailBondTaskExists || skipScheduling}
+                    disabled={isBailBondTaskExists}
                   />
                   <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
                 </div>
