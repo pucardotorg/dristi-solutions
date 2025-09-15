@@ -386,6 +386,9 @@ public class InboxServiceV2 {
         if (indexSearchCriteria.getSearchViewApplication() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(), inboxQueryConfiguration, response::setViewApplicationData);
         }
+        if (indexSearchCriteria.getSearchDelayCondonationApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchDelayCondonationApplication(), inboxQueryConfiguration, response::setDelayCondonationApplicationData);
+        }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
         }

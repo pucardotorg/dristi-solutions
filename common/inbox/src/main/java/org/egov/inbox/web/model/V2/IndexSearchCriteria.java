@@ -28,6 +28,9 @@ public class IndexSearchCriteria {
     @JsonProperty("searchViewApplication")
     private Criteria searchViewApplication;
 
+    @JsonProperty("searchDelayCondonationApplication")
+    private Criteria searchDelayCondonationApplication;
+
     @JsonProperty("searchScheduleHearing")
     private Criteria searchScheduleHearing;
 
