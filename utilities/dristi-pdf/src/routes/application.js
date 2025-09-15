@@ -195,15 +195,15 @@ router.post(
             courtCaseJudgeDetails
           );
           break;
-          case "poa-claim-application":
-            await applicationPoaClaim(
-              req,
-              res,
-              qrCode,
-              application,
-              courtCaseJudgeDetails
-            );
-            break;
+        case "poa-claim-application":
+          await applicationPoaClaim(
+            req,
+            res,
+            qrCode,
+            application,
+            courtCaseJudgeDetails
+          );
+          break;
         default:
           await applicationGeneric(
             req,

@@ -570,7 +570,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               "ISSUE_SUMMON",
               "ISSUE_NOTICE",
               "ISSUE_WARRANT",
-              "ISSUE_PROCLAMATION", 
+              "ISSUE_PROCLAMATION",
               "ISSUE_ATTACHMENT",
               "OTHER",
               "ABATED",

@@ -105,12 +105,11 @@ const WitnessDrawerV2 = ({
   const closeToast = () => {
     setShowErrorToast(null);
   };
-  
-const formatDepositionText = (text) => {
-  if (!text) return "";
-  return text.replace(/\\n/g, "<wbr>").replace(/\n/g, "<wbr>");
-};
 
+  const formatDepositionText = (text) => {
+    if (!text) return "";
+    return text.replace(/\\n/g, "<wbr>").replace(/\n/g, "<wbr>");
+  };
 
   useEffect(() => {
     if (showErrorToast) {
@@ -420,13 +419,7 @@ const formatDepositionText = (text) => {
         const uniqueId = witness?.uniqueId || witness?.uuid;
 
         return {
-          name: getFormattedName(
-            witness?.firstName,
-            witness?.middleName,
-            witness?.lastName,
-            witness?.witnessDesignation,
-            "(Witness)"
-          ),
+          name: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation, "(Witness)"),
           age: witness?.witnessAge || "",
           gender: witness?.gender,
           designation: witness?.witnessDesignation || "",
@@ -434,12 +427,7 @@ const formatDepositionText = (text) => {
           uniqueId,
           partyType: "witness",
           witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
-          sourceName: getFormattedName(
-            witness?.firstName,
-            witness?.middleName,
-            witness?.lastName,
-            witness?.witnessDesignation
-          ),
+          sourceName: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation),
           tag,
           ownerType: witness?.ownerType || "",
         };
@@ -1010,7 +998,7 @@ const formatDepositionText = (text) => {
         };
 
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
-        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
+        setShowErrorToast({ label: t("WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedEvidenceIndex === activeTabs?.length - 1) {
