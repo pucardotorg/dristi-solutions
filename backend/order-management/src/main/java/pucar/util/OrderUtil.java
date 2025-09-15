@@ -197,8 +197,10 @@ public class OrderUtil {
                 String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
                 sb.append(linePresent).append("\n");
 
-                String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                sb.append(lineAbsent).append("\n");
+                if(!rolesLocalizedAbsentee.isEmpty()){
+                    String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                    sb.append(lineAbsent).append("\n");
+                }
             }
 
             // Item Text
