@@ -576,7 +576,15 @@ public class IndexerUtils {
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
         // Update name based on referenceEntityType and referenceEntityTypeNameMapping
-        name = getUpdatedTaskName(entityDetails, referenceEntityTypeMappings, name);
+
+        Map<String, String> updatedTaskNameAndActionCategory = getUpdatedTaskNameAndActionCategory(entityDetails, referenceEntityTypeMappings);
+
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("name") != null) {
+            name = updatedTaskNameAndActionCategory.get("name");
+        }
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("actionCategory") != null) {
+            actionCategory = updatedTaskNameAndActionCategory.get("actionCategory");
+        }
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
@@ -853,27 +861,31 @@ public class IndexerUtils {
         return stateSla;
     }
 
-    private String getUpdatedTaskName(Map<String, String> entityDetails,
-                                      List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings,
-                                      String currentName) {
+    private Map<String, String> getUpdatedTaskNameAndActionCategory(Map<String, String> entityDetails,
+                                                                    List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings) {
 
         if (referenceEntityTypeMappings == null || referenceEntityTypeMappings.isEmpty()
                 || entityDetails.isEmpty()
                 || entityDetails.get("referenceEntityType") == null
                 || !entityDetails.containsKey("referenceEntityType")) {
-            return currentName;
+            return null;
         }
 
         String applicationType = entityDetails.get("referenceEntityType");
 
+        Map<String, String> updatedTaskNameAndActionCategory = new HashMap<>();
+
         // Check if referenceEntityTypeMappings has any mappings
         for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
-            if (applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
-                return mapping.getPendingTaskName();
+            if (mapping.getPendingTaskName() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("name", mapping.getPendingTaskName());
+            }
+            if (mapping.getActionCategory() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("actionCategory", mapping.getActionCategory());
             }
         }
 
-        return currentName;
+        return updatedTaskNameAndActionCategory;
     }
 
 }
