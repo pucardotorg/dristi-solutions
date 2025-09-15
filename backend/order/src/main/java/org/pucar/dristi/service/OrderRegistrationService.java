@@ -214,6 +214,7 @@ public class OrderRegistrationService {
 
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setRequestInfo(body.getRequestInfo());
+            order.setItemText(body.getOrder().getItemText());
             orderRequest.setOrder(order);
             enrichmentUtil.enrichAuditDetails(orderRequest);
 

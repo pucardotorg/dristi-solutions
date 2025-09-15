@@ -1,5 +1,6 @@
 package org.egov.transformer.event.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +14,10 @@ import org.egov.transformer.models.Order;
 import org.egov.transformer.models.OrderAndNotification;
 import org.egov.transformer.models.OrderNotificationRequest;
 import org.egov.transformer.service.CaseService;
+import org.egov.transformer.util.LocalizationUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,13 +35,15 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     private final TransformerProperties properties;
     private final ObjectMapper objectMapper;
     private final CaseService caseService;
+    private final LocalizationUtil localizationUtil;
 
     @Autowired
-    public OrderImpl(Producer producer, TransformerProperties properties, ObjectMapper objectMapper, CaseService caseService) {
+    public OrderImpl(Producer producer, TransformerProperties properties, ObjectMapper objectMapper, CaseService caseService, LocalizationUtil localizationUtil) {
         this.producer = producer;
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.caseService = caseService;
+        this.localizationUtil = localizationUtil;
     }
 
     @Override
@@ -46,7 +51,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
 
-        String businessOfTheDay = getBusinessOfTheDay(event);
+        String businessOfTheDay = getBusinessOfTheDay(event,requestInfo);
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
@@ -153,25 +158,57 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
     }
 
-    private String getBusinessOfTheDay(Order order) {
+    private String getBusinessOfTheDay(Order order,RequestInfo requestInfo) {
         StringBuilder sb = new StringBuilder();
 
         try {
             // Attendance
             if (order.getAttendance() != null) {
-                String attendanceStr = objectMapper.writeValueAsString(order.getAttendance());
-                sb.append(attendanceStr).append("\n");
+                Object attendanceObj = order.getAttendance();
+
+                Map<String, List<String>> attendanceMap = objectMapper.convertValue(
+                        attendanceObj, new TypeReference<Map<String, List<String>>>() {
+                        }
+                );
+
+                List<String> rolesLocalizedPresent = new ArrayList<>();
+                List<String> rolesLocalizedAbsentee = new ArrayList<>();
+
+                // Format and append
+                for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
+                    String status = entry.getKey(); // "Present", "Absent"
+                    List<String> roles = entry.getValue();
+                    if("Present".equalsIgnoreCase(status)) {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
+                    }
+                    else {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedAbsentee.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
+                    }
+                }
+
+                String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                sb.append(linePresent).append("\n");
+
+                String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                sb.append(lineAbsent).append("\n");
             }
 
             // Item Text
             if (order.getItemText() != null) {
-                sb.append(order.getItemText()).append("\n");
+                String html = order.getItemText();
+                String plainText = Jsoup.parse(html).text();
+                sb.append(plainText).append("\n");
             }
 
             // Purpose of Next Hearing
-            if (order.getPurposeOfNextHearing() != null) {
-                sb.append("Purpose of Next Hearing: [")
-                        .append(order.getPurposeOfNextHearing()).append("]\n");
+            if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
+                String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
+                sb.append("Purpose of Next Hearing: ")
+                        .append(purpose).append("\n");
             }
 
             // Next Hearing Date
@@ -180,8 +217,8 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
                         .toString();
-                sb.append("Date of Next Hearing: [")
-                        .append(dateStr).append("]\n");
+                sb.append("Date of Next Hearing: ")
+                        .append(dateStr).append("\n");
             }
 
             return sb.toString().trim();
