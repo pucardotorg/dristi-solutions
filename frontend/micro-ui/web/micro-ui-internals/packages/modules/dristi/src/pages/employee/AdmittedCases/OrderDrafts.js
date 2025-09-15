@@ -70,7 +70,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
               }}
               onClick={() => {
                 setCurrentOrder(order);
-                history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`, {
+                history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`, {
                   caseId: caseId,
                   tab: "Orders",
                 });

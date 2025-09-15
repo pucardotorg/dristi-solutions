@@ -1037,7 +1037,7 @@ const EvidenceModal = ({
             },
           });
           history.replace(
-            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         } catch (error) {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -1110,7 +1110,7 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {}
       } else {
         if (showConfirmationModal.type === "reject") {
