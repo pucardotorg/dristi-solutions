@@ -3,6 +3,7 @@ package pucar.service;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -90,10 +91,6 @@ public class OrderService {
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
-            hearingUtil.updateHearingStatus(request);
-        }
-
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
 
         orderProcessor.postProcessOrder(request);
@@ -132,7 +129,7 @@ public class OrderService {
 
         HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
-        order.setHearingNumber(newHearing.getHearing().getHearingId());
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
@@ -146,7 +143,6 @@ public class OrderService {
 
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
-                .status("DRAFT_IN_PROGRESS")
                 .hearingNumber(hearingNumber)
                 .tenantId(tenantId)
                 .build();
@@ -160,7 +156,10 @@ public class OrderService {
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
-            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+            log.info("Found order associated with Hearing Number: {}", hearingNumber);
+            if("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())){
+                throw new CustomException("ORDER_ALREADY_PUBLISHED","Order is already published for hearing number: " + hearingNumber);
+            }
             return response.getList().get(0);
         } else {
             Order order = Order.builder()

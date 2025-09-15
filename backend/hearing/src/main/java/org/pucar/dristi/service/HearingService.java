@@ -854,7 +854,6 @@ public class HearingService {
     public void createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
-                .status("DRAFT_IN_PROGRESS")
                 .hearingNumber(hearingNumber)
                 .tenantId(tenantId)
                 .build();

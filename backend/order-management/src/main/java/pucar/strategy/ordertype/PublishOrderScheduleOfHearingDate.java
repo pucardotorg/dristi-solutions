@@ -74,7 +74,7 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
         HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(requestInfo, order, courtCase);
         StringBuilder createHearingUri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
         HearingResponse createdHearingResponse = hearingUtil.createOrUpdateHearing(request, createHearingUri);
-        order.setHearingNumber(createdHearingResponse.getHearing().getHearingId());
+        order.setScheduledHearingNumber(createdHearingResponse.getHearing().getHearingId());
         log.info("created hearing for caseId:{}, hearingId:{}", courtCase.getId(), createdHearingResponse.getHearing().getHearingId());
 
         log.info("pre processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());

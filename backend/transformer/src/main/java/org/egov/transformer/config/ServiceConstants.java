@@ -68,4 +68,10 @@ public class ServiceConstants {
    public static final String ARTIFACT_INDEX_BUSINESS_OBJECT_KEY = "artifactDetails";
    public static final String OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY = "hearingDetails";
 
+   public static final String ENG_LOCALE_CODE = "en_IN";
+
+   public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
+
+   public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+   public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 }
