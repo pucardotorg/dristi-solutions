@@ -243,23 +243,6 @@ public class OrderUtil {
                 sb.append(plainText).append("\n");
             }
 
-            // Purpose of Next Hearing
-            if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
-                String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
-                sb.append("Purpose of Next Hearing: ")
-                        .append(purpose).append("\n");
-            }
-
-            // Next Hearing Date
-            if (order.getNextHearingDate() != null) {
-                String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .toString();
-                sb.append("Date of Next Hearing: ")
-                        .append(dateStr).append("\n");
-            }
-
             return sb.toString().trim();
         } catch (Exception e) {
             log.error("Error extracting order text", e);
