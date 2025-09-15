@@ -33,8 +33,8 @@ class PendingTaskTypeTest {
         List<String> closerAction = Arrays.asList("close1", "close2");
 
         // Create reference entity type name mapping list
-        ReferenceEntityTypeNameMapping mapping1 = new ReferenceEntityTypeNameMapping("profileEditing", "Review Litigant Details Change");
-        ReferenceEntityTypeNameMapping mapping2 = new ReferenceEntityTypeNameMapping("documentSubmission", "Review Document Submission");
+        ReferenceEntityTypeNameMapping mapping1 = new ReferenceEntityTypeNameMapping("profileEditing", "Review Litigant Details Change","actionCategory");
+        ReferenceEntityTypeNameMapping mapping2 = new ReferenceEntityTypeNameMapping("documentSubmission", "Review Document Submission","actionCategory");
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeNameMapping = Arrays.asList(mapping1, mapping2);
 
         PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor,false, triggerAction, state, workflowModule, "home","actionCategory",closerAction,referenceEntityTypeNameMapping, null);
