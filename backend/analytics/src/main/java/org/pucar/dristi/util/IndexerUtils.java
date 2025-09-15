@@ -174,6 +174,7 @@ public class IndexerUtils {
         String actionCategory = pendingTask.getActionCategory();
         Long filingDate = pendingTask.getFilingDate();
         String sectionAndSubSection = pendingTask.getSectionAndSubSection();
+        String referenceEntityType = pendingTask.getReferenceEntityType();
 
 
         String courtId = null;
@@ -211,6 +212,9 @@ public class IndexerUtils {
             List<String> searchableFieldsList = new ArrayList<>();
             searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
+            if (referenceEntityType != null) {
+                searchableFieldsList.add(referenceEntityType);
+            }
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 
@@ -292,6 +296,7 @@ public class IndexerUtils {
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
         String actionCategory = details.get("actionCategory");
+        String referenceEntityType = details.get("referenceEntityType");
         Long stateSlaFromMdms = details.get("stateSla") != null ? Long.parseLong(details.get("stateSla")) : null;
         if (stateSlaFromMdms != null) {
             stateSla = stateSlaFromMdms + clock.millis();
@@ -385,6 +390,9 @@ public class IndexerUtils {
             List<String> searchableFieldsList = new ArrayList<>();
             searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
+            if (referenceEntityType != null) {
+                searchableFieldsList.add(referenceEntityType);
+            }
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 

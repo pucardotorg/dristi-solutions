@@ -104,4 +104,7 @@ public class PendingTask {
     @JsonProperty("filingDate")
     private Long filingDate = null;
 
+    @JsonProperty("referenceEntityType")
+    private String referenceEntityType = null;
+
 }
