@@ -863,13 +863,13 @@ public class HearingService {
                 .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
                 .build();
 
-        OrderResponse orderResponse;
+                OrderResponse orderResponse;
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
             log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
         } else {
-            Order order = Order.builder()
+            org.pucar.dristi.web.models.orders.Order order = Order.builder()
                     .hearingNumber(hearingNumber)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)

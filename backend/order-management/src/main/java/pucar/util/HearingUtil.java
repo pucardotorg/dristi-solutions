@@ -360,6 +360,7 @@ public class HearingUtil {
 
     public void updateHearingSummary(OrderRequest orderRequest, Hearing hearing) {
         log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
+
         Order order = orderRequest.getOrder();
 
         hearing.setHearingSummary(orderUtil.getHearingSummary(order,orderRequest.getRequestInfo()));

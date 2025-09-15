@@ -224,41 +224,42 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
     return null;
 }
 
-public String getText(String orderSchema, List<String> paths, String text, RequestInfo requestInfo, String tenantId) {
-    for (String path : paths) {
-        if (path.startsWith("GET_DUE_DATE")) {
-            Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
-            if (dueDateInMilliSecond != null) {
-                LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
-                long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
-                text = text.replace("[" + path + "]", Long.toString(daysRemaining));
+    private String getText(String orderSchema, List<String> paths, String text,RequestInfo requestInfo,String tenantId) {
+        for (String path : paths) {
+            if (path.startsWith("GET_DUE_DATE")) {
+                Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
+                if (dueDateInMilliSecond != null) {
+                    LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
+                    text = text.replace("[" + path + "]", Long.toString(daysRemaining));
+                }
+            } else if (path.startsWith("GET_LOCAL_DATE")) {
+                Long dateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_LOCAL_DATE".length()));
+                if (dateInMilliSecond != null) {
+                    LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    text = text.replace("[" + path + "]", date.toString());
+                }
+            } else if (path.startsWith("CONCAT_STRING")) {
+                List<String> parties = JsonPath.read(orderSchema, path.substring("CONCAT_STRING".length()));
+                if (parties != null && !parties.isEmpty()) {
+                    String partyToMakeSubmission = String.join(", ", parties);
+                    text = text.replace("[" + path + "]", partyToMakeSubmission);
+                }
+            }else if (path.startsWith("LOCALIZATION")) {
+                String value = JsonPath.read(orderSchema, path.substring("LOCALIZATION".length()));
+                String localizedValue = localizationUtil.callLocalization(requestInfo, tenantId, value);
+                if (value != null && !value.isEmpty()) {
+                    text = text.replace("[" + path + "]", localizedValue);
+                }
             }
-        } else if (path.startsWith("GET_LOCAL_DATE")) {
-            Long dateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_LOCAL_DATE".length()));
-            if (dateInMilliSecond != null) {
-                LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
-                text = text.replace("[" + path + "]", date.toString());
-            }
-        } else if (path.startsWith("CONCAT_STRING")) {
-            List<String> parties = JsonPath.read(orderSchema, path.substring("CONCAT_STRING".length()));
-            if (parties != null && !parties.isEmpty()) {
-                String partyToMakeSubmission = String.join(", ", parties);
-                text = text.replace("[" + path + "]", partyToMakeSubmission);
-            }
-        } else if (path.startsWith("LOCALIZATION")) {
-            String value = JsonPath.read(orderSchema, path.substring("LOCALIZATION".length()));
-            String localizedValue = localizationUtil.callLocalization(requestInfo, tenantId, value);
-            if (value != null && !value.isEmpty()) {
-                text = text.replace("[" + path + "]", localizedValue);
-            }
-        } else {
-            String pathValue = JsonPath.read(orderSchema, path);
-            if (pathValue != null) {
-                text = text.replace("[" + path + "]", pathValue);
+            else {
+                String pathValue = JsonPath.read(orderSchema, path);
+                if (pathValue != null) {
+                    text = text.replace("[" + path + "]", pathValue);
+                }
             }
         }
+        return text;
     }
-    return text;
-}
 
 }
