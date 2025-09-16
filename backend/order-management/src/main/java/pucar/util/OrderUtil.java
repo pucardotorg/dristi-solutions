@@ -195,12 +195,12 @@ public class OrderUtil {
                 }
                 if (!rolesLocalizedPresent.isEmpty()) {
                     String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                    sb.append(linePresent).append("\n");
+                    sb.append(linePresent).append(". ");
                 }
 
                 if(!rolesLocalizedAbsentee.isEmpty()){
                     String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                    sb.append(lineAbsent).append("\n");
+                    sb.append(lineAbsent).append(". ");
                 }
             }
 
@@ -208,14 +208,14 @@ public class OrderUtil {
             if (order.getItemText() != null) {
                 String html = order.getItemText();
                 String plainText = Jsoup.parse(html).text();
-                sb.append(plainText).append("\n");
+                sb.append(plainText).append(". ");
             }
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
                 String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
                 sb.append("Purpose of Next Hearing: ")
-                        .append(purpose).append("\n");
+                        .append(purpose).append(". ");
             }
 
             // Next Hearing Date
@@ -225,7 +225,7 @@ public class OrderUtil {
                         .toLocalDate()
                         .toString();
                 sb.append("Date of Next Hearing: ")
-                        .append(dateStr).append("\n");
+                        .append(dateStr).append(". ");
             }
 
             return sb.toString().trim();
@@ -239,6 +239,44 @@ public class OrderUtil {
         StringBuilder sb = new StringBuilder();
 
         try {
+            if (order.getAttendance() != null) {
+
+                Object attendanceObj = order.getAttendance();
+
+                Map<String, List<String>> attendanceMap = objectMapper.convertValue(
+                        attendanceObj, new TypeReference<Map<String, List<String>>>() {
+                        }
+                );
+
+                List<String> rolesLocalizedPresent = new ArrayList<>();
+                List<String> rolesLocalizedAbsentee = new ArrayList<>();
+
+                // Format and append
+                for (Map.Entry<String, List<String>> entry : attendanceMap.entrySet()) {
+                    String status = entry.getKey(); // "Present", "Absent"
+                    List<String> roles = entry.getValue();
+
+                    if("Present".equalsIgnoreCase(status)) {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
+                    }
+                    else {
+                        if (roles != null) {
+                            roles.forEach(role -> rolesLocalizedAbsentee.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
+                        }
+                    }
+                }
+                if (!rolesLocalizedPresent.isEmpty()) {
+                    String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                    sb.append(linePresent).append("\n");
+                }
+
+                if(!rolesLocalizedAbsentee.isEmpty()){
+                    String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                    sb.append(lineAbsent).append("\n");
+                }
+            }
             // Item Text
             if (order.getItemText() != null) {
                 String html = order.getItemText();
