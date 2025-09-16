@@ -5675,12 +5675,8 @@ public class CaseService {
                         uniqueId != null &&
                         uniqueId.equals(existingNode.get("uniqueId").asText())) {
 
-                    JsonNode data = existingNode.get("data");
-                    WitnessDetails existingWitness = objectMapper.convertValue(data, WitnessDetails.class);
-                    updateWitnessDetails(existingWitness, witnessDetails);
-                    ObjectNode existingObjectNode = (ObjectNode) existingNode;
-                    JsonNode updatedDataNode = objectMapper.convertValue(existingWitness, JsonNode.class);
-                    existingObjectNode.set("data", updatedDataNode);
+                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                    ((ObjectNode) existingNode).set("data", updatedDataNode);
                     found = true;
                     log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
                     break;
