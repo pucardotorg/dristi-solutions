@@ -10,11 +10,8 @@ const DRISTICard = () => {
   const Digit = useMemo(() => window?.Digit || {}, []);
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isScrutiny = useMemo(() => roles?.some((role) => role.code === "CASE_REVIEWER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
   const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
@@ -23,10 +20,8 @@ const DRISTICard = () => {
     return res;
   }, true);
 
-  if (isJudge || isTypist || isBenchClerk || isCourtStaff) {
+  if (!isEpostUser && !isCitizen) {
     history.push(`/${window?.contextPath}/employee/home/home-screen`);
-  } else if (isScrutiny) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   } else if (isCitizen) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (isProcessViewer) {

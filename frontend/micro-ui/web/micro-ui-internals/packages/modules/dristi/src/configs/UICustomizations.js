@@ -2009,6 +2009,15 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchScrutinyCases: {
+              // date: activeTab ==x= "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "SCRUTINISE_CASES" ? false : true,
+              actionCategory: "Scrutinise cases",
+              ...(activeTab === "SCRUTINISE_CASES" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },

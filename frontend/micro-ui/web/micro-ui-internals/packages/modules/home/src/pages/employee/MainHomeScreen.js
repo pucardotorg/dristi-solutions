@@ -48,11 +48,8 @@ const MainHomeScreen = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
   const today = new Date();
 
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -71,11 +68,11 @@ const MainHomeScreen = () => {
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
+    if (isEpostUser || userType === "citizen") {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
     // sessionStorage.removeItem("homeActiveTab");
-  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
+  }, [userType, history, isEpostUser]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -256,6 +253,11 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Bail Bond",
           },
+          searchScrutinyCases: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Scrutinise cases",
+          },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
@@ -284,6 +286,9 @@ const MainHomeScreen = () => {
   }, []);
 
   const options = {
+    SCRUTINISE_CASES: {
+      name: "Scrutinise cases",
+    },
     REGISTRATION: {
       name: "Register Cases",
     },

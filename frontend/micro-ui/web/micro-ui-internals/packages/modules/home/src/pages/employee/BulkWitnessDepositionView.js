@@ -49,9 +49,6 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {

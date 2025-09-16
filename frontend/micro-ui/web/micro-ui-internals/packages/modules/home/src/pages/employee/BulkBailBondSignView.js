@@ -1,7 +1,6 @@
 import { ActionBar, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import axios from "axios";
@@ -29,9 +28,7 @@ const sectionsParentStyle = {
 function BulkBailBondSignView({ showToast = () => {} }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
-  const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,9 +44,6 @@ function BulkBailBondSignView({ showToast = () => {} }) {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
