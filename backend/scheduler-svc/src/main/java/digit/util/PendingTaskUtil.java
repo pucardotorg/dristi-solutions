@@ -67,6 +67,7 @@ public class PendingTaskUtil {
         pendingTask.setAssignedRole(List.of(HEARING_CREATOR));
         pendingTask.setScreenType(SCREEN_TYPE);
         LocalDateTime currentTime = LocalDateTime.now();
+        pendingTask.setReferenceEntityType(RE_SCHEDULE_APPLICATION_TYPE);
         LocalDateTime slaDate=currentTime.plusDays(configuration.getJudgePendingSla());
 
         log.info("sla date {}", slaDate);

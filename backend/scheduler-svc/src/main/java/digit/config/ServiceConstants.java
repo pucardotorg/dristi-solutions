@@ -52,6 +52,7 @@ public class ServiceConstants {
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
     public static final String RE_SCHEDULE_PENDING_TASK_ACTION_CATEGORY = "Reschedule Applications";
+    public static final String RE_SCHEDULE_APPLICATION_TYPE  = "RE_SCHEDULE";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 

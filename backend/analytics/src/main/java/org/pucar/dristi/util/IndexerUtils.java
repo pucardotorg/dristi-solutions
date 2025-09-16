@@ -271,9 +271,8 @@ public class IndexerUtils {
         Long businessServiceSla = businessServiceSlaObj != null ? ((Number) businessServiceSlaObj).longValue() : null;
         List<Object> assignedToList = JsonPath.read(jsonItem, ASSIGNES_PATH);
         List<String> assignedRoleList = JsonPath.read(jsonItem, ASSIGNED_ROLE_PATH);
-        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        List<Object> defaultRoles = null;
         String assignedTo = new JSONArray(assignedToList).toString();
-        String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
         boolean isCompleted;
@@ -301,6 +300,21 @@ public class IndexerUtils {
         if (stateSlaFromMdms != null) {
             stateSla = stateSlaFromMdms + clock.millis();
         }
+
+        if (details.get("defaultRoles") != null && !details.get("defaultRoles").isEmpty()) {
+            String defaultRolesString = details.get("defaultRoles");
+            defaultRoles = new JSONArray(defaultRolesString).toList();
+
+            if (defaultRoles != null) {
+                for (Object roleObj : defaultRoles) {
+                    String role = String.valueOf(roleObj);
+                    assignedRoleList.add(role);
+                }
+            }
+        }
+        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        String assignedRole = new JSONArray(assignedRoleSet).toString();
+
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         Long createdTime = clock.millis();
         Long filingDate = details.get("filingDate") != null ? Long.parseLong(details.get("filingDate")) : null;
@@ -546,6 +560,7 @@ public class IndexerUtils {
         String actionCategory = null;
         Long stateSla = null;
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
+        List<String> defaultRoles = null;
 
         List<PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -560,6 +575,7 @@ public class IndexerUtils {
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
                 referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
+                defaultRoles = pendingTaskType.getDefaultRoles();
                 stateSla = extractSlaFromMdms(pendingTaskType.getStateSla());
                 break;
             }
@@ -591,6 +607,9 @@ public class IndexerUtils {
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
         caseDetails.put("actionCategory", actionCategory);
+        if (defaultRoles != null) {
+            caseDetails.put("defaultRoles", defaultRoles.toString());
+        }
         caseDetails.put("actors", actors);
         if (stateSla != null) {
             caseDetails.put("stateSla", String.valueOf(stateSla));
