@@ -775,6 +775,7 @@ public class TaskService {
                 updateStatusChangeDate(task, formatEpochToDate(System.currentTimeMillis()));
                 WorkflowObject workflowObject = new WorkflowObject();
                 workflowObject.setAction("SEND");
+                workflowObject.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
                 task.setWorkflow(workflowObject);
                 updateTask(TaskRequest.builder().task(task).requestInfo(bulkSendRequest.getRequestInfo()).build());
 
