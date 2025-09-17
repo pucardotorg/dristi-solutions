@@ -23,6 +23,12 @@ public class ActionCategorySearchResponse {
     @JsonProperty("delayCondonationApplicationData")
     private Criteria delayCondonationApplicationData;
 
+    @JsonProperty("rescheduleHearingsData")
+    private Criteria rescheduleHearingsData;
+
+    @JsonProperty("otherApplicationsData")
+    private Criteria otherApplicationsData;
+
     @JsonProperty("scheduleHearingData")
     private Criteria scheduleHearingData;
 

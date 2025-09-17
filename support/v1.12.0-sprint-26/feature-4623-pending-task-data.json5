@@ -1,0 +1,37 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "common-masters.PendingTaskType",
+  "uniqueIdentifier": "4",
+  "data": {
+    "id": "4",
+    "actor": "FSO/CMO",
+    "state": "UNDER_SCRUTINY",
+    "isgeneric": false,
+    "screenType": "home",
+    "pendingTask": "Scrutiny of Case",
+    "closerAction": [
+      "VALIDATE",
+      "SEND_BACK"
+    ],
+    //TODO need to update this data once updated the schema
+    "defaultRoles": [
+      "VIEW_SCRUTINY_CASES"
+    ],
+    "triggerAction": [
+      "MAKE_PAYMENT",
+      "E-SIGN",
+      "E-SIGN_PARTY_IN_PERSON",
+      "UPLOAD"
+    ],
+    // TODO : need to update the actionCategory
+    "actionCategory": "Scrutinise cases",
+    "workflowModule": "case-default"
+  },
+  "isActive": true,
+  "auditDetails": {
+    "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+    "createdTime": 1729236680627,
+    "lastModifiedTime": 1758014294735
+  }
+}

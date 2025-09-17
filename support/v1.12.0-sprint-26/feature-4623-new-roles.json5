@@ -1,0 +1,13 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_SCRUTINY_CASES",
+    "data": {
+      "code": "VIEW_SCRUTINY_CASES",
+      "name": "VIEW_SCRUTINY_CASES",
+      "description": "VIEW_SCRUTINY_CASES"
+    },
+    "isActive": true
+  }
+]

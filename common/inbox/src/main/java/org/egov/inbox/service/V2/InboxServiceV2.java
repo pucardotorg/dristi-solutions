@@ -389,6 +389,12 @@ public class InboxServiceV2 {
         if (indexSearchCriteria.getSearchDelayCondonationApplication() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchDelayCondonationApplication(), inboxQueryConfiguration, response::setDelayCondonationApplicationData);
         }
+        if (indexSearchCriteria.getSearchRescheduleHearingsApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRescheduleHearingsApplication(), inboxQueryConfiguration, response::setRescheduleHearingsData);
+        }
+        if (indexSearchCriteria.getSearchOtherApplications() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
+        }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
         }
