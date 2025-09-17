@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,6 +99,30 @@ public class TaskApiController {
         }
         TaskCaseResponse taskCaseResponse = TaskCaseResponse.builder().list(tasks).totalCount(totalCount).responseInfo(responseInfo).build();
         return new ResponseEntity<>(taskCaseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/_getTasksToSign")
+    public ResponseEntity<TasksToSignResponse> getTasksToSign(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody TasksToSignRequest request){
+        List<TaskToSign> taskToSign = taskService.createTasksToSignRequest(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+        TasksToSignResponse response = TasksToSignResponse.builder()
+                .responseInfo(responseInfo)
+                .taskList(taskToSign)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @PostMapping("/v1/_updateSignedTasks")
+    public ResponseEntity<UpdateSignedTaskResponse> updateSignedTasks(@Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema()) @RequestBody UpdateSignedTaskRequest request) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        List<Task> tasks = taskService.updateTaskWithSignedDoc(request);
+        UpdateSignedTaskResponse response = UpdateSignedTaskResponse.builder()
+                .responseInfo(responseInfo)
+                .tasks(tasks)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

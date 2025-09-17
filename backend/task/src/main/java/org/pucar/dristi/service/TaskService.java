@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -18,13 +19,18 @@ import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.postgresql.jdbc.EscapedFunctions.SIGN;
 import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Service
@@ -46,14 +52,17 @@ public class TaskService {
     private final FileStoreUtil fileStoreUtil;
     private final EtreasuryUtil etreasuryUtil;
     private final PendingTaskUtil pendingTaskUtil;
-
+    private final ESignUtil eSignUtil;
+    private final CipherUtil cipherUtil;
+    private final Configuration configuration;
+    private final XmlRequestGenerator xmlRequestGenerator;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, Configuration configuration, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -69,6 +78,10 @@ public class TaskService {
         this.fileStoreUtil = fileStoreUtil;
         this.etreasuryUtil = etreasuryUtil;
         this.pendingTaskUtil = pendingTaskUtil;
+        this.eSignUtil = eSignUtil;
+        this.cipherUtil = cipherUtil;
+        this.configuration = configuration;
+        this.xmlRequestGenerator = xmlRequestGenerator;
     }
 
     @Autowired
@@ -739,6 +752,182 @@ public class TaskService {
         }
 
         return additionalDetails;
+    }
+
+    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request){
+        log.info("Method=createTasksToSignRequest, result= IN_PROGRESS, tasksCriteria:{}", request.getCriteria().size());
+
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, TasksCriteria> tasksCriteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+            CoordinateCriteria criteria = new CoordinateCriteria();
+            criteria.setFileStoreId(criterion.getFileStoreId());
+            criteria.setPlaceholder(criterion.getPlaceholder());
+            criteria.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(criteria);
+            tasksCriteriaMap.put(criterion.getFileStoreId(), criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
+            throw new CustomException(COORDINATES_ERROR, "CoordinateResponse does not contain coordinates for some criteria");
+        }
+
+        List<TaskToSign> tasksToSigns = new ArrayList<>();
+        for (Coordinate coordinate : coordinateForSign) {
+            TaskToSign taskToSign = new TaskToSign();
+            Resource resource;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, e.getMessage());
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
+
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String taskNumber = tasksCriteriaMap.get(coordinate.getFileStoreId()).getTaskNumber();
+                taskToSign.setTaskNumber(taskNumber);
+                taskToSign.setRequest(xmlRequest);
+
+                tasksToSigns.add(taskToSign);
+            } catch (Exception e) {
+                log.error("Error while creating tasks to sign: ", e);
+                throw new CustomException(TASK_SIGN_ERROR, "Something went wrong while signing: " + e.getMessage());
+            }
+        }
+        log.info("Method=createTasksToSignRequest, result= SUCCESS, taskCriteria:{}", request.getCriteria().size());
+        return tasksToSigns;
+    }
+
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put(CERTIFICATE, certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "150,100");
+        requestData.put(PDF, pdf);
+
+        requestData.put(DATA, base64Doc);
+
+        String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+
+        return xmlRequest;
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
+        return attribute;
+    }
+
+    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request){
+
+        log.info("Method=updateTaskWithSignedDoc, result= IN_PROGRESS, signedTasks:{}", request.getSignedTasks().size());
+        List<Task> updatedTasks = new ArrayList<>();
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        for (SignedTask signedTask : request.getSignedTasks()) {
+            String taskNumber = signedTask.getTaskNumber();
+            String signedTaskData = signedTask.getSignedTaskData();
+            Boolean isSigned = signedTask.getSigned();
+            String tenantId = signedTask.getTenantId();
+
+            if (isSigned) {
+                try {
+                    // Fetch the task
+                    TaskCriteria criteria = TaskCriteria.builder()
+                            .taskNumber(taskNumber)
+                            .tenantId(tenantId)
+                            .build();
+                    Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+                    List<Task> taskList = taskRepository.getTasks(criteria, pagination);
+
+                    if (taskList.isEmpty()) {
+                        throw new CustomException(EMPTY_TASKS_ERROR, "No tasks found for the given criteria");
+                    }
+                    Task task = taskList.get(0);
+
+                    // Ignore if already signed
+                    boolean isTaskSigned = false;
+
+                    if (task.getDocuments() != null) {
+                        for (Document document : task.getDocuments()) {
+                            if (SIGNED_TASK_DOCUMENT.equalsIgnoreCase(document.getDocumentType())) {
+                                isTaskSigned = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(isTaskSigned){
+                        log.warn("Skipping task {} which has already been signed", task.getTaskNumber());
+                        continue;
+                    }
+
+
+                    // Update document with signed PDF
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedTaskData, TASK_PDF_NAME);
+                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+
+                    Document document = Document.builder()
+                            .documentType(SIGNED_TASK_DOCUMENT)
+                            .fileStore(fileStoreId)
+                            .isActive(true)
+                            .additionalDetails(Map.of(NAME, TASK_PDF_NAME))
+                            .build();
+                    task.setDocuments(new ArrayList<>(List.of(document)));
+
+                    TaskRequest updateTaskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+
+                    Task updatedTask = updateTask(updateTaskRequest);
+                    updatedTasks.add(updatedTask);
+
+                    log.info("Method=updateTaskWithSignedDoc, result= SUCCESS,signedTasks:{}", request.getSignedTasks().size());
+
+                } catch (Exception e) {
+                    log.error("Error while bulk signing task {}", taskNumber, e);
+                    throw new CustomException(TASKS_BULK_SIGN_EXCEPTION, "Error while bulk signing task: " + e.getMessage());
+                }
+            }
+        }
+        return updatedTasks;
     }
 
 
