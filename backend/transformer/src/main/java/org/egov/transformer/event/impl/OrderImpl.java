@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COMPOSITE;
+import static org.egov.transformer.config.ServiceConstants.DOT;
 
 @Component
 @Slf4j
@@ -193,12 +194,12 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
                 if (!rolesLocalizedPresent.isEmpty()) {
                     String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                    sb.append(linePresent).append("\n");
+                    sb.append(linePresent).append(DOT);
                 }
 
                 if (!rolesLocalizedAbsentee.isEmpty()) {
                     String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                    sb.append(lineAbsent).append("\n");
+                    sb.append(lineAbsent).append(DOT);
                 }
             }
 
@@ -206,14 +207,14 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
             if (order.getItemText() != null) {
                 String html = order.getItemText();
                 String plainText = Jsoup.parse(html).text();
-                sb.append(plainText).append("\n");
+                sb.append(plainText).append(DOT);
             }
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
                 String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
                 sb.append("Purpose of Next Hearing: ")
-                        .append(purpose).append("\n");
+                        .append(purpose).append(DOT);
             }
 
             // Next Hearing Date
@@ -223,7 +224,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                         .toLocalDate()
                         .toString();
                 sb.append("Date of Next Hearing: ")
-                        .append(dateStr).append("\n");
+                        .append(dateStr).append(DOT);
             }
 
             return sb.toString().trim();

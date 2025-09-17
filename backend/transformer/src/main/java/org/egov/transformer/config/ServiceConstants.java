@@ -75,4 +75,6 @@ public class ServiceConstants {
    public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
    public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
+   public static final String DOT = ". ";
+
 }
