@@ -2828,7 +2828,7 @@ const GenerateOrdersV2 = () => {
       const [key, value] = Object?.entries(field)[0];
 
       // Special handling for presentAttendees and absentAttendees
-      if (key === "absentAttendees") {
+      if (key === "absentAttendees" || key === "presentAttendees") {
         // If presentAttendees has all four options, absentAttendees can be empty
         // const presentAttendeesComplete = currentOrder?.attendance?.Present?.length === 4;
         // If absentAttendees has all four options, presentAttendees can be empty
