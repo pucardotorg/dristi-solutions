@@ -18,5 +18,4 @@ function formatDate(date, format) {
   }
   return `${year}-${month}-${day}`;
 }
-
 module.exports = { formatDate };

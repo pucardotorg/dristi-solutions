@@ -76,6 +76,9 @@ public class ServiceConstants {
 
     public static final String WARRANT_SENT = "WARRANT_SENT";
 
+    public static final String PROCLAMATION_SENT = "PROCLAMATION_SENT";
+
+    public static final String ATTACHMENT_SENT = "ATTACHMENT_SENT";
 
     public static final String ISSUENOTICE = "ISSUE_NOTICE";
 

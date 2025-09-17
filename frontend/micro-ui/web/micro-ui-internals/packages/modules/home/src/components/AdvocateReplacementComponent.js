@@ -170,6 +170,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         orderDetails: {
           advocateName: getFullName(" ", firstName, middleName, lastName),
           applicationStatus: type === "reject" ? "REJECT" : type === "approve" ? "GRANT" : null,
+          action: type === "reject" ? "rejected" : type === "approve" ? "accepted" : null,
         },
       },
     };
@@ -195,7 +196,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
     } finally {

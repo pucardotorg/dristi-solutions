@@ -189,7 +189,7 @@ function BulkESignView() {
 
         if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
           history.push(
-            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
           );
         } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
           history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);

@@ -77,7 +77,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
         )
         .then(async (response) => {
           history.replace(
-            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${response?.order?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${response?.order?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         });
     } catch (e) {

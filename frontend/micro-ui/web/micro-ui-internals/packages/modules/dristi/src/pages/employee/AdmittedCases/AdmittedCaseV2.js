@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -31,7 +31,6 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { getDate, removeInvalidNameParts } from "../../../Utils";
 import useWorkflowDetails from "../../../hooks/dristi/useWorkflowDetails";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
@@ -40,13 +39,11 @@ import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/D
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
-import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import Breadcrumb from "../../../components/BreadCrumb";
 import Button from "../../../components/Button";
 import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
 import OrderDrawer from "./OrderDrawer";
-import WitnessDrawer from "./WitnessDrawer";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -855,7 +852,7 @@ const AdmittedCaseV2 = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
           } else {
@@ -1694,7 +1691,6 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
-
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
@@ -1785,7 +1781,7 @@ const AdmittedCaseV2 = () => {
               },
             });
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
               {
                 caseId: caseDetails?.id,
                 tab: "Orders",
@@ -1930,9 +1926,7 @@ const AdmittedCaseV2 = () => {
                 tenantId,
               },
             });
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
-            );
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
           } catch (error) {}
         }
       } catch (error) {}
@@ -2090,7 +2084,7 @@ const AdmittedCaseV2 = () => {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -2213,6 +2207,14 @@ const AdmittedCaseV2 = () => {
   const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
     hearingDetails?.HearingList,
   ]);
+
+  const todayScheduledHearing = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+    const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+    return hearingDetails?.HearingList?.find((list) => list?.status === "SCHEDULED" && list?.startTime >= fromDate && list?.startTime <= toDate);
+  }, [hearingDetails?.HearingList]);
 
   const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
     hearingDetails?.HearingList,
@@ -2385,7 +2387,7 @@ const AdmittedCaseV2 = () => {
             orderData?.orderType === "NOTICE"
           ) {
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
               {
                 caseId: caseId,
                 tab: "Orders",
@@ -2452,7 +2454,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseDetails?.id,
               tab: "Orders",
             });
@@ -2555,9 +2557,11 @@ const AdmittedCaseV2 = () => {
 
   const hideNextHearingButton = useMemo(() => {
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+    const index = validData?.findIndex(
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+    );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing]);
+  }, [data, currentInProgressHearing?.hearingId, todayScheduledHearing?.hearingId]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2565,7 +2569,9 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        const index = validData?.findIndex(
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+        );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
@@ -2606,8 +2612,35 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, userType]
+    [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
   );
+
+  const handleCaseTransition = async (actionType) => {
+    try {
+      setApiCalled(true);
+
+      await hearingService.updateHearings(
+        {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          hearing: {
+            ...currentInProgressHearing,
+            workflow: {
+              action: actionType === "PASS_OVER_START_NEXT_HEARING" ? "PASS_OVER" : "CLOSE",
+            },
+          },
+          hearingType: "",
+          status: "",
+        },
+        { applicationNumber: "", cnrNumber: "" }
+      );
+
+      nextHearing(true);
+    } catch (error) {
+      console.error("Error in updating hearing status", error);
+    } finally {
+      setApiCalled(false);
+    }
+  };
 
   const handleEmployeeAction = useCallback(
     async (option) => {
@@ -2633,6 +2666,8 @@ const AdmittedCaseV2 = () => {
         setShowBailBondModal(true);
       } else if (option.value === "ADD_WITNESS") {
         setShowAddWitnessModal(true);
+      } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
+        handleCaseTransition(option.value);
       }
     },
     [
@@ -2704,7 +2739,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2750,7 +2785,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2806,11 +2841,14 @@ const AdmittedCaseV2 = () => {
         }
 
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`,
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`,
           { caseId, tab: "Orders" }
         );
       } catch (error) {
         console.error("Error fetching order", error);
+        const errorCode = error?.response?.data?.Errors?.[0]?.code;
+        const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
+        showToast({ isError: true, message: errorMsg }, 3000);
       } finally {
         setApiCalled(false);
       }
@@ -2958,7 +2996,7 @@ const AdmittedCaseV2 = () => {
         });
         refetchCaseData();
         revalidateWorkflow();
-        history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {
         showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
@@ -3565,28 +3603,64 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {(isBenchClerk || isCourtRoomManager) && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_PASS_OVER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "PASS_OVER_START_NEXT_HEARING" })}
+                                style={{
+                                  boxShadow: "none",
+                                  border: "1px solid rgb(187, 44, 47)",
+                                  color: "rgb(187, 44, 47)",
+                                }}
+                                isDisabled={apiCalled}
+                              ></Button>
+                            )}
                             {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
                               <Button
                                 variation={"primary"}
+                                isDisabled={apiCalled}
                                 label={t(
-                                  isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                                  isBenchClerk || isCourtRoomManager
+                                    ? "CS_CASE_END_START_NEXT_HEARING"
+                                    : isJudge || isTypist
+                                    ? "CS_CASE_NEXT_HEARING"
+                                    : ""
                                 )}
                                 children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value:
+                                      isBenchClerk || isCourtRoomManager
+                                        ? "CS_CASE_END_START_NEXT_HEARING"
+                                        : isJudge || isTypist
+                                        ? "NEXT_HEARING"
+                                        : "",
                                   })
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
+                            {(isJudge || isTypist) && !hideNextHearingButton && (
+                              <Button
+                                variation={"primary"}
+                                label={t(isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
+                                children={isJudge || isTypist ? <RightArrow /> : null}
+                                isSuffix={true}
+                                onButtonClick={() =>
+                                  handleEmployeeAction({
+                                    value: isJudge || isTypist ? "NEXT_HEARING" : "",
+                                  })
+                                }
+                              ></Button>
+                            )}
                             <ActionButton
                               variation={"primary"}
                               label={t("TAKE_ACTION_LABEL")}

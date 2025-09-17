@@ -280,6 +280,7 @@ public class EvidenceService {
         }
     }
 
+    @Deprecated
     public JsonNode extractWitnessFormData(JsonNode courtCase, String filingNumber) {
         JsonNode additionalDetails = courtCase.get("additionalDetails");
         JsonNode witnessDetails = additionalDetails.get("witnessDetails");

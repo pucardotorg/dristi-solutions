@@ -3,6 +3,7 @@ package pucar.service;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -17,6 +18,7 @@ import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseListResponse;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
@@ -87,10 +89,6 @@ public class OrderService {
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
-            hearingUtil.updateHearingStatus(request);
-        }
-
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
 
         orderProcessor.postProcessOrder(request);
@@ -112,7 +110,7 @@ public class OrderService {
     }
 
     public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
-        Order order = orderRequest.getOrder();
+                Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
 
@@ -129,56 +127,75 @@ public class OrderService {
 
         HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
-        order.setHearingNumber(newHearing.getHearing().getHearingId());
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+
+        if(cnrNumber==null){
+            cnrNumber = getCnrNumber(tenantId, filingNumber, requestInfo);
+        }
+
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
-                .status("DRAFT_IN_PROGRESS")
                 .hearingNumber(hearingNumber)
                 .tenantId(tenantId)
                 .build();
 
-        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
                 .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
                 .build();
 
-        OrderResponse orderResponse;
+                OrderResponse orderResponse;
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
-            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+            log.info("Found order associated with Hearing Number: {}", hearingNumber);
+            if("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())){
+                throw new CustomException("ORDER_ALREADY_PUBLISHED","Order is already published for hearing number: " + hearingNumber);
+            }
             return response.getList().get(0);
         } else {
-            Order order = Order.builder()
+                    Order order = Order.builder()
                     .hearingNumber(hearingNumber)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
                     .orderCategory("INTERMEDIATE")
                     .orderTitle("Schedule of Next Hearing Date")
-                    .orderType("SCHEDULING_NEXT_HEARING")
+                    .orderType("")
                     .isActive(true)
                     .status("")
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
 
-            WorkflowObject workflow = new WorkflowObject();
+                    WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("SAVE_DRAFT");
             workflow.setDocuments(List.of(new org.egov.common.contract.models.Document()));
             order.setWorkflow(workflow);
 
-            OrderRequest orderRequest = OrderRequest.builder()
+                    OrderRequest orderRequest = OrderRequest.builder()
                     .requestInfo(requestInfo).order(order).build();
             orderResponse = orderUtil.createOrder(orderRequest);
             log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
         }
 
         return orderResponse.getOrder();
+    }
+
+    private String getCnrNumber(String tenantId, String filingNumber, RequestInfo requestInfo) {
+        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).tenantId(tenantId).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        List<CourtCase> cases = caseListResponse.getCriteria().get(0).getResponseList();
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+        return courtCase.getCnrNumber();
     }
 }

@@ -241,7 +241,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       (order?.nextHearingDate &&
         order?.purposeOfNextHearing &&
         hearingInProgress) ||
-      scheduleHearingItem ||
+      scheduleHearingItem?.orderDetails?.hearingDate ||
       hearingScheduled
     );
     const itemText = htmlToFormattedText(order?.itemText || "");
@@ -254,6 +254,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           judgeDesignation: judgeDetails.judgeDesignation,
           date: formattedToday,
           caseNumber,
+          caseName: courtCase.caseTitle,
           complainantList,
           accusedList,
           isHearingInProgress,

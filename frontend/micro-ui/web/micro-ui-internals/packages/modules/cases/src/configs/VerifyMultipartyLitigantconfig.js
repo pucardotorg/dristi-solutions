@@ -119,11 +119,10 @@ export const VerifyMultipartyLitigantConfig = [
             },
           ],
         },
-      }
+      },
     ],
   },
 ];
-
 
 export const VerifyPoaClaiming = [
   {
@@ -197,7 +196,7 @@ export const VerifyPoaClaiming = [
               infoHeader: "CS_COMMON_NOTE",
               infoText: "POA_CLAIMING_INFO_TEXT",
               type: "InfoComponent",
-              showTooltip : true,
+              showTooltip: true,
             },
           ],
         },

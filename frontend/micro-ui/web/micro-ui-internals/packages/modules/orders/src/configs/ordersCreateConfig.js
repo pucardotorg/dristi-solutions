@@ -1242,6 +1242,7 @@ export const configsScheduleNextHearingDate = [
               name: "PARTY_1",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -4617,7 +4618,7 @@ export const configsIssueBailAcceptance = [
         schemaKeyPath: "orderDetails.plea",
         transformer: "mdmsDropdown",
         label: "PLEA",
-        isMandatory: true,
+        isMandatory: false,
         populators: {
           label: "PLEA",
           type: "radioButton",
@@ -4625,7 +4626,8 @@ export const configsIssueBailAcceptance = [
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
-          isMandatory: true,
+          isMandatory: false,
+          hideInForm: true,
           options: [
             {
               code: "GUILTY",

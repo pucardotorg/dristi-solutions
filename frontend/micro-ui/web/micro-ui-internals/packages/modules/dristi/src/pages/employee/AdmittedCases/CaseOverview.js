@@ -114,7 +114,7 @@ const CaseOverview = ({
   ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
 
   const navigateOrdersGenerate = () => {
-    history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
+    history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}`);
   };
 
   const orderList = useMemo(
@@ -331,7 +331,7 @@ const CaseOverview = ({
                         onClick={() => {
                           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
                             history.push(
-                              `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`
+                              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`
                             );
                           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
                             history.push(homePath, { isBulkEsignSelected: true });

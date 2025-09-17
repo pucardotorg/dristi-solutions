@@ -82,6 +82,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                 } else {
                     order.setNextHearingDate(nextHearingDate);
                 }
+
                 PGobject pgObject1 = (PGobject) rs.getObject("applicationnumber");
                 if(pgObject1!=null)
                     order.setApplicationNumber(objectMapper.readValue(pgObject1.getValue(),List.class));
