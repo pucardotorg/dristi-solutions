@@ -3213,7 +3213,7 @@ const GenerateOrdersV2 = () => {
 
   const handleBulkCloseSuccessModal = () => {
     setShowBulkModal(false);
-    history.replace(`/${window.contextPath}/${userInfoType}/home/bulk-esign-order`);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
   };
 
   const createPendingTask = async ({ order, createTask = false, taskStatus = "CREATE_SUBMISSION", taskName = "", orderEntityType = null }) => {

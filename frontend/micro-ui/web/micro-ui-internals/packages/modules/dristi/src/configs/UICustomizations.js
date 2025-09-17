@@ -2010,7 +2010,7 @@ export const UICustomizations = {
                 }),
             },
             searchScrutinyCases: {
-              // date: activeTab ==x= "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              date: activeTab === "SCRUTINISE_CASES" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "SCRUTINISE_CASES" ? false : true,
               actionCategory: "Scrutinise cases",
               ...(activeTab === "SCRUTINISE_CASES" &&
@@ -2030,9 +2030,11 @@ export const UICustomizations = {
             const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
             const bailBondStatusCount = data?.bailBondData?.count || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
+              SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
               VIEW_APPLICATION: applicationCount,
@@ -2066,10 +2068,16 @@ export const UICustomizations = {
                 filingNumber: result?.filingNumber,
                 caseId: result?.caseId,
                 advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
                 tab: activeTab,
               };
             };
-            if (activeTab === "REVIEW_PROCESS") {
+            if (activeTab === "SCRUTINISE_CASES") {
+              return {
+                TotalCount: data?.scrutinyCasesData?.count,
+                data: data?.scrutinyCasesData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
@@ -2099,6 +2107,9 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2114,6 +2125,17 @@ export const UICustomizations = {
             </Link>
           ) : row?.tab === "BAIL_BOND_STATUS" ? (
             <OrderName rowData={row} colData={column} value={value} />
+          ) : row?.tab === "SCRUTINISE_CASES" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/case`,
+                search: `?caseId=${row?.caseId}`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
           ) : (
             // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
@@ -2158,6 +2180,16 @@ export const UICustomizations = {
           );
         case "STAGE":
           return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
         default:
           return value ? value : "-";
       }

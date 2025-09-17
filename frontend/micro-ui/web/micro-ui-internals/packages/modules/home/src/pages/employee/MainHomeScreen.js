@@ -12,6 +12,7 @@ import BailBondModal from "./BailBondModal";
 import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
 import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
 import NewBulkRescheduleTab from "./NewBulkRescheduleTab";
+import BulkESignView from "./BulkESignView";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -34,6 +35,7 @@ const MainHomeScreen = () => {
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
+    SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
     REVIEW_PROCESS: 0,
     VIEW_APPLICATION: 0,
@@ -48,6 +50,7 @@ const MainHomeScreen = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   const today = new Date();
@@ -188,43 +191,7 @@ const MainHomeScreen = () => {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
             courtId: localStorage.getItem("courtId"),
-            assignedRole: [
-              "DIARY_APPROVER",
-              "HEARING_VIEWER",
-              "WORKFLOW_ABANDON",
-              "ORDER_ESIGN",
-              "WORKFLOW_ADMIN",
-              "APPLICATION_CREATOR",
-              "DEPOSITION_PUBLISHER",
-              "HEARING_APPROVER",
-              "SUBMISSION_RESPONDER",
-              "ORDER_VIEWER",
-              "ORDER_REASSIGN",
-              "CASE_EDITOR",
-              "TASK_CREATOR",
-              "APPLICATION_APPROVER",
-              "DIARY_VIEWER",
-              "EMPLOYEE",
-              "ORDER_DELETE",
-              "NOTIFICATION_APPROVER",
-              "CASE_VIEWER",
-              "TASK_EDITOR",
-              "APPLICATION_REJECTOR",
-              "HEARING_EDITOR",
-              "DIARY_EDITOR",
-              "ORDER_APPROVER",
-              "NOTIFICATION_CREATOR",
-              "HEARING_CREATOR",
-              "EVIDENCE_CREATOR",
-              "ORDER_CREATOR",
-              "CALCULATION_VIEWER",
-              "JUDGE_ROLE",
-              "EVIDENCE_EDITOR",
-              "CASE_APPROVER",
-              "SUBMISSION_APPROVER",
-              "TASK_VIEWER",
-              "HEARING_SCHEDULER",
-            ],
+            assignedRole: assignedRoles,
           },
           limit: 10,
           offset: 0,
@@ -266,8 +233,10 @@ const MainHomeScreen = () => {
       const scheduleCount = res?.scheduleHearingData?.count || 0;
       const registerCount = res?.registerCasesData?.count || 0;
       const bailBondStatusCount = res?.bailBondData?.count || 0;
+      const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
 
       setPendingTaskCount({
+        SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
         VIEW_APPLICATION: applicationCount,
@@ -328,6 +297,37 @@ const MainHomeScreen = () => {
               minlength: 2,
             },
           },
+        },
+      ];
+    }
+
+    // Set columns for SCRUTINISE_CASES tab
+    if (activeTab === "SCRUTINISE_CASES") {
+      updatedConfig.sections.searchResult.uiConfig.columns = [
+        {
+          label: "PENDING_CASE_NAME",
+          jsonPath: "caseTitle",
+          additionalCustomization: true,
+        },
+        {
+          label: "STAGE",
+          jsonPath: "substage",
+          additionalCustomization: true,
+        },
+        {
+          label: "CS_CASE_NUMBER_HOME",
+          jsonPath: "caseNumber",
+          additionalCustomization: true,
+        },
+        {
+          label: "CASE_TYPE",
+          jsonPath: "",
+          additionalCustomization: true,
+        },
+        {
+          label: "CS_DAYS_FILING",
+          jsonPath: "createdTime",
+          additionalCustomization: true,
         },
       ];
     }
@@ -442,6 +442,10 @@ const MainHomeScreen = () => {
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             <BulkWitnessDepositionView showToast={showToast} />
+          </div>
+        ) : activeTab === "CS_HOME_ORDERS" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkESignView />
           </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>

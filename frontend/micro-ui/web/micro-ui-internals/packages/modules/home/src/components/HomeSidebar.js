@@ -56,7 +56,6 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
         <SidebarItem
           t={t}
           label="CS_HOME_ORDERS"
-          href={`/${window.contextPath}/employee/home/bulk-esign-order`}
           onClick={async (e) => {
             e.preventDefault();
             let shouldProceed = true;
@@ -88,7 +87,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               return;
             }
             if (shouldProceed) {
-              window.location.href = `/${window.contextPath}/employee/home/bulk-esign-order`;
+              onTabChange("CS_HOME_ORDERS");
             } else {
               showToast("error", t("NO_BULK_SIGN_ORDERS"), 5000);
             }

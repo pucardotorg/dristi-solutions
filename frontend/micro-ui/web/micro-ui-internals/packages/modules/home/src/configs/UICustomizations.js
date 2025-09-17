@@ -580,7 +580,7 @@ export const UICustomizations = {
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} />;
         case "CS_ACTIONS":
-          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
+          return <OverlayDropdown position="relative" column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
         default:
           break;
       }

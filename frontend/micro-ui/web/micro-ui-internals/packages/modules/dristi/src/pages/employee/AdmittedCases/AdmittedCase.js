@@ -672,7 +672,7 @@ const AdmittedCases = () => {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);

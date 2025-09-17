@@ -29,33 +29,6 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const ProjectBreadCrumb = ({ location }) => {
-  const userInfo = window?.Digit?.UserService?.getUser()?.info;
-  let userType = "employee";
-  if (userInfo) {
-    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-  }
-  const { t } = useTranslation();
-  const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const crumbs = [
-    {
-      path: homePath,
-      content: t("ES_COMMON_HOME"),
-      show: true,
-    },
-    {
-      path: `/${window?.contextPath}/${userType}`,
-      content: t("BULK_SIGNING"),
-      show: true,
-    },
-  ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={{ maxWidth: "min-content" }} />;
-};
-
 function BulkESignView() {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
@@ -171,7 +144,10 @@ function BulkESignView() {
 
     const deleteOrderFunc = async (data) => {
       history.push(
-        `/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${data?.businessObject?.orderNotification?.id}&deleteOrder=true`
+        `/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${data?.businessObject?.orderNotification?.id}&deleteOrder=true`,
+        {
+          homeActiveTab: "CS_HOME_ORDERS",
+        }
       );
     };
 
@@ -188,7 +164,7 @@ function BulkESignView() {
             `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
           );
         } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-          history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+          history.push(`/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
         }
       }
     };
@@ -397,7 +373,6 @@ function BulkESignView() {
         <Loader />
       ) : (
         <React.Fragment>
-          <ProjectBreadCrumb location={window.location} />
           <div className={"bulk-esign-order-view"}>
             <div className="header">{t("BULK_SIGN_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
