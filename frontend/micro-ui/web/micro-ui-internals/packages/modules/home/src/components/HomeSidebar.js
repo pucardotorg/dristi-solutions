@@ -1,13 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import HomeAccordian from "./HomeAccordian";
-import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
-import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 import { HomeService } from "../hooks/services";
 import HomeHeader from "./HomeHeader";
 
-const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount, showToast = () => {} }) => {
-  const [stepper, setStepper] = useState(0);
+const HomeSidebar = ({
+  t,
+  onTabChange,
+  activeTab,
+  options,
+  isOptionsLoading,
+  applicationOptions,
+  hearingCount = 0,
+  pendingTaskCount,
+  showToast = () => {},
+}) => {
   return (
     <div
       style={{
@@ -48,6 +55,20 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               count={pendingTaskCount[key] || 0}
               active={activeTab === key}
               onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+            />
+          ))}
+      </HomeAccordian>
+
+      <HomeAccordian title={t("REVIEW_APPLICATIONS_TAB")} defaultOpen>
+        {!isOptionsLoading &&
+          Object.keys(applicationOptions).map((key, index) => (
+            <SidebarItem
+              t={t}
+              key={index}
+              label={applicationOptions[key].name}
+              count={pendingTaskCount[key] || 0}
+              active={activeTab === key}
+              onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
             />
           ))}
       </HomeAccordian>

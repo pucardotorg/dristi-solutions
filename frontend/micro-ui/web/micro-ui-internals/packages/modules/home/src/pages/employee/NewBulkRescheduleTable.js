@@ -47,10 +47,6 @@ const NewBulkRescheduleTable = ({
     await handleBulkHearingSearch(defaultBulkFormData);
   };
 
-  const handleSearch = async () => {
-    await handleSearch(bulkFormData);
-  };
-
   const handleBulkHearingSearch = async (newFormData) => {
     try {
       setIsLoader(true);
@@ -81,6 +77,10 @@ const NewBulkRescheduleTable = ({
   useEffect(() => {
     handleBulkHearingSearch(bulkFormData);
   }, []);
+
+  const handleSearch = async () => {
+    await handleBulkHearingSearch(bulkFormData);
+  };
 
   const handleChange = (date, index, key) => {
     const selectedDate = new Date(date);

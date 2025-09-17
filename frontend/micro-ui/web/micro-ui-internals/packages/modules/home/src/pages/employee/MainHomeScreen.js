@@ -225,6 +225,21 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Scrutinise cases",
           },
+          searchRescheduleHearingsApplication: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Reschedule Applications",
+          },
+          searchDelayCondonationApplication: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Delay Condonation",
+          },
+          searchOtherApplications: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Others",
+          },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
@@ -234,6 +249,9 @@ const MainHomeScreen = () => {
       const registerCount = res?.registerCasesData?.count || 0;
       const bailBondStatusCount = res?.bailBondData?.count || 0;
       const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
+      const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.count || 0;
+      const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.count || 0;
+      const otherApplicationsCount = res?.otherApplicationsData?.count || 0;
 
       setPendingTaskCount({
         SCRUTINISE_CASES: scrutinyCasesCount,
@@ -242,6 +260,9 @@ const MainHomeScreen = () => {
         VIEW_APPLICATION: applicationCount,
         SCHEDULE_HEARING: scheduleCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
+        RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+        DELAY_CONDONATION: delayCondonationApplicationCount,
+        OTHERS: otherApplicationsCount,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -274,6 +295,19 @@ const MainHomeScreen = () => {
       name: "Bail Bonds Status",
     },
   };
+
+  const applicationOptions = {
+    RESCHEDULE_APPLICATIONS: {
+      name: "Reschedule Applications",
+    },
+    DELAY_CONDONATION: {
+      name: "Delay Condonation",
+    },
+    OTHERS: {
+      name: "Others",
+    },
+  };
+
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
     const openBailBondModal = (row) => {
@@ -283,6 +317,41 @@ const MainHomeScreen = () => {
 
     if (activeTab === "REGISTRATION") {
       updatedConfig.sections.search.uiConfig.fields = [
+        {
+          label: "CS_CASE_NAME_ADVOCATE",
+          type: "text",
+          key: "caseSearchText",
+          isMandatory: false,
+          disable: false,
+          populators: {
+            name: "caseSearchText",
+            error: "BR_PATTERN_ERR_MSG",
+            validation: {
+              pattern: {},
+              minlength: 2,
+            },
+          },
+        },
+      ];
+    }
+
+    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
+      updatedConfig.sections.search.uiConfig.fields = [
+        {
+          label: "STAGE",
+          isMandatory: false,
+          key: "stage",
+          type: "dropdown",
+          populators: {
+            name: "stage",
+            optionsKey: "code",
+            mdmsConfig: {
+              masterName: "SubStage",
+              moduleName: "case",
+              select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+            },
+          },
+        },
         {
           label: "CS_CASE_NAME_ADVOCATE",
           type: "text",
@@ -409,6 +478,7 @@ const MainHomeScreen = () => {
           activeTab={activeTab}
           options={options}
           isOptionsLoading={false}
+          applicationOptions={applicationOptions}
           hearingCount={hearingCount}
           pendingTaskCount={pendingTaskCount}
           showToast={showToast}

@@ -2018,6 +2018,33 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchRescheduleHearingsApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_APPLICATIONS" ? false : true,
+              actionCategory: "Reschedule Applications",
+              ...(activeTab === "RESCHEDULE_APPLICATIONS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchDelayCondonationApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "DELAY_CONDONATION" ? false : true,
+              actionCategory: "Delay Condonation",
+              ...(activeTab === "DELAY_CONDONATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchOtherApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "OTHERS" ? false : true,
+              actionCategory: "Others",
+              ...(activeTab === "OTHERS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2031,6 +2058,9 @@ export const UICustomizations = {
             const registerCount = data?.registerCasesData?.count || 0;
             const bailBondStatusCount = data?.bailBondData?.count || 0;
             const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.count || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.count || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
@@ -2040,6 +2070,9 @@ export const UICustomizations = {
               VIEW_APPLICATION: applicationCount,
               SCHEDULE_HEARING: scheduleCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+              DELAY_CONDONATION: delayCondonationApplicationCount,
+              OTHERS: otherApplicationsCount,
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
@@ -2096,6 +2129,21 @@ export const UICustomizations = {
               return {
                 TotalCount: data?.bailBondData?.count,
                 data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else if (activeTab === "RESCHEDULE_APPLICATIONS") {
+              return {
+                TotalCount: data?.rescheduleHearingsData?.count,
+                data: data?.rescheduleHearingsData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "DELAY_CONDONATION") {
+              return {
+                TotalCount: data?.delayCondonationApplicationData?.count,
+                data: data?.delayCondonationApplicationData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "OTHERS") {
+              return {
+                TotalCount: data?.otherApplicationsData?.count,
+                data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
               };
             } else
               return {
