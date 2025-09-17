@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -741,5 +743,54 @@ public class TaskService {
         return additionalDetails;
     }
 
+    public void updateStatusChangeDate(Task task, String newDate) {
+        if (task.getTaskDetails() == null) {
+            return;
+        }
 
+        // Convert Object → Map
+        Map<String, Object> taskDetails = objectMapper.convertValue(
+                task.getTaskDetails(),
+                new TypeReference<Map<String, Object>>() {}
+        );
+
+        // Navigate to deliveryChannels
+        Map<String, Object> deliveryChannels = (Map<String, Object>) taskDetails.get("deliveryChannels");
+        if (deliveryChannels != null) {
+            deliveryChannels.put("statusChangeDate", newDate);
+        }
+
+        // Set updated taskDetails back
+        task.setTaskDetails(taskDetails);
+    }
+
+    public List<BulkSend> bulkSend(BulkSendRequest bulkSendRequest) {
+        for (BulkSend bulkSendTask : bulkSendRequest.getBulkSendTasks()) {
+            try {
+                TaskSearchRequest taskSearchRequest = new TaskSearchRequest();
+                taskSearchRequest.setCriteria(TaskCriteria.builder().taskNumber(bulkSendTask.getTaskNumber()).tenantId(bulkSendTask.getTenantId()).build());
+                taskSearchRequest.setRequestInfo(new RequestInfo());
+
+                Task task = searchTask(taskSearchRequest).get(0);
+                updateStatusChangeDate(task, formatEpochToDate(System.currentTimeMillis()));
+                WorkflowObject workflowObject = new WorkflowObject();
+                workflowObject.setAction("SEND");
+                task.setWorkflow(workflowObject);
+                updateTask(TaskRequest.builder().task(task).requestInfo(bulkSendRequest.getRequestInfo()).build());
+
+            }catch (Exception e) {
+                bulkSendTask.setErrorMessage(e.getMessage());
+                bulkSendTask.setSuccess(false);
+            }
+        }
+
+        return bulkSendRequest.getBulkSendTasks();
+    }
+
+    public static String formatEpochToDate(long epochMillis) {
+        Date date = new Date(epochMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        return sdf.format(date);
+    }
 }

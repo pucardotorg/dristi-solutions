@@ -32,5 +32,10 @@ public class TaskCaseSearchCriteria {
     @JsonProperty("courtId")
     private String courtId = null;
 
+    @JsonProperty("noticeType")
+    private String noticeType = null;
+
+    @JsonProperty("deliveryChanel")
+    private String deliveryChanel = null;
 
 }

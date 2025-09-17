@@ -139,6 +139,18 @@ public class TaskCaseQueryBuilder {
             preparedStmtList.add(taskCaseSearchCriteria.getCourtId());
         }
 
+        if (taskCaseSearchCriteria.getNoticeType() != null && !taskCaseSearchCriteria.getNoticeType().isEmpty()) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" task.taskDetails -> 'noticeDetails' ->> 'noticeType' = ? ");
+            preparedStmtList.add(taskCaseSearchCriteria.getNoticeType());
+        }
+
+        if (taskCaseSearchCriteria.getDeliveryChanel() != null && !taskCaseSearchCriteria.getDeliveryChanel().isEmpty()) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" task.taskDetails -> 'deliveryChannels' ->> 'channelName' = ? ");
+            preparedStmtList.add(taskCaseSearchCriteria.getDeliveryChanel());
+        }
+
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
             query.append("(")
