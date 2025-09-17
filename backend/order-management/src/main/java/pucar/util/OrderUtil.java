@@ -195,12 +195,12 @@ public class OrderUtil {
                 }
                 if (!rolesLocalizedPresent.isEmpty()) {
                     String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                    sb.append(linePresent).append(". ");
+                    sb.append(linePresent).append(DOT);
                 }
 
                 if(!rolesLocalizedAbsentee.isEmpty()){
                     String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                    sb.append(lineAbsent).append(". ");
+                    sb.append(lineAbsent).append(DOT);
                 }
             }
 
@@ -208,14 +208,14 @@ public class OrderUtil {
             if (order.getItemText() != null) {
                 String html = order.getItemText();
                 String plainText = Jsoup.parse(html).text();
-                sb.append(plainText).append(". ");
+                sb.append(plainText).append(DOT);
             }
 
             // Purpose of Next Hearing
             if (order.getPurposeOfNextHearing() != null && !order.getPurposeOfNextHearing().isEmpty()) {
                 String purpose = localizationUtil.callLocalization(requestInfo, order.getTenantId(), order.getPurposeOfNextHearing());
                 sb.append("Purpose of Next Hearing: ")
-                        .append(purpose).append(". ");
+                        .append(purpose).append(DOT);
             }
 
             // Next Hearing Date
@@ -225,7 +225,7 @@ public class OrderUtil {
                         .toLocalDate()
                         .toString();
                 sb.append("Date of Next Hearing: ")
-                        .append(dateStr).append(". ");
+                        .append(dateStr).append(DOT);
             }
 
             return sb.toString().trim();

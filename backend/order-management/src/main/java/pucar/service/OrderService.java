@@ -64,6 +64,7 @@ public class OrderService {
         Order order = request.getOrder();
         RequestInfo requestInfo = request.getRequestInfo();
 
+        //If attendance is present then attendance and item text will go in hearing summary
         if (order.getAttendance() != null) {
             String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
