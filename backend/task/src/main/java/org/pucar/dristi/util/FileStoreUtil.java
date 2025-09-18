@@ -77,7 +77,7 @@ public class FileStoreUtil {
             return object;
 
         } catch (Exception e) {
-            throw new CustomException(FILE_STORE_SERVICE_EXCEPTION_CODE, FILE_STORE_SERVICE_EXCEPTION_MESSAGE);
+            throw new CustomException(FILE_STORE_SERVICE_EXCEPTION_CODE, e.getMessage());
 
         }
 
