@@ -491,6 +491,12 @@ public class InboxServiceV2 {
             searchCriteria.remove("searchableFields");
         }
 
+        if (criteria.getStatus() != null) {
+            searchCriteria.put("status", criteria.getStatus());
+        } else {
+            searchCriteria.remove("status");
+        }
+
         PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
 
         criteria.setCount(resultData.getTotalSize());
