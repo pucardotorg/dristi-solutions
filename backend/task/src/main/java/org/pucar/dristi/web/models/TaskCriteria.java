@@ -1,8 +1,10 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.pucar.dristi.annotation.CombineRequiredFields;
 import org.springframework.validation.annotation.Validated;
@@ -14,6 +16,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @CombineRequiredFields(fields = {"referenceId", "state"}, message = "combination of referenceId and state is required.")
 public class TaskCriteria {
 
