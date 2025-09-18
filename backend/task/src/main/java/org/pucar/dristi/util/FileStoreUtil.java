@@ -31,13 +31,14 @@ import static org.pucar.dristi.config.ServiceConstants.INVALID_INPUT;
 @Component
 @Slf4j
 public class FileStoreUtil {
-    private Configuration configs;
-    private RestTemplate restTemplate;
-    private ServiceRequestRepository repository;
+    private final Configuration configs;
+    private final RestTemplate restTemplate;
+    private final ServiceRequestRepository repository;
     @Autowired
-    public FileStoreUtil(RestTemplate restTemplate, Configuration configs) {
+    public FileStoreUtil(RestTemplate restTemplate, Configuration configs, ServiceRequestRepository repository) {
         this.restTemplate = restTemplate;
         this.configs = configs;
+        this.repository = repository;
     }
     public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
         if (fileStoreIds == null || fileStoreIds.isEmpty()) {
