@@ -73,10 +73,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === "WARRANT" ? "DELIVERED" : "SERVED";
+    return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
+  return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
 const ReviewSummonsNoticeAndWarrant = () => {
@@ -92,6 +92,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -112,6 +113,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [updateStatusDate, setUpdateStatusDate] = useState("");
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -222,6 +224,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [history, reload, taskNumber]);
 
   const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
     const { data: tasksData } = await refetch();
     if (tasksData) {
@@ -252,6 +255,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         console.error("Error updating task data:", error);
       }
     }
+    setIsSubmitting(false);
   }, [refetch, reload, tasksData, tenantId]);
 
   const handleUpdateStatus = useCallback(async () => {
@@ -283,7 +287,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         };
         await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && orderType !== "WARRANT") {
+          if (
+            res?.task &&
+            selectedDelievery?.key === "NOT_DELIVERED" &&
+            !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
+          ) {
             await taskService.updateTask(
               {
                 task: {
@@ -304,10 +312,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
               actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
-              referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
+              referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber || orderData?.list[0]?.scheduledHearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
+              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE", "COURT_ROOM_MANAGER"], //checkForCourtRoomManager?
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
               caseId: tasksData?.list[0]?.caseId,
@@ -481,6 +489,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
       } else if (orderType === "WARRANT") {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
@@ -489,6 +501,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_NOTICE_VIA");
       } else if (orderType === "WARRANT") {
         msg = t("SENT_WARRANT_VIA");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SENT_PROCLAMATION_VIA");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SENT_ATTACHMENT_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
@@ -498,7 +514,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleSubmitEsign = useCallback(async () => {
     try {
-      const localStorageID = sessionStorage.getItem("fileStoreId");
+      let localStorageID = "";
+      if (mockESignEnabled) {
+        // For mock esign, just send the existing file store id in update calls.
+        localStorageID = rowData?.documents?.[0]?.fileStore;
+      } else {
+        localStorageID = sessionStorage.getItem("fileStoreId");
+      }
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
         signatureId !== "" || localStorageID
@@ -580,7 +602,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: isTypist || (rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge),
+          hideSubmit:
+            isTypist ||
+            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+              rowData?.documentStatus === "SIGN_PENDING" &&
+              !isJudge),
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -648,6 +674,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      isSubmitting={isSubmitting}
                     />
                   ),
               },

@@ -131,6 +131,8 @@ public class ServiceConstants {
     public static final String REQUEST_FOR_BAIL_GRANTED = "REQUEST_FOR_BAIL_GRANTED";
     public static final String SUBMIT_BAIL_DOCUMENTS = "SUBMIT_BAIL_DOCUMENTS";
     public static final String REQUEST_FOR_WITH_DRAW_SUBMITTED = "REQUEST_FOR_WITH_DRAW_SUBMITTED";
+    public static final String APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS = "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS";
+    public static final String FLOW_JAC = "flow_jac";
 
     public static final String APPROVE = "APPROVE";
     public static final String REJECT = "REJECT";

@@ -127,6 +127,8 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
   );
 
   const replaceAdvocateOrderCreate = async (type) => {
+    const taskDetails = task?.taskDetails;
+    const { firstName, middleName, lastName } = taskDetails?.advocateDetails?.individualDetails || {};
     const formdata = {
       orderType: {
         code: "ADVOCATE_REPLACEMENT_APPROVAL",
@@ -165,6 +167,11 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         },
         documents: [],
         additionalDetails: additionalDetails,
+        orderDetails: {
+          advocateName: getFullName(" ", firstName, middleName, lastName),
+          applicationStatus: type === "reject" ? "REJECT" : type === "approve" ? "GRANT" : null,
+          action: type === "reject" ? "rejected" : type === "approve" ? "accepted" : null,
+        },
       },
     };
     setIsApiCalled(true);
@@ -189,7 +196,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
     } finally {

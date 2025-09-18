@@ -214,7 +214,7 @@ const PaymentForSummonModal = ({ path }) => {
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
@@ -245,13 +245,13 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber,
+        hearingId: orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderData?.list?.[0]?.hearingNumber,
-    Boolean(orderData?.list?.[0]?.hearingNumber && caseCourtId)
+    orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+    Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {
@@ -588,7 +588,7 @@ const PaymentForSummonModal = ({ path }) => {
     };
   }, [feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
 
-  if (isOrdersLoading || isSummonsBreakUpLoading || isCourtBillLoading || isEPOSTBillLoading || isTaskLoading || isHearingLoading) {
+  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isEPOSTBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
   }
 

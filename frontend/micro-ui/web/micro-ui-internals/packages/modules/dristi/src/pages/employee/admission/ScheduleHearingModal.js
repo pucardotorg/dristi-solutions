@@ -331,7 +331,7 @@ function ScheduleHearing({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
           setIsSubmitDisabled(false);
         })
         .catch((err) => {

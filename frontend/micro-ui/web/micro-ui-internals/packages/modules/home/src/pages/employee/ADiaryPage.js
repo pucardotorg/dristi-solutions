@@ -361,7 +361,7 @@ const ADiaryPage = ({ path }) => {
   const handleRowClick = (entry) => {
     if (entry?.referenceType === "Order") {
       history.push(
-        `/${window?.contextPath}/${userInfoType}/orders/generate-orders?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
+        `/${window?.contextPath}/${userInfoType}/orders/generate-order?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
         { diaryEntry: entry }
       );
     }
@@ -417,7 +417,7 @@ const ADiaryPage = ({ path }) => {
                           <td style={styles.rowDataStyle}>{index + 1}</td>
                           <td style={styles.rowDataStyle}>{entry?.caseNumber}</td>
                           <td
-                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle }}
+                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle , whiteSpace: "pre-line"}}
                             onClick={() => handleRowClick(entry)}
                             onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
                             onMouseLeave={(e) => (e.target.style.textDecoration = "none")}

@@ -58,7 +58,7 @@ function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalEr
               key={index}
             >
               <label>{t(item?.label)}</label>
-              <labal> {`${item?.errorCount || 0} ${t("CS_ERRORS")}`} </labal>
+              <label> {`${item?.errorCount || 0} ${t("CS_ERRORS")}`} </label>
             </div>
           ))}
         </div>
