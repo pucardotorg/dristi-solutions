@@ -105,4 +105,26 @@ public class SummonsPdf  {
 
     @JsonProperty("helplineNumber")
     private String helplineNumber;
+
+    @JsonProperty("warrantText")
+    private String warrantText;
+
+    @JsonProperty("proclamationText")
+    private String proclamationText;
+
+    @JsonProperty("attachmentText")
+    private String attachmentText;
+
+    @JsonProperty("chargeDays")
+    private String chargeDays;
+
+    @JsonProperty("village")
+    private String village;
+
+    @JsonProperty("district")
+    private String district;
+
+    @JsonProperty("partyType")
+    private String partyType;
+
 }

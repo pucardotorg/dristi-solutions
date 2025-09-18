@@ -175,7 +175,7 @@ public class PaymentUpdateService {
             enrichmentUtil.enrichAccessCode(caseRequest);
             Document paymentReceipt = null;
             if(ONLINE.equals(paymentMode)){
-                paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId());
+                paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId(), consumerCode);
             }
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));

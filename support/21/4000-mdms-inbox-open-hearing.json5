@@ -1,0 +1,34 @@
+{
+  "id": "50cfa6a6-916c-4810-bd1f-a24435f6c63f",
+  "tenantId": "kl",
+  "schemaCode": "INBOX.InboxQueryConfiguration",
+  "uniqueIdentifier": "open-hearing-index",
+  "data": {
+    "sortBy": {
+      "path": "Data.hearingDetails.caseNumber.keyword",
+      "defaultOrder": "DESC"
+    },
+    "sourceFilterPathList": [
+      "Data"
+    ],
+    "allowedSearchCriteria": [
+
+      // below fields need to add , can be done through workbench ui
+      {
+        "name": "searchableFields",
+        "path": "Data.hearingDetails.searchableFields.keyword",
+        "operator": "WILDCARD",
+        "isMandatory": false
+      },
+      {
+        "name": "hearingType",
+        "path": "Data.hearingDetails.hearingType.keyword",
+        "isMandatory": false
+      }
+    ],
+    "index": "open-hearing-index",
+    "module": "Hearing Service"
+  },
+  "isActive": true
+
+}

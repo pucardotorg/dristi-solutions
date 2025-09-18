@@ -17,6 +17,7 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import { use } from "react";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
@@ -71,8 +72,10 @@ const delayCondonationTextStyle = {
 
 function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const history = useHistory();
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const caseId = searchParams.get("caseId");
@@ -87,6 +90,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [comment, setComment] = useState("");
   const [commentSendBack, setCommentSendBack] = useState("");
   const [toastMsg, setToastMsg] = useState(null);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -135,6 +146,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       criteria: [
         {
           caseId: caseId,
+          ...(inViewCase && userInfoType === "employee" && courtId && { courtId }),
         },
       ],
       tenantId,
@@ -503,7 +515,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+    const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
@@ -673,7 +685,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   const Heading = (props) => {

@@ -48,6 +48,9 @@ const ReviewLitigantDetails = ({ path }) => {
   const referenceId = urlParams.get("referenceId");
   const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -55,6 +58,7 @@ const ReviewLitigantDetails = ({ path }) => {
         {
           caseId: caseId,
           defaultFields: false,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -71,6 +75,24 @@ const ReviewLitigantDetails = ({ path }) => {
     }),
     [caseData]
   );
+
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        applicationNumber: refApplicationNUmber,
+        tenantId,
+        courtId,
+      },
+      tenantId,
+    },
+    {},
+    refApplicationNUmber,
+    Boolean(refApplicationNUmber)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData?.applicationList]);
 
   const profileRequest = useMemo(() => {
     return caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
@@ -192,6 +214,14 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
+  const getPersonNameByUUID = (litigantDetails, representative, uuid) => {
+    const combined = [...(litigantDetails || []), ...(representative || [])];
+
+    const person = combined?.find((item) => item?.additionalDetails?.uuid === uuid);
+
+    return person?.additionalDetails?.fullName || person?.additionalDetails?.advocateName || "";
+  };
+
   const handleApproveReject = async (action) => {
     try {
       const reqBody = {
@@ -216,6 +246,11 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          orderDetails: {
+            applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+            applicationCMPNumber: applicationDetails?.applicationCMPNumber,
+          },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
@@ -244,7 +279,7 @@ const ReviewLitigantDetails = ({ path }) => {
       const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
       if (res.order.orderNumber) {
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       }
     } catch (error) {

@@ -115,11 +115,15 @@ public class CaseBundleService {
             }
 
             Map<String, Object> caseData = responseList.get(0);
+            Boolean isLPRCase = (Boolean) caseData.get("isLPRCase");
+            String lprNumber = (String) caseData.get("lprNumber");
             String courtCaseNumber = (String) caseData.get("courtCaseNumber");
             String cmpNumber = (String) caseData.get("cmpNumber");
             String filingNumber = (String) caseData.get("filingNumber");
 
-            if (courtCaseNumber != null) {
+            if (isLPRCase && lprNumber != null) {
+                caseNumber = lprNumber;
+            } else if (courtCaseNumber != null) {
                 caseNumber = courtCaseNumber;
             } else if (cmpNumber != null) {
                 caseNumber = cmpNumber;
