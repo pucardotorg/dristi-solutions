@@ -151,6 +151,12 @@ public class TaskCaseQueryBuilder {
             preparedStmtList.add(taskCaseSearchCriteria.getDeliveryChanel());
         }
 
+        if (taskCaseSearchCriteria.getHearingDate() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" (task.taskDetails -> 'caseDetails' ->> 'hearingDate')::bigint = ? ");
+            preparedStmtList.add(taskCaseSearchCriteria.getHearingDate());
+        }
+
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
             query.append("(")

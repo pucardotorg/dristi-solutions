@@ -38,4 +38,7 @@ public class TaskCaseSearchCriteria {
     @JsonProperty("deliveryChanel")
     private String deliveryChanel = null;
 
+    @JsonProperty("hearingDate")
+    private Long hearingDate = null;
+
 }
