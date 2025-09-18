@@ -125,4 +125,12 @@ public class TaskApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/v1/bulk-send", method = RequestMethod.POST)
+    public ResponseEntity<BulkSendResponse> taskBulkSendPost(@Parameter(in = ParameterIn.DEFAULT, description = "details for the bulk sending of task", schema = @Schema()) @Valid @RequestBody BulkSendRequest body) {
+        List<BulkSend> bulkSendTasks = taskService.bulkSend(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        BulkSendResponse taskResponse = BulkSendResponse.builder().bulkSendTasks(bulkSendTasks).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(taskResponse, HttpStatus.OK);
+    }
+
 }
