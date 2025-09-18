@@ -2,8 +2,10 @@ package org.pucar.dristi.web.models;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.validation.annotation.Validated;
 
@@ -15,6 +17,8 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskCaseSearchCriteria {
 
     @JsonProperty("completeStatus")
