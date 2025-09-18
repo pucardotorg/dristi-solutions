@@ -157,12 +157,10 @@ export const SummonsTabsConfig = {
                   optionsKey: "displayLabel",
                   defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
-                    moduleName: "Task",
-                    masterName: "DeliveryChannel",
-                    // select:
-                    //   "(data) => { var list = data && data.Task && data.Task.DeliveryChannel ? data.Task.DeliveryChannel : []; var map = {}; var unique = []; for (var i=0; i<list.length; i++) { var key = list[i].channel + '_' + list[i].channelfor; if (!map[key]) { map[key] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel + ' (' + item.channelfor + ')' }; }); }",
+                    moduleName: "payment",
+                    masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.Task && data.Task.DeliveryChannel) ? data.Task.DeliveryChannel : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].channel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -417,12 +415,10 @@ export const SummonsTabsConfig = {
                   optionsKey: "displayLabel",
                   defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
-                    moduleName: "Task",
-                    masterName: "DeliveryChannel",
-                    // select:
-                    //   "(data) => { var list = data && data.Task && data.Task.DeliveryChannel ? data.Task.DeliveryChannel : []; var map = {}; var unique = []; for (var i=0; i<list.length; i++) { var key = list[i].channel + '_' + list[i].channelfor; if (!map[key]) { map[key] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel + ' (' + item.channelfor + ')' }; }); }",
+                    moduleName: "payment",
+                    masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.Task && data.Task.DeliveryChannel) ? data.Task.DeliveryChannel : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].channel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -637,12 +633,10 @@ export const SummonsTabsConfig = {
                   optionsKey: "displayLabel",
                   defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
-                    moduleName: "Task",
-                    masterName: "DeliveryChannel",
-                    // select:
-                    //   "(data) => { var list = data && data.Task && data.Task.DeliveryChannel ? data.Task.DeliveryChannel : []; var map = {}; var unique = []; for (var i=0; i<list.length; i++) { var key = list[i].channel + '_' + list[i].channelfor; if (!map[key]) { map[key] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel + ' (' + item.channelfor + ')' }; }); }",
+                    moduleName: "payment",
+                    masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.Task && data.Task.DeliveryChannel) ? data.Task.DeliveryChannel : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].channel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -857,12 +851,10 @@ export const SummonsTabsConfig = {
                   optionsKey: "displayLabel",
                   defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
-                    moduleName: "Task",
-                    masterName: "DeliveryChannel",
-                    // select:
-                    //   "(data) => { var list = data && data.Task && data.Task.DeliveryChannel ? data.Task.DeliveryChannel : []; var map = {}; var unique = []; for (var i=0; i<list.length; i++) { var key = list[i].channel + '_' + list[i].channelfor; if (!map[key]) { map[key] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel + ' (' + item.channelfor + ')' }; }); }",
+                    moduleName: "payment",
+                    masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.Task && data.Task.DeliveryChannel) ? data.Task.DeliveryChannel : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].channel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.channel, name: item.channel, displayLabel: item.channel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",

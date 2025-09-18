@@ -541,6 +541,11 @@ export const UICustomizations = {
           return `${row?.caseName}`;
         case "CS_CASE_NUMBER_HOME":
           return `${caseId}`;
+        case "SENT_DATE":
+          return taskDetails?.deliveryChannels?.statusChangeDate || "-";
+        case "STATUS_UPDATE_DATE":
+          return taskDetails?.deliveryChannels?.statusChangeDate || "-";
+
         // case "PROCESS_TYPE":
         //   return t(value);
         // case "ISSUE_DATE":

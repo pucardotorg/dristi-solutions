@@ -841,6 +841,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     const requests = orderRequestList?.map(async (order) => {
       try {
+        // Debug: verify identifiers coming from getTasksToSign response
+        console.log("Bulk sign XML request identifiers:", {
+          taskNumber: order?.taskNumber,
+          orderNumber: order?.orderNumber,
+        });
         const formData = qs.stringify({ response: order?.request });
         const response = await axios.post(bulkSignUrl, formData, {
           headers: {
@@ -851,16 +856,16 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const data = response?.data;
         if (parseXml(data, "status") !== "failed") {
           responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
+            taskNumber: order?.taskNumber || order?.orderNumber,
+            signedTaskData: parseXml(data, "data"),
             signed: true,
             errorMsg: null,
             tenantId: tenantId,
           });
         } else {
           responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
+            taskNumber: order?.taskNumber || order?.orderNumber,
+            signedTaskData: parseXml(data, "data"),
             signed: false,
             errorMsg: parseXml(data, "error"),
             tenantId: tenantId,
@@ -968,11 +973,23 @@ const ReviewSummonsNoticeAndWarrant = () => {
       await fetchResponseFromXmlRequest(response?.taskList || response?.orderList).then(async (responseArray) => {
         console.log("Processed XML response:", responseArray);
 
+        // Map response to API schema: { taskNumber, signedTaskData, signed, tenantId, errorMsg }
+        const signedTasksPayload = (responseArray || []).map((item) => ({
+          taskNumber: item?.taskNumber || item?.orderNumber,
+          signedTaskData: item?.signedTaskData || item?.signedOrderData || "",
+          signed: item?.signed === true,
+          tenantId: item?.tenantId || tenantId,
+          errorMsg: item?.errorMsg || null,
+        }));
+
+        // Debug: preview the payload being sent to updateSignedTasks
+        console.log("signedTasks payload preview:", signedTasksPayload?.slice(0, 3));
+
         // Update signed tasks with proper payload structure matching the API format
         const updateTaskResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
-            signedTasks: responseArray,
+            signedTasks: signedTasksPayload,
           },
           {}
         );
