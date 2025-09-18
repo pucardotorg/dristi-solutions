@@ -36,4 +36,9 @@ export const Urls = {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
+  processManagement:{
+    getProcessToSign:"/task/v1/_getTasksToSign",
+    updateSignedProcess:"/task/v1/_updateSignedTasks",
+    bulkSend:"/task/v1/bulk-send",
+  }
 };
