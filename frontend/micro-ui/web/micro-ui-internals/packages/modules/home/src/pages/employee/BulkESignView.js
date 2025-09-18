@@ -1,4 +1,4 @@
-import { ActionBar, BreadCrumb, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -374,20 +374,18 @@ function BulkESignView() {
       ) : (
         <React.Fragment>
           <div className={"bulk-esign-order-view"}>
-            <div className="header">{t("BULK_SIGN_ORDERS")}</div>
+            <div className="header">{t("CS_HOME_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
           {isJudge && (
-            <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-              <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-                <SubmitBar
-                  label={t("SIGN_SELECTED_ORDERS")}
-                  submit="submit"
-                  disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                  onSubmit={() => setShowBulkSignConfirmModal(true)}
-                />
-              </div>
-            </ActionBar>
+            <div className="bulk-submit-bar">
+              <SubmitBar
+                label={t("SIGN_SELECTED_ORDERS")}
+                submit="submit"
+                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+                onSubmit={() => setShowBulkSignConfirmModal(true)}
+              />
+            </div>
           )}
         </React.Fragment>
       )}

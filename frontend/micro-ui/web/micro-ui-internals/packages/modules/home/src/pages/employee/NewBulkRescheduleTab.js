@@ -97,6 +97,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
     fromDate: today.setHours(0, 0, 0, 0),
     toDate: today.setHours(0, 0, 0, 0),
     slotIds: [],
+    searchableFields: null,
     reason: {
       code: "COURT_NON_WORKING_DAY",
       name: "Court Non-Working Day",

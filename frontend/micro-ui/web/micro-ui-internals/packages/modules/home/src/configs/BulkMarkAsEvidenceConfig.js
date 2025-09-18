@@ -7,7 +7,7 @@ const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset")) || 0
 
 export const bulkMarkAsEvidenceConfig = {
   label: "CS_HOME_BULK_MARK_AS_EVIDENCE",
-  type: "inbox",
+  type: "search",
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",
     requestParam: {},

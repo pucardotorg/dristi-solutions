@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { HomeService } from "../../hooks/services";
 import { Link } from "react-router-dom";
-import { Dropdown, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
+import { Dropdown, TextInput, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import AsyncOverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/AsyncOverlayDropdown";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -11,6 +10,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import useInboxSearch from "../../hooks/useInboxSearch";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { SmallSearchIcon, ConferenceIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -33,22 +33,6 @@ const CloseBtn = (props) => {
     </div>
   );
 };
-
-const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g clip-path="url(#clip0_36_7167)">
-      <path
-        d="M11.625 10.5H11.0325L10.8225 10.2975C11.5575 9.4425 12 8.3325 12 7.125C12 4.4325 9.8175 2.25 7.125 2.25C4.4325 2.25 2.25 4.4325 2.25 7.125C2.25 9.8175 4.4325 12 7.125 12C8.3325 12 9.4425 11.5575 10.2975 10.8225L10.5 11.0325V11.625L14.25 15.3675L15.3675 14.25L11.625 10.5ZM7.125 10.5C5.2575 10.5 3.75 8.9925 3.75 7.125C3.75 5.2575 5.2575 3.75 7.125 3.75C8.9925 3.75 10.5 5.2575 10.5 7.125C10.5 8.9925 8.9925 10.5 7.125 10.5Z"
-        fill="#505A5F"
-      />
-    </g>
-    <defs>
-      <clipPath id="clip0_36_7167">
-        <rect width="18" height="18" fill="white" />
-      </clipPath>
-    </defs>
-  </svg>
-);
 
 const today = new Date();
 const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -607,7 +591,7 @@ const HomeHearingsTab = ({
 
   return (
     <div className="full-height-container">
-      <div style={{ fontSize: 24, fontWeight: 700, padding: 26 }}>{t("ALL_HEARINGS")}</div>
+      <div className="header">{t("ALL_HEARINGS")}</div>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
@@ -692,12 +676,22 @@ const HomeHearingsTab = ({
               </button> */}
             </div>
           </LabelFieldPair>
-        </div>
-        <div className="filter-actions">
           <div className={`case-label-field-pair search-input`}>
+            <span
+              className="search-icon-wrapper"
+              onClick={() => {
+                if (!loading) {
+                  setPage(0);
+                  setRowsPerPage(10);
+                  fetchInbox(filters, setHearingCount);
+                }
+              }}
+            >
+              <SmallSearchIcon />
+            </span>
             <input
               className="home-input"
-              placeholder="Search here..."
+              placeholder="Search Case name or number"
               type="text"
               value={filters?.caseQuery}
               onChange={(e) => {
@@ -710,23 +704,7 @@ const HomeHearingsTab = ({
                   fetchInbox(filters, setHearingCount);
                 }
               }}
-              style={{
-                outline: "none",
-                border: "none",
-              }}
             />
-            <span
-              style={{ cursor: "pointer" }}
-              onClick={() => {
-                if (!loading) {
-                  setPage(0);
-                  setRowsPerPage(10);
-                  fetchInbox(filters, setHearingCount);
-                }
-              }}
-            >
-              <SearchIcon />
-            </span>
           </div>
           <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
             {t("ES_COMMON_SEARCH")}
@@ -734,6 +712,8 @@ const HomeHearingsTab = ({
           <button className="home-clear-btn" onClick={handleClear} disabled={loading}>
             {t("CLEAR")}
           </button>
+        </div>
+        <div className="filter-actions">
           <button
             className="digit-button-tertiary large"
             type="button"
@@ -746,16 +726,19 @@ const HomeHearingsTab = ({
               padding: "8px 24px",
             }}
           >
-            <span
-              className="digit-button-label"
-              style={{
-                fontSize: "14px",
-                fontWeight: 700,
-                fontFamily: "Roboto",
-                color: "#FFFFFF",
-              }}
-            >
-              {t("JOIN_VC")}
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <ConferenceIcon />
+              <span
+                className="digit-button-label"
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  fontFamily: "Roboto",
+                  color: "#FFFFFF",
+                }}
+              >
+                {t("JOIN_VC")}
+              </span>
             </span>
           </button>
         </div>

@@ -38,9 +38,12 @@ const MainHomeScreen = () => {
     SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
     REVIEW_PROCESS: 0,
-    VIEW_APPLICATION: 0,
-    SCHEDULE_HEARING: 0,
+    // VIEW_APPLICATION: 0,
+    // SCHEDULE_HEARING: 0,
     BAIL_BOND_STATUS: 0,
+    RESCHEDULE_APPLICATIONS: 0,
+    DELAY_CONDONATION: 0,
+    OTHERS: 0,
   });
   const [stepper, setStepper] = useState(1);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -244,8 +247,8 @@ const MainHomeScreen = () => {
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
       const reviwCount = res?.reviewProcessData?.count || 0;
-      const applicationCount = res?.viewApplicationData?.count || 0;
-      const scheduleCount = res?.scheduleHearingData?.count || 0;
+      // const applicationCount = res?.viewApplicationData?.count || 0;
+      // const scheduleCount = res?.scheduleHearingData?.count || 0;
       const registerCount = res?.registerCasesData?.count || 0;
       const bailBondStatusCount = res?.bailBondData?.count || 0;
       const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
@@ -257,8 +260,8 @@ const MainHomeScreen = () => {
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
-        VIEW_APPLICATION: applicationCount,
-        SCHEDULE_HEARING: scheduleCount,
+        // VIEW_APPLICATION: applicationCount,
+        // SCHEDULE_HEARING: scheduleCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
@@ -277,34 +280,34 @@ const MainHomeScreen = () => {
 
   const options = {
     SCRUTINISE_CASES: {
-      name: "Scrutinise cases",
+      name: "HOME_SCRUTINISE_CASES",
     },
     REGISTRATION: {
-      name: "Register Cases",
+      name: "HOME_REGISTER_CASES",
     },
     REVIEW_PROCESS: {
-      name: "Review Process",
+      name: "HOME_REISSUE_PROCESS",
     },
-    VIEW_APPLICATION: {
-      name: "View Applications",
-    },
-    SCHEDULE_HEARING: {
-      name: "Schedule Hearing",
-    },
+    // VIEW_APPLICATION: {
+    //   name: "View Applications",
+    // },
+    // SCHEDULE_HEARING: {
+    //   name: "Schedule Hearing",
+    // },
     BAIL_BOND_STATUS: {
-      name: "Bail Bonds Status",
+      name: "HOME_BAIL_BONDS_STATUS",
     },
   };
 
   const applicationOptions = {
     RESCHEDULE_APPLICATIONS: {
-      name: "Reschedule Applications",
+      name: "HOME_RESCHEDULE_APPLICATIONS",
     },
     DELAY_CONDONATION: {
-      name: "Delay Condonation",
+      name: "HOME_DELAY_CONDONATION_APPLICATIONS",
     },
     OTHERS: {
-      name: "Others",
+      name: "HOME_OTHER_APPLICATIONS",
     },
   };
 
@@ -471,7 +474,7 @@ const MainHomeScreen = () => {
           <Loader />
         </div>
       )}
-      <div className="main-home-screen" style={{ display: "flex", width: "100vw", borderTop: "1px #E6E6E6 solid" }}>
+      <div className="main-home-screen">
         <HomeSidebar
           t={t}
           onTabChange={handleTabChange}
@@ -484,7 +487,7 @@ const MainHomeScreen = () => {
           showToast={showToast}
         />
         {activeTab === "TOTAL_HEARINGS_TAB" ? (
-          <div style={{ width: "100%" }}>
+          <div className="home-bulk-reschedule">
             <HomeHearingsTab
               t={t}
               setHearingCount={setHearingCount}
@@ -498,27 +501,38 @@ const MainHomeScreen = () => {
             />
           </div>
         ) : activeTab === "CS_HOME_BULK_RESCHEDULE" ? (
-          <div style={{ width: "100%" }}>
+          <div className="home-bulk-reschedule">
             <NewBulkRescheduleTab stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
           </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkBailBondSignView showToast={showToast} />
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkMarkAsEvidenceView showToast={showToast} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkWitnessDepositionView showToast={showToast} />
           </div>
         ) : activeTab === "CS_HOME_ORDERS" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkESignView />
           </div>
         ) : (
-          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div
+            className="inbox-search-wrapper"
+            style={{
+              width: "100%",
+              maxHeight: "calc(100vh - 90px)",
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "#c5c5c5 #f9fafb",
+              padding: "26px",
+            }}
+          >
+            <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
             {inboxSearchComposer}
           </div>
         )}
@@ -540,7 +554,7 @@ const MainHomeScreen = () => {
             style={{ maxWidth: "500px" }}
           />
         )}
-      </div>{" "}
+      </div>
     </React.Fragment>
   );
 };

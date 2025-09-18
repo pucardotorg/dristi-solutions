@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { TextInput, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { TextInput, LabelFieldPair, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
-import { ActionBar, SubmitBar } from "@egovernments/digit-ui-components";
+import { SmallSearchIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const NewBulkRescheduleTable = ({
   t,
@@ -60,6 +60,7 @@ const NewBulkRescheduleTable = ({
           endTime: newFormData?.toDate + 24 * 60 * 60 * 1000 - 1, // End of the day
           slotIds: newFormData?.slotIds?.map((slot) => slot?.id) || [],
           reason: newFormData?.reason,
+          searchableFields: newFormData?.searchableFields,
         },
       });
       if (tentativeDates?.Hearings?.length === 0) {
@@ -96,6 +97,7 @@ const NewBulkRescheduleTable = ({
 
   return (
     <div className="full-height-container">
+      <div className="header">{t("BULK_RESCHEDULE_HEARINGS")}</div>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `}>
@@ -128,8 +130,20 @@ const NewBulkRescheduleTable = ({
               />
             </div>
           </LabelFieldPair>
-        </div>
-        <div className="filter-actions">
+          <div className={`case-label-field-pair search-input`}>
+            <span className="search-icon-wrapper">
+              <SmallSearchIcon />
+            </span>
+            <input
+              className="home-input"
+              placeholder="Search Case name or number"
+              type="text"
+              value={bulkFormData?.searchableFields || ""}
+              onChange={(e) => {
+                setBulkFormData((prev) => ({ ...prev, searchableFields: e.target.value }));
+              }}
+            />
+          </div>
           <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
             {t("ES_COMMON_SEARCH")}
           </button>
@@ -193,25 +207,9 @@ const NewBulkRescheduleTable = ({
           </table>
         </div>
       </div>
-      <ActionBar
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: "#fff",
-          padding: "16px 24px",
-          boxShadow: "none",
-          borderTop: "1px solid #BBBBBD",
-        }}
-      >
-        <SubmitBar
-          label={t("RESCHEDULE_ALL_HEARINGS")}
-          style={{ boxShadow: "none" }}
-          onSubmit={onSumbitReschedule}
-          disabled={bulkHearingsCount === 0}
-        />
-      </ActionBar>
+      <div className="bulk-submit-bar">
+        <SubmitBar label={t(`RESCHEDULE_ALL_HEARINGS`)} submit="submit" onSubmit={onSumbitReschedule} disabled={bulkHearingsCount === 0} />
+      </div>
     </div>
   );
 };

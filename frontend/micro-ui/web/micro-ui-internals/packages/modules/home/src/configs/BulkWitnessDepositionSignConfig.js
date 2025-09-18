@@ -1,5 +1,3 @@
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-
 const defaultSearchValues = {
   caseTitle: "",
 };
@@ -9,7 +7,7 @@ const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset"
 
 export const bulkWitnessDepositionSignConfig = {
   label: "CS_HOME_BULK_WITNESS_DEPOSITION_SIGN",
-  type: "inbox",
+  type: "search",
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",
     requestParam: {},

@@ -16,17 +16,7 @@ const HomeSidebar = ({
   showToast = () => {},
 }) => {
   return (
-    <div
-      style={{
-        background: "#fafbfc",
-        borderRight: "1px solid #eee",
-        paddingTop: 24,
-        paddingBottom: 24,
-        paddingLeft: 24,
-        paddingRight: 24,
-        width: "20%",
-      }}
-    >
+    <div className="home-sidebar">
       <HomeHeader t={t} />
       <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
         <SidebarItem
@@ -115,7 +105,6 @@ const HomeSidebar = ({
           }}
         />
         <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
-        <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
         <SidebarItem
           t={t}
           label="BULK_BAIL_BOND_SIGN"
@@ -129,6 +118,7 @@ const HomeSidebar = ({
           onClick={() => onTabChange("BULK_WITNESS_DEPOSITION_SIGN")}
         />
         <SidebarItem t={t} label="BULK_EVIDENCE_SIGN" active={activeTab === "BULK_EVIDENCE_SIGN"} onClick={() => onTabChange("BULK_EVIDENCE_SIGN")} />
+        <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
       </HomeAccordian>
     </div>
   );

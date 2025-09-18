@@ -1973,24 +1973,24 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
-            searchViewApplication: {
-              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
-              actionCategory: "View Application",
-              ...(activeTab === "VIEW_APPLICATION" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
-            searchScheduleHearing: {
-              date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
-              actionCategory: "Schedule Hearing",
-              ...(activeTab === "SCHEDULE_HEARING" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
+            // searchViewApplication: {
+            //   date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+            //   isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+            //   actionCategory: "View Application",
+            //   ...(activeTab === "VIEW_APPLICATION" &&
+            //     requestCriteria?.state?.searchForm?.caseSearchText && {
+            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+            //     }),
+            // },
+            // searchScheduleHearing: {
+            //   date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
+            //   isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+            //   actionCategory: "Schedule Hearing",
+            //   ...(activeTab === "SCHEDULE_HEARING" &&
+            //     requestCriteria?.state?.searchForm?.caseSearchText && {
+            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+            //     }),
+            // },
             searchRegisterCases: {
               date: null,
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
@@ -2053,8 +2053,8 @@ export const UICustomizations = {
           ...requestCriteria.config,
           select: (data) => {
             const reviwCount = data?.reviewProcessData?.count || 0;
-            const applicationCount = data?.viewApplicationData?.count || 0;
-            const scheduleCount = data?.scheduleHearingData?.count || 0;
+            // const applicationCount = data?.viewApplicationData?.count || 0;
+            // const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
             const bailBondStatusCount = data?.bailBondData?.count || 0;
             const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
@@ -2067,8 +2067,8 @@ export const UICustomizations = {
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
-              VIEW_APPLICATION: applicationCount,
-              SCHEDULE_HEARING: scheduleCount,
+              // VIEW_APPLICATION: applicationCount,
+              // SCHEDULE_HEARING: scheduleCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
@@ -2115,16 +2115,17 @@ export const UICustomizations = {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            } else if (activeTab === "VIEW_APPLICATION") {
-              return {
-                TotalCount: data?.viewApplicationData?.count,
-                data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
-              };
-            } else if (activeTab === "SCHEDULE_HEARING")
-              return {
-                TotalCount: data?.scheduleHearingData?.count,
-                data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
-              };
+            }
+            //  else if (activeTab === "VIEW_APPLICATION") {
+            //   return {
+            //     TotalCount: data?.viewApplicationData?.count,
+            //     data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
+            //   };
+            // } else if (activeTab === "SCHEDULE_HEARING")
+            //   return {
+            //     TotalCount: data?.scheduleHearingData?.count,
+            //     data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+            //   };
             else if (activeTab === "BAIL_BOND_STATUS") {
               return {
                 TotalCount: data?.bailBondData?.count,
