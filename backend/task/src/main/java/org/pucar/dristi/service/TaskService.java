@@ -918,7 +918,7 @@ public class TaskService {
 
                     TaskRequest updateTaskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
 
-                    Task updatedTask = updateTask(updateTaskRequest);
+                    Task updatedTask = uploadDocument(updateTaskRequest);
                     updatedTasks.add(updatedTask);
 
                     log.info("Method=updateTaskWithSignedDoc, result= SUCCESS,signedTasks:{}", request.getSignedTasks().size());
