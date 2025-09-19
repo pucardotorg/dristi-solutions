@@ -1183,31 +1183,35 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      let newFileStoreId = "";
-      if (mockESignEnabled) {
-        newFileStoreId = applicationPdfFileStoreId;
-      } else {
-        newFileStoreId = localStorageID || signedDoucumentUploadedID;
-      }
+      
+      const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      const documentsFile =
-        signedDoucumentUploadedID !== "" || localStorageID
-          ? [
-              {
-                documentType: "SIGNED",
-                fileStore: signedDoucumentUploadedID || localStorageID,
-                documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-                additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
-              },
-              ...Array.from(fileStoreIds).map((fileStoreId, index) => ({
-                fileStore: fileStoreId,
-                isActive: false,
-                documentOrder: documents?.length > 0 ? documents.length + index + 1 : 2,
-                additionalDetails: { name: `Application : ${t(applicationType)}.pdf` },
-              })),
-            ]
-          : null;
+      const documentsFile = (mockESignEnabled)
+        ? [
+            {
+              documentType: "SIGNED",
+              fileStore: applicationPdfFileStoreId,
+              documentOrder: 1,
+              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
+            },
+          ]
+        : signedDoucumentUploadedID !== "" || localStorageID
+        ? [
+            {
+              documentType: "SIGNED",
+              fileStore: signedDoucumentUploadedID || localStorageID,
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
+            },
+            ...Array.from(fileStoreIds).map((fileStoreId, index) => ({
+              fileStore: fileStoreId,
+              isActive: false,
+              documentOrder: documents?.length > 0 ? documents.length + index + 1 : 2,
+              additionalDetails: { name: `Application : ${t(applicationType)}.pdf` },
+            })),
+          ]
+        : null;
 
       sessionStorage.removeItem("fileStoreId");
       const reqBody = {
