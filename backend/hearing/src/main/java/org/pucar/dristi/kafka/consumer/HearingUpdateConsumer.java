@@ -89,14 +89,14 @@ public class HearingUpdateConsumer {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
             }
             if (hearingStatus.equalsIgnoreCase(COMPLETED)) {
-              String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
-                                ? hearingRequest.getHearing().getFilingNumber().get(0)
-                                : null;
-              String cnrNumber = hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
-                                        ? hearingRequest.getHearing().getCnrNumbers().get(0)
-                                        : null;
-              hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
-              checkAndCreatePendingTasks(hearingRequest);
+                String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
+                        ? hearingRequest.getHearing().getFilingNumber().get(0)
+                        : null;
+                String cnrNumber = hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
+                        ? hearingRequest.getHearing().getCnrNumbers().get(0)
+                        : null;
+                hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
+                checkAndCreatePendingTasks(hearingRequest);
             }
             log.info("Updated hearings");
         } catch (IllegalArgumentException e) {
@@ -200,5 +200,6 @@ public class HearingUpdateConsumer {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
+
 
 }

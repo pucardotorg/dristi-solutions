@@ -83,7 +83,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-core</artifactId>
@@ -120,6 +119,11 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>3.1.0</version>
         </dependency>
     <!-- Bean Validation API support -->
     <dependency>

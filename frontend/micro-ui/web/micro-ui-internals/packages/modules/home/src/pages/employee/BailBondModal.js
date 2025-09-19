@@ -200,9 +200,9 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
       const res = await ordersService.createOrder(reqbody, { tenantId });
       //need to check
       if (queryStrings?.filingNumber) {
-        history.replace(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+        history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
       }
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
       setShowBailModal(false);
     } catch (error) {
       console.log(error);

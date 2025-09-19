@@ -1568,7 +1568,6 @@ const GenerateOrders = () => {
             };
           });
         }
-
         newConfig = [...newConfig, ...orderTypeForm];
       }
       const updatedConfig = newConfig.map((config) => {
@@ -3115,7 +3114,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3161,7 +3160,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3210,7 +3209,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType
+              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3254,7 +3253,7 @@ const GenerateOrders = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType
+            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
           );
 
           if ("deliveryChannels" in clonedPayload) {
@@ -4067,11 +4066,11 @@ const GenerateOrders = () => {
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
       await handleIssueSummons(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
       await handleIssueNotice(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
     }
   };
 

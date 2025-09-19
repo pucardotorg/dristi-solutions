@@ -7,17 +7,7 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
-const AddSignatureComponent = ({
-  t,
-  isSigned,
-  setIsSigned,
-  handleSigned,
-  rowData,
-  setSignatureId,
-  signatureId,
-  deliveryChannel,
-  handleMockESign,
-}) => {
+const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const { handleEsign, checkSignStatus } = useESign();
   const { uploadDocuments } = useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data

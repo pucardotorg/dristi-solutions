@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
+import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -31,7 +31,6 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { getDate, removeInvalidNameParts } from "../../../Utils";
 import useWorkflowDetails from "../../../hooks/dristi/useWorkflowDetails";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
@@ -40,13 +39,11 @@ import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/D
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
-import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import Breadcrumb from "../../../components/BreadCrumb";
 import Button from "../../../components/Button";
 import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
 import OrderDrawer from "./OrderDrawer";
-import WitnessDrawer from "./WitnessDrawer";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -856,7 +853,7 @@ const AdmittedCaseV2 = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
@@ -1695,7 +1692,6 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
-
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
@@ -1786,7 +1782,7 @@ const AdmittedCaseV2 = () => {
               },
             });
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
               {
                 caseId: caseDetails?.id,
                 tab: "Orders",
@@ -1931,9 +1927,7 @@ const AdmittedCaseV2 = () => {
                 tenantId,
               },
             });
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
-            );
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
           } catch (error) {}
         }
       } catch (error) {}
@@ -2091,7 +2085,7 @@ const AdmittedCaseV2 = () => {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -2394,7 +2388,7 @@ const AdmittedCaseV2 = () => {
             orderData?.orderType === "NOTICE"
           ) {
             history.push(
-              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
               {
                 caseId: caseId,
                 tab: "Orders",
@@ -2461,7 +2455,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseDetails?.id,
               tab: "Orders",
             });
@@ -2746,7 +2740,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2792,7 +2786,7 @@ const AdmittedCaseV2 = () => {
         ordersService
           .createOrder(reqBody, { tenantId })
           .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
               caseId: caseId,
               tab: activeTab,
             });
@@ -2848,11 +2842,14 @@ const AdmittedCaseV2 = () => {
         }
 
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`,
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`,
           { caseId, tab: "Orders" }
         );
       } catch (error) {
         console.error("Error fetching order", error);
+        const errorCode = error?.response?.data?.Errors?.[0]?.code;
+        const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
+        showToast({ isError: true, message: errorMsg }, 3000);
       } finally {
         setApiCalled(false);
       }
@@ -3000,7 +2997,7 @@ const AdmittedCaseV2 = () => {
         });
         refetchCaseData();
         revalidateWorkflow();
-        history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {
         showToast({ isError: true, message: "ORDER_CREATION_FAILED" });

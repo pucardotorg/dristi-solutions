@@ -389,7 +389,7 @@ export const pendingTaskHearingActions = {
     customFunction: "handleCreateOrder",
     // additionalDetailsKeys: ["orderType"],
     redirectDetails: {
-      url: "/orders/generate-orders",
+      url: "/orders/generate-order",
       params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
@@ -400,7 +400,7 @@ export const pendingTaskOrderActions = {
     actorName: ["JUDGE"],
     actionName: "Schedule hearing",
     redirectDetails: {
-      url: "/orders/generate-orders",
+      url: "/orders/generate-order",
       params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
@@ -410,7 +410,7 @@ export const pendingTaskOrderActions = {
     customFunction: "handleCreateOrder",
     additionalDetailsKeys: ["orderType"],
     redirectDetails: {
-      url: "/orders/generate-orders",
+      url: "/orders/generate-order",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "applicationNumber", value: "referenceId" },
@@ -421,7 +421,7 @@ export const pendingTaskOrderActions = {
     actorName: ["JUDGE"],
     actionName: "Draft in Progress for Order",
     redirectDetails: {
-      url: "/orders/generate-orders",
+      url: "/orders/generate-order",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "orderNumber", value: "referenceId" },
@@ -862,7 +862,7 @@ export const pendingTaskForBailBondActions = {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/dristi/home/bail-bond-sign", // checkkkk
+      url: "/dristi/home/bail-bond-sign",
       params: [{ key: "bailbondId", value: "referenceId" }],
     },
   },

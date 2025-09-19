@@ -257,8 +257,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
-      PROCLAMATION: paymentType.TASK_PROCLAMATION,
-      ATTACHMENT: paymentType.TASK_ATTACHMENT,
+      PROCLAMATION: paymentType.TASK_WARRANT,
+      ATTACHMENT: paymentType.TASK_WARRANT,
       NOTICE: paymentType.TASK_NOTICE,
     };
     return businessServiceMap?.[orderType];

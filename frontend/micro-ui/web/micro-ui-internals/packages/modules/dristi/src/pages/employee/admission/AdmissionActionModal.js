@@ -235,7 +235,7 @@ function AdmissionActionModal({
       DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
         .then((res) => {
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",
