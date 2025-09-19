@@ -480,7 +480,9 @@ export const UICustomizations = {
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
       const deliveryChanel = searchForm?.channel?.name || null;
-      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00`).getTime() : null;
+      // const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00`).getTime() : null;
+      // const hearingDate = formatNoticeDeliveryDate(searchForm?.hearingDate) || null ;
+      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
 
       return {
         ...requestCriteria,

@@ -653,6 +653,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
       });
   }, [rowData, orderType]);
 
+  // Detect if a signed document already exists for the selected row
+  const hasSignedDoc = useMemo(() => {
+    try {
+      return Array.isArray(rowData?.documents) ? rowData.documents.some((d) => d?.documentType === "SIGNED_TASK_DOCUMENT") : false;
+    } catch (e) {
+      return false;
+    }
+  }, [rowData]);
+
   const submissionData = useMemo(() => {
     return [
       { key: "Issued Date", value: rowData?.createdDate && convertToDateInputFormat(rowData?.createdDate), copyData: false },
@@ -730,6 +739,16 @@ const ReviewSummonsNoticeAndWarrant = () => {
       // Attempt to upload the document and handle the response
       setIsLoading(true);
       const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
+      // Update local state to reflect signed status so subsequent actions don't reopen e-sign
+      if (documentsFile) {
+        setRowData((prev) => ({
+          ...prev,
+          documents: Array.isArray(prev?.documents) ? [...prev.documents, documentsFile] : [documentsFile],
+          documentStatus: "SIGNED",
+        }));
+        setIsSigned(true);
+        setActionModalType("SIGNED");
+      }
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         // localStorage.removeItem("SignedFileStoreID");
         const { data: tasksData } = await refetch();
@@ -1527,7 +1546,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <Loader />
       ) : (
         <React.Fragment>
-          <ProjectBreadCrumb location={window.location} />
+          {/* <ProjectBreadCrumb location={window.location} /> */}
           <div className="review-summon-warrant">
             <div className="header-wraper">
               <Header>{t("REVIEW_PROCESS")}</Header>
@@ -1553,13 +1572,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    config?.label === "PENDING_SIGN"
-                      ? unsignedModalConfig
-                      : config?.label === "SIGNED"
-                      ? signedModalConfig
-                      : config?.label === "SENT"
+                    // Prefer signed modal if a signed document is present, regardless of stale documentStatus
+                    config?.label === "SENT"
                       ? sentModalConfig
-                      : null
+                      : hasSignedDoc
+                      ? signedModalConfig
+                      : actionModalType === "SIGN_PENDING"
+                      ? unsignedModalConfig
+                      : signedModalConfig
                   }
                   currentStep={step}
                 />

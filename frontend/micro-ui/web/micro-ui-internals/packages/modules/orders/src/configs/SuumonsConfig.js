@@ -747,8 +747,8 @@ export const SummonsTabsConfig = {
               },
               // Signed date
               {
-                label: "SIGNED_DATE",
-                jsonPath: "signedDate",
+                label: "SENT_DATE",
+                jsonPath: "",
                 additionalCustomization: true,
               },
             ],

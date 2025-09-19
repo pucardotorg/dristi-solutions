@@ -181,8 +181,12 @@
   margin-top: -20px !important  ;
 }
 
-
-
-input.employee-select-wrap--elipses {
-  color: #77787B !important;
+.custom-search-layout table th:nth-child(1) {
+  width: auto !important;
+  min-width: 40px !important;
+  max-width: 250px !important;
 }
+
+/* input.employee-select-wrap--elipses {
+   color: #77787B !important;
+ } */
