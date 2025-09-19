@@ -155,6 +155,10 @@ public class ServiceConstants {
 
     public static final String NOTICE = "NOTICE";
 
+    public static final String PROCLAMATION = "PROCLAMATION";
+
+    public static final String ATTACHMENT = "ATTACHMENT";
+
     public static final String SUMMONS = "SUMMONS";
 
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
