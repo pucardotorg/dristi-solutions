@@ -656,7 +656,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Detect if a signed document already exists for the selected row
   const hasSignedDoc = useMemo(() => {
     try {
-      return Array.isArray(rowData?.documents) ? rowData.documents.some((d) => d?.documentType === "SIGNED_TASK_DOCUMENT") : false;
+      const sessionSigned = typeof window !== "undefined" && sessionStorage.getItem("SignedFileStoreID");
+      const hasDoc = Array.isArray(rowData?.documents) ? rowData.documents.some((d) => d?.documentType === "SIGNED_TASK_DOCUMENT") : false;
+      return Boolean(sessionSigned) || hasDoc;
     } catch (e) {
       return false;
     }
@@ -748,6 +750,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }));
         setIsSigned(true);
         setActionModalType("SIGNED");
+        // Remember which task was just signed so clicking it again opens Mark as Sent
+        // try {
+        //   const tn = rowData?.taskNumber || reqBody?.task?.taskNumber;
+        //   if (tn) sessionStorage.setItem("LastSignedTaskNumber", tn);
+        // } catch (e) {}
       }
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         // localStorage.removeItem("SignedFileStoreID");
@@ -1387,10 +1394,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setRemarks("");
     setSelectedDelievery({});
     setRowData(props?.original);
-    setActionModalType(props?.original?.documentStatus);
+    // If the clicked task matches the one we just signed in this session, open as signed
+    const lastSignedTN = typeof window !== "undefined" ? sessionStorage.getItem("LastSignedTaskNumber") : null;
+    const isLastSigned = lastSignedTN && props?.original?.taskNumber && props.original.taskNumber === lastSignedTN;
+    setActionModalType(isLastSigned ? "SIGNED" : props?.original?.documentStatus);
     setShowActionModal(true);
     setStep(0);
-    setIsSigned(props?.original?.documentStatus === "SIGN_PENDING" ? false : true);
+    setIsSigned(isLastSigned ? true : props?.original?.documentStatus === "SIGN_PENDING" ? false : true);
     setDeliveryChannel(handleTaskDetails(props?.original?.taskDetails)?.deliveryChannels?.channelName);
     // setTaskDetails(handleTaskDetails(props?.original?.taskDetails));
   };
