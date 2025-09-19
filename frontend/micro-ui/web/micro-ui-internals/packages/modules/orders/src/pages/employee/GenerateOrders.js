@@ -68,6 +68,7 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
+import { sanitizeFormData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -2803,11 +2804,13 @@ const GenerateOrders = () => {
             if (order?.orderNumber) {
               const updatedOrder = structuredClone(order);
               updatedOrder.orderTitle = t(order?.orderTitle);
-              return await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+              const sanitizedOrder = sanitizeFormData(updatedOrder);
+              return await updateOrder(sanitizedOrder, OrderWorkflowAction.SAVE_DRAFT);
             } else {
               const updatedOrder = structuredClone(order);
               updatedOrder.orderTitle = t(order?.orderTitle);
-              return await createOrder(updatedOrder);
+              const sanitizedOrder = sanitizeFormData(updatedOrder);
+              return await createOrder(sanitizedOrder);
             }
           } else {
             return Promise.resolve();
@@ -2821,7 +2824,8 @@ const GenerateOrders = () => {
               ...order,
               compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
             };
-            return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
+            const sanitizedOrder = sanitizeFormData(updatedOrder);
+            return await addOrderItem(sanitizedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
           } else {
             // create call first, get order number from response
             // then add item call
@@ -2836,7 +2840,8 @@ const GenerateOrders = () => {
               updatedOrder.orderType = t(compositeItem?.orderType);
               updatedOrder.orderCategory = "INTERMEDIATE";
               updatedOrder.orderTitle = t(compositeItem?.orderType); // If total enabled composite items is 1-> send orderTitle as orderType.
-              return await createOrder(updatedOrder);
+              const sanitizedOrder = sanitizeFormData(updatedOrder);
+              return await createOrder(sanitizedOrder);
             }
             // if totalEnabled is greater than 1 -> call create api for 1st isEnabled item and get orderNUmber from create reponse and call add item api.
             else {
@@ -2846,7 +2851,8 @@ const GenerateOrders = () => {
               const enabledCompositeItems = order?.compositeItems?.filter((item) => item?.isEnabled);
               updatedOrder.compositeItems = enabledCompositeItems;
               updatedOrder.orderTitle = t(OrderTitles[index]);
-              return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
+              const sanitizedOrder = sanitizeFormData(updatedOrder);
+              return await addOrderItem(sanitizedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
             }
           }
         }
