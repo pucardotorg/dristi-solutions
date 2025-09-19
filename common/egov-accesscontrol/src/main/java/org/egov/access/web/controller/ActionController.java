@@ -109,7 +109,8 @@ public class ActionController {
 	public ResponseEntity<Void> authorize(@RequestBody @Valid AuthorizationRequestWrapper authorizationRequestWrapper,
 										  @RequestHeader Map<String,String> headers) {
 		System.out.println("header: "+headers);
-		boolean authorized = actionService.isAuthorized(authorizationRequestWrapper.getAuthorizationRequest());
+        String courtId = headers.get("courtid");
+		boolean authorized = actionService.isAuthorized(authorizationRequestWrapper.getAuthorizationRequest(), courtId);
 
 		if(authorized)
 			return new ResponseEntity<>(HttpStatus.OK);

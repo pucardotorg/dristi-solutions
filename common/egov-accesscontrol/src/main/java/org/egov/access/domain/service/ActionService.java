@@ -109,17 +109,17 @@ public class ActionService {
 	 * @param authorizeRequest URI and role to be authorized
 	 * @return true when authorized, false when unauthorized
 	 */
-	public boolean isAuthorized(AuthorizationRequest authorizeRequest){
+	public boolean isAuthorized(AuthorizationRequest authorizeRequest, String courtId){
 
 		String inputTenantId = authorizeRequest.getTenantIds().iterator().next();
-		List<String> roles = authorizeRequest.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+		List<String> roles = authorizeRequest.getRoles().stream().filter(role -> role.getCourtId()!=null && role.getCourtId().equals(courtId)).map(Role::getCode).collect(Collectors.toList());
 		List<String> listOfMdmsTenantIdsToCheck = new ArrayList<>(fetchListOfTenantIdsForAuthorizationCheck(inputTenantId, roles));
 		Collections.sort(listOfMdmsTenantIdsToCheck, Collections.reverseOrder(Comparator.comparing(String::length)));
 
 		boolean isAuthorized = false;
 
 		for(String tenantId : listOfMdmsTenantIdsToCheck) {
-			if(isAuthorizedOnGivenTenantLevel(authorizeRequest, tenantId)){
+			if(isAuthorizedOnGivenTenantLevel(authorizeRequest, tenantId, courtId)){
 				isAuthorized = true;
 				break;
 			}
@@ -150,12 +150,12 @@ public class ActionService {
 		return listOfMdmsTenantIdsToCheck;
 	}
 
-	private boolean isAuthorizedOnGivenTenantLevel(AuthorizationRequest authorizeRequest, String tenantId){
+	private boolean isAuthorizedOnGivenTenantLevel(AuthorizationRequest authorizeRequest, String tenantId, String courtId){
 
 		Map<String, ActionContainer>  roleActions = mdmsRepository.fetchRoleActionData(tenantId);
 
 		String uriToBeAuthorized = authorizeRequest.getUri();
-		Set<String> applicableRoles = getApplicableRoles(authorizeRequest);
+		Set<String> applicableRoles = getApplicableRoles(authorizeRequest, courtId);
 		Set<String> uris = new HashSet<>();
 		List<String> regexUris = new ArrayList<>();
 
@@ -176,7 +176,7 @@ public class ActionService {
 		return isAuthorized;
 	}
 
-	private Set<String> getApplicableRoles(AuthorizationRequest authorizationRequest){
+	private Set<String> getApplicableRoles(AuthorizationRequest authorizationRequest, String courtId){
 		
 		Set<String> requestTenantIds = authorizationRequest.getTenantIds();
 		String tenantId = requestTenantIds.iterator().next();
@@ -187,10 +187,10 @@ public class ActionService {
 		Set<Role> applicableRoles = new HashSet<>();
 
 		for(Role role : roles){
-			if(requestTenantIds.contains(role.getTenantId()) || role.getTenantId().equalsIgnoreCase(stateLevelTenantId)){
+			if((requestTenantIds.contains(role.getTenantId()) || role.getTenantId().equalsIgnoreCase(stateLevelTenantId)) && role.getCourtId().equalsIgnoreCase(courtId)){
 				applicableRoles.add(role);
 			}
-			if(!ObjectUtils.isEmpty(stateLevelTenantId) && role.getTenantId().equalsIgnoreCase(centralInstanceLevelTenantId)){
+			if(!ObjectUtils.isEmpty(stateLevelTenantId) && role.getTenantId().equalsIgnoreCase(centralInstanceLevelTenantId) && role.getCourtId().equalsIgnoreCase(courtId)){
 				applicableRoles.add(role);
 			}
 		}
