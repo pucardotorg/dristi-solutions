@@ -109,7 +109,7 @@ public class OrderUtil {
             log.info("No orders found for Hearing ID: {}", hearingId);
             return null;
         }
-        List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE));
+        List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE, PROCLAMATION, ATTACHMENT));
 
         List<Order> filteredOrders = response.getList().stream()
                 .filter(order -> {
@@ -133,7 +133,8 @@ public class OrderUtil {
 
         for (JsonNode item : compositeItems) {
             orderType = item.path("orderType").textValue();
-            if (orderType != null && List.of(SUMMONS, WARRANT, NOTICE).contains(orderType)) {
+            List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE, PROCLAMATION, ATTACHMENT));
+            if (orderType != null && orderTypes.contains(orderType)) {
                 orderType = orderType.toUpperCase();
                 break;
             }
