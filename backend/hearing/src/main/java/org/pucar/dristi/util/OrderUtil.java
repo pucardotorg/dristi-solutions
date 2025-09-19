@@ -109,8 +109,15 @@ public class OrderUtil {
             log.info("No orders found for Hearing ID: {}", hearingId);
             return null;
         }
+        List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE));
+
         List<Order> filteredOrders = response.getList().stream()
-                .filter(order -> List.of(SUMMONS, WARRANT, NOTICE).contains(order.getOrderType() != null ? order.getOrderType().toUpperCase() : getOrderTypeFromCompositeOrders(order)))
+                .filter(order -> {
+                    String orderType = (order.getOrderType() != null)
+                            ? order.getOrderType().toUpperCase()
+                            : getOrderTypeFromCompositeOrders(order);
+                    return orderType != null && orderTypes.contains(orderType);
+                })
                 .collect(Collectors.toList());
 
         log.info("Found {} relevant orders (SUMMONS/WARRANT/NOTICE) for hearingId: {}", filteredOrders.size(), hearingId);
