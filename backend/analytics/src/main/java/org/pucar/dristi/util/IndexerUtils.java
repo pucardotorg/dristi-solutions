@@ -212,9 +212,6 @@ public class IndexerUtils {
             List<String> searchableFieldsList = new ArrayList<>();
             searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
-            if (referenceEntityType != null) {
-                searchableFieldsList.add(referenceEntityType);
-            }
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 
@@ -404,9 +401,6 @@ public class IndexerUtils {
             List<String> searchableFieldsList = new ArrayList<>();
             searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
-            if (referenceEntityType != null) {
-                searchableFieldsList.add(referenceEntityType);
-            }
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 
