@@ -28,6 +28,15 @@ public class IndexSearchCriteria {
     @JsonProperty("searchViewApplication")
     private Criteria searchViewApplication;
 
+    @JsonProperty("searchDelayCondonationApplication")
+    private Criteria searchDelayCondonationApplication;
+
+    @JsonProperty("searchRescheduleHearingsApplication")
+    private Criteria searchRescheduleHearingsApplication;
+
+    @JsonProperty("searchOtherApplications")
+    private Criteria searchOtherApplications;
+
     @JsonProperty("searchScheduleHearing")
     private Criteria searchScheduleHearing;
 
@@ -36,6 +45,15 @@ public class IndexSearchCriteria {
 
     @JsonProperty("searchBailBonds")
     private Criteria searchBailBonds;
+
+    @JsonProperty("searchScrutinyCases")
+    private Criteria searchScrutinyCases;
+
+    @JsonProperty("searchOfflinePayments")
+    private Criteria searchOfflinePayments;
+
+    @JsonProperty("searchRegisterUsers")
+    private Criteria searchRegisterUsers;
 
     @JsonProperty("offset")
     private Integer offset;

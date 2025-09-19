@@ -45,8 +45,6 @@ public class ServiceConstants {
 	public static final String RESPONDENT = "RESPONDENT";
 	public static final String ACCUSED = "ACCUSED";
 	public static final String COURT = "COURT";
-	public static final String JUDGE_ROLE = "JUDGE_ROLE";
-	public static final String TYPIST_ROLE = "TYPIST_ROLE";
     public static final String COURT_ROOM_MANAGER = "COURT_ROOM_MANAGER";
 
 	public static final String PARSING_ERROR = "PARSING ERROR";
@@ -107,8 +105,8 @@ public class ServiceConstants {
 	public static final String EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY = "EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";
 	public static final String DIRECT = "DIRECT";
 	public static final String APPLICATION = "APPLICATION";
-	public static final String BENCH_CLERK = "BENCH_CLERK";
 	public static final String ICOPS ="ICOPS";
+    public static final String EVIDENCE_SIGNER = "EVIDENCE_SIGNER";
 
 	public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
 

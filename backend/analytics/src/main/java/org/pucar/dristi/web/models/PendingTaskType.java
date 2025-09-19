@@ -64,4 +64,7 @@ public class PendingTaskType {
 
     @JsonProperty("stateSla")
     private String stateSla = null;
+
+    @JsonProperty("defaultRoles")
+    private List<String> defaultRoles = null;
 }
