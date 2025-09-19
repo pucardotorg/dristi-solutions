@@ -11,6 +11,7 @@ import org.pucar.dristi.web.models.CoordinateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.ESIGN_SERVICE_EXCEPTION;
@@ -34,16 +35,19 @@ public class ESignUtil {
     public List<Coordinate> getCoordinateForSign(CoordinateRequest request) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getEsignHost()).append(configuration.getEsignLocationEndPoint());
-        log.info("Getting coordinates for sign for CoordinateRequest {}", request.toString());
+        log.debug("Getting coordinates for sign: criteriaCount={}", request != null && request.getCriteria() != null ? request.getCriteria().size() : 0);
         try {
             Object response = repository.fetchResult(uri, request);
-            String jsonStringResponse = mapper.writeValueAsString(response);
-            CoordinateResponse coordinateResponse = mapper.readValue(jsonStringResponse, CoordinateResponse.class);
-            log.info("Successfully received coordinates, CoordinateResponse {}", coordinateResponse.toString());
-            return coordinateResponse.getCoordinates();
+            CoordinateResponse coordinateResponse = mapper.convertValue(response, CoordinateResponse.class);
+            List<Coordinate> coords = (coordinateResponse != null && coordinateResponse.getCoordinates() != null)
+                    ? coordinateResponse.getCoordinates()
+                    : Collections.emptyList();
+            log.debug("Received coordinates: count={}", coords.size());
+            return coords;
 
         } catch (Exception e) {
-            throw new CustomException(ESIGN_SERVICE_EXCEPTION, "Error occurred while getting coordinates: " + e.getMessage());
+            log.error("ESIGN coordinate fetch failed", e);
+            throw new CustomException(ESIGN_SERVICE_EXCEPTION, "Error occurred while getting coordinates");
         }
 
     }

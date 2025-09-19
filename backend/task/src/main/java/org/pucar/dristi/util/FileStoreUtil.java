@@ -111,9 +111,6 @@ public class FileStoreUtil {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getFileStoreHost()).append(configs.getFileStoreSaveEndPoint());
 
-        List<MultipartFile> files = new ArrayList<>();
-        files.add(file);
-
         MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
         request.add(FILE, file.getResource());
         request.add("tenantId", tenantId);

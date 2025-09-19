@@ -115,7 +115,7 @@ public class TaskApiController {
 
 
     @PostMapping("/v1/_updateSignedTasks")
-    public ResponseEntity<UpdateSignedTaskResponse> updateSignedTasks(@Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema()) @RequestBody UpdateSignedTaskRequest request) {
+    public ResponseEntity<UpdateSignedTaskResponse> updateSignedTasks(@Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema()) @Valid @RequestBody UpdateSignedTaskRequest request) {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
         List<Task> tasks = taskService.updateTaskWithSignedDoc(request);
         UpdateSignedTaskResponse response = UpdateSignedTaskResponse.builder()

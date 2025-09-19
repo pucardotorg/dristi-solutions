@@ -56,7 +56,6 @@ public class TaskService {
     private final PendingTaskUtil pendingTaskUtil;
     private final ESignUtil eSignUtil;
     private final CipherUtil cipherUtil;
-    private final Configuration configuration;
     private final XmlRequestGenerator xmlRequestGenerator;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -64,7 +63,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, Configuration configuration, XmlRequestGenerator xmlRequestGenerator) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -82,7 +81,6 @@ public class TaskService {
         this.pendingTaskUtil = pendingTaskUtil;
         this.eSignUtil = eSignUtil;
         this.cipherUtil = cipherUtil;
-        this.configuration = configuration;
         this.xmlRequestGenerator = xmlRequestGenerator;
     }
 
@@ -794,10 +792,14 @@ public class TaskService {
                 String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
-                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
 
                 String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
-                String taskNumber = tasksCriteriaMap.get(coordinate.getFileStoreId()).getTaskNumber();
+                TasksCriteria mapped = tasksCriteriaMap.get(coordinate.getFileStoreId());
+                if (mapped == null) {
+                    throw new CustomException(COORDINATES_ERROR, "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
+                }
+                String taskNumber = mapped.getTaskNumber();
                 taskToSign.setTaskNumber(taskNumber);
                 taskToSign.setRequest(xmlRequest);
 
