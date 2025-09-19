@@ -10,4 +10,6 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_delivery_channel_elem
 
 -- hearingDate epoch (as text cast to bigint)
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_hearing_date_epoch
-    ON dristi_task (((taskdetails -> 'caseDetails' ->> 'hearingDate')::bigint));
+    ON dristi_task (((taskdetails -> 'caseDetails' ->> 'hearingDate')::bigint))
+    WHERE taskdetails -> 'caseDetails' ->> 'hearingDate' IS NOT NULL
+    AND taskdetails -> 'caseDetails' ->> 'hearingDate' ~ '^[0-9]+$';

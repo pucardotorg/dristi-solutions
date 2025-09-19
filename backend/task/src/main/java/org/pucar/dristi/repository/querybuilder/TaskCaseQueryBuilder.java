@@ -153,7 +153,7 @@ public class TaskCaseQueryBuilder {
 
         if (taskCaseSearchCriteria.getHearingDate() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" (task.taskDetails -> 'caseDetails' ->> 'hearingDate')::bigint = ? ");
+            query.append(" (task.taskDetails -> 'caseDetails' ->> 'hearingDate') ~ '^[0-9]+$' AND (task.taskDetails -> 'caseDetails' ->> 'hearingDate')::bigint = ? ");
             preparedStmtList.add(taskCaseSearchCriteria.getHearingDate());
         }
 
