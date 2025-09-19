@@ -94,4 +94,6 @@ public class ServiceConstants {
     public static final String SPECIFIC = "SPECIFIC";
     public static final String GENERIC = "GENERIC";
     public static final String SUCCESS = "SUCCESS";
+
+    public static final String ICOPS_EXCEPTION = "ICOPS_EXCEPTION";
 }
