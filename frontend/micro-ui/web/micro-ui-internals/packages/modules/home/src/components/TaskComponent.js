@@ -708,7 +708,7 @@ const TasksComponent = ({
             label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
             textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
             style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
-            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
+            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" })}
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}

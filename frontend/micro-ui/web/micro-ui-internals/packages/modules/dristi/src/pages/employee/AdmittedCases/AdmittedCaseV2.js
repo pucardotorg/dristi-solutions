@@ -171,6 +171,7 @@ const AdmittedCaseV2 = () => {
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -263,7 +264,7 @@ const AdmittedCaseV2 = () => {
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -401,7 +402,7 @@ const AdmittedCaseV2 = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userType]);
-  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
   useEffect(() => {
@@ -854,7 +855,7 @@ const AdmittedCaseV2 = () => {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);

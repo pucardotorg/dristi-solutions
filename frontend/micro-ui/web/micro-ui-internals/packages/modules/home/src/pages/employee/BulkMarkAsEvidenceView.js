@@ -270,20 +270,19 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
       )}
       <React.Fragment>
         {/* bulk-esign-order-view */}
-        <div className={""} style={{ width: "100%", maxHeight: "calc(-250px + 100vh)", overflowY: "auto" }}>
+        <div className={"bulk-esign-order-view"}>
+          <div className="header">{t("BULK_EVIDENCE_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>
         {isJudge && (
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar
-                label={t("SIGN_SELECTED_EVIDENCE")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          </ActionBar>
+          <div className="bulk-submit-bar">
+            <SubmitBar
+              label={t("SIGN_SELECTED_EVIDENCE")}
+              submit="submit"
+              disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+              onSubmit={() => setShowBulkSignConfirmModal(true)}
+            />
+          </div>
         )}
       </React.Fragment>
 

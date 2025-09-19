@@ -1,21 +1,39 @@
-import React, { useState } from "react";
+import React from "react";
 import HomeAccordian from "./HomeAccordian";
-import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
-import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 import { HomeService } from "../hooks/services";
+import HomeHeader from "./HomeHeader";
 
-const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount, showToast = () => {} }) => {
-  const [stepper, setStepper] = useState(0);
+const HomeSidebar = ({
+  t,
+  onTabChange,
+  activeTab,
+  options,
+  isOptionsLoading,
+  applicationOptions,
+  hearingCount = 0,
+  pendingTaskCount,
+  showToast = () => {},
+}) => {
   return (
-    <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee" }}>
-      <SideBarTitle
-        t={t}
-        title="HEARINGS_TAB"
-        count={hearingCount}
-        onClick={() => onTabChange("HEARINGS_TAB")}
-        active={activeTab === "HEARINGS_TAB"}
-      />
+    <div className="home-sidebar">
+      <HomeHeader t={t} />
+      <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
+        <SidebarItem
+          t={t}
+          label={"TOTAL_HEARINGS_TAB"}
+          count={hearingCount}
+          active={activeTab === "TOTAL_HEARINGS_TAB"}
+          onClick={() => onTabChange("TOTAL_HEARINGS_TAB")}
+        />
+        <SidebarItem
+          t={t}
+          label={"CS_HOME_BULK_RESCHEDULE"}
+          count={hearingCount}
+          active={activeTab === "CS_HOME_BULK_RESCHEDULE"}
+          onClick={() => onTabChange("CS_HOME_BULK_RESCHEDULE")}
+        />
+      </HomeAccordian>
 
       <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
         {!isOptionsLoading &&
@@ -31,11 +49,24 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
           ))}
       </HomeAccordian>
 
+      <HomeAccordian title={t("REVIEW_APPLICATIONS_TAB")} defaultOpen>
+        {!isOptionsLoading &&
+          Object.keys(applicationOptions).map((key, index) => (
+            <SidebarItem
+              t={t}
+              key={index}
+              label={applicationOptions[key].name}
+              count={pendingTaskCount[key] || 0}
+              active={activeTab === key}
+              onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
+            />
+          ))}
+      </HomeAccordian>
+
       <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
         <SidebarItem
           t={t}
           label="CS_HOME_ORDERS"
-          href={`/${window.contextPath}/employee/home/bulk-esign-order`}
           onClick={async (e) => {
             e.preventDefault();
             let shouldProceed = true;
@@ -67,14 +98,13 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               return;
             }
             if (shouldProceed) {
-              window.location.href = `/${window.contextPath}/employee/home/bulk-esign-order`;
+              onTabChange("CS_HOME_ORDERS");
             } else {
               showToast("error", t("NO_BULK_SIGN_ORDERS"), 5000);
             }
           }}
         />
         <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
-        <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
         <SidebarItem
           t={t}
           label="BULK_BAIL_BOND_SIGN"
@@ -88,11 +118,8 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
           onClick={() => onTabChange("BULK_WITNESS_DEPOSITION_SIGN")}
         />
         <SidebarItem t={t} label="BULK_EVIDENCE_SIGN" active={activeTab === "BULK_EVIDENCE_SIGN"} onClick={() => onTabChange("BULK_EVIDENCE_SIGN")} />
+        <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
       </HomeAccordian>
-
-      <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => setStepper((prev) => prev + 1)} />
-
-      <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </div>
   );
 };

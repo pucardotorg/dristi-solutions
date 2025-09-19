@@ -1973,24 +1973,24 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
-            searchViewApplication: {
-              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
-              actionCategory: "View Application",
-              ...(activeTab === "VIEW_APPLICATION" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
-            searchScheduleHearing: {
-              date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
-              actionCategory: "Schedule Hearing",
-              ...(activeTab === "SCHEDULE_HEARING" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
+            // searchViewApplication: {
+            //   date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+            //   isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+            //   actionCategory: "View Application",
+            //   ...(activeTab === "VIEW_APPLICATION" &&
+            //     requestCriteria?.state?.searchForm?.caseSearchText && {
+            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+            //     }),
+            // },
+            // searchScheduleHearing: {
+            //   date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
+            //   isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+            //   actionCategory: "Schedule Hearing",
+            //   ...(activeTab === "SCHEDULE_HEARING" &&
+            //     requestCriteria?.state?.searchForm?.caseSearchText && {
+            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+            //     }),
+            // },
             searchRegisterCases: {
               date: null,
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
@@ -2009,6 +2009,42 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchScrutinyCases: {
+              date: activeTab === "SCRUTINISE_CASES" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "SCRUTINISE_CASES" ? false : true,
+              actionCategory: "Scrutinise cases",
+              ...(activeTab === "SCRUTINISE_CASES" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchRescheduleHearingsApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_APPLICATIONS" ? false : true,
+              actionCategory: "Reschedule Applications",
+              ...(activeTab === "RESCHEDULE_APPLICATIONS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchDelayCondonationApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "DELAY_CONDONATION" ? false : true,
+              actionCategory: "Delay Condonation",
+              ...(activeTab === "DELAY_CONDONATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchOtherApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "OTHERS" ? false : true,
+              actionCategory: "Others",
+              ...(activeTab === "OTHERS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2017,18 +2053,26 @@ export const UICustomizations = {
           ...requestCriteria.config,
           select: (data) => {
             const reviwCount = data?.reviewProcessData?.count || 0;
-            const applicationCount = data?.viewApplicationData?.count || 0;
-            const scheduleCount = data?.scheduleHearingData?.count || 0;
+            // const applicationCount = data?.viewApplicationData?.count || 0;
+            // const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
             const bailBondStatusCount = data?.bailBondData?.count || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.count || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.count || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
+              SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
-              VIEW_APPLICATION: applicationCount,
-              SCHEDULE_HEARING: scheduleCount,
+              // VIEW_APPLICATION: applicationCount,
+              // SCHEDULE_HEARING: scheduleCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+              DELAY_CONDONATION: delayCondonationApplicationCount,
+              OTHERS: otherApplicationsCount,
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
@@ -2057,28 +2101,50 @@ export const UICustomizations = {
                 filingNumber: result?.filingNumber,
                 caseId: result?.caseId,
                 advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
                 tab: activeTab,
               };
             };
-            if (activeTab === "REVIEW_PROCESS") {
+            if (activeTab === "SCRUTINISE_CASES") {
+              return {
+                TotalCount: data?.scrutinyCasesData?.count,
+                data: data?.scrutinyCasesData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            } else if (activeTab === "VIEW_APPLICATION") {
-              return {
-                TotalCount: data?.viewApplicationData?.count,
-                data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
-              };
-            } else if (activeTab === "SCHEDULE_HEARING")
-              return {
-                TotalCount: data?.scheduleHearingData?.count,
-                data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
-              };
+            }
+            //  else if (activeTab === "VIEW_APPLICATION") {
+            //   return {
+            //     TotalCount: data?.viewApplicationData?.count,
+            //     data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
+            //   };
+            // } else if (activeTab === "SCHEDULE_HEARING")
+            //   return {
+            //     TotalCount: data?.scheduleHearingData?.count,
+            //     data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+            //   };
             else if (activeTab === "BAIL_BOND_STATUS") {
               return {
                 TotalCount: data?.bailBondData?.count,
                 data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else if (activeTab === "RESCHEDULE_APPLICATIONS") {
+              return {
+                TotalCount: data?.rescheduleHearingsData?.count,
+                data: data?.rescheduleHearingsData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "DELAY_CONDONATION") {
+              return {
+                TotalCount: data?.delayCondonationApplicationData?.count,
+                data: data?.delayCondonationApplicationData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "OTHERS") {
+              return {
+                TotalCount: data?.otherApplicationsData?.count,
+                data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
               };
             } else
               return {
@@ -2090,6 +2156,9 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2105,6 +2174,17 @@ export const UICustomizations = {
             </Link>
           ) : row?.tab === "BAIL_BOND_STATUS" ? (
             <OrderName rowData={row} colData={column} value={value} />
+          ) : row?.tab === "SCRUTINISE_CASES" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/case`,
+                search: `?caseId=${row?.caseId}`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
           ) : (
             // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
@@ -2149,6 +2229,16 @@ export const UICustomizations = {
           );
         case "STAGE":
           return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
         default:
           return value ? value : "-";
       }

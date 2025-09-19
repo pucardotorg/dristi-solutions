@@ -1,6 +1,7 @@
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import React, { useMemo } from "react";
 import { Button } from "@egovernments/digit-ui-components";
+import { AllCasesIcon, DashboarGraphIcon, OpenInNewTabIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const HomeHeader = ({ t }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -31,7 +32,7 @@ const HomeHeader = ({ t }) => {
   );
 
   return (
-    <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px" }}>
+    <div>
       <style>{`
       .home-header{
 height: 88;
@@ -42,25 +43,24 @@ padding: 24px;
 gap: 6px;
 }
       .home-btn{
-      background-color:rgb(255, 255, 255);
-      color:rgb(0, 0, 0);
-      border:1px solid #B5B5B5;
-      height: 40px;
-      gap: 4px;
-      padding-top: 12px;
-      padding-right: 16px;
-      padding-bottom: 12px;
-      padding-left: 16px;
-      border-radius :0;
-      text-decoration: none;
-      font-size:14px;
-      font-weight: 400;
-      display: flex;
-      }
+  color:#3D3C3C;
+  gap: 4px;
+  border-radius :0;
+  text-decoration: none;
+  font-size:14px;
+  padding: 9px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
       .home-top-left-bar{
        display:flex;
-       gap: 18px;
-       flex-direction:row;
+       flex-direction:column;
+       padding: 16px 0px;
+       font-size: 14px;
+       border-bottom: 1px solid #E6E6E6;
       }
        .userName {
        color: #77787B;
@@ -71,22 +71,28 @@ gap: 6px;
         className="home-header{"
         style={{
           display: "flex",
+          flexDirection: "column",
           justifyContent: "space-between",
         }}
       >
-        <div style={{ fontSize: "28px", fontWeight: "700" }}>
+        <div style={{ fontSize: "20px", fontWeight: "700", paddingBottom: "16px", borderBottom: "1px solid #E6E6E6" }}>
           {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
         </div>
         {(isJudge || isBenchClerk || isTypist || isCourtRoomManager) && (
           <div className="home-top-left-bar">
             <a href={`/${window.contextPath}/employee/home/dashboard`} className="home-btn" target="_self" rel="noopener noreferrer">
-              {t("OPEN_DASHBOARD")} <ArrowIcon />
-            </a>
-            <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} className="home-btn" target="_self" rel="noopener noreferrer">
-              {t("OPEN_REGISTERS")} <ArrowIcon />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <DashboarGraphIcon />
+                <span style={{ paddingLeft: "8px" }}>{t("OPEN_DASHBOARD")}</span>
+              </div>
+              <OpenInNewTabIcon />
             </a>
             <a href={`/${window.contextPath}/employee/home/home-pending-task`} className="home-btn" target="_self" rel="noopener noreferrer">
-              {t("OPEN_ALL_CASES")} <ArrowIcon />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <AllCasesIcon />
+                <span style={{ paddingLeft: "8px" }}>{t("OPEN_ALL_CASES")}</span>
+              </div>
+              <OpenInNewTabIcon />
             </a>
           </div>
         )}

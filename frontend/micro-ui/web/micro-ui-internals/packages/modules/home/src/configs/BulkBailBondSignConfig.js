@@ -9,7 +9,7 @@ const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset") || 0);
 
 export const bulkBailBondSignConfig = {
   label: "CS_HOME_BULK_BAIL_BOND_SIGN",
-  type: "inbox",
+  type: "search",
   // preProcess: {
   //   data: (data) => {
   //     // Process the data to mark items as selected based on your criteria
