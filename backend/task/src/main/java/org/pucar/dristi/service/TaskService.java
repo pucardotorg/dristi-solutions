@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
@@ -422,8 +423,40 @@ public class TaskService {
     }
 
     public List<TaskCase> searchCaseTask(TaskCaseSearchRequest request) {
+        RequestInfo requestInfo = request.getRequestInfo();
+        List<Role> userRoles = requestInfo.getUserInfo().getRoles();
+
+        List<String> orderType = getOrderType(request, userRoles);
+
+        if (orderType.isEmpty()) {
+            log.info("No order type found for user roles");
+            return new ArrayList<>();
+        }
         return taskRepository.getTaskWithCaseDetails(request);
 
+    }
+
+    private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
+        List<String> orderType = request.getCriteria().getOrderType();
+
+        for (Role role : userRoles) {
+            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
+                orderType.remove(SUMMON);
+            }
+            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
+                orderType.remove(WARRANT);
+            }
+            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
+                orderType.remove(NOTICE);
+            }
+            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
+                orderType.remove(PROCLAMATION);
+            }
+            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
+                orderType.remove(ATTACHMENT);
+            }
+        }
+        return orderType;
     }
 
     private void callNotificationService(TaskRequest taskRequest, String messageCode) {
