@@ -54,6 +54,7 @@ import {
   showDemandNoticeModal,
   showToastForComplainant,
   signatureValidation,
+  transformCaseDataForFetching,
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
@@ -384,12 +385,11 @@ function EFilingCases({ path }) {
     }
   }, [getAllKeys, selected]);
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseData?.criteria?.[0]?.responseList?.[0] || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
+    return updatedCaseData;
+  }, [caseData]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants

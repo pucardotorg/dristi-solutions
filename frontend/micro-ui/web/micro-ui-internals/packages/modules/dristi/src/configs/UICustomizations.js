@@ -1458,20 +1458,18 @@ export const UICustomizations = {
               });
 
             const witnessDetails =
-              data?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((itemData) => {
-                const fullName = constructFullName(itemData?.data?.firstName, itemData?.data?.middleName, itemData?.data?.lastName);
+              data?.criteria[0]?.responseList[0]?.witnessDetails?.map((itemData) => {
+                const fullName = constructFullName(itemData?.firstName, itemData?.middleName, itemData?.lastName);
                 return {
                   code: fullName,
                   name: fullName,
                   uniqueId: itemData?.uniqueId,
                   isJoined: false,
-                  associatedWith: itemData?.data?.ownerType || "COMPLAINANT",
+                  associatedWith: itemData?.ownerType || "COMPLAINANT",
                   partyType: "witness",
                   caseId: data?.criteria[0]?.responseList[0]?.id,
                   isEditable: false,
-                  auditDetails: itemData?.data?.createdTime
-                    ? { createdTime: itemData?.data?.createdTime }
-                    : data?.criteria[0]?.responseList[0]?.auditDetails,
+                  auditDetails: itemData?.createdTime ? { createdTime: itemData?.createdTime } : data?.criteria[0]?.responseList[0]?.auditDetails,
                 };
               }) || [];
 
