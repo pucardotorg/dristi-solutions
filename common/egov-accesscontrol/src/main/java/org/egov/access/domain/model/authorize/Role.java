@@ -30,4 +30,6 @@ public class Role {
     @JsonProperty("tenantId")
     private String tenantId;
 
+    @JsonProperty("courtId")
+    private String courtId;
 }
