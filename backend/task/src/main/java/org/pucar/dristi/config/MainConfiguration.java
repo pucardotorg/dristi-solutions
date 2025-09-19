@@ -1,6 +1,7 @@
 package org.pucar.dristi.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +13,11 @@ import jakarta.annotation.PostConstruct;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.tracer.config.TracerConfiguration;
+import org.apache.tika.Tika;
 
 
 @Import({TracerConfiguration.class})
+@Configuration
 public class MainConfiguration {
 
     @Value("${app.timezone}")
@@ -40,5 +43,10 @@ public class MainConfiguration {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
+    }
+
+    @Bean
+    public Tika tika() {
+        return new Tika();
     }
 }
