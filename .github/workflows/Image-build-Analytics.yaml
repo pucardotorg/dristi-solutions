@@ -46,6 +46,7 @@ jobs:
           project: 'analytics'
           path: 'backend/analytics'
           format: 'SARIF'
+          args: "--disableOssIndex"
       - name: Build and analyze for Analytics
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}

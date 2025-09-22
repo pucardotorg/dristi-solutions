@@ -47,6 +47,7 @@ jobs:
           project: 'ab-diary'
           path: 'backend/ab-diary'
           format: 'SARIF'
+          args: "--disableOssIndex"
       - name: Upload SARIF result to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:

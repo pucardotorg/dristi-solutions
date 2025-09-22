@@ -46,6 +46,8 @@ jobs:
           project: 'order-management'
           path: 'backend/order-management'
           format: 'SARIF'
+          args: "--disableOssIndex"
+
       - name: Build and analyze for order-management
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}

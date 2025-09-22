@@ -286,6 +286,12 @@ public class Configuration {
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
 
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
     //Billing
     @Value("${etreasury.host}")
     private String etreasuryHost;
@@ -316,4 +322,21 @@ public class Configuration {
 
     @Value("${state.level.tenant.id}")
     private String tenantId;
+
+    // ESign Config
+    @Value("${dristi.esign.host}")
+    private String esignHost;
+
+    @Value("${dristi.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    // Zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 }

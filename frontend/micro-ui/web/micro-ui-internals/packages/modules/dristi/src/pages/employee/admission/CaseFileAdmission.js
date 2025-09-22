@@ -20,7 +20,7 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { getAdvocates, transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
+import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
 import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
@@ -139,11 +139,8 @@ function CaseFileAdmission({ t, path }) {
     caseId,
     Boolean(caseId)
   );
-  const caseDetails = useMemo(() => {
-    const caseDetails = structuredClone(caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null);
-    const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
-    return updatedCaseData;
-  }, [caseFetchResponse]);
+  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
