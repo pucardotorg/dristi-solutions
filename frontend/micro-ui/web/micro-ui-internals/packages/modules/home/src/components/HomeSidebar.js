@@ -67,6 +67,7 @@ const HomeSidebar = ({
         <SidebarItem
           t={t}
           label="CS_HOME_ORDERS"
+          active={activeTab === "CS_HOME_ORDERS"}
           onClick={async (e) => {
             e.preventDefault();
             let shouldProceed = true;

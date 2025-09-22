@@ -67,6 +67,10 @@ export const bulkWitnessDepositionSignConfig = {
       uiConfig: {
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_TITLE",
             jsonPath: "businessObject.artifactDetails.caseTitle",
             additionalCustomization: true,
@@ -89,10 +93,6 @@ export const bulkWitnessDepositionSignConfig = {
           {
             label: "ADVOCATES",
             jsonPath: "businessObject.artifactDetails.advocate",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
         ],

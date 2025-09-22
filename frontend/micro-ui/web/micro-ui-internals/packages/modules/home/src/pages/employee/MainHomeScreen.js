@@ -45,7 +45,7 @@ const MainHomeScreen = () => {
     DELAY_CONDONATION: 0,
     OTHERS: 0,
   });
-  const [stepper, setStepper] = useState(1);
+  const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });

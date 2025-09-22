@@ -270,7 +270,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
       )}
       <React.Fragment>
         {/* bulk-esign-order-view */}
-        <div className={"bulk-esign-order-view"}>
+        <div className={"bulk-esign-order-view select"}>
           <div className="header">{t("BULK_EVIDENCE_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>

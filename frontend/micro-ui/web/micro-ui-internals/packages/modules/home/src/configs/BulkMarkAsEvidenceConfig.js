@@ -67,6 +67,10 @@ export const bulkMarkAsEvidenceConfig = {
       uiConfig: {
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_TITLE",
             jsonPath: "businessObject.artifactDetails.caseTitle",
             additionalCustomization: true,
@@ -84,10 +88,6 @@ export const bulkMarkAsEvidenceConfig = {
           {
             label: "EVIDENCE_NUMBER",
             jsonPath: "businessObject.artifactDetails.evidenceNumber",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
         ],

@@ -1,20 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { TextInput, LabelFieldPair, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { TextInput, LabelFieldPair, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import { SmallSearchIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const NewBulkRescheduleTable = ({
   t,
+  loader,
   showToast = () => {},
-  onSumbitReschedule,
+  setStepper,
   newHearingData,
   setNewHearingData,
   defaultBulkFormData,
   bulkFormData,
   setBulkFormData,
-  bulkHearingsCount,
 }) => {
+  const [allHearings, setAllHearings] = useState([]);
+
+  // Handle ch`eckbox change
+  const handleSelectChange = (checked, row) => {
+    const rowId = row?.hearingBookingId;
+    if (checked) {
+      // Add back if not present
+      if (!newHearingData?.some((obj) => obj?.hearingBookingId === rowId)) {
+        setNewHearingData((prev) => [...prev, row]);
+      }
+    } else {
+      // Remove from selection
+      setNewHearingData((prev) => prev.filter((obj) => obj?.hearingBookingId !== rowId));
+    }
+  };
+
+  // Optional: Select All checkbox
+  const allSelected = newHearingData?.length > 0 && newHearingData?.length === allHearings?.length;
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setNewHearingData(allHearings);
+    } else {
+      setNewHearingData([]);
+    }
+  };
+
   const [loading, setIsLoader] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const judgeId = localStorage.getItem("judgeId");
@@ -68,6 +94,7 @@ const NewBulkRescheduleTable = ({
         return;
       }
       setNewHearingData(tentativeDates?.Hearings);
+      setAllHearings(tentativeDates?.Hearings);
     } catch (error) {
       console.log(error);
     } finally {
@@ -157,6 +184,9 @@ const NewBulkRescheduleTable = ({
           <table className="main-table">
             <thead>
               <tr>
+                <th>
+                  <input type="checkbox" className="custom-checkbox" checked={allSelected} onChange={(e) => handleSelectAll(e.target.checked)} />
+                </th>
                 <th>{t("CASE_TITLE")}</th>
                 <th>{t("CS_CASE_ID")}</th>
                 <th>{t("CS_STAGE")}</th>
@@ -166,19 +196,28 @@ const NewBulkRescheduleTable = ({
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading || loader ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 24 }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: 24 }}>
                     {t("LOADING")}
                   </td>
                 </tr>
-              ) : newHearingData && newHearingData?.length > 0 ? (
-                newHearingData?.map((row, index) => {
+              ) : allHearings && allHearings?.length > 0 ? (
+                allHearings?.map((row, index) => {
+                  const rowId = row?.hearingBookingId;
                   return (
-                    <tr key={row?.id || index} className="custom-table-row">
+                    <tr key={rowId} className="custom-table-row">
+                      <td>
+                        <input
+                          type="checkbox"
+                          className="custom-checkbox"
+                          checked={newHearingData?.some((obj) => obj?.hearingBookingId === rowId)}
+                          onChange={(e) => handleSelectChange(e.target.checked, row)}
+                        />
+                      </td>
                       <td>{row?.title}</td>
                       <td>{row?.caseId}</td>
-                      <td>{row?.caseStage}</td>
+                      <td>{t(row?.caseStage)}</td>
                       <td>{t(row?.hearingType)}</td>
                       <td>{new Date(row.originalHearingDate).toLocaleDateString("en-GB")}</td>
                       <td>
@@ -191,7 +230,7 @@ const NewBulkRescheduleTable = ({
                           disableColor="#D6D5D4"
                           disableBorderColor="#D6D5D4"
                           disableBackgroundColor="white"
-                        />{" "}
+                        />
                       </td>
                     </tr>
                   );
@@ -208,7 +247,12 @@ const NewBulkRescheduleTable = ({
         </div>
       </div>
       <div className="bulk-submit-bar">
-        <SubmitBar label={t(`RESCHEDULE_ALL_HEARINGS`)} submit="submit" onSubmit={onSumbitReschedule} disabled={bulkHearingsCount === 0} />
+        <SubmitBar
+          label={t(`RESCHEDULE_ALL_HEARINGS`)}
+          submit="submit"
+          onSubmit={() => setStepper((prev) => prev + 1)}
+          disabled={newHearingData?.length === 0}
+        />
       </div>
     </div>
   );

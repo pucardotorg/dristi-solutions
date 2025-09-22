@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import Axios from "axios";
-import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
 import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
+import _ from "lodash";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -50,8 +50,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
-  const [isBulkRescheduleDisabled, setIsBulkRescheduleDisabled] = useState(true);
-  const [Loading, setLoader] = useState(false);
+  const [loader, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -98,10 +97,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
     toDate: today.setHours(0, 0, 0, 0),
     slotIds: [],
     searchableFields: null,
-    reason: {
-      code: "COURT_NON_WORKING_DAY",
-      name: "Court Non-Working Day",
-    },
+    reason: null,
   };
   const [bulkFormData, setBulkFormData] = useState(bulkNotificationFormData || defaultBulkFormData);
 
@@ -141,7 +137,18 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
     },
     {},
     `${bulkFormData?.fromDate}-${bulkFormData?.toDate}`,
-    Boolean(bulkFormData?.fromDate && bulkFormData?.toDate && stepper > 0 && courtId)
+    Boolean(bulkFormData?.fromDate && bulkFormData?.toDate && courtId)
+  );
+
+  const { data: rescheduleReasonData, isLoading: isRescheduleReasonLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Hearing",
+    [{ name: "BulkRescheduleReason" }],
+    {
+      select: (data) => {
+        return _.get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
+      },
+    }
   );
 
   const bulkHearingsCount = useMemo(() => {
@@ -298,8 +305,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
   const onCancel = () => {
     if (stepper === 1) {
       clearLocalStorage();
-      setBulkFormData({});
-      setNewHearingData([]);
+      setBulkFormData((prev) => ({ ...prev, reason: null }));
     }
     setStepper((prev) => prev - 1);
   };
@@ -429,41 +435,55 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
 
   return (
     <React.Fragment>
-      {/* {stepper === 1 && (
-        <BulkRescheduleModal
-          t={t}
-          Loading={Loading}
-          modifiedConfig={modifiedConfig}
-          onFormValueChange={onFormValueChange}
-          defaultValues={defaultValues}
-          onCancel={onCancel}
-          onSumbitReschedule={onSumbitReschedule}
-          isBulkRescheduleDisabled={isBulkRescheduleDisabled}
-          bulkHearingsCount={bulkHearingsCount}
-          setBusinessOfTheDay={setBusinessOfTheDay}
-          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
-          bulkFromDate={bulkFromDate}
-          bulkToDate={bulkToDate}
-          toastMsg={toastMsg}
-          setToastMsg={setToastMsg}
-          setNewHearingData={setNewHearingData}
-          newHearingData={newHearingData}
-          bulkFormData={bulkFormData}
-        />
-      )} */}
-
+      <NewBulkRescheduleTable
+        t={t}
+        loader={isRescheduleReasonLoading}
+        showToast={showToast}
+        setStepper={setStepper}
+        setNewHearingData={setNewHearingData}
+        newHearingData={newHearingData}
+        defaultBulkFormData={defaultBulkFormData}
+        bulkFormData={bulkFormData}
+        setBulkFormData={setBulkFormData}
+        bulkHearingsCount={bulkHearingsCount}
+      />
       {stepper === 1 && (
-        <NewBulkRescheduleTable
-          t={t}
-          showToast={showToast}
-          onSumbitReschedule={onSumbitReschedule}
-          setNewHearingData={setNewHearingData}
-          newHearingData={newHearingData}
-          defaultBulkFormData={defaultBulkFormData}
-          bulkFormData={bulkFormData}
-          setBulkFormData={setBulkFormData}
-          bulkHearingsCount={bulkHearingsCount}
-        />
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => !loader && onCancel()} />}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CS_DETAILS")} />}
+          actionSaveOnSubmit={onSumbitReschedule}
+          actionCancelOnSubmit={onCancel}
+          isDisabled={loader}
+          isBackButtonDisabled={loader}
+          actionCancelLabel={t("CS_BULK_BACK")}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          popupStyles={{
+            width: "40%",
+          }}
+        >
+          {loader ? (
+            <Loader />
+          ) : (
+            <LabelFieldPair className="case-label-field-pair" style={{ padding: "22px 0px" }}>
+              <CardLabel className="case-input-label">{`${t("BULK_RESCHEDULE_REASON")}`}</CardLabel>
+              <Dropdown
+                t={t}
+                option={rescheduleReasonData}
+                selected={bulkFormData?.reason}
+                optionKey={"name"}
+                select={(e) => {
+                  setBulkFormData((prev) => ({ ...prev, reason: e }));
+                }}
+                topbarOptionsClassName={"top-bar-option"}
+                style={{
+                  marginBottom: "1px",
+                  maxWidth: "100%",
+                }}
+              />
+            </LabelFieldPair>
+          )}
+        </Modal>
       )}
       {stepper === 2 && (
         <Modal
@@ -476,7 +496,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
             width: "70%",
           }}
         >
-          {Loading ? (
+          {loader ? (
             <Loader />
           ) : (
             <MemoDocViewerWrapper
@@ -559,7 +579,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
           </div>
         </Modal>
       )}
-
       {stepper === 3 && openUploadSignatureModal && (
         <UploadSignatureModal
           t={t}
@@ -573,7 +592,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
           isDisabled={issignLoader}
         />
       )}
-
       {stepper === 3 && !openUploadSignatureModal && isSigned && (
         <Modal
           headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
@@ -584,7 +602,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
           actionSaveOnSubmit={uploadSignedPdf}
           className="add-signature-modal"
         >
-          {Loading ? (
+          {loader ? (
             <Loader />
           ) : (
             <div className="add-signature-main-div">

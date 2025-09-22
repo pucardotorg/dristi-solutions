@@ -78,6 +78,10 @@ export const bulkBailBondSignConfig = {
       uiConfig: {
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_TITLE",
             jsonPath: "businessObject.bailDetails.caseTitle",
             additionalCustomization: true,
@@ -90,10 +94,6 @@ export const bulkBailBondSignConfig = {
           {
             label: "LITIGANT",
             jsonPath: "businessObject.bailDetails.litigantName",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
         ],

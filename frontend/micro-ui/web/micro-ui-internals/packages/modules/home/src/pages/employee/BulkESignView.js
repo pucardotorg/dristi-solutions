@@ -373,7 +373,7 @@ function BulkESignView() {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={"bulk-esign-order-view"}>
+          <div className={"bulk-esign-order-view select"}>
             <div className="header">{t("CS_HOME_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>

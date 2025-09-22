@@ -13,7 +13,7 @@ export const BulkCheckBox = ({ rowData, colData, isBailBond }) => {
         colData?.updateOrderFunc(rowData, !checked);
       }}
       checked={checked}
-      style={{ cursor: "pointer", width: "24px", height: "24px", marginLeft: "15px" }}
+      style={{ cursor: "pointer", width: "20px", height: "20px" }}
     />
   ) : null;
 };

@@ -269,7 +269,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
       )}
       <React.Fragment>
         {/* bulk-esign-order-view */}
-        <div className={"bulk-esign-order-view"}>
+        <div className={"bulk-esign-order-view select"}>
           <div className="header">{t("BULK_BAIL_BOND_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>

@@ -465,6 +465,16 @@
   display: inline-block;
 }
 
+/* Reduce the column width for checkbox in the table */
+.bulk-esign-order-view.select th:first-child,
+.bulk-esign-order-view.select td:first-child {
+  width: 52px !important;
+  min-width: 44px !important;
+  max-width: 60px !important;
+  text-align: center;
+}
+
+
 /* Add custom tick mark */
 .custom-checkbox:checked {
   background-color: white;
