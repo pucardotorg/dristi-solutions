@@ -47,6 +47,7 @@ jobs:
           project: 'bail-bond'
           path: 'backend/bail-bond'
           format: 'SARIF'
+          args: "--disableOssIndex"
       - name: Upload SARIF result to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
