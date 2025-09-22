@@ -64,7 +64,7 @@ public class PendingTaskUtil {
         pendingTask.setStatus(PENDING_TASK_STATUS);
         pendingTask.setActionCategory(RE_SCHEDULE_PENDING_TASK_ACTION_CATEGORY);
         pendingTask.setFilingNumber(reScheduleHearing.getCaseId());
-        pendingTask.setAssignedRole(List.of(HEARING_CREATOR));
+        pendingTask.setAssignedRole(Collections.singletonList(VIEW_RE_SCHEDULE_APPLICATION));
         pendingTask.setScreenType(SCREEN_TYPE);
         LocalDateTime currentTime = LocalDateTime.now();
         pendingTask.setReferenceEntityType(RE_SCHEDULE_APPLICATION_TYPE);

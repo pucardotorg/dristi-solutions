@@ -9,5 +9,107 @@
       "description": "VIEW_SCRUTINY_CASES"
     },
     "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+    "data": {
+      "code": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+      "name": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+      "description": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to bench clerk, FSO, nyay mitra, judge
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "DECRYPT_DATA_ROLE",
+    "data": {
+      "code": "DECRYPT_DATA_ROLE",
+      "name": "DECRYPT_DATA_ROLE",
+      "description": "DECRYPT_DATA_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to judge , bench clerk
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "COURT_ASSIGNED_ROLE",
+    "data": {
+      "code": "COURT_ASSIGNED_ROLE",
+      "name": "COURT_ASSIGNED_ROLE",
+      "description": "COURT_ASSIGNED_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to judge, COURT_ROOM_MANAGER , typist, clerk
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EVIDENCE_SIGNER",
+    "data": {
+      "code": "EVIDENCE_SIGNER",
+      "name": "EVIDENCE_SIGNER",
+      "description": "EVIDENCE_SIGNER"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_SUMMONS",
+    "data": {
+      "code": "SIGN_PROCESS_SUMMONS",
+      "name": "SIGN_PROCESS_SUMMONS",
+      "description": "SIGN_PROCESS_SUMMONS"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_WARRANT",
+    "data": {
+      "code": "SIGN_PROCESS_WARRANT",
+      "name": "SIGN_PROCESS_WARRANT",
+      "description": "SIGN_PROCESS_WARRANT"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_NOTICE",
+    "data": {
+      "code": "SIGN_PROCESS_NOTICE",
+      "name": "SIGN_PROCESS_NOTICE",
+      "description": "SIGN_PROCESS_NOTICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_PROCLAMATION",
+    "data": {
+      "code": "SIGN_PROCESS_PROCLAMATION",
+      "name": "SIGN_PROCESS_PROCLAMATION",
+      "description": "SIGN_PROCESS_PROCLAMATION"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_ATTACHMENT",
+    "data": {
+      "code": "SIGN_PROCESS_ATTACHMENT",
+      "name": "SIGN_PROCESS_ATTACHMENT",
+      "description": "SIGN_PROCESS_ATTACHMENT"
+    },
+    "isActive": true
   }
 ]
