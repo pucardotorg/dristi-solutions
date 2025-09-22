@@ -153,13 +153,16 @@ public class CaseFeeCalculationService {
         List<Calculation> result = new ArrayList<>();
         for (JoinCaseCriteria joinCaseCriteria : request.getJoinCaseCriteria()) {
 
-            Double calculatedCourtFee = courtFee;
-            Double calculatedLegalBasicFund = legalBasicFund;
-            Double calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
+            Double calculatedCourtFee = 0.0;
+            Double calculatedLegalBasicFund = 0.0;
+            Double calculatedAdvocateClerkWelfareFund = 0.0;
             Double calculatedAdvocateFee = 0.0;
 
             for (LitigantAdvocateMap litigantAdvocateMap : joinCaseCriteria.getLitigantAdvocateMap()) {
                 if (litigantAdvocateMap.getAdvocateCount() > 0) {
+                    calculatedCourtFee = courtFee;
+                    calculatedLegalBasicFund = legalBasicFund;
+                    calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
                     Double advocateFee = getAdvocateFee(eFillingDefaultData.getNoOfAdvocateFees(), litigantAdvocateMap.getAdvocateCount());
                     calculatedAdvocateFee += advocateFee;
                 }
@@ -184,14 +187,21 @@ public class CaseFeeCalculationService {
 
     }
 
+    private void addBreakdownIfPositive(List<BreakDown> feeBreakdowns, String code, String label, double amount) {
+        if (amount > 0) {
+            feeBreakdowns.add(new BreakDown(code, label, amount, new HashMap<>()));
+        }
+    }
+
     public List<BreakDown> getFeeBreakdownForJoinCase(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double advocateFee) {
 
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(LEGAL_BENEFIT_FEE,"LEGAL_BENEFIT_FEE" , legalBasicFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee, new HashMap<>()));
+        addBreakdownIfPositive(feeBreakdowns, COURT_FEE, "COURT_FEE", courtFee);
+        addBreakdownIfPositive(feeBreakdowns, LEGAL_BENEFIT_FEE, "LEGAL_BENEFIT_FEE", legalBasicFund);
+        addBreakdownIfPositive(feeBreakdowns, ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund);
+        addBreakdownIfPositive(feeBreakdowns, ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee);
+
         return feeBreakdowns;
     }
 }
