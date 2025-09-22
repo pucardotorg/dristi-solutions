@@ -1460,9 +1460,11 @@ export const UICustomizations = {
             const witnessDetails =
               data?.criteria[0]?.responseList[0]?.witnessDetails?.map((itemData) => {
                 const fullName = constructFullName(itemData?.firstName, itemData?.middleName, itemData?.lastName);
+                const designation = constructFullName(itemData?.witnessDesignation);
+                const witnessName = fullName ? fullName : designation ? designation : "";
                 return {
-                  code: fullName,
-                  name: fullName,
+                  code: witnessName,
+                  name: witnessName,
                   uniqueId: itemData?.uniqueId,
                   isJoined: false,
                   associatedWith: itemData?.ownerType || "COMPLAINANT",
