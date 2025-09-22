@@ -41,13 +41,12 @@ jobs:
         uses: dependency-check/Dependency-Check_Action@main
         env:
           JAVA_HOME: /opt/jdk
-          OSSINDEX_USERNAME: ${{ secrets.OSSINDEX_USERNAME }}
-          OSSINDEX_PASSWORD: ${{ secrets.OSSINDEX_PASSWORD }}
         id: Depcheck
         with:
           project: 'order-management'
           path: 'backend/order-management'
           format: 'SARIF'
+          args: "--disableOssIndex"
 
       - name: Build and analyze for order-management
         env:
