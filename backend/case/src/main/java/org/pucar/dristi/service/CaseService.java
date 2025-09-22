@@ -1610,11 +1610,11 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
 
         } else {
-//            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest, courtCase);
-//            if (!isValid) {
-//                log.info("Not a valid request since litigant is now pip");
-//                return;
-//            }
+            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest, courtCase);
+            if (!isValid) {
+                log.info("Not a valid request since litigant is now pip");
+                return;
+            }
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
             joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
         }
