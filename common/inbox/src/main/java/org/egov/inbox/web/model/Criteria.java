@@ -13,5 +13,6 @@ public class Criteria {
     String actionCategory = null;
     String searchableFields = null;
     List<String> status = null;
+    String referenceEntityType = null;
     List<org.egov.inbox.web.model.V2.Data> data = new ArrayList<>();
 }

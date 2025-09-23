@@ -504,6 +504,12 @@ public class InboxServiceV2 {
             searchCriteria.remove("status");
         }
 
+        if (criteria.getReferenceEntityType() != null) {
+            searchCriteria.put("referenceEntityType", criteria.getReferenceEntityType());
+        } else {
+            searchCriteria.remove("referenceEntityType");
+        }
+
         PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
 
         criteria.setCount(resultData.getTotalSize());
