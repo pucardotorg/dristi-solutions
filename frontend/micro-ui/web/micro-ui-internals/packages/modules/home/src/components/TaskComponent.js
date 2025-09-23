@@ -293,7 +293,7 @@ const TasksComponent = ({
               referenceId: `MANUAL_${referenceId}`,
               status: "SAVE_DRAFT",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber: filingNumber,
               caseId,
