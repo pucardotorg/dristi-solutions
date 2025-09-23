@@ -61,11 +61,11 @@ public class ServiceConstants {
     public static final String SEARCH_TASK_ERR = "Error while searching task";
     public static final String BAIL = "BAIL";
     public static final String SUMMON = "SUMMONS";
-    public static final String ROLE_SIGN_PROCESS_SUMMONS = "SIGN_PROCESS_SUMMONS";
-    public static final String ROLE_SIGN_PROCESS_WARRANT = "SIGN_PROCESS_WARRANT";
-    public static final String ROLE_SIGN_PROCESS_NOTICE = "SIGN_PROCESS_NOTICE";
-    public static final String ROLE_SIGN_PROCESS_PROCLAMATION = "SIGN_PROCESS_PROCLAMATION";
-    public static final String ROLE_SIGN_PROCESS_ATTACHMENT = "SIGN_PROCESS_ATTACHMENT";
+    public static final String ROLE_VIEW_PROCESS_SUMMONS = "VIEW_PROCESS_SUMMONS";
+    public static final String ROLE_VIEW_PROCESS_WARRANT = "VIEW_PROCESS_WARRANT";
+    public static final String ROLE_VIEW_PROCESS_NOTICE = "VIEW_PROCESS_NOTICE";
+    public static final String ROLE_VIEW_PROCESS_PROCLAMATION = "VIEW_PROCESS_PROCLAMATION";
+    public static final String ROLE_VIEW_PROCESS_ATTACHMENT = "VIEW_PROCESS_ATTACHMENT";
 
     public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 

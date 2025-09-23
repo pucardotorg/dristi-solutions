@@ -454,37 +454,37 @@ public class TaskService {
 
         if (orderType.isEmpty()) {
             for (Role role : userRoles) {
-                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
+                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_SUMMONS)) {
                     orderType.add(SUMMON);
                 }
-                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
+                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_WARRANT)) {
                     orderType.add(WARRANT);
                 }
-                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
+                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_NOTICE)) {
                     orderType.add(NOTICE);
                 }
-                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
+                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_PROCLAMATION)) {
                     orderType.add(PROCLAMATION);
                 }
-                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
+                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_ATTACHMENT)) {
                     orderType.add(ATTACHMENT);
                 }
             }
         } else {
             for (Role role : userRoles) {
-                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_SUMMONS)) {
                     orderType.remove(SUMMON);
                 }
-                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_WARRANT)) {
                     orderType.remove(WARRANT);
                 }
-                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_NOTICE)) {
                     orderType.remove(NOTICE);
                 }
-                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_PROCLAMATION)) {
                     orderType.remove(PROCLAMATION);
                 }
-                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_ATTACHMENT)) {
                     orderType.remove(ATTACHMENT);
                 }
             }
