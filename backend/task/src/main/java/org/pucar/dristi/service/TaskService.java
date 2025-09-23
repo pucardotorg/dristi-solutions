@@ -452,21 +452,41 @@ public class TaskService {
     private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
         List<String> orderType = request.getCriteria().getOrderType();
 
-        for (Role role : userRoles) {
-            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
-                orderType.remove(SUMMON);
+        if (orderType.isEmpty()) {
+            for (Role role : userRoles) {
+                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
+                    orderType.add(SUMMON);
+                }
+                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
+                    orderType.add(WARRANT);
+                }
+                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
+                    orderType.add(NOTICE);
+                }
+                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
+                    orderType.add(PROCLAMATION);
+                }
+                if (role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
+                    orderType.add(ATTACHMENT);
+                }
             }
-            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
-                orderType.remove(WARRANT);
-            }
-            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
-                orderType.remove(NOTICE);
-            }
-            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
-                orderType.remove(PROCLAMATION);
-            }
-            if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
-                orderType.remove(ATTACHMENT);
+        } else {
+            for (Role role : userRoles) {
+                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_SUMMONS)) {
+                    orderType.remove(SUMMON);
+                }
+                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_WARRANT)) {
+                    orderType.remove(WARRANT);
+                }
+                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_NOTICE)) {
+                    orderType.remove(NOTICE);
+                }
+                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_PROCLAMATION)) {
+                    orderType.remove(PROCLAMATION);
+                }
+                if (!role.getCode().equalsIgnoreCase(ROLE_SIGN_PROCESS_ATTACHMENT)) {
+                    orderType.remove(ATTACHMENT);
+                }
             }
         }
         return orderType;
