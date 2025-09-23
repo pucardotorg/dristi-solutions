@@ -1722,6 +1722,8 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+        } else if (currentOrder?.nextHearingDate) {
+          updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
@@ -1764,6 +1766,8 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+        } else if (currentOrder?.nextHearingDate) {
+          updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
@@ -1810,6 +1814,8 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
+        } else if (currentOrder?.nextHearingDate) {
+          updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
