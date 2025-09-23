@@ -22,14 +22,14 @@ const HomeSidebar = ({
         <SidebarItem
           t={t}
           label={"TOTAL_HEARINGS_TAB"}
-          count={hearingCount}
+          // count={hearingCount}
           active={activeTab === "TOTAL_HEARINGS_TAB"}
           onClick={() => onTabChange("TOTAL_HEARINGS_TAB")}
         />
         <SidebarItem
           t={t}
           label={"CS_HOME_BULK_RESCHEDULE"}
-          count={hearingCount}
+          // count={hearingCount}
           active={activeTab === "CS_HOME_BULK_RESCHEDULE"}
           onClick={() => onTabChange("CS_HOME_BULK_RESCHEDULE")}
         />
@@ -37,30 +37,36 @@ const HomeSidebar = ({
 
       <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
         {!isOptionsLoading &&
-          Object.keys(options).map((key, index) => (
-            <SidebarItem
-              t={t}
-              key={index}
-              label={options[key].name}
-              count={pendingTaskCount[key] || 0}
-              active={activeTab === key}
-              onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-            />
-          ))}
+          Object.keys(options).map(
+            (key, index) =>
+              pendingTaskCount[key] > 0 && (
+                <SidebarItem
+                  t={t}
+                  key={index}
+                  label={options[key].name}
+                  count={pendingTaskCount[key]}
+                  active={activeTab === key}
+                  onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+                />
+              )
+          )}
       </HomeAccordian>
 
       <HomeAccordian title={t("REVIEW_APPLICATIONS_TAB")} defaultOpen>
         {!isOptionsLoading &&
-          Object.keys(applicationOptions).map((key, index) => (
-            <SidebarItem
-              t={t}
-              key={index}
-              label={applicationOptions[key].name}
-              count={pendingTaskCount[key] || 0}
-              active={activeTab === key}
-              onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
-            />
-          ))}
+          Object.keys(applicationOptions).map(
+            (key, index) =>
+              pendingTaskCount[key] > 0 && (
+                <SidebarItem
+                  t={t}
+                  key={index}
+                  label={applicationOptions[key].name}
+                  count={pendingTaskCount[key]}
+                  active={activeTab === key}
+                  onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
+                />
+              )
+          )}
       </HomeAccordian>
 
       <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
