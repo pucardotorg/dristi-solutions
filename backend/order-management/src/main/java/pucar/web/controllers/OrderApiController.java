@@ -11,9 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.w3c.dom.stylesheets.LinkStyle;
 import pucar.service.OrderService;
+import pucar.util.HearingUtil;
 import pucar.util.ResponseInfoFactory;
 import pucar.web.models.*;
+
+import java.util.List;
 
 
 @RestController
@@ -58,5 +62,11 @@ public class OrderApiController {
         return ResponseEntity.accepted().body(response);
     }
 
+    //remove this
+    @RequestMapping(value = "/v1/create-hearing", method = RequestMethod.POST)
+    public ResponseEntity<String> createHearingForMissedOrder(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody HearingCreateMissedOrder hearingCreateMissedOrder) {
+        orderService.createHearingForMissedOrder(hearingCreateMissedOrder);
+        return new ResponseEntity<>("Done", HttpStatus.OK);
+    }
 
 }

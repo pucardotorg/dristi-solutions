@@ -85,7 +85,7 @@ public class OrderService {
         orderProcessor.preProcessOrder(request);
 
         if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
-            preProcessScheduleNextHearing(request);
+            hearingUtil.preProcessScheduleNextHearing(request);
         }
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
@@ -108,30 +108,6 @@ public class OrderService {
         updateHearingSummary(request);
 
         return orderResponse.getOrder();
-    }
-
-    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
-                Order order = orderRequest.getOrder();
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
-        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
-
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        // add validation here
-        CourtCase courtCase = cases.get(0);
-
-        HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
-
-        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
-
-        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
-
-        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
-                log.info("hearing number:{}", newHearing.getHearing().getHearingId());
-
-        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
@@ -198,5 +174,25 @@ public class OrderService {
         // add validation here
         CourtCase courtCase = cases.get(0);
         return courtCase.getCnrNumber();
+    }
+
+    //remove this
+    public void createHearingForMissedOrder(HearingCreateMissedOrder body) {
+        for (String orderNumber : body.getOrderNumbers()) {
+            try {
+                OrderCriteria criteria = OrderCriteria.builder()
+                        .orderNumber(orderNumber)
+                        .build();
+                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                        .criteria(criteria).build();
+
+                OrderListResponse orders = orderUtil.getOrders(searchRequest);
+                Order order = orders.getList().get(0);
+                hearingUtil.preProcessScheduleNextHearing(OrderRequest.builder().requestInfo(body.getRequestInfo()).order(order).build());
+            }catch (Exception e) {
+                log.error("Exception in creating hearing for orderNumber :: {}", orderNumber);
+            }
+
+        }
     }
 }
