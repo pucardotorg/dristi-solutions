@@ -343,7 +343,7 @@
           box-shadow: none;
           min-height: auto;
           .search-wrapper {
-            padding: 24px 0px 0px;
+            padding: 20px 0px 0px;
 
             .search-field-wrapper.search.custom-both-clear-search {
               .label-field-pair .text-input input {
@@ -366,6 +366,13 @@
                 }
               }
             }
+          }
+        }
+        .section.tab {
+          box-shadow: none;
+          padding-top: 20px;
+          .search-wrapper {
+            box-shadow: none !important;
           }
         }
       }
@@ -435,7 +442,7 @@
     }
     .search-component-table {
       .home-offline-payments-action-column {
-        display:  flex !important;
+        display: flex !important;
         align-items: center !important;
       }
     }
@@ -480,7 +487,6 @@
   max-width: 60px !important;
   text-align: center;
 }
-
 
 /* Add custom tick mark */
 .custom-checkbox:checked {

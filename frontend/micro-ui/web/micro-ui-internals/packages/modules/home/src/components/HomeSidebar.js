@@ -39,7 +39,7 @@ const HomeSidebar = ({
         {!isOptionsLoading &&
           Object.keys(options).map(
             (key, index) =>
-              pendingTaskCount[key] > 0 && (
+              (key === "SCRUTINISE_CASES" || pendingTaskCount[key] > 0) && (
                 <SidebarItem
                   t={t}
                   key={index}

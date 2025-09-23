@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
@@ -16,6 +16,7 @@ import BulkESignView from "./BulkESignView";
 import BulkSignADiaryView from "./BulkSignADiaryView";
 import RegisterUsersHomeTab from "./RegisterUsersHomeTab";
 import OfflinePaymentsHomeTab from "./OfflinePaymentsHomeTab";
+import { scrutinyPendingTaskConfig } from "../../configs/ScrutinyPendingTaskConfig";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -36,6 +37,9 @@ const MainHomeScreen = () => {
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
+  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
+  const [tabData, setTabData] = useState(null);
+
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
     REGISTER_USERS: 0,
@@ -85,8 +89,7 @@ const MainHomeScreen = () => {
       setActiveTab("REGISTER_USERS");
     } else if (location?.state?.offlinePaymentsTab) {
       setActiveTab("OFFLINE_PAYMENTS");
-    }
-    else if (location?.state?.homeActiveTab === "CS_HOME_ORDERS") {
+    } else if (location?.state?.homeActiveTab === "CS_HOME_ORDERS") {
       setActiveTab("CS_HOME_ORDERS");
     }
     // sessionStorage.removeItem("homeActiveTab");
@@ -239,6 +242,7 @@ const MainHomeScreen = () => {
             date: null,
             isOnlyCountRequired: true,
             actionCategory: "Scrutinise cases",
+            status: ["UNDER_SCRUTINY"],
           },
           searchRescheduleHearingsApplication: {
             date: null,
@@ -403,36 +407,6 @@ const MainHomeScreen = () => {
       ];
     }
 
-    // Set columns for SCRUTINISE_CASES tab
-    if (activeTab === "SCRUTINISE_CASES") {
-      updatedConfig.sections.searchResult.uiConfig.columns = [
-        {
-          label: "PENDING_CASE_NAME",
-          jsonPath: "caseTitle",
-          additionalCustomization: true,
-        },
-        {
-          label: "STAGE",
-          jsonPath: "substage",
-          additionalCustomization: true,
-        },
-        {
-          label: "CS_CASE_NUMBER_HOME",
-          jsonPath: "caseNumber",
-          additionalCustomization: true,
-        },
-        {
-          label: "CASE_TYPE",
-          jsonPath: "",
-          additionalCustomization: true,
-        },
-        {
-          label: "CS_DAYS_FILING",
-          jsonPath: "createdTime",
-          additionalCustomization: true,
-        },
-      ];
-    }
     updatedConfig = {
       ...updatedConfig,
       sections: {
@@ -462,6 +436,47 @@ const MainHomeScreen = () => {
     setConfig(updatedConfig);
   }, [activeTab]);
 
+  const getTotalCountForTab = useCallback(
+    async function (tabConfig) {
+      const updatedTabData = await Promise.all(
+        tabConfig?.map(async (configItem, index) => {
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            SearchCriteria: {
+              moduleName: "Pending Tasks Service",
+              tenantId: tenantId,
+              moduleSearchCriteria: {
+                screenType: ["home", "applicationCompositeOrder"],
+                isCompleted: false,
+                courtId: localStorage.getItem("courtId"),
+                assignedRole: assignedRoles,
+              },
+              searchScrutinyCases: {
+                date: null,
+                isOnlyCountRequired: true,
+                actionCategory: "Scrutinise cases",
+                status: configItem?.apiDetails?.requestBody?.SearchCriteria?.searchScrutinyCases?.status,
+              },
+              limit: 10,
+              offset: 0,
+            },
+          });
+          const totalCount = response?.scrutinyCasesData?.count;
+          return {
+            key: index,
+            label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
+            active: index === 0 ? true : false,
+          };
+        }) || []
+      );
+      setTabData(updatedTabData);
+    },
+    [tenantId, assignedRoles, t]
+  );
+
+  useEffect(() => {
+    getTotalCountForTab(scrutinyPendingTaskConfig);
+  }, [scrutinyPendingTaskConfig]);
+
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "TOTAL_HEARINGS_TAB") {
@@ -475,11 +490,37 @@ const MainHomeScreen = () => {
     setActiveTabTitle(title);
   };
 
+  const onInternalTabChange = (n) => {
+    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
+    setScrutinyConfig(scrutinyPendingTaskConfig?.[n]);
+  };
+
   const inboxSearchComposer = useMemo(
     () => (
       <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
     [activeTab, updateCounter, modifiedConfig]
+  );
+
+  const scrutinyInboxSearchComposer = useMemo(
+    () =>
+      tabData && (
+        <InboxSearchComposer
+          key={`${activeTab}-${scrutinyConfig?.label}`}
+          customStyle={sectionsParentStyle}
+          configs={{
+            ...scrutinyConfig,
+            additionalDetails: {
+              setCount: setPendingTaskCount,
+              activeTab: activeTab,
+            },
+          }}
+          showTab={true}
+          tabData={tabData}
+          onTabChange={onInternalTabChange}
+        ></InboxSearchComposer>
+      ),
+    [tabData, activeTab, scrutinyConfig]
   );
 
   return (
@@ -575,7 +616,7 @@ const MainHomeScreen = () => {
             }}
           >
             <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
-            {inboxSearchComposer}
+            {activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}
           </div>
         )}
         {showBailBondModal && (
