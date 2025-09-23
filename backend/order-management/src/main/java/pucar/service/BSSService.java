@@ -2,6 +2,7 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -14,6 +15,11 @@ import pucar.util.*;
 import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
+import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.hearing.HearingRequest;
+import pucar.web.models.hearing.HearingResponse;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -33,9 +39,11 @@ public class BSSService {
     private final Configuration configuration;
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
+    private final HearingUtil hearingUtil;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -44,6 +52,8 @@ public class BSSService {
         this.configuration = configuration;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
+        this.hearingUtil = hearingUtil;
+        this.caseUtil = caseUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -210,7 +220,9 @@ public class BSSService {
                             .order(order).build();
 
                     orderProcessor.preProcessOrder(orderUpdateRequest);
-
+                    if (order.getNextHearingDate() != null) {
+                        preProcessScheduleNextHearing(orderUpdateRequest);
+                    }
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);
@@ -235,6 +247,30 @@ public class BSSService {
 
         return updatedOrder;
 
+    }
+
+    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+
+        HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
+
+        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+
+        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
+
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
+        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 
     private Map<String, Object> createAttribute(String name, String value) {
