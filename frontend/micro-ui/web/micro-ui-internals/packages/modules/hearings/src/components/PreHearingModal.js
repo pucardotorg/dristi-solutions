@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
 import { preHearingConfig } from "../configs/PreHearingConfig";
-import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
+// import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
 
@@ -181,9 +181,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
           />
         )}
       </div>
-      {purposeModalOpen && (
+      {/* {purposeModalOpen && (
         <ReschedulingPurpose rescheduleAll={rescheduleAll} courtData={courtData} closeFunc={closeFunc} caseDetails={purposeModalData} />
-      )}
+      )} */}
       <BulkReschedule
         stepper={stepper}
         setStepper={setStepper}
