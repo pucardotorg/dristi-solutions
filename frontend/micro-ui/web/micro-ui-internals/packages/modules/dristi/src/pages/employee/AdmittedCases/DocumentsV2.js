@@ -37,11 +37,7 @@ const DocumentsV2 = ({
   const { downloadPdf } = useDownloadCasePdf();
 
   const isCitizen = userRoles?.includes("CITIZEN");
-  const isJudge = userRoles?.includes("JUDGE_ROLE");
-  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
-  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const hasWitnessDepositionViewAccess = roles?.some((role) => role.code === "VIEW_WITNESS_DEPOSITION");
   const canSign = roles?.some((role) => role.code === "CASE_APPROVER");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const configList = useMemo(() => {
@@ -98,17 +94,22 @@ const DocumentsV2 = ({
             }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
         }
-        if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge || isCourtRoomManager)) {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(artifactNumber);
+        if (documentStatus === "DRAFT_IN_PROGRESS") {
+          if (hasWitnessDepositionViewAccess) {
+            setShowWitnessModal(true);
+            setEditWitnessDepositionArtifact(artifactNumber);
+          } else {
+            return;
+          }
         } else {
-          setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
-          if (canSign) {
+          if (documentStatus === "PENDING_REVIEW" && canSign) {
             history.push({
               pathname: `/${window?.contextPath}/employee/home/sign-witness-deposition`,
               search: `?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}&caseId=${caseId}`,
               state: { docObj: docObj?.[0] },
             });
+          } else {
+            setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
           }
         }
       } else {
@@ -118,37 +119,32 @@ const DocumentsV2 = ({
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
-          if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+          history.push(
+            `/${window?.contextPath}/${
+              isCitizen ? "citizen" : "employee"
+            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+          );
+        }
+        if (
+          [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+        ) {
+          if (createdByUuid === userInfo?.uuid) {
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
-              }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+              }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
           }
-          if (
-            [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-          ) {
-            if (createdByUuid === userInfo?.uuid) {
-              history.push(
-                `/${window?.contextPath}/${
-                  isCitizen ? "citizen" : "employee"
-                }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
-              );
-            }
-          } else {
-            setDocumentSubmission(docObj);
-            setShow(true);
-          }
         } else {
-          if (
-            ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(
-              status
-            )
-          ) {
-            setDocumentSubmission(docObj);
-            setShow(true);
-          }
+          setDocumentSubmission(docObj);
+          setShow(true);
+        }
+        if (
+          ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+        ) {
+          setDocumentSubmission(docObj);
+          setShow(true);
         }
       }
     };
@@ -298,7 +294,7 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isBenchClerk, isTypist, isJudge, isCitizen, isFSO, isCourtRoomManager]);
+  }, [activeTab, userInfo, isCitizen]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,

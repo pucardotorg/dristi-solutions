@@ -6,7 +6,6 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "./AdmittedCases/AdmittedCase";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
 import PaymentInbox from "./Payment/PaymentInbox";
@@ -32,7 +31,6 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
-  const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role.code));
   const homeActiveTab = location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB";
   const employeeCrumbs = [
     {
@@ -132,7 +130,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <PrivateRoute
             exact
             path={`${path}/home/view-case`}
-            component={isJudgeView ? (props) => <AdmittedCaseV2 /> : (props) => <AdmittedCases />}
+            component={(props) => <AdmittedCaseV2 />}
           />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />

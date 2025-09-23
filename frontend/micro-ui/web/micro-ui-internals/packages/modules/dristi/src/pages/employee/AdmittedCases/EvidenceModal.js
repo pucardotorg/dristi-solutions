@@ -1590,7 +1590,7 @@ const EvidenceModal = ({
                 </div>
               )} */}
             </div>
-            {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
+            {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("ALLOW_SUBMISSION_COMMENT")) && (
               <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
