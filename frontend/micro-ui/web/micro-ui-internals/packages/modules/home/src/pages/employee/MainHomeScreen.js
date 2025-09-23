@@ -86,6 +86,9 @@ const MainHomeScreen = () => {
     } else if (location?.state?.offlinePaymentsTab) {
       setActiveTab("OFFLINE_PAYMENTS");
     }
+    else if (location?.state?.homeActiveTab === "CS_HOME_ORDERS") {
+      setActiveTab("CS_HOME_ORDERS");
+    }
     // sessionStorage.removeItem("homeActiveTab");
   }, [userType, history, isEpostUser, location]);
 
