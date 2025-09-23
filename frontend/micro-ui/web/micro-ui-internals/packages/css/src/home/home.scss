@@ -419,6 +419,7 @@
       }
       .search-button-wrapper {
         margin-left: 20px;
+        padding-top: 15px !important;
         .link-label {
           font-size: 16px;
           font-weight: 700;
@@ -430,6 +431,12 @@
           box-shadow: none;
           border-radius: 4px;
         }
+      }
+    }
+    .search-component-table {
+      .home-offline-payments-action-column {
+        display:  flex !important;
+        align-items: center !important;
       }
     }
   }

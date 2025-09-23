@@ -1,16 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
-import { formatDateDifference } from "../../../orders/src/utils";
 import { formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
-import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -597,6 +596,149 @@ export const UICustomizations = {
           },
         },
       ];
+    },
+  },
+
+  bulkADiarySignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const date = new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime();
+      const fetchEntries = additionalDetails?.fetchEntries;
+      const setDiaryEntries = additionalDetails?.setDiaryEntries;
+      const courtId = localStorage.getItem("courtId");
+      // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
+      sessionStorage.setItem("diaryDate", date);
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            date,
+            courtId,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            fetchEntries(date);
+            setDiaryEntries(data?.entries || []);
+
+            return {
+              ...data,
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_NUMBER":
+          return <span>{value || ""}</span>;
+
+        case "PROCEEDINGS_OR_BUSINESS_OF_DAY":
+          return <ADiaryRowClick rowData={row} colData={column} value={value} />;
+
+        case "NEXT_HEARING_DATE":
+          return <span>{value || ""}</span>;
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  registerUserHomeConfig: {
+    customValidationCheck: (data) => {
+      return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;
+    },
+    preProcess: (requestCriteria, additionalDetails) => {
+      const moduleSearchCriteria = {
+        ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
+        ...requestCriteria?.state?.searchForm,
+        tenantId: window?.Digit.ULBService.getStateId(),
+      };
+      delete moduleSearchCriteria.userType;
+      if (additionalDetails in moduleSearchCriteria && !moduleSearchCriteria[additionalDetails]) {
+        delete moduleSearchCriteria[additionalDetails];
+      }
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            moduleSearchCriteria: {
+              ...moduleSearchCriteria,
+            },
+            processSearchCriteria: {
+              ...requestCriteria?.body?.inbox?.processSearchCriteria,
+              tenantId: window?.Digit.ULBService.getStateId(),
+            },
+            tenantId: window?.Digit.ULBService.getStateId(),
+          },
+        },
+      };
+    },
+    additionalValidations: (type, data, keys) => {
+      if (type === "date") {
+        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
+      }
+    },
+    MobileDetailsOnClick: (row, tenantId) => {
+      let link;
+      Object.keys(row).map((key) => {
+        if (key === "APPLICATION_NO") link = ``;
+      });
+      return link;
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      const usertype = row?.ProcessInstance?.businessService.includes("clerk") ? "clerk" : "advocate";
+      const individualId = row?.businessObject?.individual?.individualId;
+      const applicationNumber =
+        row?.businessObject?.advocateDetails?.applicationNumber || row?.businessObject?.clerkDetails?.applicationNumber || row?.applicationNumber;
+
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      switch (key) {
+        case "APPLICATION_NO":
+          return (
+            <span className="link">
+              <Link
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
+              >
+                {String(value ? (column?.translate ? t(column?.prefix ? `${column?.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
+              </Link>
+            </span>
+          );
+        case "ACTION":
+          return (
+            <Link
+              to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber}&individualId=${value}&type=${usertype}`}
+            >
+              <span className="action-link"> {t("CS_VERIFY")}</span>
+            </Link>
+          );
+        case "USER_TYPE":
+          return usertype === "clerk" ? t("ADVOCATE CLERK") : t("ADVOCATE");
+        case "DATE_CREATED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{formattedDate}</span>;
+        case "DUE_SINCE_IN_DAYS":
+          const createdAt = new Date(row?.businessObject?.auditDetails?.createdTime);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span>{differenceInDays}</span>;
+        case "USER_NAME":
+          const displayName = `${value?.givenName || ""} ${value?.otherNames || ""} ${value?.familyName || ""}`;
+          return displayName;
+        default:
+          return t("ES_COMMON_NA");
+      }
     },
   },
 

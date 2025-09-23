@@ -13,6 +13,9 @@ import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
 import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
 import NewBulkRescheduleTab from "./NewBulkRescheduleTab";
 import BulkESignView from "./BulkESignView";
+import BulkSignADiaryView from "./BulkSignADiaryView";
+import RegisterUsersHomeTab from "./RegisterUsersHomeTab";
+import OfflinePaymentsHomeTab from "./OfflinePaymentsHomeTab";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -35,6 +38,8 @@ const MainHomeScreen = () => {
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
+    REGISTER_USERS: 0,
+    OFFLINE_PAYMENTS: 0,
     SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
     REVIEW_PROCESS: 0,
@@ -76,9 +81,13 @@ const MainHomeScreen = () => {
   useEffect(() => {
     if (isEpostUser || userType === "citizen") {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    } else if (location?.state?.registerUsersTab) {
+      setActiveTab("REGISTER_USERS");
+    } else if (location?.state?.offlinePaymentsTab) {
+      setActiveTab("OFFLINE_PAYMENTS");
     }
     // sessionStorage.removeItem("homeActiveTab");
-  }, [userType, history, isEpostUser]);
+  }, [userType, history, isEpostUser, location]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -243,6 +252,14 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Others",
           },
+          searchRegisterUsers: {
+            date: null,
+            isOnlyCountRequired: true,
+          },
+          searchOfflinePayments: {
+            date: null,
+            isOnlyCountRequired: true,
+          },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
@@ -255,8 +272,12 @@ const MainHomeScreen = () => {
       const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.count || 0;
       const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.count || 0;
       const otherApplicationsCount = res?.otherApplicationsData?.count || 0;
+      const registerUsersCount = res?.registerUsersData?.count || 0;
+      const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
 
       setPendingTaskCount({
+        REGISTER_USERS: registerUsersCount,
+        OFFLINE_PAYMENTS: offlinePaymentsCount,
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
@@ -279,6 +300,12 @@ const MainHomeScreen = () => {
   }, []);
 
   const options = {
+    REGISTER_USERS: {
+      name: "HOME_REGISTER_USERS",
+    },
+    OFFLINE_PAYMENTS: {
+      name: "HOME_OFFLINE_PAYMENTS",
+    },
     SCRUTINISE_CASES: {
       name: "HOME_SCRUTINISE_CASES",
     },
@@ -507,6 +534,18 @@ const MainHomeScreen = () => {
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div className="home-bulk-sign">
             <BulkBailBondSignView showToast={showToast} />
+          </div>
+        ) : activeTab === "REGISTER_USERS" ? (
+          <div className="home-bulk-sign">
+            <RegisterUsersHomeTab />
+          </div>
+        ) : activeTab === "OFFLINE_PAYMENTS" ? (
+          <div className="home-bulk-sign">
+            <OfflinePaymentsHomeTab />
+          </div>
+        ) : activeTab === "CS_HOME_A_DAIRY" ? (
+          <div className="home-bulk-sign">
+            <BulkSignADiaryView showToast={showToast} />
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
           <div className="home-bulk-sign">

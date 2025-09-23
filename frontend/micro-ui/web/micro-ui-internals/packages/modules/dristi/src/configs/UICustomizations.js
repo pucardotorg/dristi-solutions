@@ -492,7 +492,7 @@ export const UICustomizations = {
       switch (key) {
         case "CASE_NAME_ID":
           return billStatus === "ACTIVE" ? (
-            <span className="link">
+            <span className="link" style={{ textDecoration: "underline", color: "#0A0A0A" }}>
               <Link
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
@@ -506,16 +506,12 @@ export const UICustomizations = {
           return <span>{`Rs. ${value}/-`}</span>;
         case "ACTION":
           return billStatus === "ACTIVE" ? (
-            <span className="action-link">
+            <span className="action-link home-offline-payments-action-column">
               <Link
-                style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
+                style={{ display: "flex", alignItem: "center", color: "#007E7E" }}
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
-                {" "}
-                <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
-                  {t("CS_RECORD_PAYMENT")}
-                </span>{" "}
-                <ArrowDirection styles={{ height: "20px", width: "20px", fill: "#9E400A" }} />
+                <span style={{ display: "flex", alignItem: "center", color: "#007E7E", fontWeight: "700" }}>{t("CS_RECORD_PAYMENT")}</span>
               </Link>
             </span>
           ) : (
@@ -2047,6 +2043,14 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchRegisterUsers: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
+            searchOfflinePayments: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2063,9 +2067,13 @@ export const UICustomizations = {
             const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.count || 0;
             const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.count || 0;
             const otherApplicationsCount = data?.otherApplicationsData?.count || 0;
+            const registerUsersCount = data?.registerUsersData?.count || 0;
+            const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
+              REGISTER_USERS: registerUsersCount,
+              OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
