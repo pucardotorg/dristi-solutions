@@ -433,5 +433,10 @@ public class HearingUtil {
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+
+        //Remove this
+        log.info("--------------------------------------------------");
+        log.info("update dristi_orders set scheduledhearingnumber='{}' where ordernumber='{}' and scheduledhearingnumber is null;", newHearing.getHearing().getHearingId(), order.getOrderNumber());
+        log.info("--------------------------------------------------");
     }
 }
