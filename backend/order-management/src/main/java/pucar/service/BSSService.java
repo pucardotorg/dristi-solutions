@@ -40,10 +40,9 @@ public class BSSService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
-    private final CaseUtil caseUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -53,7 +52,6 @@ public class BSSService {
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
-        this.caseUtil = caseUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -221,7 +219,7 @@ public class BSSService {
 
                     orderProcessor.preProcessOrder(orderUpdateRequest);
                     if (order.getNextHearingDate() != null) {
-                        preProcessScheduleNextHearing(orderUpdateRequest);
+                        hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
                     }
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
@@ -247,30 +245,6 @@ public class BSSService {
 
         return updatedOrder;
 
-    }
-
-    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
-        Order order = orderRequest.getOrder();
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
-        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
-
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        // add validation here
-        CourtCase courtCase = cases.get(0);
-
-        HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
-
-        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
-
-        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
-
-        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
-        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
-
-        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 
     private Map<String, Object> createAttribute(String name, String value) {
