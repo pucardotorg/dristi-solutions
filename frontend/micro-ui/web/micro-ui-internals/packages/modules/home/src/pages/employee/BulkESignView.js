@@ -49,7 +49,7 @@ function BulkESignView() {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const canSign = useMemo(() => roles?.some((role) => role.code === "CAN_SIGN"), [roles]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
@@ -377,7 +377,7 @@ function BulkESignView() {
             <div className="header">{t("CS_HOME_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          {isJudge && (
+          {canSign && (
             <div className="bulk-submit-bar">
               <SubmitBar
                 label={t("SIGN_SELECTED_ORDERS")}

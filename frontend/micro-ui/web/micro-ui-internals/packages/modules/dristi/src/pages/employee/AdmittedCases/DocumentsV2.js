@@ -38,7 +38,7 @@ const DocumentsV2 = ({
 
   const isCitizen = userRoles?.includes("CITIZEN");
   const hasWitnessDepositionViewAccess = roles?.some((role) => role.code === "VIEW_WITNESS_DEPOSITION");
-  const canSign = roles?.some((role) => role.code === "CASE_APPROVER");
+  const canSign = roles?.some((role) => role.code === "CAN_SIGN");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {

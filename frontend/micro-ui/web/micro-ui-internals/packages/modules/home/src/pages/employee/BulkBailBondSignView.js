@@ -43,7 +43,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const canSign = useMemo(() => roles?.some((role) => role.code === "CAN_SIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
@@ -273,7 +273,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
           <div className="header">{t("BULK_BAIL_BOND_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>
-        {isJudge && (
+        {canSign && (
           <div className="bulk-submit-bar">
             <SubmitBar
               label={t("SIGN_SELECTED_BAIL_BONDS")}
