@@ -205,7 +205,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       order?.attendance?.Absent?.map(
         (attendee) => messagesMap[attendee] || attendee
       )?.join(", ") || "";
-    const isHearingInProgress = !!hearingInProgress;
+    const isHearingInProgress = !!hearingInProgress || order?.hearingNumber;
 
     const scheduleHearingItem = (() => {
       if (order?.orderCategory === "INTERMEDIATE") return order;
@@ -238,9 +238,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       messagesMap[scheduleHearingItem?.orderDetails?.purposeOfHearing] ||
       "";
     const isNextHearing = !!(
-      (order?.nextHearingDate &&
-        order?.purposeOfNextHearing &&
-        hearingInProgress) ||
+      (order?.nextHearingDate && order?.purposeOfNextHearing) ||
       scheduleHearingItem?.orderDetails?.hearingDate ||
       hearingScheduled
     );
