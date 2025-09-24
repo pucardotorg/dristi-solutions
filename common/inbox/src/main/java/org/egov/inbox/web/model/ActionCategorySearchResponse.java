@@ -20,6 +20,15 @@ public class ActionCategorySearchResponse {
     @JsonProperty("viewApplicationData")
     private Criteria viewApplicationData;
 
+    @JsonProperty("delayCondonationApplicationData")
+    private Criteria delayCondonationApplicationData;
+
+    @JsonProperty("rescheduleHearingsData")
+    private Criteria rescheduleHearingsData;
+
+    @JsonProperty("otherApplicationsData")
+    private Criteria otherApplicationsData;
+
     @JsonProperty("scheduleHearingData")
     private Criteria scheduleHearingData;
 
@@ -28,4 +37,14 @@ public class ActionCategorySearchResponse {
 
     @JsonProperty("bailBondData")
     private Criteria bailBondData;
+
+    @JsonProperty("scrutinyCasesData")
+    private Criteria scrutinyCasesData;
+
+    @JsonProperty("offlinePaymentsData")
+    private Criteria offlinePaymentsData;
+
+    @JsonProperty("registerUsersData")
+    private Criteria registerUsersData;
+
 }
