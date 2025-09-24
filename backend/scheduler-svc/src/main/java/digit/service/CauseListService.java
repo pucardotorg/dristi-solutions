@@ -296,7 +296,7 @@ public class CauseListService {
 
             if(causeListIndex < causeList.size()){
                 log.warn("Placing {} overflown causeList items in the end of last available slot", causeList.size() - causeListIndex);
-                MdmsSlot lastSlot = mdmsSlotList.getLast();
+                MdmsSlot lastSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
                 accumulatedTime = lastSlot.getSlotDuration();
                 while(causeListIndex<causeList.size()) {
                     CauseList causeListItem = causeList.get(causeListIndex);
