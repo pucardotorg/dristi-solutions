@@ -442,16 +442,16 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
 
   const primaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_REGISTER_CASE";
     }
     //write admission condition here
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
   const secondaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_SEND_BACK";
     }
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
 
   const updateCaseDetails = async (action, filterSigned = false) => {
     let filteredDocuments = caseDetails?.documents;
@@ -503,14 +503,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handlePrimaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       // setActionModal("sendCaseBackPotential");
       setActionModal("registerCase");
     }
     // Write isAdmission condition here
   };
   const handleSecondaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       setActionModal("sendCaseBack");
     }
     // Write isAdmission condition here
@@ -693,7 +693,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     );
   };
 
-  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
+  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
 

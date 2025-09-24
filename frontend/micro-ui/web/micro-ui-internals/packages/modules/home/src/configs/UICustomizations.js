@@ -413,6 +413,8 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
@@ -423,8 +425,16 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SCRUTINY_STATUS":
+          return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
           return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
         default:
           return t("ES_COMMON_NA");
       }

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
+import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
@@ -242,15 +242,21 @@ const HomeView = () => {
     if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
       return rolesToConfigMapping?.find((item) => item[state.role]);
     } else {
-      return (
-        rolesToConfigMapping?.find((item) =>
-          item.roles?.reduce((res, curr) => {
-            if (!res) return res;
-            res = roles?.some((role) => role.code === curr);
-            return res;
-          }, true)
-        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
-      );
+      // For employees, use unified config approach
+      if (userInfoType === "employee") {
+        const unifiedConfig = getUnifiedEmployeeConfig(roles);
+        const onRowClickRoute = getOnRowClickConfig(roles);
+        
+        return {
+          config: unifiedConfig,
+          onRowClickRoute: onRowClickRoute,
+          isEmployee: true
+        };
+      }
+      else if(userInfoType === "citizen"){
+        return TabLitigantSearchConfig;
+      }
+      else return null;
     }
   }, [state?.role, roles, userInfoType]);
 

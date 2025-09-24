@@ -167,12 +167,11 @@ const AdmittedCaseV2 = () => {
   const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
+  const activeTab = urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
@@ -785,35 +784,32 @@ const AdmittedCaseV2 = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
-        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+      if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+        history.push(
+          `/${window?.contextPath}/${
+            isCitizen ? "citizen" : "employee"
+          }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+        );
+      }
+      if (
+        [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+      ) {
+        if (createdByUuid === userInfo?.uuid) {
           history.push(
             `/${window?.contextPath}/${
               isCitizen ? "citizen" : "employee"
-            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+            }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
           );
         }
-        if (
-          [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          if (createdByUuid === userInfo?.uuid) {
-            history.push(
-              `/${window?.contextPath}/${
-                isCitizen ? "citizen" : "employee"
-              }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
-            );
-          }
-        } else {
-          setDocumentSubmission(docObj);
-          setShow(true);
-        }
       } else {
-        if (
-          ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          setDocumentSubmission(docObj);
-          setShow(true);
-        }
+        setDocumentSubmission(docObj);
+        setShow(true);
+      }
+      if (
+        ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+      ) {
+        setDocumentSubmission(docObj);
+        setShow(true);
       }
     };
 
@@ -1480,8 +1476,8 @@ const AdmittedCaseV2 = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return isFSO ? true : !relevantStatuses.includes(caseDetails?.status);
-  }, [caseDetails?.status, isFSO]);
+    return !relevantStatuses.includes(caseDetails?.status);
+  }, [caseDetails?.status]);
 
   const isCaseAdmitted = useMemo(() => {
     return caseDetails?.status === "CASE_ADMITTED";
@@ -3798,7 +3794,7 @@ const AdmittedCaseV2 = () => {
       )}
       {config?.label !== "Overview" && config?.label !== "caseFileOverview" && config?.label !== "Complaint" && config?.label !== "History" && (
         <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
-          <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
+          <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label?.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (
               <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
