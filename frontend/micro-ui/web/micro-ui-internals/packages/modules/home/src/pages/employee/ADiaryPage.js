@@ -127,7 +127,7 @@ const ADiaryPage = ({ path }) => {
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const canSign = useMemo(() => roles?.some((role) => role?.code === "CAN_SIGN"), [roles]);
 
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
@@ -417,7 +417,7 @@ const ADiaryPage = ({ path }) => {
                           <td style={styles.rowDataStyle}>{index + 1}</td>
                           <td style={styles.rowDataStyle}>{entry?.caseNumber}</td>
                           <td
-                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle , whiteSpace: "pre-line"}}
+                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle, whiteSpace: "pre-line" }}
                             onClick={() => handleRowClick(entry)}
                             onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
                             onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
@@ -465,7 +465,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {isJudge && (
+          {canSign && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&
