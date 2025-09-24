@@ -1557,13 +1557,16 @@ const ReviewSummonsNoticeAndWarrant = () => {
       ) : (
         <React.Fragment>
           {/* <ProjectBreadCrumb location={window.location} /> */}
-          <div className="review-summon-warrant">
+          <div className={"bulk-esign-order-view ignore-margin-left select"}>
+            <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
+              {t("REVIEW_PROCESS")}
+            </div>
+            {/* <div className="review-summon-warrant">
             <div className="header-wraper">
               <Header>{t("REVIEW_PROCESS")}</Header>
-            </div>
+            </div> */}
 
-            <div className="inbox-search-wrapper pucar-home home-view custom-search-layout">
-              {/* Pass defaultValues as props to InboxSearchComposer */}
+            <div className="inbox-search-wrapper ">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}
@@ -1576,6 +1579,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   resultsTable: {
                     onClickRow: handleRowClick, // Use the new row click handler
                   },
+                }}
+                style={{
+                  width: "100%",
+                  maxHeight: "calc(100vh - 90px)",
+                  overflowY: "auto",
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#c5c5c5 #f9fafb",
+                  padding: "26px",
                 }}
               ></InboxSearchComposer>
               {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}

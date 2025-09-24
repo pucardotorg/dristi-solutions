@@ -590,7 +590,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_PROCESS" ? (
           <div className="home-bulk-sign">
-            <ReviewSummonsNoticeAndWarrant showToast={showToast} />
+            <ReviewSummonsNoticeAndWarrant />
           </div>
         ) : activeTab === "CS_HOME_A_DAIRY" ? (
           <div className="home-bulk-sign">

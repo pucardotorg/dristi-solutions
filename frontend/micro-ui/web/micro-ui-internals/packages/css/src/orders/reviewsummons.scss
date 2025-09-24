@@ -137,7 +137,7 @@
 }
 
 
-
+/*
 .custom-search-layout .search-field-wrapper .label-field-pair:first-child {
   flex-basis: 100%;
   width: 100%;
@@ -155,7 +155,7 @@
   color:#231F20 !important;
 }
 
-/* Make the search row flexbox */
+
 .custom-search-layout .search-field-wrapper {
   display: flex;
   flex-wrap: wrap;
@@ -163,12 +163,10 @@
   justify-content: center ;
 }
 
-/* Push Case Search box + buttons to right */
 .custom-search-layout .search-field-wrapper .label-field-pair input[name="searchText"] {
-  width: 120px; /* adjust width */
+  width: 120px; 
 }
 
-/* Move the whole Case Search pair to the right */
 .custom-search-layout .search-field-wrapper .label-field-pair:has(input[name="searchText"]) {
   margin-left: auto;
   display: flex;
@@ -186,6 +184,7 @@
   min-width: 40px !important;
   max-width: 250px !important;
 }
+  */
 
 /* input.employee-select-wrap--elipses {
    color: #77787B !important;

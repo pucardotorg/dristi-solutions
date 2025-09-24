@@ -74,12 +74,12 @@ export const SummonsTabsConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               // subheading
-              {
-                type: "label",
-                label: "PENDING_SIGN",
-                key: "pendingSignHeading",
-                breakAfter: true,
-              },
+              // {
+              //   type: "label",
+              //   label: "PENDING_SIGN",
+              //   key: "pendingSignHeading",
+              //   breakAfter: true,
+              // },
               // hidden
               {
                 type: "component",
@@ -332,12 +332,12 @@ export const SummonsTabsConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               // subheading
-              {
-                type: "label",
-                label: "SIGNED",
-                key: "signedHeading",
-                breakAfter: true,
-              },
+              // {
+              //   type: "label",
+              //   label: "SIGNED",
+              //   key: "signedHeading",
+              //   breakAfter: true,
+              // },
               // hidden
               {
                 type: "component",
@@ -575,12 +575,12 @@ export const SummonsTabsConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               // subheading
-              {
-                type: "label",
-                label: "SENT",
-                key: "sentHeading",
-                breakAfter: true,
-              },
+              // {
+              //   type: "label",
+              //   label: "SENT",
+              //   key: "sentHeading",
+              //   breakAfter: true,
+              // },
               // hidden
               {
                 type: "component",
@@ -793,12 +793,12 @@ export const SummonsTabsConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               // subheading
-              {
-                type: "label",
-                label: "COMPLETED",
-                key: "completedHeading",
-                breakAfter: true,
-              },
+              // {
+              //   type: "label",
+              //   label: "COMPLETED",
+              //   key: "completedHeading",
+              //   breakAfter: true,
+              // },
               // hidden
               {
                 type: "component",
@@ -825,9 +825,16 @@ export const SummonsTabsConfig = {
                   optionsKey: "name",
                   defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
-                    moduleName: "Order",
-                    masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    // moduleName: "Order",
+                    // masterName: "CourtStaffOrderType",
+                    // select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    moduleName: "Order,Notice",
+                    masterName: "CourtStaffOrderType,NoticeType",
+                    select:
+                      "(data) => { console.log('MDMS data:', data);  const processTypes = (data?.['Order']?.CourtStaffOrderType || []).map(i => ({ ...i, code: i.code || i.name })); const noticeTypes = (data?.['Notice']?.NoticeType || []).map(i => ({ ...i, code: i.code || i.name })); console.log('Merged types:', [...processTypes, ...noticeTypes]); return [...processTypes, ...noticeTypes]; }",
+
+                    // select:
+                    //   "(data) => { const processTypes = (data?.['Order']?.CourtStaffOrderType) || []; const noticeTypes = (data?.['Notice']?.NoticeType) || []; return [...processTypes, ...noticeTypes]; }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",

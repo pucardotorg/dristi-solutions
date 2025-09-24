@@ -448,6 +448,12 @@
     }
   }
 }
+.bulk-esign-order-view.ignore-margin-left 
+  .inbox-search-component-wrapper 
+  .search-field-wrapper.search.custom-both-clear-search 
+  .search-button-wrapper {
+  margin-left: auto;
+}
 
 .bulk-submit-bar {
   display: flex;
