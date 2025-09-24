@@ -1722,8 +1722,11 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateForHearing = "";
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
@@ -1766,8 +1769,11 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateForHearing = "";
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
@@ -1814,8 +1820,11 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateOfHearing = "";
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
