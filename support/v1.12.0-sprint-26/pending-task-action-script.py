@@ -45,23 +45,17 @@ def fetch_case_by_filing_number(filing_number):
         print(f"Error fetching case for filingNumber {filing_number}: {e}")
         return None, None, None, None, None, None
 
-def update_elasticsearch(referenceId, caseNumber, substage, advocateDetails, searchableFields, actionCategory):
+def update_elasticsearch(referenceId, actionCategory, assignedRole):
     update_query = {
         "script": {
             "source": """
-                ctx._source.Data.caseNumber = params.caseNumber;
-                ctx._source.Data.substage = params.substage;
-                ctx._source.Data.advocateDetails = params.advocateDetails;
-                ctx._source.Data.searchableFields = params.searchableFields;
                 ctx._source.Data.actionCategory = params.actionCategory;
+                ctx._source.Data.assignedRole = params.assignedRole;
             """,
             "lang": "painless",
             "params": {
-                "caseNumber": caseNumber,
-                "substage": substage,
-                "advocateDetails": advocateDetails,
-                "searchableFields": searchableFields,
-                "actionCategory": actionCategory
+                "actionCategory": actionCategory,
+                "assignedRole": assignedRole
             }
         },
         "query": {
@@ -80,39 +74,31 @@ def update_elasticsearch(referenceId, caseNumber, substage, advocateDetails, sea
         )
         res.raise_for_status()
         print(f"✅ Updated ES for {referenceId}\n"
-              f"  ↪ caseNumber: {caseNumber}\n"
-              f"  ↪ substage: {substage}\n"
-              f"  ↪ advocateDetails: {json.dumps(advocateDetails, indent=2)}\n"
-              f"  ↪ searchableFields: {json.dumps(searchableFields, indent=2)}\n"
               f"  ↪ actionCategory: {actionCategory}\n")
     except Exception as e:
         print(f"❌ Failed to update ES for {referenceId}\n"
-              f"  ↪ caseNumber: {caseNumber}\n"
-              f"  ↪ substage: {substage}\n"
-              f"  ↪ advocateDetails: {json.dumps(advocateDetails, indent=2)}\n"
-              f"  ↪ searchableFields: {json.dumps(searchableFields, indent=2)}\n"
               f"  ↪ actionCategory: {actionCategory}\n"
               f"  ↪ Error: {e}")
 
 def search_pending_tasks():
     body = {
-        "size": 10000,
-        "query": {
-            "bool": {
-                "must": [
-                    { "term": { "Data.isCompleted": False } },
-                    {
-                        "bool": {
-                             "must_not": [
-                             { "term": { "Data.filingNumber.keyword": "null" } }
-                             ]
-                        }
-                    }
-                ]
-            }
-        },
-        "_source": ["Data.filingNumber", "Data.referenceId", "Data.name"]
-    }
+             "size": 10000,
+             "query": {
+               "bool": {
+                 "must": [
+                   { "term": { "Data.isCompleted": False } },
+                   {
+                     "bool": {
+                       "must_not": [
+                         { "term": { "Data.filingNumber.keyword": "null" } }
+                       ]
+                     }
+                   },
+                   { "term": { "Data.name.keyword": "Scrutiny of Case" } }
+                 ]
+               }
+             }
+           }
     try:
         res = requests.post(elasticsearch_search_url, auth=(es_username, es_password), headers=headers, json=body)
         res.raise_for_status()
@@ -160,48 +146,11 @@ for record in records:
 
     actionCategory = ""
     if name in [
-        "Re-issue Notice", "Re-issue Summon", "Re-issue Warrant"
+        "Scrutiny of Case"
     ]:
-        actionCategory = "Review Process"
-    elif name in [
-        "Order for Initiating Rescheduling of Hearing Date",
-        "Create Order for rescheduling the hearing"
-    ]:
-        actionCategory = "Schedule Hearing"
-    elif name in [
-        "Order for Extension for Submission Deadline",
-        "Order for Advocate Replacement Approval/Rejection",
-        "Accept Document Submission",
-        "Review Document Submission"
-        "Review Delay in Submission",
-        "Review Delay Condonation application",
-        "Review of Bail Application",
-        "Review Bail Documents",
-        "Review Advocate Replace Request",
-        "Review Litigant Details Change"
-    ]:
-        actionCategory = "View Application"
-    elif name == "Register Case":
-        actionCategory = "Register cases"
+        actionCategory = "Scrutinise cases"
 
-    if filing_number and filing_number != "null":
-        filingNumber, courtCaseNumber, cmpNumber, substage, representatives, caseTitle = fetch_case_by_filing_number(filing_number)
+        update_elasticsearch(referenceId,actionCategory, ["CASE_REVIEWER","VIEW_SCRUTINY_CASES"])
 
-        if filingNumber:
-            caseNumber = filing_number
-            if courtCaseNumber:
-                caseNumber = courtCaseNumber
-            elif cmpNumber:
-                caseNumber = cmpNumber
-
-            advocate_details_map = extract_advocate_details(representatives)
-            advocateDetails = advocate_details_map
-
-            searchable_fields_list = [caseNumber, caseTitle] + extract_advocate_names(representatives)
-            searchableFields = searchable_fields_list
-
-            update_elasticsearch(referenceId, caseNumber, substage, advocateDetails, searchableFields, actionCategory)
-        else:
-            print(f"❌ Case not found for {filing_number}")
     else:
         print(f"⚠️ Skipped record with no filing number: {record}")
