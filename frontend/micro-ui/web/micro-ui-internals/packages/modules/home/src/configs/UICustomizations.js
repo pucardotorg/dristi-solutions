@@ -640,7 +640,9 @@ export const UICustomizations = {
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
       const courtId = localStorage.getItem("courtId");
       // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
-      sessionStorage.setItem("diaryDate", date);
+      // sessionStorage.setItem("diaryDate", date);
+      // sessionStorage.removeItem("diaryDate");
+
       return {
         ...requestCriteria,
         body: {

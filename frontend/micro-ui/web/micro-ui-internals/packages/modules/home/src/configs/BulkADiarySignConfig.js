@@ -4,7 +4,8 @@ const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).t
 const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
 
 const defaultSearchValues = {
-  date: sessionStoredEpoch ? new Date(sessionStoredEpoch - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0] : todayStr,
+  // date: sessionStoredEpoch ? new Date(sessionStoredEpoch - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0] : todayStr,
+  date: todayStr
 };
 
 const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10);
