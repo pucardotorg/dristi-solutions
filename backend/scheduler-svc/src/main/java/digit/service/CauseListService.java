@@ -277,24 +277,31 @@ public class CauseListService {
             List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
             Collections.reverse(mdmsSlotList);int currentSlotIndex = 0; // Track the current slot index
             int accumulatedTime = 0; // Track accumulated hearing time within the slot
+            int causeListIndex = 0;
 
-            for(CauseList causeList1 : causeList){
-                while(currentSlotIndex < mdmsSlotList.size()){
-                    MdmsSlot mdmsSlot = mdmsSlotList.get(currentSlotIndex);
-                    int hearingTime = causeList1.getHearingTimeInMinutes();
+            while(currentSlotIndex<mdmsSlotList.size() && causeListIndex<causeList.size()) {
+                MdmsSlot currentSlot = mdmsSlotList.get(currentSlotIndex);
+                CauseList causeListItem = causeList.get(causeListIndex);
+                int hearingDuration = causeListItem.getHearingTimeInMinutes();
+                if(accumulatedTime + hearingDuration <= currentSlot.getSlotDuration()){
+                    getCauseListFromHearingAndSlot(causeListItem, currentSlot, accumulatedTime);
+                    accumulatedTime += hearingDuration;
+                    causeListIndex++;
+                }
+                else{
+                    currentSlotIndex++;
+                    accumulatedTime = 0;
+                }
+            }
 
-                    if(accumulatedTime + hearingTime <= mdmsSlot.getSlotDuration()){
-                        getCauseListFromHearingAndSlot(causeList1, mdmsSlot, accumulatedTime);
-                        accumulatedTime += hearingTime;
-                        break;
-                    } else {
-                        currentSlotIndex++;
-                        accumulatedTime = 0;
-                    }
-                    if (currentSlotIndex == mdmsSlotList.size()) {
-                        MdmsSlot lastMdmsSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
-                        getCauseListFromHearingAndSlot(causeList1, lastMdmsSlot, accumulatedTime);
-                    }
+            if(causeListIndex < causeList.size()){
+                log.warn("Placing {} overflown causeList items in the end of last available slot", causeList.size() - causeListIndex);
+                MdmsSlot lastSlot = mdmsSlotList.getLast();
+                accumulatedTime = lastSlot.getSlotDuration();
+                while(causeListIndex<causeList.size()) {
+                    CauseList causeListItem = causeList.get(causeListIndex);
+                    getCauseListFromHearingAndSlot(causeListItem, lastSlot, accumulatedTime);
+                    causeListIndex++;
                 }
             }
             log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
