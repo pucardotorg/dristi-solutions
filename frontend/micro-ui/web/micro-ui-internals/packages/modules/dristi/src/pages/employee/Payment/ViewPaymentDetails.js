@@ -343,7 +343,7 @@ const ViewPaymentDetails = ({ location, match }) => {
             referenceId: taskHearingNumber,
             status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: [taskOrderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
             cnrNumber: demandBill?.additionalDetails?.cnrNumber,
             filingNumber: filingNumber,
             caseId: caseId,

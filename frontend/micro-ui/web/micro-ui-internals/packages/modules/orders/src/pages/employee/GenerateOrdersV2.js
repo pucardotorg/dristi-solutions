@@ -2976,7 +2976,7 @@ const GenerateOrdersV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
             actionCategory: "Bail Bond",
             cnrNumber: caseDetails?.cnrNumber,
             filingNumber,
