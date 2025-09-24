@@ -127,7 +127,7 @@ const ADiaryPage = ({ path }) => {
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const canSign = useMemo(() => roles?.some((role) => role?.code === "CAN_SIGN"), [roles]);
+  const isDiaryApprover = useMemo(() => roles?.some((role) => role?.code === "DIARY_APPROVER"), [roles]);
 
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
@@ -465,7 +465,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {canSign && (
+          {isDiaryApprover && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&

@@ -3,21 +3,22 @@ import { TextInput, LabelFieldPair, SubmitBar, Loader } from "@egovernments/digi
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import { SmallSearchIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { has } from "lodash";
 
 const NewBulkRescheduleTable = ({
   t,
   loader,
-  showToast = () => {},
   setStepper,
   newHearingData,
   setNewHearingData,
   defaultBulkFormData,
   bulkFormData,
   setBulkFormData,
+  allHearings,
+  loading,
+  handleBulkHearingSearch,
+  hasNotificationCreateAccess,
 }) => {
-  const [allHearings, setAllHearings] = useState([]);
-
-  // Handle ch`eckbox change
   const handleSelectChange = (checked, row) => {
     const rowId = row?.hearingBookingId;
     if (checked) {
@@ -40,11 +41,6 @@ const NewBulkRescheduleTable = ({
       setNewHearingData([]);
     }
   };
-
-  const [loading, setIsLoader] = useState(false);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const judgeId = localStorage.getItem("judgeId");
-  const courtId = localStorage.getItem("courtId");
 
   const config = {
     type: "component",
@@ -71,35 +67,6 @@ const NewBulkRescheduleTable = ({
   const handleClear = async () => {
     setBulkFormData(defaultBulkFormData);
     await handleBulkHearingSearch(defaultBulkFormData);
-  };
-
-  const handleBulkHearingSearch = async (newFormData) => {
-    try {
-      setIsLoader(true);
-      const tentativeDates = await hearingService?.bulkReschedule({
-        BulkReschedule: {
-          judgeId,
-          courtId,
-          scheduleAfter: newFormData?.toDate + 24 * 60 * 60 * 1000 + 1, //we are sending next day
-          tenantId,
-          startTime: newFormData?.fromDate,
-          endTime: newFormData?.toDate + 24 * 60 * 60 * 1000 - 1, // End of the day
-          slotIds: newFormData?.slotIds?.map((slot) => slot?.id) || [],
-          reason: newFormData?.reason,
-          searchableFields: newFormData?.searchableFields,
-        },
-      });
-      if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 5000);
-        return;
-      }
-      setNewHearingData(tentativeDates?.Hearings);
-      setAllHearings(tentativeDates?.Hearings);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsLoader(false);
-    }
   };
 
   useEffect(() => {
@@ -247,12 +214,14 @@ const NewBulkRescheduleTable = ({
         </div>
       </div>
       <div className="bulk-submit-bar">
-        <SubmitBar
-          label={t(`RESCHEDULE_ALL_HEARINGS`)}
-          submit="submit"
-          onSubmit={() => setStepper((prev) => prev + 1)}
-          disabled={newHearingData?.length === 0}
-        />
+        {hasNotificationCreateAccess && (
+          <SubmitBar
+            label={t(`RESCHEDULE_ALL_HEARINGS`)}
+            submit="submit"
+            onSubmit={() => setStepper((prev) => prev + 1)}
+            disabled={newHearingData?.length === 0}
+          />
+        )}
       </div>
     </div>
   );

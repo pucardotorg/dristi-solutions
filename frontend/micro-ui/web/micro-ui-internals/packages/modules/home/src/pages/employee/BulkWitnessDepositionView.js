@@ -48,7 +48,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
-  const canSign = useMemo(() => roles?.some((role) => role.code === "CAN_SIGN"), [roles]);
+  const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
@@ -291,7 +291,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           <div className="header">{t("BULK_WITNESS_DEPOSITION_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>
-        {canSign && (
+        {hasEvidenceEsignAccess && (
           <div className="bulk-submit-bar">
             <SubmitBar
               label={t("SIGN_SELECTED_WITNESS_DEPOSITIONS")}

@@ -90,7 +90,7 @@ const HomeView = () => {
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
-  const canSign = useMemo(() => roles?.some((role) => role?.code === "CAN_SIGN"), [roles]); // to show sign orders button in pending task section
+  const hasViewSignOrderAccess = useMemo(() => roles?.some((role) => role.code === "VIEW_SIGN_ORDERS"), [roles]);
   const viewDashBoards = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]); // to show Dashboards, Reports tabs.
   const viewADiary = useMemo(() => roles?.some((role) => role?.code === "VIEW_A_DIARY"), [roles]); // to show A-Diary tab.
 
@@ -165,7 +165,7 @@ const HomeView = () => {
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
-    Boolean(canSign && courtId)
+    Boolean(hasViewSignOrderAccess && courtId)
   );
 
   const refreshInbox = () => {

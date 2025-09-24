@@ -66,6 +66,15 @@ const MainHomeScreen = () => {
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
+  const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_USER"), [assignedRoles]);
+  const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("VIEW_COLLECT_OFFLINE_PAYMENTS"), [assignedRoles]);
+  const hasViewScrutinyCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_SCRUTINY_CASES"), [assignedRoles]);
+  const hasViewRegisterCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_CASES"), [assignedRoles]);
+  const hasViewReviewBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_REVIEW_BAIL_BOND"), [assignedRoles]);
+  const hasViewDelayCondonationAccess = useMemo(() => assignedRoles?.includes("VIEW_DELAY_CONDONATION_APPLICATION"), [assignedRoles]);
+  const hasViewReschedulApplicationAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULE_APPLICATION"), [assignedRoles]);
+  const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
+
   const today = new Date();
 
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -307,44 +316,43 @@ const MainHomeScreen = () => {
     fetchHearingCount(filters, activeTab);
   }, []);
 
-  const options = {
-    REGISTER_USERS: {
-      name: "HOME_REGISTER_USERS",
-    },
-    OFFLINE_PAYMENTS: {
-      name: "HOME_OFFLINE_PAYMENTS",
-    },
-    SCRUTINISE_CASES: {
-      name: "HOME_SCRUTINISE_CASES",
-    },
-    REGISTRATION: {
-      name: "HOME_REGISTER_CASES",
-    },
-    REVIEW_PROCESS: {
-      name: "HOME_REISSUE_PROCESS",
-    },
-    // VIEW_APPLICATION: {
-    //   name: "View Applications",
-    // },
-    // SCHEDULE_HEARING: {
-    //   name: "Schedule Hearing",
-    // },
-    BAIL_BOND_STATUS: {
-      name: "HOME_BAIL_BONDS_STATUS",
-    },
-  };
+  const options = {};
+  if (hasViewRegisterUserAccess) {
+    options.REGISTER_USERS = { name: "HOME_REGISTER_USERS" };
+  }
+  if (hasViewCollectOfflinePaymentsAccess) {
+    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
+  }
+  if (hasViewScrutinyCasesAccess) {
+    options.SCRUTINISE_CASES = { name: "HOME_SCRUTINISE_CASES" };
+  }
+  if (hasViewRegisterCasesAccess) {
+    options.REGISTRATION = { name: "HOME_REGISTER_CASES" };
+  }
+  if (hasViewReviewBailBondAccess) {
+    options.REVIEW_PROCESS = { name: "HOME_REISSUE_PROCESS" };
+  }
+  if (hasViewReviewBailBondAccess) {
+    options.BAIL_BOND_STATUS = { name: "HOME_BAIL_BONDS_STATUS" };
+  }
 
-  const applicationOptions = {
-    RESCHEDULE_APPLICATIONS: {
-      name: "HOME_RESCHEDULE_APPLICATIONS",
-    },
-    DELAY_CONDONATION: {
-      name: "HOME_DELAY_CONDONATION_APPLICATIONS",
-    },
-    OTHERS: {
-      name: "HOME_OTHER_APPLICATIONS",
-    },
-  };
+  // VIEW_APPLICATION: {
+  //   name: "View Applications",
+  // },
+  // SCHEDULE_HEARING: {
+  //   name: "Schedule Hearing",
+  // },
+
+  const applicationOptions = {};
+  if (hasViewReschedulApplicationAccess) {
+    applicationOptions.RESCHEDULE_APPLICATIONS = { name: "HOME_RESCHEDULE_APPLICATIONS" };
+  }
+  if (hasViewDelayCondonationAccess) {
+    applicationOptions.DELAY_CONDONATION = { name: "HOME_DELAY_CONDONATION_APPLICATIONS" };
+  }
+  if (hasViewOthers) {
+    applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
+  }
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -505,7 +513,7 @@ const MainHomeScreen = () => {
 
   const scrutinyInboxSearchComposer = useMemo(
     () =>
-      tabData && (
+      tabData ? (
         <InboxSearchComposer
           key={`${activeTab}-${scrutinyConfig?.label}`}
           customStyle={sectionsParentStyle}
@@ -520,6 +528,8 @@ const MainHomeScreen = () => {
           tabData={tabData}
           onTabChange={onInternalTabChange}
         ></InboxSearchComposer>
+      ) : (
+        <Loader />
       ),
     [tabData, activeTab, scrutinyConfig]
   );

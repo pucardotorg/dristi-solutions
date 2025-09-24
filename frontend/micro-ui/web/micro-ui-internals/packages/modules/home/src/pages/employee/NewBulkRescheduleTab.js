@@ -36,7 +36,7 @@ const Heading = ({ label }) => {
     </div>
   );
 };
-const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
+const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -89,6 +89,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [allHearings, setAllHearings] = useState([]);
+  const [loading, setIsLoader] = useState(false);
+  const hasNotificationCreateAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_CREATOR"), [userInfo]);
+  const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
   const today = new Date();
@@ -126,7 +130,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
     }
   }, [bulkNotificationStepper, setStepper]);
 
-  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingDetails, refetch } = Digit.Hooks.hearings.useGetHearings(
     {
       criteria: {
         tenantId,
@@ -200,6 +204,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
   };
 
   const uploadSignedPdf = async () => {
+    if (!hasNotificationApproveAccess) return;
     try {
       setLoader(true);
       const localStorageID = sessionStorage.getItem("fileStoreId");
@@ -370,6 +375,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
 
   const onAddSignature = async () => {
     try {
+      setLoader(true);
       let fileStoreId = notificationFileStoreId;
       if (notificationReviewBlob?.size) {
         const pdfFile = new File([notificationReviewBlob], notificationReviewFilename, { type: "application/pdf" });
@@ -406,6 +412,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
       if (stepper === 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setLoader(false);
     }
   };
   const handleDownloadOrders = () => {
@@ -433,6 +441,34 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
     }
   };
 
+  const handleBulkHearingSearch = async (newFormData) => {
+    try {
+      setIsLoader(true);
+      const tentativeDates = await hearingService?.bulkReschedule({
+        BulkReschedule: {
+          judgeId,
+          courtId,
+          scheduleAfter: newFormData?.toDate + 24 * 60 * 60 * 1000 + 1, //we are sending next day
+          tenantId,
+          startTime: newFormData?.fromDate,
+          endTime: newFormData?.toDate + 24 * 60 * 60 * 1000 - 1, // End of the day
+          slotIds: newFormData?.slotIds?.map((slot) => slot?.id) || [],
+          reason: newFormData?.reason,
+          searchableFields: newFormData?.searchableFields,
+        },
+      });
+      setAllHearings(tentativeDates?.Hearings || []);
+      setNewHearingData(tentativeDates?.Hearings || []);
+      if (tentativeDates?.Hearings?.length === 0) {
+        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoader(false);
+    }
+  };
+
   return (
     <React.Fragment>
       <NewBulkRescheduleTable
@@ -446,6 +482,12 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
         bulkFormData={bulkFormData}
         setBulkFormData={setBulkFormData}
         bulkHearingsCount={bulkHearingsCount}
+        allHearings={allHearings}
+        setAllHearings={setAllHearings}
+        loading={loading}
+        setIsLoader={setIsLoader}
+        handleBulkHearingSearch={handleBulkHearingSearch}
+        hasNotificationCreateAccess={hasNotificationCreateAccess}
       />
       {stepper === 1 && (
         <Modal
@@ -663,8 +705,9 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, refetch, selectedDate = new
           actionSaveOnSubmit={async () => {
             setSignedDocumentUploadID("");
             sessionStorage.removeItem("fileStoreId");
-            setStepper(1);
+            setStepper(0);
             await refetch();
+            await handleBulkHearingSearch(bulkFormData);
           }}
           className={"orders-success-modal"}
           cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}

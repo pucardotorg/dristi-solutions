@@ -53,7 +53,7 @@ function BulkSignADiaryView() {
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const canSign = roles?.some((role) => role.code === "CAN_SIGN");
+  const isDiaryApprover = useMemo(() => roles?.some((role) => role.code === "DIARY_APPROVER"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const [entryDate, setEntryDate] = useState(
@@ -369,7 +369,7 @@ function BulkSignADiaryView() {
           <div className="header">{t("BULK_SIGN_ADIARY")}</div>
           {MemoInboxSearchComposer}
         </div>
-        {canSign && !isSelectedDataSigned && entryDate !== new Date().setHours(0, 0, 0, 0) && diaryEntries.length > 0 && (
+        {isDiaryApprover && !isSelectedDataSigned && entryDate !== new Date().setHours(0, 0, 0, 0) && diaryEntries.length > 0 && (
           <div
             style={{
               display: "flex",
