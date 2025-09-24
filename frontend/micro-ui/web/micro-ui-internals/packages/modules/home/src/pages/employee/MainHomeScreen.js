@@ -17,6 +17,7 @@ import BulkSignADiaryView from "./BulkSignADiaryView";
 import RegisterUsersHomeTab from "./RegisterUsersHomeTab";
 import OfflinePaymentsHomeTab from "./OfflinePaymentsHomeTab";
 import { scrutinyPendingTaskConfig } from "../../configs/ScrutinyPendingTaskConfig";
+import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/src/pages/employee/ReviewSummonsNoticeAndWarrant";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -586,6 +587,10 @@ const MainHomeScreen = () => {
         ) : activeTab === "OFFLINE_PAYMENTS" ? (
           <div className="home-bulk-sign">
             <OfflinePaymentsHomeTab />
+          </div>
+        ) : activeTab === "CS_HOME_PROCESS" ? (
+          <div className="home-bulk-sign">
+            <ReviewSummonsNoticeAndWarrant showToast={showToast} />
           </div>
         ) : activeTab === "CS_HOME_A_DAIRY" ? (
           <div className="home-bulk-sign">

@@ -111,7 +111,7 @@ const HomeSidebar = ({
             }
           }}
         />
-        <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
+        <SidebarItem t={t} label="CS_HOME_PROCESS" active={activeTab === "CS_HOME_PROCESS"} onClick={() => onTabChange("CS_HOME_PROCESS")}  />
         <SidebarItem t={t} label="CS_HOME_A_DAIRY" active={activeTab === "CS_HOME_A_DAIRY"} onClick={() => onTabChange("CS_HOME_A_DAIRY")} />
         <SidebarItem
           t={t}

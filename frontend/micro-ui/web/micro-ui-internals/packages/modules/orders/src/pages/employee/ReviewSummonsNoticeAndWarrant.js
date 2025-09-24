@@ -1688,7 +1688,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
       {showErrorToast && (
         <Toast error={showErrorToast.error} label={showErrorToast.message} isDleteBtn={true} onClose={() => setShowErrorToast(null)} />
       )}
-      //{" "}
     </React.Fragment>
   );
 };
