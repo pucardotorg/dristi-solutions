@@ -479,8 +479,6 @@ export const UICustomizations = {
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
       const deliveryChanel = searchForm?.channel?.name || null;
-      // const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00`).getTime() : null;
-      // const hearingDate = formatNoticeDeliveryDate(searchForm?.hearingDate) || null ;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
 
       return {
@@ -546,17 +544,6 @@ export const UICustomizations = {
           return taskDetails?.deliveryChannels?.statusChangeDate || "-";
         case "STATUS_UPDATE_DATE":
           return taskDetails?.deliveryChannels?.statusChangeDate || "-";
-
-        // case "PROCESS_TYPE":
-        //   return t(value);
-        // case "ISSUE_DATE":
-        //   return `${formatDate(new Date(value))}`;
-        // case "DELIEVERY_CHANNEL":
-        //   return taskDetails?.deliveryChannels?.channelName || "N/A";
-        // // case "DELIEVRY_DATE":
-        // //   return delieveryDate || "-";
-        // case "HEARING_DATE":
-        //   return hearingDate || "-";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
         default:

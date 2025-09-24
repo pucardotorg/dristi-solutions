@@ -4,6 +4,7 @@ const defaultSearchValues = {
   orderType: { code: "", name: "PROCESS_TYPE" },
   channel: { code: "", displayLabel: "DELIVERY_CHANNEL" },
   completeStatus: { code: "", name: "STATUS" },
+  hearingDate: "",
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
@@ -149,7 +150,7 @@ export const SummonsTabsConfig = {
               {
                 label: "",
                 isMandatory: false,
-                key: "deliveryChannel",
+                key: "channel",
                 type: "dropdown",
                 populators: {
                   name: "channel",
@@ -406,7 +407,7 @@ export const SummonsTabsConfig = {
               {
                 label: "",
                 isMandatory: false,
-                key: "deliveryChannel",
+                key: "channel",
                 type: "dropdown",
 
                 populators: {
@@ -624,7 +625,7 @@ export const SummonsTabsConfig = {
               {
                 label: "",
                 isMandatory: false,
-                key: "deliveryChannel",
+                key: "channel",
                 type: "dropdown",
 
                 populators: {

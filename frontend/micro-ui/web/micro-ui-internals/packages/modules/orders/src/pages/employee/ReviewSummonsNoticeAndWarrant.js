@@ -544,8 +544,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
       currentSendSelections: bulkSendList?.filter((item) => item?.isSelected)?.length || 0,
     });
 
-    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
+    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setActiveTabIndex(n);
+    setBulkSignList([]);
+    setBulkSendList([]);
     setReload(!reload);
   };
 
@@ -1449,11 +1451,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       });
 
       if (form?.searchResult?.length > 0) {
-        // Determine which list to update based on active tab
         const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
         const isSignedTab = currentConfig?.label === "SIGNED";
-
-        // Get existing selections from BOTH lists to preserve across tabs
         const existingSignList = bulkSignList || [];
         const existingSendList = bulkSendList || [];
         const allExistingSelections = [...existingSignList, ...existingSendList].filter((item) => item?.isSelected);
@@ -1465,10 +1464,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           existingSendSelections: existingSendList?.filter((item) => item?.isSelected)?.length,
           totalExistingSelections: allExistingSelections.length,
         });
-
-        // Preserve existing selections when updating with new search results
         const updatedData = form.searchResult.map((item) => {
-          // Check if this item was previously selected in ANY list
           const wasSelected = allExistingSelections.some((existing) => existing?.taskNumber === item?.taskNumber);
 
           if (wasSelected) {
@@ -1493,30 +1489,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
     [activeTabIndex, isJudge, courtId, bulkSignList, bulkSendList]
   );
 
-  // Check if any items are selected for bulk actions - following BulkESignView pattern
   const hasNoSelectedItems = useMemo(() => {
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
     const currentList = currentConfig?.label === "PENDING_SIGN" ? bulkSignList : bulkSendList;
     const selectedItems = currentList?.filter((item) => item?.isSelected) || [];
     const result = !currentList || currentList?.length === 0 || currentList?.every((item) => !item?.isSelected);
-    console.log("hasNoSelectedItems check:", {
-      currentListLength: currentList?.length,
-      selectedCount: selectedItems.length,
-      result,
-      activeTab: currentConfig?.label,
-      selectedTaskNumbers: selectedItems.map((item) => item?.taskNumber),
-    });
     return result;
   }, [bulkSignList, bulkSendList, activeTabIndex, isJudge, courtId]);
 
-  // Clean config generation following BulkESignView pattern
   const config = useMemo(() => {
     const updateTaskFunc = (taskData, checked) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
 
       const updateList = (prev) => {
-        // If list is empty, initialize it with the current item
         if (!prev || prev.length === 0) {
           return [{ ...taskData, isSelected: checked }];
         }
@@ -1528,14 +1514,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
             isSelected: checked,
           };
         });
-
-        // If no matching item found, add the new item
         const hasMatch = prev.some((item) => item?.taskNumber === taskData?.taskNumber);
         if (!hasMatch) {
           updated.push({ ...taskData, isSelected: checked });
         }
-
-        // Filter out unchecked items to keep array clean
         return updated.filter((item) => item.isSelected || item?.taskNumber === taskData?.taskNumber);
       };
 
