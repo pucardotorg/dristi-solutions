@@ -445,7 +445,7 @@ export const UICustomizations = {
   },
   reviewSummonWarrantNotice: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const filterList = Object.keys(requestCriteria.state.searchForm)
+      let filterList = Object.keys(requestCriteria.state.searchForm)
         ?.map((key) => {
           if (requestCriteria.state.searchForm[key]) return { [key]: requestCriteria.state.searchForm[key] };
         })
@@ -457,6 +457,9 @@ export const UICustomizations = {
           }),
           {}
         );
+      // Remove UI-only fields that should not be sent to backend as-is
+      if (filterList?.channel) delete filterList.channel;
+      if (filterList?.deliveryChannel) delete filterList.deliveryChannel;
       const tenantId = window?.Digit.ULBService.getStateId();
       const { data: sentData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "SentStatus" }], {
         select: (data) => {
@@ -472,6 +475,14 @@ export const UICustomizations = {
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
       const courtId = requestCriteria?.body?.criteria?.courtId;
+
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
+      const deliveryChanel = searchForm?.channel?.name || null;
+      // const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00`).getTime() : null;
+      // const hearingDate = formatNoticeDeliveryDate(searchForm?.hearingDate) || null ;
+      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
+
       return {
         ...requestCriteria,
         body: {
@@ -479,9 +490,14 @@ export const UICustomizations = {
           criteria: {
             completeStatus: completeStatusData,
             ...filterList,
-            orderType: filterList?.orderType ? [filterList?.orderType?.code] : [],
-            applicationStatus: filterList?.applicationStatus?.code || "",
-            ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
+            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
+            ...(noticeType && { noticeType }),
+            ...(deliveryChanel && { deliveryChanel }),
+            ...(hearingDate !== null && { hearingDate }),
+            // orderType: orderTypeValue, //filterList?.orderType ? [filterList?.orderType?.code] : [],
+            applicationStatus: requestCriteria.body?.criteria?.applicationStatus || "",
+            // applicationStatus: filterList?.applicationStatus?.code || "",
+            // ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
             ...(courtId && { courtId }),
           },
           tenantId,
@@ -508,8 +524,8 @@ export const UICustomizations = {
       const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
-        case "CASE_NAME_ID":
-          return `${row?.caseName}, ${caseId}`;
+        // case "CASE_NAME_ID":
+        //   return `${row?.caseName}, ${caseId}`;
         case "STATUS":
           return t(value); // document status
         case "ISSUED":
@@ -522,6 +538,27 @@ export const UICustomizations = {
           return delieveryDate || "-";
         case "HEARING_DATE":
           return hearingDate || "-";
+        case "CASE_TITLE":
+          return `${row?.caseName}`;
+        case "CS_CASE_NUMBER_HOME":
+          return `${caseId}`;
+        case "SENT_DATE":
+          return taskDetails?.deliveryChannels?.statusChangeDate || "-";
+        case "STATUS_UPDATE_DATE":
+          return taskDetails?.deliveryChannels?.statusChangeDate || "-";
+
+        // case "PROCESS_TYPE":
+        //   return t(value);
+        // case "ISSUE_DATE":
+        //   return `${formatDate(new Date(value))}`;
+        // case "DELIEVERY_CHANNEL":
+        //   return taskDetails?.deliveryChannels?.channelName || "N/A";
+        // // case "DELIEVRY_DATE":
+        // //   return delieveryDate || "-";
+        // case "HEARING_DATE":
+        //   return hearingDate || "-";
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
         default:
           return t("ES_COMMON_NA");
       }
@@ -577,7 +614,7 @@ export const UICustomizations = {
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "SELECT":
-          return <BulkCheckBox rowData={row} colData={column} />;
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "CS_ACTIONS":
           return <OverlayDropdown position="relative" column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
         default:
