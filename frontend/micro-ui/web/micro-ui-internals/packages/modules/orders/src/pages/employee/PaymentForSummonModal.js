@@ -245,7 +245,7 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+        hearingId: orderData?.list?.[0]?.scheduledHearingNumber || orderData?.list?.[0]?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
