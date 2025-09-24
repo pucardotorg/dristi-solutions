@@ -244,7 +244,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+        hearingId: orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },

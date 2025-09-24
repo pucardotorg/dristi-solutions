@@ -1720,7 +1720,7 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
@@ -1764,7 +1764,7 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
@@ -1812,7 +1812,7 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate) {
           updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
