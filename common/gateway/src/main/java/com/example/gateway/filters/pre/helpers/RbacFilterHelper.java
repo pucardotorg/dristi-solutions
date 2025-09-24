@@ -110,6 +110,12 @@ public class RbacFilterHelper implements RewriteFunction<Map, Map> {
         if (centralInstanceUtil.getIsEnvironmentCentralInstance())
             headers.add(REQUEST_TENANT_ID_KEY, (String) exchange.getAttributes().get(TENANTID_MDC));
 
+        // ✅ Add courtId from the incoming request headers
+        String courtId = exchange.getRequest().getHeaders().getFirst(COURT_ID_KEY);
+        if (courtId != null && !courtId.isBlank()) {
+            headers.add(COURT_ID_KEY, courtId);
+        }
+
         final HttpEntity<Object> httpEntity = new HttpEntity<>(authorizationRequestWrapper, headers);
 
         try {

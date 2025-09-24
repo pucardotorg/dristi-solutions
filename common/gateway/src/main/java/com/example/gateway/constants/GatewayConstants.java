@@ -38,6 +38,7 @@ public class GatewayConstants {
     public static final String OPEN_ENDPOINT_MESSAGE = "Routing to an open endpoint: {}";
     public static final String PASS_THROUGH_GATEWAY_HEADER_NAME = "x-pass-through-gateway";
     public static final String PASS_THROUGH_GATEWAY_HEADER_VALUE = "true";
+    public static final String COURT_ID_KEY = "courtId";
 
 
 
