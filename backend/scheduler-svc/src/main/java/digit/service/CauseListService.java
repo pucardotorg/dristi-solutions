@@ -283,17 +283,20 @@ public class CauseListService {
                 MdmsSlot currentSlot = mdmsSlotList.get(currentSlotIndex);
                 CauseList causeListItem = causeList.get(causeListIndex);
                 int hearingDuration = causeListItem.getHearingTimeInMinutes();
+                // If the hearing can be accommodated in the current slot, place it here
                 if(accumulatedTime + hearingDuration <= currentSlot.getSlotDuration()){
                     getCauseListFromHearingAndSlot(causeListItem, currentSlot, accumulatedTime);
                     accumulatedTime += hearingDuration;
                     causeListIndex++;
                 }
+                // Hearing cannot be accommodated in this slot, so go to the next slot and reset the available time
                 else{
                     currentSlotIndex++;
                     accumulatedTime = 0;
                 }
             }
 
+            // If there are any hearings left after running out of slots, place them in the last slot
             if(causeListIndex < causeList.size()){
                 log.warn("Placing {} overflown causeList items in the end of last available slot", causeList.size() - causeListIndex);
                 MdmsSlot lastSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
