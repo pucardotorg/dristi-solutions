@@ -170,6 +170,9 @@ public class HearingService {
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
         if (hearing.getCourtCaseNumber() != null) searchableFields.add(hearing.getCourtCaseNumber());
+        if (courtCase.getIsLPRCase() && courtCase.getLprNumber() != null) {
+            searchableFields.add(courtCase.getLprNumber());
+        }
         return searchableFields;
 
     }
