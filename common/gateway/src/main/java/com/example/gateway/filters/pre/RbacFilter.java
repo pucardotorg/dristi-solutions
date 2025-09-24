@@ -4,6 +4,7 @@ import com.example.gateway.config.ApplicationProperties;
 import com.example.gateway.filters.pre.helpers.RbacFilterHelper;
 import com.example.gateway.model.AuthorizationRequest;
 import com.example.gateway.model.AuthorizationRequestWrapper;
+import com.example.gateway.model.Role;
 import com.example.gateway.utils.CommonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -108,7 +109,13 @@ public class RbacFilter implements GlobalFilter, Ordered {
 
         exchange.getAttributes().put(CURRENT_REQUEST_TENANTID, String.join(",", tenantIds));
 
-        AuthorizationRequest request = AuthorizationRequest.builder().roles(new HashSet<>(user.getRoles())).uri(requestUri).tenantIds(tenantIds).build();
+        // Convert egov contract roles to enhanced roles
+        Set<Role> enhancedRoles = new HashSet<>();
+        for (org.egov.common.contract.request.Role egovRole : user.getRoles()) {
+            enhancedRoles.add(Role.fromEgovRole(egovRole));
+        }
+        
+        AuthorizationRequest request = AuthorizationRequest.builder().roles(enhancedRoles).uri(requestUri).tenantIds(tenantIds).build();
 
         boolean isUriAuthorised = isUriAuthorized(request, exchange);
 
