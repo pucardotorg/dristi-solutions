@@ -55,10 +55,13 @@ const HomeHearingsTab = ({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const hasEndHearingHomeAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_END_HEARING_HOME"), [roles]);
+  const hasEndHearingHomeKebabAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_END_HEARING_HOME_KEBAB"), [roles]);
+  const hasStartHearingHomeAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_START_HEARING_HOME"), [roles]);
+  const hasStartHearingHomeKebabAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_START_HEARING_HOME_KEBAB"), [roles]);
+  const hasMarkAsPassedOverHomeKebabAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_MARK_AS_PASSED_OVER_HOME_KEBAB"), [roles]);
+  const hasGenerateOrderHomeAccess = useMemo(() => roles?.some((role) => role?.code === "ALLOW_GENERATE_ORDER_HOME"), [roles]);
+  const hasJoinVC = useMemo(() => roles?.some((role) => role?.code === "ALLOW_JOIN_VC"), [roles]);
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -219,7 +222,7 @@ const HomeHearingsTab = ({
     async (row) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
 
-      if (isJudge || isTypist) {
+      if (hasGenerateOrderHomeAccess) {
         if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
             `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
@@ -247,51 +250,49 @@ const HomeHearingsTab = ({
           }
         }
         return;
-      } else if (isBenchClerk || isCourtRoomManager) {
-        if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
-          try {
-            setLoader(true);
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: hearingDetails?.hearingNumber,
-                    tenantId: hearingDetails?.tenantId,
-                  },
+      } else if (hasStartHearingHomeAccess && ["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
+        try {
+          setLoader(true);
+          hearingService
+            ?.searchHearings(
+              {
+                criteria: {
+                  hearingId: hearingDetails?.hearingNumber,
+                  tenantId: hearingDetails?.tenantId,
                 },
-                { tenantId: hearingDetails?.tenantId }
-              )
-              .then((response) => {
-                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  if (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER") {
-                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                      setTimeout(() => {
-                        setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
-                      }, 100);
-                    });
-                  } else {
-                    setLoader(false);
-                    fetchInbox(filters, setHearingCount);
-                    showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
-                  }
+              },
+              { tenantId: hearingDetails?.tenantId }
+            )
+            .then((response) => {
+              if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                if (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER") {
+                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                    setTimeout(() => {
+                      setLoader(false);
+                      if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                    }, 100);
+                  });
                 } else {
                   setLoader(false);
-                  showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+                  fetchInbox(filters, setHearingCount);
+                  showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                 }
-              });
-            return;
-          } catch (e) {
-            console.log(e);
-            setLoader(false);
-            showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
-          }
-        } else if ((isBenchClerk || isCourtRoomManager) && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
-          setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
+              } else {
+                setLoader(false);
+                showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+              }
+            });
+          return;
+        } catch (e) {
+          console.log(e);
+          setLoader(false);
+          showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
         }
+      } else if (hasEndHearingHomeAccess && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+        setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
       }
     },
-    [history, isBenchClerk, isCourtRoomManager, isJudge, isTypist, t]
+    [history, hasGenerateOrderHomeAccess, hasStartHearingHomeAccess, hasEndHearingHomeAccess, t]
   );
 
   const tableRows = useMemo(() => {
@@ -299,7 +300,7 @@ const HomeHearingsTab = ({
     const getActionItems = async (row) => {
       let dropDownitems = [];
       const hearingDetails = row?.businessObject?.hearingDetails;
-      if ((isJudge || isTypist) && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER")) {
+      if (hasStartHearingHomeKebabAccess && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER")) {
         dropDownitems.push({
           label: "Start Hearing",
           id: "start_hearing",
@@ -347,7 +348,7 @@ const HomeHearingsTab = ({
           },
         });
       }
-      if ((isJudge || isTypist) && hearingDetails?.status === "IN_PROGRESS") {
+      if (hasEndHearingHomeKebabAccess && hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "End Hearing",
           id: "end_hearing",
@@ -357,7 +358,7 @@ const HomeHearingsTab = ({
         });
       }
 
-      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS") {
+      if (hasMarkAsPassedOverHomeKebabAccess && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS")) {
         dropDownitems.push({
           label: "Mark as Passed Over",
           id: "pass_over",
@@ -547,18 +548,14 @@ const HomeHearingsTab = ({
                     }}
                     className="edit-icon"
                   >
-                    {isBenchClerk || isCourtRoomManager ? (
-                      hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
-                        <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
-                      ) : (
-                        <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                      )
-                    ) : (
+                    {hasEndHearingHomeAccess ? (
+                      <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
+                    ) : hasGenerateOrderHomeAccess ? (
                       <EditIcon />
-                    )}
+                    ) : null}
                   </div>
                 )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && (isBenchClerk || isCourtRoomManager) && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && hasStartHearingHomeAccess && (
                   <div
                     style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
                     onClick={() => {
@@ -566,11 +563,7 @@ const HomeHearingsTab = ({
                     }}
                     className="edit-icon"
                   >
-                    {hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
-                      <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
-                    ) : (
-                      <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                    )}
+                    <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
                   </div>
                 )}
               </div>
@@ -590,7 +583,18 @@ const HomeHearingsTab = ({
         </tr>
       );
     });
-  }, [history, t, tableData, handleEditClick]);
+  }, [
+    history,
+    t,
+    tableData,
+    handleEditClick,
+    hasEndHearingHomeAccess,
+    hasGenerateOrderHomeAccess,
+    hasStartHearingHomeAccess,
+    hasEndHearingHomeKebabAccess,
+    hasMarkAsPassedOverHomeKebabAccess,
+    hasStartHearingHomeKebabAccess,
+  ]);
 
   const { data: hearingLink } = useGetHearingLink();
 
@@ -718,35 +722,37 @@ const HomeHearingsTab = ({
             {t("CLEAR")}
           </button>
         </div>
-        <div className="filter-actions">
-          <button
-            className="digit-button-tertiary large"
-            type="button"
-            onClick={() => {
-              window.open(hearingLink, "_blank");
-            }}
-            style={{
-              backgroundColor: "#007E7E",
-              height: "40px",
-              padding: "8px 24px",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <ConferenceIcon />
-              <span
-                className="digit-button-label"
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  fontFamily: "Roboto",
-                  color: "#FFFFFF",
-                }}
-              >
-                {t("JOIN_VC")}
+        {hasJoinVC && (
+          <div className="filter-actions">
+            <button
+              className="digit-button-tertiary large"
+              type="button"
+              onClick={() => {
+                window.open(hearingLink, "_blank");
+              }}
+              style={{
+                backgroundColor: "#007E7E",
+                height: "40px",
+                padding: "8px 24px",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <ConferenceIcon />
+                <span
+                  className="digit-button-label"
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    fontFamily: "Roboto",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {t("JOIN_VC")}
+                </span>
               </span>
-            </span>
-          </button>
-        </div>
+            </button>
+          </div>
+        )}
       </div>
       <div className="main-table-card">
         <div className="table-scroll">
