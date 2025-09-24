@@ -528,9 +528,9 @@ export const UICustomizations = {
         //   return `${row?.caseName}, ${caseId}`;
         case "STATUS":
           return t(value); // document status
-        case "ISSUED":
+        case "ISSUE_DATE":
           return `${formatDate(new Date(value))}`;
-        case "ORDER_TYPE":
+        case "PROCESS_TYPE":
           return t(value);
         case "DELIEVERY_CHANNEL":
           return taskDetails?.deliveryChannels?.channelName || "N/A";

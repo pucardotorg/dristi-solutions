@@ -1086,7 +1086,30 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const fileStoreId = item?.documents?.[0]?.fileStore;
 
         if (fileStoreId) {
-          const fileName = `${item?.taskType || "Document"}_${item?.taskNumber || item?.id || index + 1}`;
+          // Build filename: orderType_caseNumber_issueDate
+          const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
+          const orderTypeName = (() => {
+            const s = rawOrderType.trim();
+            if (!s) return "document";
+            return s.charAt(0) + s.slice(1).toLowerCase();
+          })();
+          const caseNumber = (
+            (item?.isLPRCase ? item?.lprNumber : item?.courtCaseNumber) ||
+            item?.courtCaseNumber ||
+            item?.cmpNumber ||
+            item?.filingNumber ||
+            item?.caseId ||
+            ""
+          ).toString();
+          const issueDate = convertToDateInputFormat && item?.createdDate ? convertToDateInputFormat(item?.createdDate) : item?.issueDate || "";
+
+          const sanitize = (s) =>
+            (s || "")
+              .toString()
+              .replace(/\s+/g, "")
+              .replace(/[\/\\]/g, "-");
+          const fileBase = `${sanitize(orderTypeName)}_${sanitize(caseNumber)}_${sanitize(issueDate)}`.replace(/^_+|_+$/g, "");
+          const fileName = fileBase || `Document_${index + 1}`;
 
           // Use a small delay between downloads to prevent overwhelming the browser
           await new Promise((resolve) => setTimeout(resolve, index * 100));
@@ -1557,15 +1580,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
       ) : (
         <React.Fragment>
           {/* <ProjectBreadCrumb location={window.location} /> */}
-          <div className={"bulk-esign-order-view ignore-margin-left select"}>
+          <div className={`bulk-esign-order-view ignore-margin-left ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            {/* <div className="review-summon-warrant">
-            <div className="header-wraper">
-              <Header>{t("REVIEW_PROCESS")}</Header>
-            </div> */}
-
             <div className="inbox-search-wrapper ">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
@@ -1577,7 +1595,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 onFormValueChange={onFormValueChange}
                 additionalConfig={{
                   resultsTable: {
-                    onClickRow: handleRowClick, // Use the new row click handler
+                    onClickRow: handleRowClick,
                   },
                 }}
                 style={{

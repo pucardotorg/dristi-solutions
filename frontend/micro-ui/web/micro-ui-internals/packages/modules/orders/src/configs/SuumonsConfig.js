@@ -267,12 +267,12 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "ORDER_TYPE",
+                label: "PROCESS_TYPE",
                 jsonPath: "taskType",
                 additionalCustomization: true,
               },
               {
-                label: "ISSUED",
+                label: "ISSUE_DATE",
                 jsonPath: "createdDate",
                 additionalCustomization: true,
               },
@@ -513,12 +513,12 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "ORDER_TYPE",
+                label: "PROCESS_TYPE",
                 jsonPath: "taskType",
                 additionalCustomization: true,
               },
               {
-                label: "ISSUED",
+                label: "ISSUE_DATE",
                 jsonPath: "createdDate",
                 additionalCustomization: true,
               },
@@ -725,12 +725,12 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "ORDER_TYPE",
+                label: "PROCESS_TYPE",
                 jsonPath: "taskType",
                 additionalCustomization: true,
               },
               {
-                label: "ISSUED",
+                label: "ISSUE_DATE",
                 jsonPath: "createdDate",
                 additionalCustomization: true,
               },
@@ -953,12 +953,12 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "ORDER_TYPE",
+                label: "PROCESS_TYPE",
                 jsonPath: "taskType",
                 additionalCustomization: true,
               },
               {
-                label: "ISSUED",
+                label: "ISSUE_DATE",
                 jsonPath: "createdDate",
                 additionalCustomization: true,
               },
