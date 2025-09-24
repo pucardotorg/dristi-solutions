@@ -123,6 +123,11 @@ export const pendingTaskConfig = {
             jsonPath: "advocateDetails",
             additionalCustomization: true,
           },
+          {
+            label: "APPLICATION_TYPE",
+            jsonPath: "applicationType",
+            additionalCustomization: true,
+          },
         ],
         enableColumnSort: true,
         resultsJsonPath: "data",

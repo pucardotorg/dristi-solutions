@@ -70,10 +70,12 @@ const MainHomeScreen = () => {
   const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("VIEW_COLLECT_OFFLINE_PAYMENTS"), [assignedRoles]);
   const hasViewScrutinyCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_SCRUTINY_CASES"), [assignedRoles]);
   const hasViewRegisterCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_CASES"), [assignedRoles]);
+  const hasViewReissueProcessAccess = useMemo(() => assignedRoles?.includes("VIEW_REISSUE_PROCESS"), [assignedRoles]);
   const hasViewReviewBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_REVIEW_BAIL_BOND"), [assignedRoles]);
   const hasViewDelayCondonationAccess = useMemo(() => assignedRoles?.includes("VIEW_DELAY_CONDONATION_APPLICATION"), [assignedRoles]);
   const hasViewReschedulApplicationAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULE_APPLICATION"), [assignedRoles]);
   const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
+  const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
 
   const today = new Date();
 
@@ -329,7 +331,7 @@ const MainHomeScreen = () => {
   if (hasViewRegisterCasesAccess) {
     options.REGISTRATION = { name: "HOME_REGISTER_CASES" };
   }
-  if (hasViewReviewBailBondAccess) {
+  if (hasViewReissueProcessAccess) {
     options.REVIEW_PROCESS = { name: "HOME_REISSUE_PROCESS" };
   }
   if (hasViewReviewBailBondAccess) {
@@ -416,6 +418,25 @@ const MainHomeScreen = () => {
       ];
     }
 
+    if (activeTab === "OTHERS") {
+      updatedConfig.sections.search.uiConfig.fields.push({
+        label: "APPLICATION_TYPE",
+        isMandatory: false,
+        key: "referenceEntityType",
+        type: "dropdown",
+        populators: {
+          name: "referenceEntityType",
+          optionsKey: "name",
+          mdmsConfig: {
+            masterName: "ApplicationType",
+            moduleName: "Application",
+            select:
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+          },
+        },
+      });
+    }
+
     updatedConfig = {
       ...updatedConfig,
       sections: {
@@ -424,14 +445,16 @@ const MainHomeScreen = () => {
           ...updatedConfig.sections.searchResult,
           uiConfig: {
             ...updatedConfig.sections.searchResult.uiConfig,
-            columns: updatedConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
-              return column?.label === "PENDING_CASE_NAME"
-                ? {
-                    ...column,
-                    clickFunc: openBailBondModal,
-                  }
-                : column;
-            }),
+            columns: updatedConfig?.sections?.searchResult?.uiConfig?.columns
+              ?.map((column) => {
+                return column?.label === "PENDING_CASE_NAME"
+                  ? {
+                      ...column,
+                      clickFunc: openBailBondModal,
+                    }
+                  : column;
+              })
+              ?.filter((column) => (activeTab !== "OTHERS" ? column?.label !== "APPLICATION_TYPE" : true)),
           },
         },
       },
@@ -522,6 +545,7 @@ const MainHomeScreen = () => {
             additionalDetails: {
               setCount: setPendingTaskCount,
               activeTab: activeTab,
+              hasCaseReviewerAccess: hasCaseReviewerAccess,
             },
           }}
           showTab={true}
@@ -531,7 +555,7 @@ const MainHomeScreen = () => {
       ) : (
         <Loader />
       ),
-    [tabData, activeTab, scrutinyConfig]
+    [tabData, activeTab, scrutinyConfig, hasCaseReviewerAccess]
   );
 
   return (

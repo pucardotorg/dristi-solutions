@@ -2039,6 +2039,9 @@ export const UICustomizations = {
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
+              ...(requestCriteria?.state?.searchForm?.referenceEntityType && {
+                referenceEntityType: requestCriteria?.state?.searchForm?.referenceEntityType?.type,
+              }),
             },
             searchRegisterUsers: {
               date: null,
@@ -2110,6 +2113,7 @@ export const UICustomizations = {
                 advocateDetails: result?.advocateDetails,
                 createdTime: result?.createdTime,
                 tab: activeTab,
+                applicationType: result?.referenceEntityType,
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
@@ -2230,6 +2234,8 @@ export const UICustomizations = {
           const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
           const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
           return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+        case "APPLICATION_TYPE":
+          return t(value);
         default:
           return value ? value : "-";
       }
@@ -2239,6 +2245,7 @@ export const UICustomizations = {
   HomeScrutinyPendingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const activeTab = additionalDetails?.activeTab;
+      const hasCaseReviewerAccess = additionalDetails?.hasCaseReviewerAccess;
       return {
         ...requestCriteria,
         body: {
@@ -2304,7 +2311,7 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            const reviwCount = data?.reviewProcessData?.count || 0;
+            const reviewCount = data?.reviewProcessData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
             const bailBondStatusCount = data?.bailBondData?.count || 0;
             const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
@@ -2319,7 +2326,7 @@ export const UICustomizations = {
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
-              REVIEW_PROCESS: reviwCount,
+              REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
@@ -2354,6 +2361,7 @@ export const UICustomizations = {
                 advocateDetails: result?.advocateDetails,
                 createdTime: result?.createdTime,
                 tab: activeTab,
+                hasCaseReviewerAccess: hasCaseReviewerAccess,
               };
             };
             return {
@@ -2370,7 +2378,7 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" ? (
+          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2382,7 +2390,7 @@ export const UICustomizations = {
               {value ? value : "-"}
             </Link>
           ) : (
-            value || value
+            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
