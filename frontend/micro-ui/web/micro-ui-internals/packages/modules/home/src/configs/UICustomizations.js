@@ -539,6 +539,11 @@ export const UICustomizations = {
         case "ISSUE_DATE":
           return `${formatDate(new Date(value))}`;
         case "PROCESS_TYPE":
+          const processType = value?.toUpperCase?.();
+          if (processType === "NOTICE") {
+            const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE"; 
+            return t(noticeType);
+          }
           return t(value);
         case "DELIEVERY_CHANNEL":
           return taskDetails?.deliveryChannels?.channelName || "N/A";

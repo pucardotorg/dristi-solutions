@@ -1566,7 +1566,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper ">
+            <div className="inbox-search-wrapper review-process-page show-grey-placeholder">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}

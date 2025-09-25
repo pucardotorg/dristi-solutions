@@ -181,6 +181,7 @@ export const SummonsTabsConfig = {
                 disable: false,
                 populators: {
                   name: "hearingDate",
+                  "data-default": "HEARING_DATE",
                 },
               },
               // search case
@@ -826,13 +827,13 @@ export const SummonsTabsConfig = {
                   optionsKey: "name",
                   defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
-                    // moduleName: "Order",
-                    // masterName: "CourtStaffOrderType",
-                    // select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
-                    moduleName: "Order,Notice",
-                    masterName: "CourtStaffOrderType,NoticeType",
-                    select:
-                      "(data) => { console.log('MDMS data:', data);  const processTypes = (data?.['Order']?.CourtStaffOrderType || []).map(i => ({ ...i, code: i.code || i.name })); const noticeTypes = (data?.['Notice']?.NoticeType || []).map(i => ({ ...i, code: i.code || i.name })); console.log('Merged types:', [...processTypes, ...noticeTypes]); return [...processTypes, ...noticeTypes]; }",
+                    moduleName: "Order",
+                    masterName: "CourtStaffOrderType",
+                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    // moduleName: "Order,Notice",
+                    // masterName: "CourtStaffOrderType,NoticeType",
+                    // select:
+                    //   "(data) => { console.log('MDMS data:', data);  const processTypes = (data?.['Order']?.CourtStaffOrderType || []).map(i => ({ ...i, code: i.code || i.name })); const noticeTypes = (data?.['Notice']?.NoticeType || []).map(i => ({ ...i, code: i.code || i.name })); console.log('Merged types:', [...processTypes, ...noticeTypes]); return [...processTypes, ...noticeTypes]; }",
 
                     // select:
                     //   "(data) => { const processTypes = (data?.['Order']?.CourtStaffOrderType) || []; const noticeTypes = (data?.['Notice']?.NoticeType) || []; return [...processTypes, ...noticeTypes]; }",

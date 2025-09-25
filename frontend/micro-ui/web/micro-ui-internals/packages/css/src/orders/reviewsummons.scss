@@ -141,22 +141,24 @@
 .custom-search-layout .search-field-wrapper .label-field-pair:first-child {
   flex-basis: 100%;
   width: 100%;
+}*/
+
+/* Grey default values for specific dropdowns */
+.review-process-page.show-grey-placeholder
+  .employee-select-wrap--elipses[value="Process Type"],
+.review-process-page.show-grey-placeholder
+  .employee-select-wrap--elipses[value="Delivery Channel"],
+.review-process-page.show-grey-placeholder
+  .employee-select-wrap--elipses[value="Status"]  {
+  color: grey !important;
 }
 
-.custom-search-layout .search-field-wrapper .label-field-pair:first-child h2 {
-  font-size: 24px !important;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  width: 144px;
-  display: flex;
-  line-height: 120%;
-  height: 80px; 
-  align-items: center;
-  color:#231F20 !important;
+/* Black text when user selects something else */
+.review-process-page.show-grey-placeholder
+  .employee-select-wrap--elipses:not([value="Process Type"]):not([value="Delivery Channel"]):not([value="Status"]) {
+  color: black !important;
 }
-
-
-.custom-search-layout .search-field-wrapper {
+/*.custom-search-layout .search-field-wrapper {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
