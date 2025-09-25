@@ -62,7 +62,6 @@ const EvidenceModal = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const user = Digit.UserService.getUser()?.info?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
-  const isCourtRoomManager = useMemo(() => userInfo?.roles?.some((role) => ["COURT_ROOM_MANAGER"].includes(role?.code)), [userInfo?.roles]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -1590,8 +1589,8 @@ const EvidenceModal = ({
                 </div>
               )} */}
             </div>
-            {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("ALLOW_SUBMISSION_COMMENT")) && (
-              <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>
+            {userRoles.includes("SUBMISSION_RESPONDER") && (
+              <div className={`application-comment`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
                   <div className="comment-main">
