@@ -5627,6 +5627,12 @@ public class CaseService {
     public WitnessDetailsResponse addWitnessToCase(@Valid WitnessDetailsRequest body) {
         try {
             log.info("operation=addWitnessToCase, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
+            Set<String> userRoleCodes = body.getRequestInfo().getUserInfo().getRoles().stream()
+                    .map(Role::getCode)
+                    .collect(Collectors.toSet());
+            if(!userRoleCodes.contains(ALLOW_ADD_WITNESS)){
+                throw new CustomException(VALIDATION_ERR, "User does not have the role to perform this operation");
+            }
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(body.getCaseFilingNumber())
                     .defaultFields(false)
