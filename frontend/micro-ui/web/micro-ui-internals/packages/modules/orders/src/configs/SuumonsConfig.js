@@ -1,10 +1,11 @@
 const defaultSearchValues = {
   searchText: "",
   applicationStatus: "",
-  orderType: { code: "", name: "PROCESS_TYPE" },
-  channel: { code: "", displayLabel: "DELIVERY_CHANNEL" },
-  completeStatus: { code: "", name: "STATUS" },
+  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
+  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
+  completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
+  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
@@ -97,7 +98,7 @@ export const SummonsTabsConfig = {
               },
               // process type
               {
-                label: "",
+                label: "PROCESS_TYPE",
                 isMandatory: false,
                 key: "orderType",
                 type: "dropdown",
@@ -105,7 +106,7 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "orderType",
                   optionsKey: "name",
-                  defaultValue: { code: "", name: "PROCESS_TYPE" },
+                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
@@ -120,6 +121,32 @@ export const SummonsTabsConfig = {
                   },
                   className: "custom-dropdown-color",
                 },
+              },
+              // Notice Type dropdown
+              {
+                label: "NOTICE_TYPE",
+                isMandatory: false,
+                key: "noticeType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "noticeType",
+                  optionsKey: "name",
+                  defaultValue: { code: "", name: "NOTICE_TYPE" },
+                  mdmsConfig: {
+                    moduleName: "Notice",
+                    masterName: "NoticeType",
+                    select:
+                      "(data) => { return data['Notice'].NoticeType?.map((item) => {return item;}); console.log('NoticeType MDMS data:', data);}",
+                  },
+                  optionsCustomStyle: { overflowX: "hidden" },
+                  styles: { maxWidth: "200px", minWidth: "150px" },
+                  className: "custom-dropdown-color",
+                },
+                // Only show if orderType is NOTICE
+                // hideInForm: (formValues) => {console.log("Form values:", formValues); return formValues?.orderType?.code !== "NOTICE"},
+                // dependsOn: ["orderType"],
+                hideInForm: true,
               },
               // hidden
               {
@@ -148,7 +175,7 @@ export const SummonsTabsConfig = {
               },
               // Delivery channel
               {
-                label: "",
+                label: "DELIVERY_CHANNEL",
                 isMandatory: false,
                 key: "channel",
                 type: "dropdown",
@@ -156,7 +183,7 @@ export const SummonsTabsConfig = {
                   name: "channel",
                   // optionsKey: "channel",
                   optionsKey: "displayLabel",
-                  defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
+                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
@@ -174,41 +201,45 @@ export const SummonsTabsConfig = {
               },
               // hearing date
               {
-                label: "",
+                label: "HEARING_DATE",
                 isMandatory: false,
                 key: "hearingDate",
                 type: "date",
                 disable: false,
                 populators: {
                   name: "hearingDate",
-                  "data-default": "HEARING_DATE",
                 },
               },
               // search case
               {
-                label: "",
+                label: "CS_CASE_NAME_ID",
                 isMandatory: false,
                 type: "text",
                 key: "searchText", // seach text
                 disable: false,
                 populators: {
                   name: "searchText",
-                  placeholder: "Search Case Name or Number",
-                  style: {
-                    width: "320px",
-                    backgroundImage:
-                      "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "18px 18px",
-                    paddingRight: "40px",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
-                  className: "digit-search-input align-right",
+                  // placeholder: "Search Case Name or Number",
+                  // style: {
+                  //   width: "320px",
+                  //   backgroundImage:
+                  //     "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
+                  //   backgroundRepeat: "no-repeat",
+                  //   backgroundPosition: "right 10px center",
+                  //   backgroundSize: "18px 18px",
+                  //   paddingRight: "40px",
+                  // },
+                  // className: "digit-search-input align-right",
                 },
               },
             ],
           },
-
           show: true,
         },
         searchResult: {
@@ -381,7 +412,7 @@ export const SummonsTabsConfig = {
               //   },
               // },
               {
-                label: "",
+                label: "PROCESS_TYPE",
                 isMandatory: false,
                 key: "orderType",
                 type: "dropdown",
@@ -389,7 +420,7 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "orderType",
                   optionsKey: "name",
-                  defaultValue: { code: "", name: "PROCESS_TYPE" },
+                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
@@ -406,7 +437,7 @@ export const SummonsTabsConfig = {
               },
               // Delivery channel
               {
-                label: "",
+                label: "DELIVERY_CHANNEL",
                 isMandatory: false,
                 key: "channel",
                 type: "dropdown",
@@ -415,7 +446,7 @@ export const SummonsTabsConfig = {
                   name: "channel",
                   // optionsKey: "channel",
                   optionsKey: "displayLabel",
-                  defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
+                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
@@ -433,7 +464,7 @@ export const SummonsTabsConfig = {
               },
               // hearing date
               {
-                label: "",
+                label: "HEARING_DATE",
                 isMandatory: false,
                 key: "hearingDate",
                 type: "date",
@@ -469,24 +500,30 @@ export const SummonsTabsConfig = {
               },
               // Case Name or number
               {
-                label: "",
+                label: "CS_CASE_NAME_ID",
                 isMandatory: false,
                 type: "text",
                 key: "searchText", // seach text
                 disable: false,
                 populators: {
                   name: "searchText",
-                  placeholder: "Search Case Name or Number",
-                  style: {
-                    width: "320px",
-                    backgroundImage:
-                      "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "18px 18px",
-                    paddingRight: "40px",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
-                  className: "digit-search-input align-right",
+                  // placeholder: "Search Case Name or Number",
+                  // style: {
+                  //   width: "320px",
+                  //   backgroundImage:
+                  //     "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
+                  //   backgroundRepeat: "no-repeat",
+                  //   backgroundPosition: "right 10px center",
+                  //   backgroundSize: "18px 18px",
+                  //   paddingRight: "40px",
+                  // },
+                  // className: "digit-search-input align-right",
                 },
               },
             ],
@@ -599,7 +636,7 @@ export const SummonsTabsConfig = {
               },
               // Process type
               {
-                label: "",
+                label: "PROCESS_TYPE",
                 isMandatory: false,
                 key: "orderType",
                 type: "dropdown",
@@ -607,7 +644,7 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "orderType",
                   optionsKey: "name",
-                  defaultValue: { code: "", name: "PROCESS_TYPE" },
+                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
@@ -624,7 +661,7 @@ export const SummonsTabsConfig = {
               },
               // Delivery channel
               {
-                label: "",
+                label: "DELIVERY_CHANNEL",
                 isMandatory: false,
                 key: "channel",
                 type: "dropdown",
@@ -633,7 +670,7 @@ export const SummonsTabsConfig = {
                   name: "channel",
                   // optionsKey: "channel",
                   optionsKey: "displayLabel",
-                  defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
+                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
@@ -651,7 +688,7 @@ export const SummonsTabsConfig = {
               },
               // hearing date
               {
-                label: "",
+                label: "HEARING_DATE",
                 isMandatory: false,
                 key: "hearingDate",
                 type: "date",
@@ -687,24 +724,30 @@ export const SummonsTabsConfig = {
               },
               // Case Name or number
               {
-                label: "",
+                label: "CS_CASE_NAME_ID",
                 isMandatory: false,
                 type: "text",
                 key: "searchText", // seach text
                 disable: false,
                 populators: {
                   name: "searchText",
-                  placeholder: "Search Case Name or Number",
-                  style: {
-                    width: "320px",
-                    backgroundImage:
-                      "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "18px 18px",
-                    paddingRight: "40px",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
-                  className: "digit-search-input align-right",
+                  // placeholder: "Search Case Name or Number",
+                  // style: {
+                  //   width: "320px",
+                  //   backgroundImage:
+                  //     "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
+                  //   backgroundRepeat: "no-repeat",
+                  //   backgroundPosition: "right 10px center",
+                  //   backgroundSize: "18px 18px",
+                  //   paddingRight: "40px",
+                  // },
+                  // className: "digit-search-input align-right",
                 },
               },
             ],
@@ -817,7 +860,7 @@ export const SummonsTabsConfig = {
               },
               // Process type
               {
-                label: "",
+                label: "PROCESS_TYPE",
                 isMandatory: false,
                 key: "orderType",
                 type: "dropdown",
@@ -825,7 +868,7 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "orderType",
                   optionsKey: "name",
-                  defaultValue: { code: "", name: "PROCESS_TYPE" },
+                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
@@ -849,7 +892,7 @@ export const SummonsTabsConfig = {
               },
               // Delivery channel
               {
-                label: "",
+                label: "DELIVERY_CHANNEL",
                 isMandatory: false,
                 key: "deliveryChannel",
                 type: "dropdown",
@@ -858,7 +901,7 @@ export const SummonsTabsConfig = {
                   name: "channel",
                   // optionsKey: "channel",
                   optionsKey: "displayLabel",
-                  defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
+                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
@@ -876,7 +919,7 @@ export const SummonsTabsConfig = {
               },
 
               {
-                label: "",
+                label: "STATUS",
                 isMandatory: false,
                 key: "completeStatus",
                 type: "dropdown",
@@ -884,7 +927,7 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "completeStatus",
                   optionsKey: "name",
-                  defaultValue: { code: "", name: "STATUS" },
+                  // defaultValue: { code: "", name: "STATUS" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "SentStatus",
@@ -904,7 +947,7 @@ export const SummonsTabsConfig = {
               },
               // hearing date
               {
-                label: "",
+                label: "HEARING_DATE",
                 isMandatory: false,
                 key: "hearingDate",
                 type: "date",
@@ -915,24 +958,30 @@ export const SummonsTabsConfig = {
               },
               // Case Name or number
               {
-                label: "",
+                label: "CS_CASE_NAME_ID",
                 isMandatory: false,
                 type: "text",
                 key: "searchText", // seach text
                 disable: false,
                 populators: {
                   name: "searchText",
-                  placeholder: "Search Case Name or Number",
-                  style: {
-                    width: "320px",
-                    backgroundImage:
-                      "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "18px 18px",
-                    paddingRight: "40px",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
-                  className: "digit-search-input align-right",
+                  // placeholder: "Search Case Name or Number",
+                  // style: {
+                  //   width: "320px",
+                  //   backgroundImage:
+                  //     "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OTk5OSIgd2lkdGg9IjE4cHgiIGhlaWdodD0iMThweCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6Ii8+PC9zdmc+')",
+                  //   backgroundRepeat: "no-repeat",
+                  //   backgroundPosition: "right 10px center",
+                  //   backgroundSize: "18px 18px",
+                  //   paddingRight: "40px",
+                  // },
+                  // className: "digit-search-input align-right",
                 },
               },
             ],

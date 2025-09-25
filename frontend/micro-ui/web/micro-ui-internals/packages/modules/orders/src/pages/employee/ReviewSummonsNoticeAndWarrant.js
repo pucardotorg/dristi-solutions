@@ -20,6 +20,7 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import CustomSubmitModal from "@egovernments/digit-ui-module-dristi/src/components/CustomSubmitModal";
 
 const ProjectBreadCrumb = ({ location }) => {
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
@@ -142,6 +143,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [bulkSignatureData, setBulkSignatureData] = useState({});
   const [isBulkSigned, setIsBulkSigned] = useState(false);
   const [bulkSignatureId, setBulkSignatureId] = useState("");
+  const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
 
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
@@ -1034,10 +1036,37 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setShowErrorToast(null);
         }, 3000);
 
-        // Refresh the page data
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // Prepare to perform bulk send immediately on the same screen (Pending Sign tab)
+        try {
+          // Pre-populate bulkSendList with the same items that were just signed
+          const preselectedForSend = selectedItems.map((it) => ({
+            ...it,
+            isSelected: true,
+            documentStatus: "SIGNED",
+          }));
+
+          // Merge into existing bulkSendList while ensuring these are selected
+          setBulkSendList((prev) => {
+            const prevArr = Array.isArray(prev) ? prev : [];
+            const map = new Map(prevArr.map((p) => [p?.taskNumber, p]));
+            preselectedForSend.forEach((ns) => {
+              const existing = map.get(ns?.taskNumber) || {};
+              map.set(ns?.taskNumber, { ...existing, ...ns, isSelected: true });
+            });
+            return Array.from(map.values());
+          });
+
+          // Optionally remove these items from bulkSignList to avoid confusion
+          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !preselectedForSend.some((s) => s.taskNumber === p.taskNumber)) : []));
+
+          // Trigger a light refresh of the table data (avoids full page reload)
+          setReload((prev) => prev + 1);
+
+          // Show the Bulk Sign Success modal; from there user can proceed to Send
+          setShowBulkSignSuccessModal(true);
+        } catch (e) {
+          console.error("Error preparing bulk send after bulk sign:", e);
+        }
       });
     } catch (error) {
       console.error("Failed to perform bulk sign:", error);
@@ -1231,6 +1260,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setShowBulkSignatureModal(true);
     }
   }, [mockESignEnabled, handleActualBulkSign]);
+
+  // After successful bulk sign, proceed button in success modal opens send confirm
+  const handleProceedToBulkSend = useCallback(() => {
+    setShowBulkSignSuccessModal(false);
+    setShowBulkSendConfirmModal(true);
+  }, []);
 
   const unsignedModalConfig = useMemo(() => {
     return {
@@ -1641,7 +1676,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           formId="modal-action"
           headerBarMain={<Heading label={t("REVIEW_DOCUMENT")} />}
           className="case-types"
-          popupStyles={{ width: "80%" }}
+          popupStyles={{ width: "85%" }}
         >
           <div style={{ padding: "20px" }}>
             <DocumentViewerWithComment infos={infos} documents={documents} links={links} />
@@ -1665,6 +1700,24 @@ const ReviewSummonsNoticeAndWarrant = () => {
             </div>
           }
         />
+      )}
+      {showBulkSignSuccessModal && (
+        <Modal
+          actionCancelLabel={"Close"}
+          actionCancelOnSubmit={() => setShowBulkSignSuccessModal(false)}
+          actionSaveLabel={"Mark as Send"}
+          actionSaveOnSubmit={handleProceedToBulkSend}
+        >
+          <CustomSubmitModal
+            t={t}
+            submitModalInfo={{
+              header:
+                t("YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT") !== "YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT"
+                  ? t("YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT")
+                  : "You have successfully signed the document",
+            }}
+          />
+        </Modal>
       )}
       {showBulkSendConfirmModal && (
         <Modal
