@@ -536,6 +536,7 @@ public class CauseListService {
                 causeList.setCaseTitle(caseList.get(0).get("caseTitle").isNull() ? null : caseList.get(0).get("caseTitle").asText());
                 causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").isNull() ? null : caseList.get(0).get("courtCaseNumber").asText());
                 causeList.setCmpNumber(caseList.get(0).get("cmpNumber").isNull() ? null : caseList.get(0).get("cmpNumber").asText());
+                causeList.setLprNumber(caseList.get(0).get("lprNumber").isNull() ? null : caseList.get(0).get("lprNumber").asText());
 
                 long registrationDate = caseList.get(0).get("registrationDate").asLong();
                 causeList.setCaseRegistrationDate(registrationDate);

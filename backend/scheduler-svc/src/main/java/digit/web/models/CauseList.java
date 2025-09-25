@@ -124,6 +124,9 @@ public class CauseList {
     @JsonProperty("cmpNumber")
     private String cmpNumber = null;
 
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
     @JsonProperty("litigants")
     @Valid
     private List<Party> litigants = new ArrayList<>();
