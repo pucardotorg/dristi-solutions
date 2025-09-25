@@ -4,6 +4,7 @@ import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { registerUserConfig } from "../../configs/RegisterUserConfig";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -17,13 +18,15 @@ const RegisterUsersHomeTab = ({ tenants }) => {
   const { t } = useTranslation();
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const history = useHistory();
+  const hasViewRegisterUserAccess = useMemo(() => roles?.some((role) => role?.code === "ADVOCATE_APPROVER"), [roles]);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
-  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) =>
-    roles?.some((role) => role.code === requiredRole)
-  );
-
-  if (!hasApprovalRoles) {
-    // history.push(homePath);
+  if (!hasViewRegisterUserAccess) {
+    history.push(homePath);
   }
   return (
     <div className={"bulk-esign-order-view"}>

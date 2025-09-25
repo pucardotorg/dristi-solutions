@@ -490,18 +490,20 @@ export const UICustomizations = {
       const paymentType = row?.businessObject?.billDetails?.paymentType;
       const courtId = row?.businessObject?.billDetails?.courtId;
       switch (key) {
-        case "CASE_NAME_ID":
+        case "PENDING_CASE_NAME":
           return billStatus === "ACTIVE" ? (
             <span className="link" style={{ textDecoration: "underline", color: "#0A0A0A" }}>
               <Link
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
-                {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
+                {String(`${caseTitle}` || t("ES_COMMON_NA"))}
               </Link>
             </span>
           ) : (
-            billStatus === "PAID" && <span>{String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}</span>
+            billStatus === "PAID" && <span>{String(`${caseTitle}` || t("ES_COMMON_NA"))}</span>
           );
+        case "CS_CASE_NUMBER_HOME":
+          return <span>{`${getCaseNumber(row?.businessObject?.billDetails)}`}</span>;
         case "AMOUNT_DUE":
           return <span>{`Rs. ${value}/-`}</span>;
         case "ACTION":

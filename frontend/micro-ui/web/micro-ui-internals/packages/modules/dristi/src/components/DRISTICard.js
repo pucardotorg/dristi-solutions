@@ -14,11 +14,6 @@ const DRISTICard = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
-  const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
-    if (!res) return res;
-    res = roles?.some((role) => role.code === curr);
-    return res;
-  }, true);
 
   if (!isEpostUser && !isCitizen) {
     history.push(`/${window?.contextPath}/employee/home/home-screen`);
@@ -54,14 +49,12 @@ const DRISTICard = () => {
                     }}
                   />
                   <CustomCard
-                    label={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS") : t("CS_VIEW_CASES")}
-                    subLabel={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS_SUB_TEXT") : t("CS_VIEW_CASES_SUB_TEXT")}
-                    buttonLabel={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS") : t("CS_VIEW_CASES")}
+                    label={t("CS_VIEW_CASES")}
+                    subLabel={t("CS_VIEW_CASES_SUB_TEXT")}
+                    buttonLabel={t("CS_VIEW_CASES")}
                     className="custom-card-style"
                     onClick={() => {
-                      isNyayMitra
-                        ? history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`)
-                        : history.push(`/${window?.contextPath}/employee/dristi/cases`);
+                      history.push(`/${window?.contextPath}/employee/dristi/cases`);
                     }}
                   />
                 </div>

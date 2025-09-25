@@ -66,8 +66,8 @@ const MainHomeScreen = () => {
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_USER"), [assignedRoles]);
-  const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("VIEW_COLLECT_OFFLINE_PAYMENTS"), [assignedRoles]);
+  const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("ADVOCATE_APPROVER"), [assignedRoles]);
+  const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("PAYMENT_COLLECTOR"), [assignedRoles]);
   const hasViewScrutinyCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_SCRUTINY_CASES"), [assignedRoles]);
   const hasViewRegisterCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_CASES"), [assignedRoles]);
   const hasViewReissueProcessAccess = useMemo(() => assignedRoles?.includes("VIEW_REISSUE_PROCESS"), [assignedRoles]);

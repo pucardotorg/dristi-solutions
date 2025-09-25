@@ -84,6 +84,13 @@ const ViewPaymentDetails = ({ location, match }) => {
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
   const [tasksData, setTasksData] = useState(null);
   const [genericTaskData, setGenericTaskData] = useState(null);
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const hasViewCollectOfflinePaymentsAccess = useMemo(() => roles?.some((role) => role?.code === "PAYMENT_COLLECTOR"), [roles]);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -292,7 +299,6 @@ const ViewPaymentDetails = ({ location, match }) => {
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
     if (!Object.keys(bill || regenerateBill || {}).length) {
       toast.error(t("CS_BILL_NOT_AVAILABLE"));
-      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`);
       return;
     }
     try {
@@ -420,6 +426,11 @@ const ViewPaymentDetails = ({ location, match }) => {
     }),
     [caseTitle, cmpNumber, courtCaseNumber, filingNumber, paymentType, t]
   );
+
+  debugger;
+  if (!hasViewCollectOfflinePaymentsAccess) {
+    history.push(homePath);
+  }
 
   if (isFetchBillLoading || isPaymentLoading || isBillLoading || isEPOSTBillLoading || isSummonsBreakUpLoading) {
     return <Loader />;

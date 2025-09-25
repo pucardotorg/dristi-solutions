@@ -32,8 +32,6 @@ function PaymentInbox() {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
-  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
-
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
 
   const getTotalCountForTab = useCallback(
@@ -76,10 +74,6 @@ function PaymentInbox() {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setConfig(paymentTabInboxConfig?.TabSearchConfig?.[n]);
   };
-
-  if (!isNyayMitra) {
-    history.push(homePath);
-  }
 
   return (
     <React.Fragment>

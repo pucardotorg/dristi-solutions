@@ -380,6 +380,7 @@
                 border-color: #3d3c3c;
               }
               .search-button-wrapper {
+                flex-direction: row-reverse !important;
                 .link-label {
                   font-size: 16px;
                   font-weight: 700;
@@ -450,6 +451,7 @@
         }
       }
       .search-button-wrapper {
+        flex-direction: row-reverse !important;
         margin-left: 20px;
         padding-top: 15px !important;
         .link-label {
@@ -473,9 +475,9 @@
     }
   }
 }
-.bulk-esign-order-view.ignore-margin-left 
-  .inbox-search-component-wrapper 
-  .search-field-wrapper.search.custom-both-clear-search 
+.bulk-esign-order-view.ignore-margin-left
+  .inbox-search-component-wrapper
+  .search-field-wrapper.search.custom-both-clear-search
   .search-button-wrapper {
   margin-left: auto;
 }

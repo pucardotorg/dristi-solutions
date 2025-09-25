@@ -95,7 +95,6 @@ const HomeView = () => {
   const viewADiary = useMemo(() => roles?.some((role) => role?.code === "VIEW_A_DIARY"), [roles]); // to show A-Diary tab.
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
@@ -246,17 +245,15 @@ const HomeView = () => {
       if (userInfoType === "employee") {
         const unifiedConfig = getUnifiedEmployeeConfig(roles);
         const onRowClickRoute = getOnRowClickConfig(roles);
-        
+
         return {
           config: unifiedConfig,
           onRowClickRoute: onRowClickRoute,
-          isEmployee: true
+          isEmployee: true,
         };
-      }
-      else if(userInfoType === "citizen"){
+      } else if (userInfoType === "citizen") {
         return TabLitigantSearchConfig;
-      }
-      else return null;
+      } else return null;
     }
   }, [state?.role, roles, userInfoType]);
 
@@ -456,10 +453,6 @@ const HomeView = () => {
 
   if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
     history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
-  }
-
-  if (isNyayMitra) {
-    history.push(`/${window?.contextPath}/employee`);
   }
 
   const data = [

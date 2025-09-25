@@ -93,7 +93,7 @@ const ADiaryPage = ({ path }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
+  const userRoles = useMemo(() => userInfo?.roles, [userInfo]);
   const styles = getStyles();
   const [selectedDate, setSelectedDate] = useState(
     getCurrentDate(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate") || "")
@@ -101,6 +101,11 @@ const ADiaryPage = ({ path }) => {
   const [entryDate, setEntryDate] = useState(
     parseInt(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate")) || new Date().setHours(0, 0, 0, 0)
   );
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => userRoles?.some((role) => role?.code === "POST_MANAGER"), [userRoles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const hasViewSignADiaryAccess = useMemo(() => userRoles?.some((role) => role?.code === "VIEW_A_DIARY"), [userRoles]);
 
   const [offSet, setOffset] = useState(0);
   const limit = 10;
@@ -375,6 +380,10 @@ const ADiaryPage = ({ path }) => {
       history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry });
     }
   };
+
+  if (!hasViewSignADiaryAccess) {
+    history.push(homePath);
+  }
 
   if (isDiaryEntriesLoading || generateAdiaryLoader) {
     return <Loader />;

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { offlinePaymentsConfig } from "../../configs/OfflinePaymentsConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -29,8 +30,6 @@ function OfflinePaymentsHomeTab() {
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-
-  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE"); //check
 
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
 
@@ -74,10 +73,6 @@ function OfflinePaymentsHomeTab() {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setConfig(offlinePaymentsConfig?.TabSearchConfig?.[n]);
   };
-
-  if (!isNyayMitra) {
-    // history.push(homePath);
-  }
 
   return (
     <React.Fragment>
