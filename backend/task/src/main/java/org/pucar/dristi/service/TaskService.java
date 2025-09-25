@@ -467,6 +467,10 @@ public class TaskService {
     private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
         List<String> orderType = request.getCriteria().getOrderType();
 
+        if (orderType == null) {
+            orderType = new ArrayList<>();
+        }
+
         if (orderType.isEmpty()) {
             // Add orderType if the user has the corresponding role
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
