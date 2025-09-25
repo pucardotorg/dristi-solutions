@@ -326,7 +326,7 @@ const AdmittedCaseV2 = () => {
   const {
     isLoading: isWorkFlowLoading,
     data: workFlowDetails,
-    revalidate: revalidateWorkflow = () => {},
+    revalidate: revalidateWorkflow = () => { },
     isFetching: isWorkFlowFetching,
   } = useWorkflowDetails({
     tenantId,
@@ -457,9 +457,9 @@ const AdmittedCaseV2 = () => {
 
     return section && subsection
       ? `${section
-          ?.split(" ")
-          ?.map((splitString) => splitString.charAt(0))
-          ?.join("")} S${subsection}`
+        ?.split(" ")
+        ?.map((splitString) => splitString.charAt(0))
+        ?.join("")} S${subsection}`
       : "";
   }, [caseDetails?.statutesAndSections]);
 
@@ -792,8 +792,7 @@ const AdmittedCaseV2 = () => {
       if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
           history.push(
-            `/${window?.contextPath}/${
-              isCitizen ? "citizen" : "employee"
+            `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
             }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
           );
         }
@@ -802,8 +801,7 @@ const AdmittedCaseV2 = () => {
         ) {
           if (createdByUuid === userInfo?.uuid) {
             history.push(
-              `/${window?.contextPath}/${
-                isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
               }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
           }
@@ -995,16 +993,16 @@ const AdmittedCaseV2 = () => {
                   fields: tabConfig.sections.search.uiConfig.fields.map((field) =>
                     field.key === "parties"
                       ? {
-                          ...field,
-                          populators: {
-                            name: "parties",
-                            optionsKey: "name",
-                            options: caseRelatedData.parties.map((party) => ({
-                              code: removeInvalidNameParts(party.name),
-                              name: removeInvalidNameParts(party.name),
-                            })),
-                          },
-                        }
+                        ...field,
+                        populators: {
+                          name: "parties",
+                          optionsKey: "name",
+                          options: caseRelatedData.parties.map((party) => ({
+                            code: removeInvalidNameParts(party.name),
+                            name: removeInvalidNameParts(party.name),
+                          })),
+                        },
+                      }
                       : field
                   ),
                 },
@@ -1016,15 +1014,15 @@ const AdmittedCaseV2 = () => {
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
                     return column.label === "ORDER_TITLE"
                       ? {
-                          ...column,
-                          clickFunc: orderSetFunc,
-                        }
+                        ...column,
+                        clickFunc: orderSetFunc,
+                      }
                       : column.label === "CS_ACTIONS"
-                      ? {
+                        ? {
                           ...column,
                           clickFunc: orderDeleteFunc,
                         }
-                      : column;
+                        : column;
                   }),
                 },
               },
@@ -1210,8 +1208,8 @@ const AdmittedCaseV2 = () => {
                     column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
                       ? { ...column, clickFunc: docSetFunc }
                       : column.label === "OWNER"
-                      ? { ...column, parties: caseRelatedData.parties }
-                      : column
+                        ? { ...column, parties: caseRelatedData.parties }
+                        : column
                   ),
                 },
               },
@@ -1378,18 +1376,18 @@ const AdmittedCaseV2 = () => {
           "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
             ? t("REASON_FOR_VOIDING")
             : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-            ? t("ARE_YOU_SURE_TO_UNMARK_AS_VOID")
-            : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
+              ? t("ARE_YOU_SURE_TO_UNMARK_AS_VOID")
+              : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
       },
       isStepperModal: true,
       actionSaveLabel:
         userType === "citizen"
           ? undefined
           : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
-          ? t("UNMARK_AS_VOID")
-          : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-          ? t("MARK_VOID_CONFIRM")
-          : t("MARK_AS_VOID"),
+            ? t("UNMARK_AS_VOID")
+            : "unmark_void_submission" === documentSubmission?.[0]?.itemType
+              ? t("MARK_VOID_CONFIRM")
+              : t("MARK_AS_VOID"),
       actionCancelLabel: userType === "citizen" ? t("VOID_BACK") : t("MARK_VOID_CANCEL"),
       steps: [
         {
@@ -1434,20 +1432,20 @@ const AdmittedCaseV2 = () => {
       heading: { label: "" },
       actionSaveLabel: "",
       isStepperModal: true,
-      actionSaveOnSubmit: () => {},
+      actionSaveOnSubmit: () => { },
       steps: [
         {
           heading: { label: isDelayApplicationPending ? t("DELAY_CONDONATION_APPLICATION_OPEN") : t("DCA_NOT_FILED") },
           ...(isDelayCondonationApplicable &&
             !isDelayApplicationPending && {
-              actionSaveLabel: t("DCA_PROCEED_ANYWAY"),
-              actionSaveOnSubmit: () => {
-                setIsOpenDCA(false);
-                setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-                setModalInfo({ type: "admitCase", page: 0 });
-                setShowModal(true);
-              },
-            }),
+            actionSaveLabel: t("DCA_PROCEED_ANYWAY"),
+            actionSaveOnSubmit: () => {
+              setIsOpenDCA(false);
+              setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+              setModalInfo({ type: "admitCase", page: 0 });
+              setShowModal(true);
+            },
+          }),
           modalBody: (
             <div style={{ width: "527px", padding: "12px 16px" }}>
               <p style={delayCondonationTextStyle}>
@@ -1936,9 +1934,9 @@ const AdmittedCaseV2 = () => {
             history.push(
               `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
             );
-          } catch (error) {}
+          } catch (error) { }
         }
-      } catch (error) {}
+      } catch (error) { }
     },
     [
       tenantId,
@@ -2453,9 +2451,8 @@ const AdmittedCaseV2 = () => {
                   code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
                 },
-                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                  date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                }`,
+                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                  }`,
               },
             },
           },
@@ -2901,11 +2898,9 @@ const AdmittedCaseV2 = () => {
 
   const handleExtensionRequest = useCallback(
     (orderNumber, itemId, litigant, litigantIndId) => {
-      let url = `/${
-        window?.contextPath
-      }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
-        currentOrder?.litigant || litigant
-      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      let url = `/${window?.contextPath
+        }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant || litigant
+        }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
       if (itemId) url += `&itemId=${itemId}`;
       history.push(url);
     },
@@ -2914,9 +2909,8 @@ const AdmittedCaseV2 = () => {
 
   const handleSubmitDocument = useCallback(
     (orderNumber, itemId, litigant, litigantIndId) => {
-      let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
-        currentOrder?.litigant || litigant
-      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant || litigant
+        }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
       if (itemId) url += `&itemId=${itemId}`;
       history.push(url);
     },
@@ -3035,29 +3029,29 @@ const AdmittedCaseV2 = () => {
       return [
         ...(currentInProgressHearing
           ? [
-              {
-                value: "END_HEARING",
-                label: "END_HEARING",
-              },
-              {
-                value: "GENERATE_ORDER",
-                label: "GENERATE_ORDER",
-              },
-              {
-                value: "SUBMIT_DOCUMENTS",
-                label: "SUBMIT_DOCUMENTS",
-              },
-              {
-                value: "GENERATE_PAYMENT_DEMAND",
-                label: "GENERATE_PAYMENT_DEMAND",
-              },
-            ]
+            {
+              value: "END_HEARING",
+              label: "END_HEARING",
+            },
+            {
+              value: "GENERATE_ORDER",
+              label: "GENERATE_ORDER",
+            },
+            {
+              value: "SUBMIT_DOCUMENTS",
+              label: "SUBMIT_DOCUMENTS",
+            },
+            {
+              value: "GENERATE_PAYMENT_DEMAND",
+              label: "GENERATE_PAYMENT_DEMAND",
+            },
+          ]
           : [
-              {
-                value: "CREATE_BAIL_BOND",
-                label: "CREATE_BAIL_BOND",
-              },
-            ]),
+            {
+              value: "CREATE_BAIL_BOND",
+              label: "CREATE_BAIL_BOND",
+            },
+          ]),
         {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
@@ -3078,123 +3072,123 @@ const AdmittedCaseV2 = () => {
     else if (isBenchClerk || isCourtRoomManager) {
       return currentInProgressHearing
         ? [
-            {
-              value: "NEXT_HEARING",
-              label: "NEXT_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "GENERATE_ORDER",
-              label: "GENERATE_ORDER",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
+          {
+            value: "NEXT_HEARING",
+            label: "NEXT_HEARING",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+          {
+            value: "GENERATE_ORDER",
+            label: "GENERATE_ORDER",
+          },
+          {
+            value: "SUBMIT_DOCUMENTS",
+            label: "SUBMIT_DOCUMENTS",
+          },
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "GENERATE_PAYMENT_DEMAND",
+            label: "GENERATE_PAYMENT_DEMAND",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ]
         : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ];
     } else if (isTypist) {
       return currentInProgressHearing
         ? [
-            {
-              value: "END_HEARING",
-              label: "END_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "VIEW_CALENDAR",
-              label: "VIEW_CALENDAR",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
+          {
+            value: "END_HEARING",
+            label: "END_HEARING",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+          {
+            value: "SUBMIT_DOCUMENTS",
+            label: "SUBMIT_DOCUMENTS",
+          },
+          {
+            value: "VIEW_CALENDAR",
+            label: "VIEW_CALENDAR",
+          },
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "GENERATE_PAYMENT_DEMAND",
+            label: "GENERATE_PAYMENT_DEMAND",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ]
         : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "CREATE_BAIL_BOND",
-              label: "CREATE_BAIL_BOND",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "CREATE_BAIL_BOND",
+            label: "CREATE_BAIL_BOND",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ];
     }
   }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist, isCourtRoomManager]);
 
@@ -3244,23 +3238,19 @@ const AdmittedCaseV2 = () => {
     const accusedAdvocates = caseDetails?.representatives?.filter((rep) => rep?.representing?.some((lit) => lit?.partyType?.includes("respondent")));
     const complainantAdvocateName =
       complainantAdvocates?.length > 0
-        ? `${complainantAdvocates?.[0]?.additionalDetails?.advocateName} (C)${
-            complainantAdvocates?.length > 1
-              ? ` ${t("CS_COMMON_AND")} ${complainantAdvocates?.length - 1} ${
-                  complainantAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
-                }`
-              : ""
+        ? `${complainantAdvocates?.[0]?.additionalDetails?.advocateName} (C)${complainantAdvocates?.length > 1
+          ? ` ${t("CS_COMMON_AND")} ${complainantAdvocates?.length - 1} ${complainantAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
           }`
+          : ""
+        }`
         : "";
     const accusedAdvocateName =
       accusedAdvocates?.length > 0
-        ? `${accusedAdvocates?.[0]?.additionalDetails?.advocateName} (A)${
-            accusedAdvocates?.length > 1
-              ? ` ${t("CS_COMMON_AND")} ${accusedAdvocates?.length - 1} ${
-                  accusedAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
-                }`
-              : ""
+        ? `${accusedAdvocates?.[0]?.additionalDetails?.advocateName} (A)${accusedAdvocates?.length > 1
+          ? ` ${t("CS_COMMON_AND")} ${accusedAdvocates?.length - 1} ${accusedAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
           }`
+          : ""
+        }`
         : "";
     return `${t("CS_COMMON_ADVOCATES")}: ${complainantAdvocateName} ${accusedAdvocateName ? ", " + accusedAdvocateName : ""}`;
   }, [caseDetails?.representatives, t]);
@@ -3633,8 +3623,8 @@ const AdmittedCaseV2 = () => {
                                   isBenchClerk || isCourtRoomManager
                                     ? "CS_CASE_END_START_NEXT_HEARING"
                                     : isJudge || isTypist
-                                    ? "CS_CASE_NEXT_HEARING"
-                                    : ""
+                                      ? "CS_CASE_NEXT_HEARING"
+                                      : ""
                                 )}
                                 children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                                 isSuffix={true}
@@ -3644,8 +3634,8 @@ const AdmittedCaseV2 = () => {
                                       isBenchClerk || isCourtRoomManager
                                         ? "CS_CASE_END_START_NEXT_HEARING"
                                         : isJudge || isTypist
-                                        ? "NEXT_HEARING"
-                                        : "",
+                                          ? "NEXT_HEARING"
+                                          : "",
                                   })
                                 }
                                 style={{
@@ -3718,10 +3708,25 @@ const AdmittedCaseV2 = () => {
         </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="sub-details-text">
-              {caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}
-            </div>
-            <hr className="vertical-line" />
+            {caseDetails?.cmpNumber && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.cmpNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
+
+            {caseDetails?.isLPRCase ? (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.lprNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            ) :
+              (caseDetails?.courtCaseNumber &&
+                <React.Fragment>
+                  <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                  <hr className="vertical-line" />
+                </React.Fragment>
+              )}
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
                 {" "}
@@ -3739,12 +3744,11 @@ const AdmittedCaseV2 = () => {
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
             <hr className="vertical-line" />
             {advocateName && <div className="sub-details-text">{advocateName}</div>}
-            {delayCondonationData?.delayCondonationType?.code === "NO" && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && !isDelayApplicationCompleted && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                  isDelayApplicationPending ||
-                  isDelayApplicationCompleted
+                    isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>
