@@ -717,7 +717,7 @@ export const updateProfileData = async ({
       //     referenceId,
       //     status: "PROFILE_EDIT_REQUEST",
       //     assignedTo: [],
-      //     assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+      //     assignedRole: ["JUDGE_ROLE"],
       //     cnrNumber: caseDetails?.cnrNumber,
       //     filingNumber: caseDetails?.filingNumber,
       //     caseId: caseDetails?.id,

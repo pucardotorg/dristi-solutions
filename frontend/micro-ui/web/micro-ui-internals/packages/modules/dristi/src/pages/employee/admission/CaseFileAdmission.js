@@ -104,8 +104,7 @@ function CaseFileAdmission({ t, path }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER"); // check
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
@@ -1195,7 +1194,7 @@ function CaseFileAdmission({ t, path }) {
                 )}
                 <FormComposerV2
                   // by disabling label, we hide the action bar for court room manager.
-                  label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
+                  label={isCaseApprover ? t(primaryAction?.label || "") : false}
                   config={formConfig}
                   onSubmit={onSubmit}
                   // defaultValues={}

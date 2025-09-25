@@ -10,7 +10,6 @@ import BulkReschedule from "../pages/employee/BulkReschedule";
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
   // const roles = Digit.UserService.getUser()?.info?.roles;
-  // const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   // const [totalCount, setTotalCount] = useState(count);
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
@@ -20,10 +19,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -48,14 +44,14 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     const configCopy = structuredClone(preHearingConfig);
 
     // Filter out Actions column for judge, bench clerk, and typist
-    if (isJudge || isBenchClerk || isTypist || isCourtRoomManager) {
+    if (isEmployee) {
       configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
         (column) => column.label !== "Actions"
       );
     }
 
     return configCopy;
-  }, [isJudge, isBenchClerk, isTypist, isCourtRoomManager]);
+  }, [isEmployee]);
 
   const updatedConfig = useMemo(() => {
     const configCopy = structuredClone(updatedPreHearingConfig);

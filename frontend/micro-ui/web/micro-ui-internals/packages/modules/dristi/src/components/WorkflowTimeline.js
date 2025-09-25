@@ -119,7 +119,7 @@ const WorkflowTimeline = ({
       captionDetails.date = `${Digit.DateUtils?.ConvertTimestampToDate(checkpoint.auditDetails.lastModifiedEpoch)}`;
       captionDetails.mobileNumber = checkpoint?.assigner?.mobileNumber;
       captionDetails.wfComment =
-        checkpoint?.comment && checkpoint?.assigner?.roles?.some((role) => ["JUDGE_ROLE", "FSO_ROLE"]?.includes(role?.code))
+        checkpoint?.comment && checkpoint?.assigner?.roles?.some((role) => ["JUDGE_ROLE", "CASE_REVIEWER"]?.includes(role?.code))
           ? [checkpoint?.comment]
           : [];
       captionDetails.additionalComment = additionalComment && checkpoint?.performedAction === "APPROVE";

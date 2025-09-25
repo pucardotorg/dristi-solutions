@@ -48,7 +48,6 @@ const TasksComponent = ({
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
-  const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
@@ -410,17 +409,10 @@ const TasksComponent = ({
     });
 
     const filteredTasks = tasks.filter((task) => {
-      // if (isCourtRoomManager) {
-      //   // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
-
-      //   return task?.entityType === "bail bond" ? true : false;
-      // } else return true;
-
-      const passesRoleFilter = isCourtRoomManager ? task?.entityType === "bail bond" : true;
       const excludeForComposite = isApplicationCompositeOrder
         ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
         : true;
-      return passesRoleFilter && excludeForComposite;
+      return excludeForComposite;
     });
     if (taskType?.code)
       return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
@@ -429,7 +421,6 @@ const TasksComponent = ({
     handleCreateOrder,
     handleReviewOrder,
     handleReviewSubmission,
-    isCourtRoomManager,
     isLoading,
     isOptionsLoading,
     pendingTaskActionDetails,

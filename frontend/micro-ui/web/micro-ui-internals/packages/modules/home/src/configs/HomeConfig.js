@@ -983,7 +983,7 @@ export const getOnRowClickConfig = (roles) => {
 
 export const rolesToConfigMapping = [
   {
-    roles: ["CASE_VIEWER", "JUDGE_ROLE"],
+    roles: ["CASE_VIEWER", "JUDGE_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isJudge: true,
     onRowClickRoute: {
@@ -1003,7 +1003,7 @@ export const rolesToConfigMapping = [
   //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER"]),
   // },
   {
-    roles: ["TYPIST_ROLE"],
+    roles: ["TYPIST_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isTypist: true,
     onRowClickRoute: {
@@ -1017,7 +1017,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "HEARING_CREATOR"],
+    roles: ["CASE_VIEWER", "HEARING_CREATOR"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -1031,7 +1031,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "CASE_REVIEWER"],
+    roles: ["CASE_VIEWER", "CASE_REVIEWER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabFSOSearchConfig,
     isFSO: true,
     onRowClickRoute: {
@@ -1048,7 +1048,7 @@ export const rolesToConfigMapping = [
   //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER", "CASE_REVIEWER"]),
   // },
   {
-    roles: ["CASE_VIEWER", "BENCH_CLERK"],
+    roles: ["CASE_VIEWER", "BENCH_CLERK"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabBenchSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -1062,7 +1062,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"],
+    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabCourtRoomSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
