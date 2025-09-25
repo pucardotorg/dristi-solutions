@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig } from "../../configs/HomeConfig";
+import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
@@ -252,7 +252,7 @@ const HomeView = () => {
           isEmployee: true,
         };
       } else if (userInfoType === "citizen") {
-        return TabLitigantSearchConfig;
+        return litigantConfig;
       } else return null;
     }
   }, [state?.role, roles, userInfoType]);

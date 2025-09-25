@@ -3801,7 +3801,7 @@ const AdmittedCaseV2 = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
-          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtRoomManager) && config?.label === "Parties" && (
+          {(showMakeSubmission || userRoles?.includes("ALLOW_ADD_WITNESS")) && config?.label === "Parties" && (
             <Button
               label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
@@ -4235,10 +4235,8 @@ const AdmittedCaseV2 = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowOrderModal(false);
           }}
@@ -4264,10 +4262,8 @@ const AdmittedCaseV2 = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowWitnessModal(false);
           }}

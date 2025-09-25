@@ -1075,19 +1075,20 @@ export const rolesToConfigMapping = [
       ],
     },
   },
-  {
-    roles: ["CASE_VIEWER"],
-    config: TabLitigantSearchConfig,
-    isLitigant: true,
-    showJoinFileOption: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/home/file-case/case",
-      urlDependentOn: "status",
-      urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"],
-      params: [{ key: "caseId", value: "id" }],
-    },
-  },
 ];
+
+export const litigantConfig = {
+  roles: ["CASE_VIEWER"],
+  config: TabLitigantSearchConfig,
+  isLitigant: true,
+  showJoinFileOption: true,
+  onRowClickRoute: {
+    dependentUrl: "/dristi/home/file-case/case",
+    urlDependentOn: "status",
+    urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"],
+    params: [{ key: "caseId", value: "id" }],
+  },
+};
 
 export const caseTypes = [{ name: "NIA S138", code: "NIA S138" }];
 

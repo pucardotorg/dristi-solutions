@@ -427,7 +427,6 @@ const ViewPaymentDetails = ({ location, match }) => {
     [caseTitle, cmpNumber, courtCaseNumber, filingNumber, paymentType, t]
   );
 
-  debugger;
   if (!hasViewCollectOfflinePaymentsAccess) {
     history.push(homePath);
   }
