@@ -266,6 +266,7 @@ const AdmittedCaseV2 = () => {
   // we removed isCourtRoomManager and isbenchClerk conditions and used one new condition for both.
   // because according to new hrms PRD implementation there will be mainly 3 user types i.e. judge, typist and general court user.
 
+  const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -3018,6 +3019,52 @@ const AdmittedCaseV2 = () => {
     []
   );
 
+  const employeeActionsPermissionsMapping = useMemo(
+    () => [
+      {
+        label: "END_HEARING",
+        requiredRoles: ["HEARING_APPROVER"], // update hearing api validation
+      },
+      {
+        label: "GENERATE_ORDER",
+        requiredRoles: ["ORDER_CREATER"], // order create api validation
+      },
+      {
+        label: "SUBMIT_DOCUMENTS", // /evidence/v1/_create api, then /evidence/v1/_update api for signing
+        requiredRoles: ["EVIDENCE_CREATOR", "EVIDENCE_EDITOR"],
+      },
+      {
+        label: "GENERATE_PAYMENT_DEMAND",
+        requiredRoles: ["TASK_CREATOR"], // task create api validation
+      },
+      {
+        label: "CREATE_BAIL_BOND", // /analytics/pending_task/v1/create api
+        requiredRoles: ["ALLOW_CREATE_CONFIRM_BOND_SUBMISSION_TASK"], // created new role for ui purpose.
+      },
+      {
+        label: "DOWNLOAD_CASE_FILE",
+        requiredRoles: [],
+      },
+      {
+        label: "SHOW_TIMELINE",
+        requiredRoles: [],
+      },
+      {
+        label: "ADD_WITNESS",
+        requiredRoles: ["ALLOW_ADD_WITNESS"], // add witness api validation
+      },
+      {
+        label: "TAKE_WITNESS_DEPOSITION",
+        requiredRoles: ["EVIDENCE_EDITOR"], // update evidence api validation
+      },
+      {
+        label: "VIEW_CALENDAR",
+        requiredRoles: [],
+      },
+    ],
+    []
+  );
+
   const employeeActionOptions = useMemo(() => {
     if (isJudge)
       return [
@@ -3186,6 +3233,27 @@ const AdmittedCaseV2 = () => {
     }
   }, [isJudge, currentInProgressHearing, isTypist, isCourtUser]);
 
+  const allowedEmployeeActionOptions = useMemo(() => {
+    return employeeActionOptions.filter((option) => {
+      // Find matching permission mapping for this action
+      const permissionMapping = employeeActionsPermissionsMapping.find((mapping) => mapping.label === option.label);
+
+      // If no mapping found, allow the action (no restrictions)
+      if (!permissionMapping) {
+        return true;
+      }
+
+      // If no required roles specified, allow the action
+      if (!permissionMapping.requiredRoles || permissionMapping.requiredRoles.length === 0) {
+        return true;
+      }
+
+      // Check if user has all required roles
+      const userRoleCodes = roles?.map((role) => role.code) || [];
+      return permissionMapping.requiredRoles.every((requiredRole) => userRoleCodes.includes(requiredRole));
+    });
+  }, [employeeActionOptions, roles, employeeActionsPermissionsMapping]);
+
   const courtActionOptions = useMemo(
     () => [
       {
@@ -3196,7 +3264,30 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND")], [t]);
+  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
+
+  const allowedTakeActionOptions = useMemo(() => {
+    return takeActionOptions
+      .filter((option) => {
+        // Find matching permission mapping for this action
+        const permissionMapping = employeeActionsPermissionsMapping.find((mapping) => mapping.label === option.label);
+
+        // If no mapping found, allow the action (no restrictions)
+        if (!permissionMapping) {
+          return true;
+        }
+
+        // If no required roles specified, allow the action
+        if (!permissionMapping.requiredRoles || permissionMapping.requiredRoles.length === 0) {
+          return true;
+        }
+
+        // Check if user has all required roles
+        const userRoleCodes = roles?.map((role) => role.code) || [];
+        return permissionMapping.requiredRoles.every((requiredRole) => userRoleCodes.includes(requiredRole));
+      })
+      ?.map((obj) => t(obj?.label));
+  }, [takeActionOptions, employeeActionsPermissionsMapping, roles, t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3596,7 +3687,7 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            {isCourtUser && (
+                            {isCourtUser && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
                                 label={t("CS_CASE_PASS_OVER")}
@@ -3609,7 +3700,7 @@ const AdmittedCaseV2 = () => {
                                 isDisabled={apiCalled}
                               ></Button>
                             )}
-                            {(isCourtUser || ((isJudge || isTypist) && !hideNextHearingButton)) && (
+                            {(isCourtUser || ((isJudge || isTypist) && hideNextHearingButton)) && hasHearingEditAccess && (
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
@@ -3652,7 +3743,11 @@ const AdmittedCaseV2 = () => {
                               className={"take-action-btn-class"}
                             ></ActionButton>
                             {showMenu && (
-                              <Menu textStyles={{ cursor: "pointer" }} options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>
+                              <Menu
+                                textStyles={{ cursor: "pointer" }}
+                                options={allowedTakeActionOptions}
+                                onSelect={(option) => handleSelect(option)}
+                              ></Menu>
                             )}
                           </React.Fragment>
                         )}
@@ -3676,7 +3771,7 @@ const AdmittedCaseV2 = () => {
                           <Menu
                             t={t}
                             localeKeyPrefix={"CS_CASE"}
-                            options={employeeActionOptions}
+                            options={allowedEmployeeActionOptions}
                             optionKey={"label"}
                             onSelect={handleEmployeeAction}
                           ></Menu>
