@@ -33,7 +33,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.postgresql.jdbc.EscapedFunctions.SIGN;
 import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Service
@@ -443,51 +442,42 @@ public class TaskService {
 
         if (orderType.isEmpty()) {
             log.info("No order type found for user roles");
+            request.getPagination().setTotalCount(0D);
             return new ArrayList<>();
         }
         return taskRepository.getTaskWithCaseDetails(request);
 
     }
 
+    private static void addOrderTypeIfRolePresent(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode))) {
+            if (!orderType.contains(type)) orderType.add(type);
+        }
+    }
+
+    private static void removeOrderTypeIfRoleMissing(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (orderType.contains(type)) {
+            boolean hasRole = userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode));
+            if (!hasRole) orderType.remove(type);
+        }
+    }
+
     private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
         List<String> orderType = request.getCriteria().getOrderType();
 
         if (orderType.isEmpty()) {
-            for (Role role : userRoles) {
-                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_SUMMONS)) {
-                    orderType.add(SUMMON);
-                }
-                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_WARRANT)) {
-                    orderType.add(WARRANT);
-                }
-                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_NOTICE)) {
-                    orderType.add(NOTICE);
-                }
-                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_PROCLAMATION)) {
-                    orderType.add(PROCLAMATION);
-                }
-                if (role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_ATTACHMENT)) {
-                    orderType.add(ATTACHMENT);
-                }
-            }
+            // Add orderType if the user has the corresponding role
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
         } else {
-            for (Role role : userRoles) {
-                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_SUMMONS)) {
-                    orderType.remove(SUMMON);
-                }
-                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_WARRANT)) {
-                    orderType.remove(WARRANT);
-                }
-                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_NOTICE)) {
-                    orderType.remove(NOTICE);
-                }
-                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_PROCLAMATION)) {
-                    orderType.remove(PROCLAMATION);
-                }
-                if (!role.getCode().equalsIgnoreCase(ROLE_VIEW_PROCESS_ATTACHMENT)) {
-                    orderType.remove(ATTACHMENT);
-                }
-            }
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
         }
         return orderType;
     }
