@@ -309,16 +309,24 @@ public class HearingService {
     private RequestInfo createInternalRequestInfo() {
         org.egov.common.contract.request.User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
-        userInfo.setRoles(userService.internalMicroserviceRoles);
-        userInfo.getRoles().add(Role.builder().code(WORKFLOW_ABANDON)
+        // Convert enhanced roles to egov contract roles for User object
+        List<org.egov.common.contract.request.Role> egovRoles = userService.internalMicroserviceRoles.stream()
+                .map(role -> org.egov.common.contract.request.Role.builder()
+                        .code(role.getCode())
+                        .name(role.getName())
+                        .tenantId(role.getTenantId())
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
+        userInfo.setRoles(egovRoles);
+        userInfo.getRoles().add(org.egov.common.contract.request.Role.builder().code(WORKFLOW_ABANDON)
                         .name(WORKFLOW_ABANDON)
                         .tenantId(config.getEgovStateTenantId())
                 .build());
-        userInfo.getRoles().add(Role.builder().code(PAYMENT_COLLECTOR)
+        userInfo.getRoles().add(org.egov.common.contract.request.Role.builder().code(PAYMENT_COLLECTOR)
                         .name(PAYMENT_COLLECTOR)
                         .tenantId(config.getEgovStateTenantId())
                         .build());
-        userInfo.getRoles().add(Role.builder().code(serviceConstants.SYSTEM_ADMIN)
+        userInfo.getRoles().add(org.egov.common.contract.request.Role.builder().code(serviceConstants.SYSTEM_ADMIN)
                         .name(serviceConstants.SYSTEM_ADMIN)
                         .tenantId(config.getEgovStateTenantId())
                 .build());

@@ -2,7 +2,7 @@ package digit.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import digit.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.encryption.EncryptionService;
 import org.egov.tracer.model.CustomException;
@@ -96,16 +96,25 @@ public class EncryptionDecryptionUtil {
     }
 
     private User getEncrichedandCopiedUserInfo(User userInfo) {
-        List<Role> newRoleList = new ArrayList<>();
+        List<org.egov.common.contract.request.Role> newRoleList = new ArrayList<>();
         if (userInfo.getRoles() != null) {
-            for (Role role : userInfo.getRoles()) {
-                Role newRole = Role.builder().code(role.getCode()).name(role.getName()).id(role.getId()).build();
+            for (org.egov.common.contract.request.Role role : userInfo.getRoles()) {
+                // Convert egov contract roles to enhanced roles and back to egov contract roles
+                Role enhancedRole = Role.fromEgovRole(role);
+                org.egov.common.contract.request.Role newRole = org.egov.common.contract.request.Role.builder()
+                        .code(enhancedRole.getCode())
+                        .name(enhancedRole.getName())
+                        .id(enhancedRole.getId())
+                        .build();
                 newRoleList.add(newRole);
             }
         }
 
         if (newRoleList.stream().filter(role -> (role.getCode() != null) && (userInfo.getType() != null) && role.getCode().equalsIgnoreCase(userInfo.getType())).count() == 0) {
-            Role roleFromtype = Role.builder().code(userInfo.getType()).name(userInfo.getType()).build();
+            org.egov.common.contract.request.Role roleFromtype = org.egov.common.contract.request.Role.builder()
+                    .code(userInfo.getType())
+                    .name(userInfo.getType())
+                    .build();
             newRoleList.add(roleFromtype);
         }
 

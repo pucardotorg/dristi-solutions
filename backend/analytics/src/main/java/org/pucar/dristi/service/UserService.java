@@ -3,7 +3,7 @@ package org.pucar.dristi.service;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import org.pucar.dristi.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.tracer.model.CustomException;
@@ -69,9 +69,8 @@ public class UserService {
     private void createInternalMicroserviceUser(RequestInfo requestInfo) {
         Map<String, Object> userCreateRequest = new HashMap<>();
         //Creating role with INTERNAL_MICROSERVICE_ROLE
-        Role role = Role.builder()
-                .name(INTERNALMICROSERVICEROLE_NAME).code(INTERNALMICROSERVICEROLE_CODE)
-                .tenantId(configuration.getEgovStateTenantId()).build();
+        Role role = new Role(INTERNALMICROSERVICEROLE_NAME, INTERNALMICROSERVICEROLE_CODE, 
+                configuration.getEgovStateTenantId(), null);
         User user = User.builder().userName(INTERNALMICROSERVICEUSER_USERNAME)
                 .name(INTERNALMICROSERVICEUSER_NAME).mobileNumber(INTERNALMICROSERVICEUSER_MOBILENO)
                 .type(INTERNALMICROSERVICEUSER_TYPE).tenantId(configuration.getEgovStateTenantId())

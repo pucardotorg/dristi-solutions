@@ -302,7 +302,15 @@ public class CaseConsumer {
     private RequestInfo createInternalRequestInfo() {
         User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
-        userInfo.setRoles(userService.internalMicroserviceRoles);
+        // Convert enhanced roles to egov contract roles for User object
+        List<org.egov.common.contract.request.Role> egovRoles = userService.internalMicroserviceRoles.stream()
+                .map(role -> org.egov.common.contract.request.Role.builder()
+                        .code(role.getCode())
+                        .name(role.getName())
+                        .tenantId(role.getTenantId())
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
+        userInfo.setRoles(egovRoles);
         userInfo.setTenantId(transformerProperties.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import org.pucar.dristi.web.models.Role;
 import org.egov.common.models.project.TaskResponse;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -60,11 +60,14 @@ public class OrderUtil {
             String hearingId = hearingRequest.getHearing().getHearingId();
             String tenantId = hearingRequest.getHearing().getTenantId();
             RequestInfo requestInfo = hearingRequest.getRequestInfo();
-            Role role = Role.builder()
-                    .code(PAYMENT_COLLECTOR)
-                    .name(PAYMENT_COLLECTOR)
+            Role enhancedRole = new Role(PAYMENT_COLLECTOR, PAYMENT_COLLECTOR, null, null);
+            // Convert enhanced role to egov contract role for RequestInfo
+            org.egov.common.contract.request.Role egovRole = org.egov.common.contract.request.Role.builder()
+                    .code(enhancedRole.getCode())
+                    .name(enhancedRole.getName())
+                    .tenantId(enhancedRole.getTenantId())
                     .build();
-            requestInfo.getUserInfo().getRoles().add(role);
+            requestInfo.getUserInfo().getRoles().add(egovRole);
 
             if (hearingId == null) {
                 log.warn("Hearing ID is null. Skipping closing tasks.");

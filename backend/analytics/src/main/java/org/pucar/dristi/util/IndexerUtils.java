@@ -251,7 +251,12 @@ public class IndexerUtils {
     private RequestInfo createInternalRequestInfo() {
         User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
-        userInfo.setRoles(userService.internalMicroserviceRoles);
+        
+        // Since the receiving service already has courtId field, we can pass our enhanced roles directly
+        // The enhanced Role extends egov contract Role, so it's compatible and preserves courtId
+        List<org.egov.common.contract.request.Role> egovRoles = new ArrayList<>(userService.internalMicroserviceRoles);
+        
+        userInfo.setRoles(egovRoles);
         userInfo.setTenantId(config.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

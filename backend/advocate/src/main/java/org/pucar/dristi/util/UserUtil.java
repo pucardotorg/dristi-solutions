@@ -1,7 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.egov.common.contract.request.Role;
+import org.pucar.dristi.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.user.UserDetailResponse;
 import org.egov.tracer.model.CustomException;
@@ -103,8 +103,14 @@ public class UserUtil {
 	 * @param userInfo
 	 */
 	public void addUserDefaultFields(String mobileNumber, String tenantId, User userInfo, String userType) {
-		Role role = getCitizenRole(tenantId);
-		userInfo.setRoles((List<Role>) Collections.singleton(role));
+		Role enhancedRole = getCitizenRole(tenantId);
+		// Convert enhanced role to egov contract role for User object
+		org.egov.common.contract.request.Role egovRole = org.egov.common.contract.request.Role.builder()
+				.code(enhancedRole.getCode())
+				.name(enhancedRole.getName())
+				.tenantId(enhancedRole.getTenantId())
+				.build();
+		userInfo.setRoles(Collections.singletonList(egovRole));
 		userInfo.setType(userType);
 		userInfo.setUserName(mobileNumber);
 		userInfo.setTenantId(getStateLevelTenant(tenantId));
@@ -117,10 +123,7 @@ public class UserUtil {
 	 * @return
 	 */
 	private Role getCitizenRole(String tenantId) {
-		Role role = Role.builder().build();
-		role.setCode(CITIZEN_UPPER);
-		role.setName(CITIZEN_LOWER);
-		role.setTenantId(getStateLevelTenant(tenantId));
+		Role role = new Role(CITIZEN_LOWER, CITIZEN_UPPER, getStateLevelTenant(tenantId), null);
 		return role;
 	}
 

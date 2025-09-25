@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import digit.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -386,7 +386,15 @@ public class BailService {
                 workflowObject.setAction(E_SIGN_COMPLETE);
 
                 bailRequest.getBail().setWorkflow(workflowObject);
-                bailRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(bailRequest.getBail().getTenantId()).build());
+                // Create enhanced role and convert to egov contract role for User object
+                Role enhancedSystemRole = new Role(SYSTEM, SYSTEM, bailRequest.getBail().getTenantId(), null);
+                org.egov.common.contract.request.Role systemRole = org.egov.common.contract.request.Role.builder()
+                        .id(123L)
+                        .code(enhancedSystemRole.getCode())
+                        .name(enhancedSystemRole.getName())
+                        .tenantId(enhancedSystemRole.getTenantId())
+                        .build();
+                bailRequest.getRequestInfo().getUserInfo().getRoles().add(systemRole);
                 workflowService.updateWorkflowStatus(bailRequest);
             }
         } catch (Exception e) {

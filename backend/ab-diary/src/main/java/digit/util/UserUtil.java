@@ -3,7 +3,7 @@ package digit.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import static digit.config.ServiceConstants.*;
-import org.egov.common.contract.request.Role;
+import digit.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.user.UserDetailResponse;
 import org.egov.common.contract.user.enums.UserType;
@@ -122,11 +122,7 @@ public class UserUtil {
      * @return
      */
     private Role getCitizenRole(String tenantId){
-        Role role = Role.builder().build();
-        role.setCode(CITIZEN_UPPER);
-        role.setName(CITIZEN_LOWER);
-        role.setTenantId(getStateLevelTenant(tenantId));
-        return role;
+        return new Role(CITIZEN_LOWER, CITIZEN_UPPER, getStateLevelTenant(tenantId), null);
     }
 
     public String getStateLevelTenant(String tenantId){

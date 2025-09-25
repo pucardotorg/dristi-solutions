@@ -3,7 +3,7 @@ package digit.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
-import org.egov.common.contract.request.Role;
+import digit.model.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.user.UserDetailResponse;
 import org.egov.common.contract.user.enums.UserType;
@@ -140,7 +140,7 @@ public class UserUtilTest {
         assertEquals("state", userInfo.getTenantId());
         assertEquals(UserType.CITIZEN.toString(), userInfo.getType());
         assertEquals(1, userInfo.getRoles().size());
-        Role role = userInfo.getRoles().get(0);
+        org.egov.common.contract.request.Role role = userInfo.getRoles().get(0);
         assertEquals("CITIZEN", role.getCode());
         assertEquals("Citizen", role.getName());
         assertEquals("state", role.getTenantId());

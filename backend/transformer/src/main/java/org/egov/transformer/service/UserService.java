@@ -3,7 +3,7 @@ package org.egov.transformer.service;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import org.egov.transformer.web.models.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.tracer.model.CustomException;
@@ -70,9 +70,13 @@ public class UserService {
     private void createInternalMicroserviceUser(RequestInfo requestInfo) {
         Map<String, Object> userCreateRequest = new HashMap<>();
         //Creating role with INTERNAL_MICROSERVICE_ROLE
-        Role role = Role.builder()
-                .name(INTERNALMICROSERVICEROLE_NAME).code(INTERNALMICROSERVICEROLE_CODE)
-                .tenantId(configuration.getEgovStateTenantId()).build();
+        Role enhancedRole = new Role(INTERNALMICROSERVICEROLE_NAME, INTERNALMICROSERVICEROLE_CODE, configuration.getEgovStateTenantId(), null);
+        // Convert enhanced role to egov contract role for User object
+        org.egov.common.contract.request.Role role = org.egov.common.contract.request.Role.builder()
+                .name(enhancedRole.getName())
+                .code(enhancedRole.getCode())
+                .tenantId(enhancedRole.getTenantId())
+                .build();
         User user = User.builder().userName(INTERNALMICROSERVICEUSER_USERNAME)
                 .name(INTERNALMICROSERVICEUSER_NAME).mobileNumber(INTERNALMICROSERVICEUSER_MOBILENO)
                 .type(INTERNALMICROSERVICEUSER_TYPE).tenantId(configuration.getEgovStateTenantId())

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -100,7 +101,17 @@ public class GenerateDiaryService {
         User userInfo = new User();
         userInfo.setType(SYSTEM);
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
-        userInfo.setRoles(userService.internalMicroserviceRoles);
+        
+        // Convert enhanced roles to egov contract roles for User objects
+        List<org.egov.common.contract.request.Role> egovRoles = userService.internalMicroserviceRoles.stream()
+            .map(role -> org.egov.common.contract.request.Role.builder()
+                    .code(role.getCode())
+                    .name(role.getName())
+                    .tenantId(role.getTenantId())
+                    .build())
+            .collect(Collectors.toList());
+        
+        userInfo.setRoles(egovRoles);
         userInfo.setTenantId(configuration.getTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

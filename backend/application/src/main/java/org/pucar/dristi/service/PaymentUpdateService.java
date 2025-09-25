@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
+import org.pucar.dristi.web.models.Role;
 import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
@@ -106,7 +106,7 @@ public class PaymentUpdateService {
                 throw new CustomException("INVALID_RECEIPT", "No applications found for the consumerCode " + criteria.getFilingNumber());
             }
 
-            Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build();
+            Role role = new Role("SYSTEM_ADMIN", "SYSTEM_ADMIN", tenantId, null);
             requestInfo.getUserInfo().getRoles().add(role);
 
             for (Application application : applications) {
