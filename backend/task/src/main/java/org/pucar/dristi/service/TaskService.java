@@ -442,8 +442,10 @@ public class TaskService {
 
         if (orderType.isEmpty()) {
             log.info("No order type found for user roles");
-            request.getPagination().setTotalCount(0D);
-            return new ArrayList<>();
+            if (request.getPagination() != null) {
+                request.getPagination().setTotalCount(0D);
+            }
+            return Collections.emptyList();
         }
         return taskRepository.getTaskWithCaseDetails(request);
 
