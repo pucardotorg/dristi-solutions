@@ -56,6 +56,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
     <React.Fragment></React.Fragment>
   );
   const SBIEpostPayment = Digit.ComponentRegistryService.getComponent("SBIEpostPayment") || <React.Fragment></React.Fragment>;
+  const EpostTrackingPage = Digit.ComponentRegistryService.getComponent("EpostTrackingPage") || <React.Fragment></React.Fragment>;
 
   const history = useHistory();
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -130,6 +131,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/sbi-payment-screen`} component={() => <SBIPaymentStatus />} />
         <PrivateRoute path={`${path}/view-hearing`} component={() => <ViewHearing></ViewHearing>} />
         <PrivateRoute path={`${path}/home-popup`} component={() => <HomePopUp></HomePopUp>} />
+        <PrivateRoute exact path={`${path}/epost-home-screen`} component={() => <EpostTrackingPage></EpostTrackingPage>} />
       </AppContainer>
     </Switch>
   );

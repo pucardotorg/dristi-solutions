@@ -17,6 +17,7 @@ const DRISTICard = () => {
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
+  const isEpsotUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
     if (!res) return res;
     res = roles?.some((role) => role.code === curr);
@@ -31,6 +32,8 @@ const DRISTICard = () => {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (isProcessViewer) {
     history.push(`/${window?.contextPath}/employee/orders/Summons&Notice`);
+  } else if( isEpsotUser ){
+    history.push(`/${window?.contextPath}/employee/home/epost-home-screen`);
   }
 
   let roleType = isJudge ? "isJudge" : "default";

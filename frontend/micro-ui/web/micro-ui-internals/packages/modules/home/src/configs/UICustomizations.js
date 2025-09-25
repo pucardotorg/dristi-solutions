@@ -89,11 +89,38 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
-        case "Delivery Status":
+        case "STATUS":
           return t(value);
+        case "CS_ACTIONS":
+          return <OverlayDropdown column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
         default:
           return t("ES_COMMON_NA");
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "Print Document",
+          id: "print_document",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+        {
+          label: "Print Address Label",
+          id: "print_address_label",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+        {
+          label: "Update Status",
+          id: "update_status",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   SearchHearingsConfig: {
