@@ -112,7 +112,7 @@ public class ActionService {
 	public boolean isAuthorized(AuthorizationRequest authorizeRequest, String courtId){
 
 		String inputTenantId = authorizeRequest.getTenantIds().iterator().next();
-		List<String> roles = authorizeRequest.getRoles().stream().filter(role -> role.getCourtId()!=null && role.getCourtId().equals(courtId)).map(Role::getCode).collect(Collectors.toList());
+		List<String> roles = authorizeRequest.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
 		List<String> listOfMdmsTenantIdsToCheck = new ArrayList<>(fetchListOfTenantIdsForAuthorizationCheck(inputTenantId, roles));
 		Collections.sort(listOfMdmsTenantIdsToCheck, Collections.reverseOrder(Comparator.comparing(String::length)));
 
