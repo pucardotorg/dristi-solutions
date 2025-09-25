@@ -1256,10 +1256,7 @@ export const UICustomizations = {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       // row.status === "Submitted" &&
       return [
-        ...((userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") ||
-          userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")) &&
-        !row?.isVoid &&
-        row?.filingType === "DIRECT"
+        ...(userInfo.roles.map((role) => role.code).includes("EVIDENCE_EDITOR") && !row?.isVoid && row?.filingType === "DIRECT"
           ? [
               {
                 label: "MARK_AS_VOID",

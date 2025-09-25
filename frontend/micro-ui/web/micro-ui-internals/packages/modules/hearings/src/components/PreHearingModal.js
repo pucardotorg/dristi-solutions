@@ -43,7 +43,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const updatedPreHearingConfig = useMemo(() => {
     const configCopy = structuredClone(preHearingConfig);
 
-    // Filter out Actions column for judge, bench clerk, and typist
+    // Filter out Actions column for employees
     if (isEmployee) {
       configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
         (column) => column.label !== "Actions"
