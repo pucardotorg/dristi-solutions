@@ -92,7 +92,7 @@ public class TaskApiController {
         List<TaskCase> tasks = taskService.searchCaseTask(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
         int totalCount;
-        if (request.getPagination() != null) {
+        if (request.getPagination() != null && request.getPagination().getTotalCount() != null) {
             totalCount = request.getPagination().getTotalCount().intValue();
         } else {
             totalCount = tasks.size();
