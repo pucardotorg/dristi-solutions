@@ -3027,7 +3027,7 @@ const AdmittedCaseV2 = () => {
       },
       {
         label: "GENERATE_ORDER",
-        requiredRoles: ["ORDER_CREATER"], // order create api validation
+        requiredRoles: ["ORDER_CREATOR"], // order create api validation
       },
       {
         label: "SUBMIT_DOCUMENTS", // /evidence/v1/_create api, then /evidence/v1/_update api for signing

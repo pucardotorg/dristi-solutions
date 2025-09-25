@@ -258,6 +258,7 @@ const GenerateOrdersV2 = () => {
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
   const hasStartNextHearingAccess = useMemo(() => roles?.includes("ALLOW_START_NEXT_HEARING_ORDERS"), [roles]);
+  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
@@ -3852,41 +3853,25 @@ const GenerateOrdersV2 = () => {
             )}
           </div>
         </div>
-        <ActionBar
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: "#fff",
-            padding: "16px 24px",
-            boxShadow: "none",
-            borderTop: "1px solid #BBBBBD",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <Button
-              label={t("CS_COMMON_BACK")}
-              variation={"secondary"}
-              onButtonClick={handleGoBack}
-              style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
-              textStyles={{
-                fontFamily: "Roboto",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: "18.75px",
-                textAlign: "center",
-                color: "#007E7E",
-              }}
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+        {hasOrderUpdateAccess && (
+          <ActionBar
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: "#fff",
+              padding: "16px 24px",
+              boxShadow: "none",
+              borderTop: "1px solid #BBBBBD",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
               <Button
-                label={t("SAVE_AS_DRAFT")}
+                label={t("CS_COMMON_BACK")}
                 variation={"secondary"}
-                onButtonClick={() => {
-                  handleSaveDraft(currentOrder);
-                }}
-                style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                onButtonClick={handleGoBack}
+                style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
                 textStyles={{
                   fontFamily: "Roboto",
                   fontSize: "16px",
@@ -3896,10 +3881,28 @@ const GenerateOrdersV2 = () => {
                   color: "#007E7E",
                 }}
               />
-              <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                <Button
+                  label={t("SAVE_AS_DRAFT")}
+                  variation={"secondary"}
+                  onButtonClick={() => {
+                    handleSaveDraft(currentOrder);
+                  }}
+                  style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                  textStyles={{
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#007E7E",
+                  }}
+                />
+                <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              </div>
             </div>
-          </div>
-        </ActionBar>
+          </ActionBar>
+        )}
       </div>
       {showEditOrderModal && (
         <EditSendBackModal
