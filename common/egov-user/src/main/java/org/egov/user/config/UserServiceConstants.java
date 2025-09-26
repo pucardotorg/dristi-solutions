@@ -69,6 +69,7 @@ public class UserServiceConstants {
     public static final String TENANTID_MDC_STRING = "TENANTID";
     
     public static final String CITIZEN_ROLE_CODE = "CITIZEN";
-    
+    public static final String EMPLOYEE_USER = "EMPLOYEE";
+
 }
 

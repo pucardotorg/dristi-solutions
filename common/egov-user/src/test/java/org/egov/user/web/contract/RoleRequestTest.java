@@ -23,11 +23,15 @@ public class RoleRequestTest {
                 .lastModifiedBy(1L)
                 .createdDate(date)
                 .lastModifiedDate(date)
+                .tenantId("tenant1")
+                .courtId("court1")
                 .build();
 
         RoleRequest roleRequest = new RoleRequest(domainRole);
 
         assertThat(roleRequest.getName()).isEqualTo("name of the roleRequest 1");
         assertThat(roleRequest.getCode()).isEqualTo("code");
+        assertThat(roleRequest.getTenantId()).isEqualTo("tenant1");
+        assertThat(roleRequest.getCourtId()).isEqualTo("court1");
     }
 }

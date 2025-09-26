@@ -1,5 +1,6 @@
 package org.egov.user.web.contract;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.egov.user.domain.model.Role;
 
@@ -8,17 +9,20 @@ import org.egov.user.domain.model.Role;
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"code", "tenantId"})
+@EqualsAndHashCode(of = {"code", "tenantId", "courtId"})
 public class RoleRequest {
 
     private String code;
     private String name;
     private String tenantId;
+    @JsonProperty("courtId")
+    private String courtId;
 
     public RoleRequest(Role domainRole) {
         this.code = domainRole.getCode();
         this.name = domainRole.getName();
         this.tenantId = domainRole.getTenantId();
+        this.courtId = domainRole.getCourtId();
     }
 
     public Role toDomain() {
@@ -26,6 +30,7 @@ public class RoleRequest {
                 .code(code)
                 .name(name)
                 .tenantId(tenantId)
+                .courtId(courtId)
                 .build();
     }
 }
