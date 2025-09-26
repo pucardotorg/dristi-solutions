@@ -66,4 +66,8 @@ public class PendingTask {
 
     @JsonProperty("screenType")
     private String screenType = null;
+
+    @JsonProperty("referenceEntityType")
+    private String referenceEntityType = null;
+
 }

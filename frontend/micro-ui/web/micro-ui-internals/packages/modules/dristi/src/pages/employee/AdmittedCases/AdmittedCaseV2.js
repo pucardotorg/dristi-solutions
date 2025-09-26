@@ -117,7 +117,8 @@ const CloseBtn = (props) => {
   );
 };
 
-const relevantStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
+const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
+const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
 
 const styles = {
@@ -315,7 +316,7 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && relevantStatuses.includes(caseDetails?.status), [
+  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
     caseDetails?.status,
     userRoles,
     isCitizen,
@@ -1477,7 +1478,7 @@ const AdmittedCaseV2 = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return !relevantStatuses.includes(caseDetails?.status);
+    return !viewEnabledStatuses.includes(caseDetails?.status);
   }, [caseDetails?.status]);
 
   const isCaseAdmitted = useMemo(() => {

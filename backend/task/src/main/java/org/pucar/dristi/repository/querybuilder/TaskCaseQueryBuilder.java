@@ -147,7 +147,7 @@ public class TaskCaseQueryBuilder {
 
         if (taskCaseSearchCriteria.getDeliveryChanel() != null && !taskCaseSearchCriteria.getDeliveryChanel().isEmpty()) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" task.taskDetails -> 'deliveryChannels' ->> 'channelName' = ? ");
+            query.append(" LOWER(task.taskDetails -> 'deliveryChannels' ->> 'channelName') = LOWER(?) ");
             preparedStmtList.add(taskCaseSearchCriteria.getDeliveryChanel());
         }
 
