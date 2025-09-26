@@ -2,6 +2,7 @@ package org.pucar.dristi.enrichment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,13 +12,20 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static org.pucar.dristi.config.ServiceConstants.ADMIT_CASE_WORKFLOW_ACTION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.minidev.json.JSONArray;
 
 import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.*;
@@ -33,6 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.util.MdmsUtil;
 
 @ExtendWith(MockitoExtension.class)
 class CaseRegistrationEnrichmentTest {
@@ -41,9 +50,12 @@ class CaseRegistrationEnrichmentTest {
     private IdgenUtil idgenUtil;
     @Mock
     private CaseUtil caseUtil;
-
     @Mock
     private Configuration config;
+    @Mock
+    private MdmsUtil mdmsUtil;
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private CaseRegistrationEnrichment caseRegistrationEnrichment;
@@ -314,6 +326,307 @@ class CaseRegistrationEnrichmentTest {
         AuditDetails auditDetails = new AuditDetails("createdBy", "lastModifiedBy", System.currentTimeMillis(), System.currentTimeMillis());
         CaseRegistrationEnrichment.enrichRepresentativesOnCreateAndUpdate(courtCase, auditDetails);
         assertEquals(auditDetails, existingRepresentative.getAuditDetails());
+    }
+
+    @Test
+    void testEnrichCourtId_Success() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("1001");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        Map<String, Map<String, JSONArray>> mdmsData = createMdmsDataWithPoliceStation("1001", "COURT001");
+        when(mdmsUtil.fetchMdmsData(any(RequestInfo.class), eq("tenant-id"), eq("case"), any(List.class)))
+            .thenReturn(mdmsData);
+        
+        JsonNode caseDetailsNode = createCaseDetailsJsonNode("1001");
+        JsonNode policeStationNode = createPoliceStationJsonNode("1001", "COURT001");
+        
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenAnswer(invocation -> {
+            Object firstArg = invocation.getArgument(0);
+            if (firstArg.equals(caseDetails)) {
+                return caseDetailsNode;
+            } else if (firstArg instanceof Map) {
+                // This is likely a police station object from MDMS
+                Map<?, ?> map = (Map<?, ?>) firstArg;
+                if (Long.valueOf(1001).equals(map.get("code"))) {
+                    return policeStationNode;
+                }
+            }
+            return policeStationNode;
+        });
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify
+        assertEquals("COURT001", courtCase.getCourtId());
+        verify(mdmsUtil).fetchMdmsData(any(RequestInfo.class), eq("tenant-id"), eq("case"), any(List.class));
+    }
+    
+    @Test
+    void testEnrichCourtId_NullCaseRequest() {
+        caseRegistrationEnrichment.enrichCourtId(null);
+    }
+    
+    @Test
+    void testEnrichCourtId_NullCourtCase() {
+        caseRequest.setCases(null);
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+    }
+    
+    @Test
+    void testEnrichCourtId_NoPoliceStationCode() {
+        Map<String, Object> caseDetails = new HashMap<>();
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+
+        JsonNode emptyCaseDetailsNode = mock(JsonNode.class);
+        JsonNode missingChequeDetails = mock(JsonNode.class);
+        when(missingChequeDetails.isMissingNode()).thenReturn(true);
+        when(emptyCaseDetailsNode.path("chequeDetails")).thenReturn(missingChequeDetails);
+        when(objectMapper.convertValue(caseDetails, JsonNode.class)).thenReturn(emptyCaseDetailsNode);
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set
+        assertNull(courtCase.getCourtId());
+    }
+    
+    @Test
+    void testEnrichCourtId_PoliceStationFoundButNoCourtId() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("1001");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        Map<String, Map<String, JSONArray>> mdmsData = createMdmsDataWithPoliceStationNoCourtId("1001");
+        when(mdmsUtil.fetchMdmsData(any(RequestInfo.class), eq("tenant-id"), eq("case"), any(List.class)))
+            .thenReturn(mdmsData);
+        
+        JsonNode caseDetailsNode = createCaseDetailsJsonNode("1001");
+        JsonNode policeStationNode = createPoliceStationJsonNodeNoCourtId("1001");
+        
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenAnswer(invocation -> {
+            Object firstArg = invocation.getArgument(0);
+            if (firstArg.equals(caseDetails)) {
+                return caseDetailsNode;
+            } else if (firstArg instanceof Map) {
+                // This is likely a police station object from MDMS
+                Map<?, ?> map = (Map<?, ?>) firstArg;
+                if (Long.valueOf(1001).equals(map.get("code"))) {
+                    return policeStationNode;
+                }
+            }
+            return policeStationNode;
+        });
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set
+        assertNull(courtCase.getCourtId());
+    }
+    
+    @Test
+    void testEnrichCourtId_PoliceStationNotFound() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("9999");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        Map<String, Map<String, JSONArray>> mdmsData = createMdmsDataWithPoliceStation("1001", "COURT001");
+        when(mdmsUtil.fetchMdmsData(any(RequestInfo.class), eq("tenant-id"), eq("case"), any(List.class)))
+            .thenReturn(mdmsData);
+        
+        JsonNode caseDetailsNode = createCaseDetailsJsonNode("9999");
+        JsonNode policeStationNode = createPoliceStationJsonNode("1001", "COURT001");
+        
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenAnswer(invocation -> {
+            Object firstArg = invocation.getArgument(0);
+            if (firstArg.equals(caseDetails)) {
+                return caseDetailsNode;
+            } else if (firstArg instanceof Map) {
+                // This is likely a police station object from MDMS
+                Map<?, ?> map = (Map<?, ?>) firstArg;
+                if (Long.valueOf(1001).equals(map.get("code"))) {
+                    return policeStationNode;
+                }
+            }
+            return policeStationNode;
+        });
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set
+        assertNull(courtCase.getCourtId());
+    }
+    
+    @Test
+    void testEnrichCourtId_MdmsDataNull() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("1001");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        when(mdmsUtil.fetchMdmsData(any(RequestInfo.class), eq("tenant-id"), eq("case"), any(List.class)))
+            .thenReturn(null);
+        
+        JsonNode caseDetailsNode = createCaseDetailsJsonNode("1001");
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenAnswer(invocation -> {
+            Object firstArg = invocation.getArgument(0);
+            if (firstArg.equals(caseDetails)) {
+                return caseDetailsNode;
+            }
+            return caseDetailsNode;
+        });
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set
+        assertNull(courtCase.getCourtId());
+    }
+    
+    @Test
+    void testEnrichCourtId_ExceptionHandling() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("1001");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        when(objectMapper.convertValue(caseDetails, JsonNode.class))
+            .thenThrow(new RuntimeException("JSON processing error"));
+        
+        // Execute - should not throw exception due to try-catch
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set due to exception
+        assertNull(courtCase.getCourtId());
+    }
+    
+    @Test
+    void testEnrichCourtId_EmptyPoliceStationCode() {
+        Map<String, Object> caseDetails = createCaseDetailsWithChequeDetails("");
+        courtCase.setCaseDetails(caseDetails);
+        courtCase.setTenantId("tenant-id");
+        caseRequest.setCases(courtCase);
+        
+        JsonNode caseDetailsNode = createCaseDetailsJsonNode("");
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenAnswer(invocation -> {
+            Object firstArg = invocation.getArgument(0);
+            if (firstArg.equals(caseDetails)) {
+                return caseDetailsNode;
+            }
+            return caseDetailsNode;
+        });
+        
+        // Execute
+        caseRegistrationEnrichment.enrichCourtId(caseRequest);
+        
+        // Verify - courtId should not be set
+        assertNull(courtCase.getCourtId());
+    }
+    
+    private Map<String, Object> createCaseDetailsWithChequeDetails(String policeStationCode) {
+        Map<String, Object> caseDetails = new HashMap<>();
+        Map<String, Object> chequeDetails = new HashMap<>();
+        List<Map<String, Object>> formdata = new ArrayList<>();
+        Map<String, Object> formdataItem = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
+        Map<String, Object> policeStationJuris = new HashMap<>();
+        policeStationJuris.put("code", policeStationCode);
+        data.put("policeStationJurisDictionCheque", policeStationJuris);
+        formdataItem.put("data", data);
+        formdata.add(formdataItem);
+        chequeDetails.put("formdata", formdata);
+        caseDetails.put("chequeDetails", chequeDetails);
+        return caseDetails;
+    }
+    
+    private Map<String, Map<String, JSONArray>> createMdmsDataWithPoliceStation(String policeStationCode, String courtId) {
+        Map<String, Map<String, JSONArray>> mdmsData = new HashMap<>();
+        Map<String, JSONArray> caseModule = new HashMap<>();
+        JSONArray policeStations = new JSONArray();
+        
+        Map<String, Object> policeStation = new HashMap<>();
+        try {
+            policeStation.put("code", Long.parseLong(policeStationCode));
+        } catch (NumberFormatException e) {
+            policeStation.put("code", policeStationCode);
+        }
+        policeStation.put("courtId", courtId);
+        policeStations.add(policeStation);
+        
+        caseModule.put("PoliceStation", policeStations);
+        mdmsData.put("case", caseModule);
+        return mdmsData;
+    }
+    
+    private Map<String, Map<String, JSONArray>> createMdmsDataWithPoliceStationNoCourtId(String policeStationCode) {
+        Map<String, Map<String, JSONArray>> mdmsData = new HashMap<>();
+        Map<String, JSONArray> caseModule = new HashMap<>();
+        JSONArray policeStations = new JSONArray();
+        
+        Map<String, Object> policeStation = new HashMap<>();
+        try {
+            policeStation.put("code", Long.parseLong(policeStationCode));
+        } catch (NumberFormatException e) {
+            policeStation.put("code", policeStationCode);
+        }
+        policeStations.add(policeStation);
+        
+        caseModule.put("PoliceStation", policeStations);
+        mdmsData.put("case", caseModule);
+        return mdmsData;
+    }
+    
+    private JsonNode createCaseDetailsJsonNode(String policeStationCode) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode caseDetailsNode = mapper.createObjectNode();
+        ObjectNode chequeDetails = mapper.createObjectNode();
+        ObjectNode data = mapper.createObjectNode();
+        ObjectNode policeStationJuris = mapper.createObjectNode();
+        
+        policeStationJuris.put("code", policeStationCode);
+        data.set("policeStationJurisDictionCheque", policeStationJuris);
+        
+        ObjectNode formdataItem = mapper.createObjectNode();
+        formdataItem.set("data", data);
+        var formdataArray = mapper.createArrayNode().add(formdataItem);
+        
+        chequeDetails.set("formdata", formdataArray);
+        caseDetailsNode.set("chequeDetails", chequeDetails);
+        
+        return caseDetailsNode;
+    }
+    
+    private JsonNode createPoliceStationJsonNode(String policeStationCode, String courtId) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode policeStationNode = mapper.createObjectNode();
+        // Set code as number as per MDMS schema
+        try {
+            policeStationNode.put("code", Long.parseLong(policeStationCode));
+        } catch (NumberFormatException e) {
+            // Fallback to string if not numeric
+            policeStationNode.put("code", policeStationCode);
+        }
+        policeStationNode.put("courtId", courtId);
+        return policeStationNode;
+    }
+    
+    private JsonNode createPoliceStationJsonNodeNoCourtId(String policeStationCode) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode policeStationNode = mapper.createObjectNode();
+        try {
+            policeStationNode.put("code", Long.parseLong(policeStationCode));
+        } catch (NumberFormatException e) {
+            policeStationNode.put("code", policeStationCode);
+        }
+        return policeStationNode;
     }
 }
 
