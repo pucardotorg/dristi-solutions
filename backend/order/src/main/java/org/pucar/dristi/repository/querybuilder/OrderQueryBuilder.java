@@ -111,7 +111,7 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-            firstCriteria = addCriteria(criteria.getScheduledHearingNumber(), query, firstCriteria, "orders.scheduledhearingnumber", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getScheduledHearingNumber(), query, firstCriteria, "orders.scheduledhearingnumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteriaDate(criteria.getFromPublishedDate(), query, firstCriteria, "orders.createdDate >= ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteriaDate(criteria.getToPublishedDate(), query, firstCriteria, "orders.createdDate <= ?", preparedStmtList, preparedStmtArgList);
 

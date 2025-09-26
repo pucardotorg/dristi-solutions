@@ -13,6 +13,7 @@ import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.cases.CaseOutcome;
 import org.pucar.dristi.web.models.cases.CaseRequest;
 import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.orders.*;
@@ -104,11 +105,41 @@ public class HearingUpdateConsumer {
         }
     }
 
+    @KafkaListener(topics = {"${egov.case.outcome.topic}"})
+    public void updateCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received case outcome record on topic: {}", topic);
+            CaseOutcome caseOutcome = objectMapper.convertValue(payload.value(), CaseOutcome.class);
+            String filingNumber = caseOutcome.getOutcome().getFilingNumber();
+
+            CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+            caseSearchRequest.setRequestInfo(caseOutcome.getRequestInfo());
+            CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+            caseSearchRequest.addCriteriaItem(caseCriteria);
+
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            String caseCnrNumber = textValueOrNull(caseDetails, CASE_CNR);
+            String caseId = textValueOrNull(caseDetails, CASE_ID);
+            String caseTitle = textValueOrNull(caseDetails, CASE_TITLE);
+
+            // close manual pending task of schedule of hearing
+            log.info("close manual pending task of schedule of hearing");
+            pendingTaskUtil.closeManualPendingTask(MANUAL + filingNumber + SCHEDULE_HEARING_SUFFIX, caseOutcome.getRequestInfo(), filingNumber, caseCnrNumber, caseId, caseTitle, null);
+
+        } catch (final Exception e) {
+            log.error("Error while listening to case outcome on topic: {}: ", topic, e);
+        }
+    }
+
     private void checkAndCreatePendingTasks(HearingRequest hearingRequest) {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
 
-        if (!COMPLETED.equalsIgnoreCase(hearing.getStatus())) {
+        JsonNode caseDetails = getCaseDetails(requestInfo, hearing);
+        String caseOutcome = textValueOrNull(caseDetails, CASE_OUTCOME);
+
+        if (!COMPLETED.equalsIgnoreCase(hearing.getStatus())
+                || (caseOutcome != null && !caseOutcome.isEmpty())) {
             return;
         }
 
