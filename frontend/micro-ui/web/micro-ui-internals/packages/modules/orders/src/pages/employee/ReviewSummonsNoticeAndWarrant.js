@@ -1480,9 +1480,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         },
       },
-      additionalDetails: {
-        activeTabIndex: activeTabIndex,
-      },
     };
   }, [
     isJudge,
