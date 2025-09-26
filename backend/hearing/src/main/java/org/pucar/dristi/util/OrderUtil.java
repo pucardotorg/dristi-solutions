@@ -127,14 +127,12 @@ public class OrderUtil {
         OrderListResponse orderListResponse = getOrders(orderSearchRequest);
         if (orderListResponse == null || CollectionUtils.isEmpty(orderListResponse.getList())) {
             log.info("no orders were published after the hearing was scheduled : {}", hearingId);
-        } else {
-            log.info("{} orders were published after the hearing was scheduled : {}", orderListResponse.getList().size(), hearingId);
-            response.getList().addAll(orderListResponse.getList());
+            return null;
         }
 
         List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE, PROCLAMATION, ATTACHMENT));
 
-        List<Order> filteredOrders = response.getList().stream()
+        List<Order> filteredOrders = orderListResponse.getList().stream()
                 .filter(order -> {
                     String orderType = (order.getOrderType() != null)
                             ? order.getOrderType().toUpperCase()
