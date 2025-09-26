@@ -159,6 +159,15 @@ public class PaymentUpdateService {
 
             CourtCase courtCase = updateRequest.getCriteria().get(0).getResponseList().get(0);
             courtCase.setStatus(state.getState());
+            
+            // Create CaseRequest for enrichment
+            CaseRequest enrichmentRequest = new CaseRequest();
+            enrichmentRequest.setRequestInfo(requestInfo);
+            enrichmentRequest.setCases(courtCase);
+            
+            // Enrich court ID based on police station code from cheque details
+            enrichmentUtil.enrichCourtId(enrichmentRequest);
+            
             enrichmentUtil.enrichCaseRegistrationFillingDate(courtCase);
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());

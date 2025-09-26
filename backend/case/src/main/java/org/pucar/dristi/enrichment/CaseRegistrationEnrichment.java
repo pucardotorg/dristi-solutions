@@ -12,6 +12,8 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.minidev.json.JSONArray;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +39,11 @@ public class CaseRegistrationEnrichment {
     private Configuration config;
     private HrmsUtil hrmsUtil;
     private final EtreasuryUtil etreasuryUtil;
+    private MdmsUtil mdmsUtil;
+    private ObjectMapper objectMapper;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil, MdmsUtil mdmsUtil, ObjectMapper objectMapper) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.idgenUtil = idgenUtil;
@@ -47,6 +51,8 @@ public class CaseRegistrationEnrichment {
         this.config = config;
         this.hrmsUtil = hrmsUtil;
         this.etreasuryUtil = etreasuryUtil;
+        this.mdmsUtil = mdmsUtil;
+        this.objectMapper = objectMapper;
     }
 
     private static void enrichDocumentsOnCreate(Document document) {
@@ -644,6 +650,170 @@ public class CaseRegistrationEnrichment {
         } catch (Exception e) {
             log.error("Error enriching lpr number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching lpr number: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Enriches the case request with court ID based on police station code from cheque details
+     */
+    public void enrichCourtId(CaseRequest caseRequest) {
+        try {
+            log.info("Starting court ID enrichment for case request");
+            
+            if (caseRequest == null || caseRequest.getCases() == null) {
+                log.warn("Invalid case request for court ID enrichment");
+                return;
+            }
+            
+            Object caseDetails = caseRequest.getCases().getCaseDetails();
+            String tenantId = caseRequest.getCases().getTenantId();
+            
+            // Extract police station code from cheque details
+            String policeStationCode = extractPoliceStationCode(caseDetails);
+            if (policeStationCode == null || policeStationCode.trim().isEmpty()) {
+                log.warn("No police station code found in cheque details");
+                return;
+            }
+            // Fetch police station data from MDMS
+            Map<String, Map<String, JSONArray>> mdmsData = fetchPoliceStationData(caseRequest.getRequestInfo(), tenantId);
+            
+            // Find court ID for the police station
+            String courtId = findCourtIdForPoliceStation(mdmsData, policeStationCode);
+            
+            if (courtId != null && !courtId.trim().isEmpty()) {
+                // Set court ID in the case
+                caseRequest.getCases().setCourtId(courtId);
+                log.info("Successfully enriched case with court ID: {} for police station: {}", courtId, policeStationCode);
+            } else {
+                log.warn("No court ID found for police station code: {}", policeStationCode);
+            }
+            
+        } catch (Exception e) {
+            log.error("Error enriching case with court ID: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Extracts police station code from cheque details in case details
+     */
+    private String extractPoliceStationCode(Object caseDetails) {
+        try {
+            if (caseDetails == null) {
+                return null;
+            }
+            
+            JsonNode caseDetailsNode = objectMapper.convertValue(caseDetails, JsonNode.class);
+            JsonNode chequeDetails = caseDetailsNode.path("chequeDetails");
+            
+            if (chequeDetails.isMissingNode()) {
+                log.debug("No chequeDetails found in case details");
+                return null;
+            }
+            
+            JsonNode formdata = chequeDetails.path("formdata");
+            if (!formdata.isArray() || formdata.size() == 0) {
+                log.debug("No formdata array found in chequeDetails");
+                return null;
+            }
+            
+            // Get the first formdata entry
+            JsonNode firstFormData = formdata.get(0);
+            JsonNode data = firstFormData.path("data");
+            JsonNode policeStationJuris = data.path("policeStationJurisDictionCheque");
+            
+            if (policeStationJuris.isMissingNode()) {
+                log.debug("No policeStationJurisDictionCheque found in formdata");
+                return null;
+            }
+            
+            JsonNode codeNode = policeStationJuris.path("code");
+            if (codeNode.isMissingNode()) {
+                log.debug("No code found in policeStationJurisDictionCheque");
+                return null;
+            }
+            
+            String code = codeNode.asText();
+            log.debug("Extracted police station code: {}", code);
+            return code;
+            
+        } catch (Exception e) {
+            log.error("Error extracting police station code from case details: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * Fetches police station data from MDMS
+     */
+    private Map<String, Map<String, JSONArray>> fetchPoliceStationData(RequestInfo requestInfo, String tenantId) {
+        try {
+            List<String> masterNames = List.of(POLICE_STATION_MASTER);
+            return mdmsUtil.fetchMdmsData(requestInfo, tenantId, CASE_MODULE, masterNames);
+        } catch (Exception e) {
+            log.error("Error fetching police station data from MDMS: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * Finds court ID for the given police station code from MDMS data
+     */
+    private String findCourtIdForPoliceStation(Map<String, Map<String, JSONArray>> mdmsData, String policeStationCode) {
+        try {
+            if (mdmsData == null || mdmsData.isEmpty()) {
+                log.warn("MDMS data is null or empty");
+                return null;
+            }
+            Map<String, JSONArray> caseModule = mdmsData.get(CASE_MODULE);
+            if (caseModule == null) {
+                log.warn("Case module not found in MDMS data");
+                return null;
+            }
+            JSONArray policeStations = caseModule.get(POLICE_STATION_MASTER);
+            if (policeStations == null || policeStations.isEmpty()) {
+                log.warn("PoliceStation master not found in MDMS data");
+                return null;
+            }
+            // Search for matching police station
+            for (Object policeStationObj : policeStations) {
+                JsonNode policeStation = objectMapper.convertValue(policeStationObj, JsonNode.class);
+                
+                JsonNode codeNode = policeStation.path("code");
+                if (!codeNode.isMissingNode()) {
+                    // Handle both string and number comparison since MDMS code is number type
+                    boolean codeMatches = false;
+                    if (codeNode.isNumber()) {
+                        // Convert police station code to number for comparison
+                        try {
+                            long numericCode = Long.parseLong(policeStationCode);
+                            codeMatches = (codeNode.asLong() == numericCode);
+                        } catch (NumberFormatException e) {
+                            log.debug("Police station code '{}' is not numeric, comparing as string", policeStationCode);
+                            codeMatches = policeStationCode.equals(codeNode.asText());
+                        }
+                    } else {
+                        // Fallback to string comparison
+                        codeMatches = policeStationCode.equals(codeNode.asText());
+                    }
+                    
+                    if (codeMatches) {
+                        JsonNode courtIdNode = policeStation.path("courtId");
+                        if (!courtIdNode.isMissingNode()) {
+                            String courtId = courtIdNode.asText();
+                            log.debug("Found court ID: {} for police station: {}", courtId, policeStationCode);
+                            return courtId;
+                        } else {
+                            log.warn("Police station found with code: {} but courtId field is missing in master data", policeStationCode);
+                            return null;
+                        }
+                    }
+                }
+            }
+            log.warn("No police station found with code: {} in master data", policeStationCode);
+            return null;
+        } catch (Exception e) {
+            log.error("Error finding court ID for police station: {}", e.getMessage(), e);
+            return null;
         }
     }
 }
