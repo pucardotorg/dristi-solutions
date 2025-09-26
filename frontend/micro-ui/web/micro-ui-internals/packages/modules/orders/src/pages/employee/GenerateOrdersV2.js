@@ -257,7 +257,8 @@ const GenerateOrdersV2 = () => {
   const [errors, setErrors] = useState({});
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
-  const hasStartNextHearingAccess = useMemo(() => roles?.includes("ALLOW_START_NEXT_HEARING_ORDERS"), [roles]);
+  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
@@ -3494,7 +3495,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {hasStartNextHearingAccess && !hideNextHearingButton && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}

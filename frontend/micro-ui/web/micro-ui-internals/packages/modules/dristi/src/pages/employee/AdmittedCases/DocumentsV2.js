@@ -37,8 +37,7 @@ const DocumentsV2 = ({
   const { downloadPdf } = useDownloadCasePdf();
 
   const isCitizen = userRoles?.includes("CITIZEN");
-  const hasWitnessDepositionViewAccess = roles?.some((role) => role.code === "VIEW_WITNESS_DEPOSITION");
-  const canSign = roles?.some((role) => role.code === "CAN_SIGN");
+  const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
@@ -95,12 +94,8 @@ const DocumentsV2 = ({
           );
         }
         if (documentStatus === "DRAFT_IN_PROGRESS") {
-          if (hasWitnessDepositionViewAccess) {
-            setShowWitnessModal(true);
-            setEditWitnessDepositionArtifact(artifactNumber);
-          } else {
-            return;
-          }
+          setShowWitnessModal(true);
+          setEditWitnessDepositionArtifact(artifactNumber);
         } else {
           if (documentStatus === "PENDING_REVIEW" && canSign) {
             history.push({

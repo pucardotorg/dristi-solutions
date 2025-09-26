@@ -260,8 +260,13 @@ export const offlinePaymentsConfig = {
           uiConfig: {
             columns: [
               {
-                label: "CASE_NAME_ID",
-                jsonPath: "businessObject.billDetails.caseTitleFilingNumber",
+                label: "PENDING_CASE_NAME",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "",
                 additionalCustomization: true,
               },
               {

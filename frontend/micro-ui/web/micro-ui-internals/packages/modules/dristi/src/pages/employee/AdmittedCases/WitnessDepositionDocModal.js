@@ -25,7 +25,7 @@ function WitnessDepositionDocModal({
   const [isLoading, setIsLoading] = useState(false);
 
   const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
-  const hasWitnessDepositionEditAccess = useMemo(() => userRoles?.includes("ALLOW_WITNESS_DEPOSITION_EDIT"), [userRoles]);
+  const isEmployee = useMemo(() => userRoles?.includes("EMPLOYEE"), [userRoles]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -87,14 +87,14 @@ function WitnessDepositionDocModal({
   }, [docObj, t, tenantId]);
 
   const saveLabel = useMemo(() => {
-    if (hasWitnessDepositionEditAccess) {
+    if (isEmployee) {
       if (artifact?.status === "PENDING_E-SIGN") {
         return t("EDIT_DETAILS_DEPOSITION");
       } else return null;
     } else if (isCitizen && userInfo?.uuid !== artifact?.sourceId) {
       return null;
     } else return null;
-  }, [isCitizen, artifact, t, userInfo?.uuid]);
+  }, [isCitizen, artifact, t, userInfo?.uuid, isEmployee]);
 
   const handleSubmit = async () => {
     if (saveLabel === t("EDIT_DETAILS_DEPOSITION")) {

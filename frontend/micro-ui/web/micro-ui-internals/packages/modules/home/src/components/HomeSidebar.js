@@ -25,7 +25,7 @@ const HomeSidebar = ({
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);
   const hasViewSignWitnessDepositionAccess = useMemo(() => assignedRoles?.includes("VIEW_WITNESS_DEPOSITION"), [assignedRoles]);
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
-  const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("VIEW_A_DIARY"), [assignedRoles]);
+  const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("DIARY_VIEWER"), [assignedRoles]);
 
   return (
     <div className="home-sidebar">

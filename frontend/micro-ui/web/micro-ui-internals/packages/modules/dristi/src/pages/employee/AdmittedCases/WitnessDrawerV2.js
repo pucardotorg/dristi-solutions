@@ -101,8 +101,6 @@ const WitnessDrawerV2 = ({
   const [showConfirmDeleteDepositionModal, setShowConfirmDeleteDepositionModal] = useState({ show: false, tab: {} });
   const [advocatesData, setAdvocatesData] = useState([]);
   const [respondentsData, setRespondentsData] = useState([]);
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const hasWitnessDepositionEditAccess = roles?.some((role) => role.code === "ALLOW_WITNESS_DEPOSITION_EDIT"); // If user does not has this role -> disable all actions.
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -628,10 +626,6 @@ const WitnessDrawerV2 = ({
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
   const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
-    if (!hasWitnessDepositionEditAccess) {
-      onClose();
-      return;
-    }
     if (!selectedWitness?.value) {
       setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
       if (backAction) {
@@ -1183,7 +1177,7 @@ const WitnessDrawerV2 = ({
 
   const config = {
     key: CONFIG_KEY,
-    disable: isDisabled || !hasWitnessDepositionEditAccess,
+    disable: isDisabled,
     populators: {
       inputs: [
         {
@@ -1203,7 +1197,6 @@ const WitnessDrawerV2 = ({
       ],
     },
     disableScrutinyHeader: true,
-    readOnly: !hasWitnessDepositionEditAccess,
   };
   return (
     <React.Fragment>
@@ -1254,10 +1247,7 @@ const WitnessDrawerV2 = ({
                   <div
                     key={tab.artifactNumber || `new-tab-${index}`}
                     className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
-                    onClick={() => {
-                      if (!hasWitnessDepositionEditAccess) return;
-                      handleTabChange(tab);
-                    }}
+                    onClick={() => handleTabChange(tab)}
                     style={{
                       padding: "8px 16px",
                       marginRight: "8px",
@@ -1283,7 +1273,6 @@ const WitnessDrawerV2 = ({
                       }}
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent tab change when clicking delete
-                        if (!hasWitnessDepositionEditAccess) return;
                         if (tab?.artifactNumber) {
                           setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
                         } else {
@@ -1299,10 +1288,7 @@ const WitnessDrawerV2 = ({
                 {
                   <div
                     className="witness-tab add-tab"
-                    onClick={() => {
-                      if (!hasWitnessDepositionEditAccess) return;
-                      handleAddNewDepositionDraft();
-                    }}
+                    onClick={() => handleAddNewDepositionDraft()}
                     style={{
                       padding: "8px 18px",
                       cursor: "pointer",
@@ -1324,7 +1310,7 @@ const WitnessDrawerV2 = ({
                     optionKey={"label"}
                     select={handleDropdownChange}
                     freeze={true}
-                    disable={isProceeding || !hasWitnessDepositionEditAccess}
+                    disable={isProceeding}
                     selected={selectedWitness}
                     style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                   />
@@ -1337,7 +1323,7 @@ const WitnessDrawerV2 = ({
                     optionKey={"label"}
                     select={handleWitnessTypeChange}
                     freeze={true}
-                    disable={isProceeding || isWitnessTypeDisabled || !hasWitnessDepositionEditAccess}
+                    disable={isProceeding || isWitnessTypeDisabled}
                     selected={selectedWitnessType}
                     style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                   />
@@ -1356,10 +1342,7 @@ const WitnessDrawerV2 = ({
                     color: "rgb(0, 126, 126)",
                     fontWeight: 700,
                   }}
-                  onClick={() => {
-                    if (!hasWitnessDepositionEditAccess) return;
-                    onClickAddWitness();
-                  }}
+                  onClick={onClickAddWitness}
                 >
                   + {t("ADD_NEW_WITNESS")}
                 </button>
@@ -1381,7 +1364,7 @@ const WitnessDrawerV2 = ({
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedWitness || isProceeding || !hasWitnessDepositionEditAccess}
+                  isDisabled={!IsSelectedWitness || isProceeding}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -1393,7 +1376,7 @@ const WitnessDrawerV2 = ({
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0 || !hasWitnessDepositionEditAccess}
+                  isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{

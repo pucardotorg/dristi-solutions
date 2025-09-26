@@ -105,7 +105,7 @@ const ADiaryPage = ({ path }) => {
   const isEpostUser = useMemo(() => userRoles?.some((role) => role?.code === "POST_MANAGER"), [userRoles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const hasViewSignADiaryAccess = useMemo(() => userRoles?.some((role) => role?.code === "VIEW_A_DIARY"), [userRoles]);
+  const hasViewSignADiaryAccess = useMemo(() => userRoles?.some((role) => role?.code === "DIARY_VIEWER"), [userRoles]);
 
   const [offSet, setOffset] = useState(0);
   const limit = 10;

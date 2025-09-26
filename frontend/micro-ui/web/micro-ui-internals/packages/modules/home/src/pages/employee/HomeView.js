@@ -92,7 +92,7 @@ const HomeView = () => {
   const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const hasViewSignOrderAccess = useMemo(() => roles?.some((role) => role.code === "VIEW_SIGN_ORDERS"), [roles]);
   const viewDashBoards = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]); // to show Dashboards, Reports tabs.
-  const viewADiary = useMemo(() => roles?.some((role) => role?.code === "VIEW_A_DIARY"), [roles]); // to show A-Diary tab.
+  const viewADiary = useMemo(() => roles?.some((role) => role?.code === "DIARY_VIEWER"), [roles]); // to show A-Diary tab.
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
@@ -511,9 +511,15 @@ const HomeView = () => {
                       </React.Fragment>
                     )}
                     {viewADiary && (
-                      <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
+                      <span
+                        onClick={() => {
+                          sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
+                          history.push(`/${window?.contextPath}/${userType}/home/home-screen`, { state: { CS_HOME_A_DAIRY: true } });
+                        }}
+                        style={{ ...linkStyle, cursor: "pointer" }}
+                      >
                         {t("OPEN_A_DIARY")}
-                      </Link>
+                      </span>
                     )}
                   </div>
                 )}

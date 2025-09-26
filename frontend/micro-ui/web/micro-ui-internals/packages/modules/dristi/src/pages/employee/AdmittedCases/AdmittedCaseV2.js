@@ -3039,7 +3039,7 @@ const AdmittedCaseV2 = () => {
       },
       {
         label: "CREATE_BAIL_BOND", // /analytics/pending_task/v1/create api
-        requiredRoles: ["ALLOW_CREATE_CONFIRM_BOND_SUBMISSION_TASK"], // created new role for ui purpose.
+        requiredRoles: [], // created new role for ui purpose.
       },
       {
         label: "DOWNLOAD_CASE_FILE",

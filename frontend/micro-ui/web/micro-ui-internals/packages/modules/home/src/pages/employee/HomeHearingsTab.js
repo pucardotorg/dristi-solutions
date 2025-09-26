@@ -57,7 +57,6 @@ const HomeHearingsTab = ({
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
-  const hasJoinVC = useMemo(() => roles?.some((role) => role?.code === "ALLOW_JOIN_VC"), [roles]);
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -718,7 +717,7 @@ const HomeHearingsTab = ({
             {t("CLEAR")}
           </button>
         </div>
-        {hasJoinVC && (
+        {
           <div className="filter-actions">
             <button
               className="digit-button-tertiary large"
@@ -748,7 +747,7 @@ const HomeHearingsTab = ({
               </span>
             </button>
           </div>
-        )}
+        }
       </div>
       <div className="main-table-card">
         <div className="table-scroll">
