@@ -22,35 +22,17 @@ import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import CustomSubmitModal from "@egovernments/digit-ui-module-dristi/src/components/CustomSubmitModal";
 
-const ProjectBreadCrumb = ({ location }) => {
-  const userInfo = window?.Digit?.UserService?.getUser()?.info;
-  let userType = "employee";
-  if (userInfo) {
-    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-  }
-  const { t } = useTranslation();
-  const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (userType !== "citizen" && !isEpostUser) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const crumbs = [
-    {
-      path: homePath,
-      content: t("ES_COMMON_HOME"),
-      show: true,
-    },
-    {
-      path: `/${window?.contextPath}/${userType}`,
-      content: t("PROCESSES"),
-      show: true,
-    },
-  ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={{ maxWidth: "min-content" }} />;
-};
-
 const defaultSearchValues = {
   eprocess: "",
   caseId: "",
+};
+
+const sectionsParentStyle = {
+  height: "50%",
+  display: "flex",
+  flexDirection: "column",
+  gridTemplateColumns: "20% 1fr",
+  gap: "1rem",
 };
 
 const handleTaskDetails = (taskDetails) => {
@@ -518,7 +500,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [taskNumber, history, isJudge, courtId, activeTabIndex, reload]);
 
   const onTabChange = (n) => {
-
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setActiveTabIndex(n);
     setBulkSignList([]);
@@ -908,7 +889,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
     const criteriaList = selectedItems?.map((item) => {
-
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
 
       return {
@@ -1363,7 +1343,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onFormValueChange = useCallback(
     (form) => {
-
       if (form?.searchResult?.length > 0) {
         const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
         const isSignedTab = currentConfig?.label === "SIGNED";
@@ -1462,7 +1441,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <Loader />
       ) : (
         <React.Fragment>
-          {/* <ProjectBreadCrumb location={window.location} /> */}
           <div className={`bulk-esign-order-view ignore-margin-left ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
@@ -1481,14 +1459,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     onClickRow: handleRowClick,
                   },
                 }}
-                style={{
-                  width: "100%",
-                  maxHeight: "calc(100vh - 90px)",
-                  overflowY: "auto",
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "#c5c5c5 #f9fafb",
-                  padding: "26px",
-                }}
+                customStyle={sectionsParentStyle}
+                // style={{
+                //   width: "100%",
+                //   maxHeight: "calc(100vh - 90px)",
+                //   overflowY: "auto",
+                //   scrollbarWidth: "thin",
+                //   scrollbarColor: "#c5c5c5 #f9fafb",
+                //   padding: "26px",
+                // }}
               ></InboxSearchComposer>
               {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
               {showActionModal && (
@@ -1507,28 +1486,34 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 />
               )}
               {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
-
-              {/* && config?.label === "PENDING" && bulkSignList && bulkSignList.length > 0 && */}
-              {/* Pending Sign btns */}
-              {isJudge && config?.label === "PENDING_SIGN" && (
-                <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-                  <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-                    <SubmitBar label={t("DOWNLOAD_SELECTED_DOCUMENTS")} onSubmit={handleBulkDownload} disabled={hasNoSelectedItems} />
-                    <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />
-                  </div>
-                </ActionBar>
-              )}
-              {/* Pending Send btns */}
-              {isJudge && config?.label === "SIGNED" && (
-                <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-                  <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-                    <SubmitBar label={t("DOWNLOAD_SELECTED_DOCUMENTS")} onSubmit={handleBulkDownload} disabled={hasNoSelectedItems} />
-                    <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
-                  </div>
-                </ActionBar>
-              )}
             </div>
           </div>
+          {isJudge && config?.label === "PENDING_SIGN" && (
+            <div className={"bulk-submit-bar"}>
+              <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
+                  onSubmit={handleBulkDownload}
+                  disabled={hasNoSelectedItems}
+                  style={{  width: "auto" }}
+                />
+                <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />
+              </div>
+            </div>
+          )}
+          {isJudge && config?.label === "SIGNED" && (
+            <div className={"bulk-submit-bar"}>
+              <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
+                  onSubmit={handleBulkDownload}
+                  disabled={hasNoSelectedItems}
+                  style={{width: "auto"}}
+                />
+                <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
+              </div>
+            </div>
+          )}
         </React.Fragment>
       )}
       {/* Modals */}
