@@ -124,7 +124,7 @@ public class HearingUpdateConsumer {
 
             // close manual pending task of schedule of hearing
             log.info("close manual pending task of schedule of hearing");
-            pendingTaskUtil.closeManualPendingTask(filingNumber + SCHEDULE_HEARING_SUFFIX, caseOutcome.getRequestInfo(), filingNumber, caseCnrNumber, caseId, caseTitle, null);
+            pendingTaskUtil.closeManualPendingTask(MANUAL + filingNumber + SCHEDULE_HEARING_SUFFIX, caseOutcome.getRequestInfo(), filingNumber, caseCnrNumber, caseId, caseTitle, null);
 
         } catch (final Exception e) {
             log.error("Error while listening to case outcome on topic: {}: ", topic, e);
