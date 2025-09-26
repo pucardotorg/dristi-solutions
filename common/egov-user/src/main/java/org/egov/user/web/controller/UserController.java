@@ -150,6 +150,10 @@ public class UserController {
         // Extract courtId from headers for role filtering
         String courtId = extractCourtIdFromHeaders(headers);
         
+        // Log usertype and courtId for debugging
+        String userType = userDetail.getSecureUser().getUser().getType();
+        log.debug("User details request - UserType: {}, CourtId: {}", userType, courtId);
+        
         return new CustomUserDetails(userDetail, courtId);
         //  no encrypt/decrypt
     }
