@@ -40,6 +40,7 @@
 
 package org.egov.hrms.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
@@ -47,7 +48,7 @@ import javax.validation.constraints.Size;
 
 @Builder
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = {"code", "tenantId", "courtId"})
 @Getter
 @NoArgsConstructor
 @Setter
@@ -68,5 +69,8 @@ public class Role {
 	@Size(max = 256)
 	private String tenantId;
 
+	@JsonProperty("courtId")
+	@Size(max = 256)
+	private String courtId;
 
 }
