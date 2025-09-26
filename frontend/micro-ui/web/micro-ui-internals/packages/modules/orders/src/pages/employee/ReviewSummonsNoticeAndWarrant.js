@@ -55,13 +55,10 @@ const defaultSearchValues = {
 
 const handleTaskDetails = (taskDetails) => {
   try {
-    // Check if taskDetails is a string
     if (typeof taskDetails === "string") {
-      // First, remove escape characters like backslashes if present
       const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
       return JSON.parse(cleanedDetails);
     }
-    // If taskDetails is not a string, return it as it is
     return taskDetails;
   } catch (error) {
     console.error("Failed to parse taskDetails:", error);
@@ -288,27 +285,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
           message: t("DOCUMENT_SENT_SUCCESSFULLY"),
           error: false,
         });
-
-        // Auto-dismiss success toast after 3 seconds
         setTimeout(() => {
           setShowErrorToast(null);
         }, 3000);
-        console.log("Successfully sent single document");
-
-        // Clear selection for successfully sent single document
         setBulkSendList((prev) => prev?.filter((item) => item?.taskNumber !== rowData?.taskNumber) || []);
       }
 
       setShowActionModal(false);
       setReload(!reload);
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
       setShowErrorToast({
         message: t("SEND_FAILED"),
         error: true,
       });
-
-      // Auto-dismiss error toast after 5 seconds
       setTimeout(() => {
         setShowErrorToast(null);
       }, 5000);
@@ -317,7 +306,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [refetch, reload, tenantId, t, rowData?.taskNumber]);
 
-  // Mock Bulk Send API integration (similar to Bulk Sign integration) - placed before usage
   const callBulkSendApi = useCallback(
     async (selectedItems) => {
       const bulkSendUrl = window?.globalConfigs?.getConfig("BULK_SEND_URL") || "http://localhost:9000/task/v1/bulk-send";
@@ -370,7 +358,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
         // If structure is unknown, treat as failure rather than optimistic success
         return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
       } catch (error) {
-        console.error("Mock bulk send API error:", error);
         return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
       }
     },
@@ -383,24 +370,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     try {
       const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
-      console.log("Processing bulk send for items:", selectedItems);
 
       const { successful, failed, total } = await callBulkSendApi(selectedItems);
-      // Show success only if all items succeeded
       if (successful === total && total > 0) {
         setShowErrorToast({ message: t("DOCUMENTS_SENT_SUCCESSFULLY", { successful, total }), error: false });
         setTimeout(() => setShowErrorToast(null), 3000);
         setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((s) => s.taskNumber === item.taskNumber)) || []);
         setReload(!reload);
       } else {
-        // Partial or full failure
         setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
         setTimeout(() => setShowErrorToast(null), 5000);
         setBulkSendList([]);
         setReload((prev) => prev + 1);
       }
     } catch (error) {
-      console.error("Error in bulk send:", error);
       setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
       setTimeout(() => setShowErrorToast(null), 5000);
       setBulkSendList([]);
@@ -535,12 +518,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [taskNumber, history, isJudge, courtId, activeTabIndex, reload]);
 
   const onTabChange = (n) => {
-    console.log("Tab change detected:", {
-      fromTab: activeTabIndex,
-      toTab: n,
-      currentSignSelections: bulkSignList?.filter((item) => item?.isSelected)?.length || 0,
-      currentSendSelections: bulkSendList?.filter((item) => item?.isSelected)?.length || 0,
-    });
 
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setActiveTabIndex(n);
@@ -713,7 +690,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     try {
       let localStorageID = "";
       if (mockESignEnabled) {
-        // For mock esign, just send the existing file store id in update calls.
         localStorageID = rowData?.documents?.[0]?.fileStore;
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
@@ -737,11 +713,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         tenantId,
       };
-
-      // Attempt to upload the document and handle the response
       setIsLoading(true);
       const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
-      // Update local state to reflect signed status so subsequent actions don't reopen e-sign
       if (documentsFile) {
         setRowData((prev) => ({
           ...prev,
@@ -750,14 +723,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }));
         setIsSigned(true);
         setActionModalType("SIGNED");
-        // Remember which task was just signed so clicking it again opens Mark as Sent
-        // try {
-        //   const tn = rowData?.taskNumber || reqBody?.task?.taskNumber;
-        //   if (tn) sessionStorage.setItem("LastSignedTaskNumber", tn);
-        // } catch (e) {}
       }
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
-        // localStorage.removeItem("SignedFileStoreID");
         const { data: tasksData } = await refetch();
         if (tasksData) {
           try {
@@ -786,7 +753,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return { continue: true };
           } catch (error) {
             setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
-            console.error("Error updating task data:", error);
             return { continue: true };
           } finally {
             setIsLoading(false);
@@ -795,31 +761,24 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
       return { continue: true };
     } catch (error) {
-      // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
     } finally {
       setIsLoading(false);
     }
   }, [rowData, signatureId, tenantId]);
 
-  // Handle bulk sign functionality
   const handleBulkSign = useCallback(() => {
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
       setShowErrorToast({ message: t("NO_DOCUMENTS_SELECTED"), error: true });
-
-      // Auto-dismiss error toast after 5 seconds
       setTimeout(() => {
         setShowErrorToast(null);
       }, 5000);
       return;
     }
-
-    // Set the selected items and show confirmation modal
     setShowBulkSignConfirmModal(true);
   }, [bulkSignList, t]);
 
-  // Handle bulk send button click - show confirmation modal
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
@@ -827,8 +786,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
         message: t("NO_DOCUMENTS_SELECTED"),
         error: true,
       });
-
-      // Auto-dismiss error toast after 5 seconds
       setTimeout(() => {
         setShowErrorToast(null);
       }, 5000);
@@ -860,18 +817,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return element ? element.textContent.trim() : null;
   };
 
-  // Fetch response from XML request (from BulkESignView)
   const fetchResponseFromXmlRequest = async (orderRequestList) => {
     const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
     const responses = [];
 
     const requests = orderRequestList?.map(async (order) => {
       try {
-        // Debug: verify identifiers coming from getTasksToSign response
-        console.log("Bulk sign XML request identifiers:", {
-          taskNumber: order?.taskNumber,
-          orderNumber: order?.orderNumber,
-        });
         const formData = qs.stringify({ response: order?.request });
         const response = await axios.post(bulkSignUrl, formData, {
           headers: {
@@ -905,8 +856,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     await Promise.allSettled(requests);
     return responses;
   };
-
-  // Upload modal config for bulk signature
   const bulkUploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -927,7 +876,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     };
   }, []);
 
-  // Handle bulk signature upload
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {
       setBulkSignatureData({});
@@ -940,7 +888,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   };
 
-  // Handle bulk signature upload submission
   const onBulkSignatureSubmit = async () => {
     if (bulkSignatureData?.uploadSignature?.Signature?.length > 0) {
       try {
@@ -948,31 +895,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setBulkSignatureId(uploadedFileId?.[0]?.fileStoreId);
         setIsBulkSigned(true);
         setShowBulkSignatureModal(false);
-        // Now proceed with actual signing
         handleActualBulkSign();
       } catch (error) {
-        console.error("error", error);
         setBulkSignatureData({});
         setIsBulkSigned(false);
       }
     }
   };
-
-  // Handle actual bulk signing after signature upload
   const handleActualBulkSign = useCallback(async () => {
     setIsBulkLoading(true);
 
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
-    // Prepare criteria list for signing following the getTasksToSign API format
     const criteriaList = selectedItems?.map((item) => {
-      // Debug: Log the entire item structure to understand the data
-      console.log("Full item structure for debugging:", JSON.stringify(item, null, 2));
 
-      // Extract fileStoreId from documents array (found in item.documents[0].fileStore)
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
-
-      console.log("Extracted fileStoreId:", fileStoreId);
 
       return {
         fileStoreId: fileStoreId,
@@ -982,10 +919,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       };
     });
 
-    console.log("Bulk sign payload - criteriaList:", criteriaList);
-
     try {
-      // Get tasks to sign using the new API with RequestInfo structure
       const response = await processManagementService.getProcessToSign(
         {
           RequestInfo: {},
@@ -993,13 +927,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         {}
       );
-      console.log("Tasks to sign response:", response);
-
-      // Process XML signing requests
       await fetchResponseFromXmlRequest(response?.taskList || response?.orderList).then(async (responseArray) => {
-        console.log("Processed XML response:", responseArray);
-
-        // Map response to API schema: { taskNumber, signedTaskData, signed, tenantId, errorMsg }
         const signedTasksPayload = (responseArray || []).map((item) => ({
           taskNumber: item?.taskNumber || item?.orderNumber,
           signedTaskData: item?.signedTaskData || item?.signedOrderData || "",
@@ -1007,11 +935,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-
-        // Debug: preview the payload being sent to updateSignedTasks
-        console.log("signedTasks payload preview:", signedTasksPayload?.slice(0, 3));
-
-        // Update signed tasks with proper payload structure matching the API format
         const updateTaskResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
@@ -1019,29 +942,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
           {}
         );
-        console.log("Update signed tasks response:", updateTaskResponse);
-
-        // Show success message and refresh
         setShowErrorToast({
           message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
           error: false,
         });
 
-        // Auto-dismiss success toast after 3 seconds
         setTimeout(() => {
           setShowErrorToast(null);
         }, 3000);
-
-        // Prepare to perform bulk send immediately on the same screen (Pending Sign tab)
         try {
-          // Pre-populate bulkSendList with the same items that were just signed
           const preselectedForSend = selectedItems.map((it) => ({
             ...it,
             isSelected: true,
             documentStatus: "SIGNED",
           }));
-
-          // Merge into existing bulkSendList while ensuring these are selected
           setBulkSendList((prev) => {
             const prevArr = Array.isArray(prev) ? prev : [];
             const map = new Map(prevArr.map((p) => [p?.taskNumber, p]));
@@ -1052,42 +966,29 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return Array.from(map.values());
           });
 
-          // Optionally remove these items from bulkSignList to avoid confusion
           setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !preselectedForSend.some((s) => s.taskNumber === p.taskNumber)) : []));
-
-          // Trigger a light refresh of the table data (avoids full page reload)
           setReload((prev) => prev + 1);
-
-          // Show the Bulk Sign Success modal; from there user can proceed to Send
           setShowBulkSignSuccessModal(true);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
         }
       });
     } catch (error) {
-      console.error("Failed to perform bulk sign:", error);
       setShowErrorToast({
         message: t("FAILED_TO_PERFORM_BULK_SIGN"),
         error: true,
       });
-
-      // Auto-dismiss error toast after 5 seconds
       setTimeout(() => {
         setShowErrorToast(null);
       }, 5000);
-
-      // Clear all selections and refresh table when bulk sign fails
       setBulkSignList([]);
       setReload((prev) => prev + 1);
     } finally {
       setIsBulkLoading(false);
     }
   }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest]);
-
-  // Handle bulk download of selected documents
   const handleBulkDownload = useCallback(async () => {
     try {
-      // Determine which list to check based on current tab
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
 
@@ -1100,20 +1001,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
           message: t("NO_DOCUMENTS_SELECTED_FOR_DOWNLOAD"),
           error: true,
         });
-
-        // Auto-dismiss error toast after 5 seconds
         setTimeout(() => {
           setShowErrorToast(null);
         }, 5000);
         return;
       }
-
-      // Start parallel downloads for all selected documents
       const downloadPromises = selectedItems.map(async (item, index) => {
         const fileStoreId = item?.documents?.[0]?.fileStore;
 
         if (fileStoreId) {
-          // Build filename: orderType_caseNumber_issueDate
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
           const orderTypeName = (() => {
             const s = rawOrderType.trim();
@@ -1183,8 +1079,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           }, 2000); // Wait 2 seconds for browser to finish saving files
         })
         .catch((error) => {
-          // Some or all downloads failed - show error toast
-          console.error("Bulk download error:", error);
           setShowErrorToast({
             message: t("BULK_DOWNLOAD_FAILED"),
             error: true,
@@ -1207,18 +1101,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setReload((prev) => prev + 1);
         });
     } catch (error) {
-      console.error("Bulk download error:", error);
       setShowErrorToast({
         message: t("BULK_DOWNLOAD_FAILED"),
         error: true,
       });
-
-      // Auto-dismiss error toast after 5 seconds
       setTimeout(() => {
         setShowErrorToast(null);
       }, 5000);
-
-      // Clear all selections and refresh table when bulk download fails completely
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
 
@@ -1474,12 +1363,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onFormValueChange = useCallback(
     (form) => {
-      console.log("onFormValueChange called:", {
-        hasSearchResult: !!form?.searchResult?.length,
-        searchResultLength: form?.searchResult?.length,
-        activeTabIndex,
-        form,
-      });
 
       if (form?.searchResult?.length > 0) {
         const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
@@ -1488,27 +1371,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const existingSendList = bulkSendList || [];
         const allExistingSelections = [...existingSignList, ...existingSendList].filter((item) => item?.isSelected);
 
-        console.log("Preserving selections for tab:", {
-          tabLabel: currentConfig?.label,
-          isSignedTab,
-          existingSignSelections: existingSignList?.filter((item) => item?.isSelected)?.length,
-          existingSendSelections: existingSendList?.filter((item) => item?.isSelected)?.length,
-          totalExistingSelections: allExistingSelections.length,
-        });
         const updatedData = form.searchResult.map((item) => {
           const wasSelected = allExistingSelections.some((existing) => existing?.taskNumber === item?.taskNumber);
-
-          if (wasSelected) {
-            console.log(`Preserving selection for task: ${item?.taskNumber}`);
-          }
 
           return {
             ...item,
             isSelected: wasSelected,
           };
         });
-
-        console.log("Updated data selections:", updatedData?.filter((item) => item?.isSelected)?.length);
 
         if (isSignedTab) {
           setBulkSendList(updatedData);
