@@ -8,6 +8,8 @@ import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
 import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 
+const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/0020f4d2-9d56-439b-bbaa-4c7ab391eef1";
+
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { select } = Digit.Hooks.useQueryParams();
@@ -29,6 +31,7 @@ const DashboardPage = () => {
   const [taskType, setTaskType] = useState({});
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
+  const [metabaseUrl, setMetabaseUrl] = useState(METABASE_URL);
   const [showPicker, setShowPicker] = useState(false);
   const [dateRange, setDateRange] = useState([
     {
@@ -249,9 +252,10 @@ const DashboardPage = () => {
 
     const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
     const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+    const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
     const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
     let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-    if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+    if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
     const crumbs = [
       {
         path: homePath,
@@ -307,6 +311,9 @@ const DashboardPage = () => {
                       onClick={() => {
                         setStepper(1);
                         setHeadingTxt(data.code + "_HEADING");
+                        setMetabaseUrl(data.code === "HEARINGS_DS"
+                          ? `${METABASE_URL}?tab=89-hearings-progress`
+                          : METABASE_URL)
                         setJobID(data.jobId);
                       }}
                     >
@@ -337,29 +344,28 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {!isNaN(stepper) && headingTxt?.trim() && (
+          {headingTxt === 'AVAILABLE_REPORTS' && !isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
               <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
           )}
 
           <div className="dashboard-content">
-            {stepper === 1 && (
+            {/*stepper === 1 && (
               <div className="date-filter">
                 <CustomDateRangePicker setDateRange={setDateRange} dateRange={dateRange} showPicker={showPicker} setShowPicker={setShowPicker} />
                 <button onClick={handleSubmit} className="filter-button">
                   <FilterIcon /> {t("ADD_FILTER")}
                 </button>
               </div>
-            )}
+            ) */}
             <div className="content-area">
               <style>{customStyles}</style>
               {stepper === 1 && (
                 <iframe
-                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&chrome=false&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
-                  height="600"
+                  src={metabaseUrl}
+                  height="700"
                   width="100%"
-                  title="case"
                 ></iframe>
               )}{" "}
               {stepper === 2 && (

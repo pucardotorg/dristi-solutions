@@ -16,6 +16,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   const [fileStoreId, setFileStoreId] = useState(rowData?.documents?.[0]?.fileStore || ""); // have to set the uploaded fileStoreID
   const [pageModule, setPageModule] = useState("en");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const name = "Signature";
   const signPlaceHolder = "Signature";
@@ -76,6 +77,10 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
       txt = "Summons";
     } else if (rowData?.orderType === "WARRANT") {
       txt = "Warrant";
+    } else if (rowData?.orderType === "PROCLAMATION") {
+      txt = "Proclamation";
+    } else if (rowData?.orderType === "ATTACHMENT") {
+      txt = "Attachment";
     } else {
       txt = "Notice";
     }
@@ -83,6 +88,16 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   }, [rowData]);
 
   const fileStore = sessionStorage.getItem("fileStoreId") || signatureId;
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
+      sessionStorage.setItem("delieveryChannel", deliveryChannel);
+      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
+    }
+  };
 
   return (
     <div>
@@ -128,11 +143,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
               <div style={{ display: "flex", gap: "16px" }}>
                 <Button
                   label={t("CS_ESIGN")}
-                  onButtonClick={() => {
-                    sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
-                    sessionStorage.setItem("delieveryChannel", deliveryChannel);
-                    handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
-                  }}
+                  onButtonClick={handleClickEsign}
                   style={{
                     width: "96px",
                     background: "none",

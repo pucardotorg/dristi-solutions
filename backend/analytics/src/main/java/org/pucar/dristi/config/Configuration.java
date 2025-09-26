@@ -164,6 +164,10 @@ public class Configuration {
 	private String aDiaryBusinessServices;
 	private List<String> aDiaryBusinessServiceList;
 
+	@Value("${egov.bail.bond.business.services}")
+	private String bailBondBusinessServices;
+	private List<String> bailBondBusinessServiceList;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -220,6 +224,13 @@ public class Configuration {
 	@Value("${egov-state-level-tenant-id}")
 	private String egovStateTenantId;
 
+	// LPR config
+	@Value("${lpr.stage}")
+	private String lprStage;
+
+	@Value("${lpr.sub.stage}")
+	private String lprSubStage;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
@@ -229,6 +240,7 @@ public class Configuration {
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
+		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
 	}
 
 

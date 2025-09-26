@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
-import org.egov.common.contract.models.Workflow;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -138,6 +137,11 @@ public class Artifact {
 	@Valid
 	private Document file = null;
 
+    @JsonProperty("seal")
+
+    @Valid
+    private Document seal = null;
+
 	@JsonProperty("description")
 
 	private String description = null;
@@ -163,6 +167,24 @@ public class Artifact {
 
 	@Valid
 	private WorkflowObject workflow = null;
+
+	@JsonProperty("shortenedUrl")
+	private String shortenedUrl = null;
+
+	@JsonProperty("witnessMobileNumbers")
+	private List<String> witnessMobileNumbers = null;
+
+	@JsonProperty("witnessEmails")
+	private List<String> witnessEmails = null;
+
+	@JsonProperty("tag")
+	private String tag = null;
+
+	@JsonProperty("evidenceMarkedStatus")
+	private String evidenceMarkedStatus = null;
+
+	@JsonProperty("isEvidenceMarkedFlow")
+	private Boolean isEvidenceMarkedFlow = false;
 
 	public Artifact addApplicableToItem(String applicableToItem) {
 		if (this.applicableTo == null) {
