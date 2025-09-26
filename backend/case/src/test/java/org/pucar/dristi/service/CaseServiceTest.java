@@ -1533,6 +1533,7 @@ public class CaseServiceTest {
     void testAddWitnessToCase_Success() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
+        addAllowAddWitnessRole(request.getRequestInfo());
         CourtCase courtCase = createCourtCase();
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .responseList(Collections.singletonList(courtCase))
@@ -1570,9 +1571,27 @@ public class CaseServiceTest {
     }
 
     @Test
+    void testAddWitnessToCase_UserNotAllowed() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        removeAllowAddWitnessRole(request.getRequestInfo());
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.emptyList())
+                .defaultFields(false)
+                .build();
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
+
+        assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
+        assertTrue(exception.getMessage().contains("User does not have the role to perform this operation"));
+    }
+
+    @Test
     void testAddWitnessToCase_CaseNotFound() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
+        addAllowAddWitnessRole(request.getRequestInfo());
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .responseList(Collections.emptyList())
                 .defaultFields(false)
@@ -1596,6 +1615,7 @@ public class CaseServiceTest {
     void testAddWitnessToCase_NullWitnessDetails() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
+        addAllowAddWitnessRole(request.getRequestInfo());
         request.setWitnessDetails(null);
         CourtCase courtCase = createCourtCase();
         CaseCriteria caseCriteria = CaseCriteria.builder()
@@ -1649,6 +1669,26 @@ public class CaseServiceTest {
         courtCase.setTenantId("pb.amritsar");
         courtCase.setAdditionalDetails(new HashMap<>());
         return courtCase;
+    }
+
+    private void addAllowAddWitnessRole(RequestInfo requestInfo) {
+        Role allowAddWitnessRole = Role.builder().code(ALLOW_ADD_WITNESS).build();
+        List<Role> roles = requestInfo.getUserInfo().getRoles();
+        if(roles == null){
+            roles = new ArrayList<>();
+            requestInfo.getUserInfo().setRoles(roles);
+        }
+        requestInfo.getUserInfo().getRoles().add(allowAddWitnessRole);
+    }
+
+    private void removeAllowAddWitnessRole(RequestInfo requestInfo) {
+        List<Role> roles = requestInfo.getUserInfo().getRoles();
+        if(roles == null){
+            roles = new ArrayList<>();
+            requestInfo.getUserInfo().setRoles(roles);
+            return;
+        }
+        roles.removeIf(role -> role.getCode().equals(ALLOW_ADD_WITNESS));
     }
 
 }
