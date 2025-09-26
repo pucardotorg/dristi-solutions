@@ -218,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
