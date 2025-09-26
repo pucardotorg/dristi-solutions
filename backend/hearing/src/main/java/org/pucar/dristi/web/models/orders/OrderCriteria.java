@@ -51,8 +51,12 @@ public class OrderCriteria {
     @Valid
     private String scheduledHearingNumber = null;
 
-    @JsonProperty("createdTime")
+    @JsonProperty("fromPublishedDate")
     @Valid
-    private Long createdTime = null;
+    private Long fromPublishedDate = null;
+
+    @JsonProperty("toPublishedDate")
+    @Valid
+    private Long toPublishedDate = null;
 
 }

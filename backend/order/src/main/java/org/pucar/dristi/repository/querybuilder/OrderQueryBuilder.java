@@ -112,10 +112,8 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getScheduledHearingNumber(), query, firstCriteria, "orders.scheduledhearingnumber", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-            firstCriteria = addCriteria(criteria.getCreatedTime() != null ? criteria.getCreatedTime().toString() : null, query, firstCriteria, "orders.createdTime >= ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-            if (criteria.getCreatedTime() != null) {
-                firstCriteria = addCriteria(String.valueOf(System.currentTimeMillis()), query, firstCriteria, "orders.createdTime <= ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-            }
+            firstCriteria = addCriteria(criteria.getFromPublishedDate() != null ? criteria.getFromPublishedDate().toString() : null, query, firstCriteria, "orders.createdDate >= ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getToPublishedDate() != null ? criteria.getToPublishedDate().toString() : null, query, firstCriteria, "orders.createdDate <= ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
             if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
                 addCriteria(criteria.getOrderNumber() , query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);

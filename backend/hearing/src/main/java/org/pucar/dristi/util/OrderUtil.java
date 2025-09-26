@@ -112,7 +112,8 @@ public class OrderUtil {
 
         // get orders which are created after this hearing scheduled
         OrderCriteria orderCriteria = OrderCriteria.builder()
-                .createdTime(response.getList().get(0).getCreatedDate())
+                .fromPublishedDate(response.getList().get(0).getCreatedDate())
+                .toPublishedDate(System.currentTimeMillis())
                 .filingNumber(response.getList().get(0).getFilingNumber())
                 .status(PUBLISHED)
                 .tenantId(tenantId)
