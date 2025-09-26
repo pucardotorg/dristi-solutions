@@ -1176,6 +1176,12 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       }
     }
 
+    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
     return hasError;
   } else {
     return false;
