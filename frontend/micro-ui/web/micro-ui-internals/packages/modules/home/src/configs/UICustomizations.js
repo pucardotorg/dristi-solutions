@@ -457,6 +457,7 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       let filterList = Object.keys(requestCriteria.state.searchForm)
         ?.map((key) => {
+          if (key === "applicationStatus") return null;
           if (requestCriteria.state.searchForm[key]) return { [key]: requestCriteria.state.searchForm[key] };
         })
         ?.filter((filter) => filter)
@@ -470,6 +471,8 @@ export const UICustomizations = {
       // Remove UI-only fields that should not be sent to backend as-is
       if (filterList?.channel) delete filterList.channel;
       if (filterList?.deliveryChannel) delete filterList.deliveryChannel;
+      if (filterList?.hearingDate) delete filterList.hearingDate;
+      if (filterList?.applicationStatus !== undefined) delete filterList.applicationStatus;
       const tenantId = window?.Digit.ULBService.getStateId();
       const { data: sentData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "SentStatus" }], {
         select: (data) => {
@@ -490,6 +493,10 @@ export const UICustomizations = {
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
       const deliveryChanel = searchForm?.channel?.name || null;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
+      const activeTabIndex = additionalDetails?.activeTabIndex || 0;
+      let resolvedApplicationStatus = "";
+      if (activeTabIndex === 0) resolvedApplicationStatus = "SIGN_PENDING";
+      else if (activeTabIndex === 1) resolvedApplicationStatus = "SIGNED";
 
       return {
         ...requestCriteria,
@@ -502,11 +509,8 @@ export const UICustomizations = {
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
             ...(hearingDate !== null && { hearingDate }),
-            // orderType: orderTypeValue, //filterList?.orderType ? [filterList?.orderType?.code] : [],
-            applicationStatus: requestCriteria.body?.criteria?.applicationStatus || "",
-            // applicationStatus: filterList?.applicationStatus?.code || "",
-            // ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
             ...(courtId && { courtId }),
+            applicationStatus: resolvedApplicationStatus,
           },
           tenantId,
           pagination: {
@@ -541,7 +545,7 @@ export const UICustomizations = {
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
           if (processType === "NOTICE") {
-            const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE"; 
+            const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
           }
           return t(value);
@@ -552,7 +556,14 @@ export const UICustomizations = {
         case "HEARING_DATE":
           return hearingDate || "-";
         case "CASE_TITLE":
-          return `${row?.caseName}`;
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+            >{`${row?.caseName}`}</span>
+          );
         case "CS_CASE_NUMBER_HOME":
           return `${caseId}`;
         case "SENT_DATE":
