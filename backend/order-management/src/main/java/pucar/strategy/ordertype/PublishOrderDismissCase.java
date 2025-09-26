@@ -99,6 +99,7 @@ public class PublishOrderDismissCase implements OrderUpdateStrategy {
                     hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
                 });
         log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
         return null;
     }
 
