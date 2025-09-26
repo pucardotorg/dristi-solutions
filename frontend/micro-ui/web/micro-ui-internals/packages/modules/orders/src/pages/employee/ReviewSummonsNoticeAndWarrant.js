@@ -85,6 +85,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
+
+  const hasViewAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_ATTACHMENT"), [roles]);
+  const hasViewProclamationAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_PROCLAMATION"), [roles]);
+  const hasViewSummonsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_SUMMONS"), [roles]);
+  const hasViewWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_WARRANT"), [roles]);
+  const hasViewNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_NOTICE"), [roles]);
+
+  const hasSignAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_ATTACHMENT"), [roles]);
+  const hasSignProclamationAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_PROCLAMATION"), [roles]);
+  const hasSignSummonsAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_SUMMONS"), [roles]);
+  const hasSignWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_WARRANT"), [roles]);
+  const hasSignNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_NOTICE"), [roles]);
+
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const courtId = localStorage.getItem("courtId");
@@ -141,11 +154,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           active: index === 0 ? true : false,
         }))
   );
-
-  // const handleOpen = (props) => {
-  //change status to signed or unsigned
-  // };
-
   const handleDownload = useCallback(() => {
     const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore;
     const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
@@ -1040,8 +1048,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
               setTimeout(() => {
                 setShowErrorToast(null);
               }, 3000);
-
-              // Clear selections for successfully downloaded items
               const currentConfig = isJudge
                 ? getJudgeDefaultConfig(courtId)?.[activeTabIndex]
                 : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
@@ -1136,7 +1142,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: handleClose,
       heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
-      actionSaveLabel: t("E_SIGN_TEXT"),
+      actionSaveLabel:
+        (rowData?.taskType === "ATTACHMENT" && hasSignAttachmentAccess) ||
+        (rowData?.taskType === "PROCLAMATION" && hasSignProclamationAccess) ||
+        (rowData?.taskType === "SUMMONS" && hasSignSummonsAccess) ||
+        (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
+        (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
+        isJudge
+          ? t("E_SIGN_TEXT")
+          : null,
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
       steps: [
@@ -1413,10 +1427,44 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     if (!baseConfig) return null;
 
+    const updatedFields = baseConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+      if (field.key === "orderType" && field.type === "dropdown") {
+        const originalSelect = field.populators.mdmsConfig.select;
+
+        return {
+          ...field,
+          populators: {
+            ...field.populators,
+            mdmsConfig: {
+              ...field.populators.mdmsConfig,
+              select: `(data) => {
+              const list = (${originalSelect})(data) || [];
+              return list.filter(item => 
+                (item.code === "ATTACHMENT" && ${hasViewAttachmentAccess}) ||
+                (item.code === "PROCLAMATION" && ${hasViewProclamationAccess}) ||
+                (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
+                (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
+                (item.code === "NOTICE" && ${hasViewNoticeAccess})
+              );
+            }`,
+            },
+          },
+        };
+      }
+      return field;
+    });
+
     return {
       ...baseConfig,
       sections: {
         ...baseConfig?.sections,
+        search: {
+          ...baseConfig?.sections?.search,
+          uiConfig: {
+            ...baseConfig?.sections?.search?.uiConfig,
+            fields: updatedFields,
+          },
+        },
         searchResult: {
           ...baseConfig?.sections?.searchResult,
           uiConfig: {
@@ -1433,7 +1481,16 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       },
     };
-  }, [isJudge, courtId, activeTabIndex]);
+  }, [
+    isJudge,
+    courtId,
+    activeTabIndex,
+    hasViewAttachmentAccess,
+    hasViewProclamationAccess,
+    hasViewSummonsAccess,
+    hasViewWarrantAccess,
+    hasViewNoticeAccess,
+  ]);
 
   return (
     <React.Fragment>
@@ -1460,14 +1517,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   },
                 }}
                 customStyle={sectionsParentStyle}
-                // style={{
-                //   width: "100%",
-                //   maxHeight: "calc(100vh - 90px)",
-                //   overflowY: "auto",
-                //   scrollbarWidth: "thin",
-                //   scrollbarColor: "#c5c5c5 #f9fafb",
-                //   padding: "26px",
-                // }}
               ></InboxSearchComposer>
               {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
               {showActionModal && (
@@ -1495,7 +1544,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
                   onSubmit={handleBulkDownload}
                   disabled={hasNoSelectedItems}
-                  style={{  width: "auto" }}
+                  style={{ width: "auto" }}
                 />
                 <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />
               </div>
@@ -1508,7 +1557,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
                   onSubmit={handleBulkDownload}
                   disabled={hasNoSelectedItems}
-                  style={{width: "auto"}}
+                  style={{ width: "auto" }}
                 />
                 <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
               </div>
