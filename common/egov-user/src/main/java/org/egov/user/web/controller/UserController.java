@@ -136,14 +136,21 @@ public class UserController {
 
     /**
      * end-point to fetch the user details by access-token
+     * Supports court-based role filtering via courtId header
      *
      * @param accessToken
-     * @return
+     * @param headers HTTP headers containing optional courtId for role filtering
+     * @return CustomUserDetails with roles filtered by courtId if provided
      */
     @PostMapping("/_details")
-    public CustomUserDetails getUser(@RequestParam(value = "access_token") String accessToken) {
+    public CustomUserDetails getUser(@RequestParam(value = "access_token") String accessToken,
+                                     @RequestHeader HttpHeaders headers) {
         final UserDetail userDetail = tokenService.getUser(accessToken);
-        return new CustomUserDetails(userDetail);
+        
+        // Extract courtId from headers for role filtering
+        String courtId = extractCourtIdFromHeaders(headers);
+        
+        return new CustomUserDetails(userDetail, courtId);
         //  no encrypt/decrypt
     }
 
@@ -213,6 +220,38 @@ public class UserController {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Extracts courtId from HTTP headers for role filtering
+     * 
+     * @param headers HTTP headers
+     * @return courtId if present in headers, null otherwise
+     */
+    private String extractCourtIdFromHeaders(HttpHeaders headers) {
+        if (headers == null) {
+            return null;
+        }
+        
+        // Check for courtId in headers (case-insensitive)
+        List<String> courtIdHeaders = headers.get("courtId");
+        if (courtIdHeaders == null || courtIdHeaders.isEmpty()) {
+            courtIdHeaders = headers.get("courtid");
+        }
+        if (courtIdHeaders == null || courtIdHeaders.isEmpty()) {
+            courtIdHeaders = headers.get("COURTID");
+        }
+        
+        if (courtIdHeaders != null && !courtIdHeaders.isEmpty()) {
+            String courtId = courtIdHeaders.get(0);
+            if (StringUtils.isNotBlank(courtId)) {
+                log.debug("Court ID extracted from headers: {}", courtId);
+                return courtId.trim();
+            }
+        }
+        
+        log.debug("No courtId found in headers");
+        return null;
     }
 
 }
