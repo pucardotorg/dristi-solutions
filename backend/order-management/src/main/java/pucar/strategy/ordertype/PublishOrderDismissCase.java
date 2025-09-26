@@ -8,7 +8,6 @@ import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
-import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
@@ -34,14 +33,12 @@ public class PublishOrderDismissCase implements OrderUpdateStrategy {
     private final CaseUtil caseUtil;
     private final HearingUtil hearingUtil;
     private final Configuration config;
-    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public PublishOrderDismissCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderDismissCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config) {
         this.caseUtil = caseUtil;
         this.hearingUtil = hearingUtil;
         this.config = config;
-        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     @Override
@@ -102,11 +99,6 @@ public class PublishOrderDismissCase implements OrderUpdateStrategy {
                     hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
                 });
         log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
-
-        // close manual pending task of schedule of hearing
-        log.info("close manual pending task of schedule of hearing");
-        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
-
         return null;
     }
 

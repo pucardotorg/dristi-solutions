@@ -136,11 +136,9 @@ public class HearingUpdateConsumer {
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
 
         JsonNode caseDetails = getCaseDetails(requestInfo, hearing);
-        String caseStatus = textValueOrNull(caseDetails, CASE_STATUS);
         String caseOutcome = textValueOrNull(caseDetails, CASE_OUTCOME);
 
         if (!COMPLETED.equalsIgnoreCase(hearing.getStatus())
-                || CASE_DISMISSED.equalsIgnoreCase(caseStatus)
                 || (caseOutcome != null && !caseOutcome.isEmpty())) {
             return;
         }
