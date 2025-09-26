@@ -4,6 +4,7 @@ import OverlayDropdown from "../components/HearingOverlayDropdown";
 import { hearingService } from "../hooks/services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { formatNoticeDeliveryDate } from "@egovernments/digit-ui-module-home/src/utils";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
 function normalizeData(input) {
   try {
@@ -17,6 +18,8 @@ function normalizeData(input) {
 export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const courtId = requestCriteria?.body?.courtId;
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -27,6 +30,8 @@ export const UICustomizations = {
           fromDate: requestCriteria?.params.fromDate,
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
+          ...(courtId && { courtId }),
+          ...(userInfo?.type === "CITIZEN" && { searchableFields: additionalDetails?.attendeeIndividualId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
@@ -43,6 +48,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const courtId = localStorage.getItem("courtId");
       const searchParams = new URLSearchParams();
       const showAction =
         userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;
@@ -62,13 +68,14 @@ export const UICustomizations = {
                           criteria: {
                             hearingId: row?.hearingId,
                             tenantId: row?.tenantId,
+                            ...(courtId && userType === "employee" && { courtId }),
                           },
                         },
                         { tenantId: row?.tenantId }
                       )
                       .then((response) => {
                         hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                          window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
                         });
                       });
                   }}
@@ -90,7 +97,8 @@ export const UICustomizations = {
                   variation={"secondary"}
                   label={t("JOIN_HEARING")}
                   onButtonClick={() => {
-                    window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                    const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                    window.location = path;
                   }}
                   style={{ marginRight: "1rem" }}
                   textStyles={{
@@ -121,6 +129,8 @@ export const UICustomizations = {
               )}
             </div>
           );
+        case "CS_STAGE":
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }
@@ -304,15 +314,29 @@ export const UICustomizations = {
                   Police: "address",
                   RPAD: "address",
                 };
+                function mapStatus(status, taskType) {
+                  const mapping = {
+                    ISSUE_WARRANT: {
+                      PROCLAMATION: "ISSUE_PROCLAMATION",
+                      ATTACHMENT: "ISSUE_ATTACHMENT",
+                    },
+                    WARRANT_SENT: {
+                      PROCLAMATION: "PROCLAMATION_SENT",
+                      ATTACHMENT: "ATTACHMENT_SENT",
+                    },
+                  };
+                  return mapping[status]?.[taskType] || status; // fallback to original
+                }
                 const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
-                  status: data?.status,
+                  status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
                   documents: data?.documents,
+                  feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
             return { list: taskData };
@@ -335,9 +359,17 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "Status":
-          return t(value);
+          return (
+            <CustomChip
+              text={t(value)}
+              shade={value === "DELIVERED" ? "green" : value === "UNDELIVERED" ? "red" : value === "pending" ? "grey" : "orange"}
+            />
+          );
+        // return t(value);
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
+        case "PROCESS_FEE_PAID_ON":
+          return value || "-";
         default:
           return t("ES_COMMON_NA");
       }

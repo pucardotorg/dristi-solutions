@@ -66,6 +66,8 @@ public class ServiceConstants {
 
     public static final String NOTICE = "NOTICE";
     public static final String WARRANT = "WARRANT";
+    public static final String PROCLAMATION = "PROCLAMATION";
+    public static final String ATTACHMENT = "ATTACHMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
 
     public static final String SUMMON_SENT = "SUMMON_SENT";
@@ -74,6 +76,9 @@ public class ServiceConstants {
 
     public static final String WARRANT_SENT = "WARRANT_SENT";
 
+    public static final String PROCLAMATION_SENT = "PROCLAMATION_SENT";
+
+    public static final String ATTACHMENT_SENT = "ATTACHMENT_SENT";
 
     public static final String ISSUENOTICE = "ISSUE_NOTICE";
 
@@ -129,5 +134,32 @@ public class ServiceConstants {
 
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
     public static final String GEOLOCATION = "geoLocationDetails";
+
+    public static final String GENERIC = "GENERIC";
+    public static final String ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK = "Error while creating demand for generic task: ";
+
+    public static final String CHANNEL_CODE = "channelCode";
+    public static final String RPAD = "RPAD";
+    public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
+    public static final String MANUAL = "MANUAL_";
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails.taskNumber";
+    public static final String APPLICATION_TYPE_PATH = "$.application.applicationType";
+
+    public static final String APPLICATION_STATUS_PATH = "$.application.status";
+    public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
+    public static final String TENANTID_PATH = "$.application.tenantId";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "1234567890";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
 }

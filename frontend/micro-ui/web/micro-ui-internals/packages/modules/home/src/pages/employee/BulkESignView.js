@@ -36,9 +36,17 @@ const ProjectBreadCrumb = ({ location }) => {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path: homePath,
       content: t("ES_COMMON_HOME"),
       show: true,
     },
@@ -68,7 +76,15 @@ function BulkESignView() {
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+  const courtId = localStorage.getItem("courtId");
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -88,12 +104,12 @@ function BulkESignView() {
   const { data: ordersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { orderNumber: orderNumber },
+      criteria: { orderNumber: orderNumber, ...(courtId && { courtId }) },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     orderNumber,
-    Boolean(orderNumber)
+    Boolean(orderNumber && courtId)
   );
 
   const { data: bulkOrdersData } = useSearchOrdersNotificationService(
@@ -110,12 +126,13 @@ function BulkESignView() {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
     { tenantId },
     `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
-    true
+    Boolean(courtId)
   );
 
   const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
@@ -129,7 +146,7 @@ function BulkESignView() {
       }
     }
     if (bulkOrdersData?.totalCount === 0) {
-      history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+      history.replace(homePath);
     }
   }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
 
@@ -165,14 +182,14 @@ function BulkESignView() {
     const setOrderFunc = async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Order") {
         const orderResponse = await ordersService.searchOrder(
-          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id } },
+          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id, ...(courtId && { courtId }) } },
           { tenantId }
         );
         order = orderResponse?.list?.[0];
 
         if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
           history.push(
-            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
           );
         } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
           history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
@@ -182,6 +199,19 @@ function BulkESignView() {
 
     return {
       ...bulkESignOrderConfig,
+      apiDetails: {
+        ...bulkESignOrderConfig.apiDetails,
+        requestBody: {
+          ...bulkESignOrderConfig.apiDetails.requestBody,
+          inbox: {
+            ...bulkESignOrderConfig.apiDetails.requestBody.inbox,
+            moduleSearchCriteria: {
+              ...bulkESignOrderConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+              ...(courtId && { courtId }),
+            },
+          },
+        },
+      },
       sections: {
         ...bulkESignOrderConfig.sections,
         searchResult: {
@@ -210,7 +240,7 @@ function BulkESignView() {
         },
       },
     };
-  }, [history, tenantId, userType]);
+  }, [history, tenantId, userType, courtId]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
@@ -228,6 +258,7 @@ function BulkESignView() {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
+        ...(courtId && { courtId }),
       };
       await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
         inbox: {
@@ -349,7 +380,7 @@ function BulkESignView() {
           },
           {}
         );
-        history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`, {
+        history.replace(homePath, {
           bulkSignSuccess: {
             show: true,
             bulkSignOrderListLength: updateOrderResponse?.orders?.length,
@@ -375,16 +406,18 @@ function BulkESignView() {
             <div className="header">{t("BULK_SIGN_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar
-                label={t("SIGN_SELECTED_ORDERS")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          </ActionBar>
+          {isJudge && (
+            <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+              <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("SIGN_SELECTED_ORDERS")}
+                  submit="submit"
+                  disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+                  onSubmit={() => setShowBulkSignConfirmModal(true)}
+                />
+              </div>
+            </ActionBar>
+          )}
         </React.Fragment>
       )}
       {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}

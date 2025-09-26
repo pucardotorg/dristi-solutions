@@ -45,6 +45,7 @@ const groupByFilingNumber = (data) => {
 const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const courtId = localStorage.getItem("courtId");
   const todayDate = getFormattedDate();
   const [groupedData, setGroupedData] = useState([]);
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
+          ...(!isLitigant && courtId && { courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -85,7 +87,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
       {
         tenantId,
         Criteria: {
-          courtId: window?.globalConfigs?.getConfig("COURT_ID"),
+          courtId: localStorage.getItem("courtId"),
         },
       },
       {},

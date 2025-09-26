@@ -5,12 +5,12 @@ import { CustomThreeDots, ThreeDots } from "../icons/svgIndex";
 
 export const Context = React.createContext();
 
-const OverlayDropdown = ({ column, row, master, module }) => {
+const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [], position = "absolute", textStyle = {} }) => {
   const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const history = useHistory();
 
-  const dropdownItems = Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) || [];
+  const dropdownItems = master ? Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) : cutomDropdownItems || [];
 
   const filteredDropdownItems = dropdownItems.filter((item) => !item.hide);
 
@@ -19,7 +19,7 @@ const OverlayDropdown = ({ column, row, master, module }) => {
   };
 
   return (
-    <div style={{ position: "absolute", display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
+    <div style={{ position: position, display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
       <div
         style={{
           cursor: "pointer",
@@ -47,7 +47,7 @@ const OverlayDropdown = ({ column, row, master, module }) => {
           {filteredDropdownItems.map((item) => (
             <li
               key={item.id}
-              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black" }}
+              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black", ...textStyle }}
               onClick={() => {
                 setIsDropdownOpen(false);
                 return !item.disabled && item.action(history, column, row, item);

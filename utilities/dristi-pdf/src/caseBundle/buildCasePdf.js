@@ -83,7 +83,9 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
             });
             const pdfData = pdfFetchResponse.data;
 
-            const itemPdf = await PDFDocument.load(pdfData);
+            const itemPdf = await PDFDocument.load(pdfData, {
+              ignoreEncryption: true,
+            });
 
             // Add case number to each page
             const pages = itemPdf.getPages();

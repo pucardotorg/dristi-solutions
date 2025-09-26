@@ -119,11 +119,15 @@ const ADiaryPage = ({ path }) => {
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
+  const [loader, setLoader] = useState(false);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
 
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
@@ -165,7 +169,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -210,6 +214,7 @@ const ADiaryPage = ({ path }) => {
   const onUploadSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
@@ -217,9 +222,11 @@ const ADiaryPage = ({ path }) => {
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        setLoader(false);
         setFormData({});
         setIsSigned(false);
       }
+      setLoader(false);
     }
   };
 
@@ -250,7 +257,7 @@ const ADiaryPage = ({ path }) => {
       }
     };
     getDiarySearch();
-  }, [entryDate, tenantId]);
+  }, [entryDate, tenantId, courtId]);
 
   const uploadSignedPdf = async () => {
     try {
@@ -315,7 +322,7 @@ const ADiaryPage = ({ path }) => {
     {},
     `diary-entries-${entryDate}-${offSet}`,
     entryDate,
-    Boolean(entryDate)
+    Boolean(entryDate && courtId)
   );
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -354,7 +361,7 @@ const ADiaryPage = ({ path }) => {
   const handleRowClick = (entry) => {
     if (entry?.referenceType === "Order") {
       history.push(
-        `/${window?.contextPath}/${userInfoType}/orders/generate-orders?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
+        `/${window?.contextPath}/${userInfoType}/orders/generate-order?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
         { diaryEntry: entry }
       );
     }
@@ -410,7 +417,7 @@ const ADiaryPage = ({ path }) => {
                           <td style={styles.rowDataStyle}>{index + 1}</td>
                           <td style={styles.rowDataStyle}>{entry?.caseNumber}</td>
                           <td
-                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle }}
+                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle , whiteSpace: "pre-line"}}
                             onClick={() => handleRowClick(entry)}
                             onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
                             onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
@@ -458,7 +465,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {
+          {isJudge && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&
@@ -477,7 +484,7 @@ const ADiaryPage = ({ path }) => {
                 isDiary={true}
               />
             </div>
-          }
+          )}
         </div>
         <div className="adiary-container">
           {stepper === 1 && (
@@ -572,6 +579,7 @@ const ADiaryPage = ({ path }) => {
               config={uploadModalConfig}
               formData={formData}
               onSubmit={onUploadSubmit}
+              isDisabled={loader}
             />
           )}
 

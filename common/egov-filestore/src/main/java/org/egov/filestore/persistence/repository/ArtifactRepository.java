@@ -2,6 +2,7 @@ package org.egov.filestore.persistence.repository;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,17 +104,25 @@ public class ArtifactRepository {
  * This api needs to be enhanced to pick right object .All repositories should implement cloudmanager and it should provide 
  * simple get api too
  */
-	public Resource find(String fileStoreId, String tenantId) throws IOException {
+	public Resource find(String fileStoreId, String tenantId, String module) throws IOException {
 		Artifact artifact = fileStoreJpaRepository.findByFileStoreIdAndTenantId(fileStoreId, tenantId);
 		if (artifact == null)
 			throw new CustomException("NOT_FOUND", "Invalid filestoreid or tenantid");
+
+		if (module != null && !module.isEmpty() &&
+				Arrays.stream(module.split(","))
+						.map(String::trim)
+						.filter(m -> !m.isEmpty())
+				        .noneMatch(m -> m.equalsIgnoreCase(artifact.getModule()))) {
+			throw new CustomException("module_mismatch", "Invalid module");
+		}
 
 		org.springframework.core.io.Resource resource = null;
 
 		if (artifact.getFileLocation().getFileSource().equals("minio")) {
 			// if only DiskFileStoreRepository use read else ignore
 			MinioRepository repo = (MinioRepository) cloudFilesManager;
-			resource = repo.read(artifact.getFileLocation());
+			resource = repo.read(artifact.getFileLocation(), true);
 		} else if (artifact.getFileLocation().getFileSource().equals("AzureBlobStorage")) {
 			AzureBlobStorageImpl repo = (AzureBlobStorageImpl) cloudFilesManager;
 			resource = repo.read(artifact.getFileLocation());
