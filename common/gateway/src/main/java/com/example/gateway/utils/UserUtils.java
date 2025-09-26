@@ -54,6 +54,14 @@ public class UserUtils {
         headers.add(CORRELATION_ID_HEADER_NAME, (String) exchange.getAttributes().get(CORRELATION_ID_KEY));
         if (multiStateInstanceUtil.getIsEnvironmentCentralInstance())
             headers.add(REQUEST_TENANT_ID_KEY, (String) exchange.getAttributes().get(TENANTID_MDC));
+        
+        // Extract courtId from incoming request headers and pass it to user details API
+        String courtId = exchange.getRequest().getHeaders().getFirst(COURT_ID_KEY);
+        if (courtId != null && !courtId.trim().isEmpty()) {
+            headers.add(COURT_ID_KEY, courtId);
+            log.debug("Adding courtId header to user details API call: {}", courtId);
+        }
+        
         final HttpEntity<Object> httpEntity = new HttpEntity<>(null, headers);
 
         try {
