@@ -472,7 +472,7 @@ export const UICustomizations = {
       if (filterList?.channel) delete filterList.channel;
       if (filterList?.deliveryChannel) delete filterList.deliveryChannel;
       if (filterList?.hearingDate) delete filterList.hearingDate;
-      if (filterList?.applicationStatus !== undefined) delete filterList.applicationStatus;
+      if (filterList?.applicationStatus) delete filterList.applicationStatus;
       const tenantId = window?.Digit.ULBService.getStateId();
       const { data: sentData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "SentStatus" }], {
         select: (data) => {
