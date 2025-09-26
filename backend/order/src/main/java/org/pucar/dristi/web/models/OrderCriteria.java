@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +44,14 @@ public class OrderCriteria {
 
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
+
+    @JsonProperty("scheduledHearingNumber")
+    @Valid
+    private String scheduledHearingNumber = null;
+
+    @JsonProperty("createdTime")
+    @Valid
+    private Long createdTime = null;
 
     @JsonProperty("isFuzzySearch")
     private Boolean isFuzzySearch = false;

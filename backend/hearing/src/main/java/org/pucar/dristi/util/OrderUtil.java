@@ -94,7 +94,7 @@ public class OrderUtil {
         log.info("Fetching orders for Hearing ID: {}, Tenant ID: {}", hearingId, tenantId);
 
         OrderCriteria criteria = OrderCriteria.builder()
-                .hearingNumber(hearingId)
+                .scheduledHearingNumber(hearingId)
                 .status(PUBLISHED)
                 .tenantId(tenantId)
                 .build();
@@ -109,6 +109,28 @@ public class OrderUtil {
             log.info("No orders found for Hearing ID: {}", hearingId);
             return null;
         }
+
+        // get orders which are created after this hearing scheduled
+        OrderCriteria orderCriteria = OrderCriteria.builder()
+                .createdTime(response.getList().get(0).getCreatedDate())
+                .filingNumber(response.getList().get(0).getFilingNumber())
+                .status(PUBLISHED)
+                .tenantId(tenantId)
+                .build();
+
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .criteria(orderCriteria)
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .build();
+
+        OrderListResponse orderListResponse = getOrders(orderSearchRequest);
+        if (orderListResponse == null || CollectionUtils.isEmpty(orderListResponse.getList())) {
+            log.info("no orders were published after the hearing was scheduled : {}", hearingId);
+        } else {
+            log.info("{} orders were published after the hearing was scheduled : {}", orderListResponse.getList().size(), hearingId);
+            response.getList().addAll(orderListResponse.getList());
+        }
+
         List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE, PROCLAMATION, ATTACHMENT));
 
         List<Order> filteredOrders = response.getList().stream()
