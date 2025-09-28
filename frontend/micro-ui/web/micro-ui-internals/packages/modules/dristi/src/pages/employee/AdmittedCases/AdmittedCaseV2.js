@@ -3231,11 +3231,11 @@ const AdmittedCaseV2 = () => {
               label: "TAKE_WITNESS_DEPOSITION",
             },
           ];
-    }
+    } else return [];
   }, [isJudge, currentInProgressHearing, isTypist, isCourtUser]);
 
   const allowedEmployeeActionOptions = useMemo(() => {
-    return employeeActionOptions.filter((option) => {
+    return employeeActionOptions?.filter((option) => {
       // Find matching permission mapping for this action
       const permissionMapping = employeeActionsPermissionsMapping.find((mapping) => mapping.label === option.label);
 
