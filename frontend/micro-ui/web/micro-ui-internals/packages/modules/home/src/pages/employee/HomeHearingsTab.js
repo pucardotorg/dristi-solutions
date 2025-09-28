@@ -561,7 +561,7 @@ const HomeHearingsTab = ({
                     ) : null}
                   </div>
                 )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isCourtUser && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isCourtUser && hasHearingEditAccess && (
                   <div
                     style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
                     onClick={() => {
