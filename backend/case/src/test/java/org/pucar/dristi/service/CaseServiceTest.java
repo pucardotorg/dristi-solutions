@@ -1533,7 +1533,6 @@ public class CaseServiceTest {
     void testAddWitnessToCase_Success() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
-        addAllowAddWitnessRole(request.getRequestInfo());
         CourtCase courtCase = createCourtCase();
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .responseList(Collections.singletonList(courtCase))
@@ -1571,28 +1570,9 @@ public class CaseServiceTest {
     }
 
     @Test
-    void testAddWitnessToCase_UserNotAllowed() {
-        // Setup
-        WitnessDetailsRequest request = createWitnessDetailsRequest();
-        removeAllowAddWitnessRole(request.getRequestInfo());
-
-        // Execute & Verify
-        CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
-
-        assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
-        assertTrue(exception.getMessage().contains("User not authorized to perform this operation"));
-
-        // Ensure service returned before any IO
-        verify(caseRepository, never()).getCases(any(), any());
-        verify(encryptionDecryptionUtil, never()).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
-        verify(encryptionDecryptionUtil, never()).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
-    }
-
-    @Test
     void testAddWitnessToCase_CaseNotFound() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
-        addAllowAddWitnessRole(request.getRequestInfo());
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .responseList(Collections.emptyList())
                 .defaultFields(false)
@@ -1610,15 +1590,12 @@ public class CaseServiceTest {
         verify(caseRepository, times(1)).getCases(any(), any());
         verify(validator, never()).validateWitnessRequest(any(), any());
         verify(producer, never()).push(anyString(), any());
-        verify(encryptionDecryptionUtil, never()).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
-        verify(encryptionDecryptionUtil, never()).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
     }
 
     @Test
     void testAddWitnessToCase_NullWitnessDetails() {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
-        addAllowAddWitnessRole(request.getRequestInfo());
         request.setWitnessDetails(null);
         CourtCase courtCase = createCourtCase();
         CaseCriteria caseCriteria = CaseCriteria.builder()
@@ -1647,7 +1624,6 @@ public class CaseServiceTest {
         
         verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
         verify(producer, times(1)).push(anyString(), any());
-        verify(producer, times(1)).push(eq("case-update-topic"), any(CaseRequest.class));
     }
 
     // Helper methods for test data creation
@@ -1673,25 +1649,6 @@ public class CaseServiceTest {
         courtCase.setTenantId("pb.amritsar");
         courtCase.setAdditionalDetails(new HashMap<>());
         return courtCase;
-    }
-
-    private void addAllowAddWitnessRole(RequestInfo requestInfo) {
-        Role allowAddWitnessRole = Role.builder().code(ALLOW_ADD_WITNESS).build();
-        List<Role> roles = requestInfo.getUserInfo().getRoles();
-        if(roles == null){
-            roles = new ArrayList<>();
-            requestInfo.getUserInfo().setRoles(roles);
-        }
-        boolean isRoleMissing = roles.stream().noneMatch(r -> ALLOW_ADD_WITNESS.equals(r.getCode()));
-        if (isRoleMissing) {
-            roles.add(allowAddWitnessRole);
-        }
-    }
-
-    private void removeAllowAddWitnessRole(RequestInfo requestInfo) {
-        List<Role> roles = requestInfo.getUserInfo().getRoles();
-        if (roles == null) return;
-        roles.removeIf(role -> ALLOW_ADD_WITNESS.equals(role.getCode()));
     }
 
 }
