@@ -180,7 +180,7 @@ for record in records:
 
 
     if applications and applications != []:
-        update_elasticsearch(referenceId, actionCategory, applications[0].get("applicationNumber"))
+        update_elasticsearch(referenceId, actionCategory, applications[0].get("applicationType"))
 
     else:
         print(f"⚠️ Skipped record with referenceId: {referenceId}")
