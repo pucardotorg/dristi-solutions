@@ -11,12 +11,7 @@ const defaultSearchValues = {
 
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
-  applicationStatus: "",
-  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
-  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
-  completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
-  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // applicationStatus: {
   //   id: 2,
   //   code: "SIGN_PENDING",
@@ -34,11 +29,7 @@ export const defaultSearchValuesForJudgePending = {
 export const defaultSearchValuesForJudgeSent = {
   searchText: "",
   applicationStatus: "",
-  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
-  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
-  completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
-  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // orderType: {
   //   id: 2,
   //   code: "WARRANT",
