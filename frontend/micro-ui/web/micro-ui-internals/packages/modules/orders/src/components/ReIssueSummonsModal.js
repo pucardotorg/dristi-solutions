@@ -121,7 +121,7 @@ function ReIssueSummonsModal() {
         referenceId: `MANUAL_${res?.order?.orderNumber}`,
         status: "DRAFT_IN_PROGRESS",
         assignedTo: [],
-        assignedRole: ["JUDGE_ROLE"],
+        assignedRole: ["PENDING_TASK_ORDER"],
         cnrNumber,
         filingNumber,
         caseId: caseId,

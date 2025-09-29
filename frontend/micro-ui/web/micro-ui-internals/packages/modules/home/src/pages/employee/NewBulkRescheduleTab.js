@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { Urls } from "../../hooks/services/Urls";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-import isEqual from "lodash/isEqual";
-import { hearingService } from "../../hooks/services";
 import Axios from "axios";
-import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
-import BulkRescheduleModal from "../../components/BulkRescheduleModal";
+import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
+import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
+import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
+import _ from "lodash";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -37,9 +36,8 @@ const Heading = ({ label }) => {
     </div>
   );
 };
-const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
+const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
-  const history = useHistory();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
@@ -52,9 +50,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
-  const [isBulkRescheduleDisabled, setIsBulkRescheduleDisabled] = useState(true);
-  const [businessOfTheDay, setBusinessOfTheDay] = useState("");
-  const [Loading, setLoader] = useState(false);
+  const [loader, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -85,11 +81,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
     : null;
 
-  const currentDiaryEntry = history.location?.state?.diaryEntry;
-  const isADiarySigned = history.location?.state?.aDiarySigned;
-  const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
-  const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
-  const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
   const [signFormData, setSignFormData] = useState({});
   const [newHearingData, setNewHearingData] = useState(bulkNewHearingData);
   const [notificationNumber, setNotificationNumber] = useState(bulkNotificationNumber);
@@ -98,15 +89,23 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [allHearings, setAllHearings] = useState([]);
+  const [loading, setIsLoader] = useState(false);
+  const hasNotificationCreateAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_CREATOR"), [userInfo]);
+  const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
+  const today = new Date();
+  const defaultBulkFormData = {
+    fromDate: today.setHours(0, 0, 0, 0),
+    toDate: today.setHours(0, 0, 0, 0),
+    slotIds: [],
+    searchableFields: null,
+    reason: null,
+  };
+  const [bulkFormData, setBulkFormData] = useState(bulkNotificationFormData || defaultBulkFormData);
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
-  const defaultValues = {
-    toDate: bulkFormData?.toDate || selectedDate,
-    fromDate: bulkFormData?.fromDate || selectedDate,
-    reason: bulkFormData?.reason || "",
-  };
 
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
@@ -116,7 +115,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   };
 
   useEffect(() => {
-    if (currentDiaryEntry) setStepper(1);
     const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
       setTimeout(() => {
@@ -124,7 +122,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         clearLocalStorage();
       }, 200);
     }
-  }, [currentDiaryEntry, setStepper]);
+  }, [setStepper]);
 
   useEffect(() => {
     if (bulkNotificationStepper) {
@@ -132,42 +130,32 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   }, [bulkNotificationStepper, setStepper]);
 
-  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingDetails, refetch } = Digit.Hooks.hearings.useGetHearings(
     {
       criteria: {
         tenantId,
-        fromDate: bulkFromDate ? bulkFromDate : null,
-        toDate: bulkToDate ? bulkToDate + 24 * 60 * 60 * 1000 - 1 : null, //to get the end of the day
+        fromDate: bulkFormData?.fromDate ? bulkFormData?.fromDate : null,
+        toDate: bulkFormData?.toDate ? bulkFormData?.toDate + 24 * 60 * 60 * 1000 - 1 : null, //to get the end of the day
         ...(courtId && userType === "employee" && { courtId }),
       },
     },
     {},
-    `${bulkFromDate}-${bulkToDate}`,
-    Boolean(bulkFromDate && bulkToDate && stepper > 0 && courtId)
+    `${bulkFormData?.fromDate}-${bulkFormData?.toDate}`,
+    Boolean(bulkFormData?.fromDate && bulkFormData?.toDate && courtId)
   );
 
-  function formatTimeFromEpoch(epoch) {
-    return new Date(epoch).toLocaleTimeString("en-GB", { hour12: false });
-  }
+  const { data: rescheduleReasonData, isLoading: isRescheduleReasonLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Hearing",
+    [{ name: "BulkRescheduleReason" }],
+    {
+      select: (data) => {
+        return _.get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
+      },
+    }
+  );
 
-  function timeToSeconds(timeStr) {
-    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  }
   const bulkHearingsCount = useMemo(() => {
-    // if (bulkFormData?.slotIds?.length > 0) {
-    //   const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
-    //     const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
-
-    //     return (
-    //       hearing?.status != "COMPLETED" &&
-    //       bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
-    //     );
-    //   });
-
-    //   setOriginalHearingData(filteredHearings);
-    //   return filteredHearings?.length || 0;
-    // }
     setOriginalHearingData(hearingDetails?.HearingList);
     const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status !== "COMPLETED");
     return filteredHearings?.length || 0;
@@ -216,6 +204,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   };
 
   const uploadSignedPdf = async () => {
+    if (!hasNotificationApproveAccess) return;
     try {
       setLoader(true);
       const localStorageID = sessionStorage.getItem("fileStoreId");
@@ -298,32 +287,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       console.log("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
-      setStepper(0);
+      setStepper(1);
       setIsSigned(false);
       setSignedDocumentUploadID("");
     }
     clearLocalStorage();
-  };
-
-  const handleUpdateBusinessOfDayEntry = async () => {
-    try {
-      await hearingService
-        .aDiaryEntryUpdate(
-          {
-            diaryEntry: {
-              ...currentDiaryEntry,
-              businessOfDay: businessOfTheDay,
-            },
-          },
-          {}
-        )
-        .then(async () => {
-          history.goBack();
-        });
-    } catch (error) {
-      console.error("error: ", error);
-      showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
-    }
   };
 
   useEffect(() => {
@@ -342,139 +310,9 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const onCancel = () => {
     if (stepper === 1) {
       clearLocalStorage();
-      setBulkFormData({});
-      setNewHearingData([]);
+      setBulkFormData((prev) => ({ ...prev, reason: null }));
     }
     setStepper((prev) => prev - 1);
-  };
-
-  const config = useMemo(
-    () => [
-      {
-        body: [
-          {
-            type: "dropdown",
-            key: "reason",
-            label: "BULK_RESCHEDULE_REASON",
-            isMandatory: true,
-            disable: currentDiaryEntry ? true : false,
-            populators: {
-              label: "Reason for Reschedule",
-              optionsKey: "name",
-              isMandatory: true,
-              name: "reason",
-              mdmsConfig: {
-                masterName: "BulkRescheduleReason",
-                moduleName: "Hearing",
-                select: "(data) => { return data['Hearing'].BulkRescheduleReason?.map((item) => {return item;});}",
-              },
-            },
-          },
-          {
-            type: "component",
-            component: "CustomDatePicker",
-            disable: currentDiaryEntry ? true : false,
-            key: "fromDate",
-            label: "BULK_FROM_DATE",
-            isMandatory: true,
-            customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-            populators: {
-              name: "fromDate",
-              // error: "Required",
-            },
-          },
-          {
-            label: "BULK_TO_DATE",
-            isMandatory: true,
-            key: "toDate",
-            type: "component",
-            component: "CustomDatePicker",
-            customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-            disable: currentDiaryEntry ? true : false,
-            populators: {},
-          },
-          // {
-          //   label: "BULK_SLOT",
-          //   isMandatory: true,
-          //   key: "slotIds",
-          //   type: "dropdown",
-          //   disable: currentDiaryEntry ? true : false,
-          //   // disable: true,//dynamic based on dates court.slots
-          //   populators: {
-          //     name: "slotIds",
-          //     optionsKey: "slotName",
-          //     allowMultiSelect: true,
-          //     isMandatory: true,
-          //     // defaultText: "select slot",
-          //     selectedText: "Slot(s)",
-          //     mdmsConfig: {
-          //       masterName: "slots",
-          //       moduleName: "court",
-          //       select: "(data) => {return data['court'].slots?.map((item) => {return item;});}",
-          //     },
-          //   },
-          // },
-        ],
-      },
-    ],
-    [currentDiaryEntry]
-  );
-
-  const compareDates = (dateStr1, dateStr2) => {
-    const date1 = new Date(dateStr1);
-    const date2 = new Date(dateStr2);
-
-    return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
-  };
-
-  const modifiedConfig = useMemo(() => {
-    if (bulkToDate && bulkToDate && !compareDates(bulkFromDate, bulkToDate)) {
-      let updatedConfig = [{}];
-      updatedConfig[0].body = config[0].body.map((item) => {
-        return item;
-      });
-      return updatedConfig;
-    }
-    return config;
-  }, [bulkFromDate, bulkToDate, config]);
-
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
-    const newFromDate = formData?.fromDate;
-    let newToDate = formData?.toDate;
-    if (newToDate && newFromDate) {
-      const date1 = new Date(newFromDate);
-      const date2 = new Date(newToDate);
-      if (date1 > date2) {
-        setError("toDate", { message: "BULK_INVALID_DATE_RANGE" });
-        setValue("toDate", null);
-        newToDate = null;
-      } else if (Object.keys(formState?.errors).includes("toDate") && date2) {
-        clearErrors("toDate");
-      }
-    }
-    if (newFromDate && !compareDates(newFromDate, bulkFromDate)) {
-      setBulkFromDate(newFromDate);
-    }
-
-    if (newToDate && !compareDates(newToDate, bulkToDate)) {
-      setBulkToDate(newToDate);
-    }
-
-    if (newFromDate && newToDate && Boolean(formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))) {
-      setIsBulkRescheduleDisabled(false);
-    } else if (
-      Boolean(formData?.slotIds?.length > 0 && formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))
-    ) {
-      setIsBulkRescheduleDisabled(false);
-    } else if (!isBulkRescheduleDisabled) {
-      setIsBulkRescheduleDisabled(true);
-      if (Object.keys(formState?.errors)) {
-        clearErrors();
-      }
-    }
-    if (!isEqual(bulkFormData, formData)) {
-      setBulkFormData(formData);
-    }
   };
 
   const formatDate = (dateString) => {
@@ -537,6 +375,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
 
   const onAddSignature = async () => {
     try {
+      setLoader(true);
       let fileStoreId = notificationFileStoreId;
       if (notificationReviewBlob?.size) {
         const pdfFile = new File([notificationReviewBlob], notificationReviewFilename, { type: "application/pdf" });
@@ -573,6 +412,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       if (stepper === 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setLoader(false);
     }
   };
   const handleDownloadOrders = () => {
@@ -600,31 +441,91 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   };
 
+  const handleBulkHearingSearch = async (newFormData) => {
+    try {
+      setIsLoader(true);
+      const tentativeDates = await hearingService?.bulkReschedule({
+        BulkReschedule: {
+          judgeId,
+          courtId,
+          scheduleAfter: newFormData?.toDate + 24 * 60 * 60 * 1000 + 1, //we are sending next day
+          tenantId,
+          startTime: newFormData?.fromDate,
+          endTime: newFormData?.toDate + 24 * 60 * 60 * 1000 - 1, // End of the day
+          slotIds: newFormData?.slotIds?.map((slot) => slot?.id) || [],
+          reason: newFormData?.reason,
+          searchableFields: newFormData?.searchableFields,
+        },
+      });
+      setAllHearings(tentativeDates?.Hearings || []);
+      setNewHearingData(tentativeDates?.Hearings || []);
+      if (tentativeDates?.Hearings?.length === 0) {
+        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoader(false);
+    }
+  };
+
   return (
     <React.Fragment>
+      <NewBulkRescheduleTable
+        t={t}
+        loader={isRescheduleReasonLoading}
+        showToast={showToast}
+        setStepper={setStepper}
+        setNewHearingData={setNewHearingData}
+        newHearingData={newHearingData}
+        defaultBulkFormData={defaultBulkFormData}
+        bulkFormData={bulkFormData}
+        setBulkFormData={setBulkFormData}
+        bulkHearingsCount={bulkHearingsCount}
+        allHearings={allHearings}
+        setAllHearings={setAllHearings}
+        loading={loading}
+        setIsLoader={setIsLoader}
+        handleBulkHearingSearch={handleBulkHearingSearch}
+        hasNotificationCreateAccess={hasNotificationCreateAccess}
+      />
       {stepper === 1 && (
-        <BulkRescheduleModal
-          t={t}
-          Loading={Loading}
-          modifiedConfig={modifiedConfig}
-          onFormValueChange={onFormValueChange}
-          defaultValues={defaultValues}
-          currentDiaryEntry={currentDiaryEntry}
-          onCancel={onCancel}
-          onSumbitReschedule={onSumbitReschedule}
-          isBulkRescheduleDisabled={isBulkRescheduleDisabled}
-          bulkHearingsCount={bulkHearingsCount}
-          setBusinessOfTheDay={setBusinessOfTheDay}
-          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
-          bulkFromDate={bulkFromDate}
-          bulkToDate={bulkToDate}
-          toastMsg={toastMsg}
-          setToastMsg={setToastMsg}
-          setNewHearingData={setNewHearingData}
-          newHearingData={newHearingData}
-          bulkFormData={bulkFormData}
-          isADiarySigned={isADiarySigned}
-        />
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => !loader && onCancel()} />}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CS_DETAILS")} />}
+          actionSaveOnSubmit={onSumbitReschedule}
+          actionCancelOnSubmit={onCancel}
+          isDisabled={loader}
+          isBackButtonDisabled={loader}
+          actionCancelLabel={t("CS_BULK_BACK")}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          popupStyles={{
+            width: "40%",
+          }}
+        >
+          {loader ? (
+            <Loader />
+          ) : (
+            <LabelFieldPair className="case-label-field-pair" style={{ padding: "22px 0px" }}>
+              <CardLabel className="case-input-label">{`${t("BULK_RESCHEDULE_REASON")}`}</CardLabel>
+              <Dropdown
+                t={t}
+                option={rescheduleReasonData}
+                selected={bulkFormData?.reason}
+                optionKey={"name"}
+                select={(e) => {
+                  setBulkFormData((prev) => ({ ...prev, reason: e }));
+                }}
+                topbarOptionsClassName={"top-bar-option"}
+                style={{
+                  marginBottom: "1px",
+                  maxWidth: "100%",
+                }}
+              />
+            </LabelFieldPair>
+          )}
+        </Modal>
       )}
       {stepper === 2 && (
         <Modal
@@ -637,7 +538,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             width: "70%",
           }}
         >
-          {Loading ? (
+          {loader ? (
             <Loader />
           ) : (
             <MemoDocViewerWrapper
@@ -720,7 +621,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           </div>
         </Modal>
       )}
-
       {stepper === 3 && openUploadSignatureModal && (
         <UploadSignatureModal
           t={t}
@@ -734,7 +634,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           isDisabled={issignLoader}
         />
       )}
-
       {stepper === 3 && !openUploadSignatureModal && isSigned && (
         <Modal
           headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
@@ -745,7 +644,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           actionSaveOnSubmit={uploadSignedPdf}
           className="add-signature-modal"
         >
-          {Loading ? (
+          {loader ? (
             <Loader />
           ) : (
             <div className="add-signature-main-div">
@@ -808,6 +707,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             sessionStorage.removeItem("fileStoreId");
             setStepper(0);
             await refetch();
+            await handleBulkHearingSearch(bulkFormData);
           }}
           className={"orders-success-modal"}
           cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
@@ -850,4 +750,4 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   );
 };
 
-export default BulkReschedule;
+export default NewBulkRescheduleTab;
