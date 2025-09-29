@@ -54,6 +54,7 @@ public class EpostUtil {
                 .processNumber(processNumber)
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
+                .totalAmount(request.getTask().getAmount().getAmount())
                 .fileStoreId(getFileStore(request))
                 .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
@@ -105,6 +106,7 @@ public class EpostUtil {
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
         ePostTracker.setReceivedDate(ePostRequest.getEPostTracker().getReceivedDate());
+        ePostTracker.setSpeedPostId(ePostTracker.getSpeedPostId());
 
         return ePostTracker;
 
@@ -141,12 +143,13 @@ public class EpostUtil {
             return postHubNames.get(0);
         }
         else if (postHubNames.isEmpty()) {
-            log.error("postal hub not found for pin code {}", pinCode);
+            String defaultPostalHub = config.getDefaultPostalHub();
+            log.error("postal hub not found for pin code {} setting default postal hub {}", pinCode, defaultPostalHub);
+            return defaultPostalHub;
         }
         else {
             return postHubNames.get(0);
         }
-        return null;
     }
 
 }

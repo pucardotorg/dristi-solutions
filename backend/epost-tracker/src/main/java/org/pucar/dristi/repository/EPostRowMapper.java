@@ -53,6 +53,8 @@ public class EPostRowMapper implements RowMapper<EPostTracker> {
                 .bookingDate(rs.getString("booking_date"))
                 .receivedDate(rs.getString("received_date"))
                 .postalHub(rs.getString("postal_hub"))
+                .totalAmount(rs.getString("total_amount"))
+                .speedPostId(rs.getString("speed_post_id"))
                 .auditDetails(
                         AuditDetails.builder()
                                 .createdBy(rs.getString("createdBy"))

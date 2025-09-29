@@ -58,4 +58,7 @@ public class EPostConfiguration {
     @Value("${get.data.based.user.logged.in}")
     private boolean getDataBasedOnUserLoggedIn;
 
+    @Value("${default.postal.hub}")
+    private String defaultPostalHub;
+
 }

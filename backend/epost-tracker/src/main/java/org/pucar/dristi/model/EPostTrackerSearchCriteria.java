@@ -37,6 +37,9 @@ public class EPostTrackerSearchCriteria {
     @JsonProperty("postalHub")
     private String postalHub;
 
+    @JsonProperty("speedPostId")
+    private String speedPostId;
+
     @JsonProperty("pagination")
     private Pagination pagination = null;
 }

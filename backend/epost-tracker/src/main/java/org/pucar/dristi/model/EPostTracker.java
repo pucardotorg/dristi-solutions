@@ -24,4 +24,6 @@ public class EPostTracker {
     private String receivedDate;
     private String postalHub;
     private AuditDetails auditDetails;
+    private String totalAmount;
+    private String speedPostId;
 }
