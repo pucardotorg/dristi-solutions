@@ -5627,21 +5627,6 @@ public class CaseService {
     public WitnessDetailsResponse addWitnessToCase(@Valid WitnessDetailsRequest body) {
         try {
             log.info("operation=addWitnessToCase, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
-            List<Role> roles = Optional.ofNullable(body.getRequestInfo())
-                    .map(RequestInfo::getUserInfo)
-                    .map(User::getRoles)
-                    .orElse(Collections.emptyList());
-            Set<String> userRoleCodes = roles.stream()
-                    .map(Role::getCode)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-            if (!(userRoleCodes.contains(ALLOW_ADD_WITNESS))) {
-                log.warn("operation=addWitnessToCase, status=FORBIDDEN, userUuid={}, tenantId={}, filingNumber={}",
-                        Optional.ofNullable(body.getRequestInfo().getUserInfo()).map(User::getUuid).orElse("unknown"),
-                        Optional.ofNullable(body.getRequestInfo().getUserInfo()).map(User::getTenantId).orElse("unknown"),
-                        body.getCaseFilingNumber());
-                throw new CustomException(VALIDATION_ERR, "User not authorized to perform this operation");
-            }
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(body.getCaseFilingNumber())
                     .defaultFields(false)
