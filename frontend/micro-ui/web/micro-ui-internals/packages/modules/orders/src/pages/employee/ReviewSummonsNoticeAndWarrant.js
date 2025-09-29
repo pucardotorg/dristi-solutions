@@ -1501,11 +1501,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={`bulk-esign-order-view ignore-margin-left ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
+          <div className={`bulk-esign-order-view  ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper review-process-page show-grey-placeholder">
+            <div className="inbox-search-wrapper">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}
@@ -1525,7 +1525,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    // Prefer signed modal if a signed document is present, regardless of stale documentStatus
                     config?.label === "SENT"
                       ? sentModalConfig
                       : hasSignedDoc
@@ -1592,14 +1591,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSignConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
-          actionSaveLabel={t("CS_BULK_SIGN_AND_PUBLISH")}
+          actionSaveLabel={t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={handleBulkSignConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
           children={
             <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_BAIL_BOND_SIGN_TEXT")}</h3>
+              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_PROCESS_SIGN_TEXT")}</h3>
             </div>
           }
         />

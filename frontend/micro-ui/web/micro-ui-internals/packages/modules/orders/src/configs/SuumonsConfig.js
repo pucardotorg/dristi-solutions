@@ -11,6 +11,12 @@ const defaultSearchValues = {
 
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
+  applicationStatus: "",
+  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
+  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
+  completeStatus: "", //{ code: "", name: "STATUS" },
+  hearingDate: "",
+  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // applicationStatus: {
   //   id: 2,
   //   code: "SIGN_PENDING",
@@ -28,6 +34,11 @@ export const defaultSearchValuesForJudgePending = {
 export const defaultSearchValuesForJudgeSent = {
   searchText: "",
   applicationStatus: "",
+  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
+  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
+  completeStatus: "", //{ code: "", name: "STATUS" },
+  hearingDate: "",
+  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // orderType: {
   //   id: 2,
   //   code: "WARRANT",
@@ -188,7 +199,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -451,7 +462,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -675,7 +686,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -906,7 +917,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item){ return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel }; }); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
