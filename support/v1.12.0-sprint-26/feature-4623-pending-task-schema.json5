@@ -61,6 +61,9 @@
       "workflowModule": {
         "type": "string"
       },
+      "stateSla": {
+        "type": "string"
+      },
       "referenceEntityTypeNameMapping": {
         "type": "array",
         "items": {
