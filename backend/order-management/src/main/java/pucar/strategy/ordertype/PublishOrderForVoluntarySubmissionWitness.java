@@ -60,7 +60,7 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
     public OrderRequest postProcess(OrderRequest orderRequest) {
         log.info("operation=postProcess, result= IN_PROGRESS, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());
         Order order = orderRequest.getOrder();
-        List<String> applicationNumberList = order.getApplicationNumber();
+        List<String> applicationNumberList = getApplicationNumber(order);
         for(String applicationNumber : applicationNumberList) {
             List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                     .requestInfo(orderRequest.getRequestInfo())
@@ -74,6 +74,34 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
         }
         log.info("operation=postProcess, result= COMPLETED, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());
         return null;
+    }
+
+    private List<String> getApplicationNumber(Order order) {
+        try {
+            if (order.getOrderCategory() != null && COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+                Object compositeItems = order.getCompositeItems();
+                if (compositeItems == null) return order.getApplicationNumber();
+
+                JsonNode itemsNode = mapper.convertValue(compositeItems, JsonNode.class);
+                if (itemsNode != null && itemsNode.isArray()) {
+                    List<String> appNos = new ArrayList<>();
+                    for (JsonNode item : itemsNode) {
+                        JsonNode appArray = item.get("applicationNumber");
+                        if (appArray != null && appArray.isArray()) {
+                            for (JsonNode val : appArray) {
+                                if (val != null && !val.isNull() && val.isTextual()) {
+                                    appNos.add(val.asText());
+                                }
+                            }
+                        }
+                    }
+                    if (!appNos.isEmpty()) return appNos;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to read application numbers from compositeItems, falling back. orderNumber:{}", order.getOrderNumber(), e);
+        }
+        return order.getApplicationNumber();
     }
 
     private void addWitnessToCase(Application application, @Valid RequestInfo requestInfo) {
