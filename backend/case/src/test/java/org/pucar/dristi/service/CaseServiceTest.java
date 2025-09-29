@@ -1575,16 +1575,17 @@ public class CaseServiceTest {
         // Setup
         WitnessDetailsRequest request = createWitnessDetailsRequest();
         removeAllowAddWitnessRole(request.getRequestInfo());
-        CaseCriteria caseCriteria = CaseCriteria.builder()
-                .responseList(Collections.emptyList())
-                .defaultFields(false)
-                .build();
 
         // Execute & Verify
         CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
 
         assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
-        assertTrue(exception.getMessage().contains("User does not have the role to perform this operation"));
+        assertTrue(exception.getMessage().contains("User not authorized to perform this operation"));
+
+        // Ensure service returned before any IO
+        verify(caseRepository, never()).getCases(any(), any());
+        verify(encryptionDecryptionUtil, never()).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
+        verify(encryptionDecryptionUtil, never()).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
     }
 
     @Test
@@ -1609,6 +1610,8 @@ public class CaseServiceTest {
         verify(caseRepository, times(1)).getCases(any(), any());
         verify(validator, never()).validateWitnessRequest(any(), any());
         verify(producer, never()).push(anyString(), any());
+        verify(encryptionDecryptionUtil, never()).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
+        verify(encryptionDecryptionUtil, never()).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
     }
 
     @Test
@@ -1644,6 +1647,7 @@ public class CaseServiceTest {
         
         verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
         verify(producer, times(1)).push(anyString(), any());
+        verify(producer, times(1)).push(eq("case-update-topic"), any(CaseRequest.class));
     }
 
     // Helper methods for test data creation
@@ -1678,17 +1682,16 @@ public class CaseServiceTest {
             roles = new ArrayList<>();
             requestInfo.getUserInfo().setRoles(roles);
         }
-        requestInfo.getUserInfo().getRoles().add(allowAddWitnessRole);
+        boolean isRoleMissing = roles.stream().noneMatch(r -> ALLOW_ADD_WITNESS.equals(r.getCode()));
+        if (isRoleMissing) {
+            roles.add(allowAddWitnessRole);
+        }
     }
 
     private void removeAllowAddWitnessRole(RequestInfo requestInfo) {
         List<Role> roles = requestInfo.getUserInfo().getRoles();
-        if(roles == null){
-            roles = new ArrayList<>();
-            requestInfo.getUserInfo().setRoles(roles);
-            return;
-        }
-        roles.removeIf(role -> role.getCode().equals(ALLOW_ADD_WITNESS));
+        if (roles == null) return;
+        roles.removeIf(role -> ALLOW_ADD_WITNESS.equals(role.getCode()));
     }
 
 }
