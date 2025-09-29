@@ -1119,20 +1119,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setReload,
   ]);
 
-  // Handle bulk sign confirmation - now shows signature upload modal first
   const handleBulkSignConfirm = useCallback(() => {
     setShowBulkSignConfirmModal(false);
+    handleActualBulkSign();
+  }, [handleActualBulkSign]);
 
-    if (mockESignEnabled) {
-      // If mock e-sign is enabled, skip upload and proceed directly
-      handleActualBulkSign();
-    } else {
-      // Show signature upload modal
-      setShowBulkSignatureModal(true);
-    }
-  }, [mockESignEnabled, handleActualBulkSign]);
-
-  // After successful bulk sign, proceed button in success modal opens send confirm
   const handleProceedToBulkSend = useCallback(() => {
     setShowBulkSignSuccessModal(false);
     setShowBulkSendConfirmModal(true);
