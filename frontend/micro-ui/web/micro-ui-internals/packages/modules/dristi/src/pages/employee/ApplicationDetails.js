@@ -245,7 +245,12 @@ const ApplicationDetails = ({ location, match }) => {
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
         doc: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
+          <DocViewerWrapper
+            fileStoreId={identifierIdDetails?.fileStoreId}
+            tenantId={tenantId}
+            displayFilename={identifierIdDetails?.filename}
+            docViewerCardClassName={"doc-card"}
+          />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
@@ -356,10 +361,8 @@ const ApplicationDetails = ({ location, match }) => {
                   onClick={() => {
                     setShowInfoModal({ isOpen: false, status: "" });
                     history.push(
-                      userType === "ADVOCATE_CLERK"
-                        ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                        : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                      { isSentBack: true }
+                      `/${window?.contextPath}/employee/home/home-screen`,
+                      { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                     );
                   }}
                 />
@@ -368,10 +371,8 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 setShowInfoModal({ isOpen: false, status: "" });
                 history.push(
-                  userType === "ADVOCATE_CLERK"
-                    ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                    : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                  { isSentBack: true }
+                  `/${window?.contextPath}/employee/home/home-screen`,
+                  { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                 );
               }}
               style={{ backgroundColor: "#BB2C2F" }}

@@ -1,9 +1,9 @@
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { paymentTabInboxConfig } from "./paymentInboxConfig";
+import { offlinePaymentsConfig } from "../../configs/OfflinePaymentsConfig";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { DRISTIService } from "../../../services";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -13,12 +13,11 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function PaymentInbox() {
+function OfflinePaymentsHomeTab() {
   const { t } = useTranslation();
-  const history = useHistory();
-  const [config, setConfig] = useState(paymentTabInboxConfig?.TabSearchConfig?.[0]);
+  const [config, setConfig] = useState(offlinePaymentsConfig?.TabSearchConfig?.[0]);
   const [tabData, setTabData] = useState(
-    paymentTabInboxConfig?.TabSearchConfig?.map((configItem, index) => ({
+    offlinePaymentsConfig?.TabSearchConfig?.map((configItem, index) => ({
       key: index,
       label: configItem.label,
       active: index === 0 ? true : false,
@@ -63,36 +62,36 @@ function PaymentInbox() {
       );
       setTabData(updatedTabData);
     },
-    [tenantId]
+    [tenantId, t]
   );
 
   useEffect(() => {
-    getTotalCountForTab(paymentTabInboxConfig);
+    getTotalCountForTab(offlinePaymentsConfig);
   }, [getTotalCountForTab, tenantId]);
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
-    setConfig(paymentTabInboxConfig?.TabSearchConfig?.[n]);
+    setConfig(offlinePaymentsConfig?.TabSearchConfig?.[n]);
   };
 
   return (
     <React.Fragment>
-      <div className="home-screen-wrapper payment-inbox" style={{ minHeight: "calc(100vh - 90px)", width: "100%", padding: "30px" }}>
-        <div className="header-class" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div className="header">{t("NYAY_MITRA_PAYMENTS")}</div>
-        </div>
-        <div className="inbox-search-wrapper">
+      <div className="home-screen-wrapper payment-inbox" style={{ minHeight: "calc(100vh - 90px)", width: "100%" }}>
+        <div className={"bulk-esign-order-view"}>
+          <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
+            {t("COLLECT_OFFLINE_PAYMENTS")}
+          </div>
           <InboxSearchComposer
             customStyle={sectionsParentStyle}
             configs={config}
             showTab={true}
             tabData={tabData}
             onTabChange={onTabChange}
-          ></InboxSearchComposer>{" "}
+          ></InboxSearchComposer>
         </div>
       </div>
     </React.Fragment>
   );
 }
 
-export default PaymentInbox;
+export default OfflinePaymentsHomeTab;

@@ -111,6 +111,9 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getScheduledHearingNumber(), query, firstCriteria, "orders.scheduledhearingnumber", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteriaDate(criteria.getFromPublishedDate(), query, firstCriteria, "orders.createdDate >= ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addCriteriaDate(criteria.getToPublishedDate(), query, firstCriteria, "orders.createdDate <= ?", preparedStmtList, preparedStmtArgList);
 
             if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
                 addCriteria(criteria.getOrderNumber() , query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
@@ -133,6 +136,17 @@ public class OrderQueryBuilder {
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(type);
 
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    boolean addCriteriaDate(Long criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
+            preparedStmtList.add(criteria);
+            preparedStmtArgList.add(Types.BIGINT);
             firstCriteria = false;
         }
         return firstCriteria;

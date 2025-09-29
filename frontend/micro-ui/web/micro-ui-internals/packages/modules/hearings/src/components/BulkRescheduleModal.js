@@ -51,6 +51,7 @@ const BulkRescheduleModal = ({
   bulkFormData,
   showToast,
   newHearingData,
+  isADiarySigned,
 }) => {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -155,6 +156,7 @@ const BulkRescheduleModal = ({
                     defaultValue={currentDiaryEntry?.businessOfDay}
                     style={{}}
                     textInputStyle={{ maxWidth: "100%" }}
+                    disable={isADiarySigned ? true : false} //BOTD should not be editable if Adiary is already signed
                   />
                   {currentDiaryEntry && (
                     <Button
@@ -164,6 +166,7 @@ const BulkRescheduleModal = ({
                       onButtonClick={() => {
                         handleUpdateBusinessOfDayEntry();
                       }}
+                      isDisabled={isADiarySigned ? true : false} //BOTD should not be editable if Adiary is already signed
                     />
                   )}
                 </div>
