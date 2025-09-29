@@ -249,6 +249,9 @@ public class ServiceConstants {
     public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
 
     public static final String REGEX_TO_EXTRACT_YEAR = "ST/\\d+/(\\d{4})";
+
+    public static final String ALLOW_ADD_WITNESS = "ALLOW_ADD_WITNESS";
+
     private ServiceConstants() {
     }
 }
