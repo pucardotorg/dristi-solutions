@@ -1,11 +1,11 @@
 const defaultSearchValues = {
   searchText: "",
-  applicationStatus: "",
-  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
-  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
-  completeStatus: "", //{ code: "", name: "STATUS" },
+  // applicationStatus: "",
+  // orderType: "", //{ code: "", name: "PROCESS_TYPE" },
+  // channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
+  // completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
-  noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
+  // noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
