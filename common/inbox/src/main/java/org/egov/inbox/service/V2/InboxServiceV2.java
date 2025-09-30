@@ -484,24 +484,12 @@ public class InboxServiceV2 {
                                             Consumer<Criteria> setter) {
         Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
-        // Temporarily remove 'substage' when only a count is required, then restore it
-        Object originalSubstage = null;
-        boolean substageRemoved = false;
-        if (criteria.getIsOnlyCountRequired() && searchCriteria.containsKey("substage")) {
-            originalSubstage = searchCriteria.remove("substage");
-            substageRemoved = true;
+        // Temporarily remove substage for count-only queries without permanently mutating the original map
+        Object originalSubStage = searchCriteria.get("substage");
+        boolean hadSubStage = searchCriteria.containsKey("substage");
+        if (criteria.getIsOnlyCountRequired()) {
+            searchCriteria.remove("substage");
         }
-
-        if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(resultData.getRecords());
-        }
-
-        // Restore 'substage' filter if it was removed
-        if (substageRemoved) {
-            searchCriteria.put("substage", originalSubstage);
-        }
-
-        setter.accept(criteria);
 
         searchCriteria.put("actionCategory", criteria.getActionCategory());
 
@@ -535,6 +523,14 @@ public class InboxServiceV2 {
 
         if (!criteria.getIsOnlyCountRequired()) {
             criteria.setData(resultData.getRecords());
+        }
+        // Restore substage to avoid side-effects on shared moduleSearchCriteria map
+        if (criteria.getIsOnlyCountRequired()) {
+            if (hadSubStage) {
+                searchCriteria.put("substage", originalSubStage);
+            } else {
+                searchCriteria.remove("substage");
+            }
         }
 
         setter.accept(criteria);
