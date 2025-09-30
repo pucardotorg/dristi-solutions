@@ -117,11 +117,12 @@ export const TabSearchConfig = [
           columns: [
             {
               label: "SPEED_POST_ID",
-              jsonPath: "processNumber",
+              jsonPath: "speedPostId",
+              additionalCustomization: true,
             },
             {
               label: "RECIEVED_DATE",
-              jsonPath: "bookingDate",
+              jsonPath: "receivedDate",
             },
             {
               label: "ADDRESS",
@@ -217,21 +218,7 @@ export const TabSearchConfig = [
               populators: {
                 name: "deliveryStatusList",
                 optionsKey: "name",
-                options: [
-                  // add in mdms
-                  {
-                    name: "All",
-                    code: "ALL",
-                  },
-                  {
-                    name: "Booked",
-                    code: "BOOKED",
-                  },
-                  {
-                    name: "Delivered",
-                    code: "DELIVERED",
-                  },
-                ],
+                options: [],
               },
             },
             {
@@ -291,7 +278,7 @@ export const TabSearchConfig = [
           columns: [
             {
               label: "SPEED_POST_ID",
-              jsonPath: "processNumber",
+              jsonPath: "speedPostId",
             },
             {
               label: "BOOKING_DATE",
@@ -418,7 +405,7 @@ export const TabSearchConfig = [
           columns: [
             {
               label: "SPEED_POST_ID",
-              jsonPath: "processNumber",
+              jsonPath: "speedPostId",
             },
             {
               label: "BOOKING_DATE_TIME",
@@ -426,7 +413,7 @@ export const TabSearchConfig = [
             },
             {
               label: "TOTAL_CHARGES",
-              jsonPath: "remarks",
+              jsonPath: "totalAmount",
             },
             {
               label: "CS_ACTIONS_PENCIL",

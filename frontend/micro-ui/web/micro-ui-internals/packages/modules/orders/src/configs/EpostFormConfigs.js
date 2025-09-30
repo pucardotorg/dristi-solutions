@@ -163,3 +163,109 @@ export const updateEPostConfig = (status) => {
     },
   ];
 };
+
+export const updateEpostStatusPendingConfig = [
+  {
+    body: [
+      {
+        isMandatory: true,
+        type: "date",
+        label: "Status Update Date",
+        key: "bookingDate",
+        populators: {
+          name: "bookingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+      {
+        isMandatory: true,
+        type: "text",
+        label: "Speed Post Id",
+        key: "speedPostId",
+        populators: {
+          name: "speedPostId",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "remarks",
+        isMandatory: true,
+        label: "Additional Remarks",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const updateEpostStatusConfig = [
+  {
+    body: [
+      {
+        isMandatory: true,
+        type: "date",
+        label: "Status Update Date",
+        key: "bookingDate",
+        populators: {
+          name: "bookingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+      {
+        isMandatory: true,
+        key: "status",
+        type: "dropdown",
+        label: "STATUS",
+        populators: {
+          name: "status",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          options:[],
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "remarks",
+        isMandatory: true,
+        label: "Additional Remarks",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];

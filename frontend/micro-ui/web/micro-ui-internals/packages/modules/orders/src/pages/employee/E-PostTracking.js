@@ -5,6 +5,8 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
 import SubmitBar from "../../components/SubmitBar";
+import EpostUpdateStatus from "./EpostUpdateStatus";
+import { updateEpostStatusPendingConfig, updateEpostStatusConfig } from "../../configs/EpostFormConfigs";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -26,6 +28,7 @@ const EpostTrackingPage = () => {
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
   const userName = useMemo(() => {
     const userInfo = Digit.UserService.getUser()?.info || {};
     return userInfo?.name || "";
@@ -53,11 +56,22 @@ const EpostTrackingPage = () => {
     { select: (data) => data?.Epost?.PostalHubAndUserName || [] }
   );
 
+  const { data: epostStatusDropDown, isLoading: isEpostStatusDropDownLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Epost",
+    [{ name: "status" }],
+    { select: (data) => data?.Epost?.status || [] }
+  );
+
   const district = useMemo(() => {
     if (!userName) return "";
     const user = epostUserData?.find((user) => user?.userName === userName);
-    return user?.postHubName || "";
+    return user?.district || "";
   }, [epostUserData, userName]);
+
+  const epostStatusDropDownData = useMemo(() => {
+    return (epostStatusDropDown || [])?.slice()?.reverse();
+  }, [epostStatusDropDown]);
 
   const handleDownloadDocument = async (row) => {
     const { fileStoreId, processNumber } = row;
@@ -108,9 +122,10 @@ const EpostTrackingPage = () => {
 
   const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
     const currentForm = searchFormData[activeTabIndex] || {};
+    const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : [];
     return {
       processNumber: currentForm?.speedPostId || "",
-      deliveryStatusList: activeTabIndex === 1 ? [currentForm?.deliveryStatusList?.code] : [],
+      deliveryStatusList: activeTabIndex === 1 ? currentStatus : [],
       pagination: {
         ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria.pagination,
         sortBy: currentForm?.pagination?.sortBy || "",
@@ -139,6 +154,19 @@ const EpostTrackingPage = () => {
           ...baseConfig.sections.search,
           uiConfig: {
             ...baseConfig.sections.search.uiConfig,
+            fields: baseConfig.sections.search.uiConfig.fields?.map((field) => {
+              if (field.key === "deliveryStatusList") {
+                return {
+                  ...field,
+                  populators: {
+                    ...field.populators,
+                    options: [{ id: 0, code: "ALL", name: "All" }, ...epostStatusDropDownData],
+                  },
+                };
+              }
+
+              return field;
+            }),
             defaultValues: {
               ...baseConfig.sections.search.uiConfig.defaultValues,
               ...searchFormData[activeTabIndex],
@@ -180,8 +208,6 @@ const EpostTrackingPage = () => {
 
   const closeToast = () => setShowErrorToast(null);
 
-  const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
-
   const onFormSubmit = (formData, isClear = false) => {
     setSearchFormData((prev) => {
       const newData = [...prev];
@@ -191,6 +217,27 @@ const EpostTrackingPage = () => {
     setSearchRefreshCounter((prev) => prev + 1);
   };
 
+  const handleUpdateStatus = (formData) => {};
+
+  const modifiedFormConfig = useMemo(() => {
+    const baseConfig = activeTabIndex === 0 ? updateEpostStatusPendingConfig : updateEpostStatusConfig;
+
+    return baseConfig.map((section) => ({
+      ...section,
+      body: section.body.map((field) =>
+        field.key === "status"
+          ? {
+              ...field,
+              populators: {
+                ...field.populators,
+                options: epostStatusDropDownData,
+              },
+            }
+          : field
+      ),
+    }));
+  }, [activeTabIndex, epostStatusDropDownData]);
+
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => setShowErrorToast(null), 2000);
@@ -198,7 +245,7 @@ const EpostTrackingPage = () => {
     }
   }, [showErrorToast]);
 
-  if (isEpostUserDataLoading) return <Loader />;
+  if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 
   return (
     <React.Fragment>
@@ -236,6 +283,18 @@ const EpostTrackingPage = () => {
 
         {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
       </div>
+      {showUpdateStatusModal && (
+        <EpostUpdateStatus
+          t={t}
+          headerLabel={"Update Status"}
+          handleCancel={() => setShowUpdateStatusModal(false)}
+          handleSubmit={handleUpdateStatus}
+          defaultValue={{}}
+          modifiedFormConfig={modifiedFormConfig}
+          saveLabel={"CONFIRM"}
+          cancelLabel={"CS_COMMON_CANCEL"}
+        />
+      )}
     </React.Fragment>
   );
 };

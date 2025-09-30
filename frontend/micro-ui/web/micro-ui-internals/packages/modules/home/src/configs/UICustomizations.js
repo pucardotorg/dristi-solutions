@@ -68,6 +68,8 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
+        case "SPEED_POST_ID":
+          return t(value) || "-"
         case "STATUS":
           return t(value);
         case "CS_ACTIONS":
