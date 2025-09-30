@@ -410,4 +410,28 @@ public class HearingUtil {
         }
 
     }
+
+    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+
+        HearingRequest request = createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
+
+        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+
+        HearingResponse newHearing = createOrUpdateHearing(request, createHearingURI);
+
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
+        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+    }
 }

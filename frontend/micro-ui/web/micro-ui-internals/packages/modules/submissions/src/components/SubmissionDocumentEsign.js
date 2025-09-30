@@ -11,18 +11,15 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [pageModule, setPageModule] = useState(() =>
-    Digit.UserService.getUser()?.info?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role.code))
-      ? "en"
-      : "ci"
-  );
+  const userInfo = Digit.UserService.getUser()?.info;
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
+  const [pageModule, setPageModule] = useState(() => (isEmployee ? "en" : "ci")); // here
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const name = "Signature";
-  const userInfo = Digit.UserService.getUser()?.info;
   const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
 
   const uploadModalConfig = useMemo(() => {

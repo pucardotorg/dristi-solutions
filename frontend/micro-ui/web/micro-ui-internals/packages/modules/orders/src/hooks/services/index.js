@@ -200,3 +200,30 @@ export const orderManagementService = {
       params,
     }),
 };
+
+export const processManagementService = {
+  getProcessToSign: (data, params) =>
+    Request({
+      url: Urls.processManagement.getProcessToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedProcess: (data, params) =>
+    Request({
+      url: Urls.processManagement.updateSignedProcess,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  bulkSend: (data, params) =>
+    Request({
+      url: Urls.processManagement.bulkSend,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};  

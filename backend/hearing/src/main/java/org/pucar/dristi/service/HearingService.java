@@ -495,14 +495,16 @@ public class HearingService {
         validator.validateBulkRescheduleRequest(requestInfo, bulkReschedule);
         updateJudgeCalendar(request);
 
-        List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
+        List<OpenHearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
 
         if (hearingsToReschedule.isEmpty()) {
             log.info("No hearings found for bulk reschedule");
             return new ArrayList<>();
         }
 
-        List<String> hearingIds = hearingsToReschedule.stream().filter((hearing) -> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
+        List<String> hearingIds = new ArrayList<>();
+
+        hearingsToReschedule.stream().map(OpenHearing::getHearingNumber).forEach(hearingIds::add);
 
         if (hearingIds.isEmpty()) {
             log.info("all hearings are completed");
@@ -514,15 +516,14 @@ public class HearingService {
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
-        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        Map<String, OpenHearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(OpenHearing::getHearingNumber, obj -> obj));
         for (ScheduleHearing scheduleHearing : scheduleHearings) {
             if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
-                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
-                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
-                scheduleHearing.setCaseId(hearing.getCaseReferenceNumber());
-                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
-                scheduleHearing.setFilingNumber(hearing.getFilingNumber());
-                // todo: check for case title
+                OpenHearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getFromDate());
+                scheduleHearing.setCaseId(hearing.getCaseNumber());
+                scheduleHearing.setFilingNumber(Collections.singletonList(hearing.getFilingNumber()));
+                scheduleHearing.setCaseStage(hearing.getSubStage());
             }
         }
 
@@ -563,7 +564,7 @@ public class HearingService {
     }
 
 
-    private List<Hearing> getHearingsForBulkReschedule(Set<Integer> slotIds, BulkReschedule bulkReschedule, RequestInfo requestInfo) {
+    private List<OpenHearing> getHearingsForBulkReschedule(Set<Integer> slotIds, BulkReschedule bulkReschedule, RequestInfo requestInfo) {
 
         HearingCriteria criteria = HearingCriteria.builder()
                 .tenantId(bulkReschedule.getTenantId()).fromDate(bulkReschedule.getStartTime())
@@ -571,13 +572,7 @@ public class HearingService {
                 .courtId(bulkReschedule.getCourtId())
                 .build();
 
-        HearingSearchRequest searchRequest = HearingSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(criteria)
-                .pagination(null)
-                .build();
-
-        List<Hearing> hearingsToReschedule = new ArrayList<>();
+        List<OpenHearing> hearingsToReschedule = new ArrayList<>();
 
         if (!slotIds.isEmpty()) {
             // check mdms data for slot filtering if any slot id is there
@@ -610,7 +605,9 @@ public class HearingService {
 
                     }
 
-                    List<Hearing> hearings = searchHearing(searchRequest);
+                    InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(bulkReschedule);
+
+                    List<OpenHearing> hearings = inboxUtil.getOpenHearings(inboxRequest);
                     log.info("hearings in slot Id {}: Hearing {}", hearingSlot.getId(), hearings.size());
                     hearingsToReschedule.addAll(hearings);
 
@@ -619,7 +616,10 @@ public class HearingService {
                 }
             }
         } else {
-            hearingsToReschedule = searchHearing(searchRequest);
+
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(bulkReschedule);
+
+            hearingsToReschedule = inboxUtil.getOpenHearings(inboxRequest);
 
         }
 
