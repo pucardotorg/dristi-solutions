@@ -91,7 +91,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [issignLoader, setSignLoader] = useState(false);
   const [allHearings, setAllHearings] = useState([]);
   const [loading, setIsLoader] = useState(false);
-  const assignedRoles = useMemo(() => userInfo?.map((role) => role?.code), [userInfo]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
   const hasBulkRescheduleAccess = useMemo(
     () => ["NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
