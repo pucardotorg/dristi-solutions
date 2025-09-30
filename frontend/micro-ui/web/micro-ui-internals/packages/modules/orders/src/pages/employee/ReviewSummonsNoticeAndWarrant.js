@@ -100,6 +100,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+
+  const canSign = useMemo(() => {
+    return isJudge || hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess;
+  }, [isJudge, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
+
   const courtId = localStorage.getItem("courtId");
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -996,7 +1001,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
       const downloadPromises = selectedItems.map(async (item, index) => {
         const fileStoreId = item?.documents?.[0]?.fileStore;
-
+        if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
           const orderTypeName = (() => {
@@ -1022,9 +1027,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const fileBase = `${sanitize(orderTypeName)}_${sanitize(caseNumber)}_${sanitize(issueDate)}`.replace(/^_+|_+$/g, "");
           const fileName = fileBase || `Document_${index + 1}`;
 
-          // Use a small delay between downloads to prevent overwhelming the browser
           await new Promise((resolve) => setTimeout(resolve, index * 100));
-
           await downloadPdf(tenantId, fileStoreId, fileName);
           return { success: true, fileName, fileStoreId };
         } else {
@@ -1032,60 +1035,46 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }
       });
 
-      Promise.all(downloadPromises)
-        .then((results) => {
-          // Wait for files to be saved to disk before showing success toast and clearing selections
+      const results = await Promise.allSettled(downloadPromises);
+      const successful = results.filter((r) => r.status === "fulfilled" && r.value?.success).length;
+      const failed = results.length - successful;
+      setTimeout(() => {
+        if (successful > 0 && failed === 0) {
+          setShowErrorToast({
+            message: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
+            error: false,
+          });
           setTimeout(() => {
-            // All downloads successful - show success toast and clear selections
-            const successful = results.length;
-            if (successful > 0) {
-              setShowErrorToast({
-                message: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
-                error: false,
-              });
-
-              // Auto-dismiss success toast after 3 seconds.
-              setTimeout(() => {
-                setShowErrorToast(null);
-              }, 3000);
-              const currentConfig = isJudge
-                ? getJudgeDefaultConfig(courtId)?.[activeTabIndex]
-                : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-              const isSignedTab = currentConfig?.label === "SIGNED";
-
-              if (isSignedTab) {
-                setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-              } else {
-                setBulkSignList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-              }
-
-              // Force table refresh to update checkbox states
-              setReload((prev) => prev + 1);
-            }
-          }, 2000); // Wait 2 seconds for browser to finish saving files
-        })
-        .catch((error) => {
+            setShowErrorToast(null);
+          }, 3000);
+        } else if (successful > 0 && failed > 0) {
+          setShowErrorToast({
+            message: t("SOME_DOCUMENTS_FAILED_TO_DOWNLOAD", { successful, failed }),
+            error: true,
+          });
+          setTimeout(() => setShowErrorToast(null), 5000);
+        } else {
           setShowErrorToast({
             message: t("BULK_DOWNLOAD_FAILED"),
             error: true,
           });
+          setTimeout(() => setShowErrorToast(null), 5000);
+        }
+        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+        const isSignedTab = currentConfig?.label === "SIGNED";
 
-          // Auto-dismiss error toast after 5 seconds
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 5000);
+        setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+        setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
 
-          // Clear all selections and refresh table when bulk download fails
-          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-          const isSignedTab = currentConfig?.label === "SIGNED";
+        const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
 
-          if (isSignedTab) {
-            setBulkSendList([]);
-          } else {
-            setBulkSignList([]);
-          }
-          setReload((prev) => prev + 1);
-        });
+        if (isSignedTab) {
+          setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        } else {
+          setBulkSignList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        }
+        setReload((prev) => prev + 1);
+      }, 2000);
     } catch (error) {
       setShowErrorToast({
         message: t("BULK_DOWNLOAD_FAILED"),
@@ -1530,7 +1519,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
             </div>
           </div>
-          {isJudge && config?.label === "PENDING_SIGN" && (
+          {canSign && config?.label === "PENDING_SIGN" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
@@ -1543,7 +1532,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               </div>
             </div>
           )}
-          {isJudge && config?.label === "SIGNED" && (
+          {canSign && config?.label === "SIGNED" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
