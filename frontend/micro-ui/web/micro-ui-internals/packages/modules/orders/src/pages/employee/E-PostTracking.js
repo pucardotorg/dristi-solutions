@@ -183,7 +183,7 @@ const EpostTrackingPage = () => {
             referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber || orderData?.list[0]?.scheduledHearingNumber}`,
             status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: [orderType === "NOTICE" ? "PENDING_TASK_SHOW_NOTICE_STATUS" : "PENDING_TASK_SHOW_SUMMON_WARRANT"],
             cnrNumber: taskData?.list[0]?.cnrNumber,
             filingNumber: taskData?.list[0]?.filingNumber,
             caseId: taskData?.list[0]?.caseId,
