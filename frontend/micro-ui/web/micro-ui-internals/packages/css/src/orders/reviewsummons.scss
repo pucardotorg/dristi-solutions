@@ -191,11 +191,21 @@
 .custom-speedpost-search-pending-booking {
   display: flex !important;
   align-items: flex-end;
+  flex-direction: row;
   gap: 12px;
   font-family: sans-serif;
   padding: 0.5rem 0 0.5rem 0 !important;
 
   .label-field-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .form-label {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
     .select-wrap {
       width: 10rem;
       margin: 0 !important;
@@ -210,37 +220,91 @@
       }
     }
 
-    .text-input {
-      position: relative;
+    input[type="text"] {
+      width: 230px;
+      border-radius: 4px;
+      font-size: 15px;
+      outline: none;
+      margin: 0px !important;
+      height: 36px;
+      padding: 1px 2px 1px 8px;
+    }
 
-      input[type="text"] {
-        width: 253px;
-        border: 1px solid #505a5f;
-        border-radius: 4px;
-        font-size: 14px;
-        outline: none;
-        margin: 0px !important;
-      }
+    input[type="date"] {
+      width: 10rem;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+      margin: 0px !important;
+      height: 36px;
+      padding: 9px;
 
-      input[type="date"] {
-        width: 10rem;
-        border: 1px solid #505a5f;
-        border-radius: 4px;
-        font-size: 14px;
-        outline: none;
-        margin: 0px !important;
-
-        &::placeholder {
-          color: #999;
-        }
+      &::placeholder {
+        color: #999;
       }
     }
   }
+}
+
+$tab-inactive: #6f767e;
+$tab-active: #0a5757;
+$tab-hover: #222;
+$tab-border: #ddd;
+$tab-underline: #0a5757;
+
+.tab-container {
+  display: flex;
+  gap: 2rem;
+  border-bottom: 1px solid $tab-border;
+  padding-left: 16px;
+
+  button {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: $tab-inactive;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s ease-in-out;
+
+    &:hover {
+      color: $tab-hover;
+    }
+
+    &.search-tab-head-selected {
+      font-weight: 600;
+      color: $tab-active;
+
+      &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        width: 100%;
+        height: 3px;
+        background-color: $tab-underline;
+        border-radius: 2px;
+      }
+    }
+  }
+}
+
+.form-container {
+  display: flex;
+  gap: 20px;
+  padding: 16px;
 
   .search-button-wrapper {
     flex-direction: row-reverse !important;
     margin-left: 20px;
-    padding-top: 0 !important;
+    padding-top: 20px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
 
     .link-label {
       font-size: 16px;

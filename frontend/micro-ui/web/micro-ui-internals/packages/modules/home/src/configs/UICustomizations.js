@@ -54,32 +54,11 @@ const handleNavigate = (path) => {
 export const UICustomizations = {
   EpostTrackingUiConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const ePostTrackerSearchCriteria = {
-        ...requestCriteria?.body?.ePostTrackerSearchCriteria,
-        processNumber: requestCriteria?.state?.searchForm?.processNumber ? requestCriteria?.state?.searchForm?.processNumber : "",
-        deliveryStatusList: requestCriteria?.state?.searchForm?.deliveryStatusList?.selected
-          ? [requestCriteria?.state?.searchForm?.deliveryStatusList?.selected]
-          : requestCriteria?.body?.ePostTrackerSearchCriteria.deliveryStatusList,
-        pagination: {
-          sortBy: requestCriteria?.state?.searchForm?.pagination?.sortBy
-            ? requestCriteria?.state?.searchForm?.pagination?.sortBy
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.sortBy,
-          orderBy: requestCriteria?.state?.searchForm?.pagination?.order
-            ? requestCriteria?.state?.searchForm?.pagination?.order
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.orderBy,
-        },
-      };
+      debugger;
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ePostTrackerSearchCriteria,
-          processNumber: "",
-          deliveryStatusList: {},
-          pagination: {
-            sortBy: "",
-            order: "",
-          },
         },
         config: {
           ...requestCriteria?.config,
@@ -101,13 +80,6 @@ export const UICustomizations = {
         {
           label: "Print Document",
           id: "print_document",
-          hide: false,
-          disabled: false,
-          action: column.clickFunc,
-        },
-        {
-          label: "Print Address Label",
-          id: "print_address_label",
           hide: false,
           disabled: false,
           action: column.clickFunc,

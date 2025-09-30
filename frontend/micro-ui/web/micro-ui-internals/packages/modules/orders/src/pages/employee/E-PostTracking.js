@@ -3,6 +3,17 @@ import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
+import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
+
+const defaultSearchValues = {
+  pagination: { sortBy: "", order: "" },
+  deliveryStatusList: {
+    name: "All",
+    code: "ALL",
+  },
+  speedPostId: "",
+  bookingDate: "",
+};
 
 const EpostTrackingPage = () => {
   const { t } = useTranslation();
@@ -13,34 +24,32 @@ const EpostTrackingPage = () => {
   const [selectedRowData, setSelectedRowData] = useState({});
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [loading, setLoading] = useState(false);
   const userName = useMemo(() => {
     const userInfo = Digit.UserService.getUser()?.info || {};
     return userInfo?.name || "";
   }, []);
 
+  const [searchFormData, setSearchFormData] = useState(TabSearchConfig.map(() => ({ ...defaultSearchValues })));
+
   const [tabData, setTabData] = useState(
     TabSearchConfig?.map((configItem, index) => ({
       key: index,
       label: configItem.label,
-      active: index === 0 ? true : false,
+      active: index === 0,
     }))
   );
 
   const onTabChange = (n) => {
-    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
+    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n })));
     setActiveTabIndex(n);
   };
 
-  // TODO: need to search way to optimise this
   const { data: epostUserData, isLoading: isEpostUserDataLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "Epost",
     [{ name: "PostalHubAndUserName" }],
-    {
-      select: (data) => {
-        return data?.Epost?.PostalHubAndUserName || [];
-      },
-    }
+    { select: (data) => data?.Epost?.PostalHubAndUserName || [] }
   );
 
   const district = useMemo(() => {
@@ -50,23 +59,20 @@ const EpostTrackingPage = () => {
   }, [epostUserData, userName]);
 
   const handleDownloadDocument = async (row) => {
-    // TODO : need to check with backend team regarding fileStoreId
     const { fileStoreId, processNumber } = row;
-    if (fileStoreId) {
-      try {
-        await downloadPdf(tenantId, fileStoreId, processNumber);
-        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
-      } catch (error) {
-        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
-      }
-    } else {
+    if (!fileStoreId) {
       setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+      return;
     }
-  };
-
-  const handlePrintAddressLabel = (row) => {
-    console.log("row", row);
-    // TODO: need to implement
+    try {
+      setLoading(true);
+      await downloadPdf(tenantId, fileStoreId, processNumber);
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+    } catch (err) {
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleActionItems = (history, column, row, item) => {
@@ -75,9 +81,6 @@ const EpostTrackingPage = () => {
     switch (item.id) {
       case "print_document":
         handleDownloadDocument(row);
-        break;
-      case "print_address_label":
-        handlePrintAddressLabel(row);
         break;
       case "update_status":
         setShowUpdateStatusModal(true);
@@ -88,63 +91,116 @@ const EpostTrackingPage = () => {
     }
   };
 
+  const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
+    const currentForm = searchFormData[activeTabIndex] || {};
+    return {
+      processNumber: currentForm?.speedPostId || "",
+      deliveryStatusList: activeTabIndex === 1 ? [currentForm?.deliveryStatusList?.code] : [],
+      pagination: {
+        ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria.pagination,
+        sortBy: currentForm?.pagination?.sortBy || "",
+        order: currentForm?.pagination?.order || "",
+      },
+    };
+  };
+
   const config = useMemo(() => {
     const baseConfig = TabSearchConfig?.[activeTabIndex];
     if (!baseConfig) return null;
 
     return {
       ...baseConfig,
+      apiDetails: {
+        ...baseConfig.apiDetails,
+        requestBody: {
+          ...baseConfig.apiDetails.requestBody,
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          ePostTrackerSearchCriteria: getSearchRequestBody(activeTabIndex, searchFormData, baseConfig),
+        },
+      },
       sections: {
         ...baseConfig.sections,
+        search: {
+          ...baseConfig.sections.search,
+          uiConfig: {
+            ...baseConfig.sections.search.uiConfig,
+            defaultValues: {
+              ...baseConfig.sections.search.uiConfig.defaultValues,
+              ...searchFormData[activeTabIndex],
+            },
+          },
+        },
         searchResult: {
           ...baseConfig.sections.searchResult,
           uiConfig: {
             ...baseConfig.sections.searchResult.uiConfig,
-            columns: baseConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
-              return column.label === "CS_ACTIONS"
-                ? {
-                    ...column,
-                    clickFunc: handleActionItems,
-                  }
-                : column;
-            }),
+            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) =>
+              column.label === "CS_ACTIONS" ? { ...column, clickFunc: handleActionItems } : column
+            ),
           },
         },
       },
     };
-  }, [activeTabIndex]);
+  }, [activeTabIndex, searchFormData]);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
+  const closeToast = () => setShowErrorToast(null);
+
+  const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
+
+  const onFormSubmit = (formData, isClear = false) => {
+    debugger;
+    setSearchFormData((prev) => {
+      const newData = [...prev];
+      newData[activeTabIndex] = isClear ? { ...defaultSearchValues } : { ...formData };
+      return newData;
+    });
+    setSearchRefreshCounter((prev) => prev + 1);
   };
 
   useEffect(() => {
     if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
+      const timer = setTimeout(() => setShowErrorToast(null), 2000);
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
 
-  if (isEpostUserDataLoading) {
-    return <Loader />;
-  }
+  if (isEpostUserDataLoading) return <Loader />;
 
   return (
     <React.Fragment>
+      {loading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: 10001,
+            position: "fixed",
+            top: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgb(234 234 245 / 50%)",
+          }}
+        >
+          <Loader />
+        </div>
+      )}
+
       <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px", display: "flex", flexDirection: "column", gap: "2rem" }}>
         <div style={{ fontWeight: 700, fontSize: "2rem" }}>{`${t("HUB_CO_ORDINATOR")}, ${district}`}</div>
-        <div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <Inboxheader config={config} tabData={tabData} onTabChange={onTabChange} onFormSubmit={onFormSubmit} />
           <InboxSearchComposer
-            key={`e-post-track-${activeTabIndex}`}
+            key={`e-post-track-${activeTabIndex}-${searchRefreshCounter}`}
             configs={config}
-            showTab={true}
+            showTab={false}
             tabData={tabData}
             onTabChange={onTabChange}
-          ></InboxSearchComposer>
+          />
         </div>
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+
+        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
       </div>
     </React.Fragment>
   );

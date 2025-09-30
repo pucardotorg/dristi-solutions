@@ -3,9 +3,11 @@ const defaultSearchValues = {
     sortBy: "",
     order: "",
   },
-  deliveryStatusList: {},
-  processNumber: "",
-  status: { name: "All", code: "ALL" },
+  deliveryStatusList: {
+    name: "All",
+    code: "ALL",
+  },
+  speedPostId: "",
   bookingDate: "",
 };
 
@@ -27,7 +29,7 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
-          processNumber: "",
+          speedPostId: "",
           deliveryStatusList: [],
           pagination: {
             orderBy: "",
@@ -73,8 +75,9 @@ export const TabSearchConfig = [
               showIcon: true,
               icon: "SearchIcon",
               label: "SEACRH_SPEED_POST_ID",
+              key: "speedPostId",
               populators: {
-                name: "processNumber",
+                name: "speedPostId",
               },
             },
 
@@ -105,7 +108,8 @@ export const TabSearchConfig = [
             // },
           ],
         },
-        show: true,
+        show: false,
+        customShow: true,
       },
       searchResult: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
@@ -157,8 +161,11 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
-          processNumber: "",
-          deliveryStatusList: [],
+          speedPostId: "",
+          deliveryStatusList: {
+            name: "All",
+            code: "ALL",
+          },
           pagination: {
             orderBy: "",
             sortBy: "",
@@ -179,7 +186,13 @@ export const TabSearchConfig = [
           primaryLabel: "ES_COMMON_SEARCH",
           secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
           minReqFields: 0,
-          defaultValues: defaultSearchValues,
+          defaultValues: {
+            ...defaultSearchValues,
+            deliveryStatusList: {
+              name: "All",
+              code: "ALL",
+            },
+          },
           fields: [
             // {
             //   type: "component",
@@ -199,10 +212,10 @@ export const TabSearchConfig = [
             {
               label: "STATUS",
               isMandatory: false,
-              key: "status",
+              key: "deliveryStatusList",
               type: "dropdown",
               populators: {
-                name: "status",
+                name: "deliveryStatusList",
                 optionsKey: "name",
                 options: [
                   // add in mdms
@@ -238,8 +251,9 @@ export const TabSearchConfig = [
               showIcon: true,
               icon: "SearchIcon",
               label: "SEACRH_SPEED_POST_ID",
+              key: "speedPostId",
               populators: {
-                name: "processNumber",
+                name: "speedPostId",
               },
             },
             // {
@@ -268,7 +282,8 @@ export const TabSearchConfig = [
             // },
           ],
         },
-        show: true,
+        show: false,
+        customShow: true,
       },
       searchResult: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
@@ -325,8 +340,8 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
-          processNumber: "",
-          deliveryStatusList: [],
+          speedPostId: "",
+          deliveryStatusList: {},
           pagination: {
             orderBy: "",
             sortBy: "",
@@ -371,8 +386,9 @@ export const TabSearchConfig = [
               showIcon: true,
               icon: "SearchIcon",
               label: "SEACRH_SPEED_POST_ID",
+              key: "speedPostId",
               populators: {
-                name: "processNumber",
+                name: "speedPostId",
               },
             },
             // {
@@ -401,7 +417,8 @@ export const TabSearchConfig = [
             // },
           ],
         },
-        show: true,
+        show: false,
+        customShow: true,
       },
       searchResult: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
