@@ -484,9 +484,24 @@ public class InboxServiceV2 {
                                             Consumer<Criteria> setter) {
         Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
-        if (criteria.getIsOnlyCountRequired()) {
-            searchCriteria.remove("substage");
+        // Temporarily remove 'substage' when only a count is required, then restore it
+        Object originalSubstage = null;
+        boolean substageRemoved = false;
+        if (criteria.getIsOnlyCountRequired() && searchCriteria.containsKey("substage")) {
+            originalSubstage = searchCriteria.remove("substage");
+            substageRemoved = true;
         }
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            criteria.setData(resultData.getRecords());
+        }
+
+        // Restore 'substage' filter if it was removed
+        if (substageRemoved) {
+            searchCriteria.put("substage", originalSubstage);
+        }
+
+        setter.accept(criteria);
 
         searchCriteria.put("actionCategory", criteria.getActionCategory());
 
