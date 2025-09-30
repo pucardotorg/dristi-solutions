@@ -484,6 +484,10 @@ public class InboxServiceV2 {
                                             Consumer<Criteria> setter) {
         Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
+        if (criteria.getIsOnlyCountRequired()) {
+            searchCriteria.remove("substage");
+        }
+
         searchCriteria.put("actionCategory", criteria.getActionCategory());
 
         if (criteria.getDate() != null) {
