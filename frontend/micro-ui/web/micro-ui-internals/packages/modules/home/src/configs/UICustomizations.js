@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
-import { formatNoticeDeliveryDate } from "../utils";
+import { formatDateDDMMYYYY, formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
@@ -691,7 +691,7 @@ export const UICustomizations = {
           return <ADiaryRowClick rowData={row} colData={column} value={value} />;
 
         case "NEXT_HEARING_DATE":
-          return <span>{value || ""}</span>;
+          return <span>{value ? formatDateDDMMYYYY(value) : ""}</span>;
         default:
           return value || "";
       }
