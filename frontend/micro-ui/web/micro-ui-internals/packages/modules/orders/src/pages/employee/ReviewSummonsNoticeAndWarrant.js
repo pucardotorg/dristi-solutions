@@ -1027,9 +1027,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const fileBase = `${sanitize(orderTypeName)}_${sanitize(caseNumber)}_${sanitize(issueDate)}`.replace(/^_+|_+$/g, "");
           const fileName = fileBase || `Document_${index + 1}`;
 
-          // Use a small delay between downloads to prevent overwhelming the browser
           await new Promise((resolve) => setTimeout(resolve, index * 100));
-
           await downloadPdf(tenantId, fileStoreId, fileName);
           return { success: true, fileName, fileStoreId };
         } else {
@@ -1037,9 +1035,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }
       });
 
-      const results = await Promise.all(downloadPromises);
-      const successful = results.filter((r) => r.success).length;
-      const failed = results.filter((r) => !r.success).length;
+      const results = await Promise.allSettled(downloadPromises);
+      const successful = results.filter((r) => r.status === "fulfilled" && r.value?.success).length;
+      const failed = results.length - successful;
       setTimeout(() => {
         if (successful > 0 && failed === 0) {
           setShowErrorToast({
@@ -1049,15 +1047,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setTimeout(() => {
             setShowErrorToast(null);
           }, 3000);
-          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-          const isSignedTab = currentConfig?.label === "SIGNED";
-
-          if (isSignedTab) {
-            setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-          } else {
-            setBulkSignList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-          }
-           setReload((prev) => prev + 1);
         } else if (successful > 0 && failed > 0) {
           setShowErrorToast({
             message: t("SOME_DOCUMENTS_FAILED_TO_DOWNLOAD", { successful, failed }),
@@ -1071,8 +1060,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
           });
           setTimeout(() => setShowErrorToast(null), 5000);
         }
+        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+        const isSignedTab = currentConfig?.label === "SIGNED";
 
-        const successfulFileStoreIds = results.filter((r) => r.success).map((r) => r.fileStoreId);
+        setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+        setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+
+        const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
 
         if (isSignedTab) {
           setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
