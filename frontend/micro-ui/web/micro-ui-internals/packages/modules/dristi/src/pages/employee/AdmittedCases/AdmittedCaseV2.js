@@ -3039,8 +3039,9 @@ const AdmittedCaseV2 = () => {
         requiredRoles: ["TASK_CREATOR"], // task create api validation
       },
       {
-        label: "CREATE_BAIL_BOND", // /analytics/pending_task/v1/create api
-        requiredRoles: [], // created new role for ui purpose.
+        label: "CREATE_BAIL_BOND",
+        requiredRoles: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+        // The employee which has this role, wil receive this pending task so for create button also we are using same role.
       },
       {
         label: "DOWNLOAD_CASE_FILE",

@@ -91,8 +91,13 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [issignLoader, setSignLoader] = useState(false);
   const [allHearings, setAllHearings] = useState([]);
   const [loading, setIsLoader] = useState(false);
-  const hasNotificationCreateAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_CREATOR"), [userInfo]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
+  const hasBulkRescheduleAccess = useMemo(
+    () => ["NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
+    [assignedRoles]
+  );
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
   const today = new Date();
@@ -487,7 +492,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         loading={loading}
         setIsLoader={setIsLoader}
         handleBulkHearingSearch={handleBulkHearingSearch}
-        hasNotificationCreateAccess={hasNotificationCreateAccess}
+        hasBulkRescheduleAccess={hasBulkRescheduleAccess}
       />
       {stepper === 1 && (
         <Modal
