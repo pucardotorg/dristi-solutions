@@ -245,7 +245,7 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+        hearingId: orderData?.list?.[0]?.scheduledHearingNumber || orderData?.list?.[0]?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
@@ -373,7 +373,7 @@ const PaymentForSummonModal = ({ path }) => {
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
                 status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,

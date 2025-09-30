@@ -453,21 +453,16 @@ public class CaseRegistrationEnrichment {
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchRequest searchRequest) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             for (CaseCriteria element : searchRequest.getCriteria()) {
                 String courtId = getCourtId(searchRequest.getRequestInfo());
                 element.setCourtId(courtId);
             }
 
-        }
-        else {
+        } else {
             for (CaseCriteria element : searchRequest.getCriteria()) {
                 element.setCourtId(null);
             }
@@ -523,17 +518,13 @@ public class CaseRegistrationEnrichment {
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             String courtId = getCourtId(requestInfo);
             criteria.setCourtId(courtId);
-        }else {
+        } else {
             criteria.setCourtId(null);
         }
 
@@ -579,17 +570,13 @@ public class CaseRegistrationEnrichment {
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria, RequestInfo requestInfo) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             String courtId = getCourtId(requestInfo);
             caseSummaryListCriteria.setCourtId(courtId);
-        }else {
+        } else {
             caseSummaryListCriteria.setCourtId(null);
         }
 

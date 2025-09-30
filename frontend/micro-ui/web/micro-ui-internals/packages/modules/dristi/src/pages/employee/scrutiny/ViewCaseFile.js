@@ -91,13 +91,10 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [commentSendBack, setCommentSendBack] = useState("");
   const [toastMsg, setToastMsg] = useState(null);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -445,16 +442,16 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
 
   const primaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_REGISTER_CASE";
     }
     //write admission condition here
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
   const secondaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_SEND_BACK";
     }
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
 
   const updateCaseDetails = async (action, filterSigned = false) => {
     let filteredDocuments = caseDetails?.documents;
@@ -506,14 +503,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handlePrimaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       // setActionModal("sendCaseBackPotential");
       setActionModal("registerCase");
     }
     // Write isAdmission condition here
   };
   const handleSecondaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       setActionModal("sendCaseBack");
     }
     // Write isAdmission condition here
@@ -696,7 +693,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     );
   };
 
-  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
+  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
 

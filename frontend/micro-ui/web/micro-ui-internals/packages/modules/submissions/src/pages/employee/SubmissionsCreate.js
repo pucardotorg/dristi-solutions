@@ -395,7 +395,7 @@ const SubmissionsCreate = ({ path }) => {
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
-            (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+            (application) => !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
     [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
@@ -447,8 +447,6 @@ const SubmissionsCreate = ({ path }) => {
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
-                      isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
-                    }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
