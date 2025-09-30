@@ -298,14 +298,6 @@ export const TabSearchConfig = [
               jsonPath: "bookingDate",
             },
             {
-              label: "ADDRESS",
-              jsonPath: "address",
-            },
-            {
-              label: "PINCODE",
-              jsonPath: "pinCode",
-            },
-            {
               label: "STATUS",
               jsonPath: "deliveryStatus",
               additionalCustomization: true,
@@ -429,16 +421,17 @@ export const TabSearchConfig = [
               jsonPath: "processNumber",
             },
             {
-              label: "BOOKING_DATE",
+              label: "BOOKING_DATE_TIME",
               jsonPath: "bookingDate",
-            },
-            {
-              label: "ADDRESS",
-              jsonPath: "address",
             },
             {
               label: "TOTAL_CHARGES",
               jsonPath: "remarks",
+            },
+            {
+              label: "CS_ACTIONS_PENCIL",
+              jsonPath: "actions",
+              additionalCustomization: true,
             },
           ],
           enableColumnSort: true,

@@ -10,6 +10,8 @@ import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/component
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
+import { EditPencilIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -54,7 +56,6 @@ const handleNavigate = (path) => {
 export const UICustomizations = {
   EpostTrackingUiConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      debugger;
       return {
         ...requestCriteria,
         body: {
@@ -71,6 +72,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_ACTIONS":
           return <OverlayDropdown column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "CS_ACTIONS_PENCIL":
+          return <PencilIconEdit column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
         default:
           return t("ES_COMMON_NA");
       }
@@ -87,6 +90,17 @@ export const UICustomizations = {
         {
           label: "Update Status",
           id: "update_status",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
+    },
+    actionItems: (row, column) => {
+      return [
+        {
+          label: "Pencil Edit",
+          id: "pencil_edit",
           hide: false,
           disabled: false,
           action: column.clickFunc,

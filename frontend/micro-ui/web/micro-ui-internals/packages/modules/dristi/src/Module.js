@@ -76,6 +76,7 @@ import SelectCustomGroupedDropdown from "./components/SelectCustomGroupedDropdow
 import SuretyComponent from "./components/SuretyComponent";
 import EditSendBackModal from "./components/EditSendBackModal";
 import DownloadButton from "./components/DownloadButton";
+import PencilIconEdit from "./components/PencilIconEdit";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -213,6 +214,7 @@ const componentsToRegister = {
   SuretyComponent,
   EditSendBackModal,
   DownloadButton,
+  PencilIconEdit
 };
 
 const overrideHooks = () => {

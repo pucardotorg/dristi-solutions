@@ -92,6 +92,11 @@ const Inboxheader = ({ config, tabData, onTabChange, onFormSubmit }) => {
             </div>
           </form>
         )}
+        {config?.sections?.search?.additionalCustomization?.component && (
+          <div className={`additional-customization ${config?.sections?.search?.additionalCustomization?.className || ""}`}>
+            {config.sections.search.additionalCustomization.component({ t, formData: watch(), setValue })}
+          </div>
+        )}
       </div>
     </React.Fragment>
   );

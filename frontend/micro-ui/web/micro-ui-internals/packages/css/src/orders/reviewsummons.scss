@@ -320,3 +320,20 @@ $tab-underline: #0a5757;
     }
   }
 }
+
+.inbox-search-fields {
+  display: flex;
+  justify-content: space-between;
+
+  .custom-button-wrapper{
+    padding: 16px !important;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+
+    .submit-bar {
+      box-shadow: none;
+      border-radius: 4px;
+    }
+  }
+}

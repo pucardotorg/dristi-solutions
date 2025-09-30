@@ -4,6 +4,7 @@ import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
+import SubmitBar from "../../components/SubmitBar";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -86,8 +87,22 @@ const EpostTrackingPage = () => {
         setShowUpdateStatusModal(true);
         setSelectedRowData(row);
         break;
+      case "pencil_edit":
+        setShowUpdateStatusModal(true);
+        setSelectedRowData(row);
+        break;
       default:
         break;
+    }
+  };
+
+  const handleDownloadList = (activeIndex) => {
+    if (activeIndex === 2) {
+      // TODO: download Reports
+      setShowErrorToast({ label: t("Reports Downloaded"), error: false });
+    } else {
+      // TODO: download List
+      setShowErrorToast({ label: t("List Downloaded"), error: false });
     }
   };
 
@@ -129,14 +144,34 @@ const EpostTrackingPage = () => {
               ...searchFormData[activeTabIndex],
             },
           },
+          ...(activeTabIndex !== 1 && {
+            additionalCustomization: {
+              component: ({ t, formData, setValue }) => (
+                <SubmitBar
+                  label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
+                  submit="submit"
+                  style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
+                  onSubmit={() => handleDownloadList(activeTabIndex)}
+                />
+              ),
+              className: "custom-button-wrapper",
+            },
+          }),
         },
         searchResult: {
           ...baseConfig.sections.searchResult,
           uiConfig: {
             ...baseConfig.sections.searchResult.uiConfig,
-            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) =>
-              column.label === "CS_ACTIONS" ? { ...column, clickFunc: handleActionItems } : column
-            ),
+            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) => {
+              switch (column.label) {
+                case "CS_ACTIONS":
+                  return { ...column, clickFunc: handleActionItems };
+                case "CS_ACTIONS_PENCIL":
+                  return { ...column, clickFunc: handleActionItems };
+                default:
+                  return column;
+              }
+            }),
           },
         },
       },
@@ -148,7 +183,6 @@ const EpostTrackingPage = () => {
   const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
 
   const onFormSubmit = (formData, isClear = false) => {
-    debugger;
     setSearchFormData((prev) => {
       const newData = [...prev];
       newData[activeTabIndex] = isClear ? { ...defaultSearchValues } : { ...formData };
