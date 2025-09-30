@@ -484,6 +484,9 @@ public class InboxServiceV2 {
                                             Consumer<Criteria> setter) {
         Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
+        // Temporarily remove substage for count-only queries without permanently mutating the original map
+        Object originalSubStage = searchCriteria.get("substage");
+        boolean hadSubStage = searchCriteria.containsKey("substage");
         if (criteria.getIsOnlyCountRequired()) {
             searchCriteria.remove("substage");
         }
@@ -520,6 +523,14 @@ public class InboxServiceV2 {
 
         if (!criteria.getIsOnlyCountRequired()) {
             criteria.setData(resultData.getRecords());
+        }
+        // Restore substage to avoid side-effects on shared moduleSearchCriteria map
+        if (criteria.getIsOnlyCountRequired()) {
+            if (hadSubStage) {
+                searchCriteria.put("substage", originalSubStage);
+            } else {
+                searchCriteria.remove("substage");
+            }
         }
 
         setter.accept(criteria);
