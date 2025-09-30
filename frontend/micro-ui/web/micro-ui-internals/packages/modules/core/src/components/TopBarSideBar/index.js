@@ -37,16 +37,22 @@ const TopBarSideBar = ({
     toggleSidebar(false);
     setShowDialog(true);
   };
-  const handleOnSubmit = () => {
-    Digit.UserService.logoutUser();
+  const handleOnSubmit = async () => {
+  try {
+    await Digit.UserService.logoutUser();  // ✅ added await
     window.localStorage.clear();
     window.sessionStorage.clear();
+    
     if (CITIZEN) {
       window.location.replace(`/${window?.contextPath}/citizen`);
     } else {
       window.location.replace(`/${window?.contextPath}/employee/user/language-selection`);
     }
+
     setShowDialog(false);
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
   };
   const handleOnCancel = () => {
     setShowDialog(false);
