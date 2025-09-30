@@ -496,7 +496,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           headerBarMain={<Heading label={t("CS_DETAILS")} />}
           actionSaveOnSubmit={onSumbitReschedule}
           actionCancelOnSubmit={onCancel}
-          isDisabled={loader}
+          isDisabled={loader || !bulkFormData?.reason}
           isBackButtonDisabled={loader}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
