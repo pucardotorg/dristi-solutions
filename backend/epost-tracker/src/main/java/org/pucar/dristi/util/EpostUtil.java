@@ -54,7 +54,7 @@ public class EpostUtil {
                 .processNumber(processNumber)
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
-                .totalAmount(request.getTask().getAmount().getAmount())
+                .totalAmount((request.getTask() != null && request.getTask().getAmount() != null && request.getTask().getAmount().getAmount() != null) ? request.getTask().getAmount().getAmount() : null)
                 .fileStoreId(getFileStore(request))
                 .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
