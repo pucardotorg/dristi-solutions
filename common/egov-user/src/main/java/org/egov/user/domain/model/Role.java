@@ -1,5 +1,6 @@
 package org.egov.user.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.Date;
@@ -11,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Data
 @ToString
-@EqualsAndHashCode(of = {"code", "tenantId"})
+@EqualsAndHashCode(of = {"code", "tenantId", "courtId"})
 public class Role {
     private static final String CITIZEN = "CITIZEN";
     private String name;
@@ -22,6 +23,8 @@ public class Role {
     private Long lastModifiedBy;
     private Date lastModifiedDate;
     private String tenantId;
+    @JsonProperty("courtId")
+    private String courtId;
 
     public static Role getCitizenRole() {
         return Role.builder().code(CITIZEN).build();
