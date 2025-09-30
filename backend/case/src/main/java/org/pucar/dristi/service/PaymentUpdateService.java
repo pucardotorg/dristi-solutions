@@ -159,6 +159,7 @@ public class PaymentUpdateService {
 
             CourtCase courtCase = updateRequest.getCriteria().get(0).getResponseList().get(0);
             courtCase.setStatus(state.getState());
+
             enrichmentUtil.enrichCaseRegistrationFillingDate(courtCase);
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());
@@ -172,6 +173,8 @@ public class PaymentUpdateService {
             if(UNDER_SCRUTINY.equalsIgnoreCase(courtCase.getStatus())) {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
             }
+            // Enrich court ID based on police station code from cheque details
+            enrichmentUtil.enrichCourtId(caseRequest);
             enrichmentUtil.enrichAccessCode(caseRequest);
             Document paymentReceipt = null;
             if(ONLINE.equals(paymentMode)){
