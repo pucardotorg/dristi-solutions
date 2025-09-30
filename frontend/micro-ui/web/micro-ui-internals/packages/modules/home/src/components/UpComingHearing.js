@@ -80,7 +80,6 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const roles = userInfo?.roles;
-  const isFSO = roles?.some((role) => role?.code === "FSO_ROLE");
   const [hearingCaseList, setHearingCaseList] = useState([]);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
@@ -287,57 +286,56 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
       <div className="header">
         {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
       </div>
-      {!isFSO && (
-        <div className="hearing-card-wrapper">
-          <div className="hearingCard">
-            <React.Fragment>
-              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                <div className="hearingDate">
-                  <div className="dateText">{date.split(" ")[0]}</div>
-                  <div className="dateNumber">{date.split(" ")[1]}</div>
-                  <div className="dayText">{day}</div>
-                </div>
-                {!earliestHearingSlot && (
-                  <div className="no-hearing">
-                    <p>
-                      {t("YOU_DONT_HAVE_ANY")} <span>{t("HEARING_SCHEDULED")}</span>
-                    </p>
-                  </div>
-                )}
 
-                {hearingCount > 0 && (
-                  <div className="time-hearing-type">
-                    <div className="timeText">
-                      {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <Link
-                        className="hearingType"
-                        to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString() }}
-                      >
-                        {userInfoType === "citizen"
-                          ? hearingCaseList
-                              .slice(0, 2)
-                              .map((hearing) => hearing.caseName)
-                              .join(", ") + (hearingCaseList.length > 2 ? ` +${hearingCaseList.length - 2} more` : "")
-                          : hearingCountsByType}
-                      </Link>
-                    </div>
-                  </div>
-                )}
+      <div className="hearing-card-wrapper">
+        <div className="hearingCard">
+          <React.Fragment>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              <div className="hearingDate">
+                <div className="dateText">{date.split(" ")[0]}</div>
+                <div className="dateNumber">{date.split(" ")[1]}</div>
+                <div className="dayText">{day}</div>
               </div>
-              <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
-            </React.Fragment>
-          </div>
-          {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && advocateId && (
-            <div className="ongoing-month-hearing">
-              <p>
-                {t("YOU_HAVE_TEXT")} <span>{`${ongoingMonthHearingCount} ${t("UPCOMING_HEARINGS_TEXT")}`}</span> {t("THIS_MONTH_TEXT")}
-              </p>
+              {!earliestHearingSlot && (
+                <div className="no-hearing">
+                  <p>
+                    {t("YOU_DONT_HAVE_ANY")} <span>{t("HEARING_SCHEDULED")}</span>
+                  </p>
+                </div>
+              )}
+
+              {hearingCount > 0 && (
+                <div className="time-hearing-type">
+                  <div className="timeText">
+                    {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <Link
+                      className="hearingType"
+                      to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString() }}
+                    >
+                      {userInfoType === "citizen"
+                        ? hearingCaseList
+                            .slice(0, 2)
+                            .map((hearing) => hearing.caseName)
+                            .join(", ") + (hearingCaseList.length > 2 ? ` +${hearingCaseList.length - 2} more` : "")
+                        : hearingCountsByType}
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
+          </React.Fragment>
         </div>
-      )}
+        {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && advocateId && (
+          <div className="ongoing-month-hearing">
+            <p>
+              {t("YOU_HAVE_TEXT")} <span>{`${ongoingMonthHearingCount} ${t("UPCOMING_HEARINGS_TEXT")}`}</span> {t("THIS_MONTH_TEXT")}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

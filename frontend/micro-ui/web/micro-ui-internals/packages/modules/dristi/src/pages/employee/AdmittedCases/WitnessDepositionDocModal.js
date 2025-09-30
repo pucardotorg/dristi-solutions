@@ -25,10 +25,7 @@ function WitnessDepositionDocModal({
   const [isLoading, setIsLoading] = useState(false);
 
   const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
-  const isJudge = useMemo(() => userRoles?.includes("JUDGE_ROLE"), [userRoles]);
-  const isCourtRoomManager = useMemo(() => userRoles?.includes("COURT_ROOM_MANAGER"), [userRoles]);
-  const isBenchClerk = useMemo(() => userRoles?.includes("BENCH_CLERK"), [userRoles]);
-  const isTypist = useMemo(() => userRoles?.includes("TYPIST_ROLE"), [userRoles]);
+  const isEmployee = useMemo(() => userRoles?.includes("EMPLOYEE"), [userRoles]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -90,14 +87,14 @@ function WitnessDepositionDocModal({
   }, [docObj, t, tenantId]);
 
   const saveLabel = useMemo(() => {
-    if (isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
+    if (isEmployee) {
       if (artifact?.status === "PENDING_E-SIGN") {
         return t("EDIT_DETAILS_DEPOSITION");
       } else return null;
     } else if (isCitizen && userInfo?.uuid !== artifact?.sourceId) {
       return null;
     } else return null;
-  }, [isBenchClerk, isCitizen, isJudge, isTypist, artifact, t, userInfo?.uuid, isCourtRoomManager]);
+  }, [isCitizen, artifact, t, userInfo?.uuid, isEmployee]);
 
   const handleSubmit = async () => {
     if (saveLabel === t("EDIT_DETAILS_DEPOSITION")) {

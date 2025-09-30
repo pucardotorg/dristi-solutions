@@ -47,7 +47,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const [paginatedData, setEvidencePaginationData] = useState({});
@@ -270,20 +270,19 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
       )}
       <React.Fragment>
         {/* bulk-esign-order-view */}
-        <div className={""} style={{ width: "100%", maxHeight: "calc(-250px + 100vh)", overflowY: "auto" }}>
+        <div className={"bulk-esign-order-view select"}>
+          <div className="header">{t("BULK_EVIDENCE_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>
-        {isJudge && (
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar
-                label={t("SIGN_SELECTED_EVIDENCE")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          </ActionBar>
+        {hasEvidenceEsignAccess && (
+          <div className="bulk-submit-bar">
+            <SubmitBar
+              label={t("SIGN_SELECTED_EVIDENCE")}
+              submit="submit"
+              disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+              onSubmit={() => setShowBulkSignConfirmModal(true)}
+            />
+          </div>
         )}
       </React.Fragment>
 
