@@ -17,7 +17,7 @@ const NewBulkRescheduleTable = ({
   allHearings,
   loading,
   handleBulkHearingSearch,
-  hasNotificationCreateAccess,
+  hasBulkRescheduleAccess,
 }) => {
   const handleSelectChange = (checked, row) => {
     const rowId = row?.hearingBookingId;
@@ -214,7 +214,7 @@ const NewBulkRescheduleTable = ({
         </div>
       </div>
       <div className="bulk-submit-bar">
-        {hasNotificationCreateAccess && (
+        {hasBulkRescheduleAccess && (
           <SubmitBar
             label={t(`RESCHEDULE_ALL_HEARINGS`)}
             submit="submit"

@@ -1589,7 +1589,7 @@ const EvidenceModal = ({
                 </div>
               )} */}
             </div>
-            {userRoles.includes("SUBMISSION_RESPONDER") && (
+            {(userRoles.includes("SUBMISSION_RESPONDER") || userType === "employee") && (
               <div className={`application-comment`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
