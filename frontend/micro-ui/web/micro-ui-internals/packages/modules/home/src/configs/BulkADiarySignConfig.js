@@ -83,6 +83,7 @@ export const bulkADiarySignConfig = {
           {
             label: "NEXT_HEARING_DATE",
             jsonPath: "hearingDate",
+            additionalCustomization: true,
           },
         ],
         resultsJsonPath: "entries",
