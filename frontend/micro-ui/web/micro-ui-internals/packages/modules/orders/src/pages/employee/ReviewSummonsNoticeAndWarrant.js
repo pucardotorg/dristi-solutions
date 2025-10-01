@@ -98,6 +98,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const hasSignWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_WARRANT"), [roles]);
   const hasSignNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_NOTICE"), [roles]);
 
+  const hasEditTaskAccess = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
+
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
 
@@ -1201,7 +1203,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+                      submitButtonText={documents && hasEditTaskAccess ? "MARK_AS_SENT" : "CS_CLOSE"}
                       closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
@@ -1246,7 +1248,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: () => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
-      actionSaveLabel: t("MARK_AS_SENT"),
+      actionSaveLabel: hasEditTaskAccess ? t("MARK_AS_SENT") : null,
       isStepperModal: false,
       hideSubmit: isTypist,
       modalBody: (
@@ -1265,7 +1267,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: () => handleCloseActionModal(),
       heading: { label: t("DELIVERY_STATUS_AND_DETAILS") },
-      actionSaveLabel: t("UPDATE_STATUS"),
+      actionSaveLabel: hasEditTaskAccess ? t("UPDATE_STATUS") : null,
       actionCancelLabel: t("VIEW_DOCUMENT_TEXT"),
       isStepperModal: false,
       modalBody: (
@@ -1541,7 +1543,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   disabled={hasNoSelectedItems}
                   style={{ width: "auto" }}
                 />
-                <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
+                {hasEditTaskAccess && (
+                  <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
+                )}
               </div>
             </div>
           )}
@@ -1607,7 +1611,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSendConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSendConfirmModal(false)}
-          actionSaveLabel={t("MARK_AS_SENT")}
+          actionSaveLabel={hasEditTaskAccess ? t("MARK_AS_SENT") : null}
           actionSaveOnSubmit={handleBulkSendConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
