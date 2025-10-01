@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models.orders;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 
@@ -45,5 +46,17 @@ public class OrderCriteria {
 
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
+
+    @JsonProperty("scheduledHearingNumber")
+    @Valid
+    private String scheduledHearingNumber = null;
+
+    @JsonProperty("fromPublishedDate")
+    @Valid
+    private Long fromPublishedDate = null;
+
+    @JsonProperty("toPublishedDate")
+    @Valid
+    private Long toPublishedDate = null;
 
 }

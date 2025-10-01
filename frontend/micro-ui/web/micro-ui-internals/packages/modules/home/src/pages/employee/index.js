@@ -62,13 +62,10 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
@@ -119,8 +116,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute exact path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
         <PrivateRoute exact path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
         <PrivateRoute exact path={`${path}/home-screen`} component={() => <MainHomeScreen></MainHomeScreen>} />
-        <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
-        <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
+        {/* <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} /> */}
+        {/* <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} /> */}
         <PrivateRoute path={`${path}/bail-bond`} component={() => <BailBondModal></BailBondModal>} />
         <PrivateRoute path={`${path}/sign-bail-bond`} component={() => <BailBondSignModal></BailBondSignModal>} />
         <PrivateRoute path={`${path}/sign-witness-deposition`} component={() => <WitnessDepositionSignModal></WitnessDepositionSignModal>} />

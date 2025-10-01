@@ -48,16 +48,13 @@ const TasksComponent = ({
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
-  const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudgeOrBenchClerk = userInfo?.roles?.some(
-    (role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK" || role.code === "COURT_ROOM_MANAGER"
-  );
+  const hasViewSignOrderAccess = userInfo?.roles?.some((role) => role.code === "VIEW_SIGN_ORDERS");
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
@@ -293,7 +290,7 @@ const TasksComponent = ({
               referenceId: `MANUAL_${referenceId}`,
               status: "SAVE_DRAFT",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber: filingNumber,
               caseId,
@@ -412,17 +409,10 @@ const TasksComponent = ({
     });
 
     const filteredTasks = tasks.filter((task) => {
-      // if (isCourtRoomManager) {
-      //   // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
-
-      //   return task?.entityType === "bail bond" ? true : false;
-      // } else return true;
-
-      const passesRoleFilter = isCourtRoomManager ? task?.entityType === "bail bond" : true;
       const excludeForComposite = isApplicationCompositeOrder
         ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
         : true;
-      return passesRoleFilter && excludeForComposite;
+      return excludeForComposite;
     });
     if (taskType?.code)
       return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
@@ -431,7 +421,6 @@ const TasksComponent = ({
     handleCreateOrder,
     handleReviewOrder,
     handleReviewSubmission,
-    isCourtRoomManager,
     isLoading,
     isOptionsLoading,
     pendingTaskActionDetails,
@@ -703,12 +692,12 @@ const TasksComponent = ({
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
-        {isJudgeOrBenchClerk && pendingSignOrderList && (
+        {hasViewSignOrderAccess && pendingSignOrderList && (
           <Button
             label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
             textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
             style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
-            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
+            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" })}
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}

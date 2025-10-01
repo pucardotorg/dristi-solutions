@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
@@ -32,7 +33,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.postgresql.jdbc.EscapedFunctions.SIGN;
 import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Service
@@ -435,8 +435,57 @@ public class TaskService {
     }
 
     public List<TaskCase> searchCaseTask(TaskCaseSearchRequest request) {
+        RequestInfo requestInfo = request.getRequestInfo();
+        List<Role> userRoles = requestInfo.getUserInfo().getRoles();
+
+        List<String> orderType = getOrderType(request, userRoles);
+
+        if (orderType.isEmpty()) {
+            log.info("No order type found for user roles");
+            if (request.getPagination() != null) {
+                request.getPagination().setTotalCount(0D);
+            }
+            return Collections.emptyList();
+        }
         return taskRepository.getTaskWithCaseDetails(request);
 
+    }
+
+    private static void addOrderTypeIfRolePresent(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode))) {
+            if (!orderType.contains(type)) orderType.add(type);
+        }
+    }
+
+    private static void removeOrderTypeIfRoleMissing(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (orderType.contains(type)) {
+            boolean hasRole = userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode));
+            if (!hasRole) orderType.remove(type);
+        }
+    }
+
+    private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
+        List<String> orderType = request.getCriteria().getOrderType();
+
+        if (orderType == null) {
+            orderType = new ArrayList<>();
+        }
+
+        if (orderType.isEmpty()) {
+            // Add orderType if the user has the corresponding role
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+        } else {
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+        }
+        return orderType;
     }
 
     private void callNotificationService(TaskRequest taskRequest, String messageCode) {

@@ -56,10 +56,7 @@ const SubmissionDocuments = ({ path }) => {
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const isEmployee = useMemo(
-    () => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role?.code)),
-    [userInfo?.roles]
-  );
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },

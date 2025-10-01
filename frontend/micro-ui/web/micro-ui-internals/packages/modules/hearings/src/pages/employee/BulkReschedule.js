@@ -86,6 +86,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     : null;
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
+  const isADiarySigned = history.location?.state?.aDiarySigned;
   const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
   const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
   const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
@@ -622,6 +623,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           setNewHearingData={setNewHearingData}
           newHearingData={newHearingData}
           bulkFormData={bulkFormData}
+          isADiarySigned={isADiarySigned}
         />
       )}
       {stepper === 2 && (
