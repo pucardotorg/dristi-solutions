@@ -175,7 +175,7 @@ function AdmissionActionModal({
       {
         criteria: [
           {
-            status: ["PENDING_ADMISSION"],
+            status: ["PENDING_REGISTRATION"],
             ...(courtId && userType === "employee" && { courtId }),
           },
         ],

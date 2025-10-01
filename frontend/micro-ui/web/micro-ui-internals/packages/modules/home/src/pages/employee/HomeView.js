@@ -514,7 +514,7 @@ const HomeView = () => {
                       <span
                         onClick={() => {
                           sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
-                          history.push(`/${window?.contextPath}/${userType}/home/home-screen`, { state: { CS_HOME_A_DAIRY: true } });
+                          history.push(`/${window?.contextPath}/employee/home/home-screen`, { state: { CS_HOME_A_DAIRY: true } });
                         }}
                         style={{ ...linkStyle, cursor: "pointer" }}
                       >
