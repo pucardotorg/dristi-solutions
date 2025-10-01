@@ -1,0 +1,498 @@
+[
+  {
+    "moduleName": "egov-hrms",
+    "masterName": "EmployeeRolesMapping",
+    "mdmsPayload": [
+      {
+        "id": "a2c111cd-ef15-4004-a281-2c9fbbf4b03f",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Court User",
+        "data": {
+          "employeeCode": "Court User",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "EMPLOYEE",
+                "HEARING_VIEWER",
+                "WORKFLOW_ABANDON",
+                "WORKFLOW_ADMIN",
+                "APPLICATION_CREATOR",
+                "DEPOSITION_PUBLISHER",
+                "HEARING_APPROVER",
+                "APPLICATION_RESPONDER",
+                "SUBMISSION_RESPONDER",
+                "ORDER_VIEWER",
+                "ORDER_REASSIGN",
+                "CASE_EDITOR",
+                "TASK_CREATOR",
+                "APPLICATION_APPROVER",
+                "DIARY_VIEWER",
+                "SUBMISSION_CREATOR",
+                "NOTIFICATION_APPROVER",
+                "CASE_VIEWER",
+                "PDF_CREATOR",
+                "APPLICATION_REJECTOR",
+                "HEARING_EDITOR",
+                "BAIL_BOND_VIEWER",
+                "ORDER_APPROVER",
+                "NOTIFICATION_CREATOR",
+                "HEARING_CREATOR",
+                "ORDER_CREATOR",
+                "EVIDENCE_CREATOR",
+                "EVIDENCE_EDITOR",
+                "SUBMISSION_APPROVER",
+                "TASK_VIEWER",
+                "HEARING_SCHEDULER",
+                "DECRYPT_DATA_ROLE",
+                "EVIDENCE_SIGNER",
+                "SIGN_PROCESS_SUMMONS",
+                "SIGN_PROCESS_WARRANT",
+                "SIGN_PROCESS_NOTICE",
+                "SIGN_PROCESS_PROCLAMATION",
+                "SIGN_PROCESS_ATTACHMENT",
+                "VIEW_PROCESS_SUMMONS",
+                "VIEW_PROCESS_WARRANT",
+                "VIEW_PROCESS_NOTICE",
+                "VIEW_PROCESS_PROCLAMATION",
+                "VIEW_PROCESS_ATTACHMENT",
+                "PENDING_TASK_ORDER",
+                "PENDING_TASK_REISSUE_NOTICE",
+                "PENDING_TASK_REISSUE_SUMMON",
+                "VIEW_DASHBOARDS",
+                "VIEW_ALL_CASES",
+                "VIEW_TODAYS_HEARINGS",
+                "VIEW_BULK_RESCHEDULE_HEARINGS",
+                "VIEW_REVIEW_BAIL_BOND",
+                "VIEW_SIGN_PROCESS",
+                "ALLOW_ADD_WITNESS"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1759143119855,
+          "lastModifiedTime": 1759157497568
+        }
+      },
+      {
+        "id": "d3a1d4aa-8501-4cd8-8aa5-1f753b66ca0d",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "E-Sewa",
+        "data": {
+          "employeeCode": "E-Sewa",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "EMPLOYEE",
+                "TASK_EDITOR",
+                "PROCESS_VIEWER"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1755161770944,
+          "lastModifiedTime": 1755161770944
+        }
+      },
+      {
+        "id": "de72db6c-442f-4135-a661-db0859b4b311",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "LD Typist",
+        "data": {
+          "employeeCode": "LD Typist",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "HEARING_EDITOR",
+                "EMPLOYEE",
+                "TYPIST_ROLE",
+                "ORDER_APPROVER",
+                "ORDER_REASSIGN",
+                "ORDER_CREATOR",
+                "ORDER_VIEWER",
+                "WORKFLOW_ABANDON",
+                "EVIDENCE_CREATOR",
+                "EVIDENCE_EDITOR",
+                "DEPOSITION_PUBLISHER",
+                "TASK_VIEWER",
+                "TASK_CREATOR",
+                "CASE_EDITOR",
+                "HEARING_VIEWER",
+                "APPLICATION_CREATOR",
+                "HEARING_APPROVER",
+                "APPLICATION_RESPONDER",
+                "SUBMISSION_RESPONDER",
+                "WORKFLOW_ADMIN",
+                "SUBMISSION_CREATOR",
+                "NOTIFICATION_APPROVER",
+                "CASE_VIEWER",
+                "PDF_CREATOR",
+                "APPLICATION_REJECTOR",
+                "BAIL_BOND_VIEWER",
+                "NOTIFICATION_CREATOR",
+                "HEARING_CREATOR",
+                "SUBMISSION_APPROVER",
+                "HEARING_SCHEDULER",
+                "EVIDENCE_SIGNER",
+                "SIGN_PROCESS_SUMMONS",
+                "SIGN_PROCESS_WARRANT",
+                "SIGN_PROCESS_NOTICE",
+                "SIGN_PROCESS_PROCLAMATION",
+                "SIGN_PROCESS_ATTACHMENT",
+                "VIEW_PROCESS_SUMMONS",
+                "VIEW_PROCESS_WARRANT",
+                "VIEW_PROCESS_NOTICE",
+                "VIEW_PROCESS_PROCLAMATION",
+                "VIEW_PROCESS_ATTACHMENT",
+                "PENDING_TASK_ORDER",
+                "PENDING_TASK_REISSUE_NOTICE",
+                "VIEW_DASHBOARDS",
+                "VIEW_ALL_CASES",
+                "VIEW_TODAYS_HEARINGS",
+                "ALLOW_ADD_WITNESS",
+                "APPLICATION_APPROVER"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1748972855924,
+          "lastModifiedTime": 1759206212494
+        }
+      },
+      {
+        "id": "16a3442b-b112-4867-a353-bca19c31db18",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Nyay Mitra",
+        "data": {
+          "employeeCode": "Nyay Mitra",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "ADVOCATE_APPROVER",
+                "ADVOCATE_CLERK_APPROVER",
+                "TASK_VIEWER",
+                "EMPLOYEE",
+                "PAYMENT_COLLECTOR",
+                "ORDER_VIEWER",
+                "ADVOCATE_APPLICATION_VIEWER",
+                "NYAY_MITRA_ROLE"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1748417990836,
+          "lastModifiedTime": 1748417990836
+        }
+      },
+      {
+        "id": "82cac887-ec0a-468c-9bf5-6dea73a502d6",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Manager (currently Bench Clerk)",
+        "data": {
+          "employeeCode": "Manager (currently Bench Clerk)",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "CASE_CREATOR",
+                "CASE_EDITOR",
+                "CASE_VIEWER",
+                "EVIDENCE_CREATOR",
+                "EVIDENCE_VIEWER",
+                "EVIDENCE_EDITOR",
+                "APPLICATION_CREATOR",
+                "ADVOCATE_APPLICATION_VIEWER",
+                "HEARING_VIEWER",
+                "ORDER_VIEWER",
+                "SUBMISSION_CREATOR",
+                "SUBMISSION_RESPONDER",
+                "SUBMISSION_DELETE",
+                "TASK_VIEWER",
+                "HEARING_ACCEPTOR",
+                "USER_REGISTER",
+                "ADVOCATE_VIEWER",
+                "ADVOCATE_APPLICATION_VIEWER",
+                "PENDING_TASK_CREATOR",
+                "EMPLOYEE"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1748417905058,
+          "lastModifiedTime": 1759136962698
+        }
+      },
+      {
+        "id": "4ef4222a-8ebb-47f8-af74-fec3d63d7209",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "E-Post Personnel",
+        "data": {
+          "employeeCode": "E-Post Personnel",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "EMPLOYEE",
+                "ADVOCATE_APPROVER",
+                "ADVOCATE_CLERK_APPROVER",
+                "TASK_VIEWER",
+                "PAYMENT_COLLECTOR",
+                "ORDER_VIEWER",
+                "ADVOCATE_APPLICATION_VIEWER",
+                "NYAY_MITRA_ROLE"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1739963774492,
+          "lastModifiedTime": 1749017223641
+        }
+      },
+      {
+        "id": "01b1b121-17a2-4276-be53-b86193f26015",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Judge",
+        "data": {
+          "employeeCode": "Judge",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "CASE_VIEWER",
+                "CASE_EDITOR",
+                "CASE_APPROVER",
+                "HEARING_CREATOR",
+                "HEARING_EDITOR",
+                "HEARING_APPROVER",
+                "HEARING_SCHEDULER",
+                "APPLICATION_CREATOR",
+                "CALCULATION_VIEWER",
+                "HEARING_VIEWER",
+                "ORDER_APPROVER",
+                "ORDER_REASSIGN",
+                "ORDER_ESIGN",
+                "ORDER_CREATOR",
+                "ORDER_VIEWER",
+                "ORDER_DELETE",
+                "WORKFLOW_ADMIN",
+                "WORKFLOW_ABANDON",
+                "APPLICATION_APPROVER",
+                "APPLICATION_REJECTOR",
+                "TASK_VIEWER",
+                "TASK_CREATOR",
+                "EVIDENCE_EDITOR",
+                "DEPOSITION_PUBLISHER",
+                "EVIDENCE_CREATOR",
+                "SUBMISSION_APPROVER",
+                "JUDGE_ROLE",
+                "EMPLOYEE",
+                "TASK_EDITOR",
+                "SUBMISSION_RESPONDER",
+                "DIARY_APPROVER",
+                "DIARY_VIEWER",
+                "DIARY_EDITOR",
+                "NOTIFICATION_CREATOR",
+                "NOTIFICATION_APPROVER",
+                "PDF_CREATOR",
+                "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+                "COURT_ASSIGNED_ROLE",
+                "DECRYPT_DATA_ROLE",
+                "EVIDENCE_SIGNER",
+                "VIEW_SCHEDULE_HEARING",
+                "SIGN_PROCESS_SUMMONS",
+                "SIGN_PROCESS_WARRANT",
+                "SIGN_PROCESS_NOTICE",
+                "SIGN_PROCESS_PROCLAMATION",
+                "SIGN_PROCESS_ATTACHMENT",
+                "VIEW_PROCESS_SUMMONS",
+                "VIEW_PROCESS_WARRANT",
+                "VIEW_PROCESS_NOTICE",
+                "VIEW_PROCESS_PROCLAMATION",
+                "VIEW_PROCESS_ATTACHMENT",
+                "VIEW_RE_SCHEDULE_APPLICATION",
+                "PENDING_TASK_ORDER",
+                "PENDING_TASK_REISSUE_NOTICE",
+                "PENDING_TASK_REISSUE_SUMMON",
+                "PENDING_TASK_CONFIRM_BOND_SUBMISSION",
+                "PENDING_TASK_SHOW_SUMMON_WARRANT",
+                "PENDING_TASK_SHOW_NOTICE_STATUS",
+                "VIEW_DASHBOARDS",
+                "VIEW_ALL_CASES",
+                "VIEW_TODAYS_HEARINGS",
+                "VIEW_BULK_RESCHEDULE_HEARINGS",
+                "VIEW_REGISTER_CASES",
+                "VIEW_DELAY_CONDONATION_APPLICATION",
+                "VIEW_RESCHEDULE_APPLICATION",
+                "VIEW_OTHERS_APPLICATION",
+                "VIEW_SIGN_ORDERS",
+                "VIEW_SIGN_PROCESS",
+                "VIEW_SIGN_BAIL_BOND",
+                "VIEW_WITNESS_DEPOSITION",
+                "VIEW_SIGN_EVIDENCE",
+                "BAIL_BOND_ESIGN",
+                "EVIDENCE_ESIGN",
+                "ALLOW_ADD_WITNESS"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1739798913588,
+          "lastModifiedTime": 1759144765343
+        }
+      },
+      {
+        "id": "a5071768-09a5-4cea-b24b-a423081f4b96",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "General Court Room Manager",
+        "data": {
+          "employeeCode": "General Court Room Manager",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "CASE_REVIEWER",
+                "CASE_VIEWER",
+                "CASE_EDITOR",
+                "EMPLOYEE",
+                "FSO_ROLE",
+                "ORDER_APPROVER",
+                "ORDER_REASSIGN",
+                "ORDER_VIEWER",
+                "HEARING_APPROVER",
+                "HEARING_VIEWER",
+                "GENERAL_COURT_ROOM_MANAGER"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1739798898976,
+          "lastModifiedTime": 1739963657718
+        }
+      },
+      {
+        "id": "062602ea-aff7-4298-8ddd-7cd65a183528",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Legal Assistant",
+        "data": {
+          "employeeCode": "Legal Assistant",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "ORDER_VIEWER",
+                "DEPOSITION_PUBLISHER",
+                "SUBMISSION_APPROVER",
+                "SUBMISSION_CREATOR",
+                "APPLICATION_CREATOR",
+                "DIARY_APPROVER",
+                "DIARY_VIEWER",
+                "DIARY_EDITOR",
+                "LEGAL_ASSISTANT"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1739798883883,
+          "lastModifiedTime": 1739963688396
+        }
+      },
+      {
+        "id": "ae17c777-832e-4020-b2e4-624af1d0c09e",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Court Room Manager",
+        "data": {
+          "employeeCode": "Court Room Manager",
+          "courtRoleMappings": [
+            {
+              "courtId": "KLKM52",
+              "roleCodes": [
+                "CASE_EDITOR",
+                "HEARING_VIEWER",
+                "HEARING_CREATOR",
+                "HEARING_EDITOR",
+                "HEARING_APPROVER",
+                "HEARING_SCHEDULER",
+                "ORDER_APPROVER",
+                "ORDER_REASSIGN",
+                "ORDER_CREATOR",
+                "ORDER_VIEWER",
+                "EVIDENCE_CREATOR",
+                "EVIDENCE_EDITOR",
+                "DEPOSITION_PUBLISHER",
+                "EMPLOYEE",
+                "WORKFLOW_ABANDON",
+                "WORKFLOW_ADMIN",
+                "APPLICATION_RESPONDER",
+                "APPLICATION_APPROVER",
+                "APPLICATION_REJECTOR",
+                "TASK_VIEWER",
+                "TASK_CREATOR",
+                "SUBMISSION_APPROVER",
+                "SUBMISSION_CREATOR",
+                "APPLICATION_CREATOR",
+                "SUBMISSION_RESPONDER",
+                "COURT_ROOM_MANAGER"
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1739798595841,
+          "lastModifiedTime": 1739963676323
+        }
+      }
+    ]
+  }
+]
