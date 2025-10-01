@@ -531,59 +531,48 @@ const HomeHearingsTab = ({
               {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
             </span>
           </td>
-          <td
-            style={{
-              textAlign: "center",
-              position: "relative",
-              display: "table-cell",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
-              <div style={{ width: "50%" }}>
-                {["IN_PROGRESS"].includes(hearingDetails?.status) && (
-                  <div
-                    style={{
-                      position: "relative",
-                      cursor: "pointer",
-                      maxWidth: "80px",
-                      display: "flex",
-                      justifyContent: "start",
-                    }}
-                    onClick={() => {
-                      handleEditClick(row);
-                    }}
-                    className="edit-icon"
-                  >
-                    {isCourtUser && hasHearingEditAccess ? (
-                      <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                    ) : hasOrderCreateAccess ? (
-                      <EditIcon />
-                    ) : null}
-                  </div>
-                )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isCourtUser && hasHearingEditAccess && (
-                  <div
-                    style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
-                    onClick={() => {
-                      handleEditClick(row);
-                    }}
-                    className="edit-icon"
-                  >
-                    <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ width: "50%" }}>
-                {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
-                  <AsyncOverlayDropdown
-                    style={{ position: "relative" }}
-                    textStyle={{ textAlign: "start" }}
-                    row={row}
-                    getDropdownItems={getActionItems}
-                    position="relative"
-                  />
-                )}
-              </div>
+          <td style={{ textAlign: "left", position: "relative", display: "table-cell" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-start" }}>
+              {["IN_PROGRESS"].includes(hearingDetails?.status) ? (
+                <div
+                  style={{ display: "flex", justifyContent: "flex-start", cursor: "pointer", maxWidth: "80px" }}
+                  onClick={() => handleEditClick(row)}
+                  className="edit-icon"
+                >
+                  {isCourtUser && hasHearingEditAccess ? (
+                    <span style={{ color: "red", fontWeight: 700 }}>{t("END_HEARING")}</span>
+                  ) : hasOrderCreateAccess ? (
+                    <EditIcon />
+                  ) : null}
+                </div>
+              ) : (
+                <div style={{ width: "24px", flexShrink: 0 }} />
+              )}
+              {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isCourtUser && hasHearingEditAccess && (
+                <div
+                  style={{
+                    position: "relative",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    maxWidth: "80px",
+                  }}
+                  onClick={() => handleEditClick(row)}
+                  className="edit-icon"
+                >
+                  <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
+                </div>
+              )}
+
+              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                <AsyncOverlayDropdown
+                  style={{ position: "relative" }}
+                  textStyle={{ textAlign: "start" }}
+                  row={row}
+                  getDropdownItems={getActionItems}
+                  position="relative"
+                />
+              )}
             </div>
           </td>
         </tr>
@@ -681,7 +670,7 @@ const HomeHearingsTab = ({
             </div>
           </LabelFieldPair>
           <div className={`case-label-field-pair search-input`}>
-            <span
+            {/* <span
               className="search-icon-wrapper"
               onClick={() => {
                 if (!loading) {
@@ -692,11 +681,12 @@ const HomeHearingsTab = ({
               }}
             >
               <SmallSearchIcon />
-            </span>
+            </span> */}
             <input
               className="home-input"
               placeholder="Search Case name or number"
               type="text"
+              style={{ width: "280px" }}
               value={filters?.caseQuery}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
