@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COMPOSITE;
@@ -216,10 +217,11 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
             // Next Hearing Date
             if (order.getNextHearingDate() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of(properties.getApplicationZoneId()))
                         .toLocalDate()
-                        .toString();
+                        .format(formatter);
                 sb.append("Date of Next Hearing: ")
                         .append(dateStr).append(DOT);
             }
