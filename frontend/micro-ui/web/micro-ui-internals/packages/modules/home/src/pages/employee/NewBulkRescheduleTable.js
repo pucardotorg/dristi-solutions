@@ -125,12 +125,10 @@ const NewBulkRescheduleTable = ({
             </div>
           </LabelFieldPair>
           <div className={`case-label-field-pair search-input`}>
-            <span className="search-icon-wrapper">
-              <SmallSearchIcon />
-            </span>
             <input
               className="home-input"
               placeholder="Search Case name or number"
+              style={{ width: "280px" }}
               type="text"
               value={bulkFormData?.searchableFields || ""}
               onChange={(e) => {
