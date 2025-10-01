@@ -20,8 +20,8 @@ public class EPostTracker {
     private String remarks;
     private Object additionalDetails;
     private Integer rowVersion;
-    private String bookingDate;
-    private String receivedDate;
+    private Long bookingDate;
+    private Long receivedDate;
     private String postalHub;
     private AuditDetails auditDetails;
     private String totalAmount;

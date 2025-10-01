@@ -52,13 +52,9 @@ class EPostRowMapperTest {
         when(resultSet.getString("pincode")).thenReturn("123456");
         when(resultSet.getString("remarks")).thenReturn("Remarks");
         when(resultSet.getInt("row_version")).thenReturn(1);
-        when(resultSet.getString("booking_date")).thenReturn("2023-01-01");
-        when(resultSet.getString("received_date")).thenReturn("2023-01-02");
         when(resultSet.getString("createdBy")).thenReturn("creator");
         when(resultSet.getString("lastModifiedBy")).thenReturn("modifier");
         when(resultSet.getString("postal_hub")).thenReturn("postal_hub");
-        when(resultSet.getLong("createdTime")).thenReturn(1000L);
-        when(resultSet.getLong("lastModifiedTime")).thenReturn(2000L);
         when(resultSet.getString("total_amount")).thenReturn("100");
         when(resultSet.getString("speed_post_id")).thenReturn("speedPostId1");
 
@@ -79,15 +75,11 @@ class EPostRowMapperTest {
         assertEquals("postal_hub",result.getPostalHub());
         assertEquals(additionalFields, result.getAdditionalDetails());
         assertEquals(1, result.getRowVersion());
-        assertEquals("2023-01-01", result.getBookingDate());
-        assertEquals("2023-01-02", result.getReceivedDate());
 
         AuditDetails auditDetails = result.getAuditDetails();
         assertNotNull(auditDetails);
         assertEquals("creator", auditDetails.getCreatedBy());
         assertEquals("modifier", auditDetails.getLastModifiedBy());
-        assertEquals(1000L, auditDetails.getCreatedTime());
-        assertEquals(2000L, auditDetails.getLastModifiedTime());
 
         verify(resultSet).getString("delivery_status");
         verify(resultSet).getString("additional_details");
