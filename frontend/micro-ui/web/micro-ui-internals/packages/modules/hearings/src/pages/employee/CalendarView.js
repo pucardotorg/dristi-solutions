@@ -288,7 +288,8 @@ const MonthlyCalendar = ({ hideRight }) => {
   };
 
   const onSubmit = () => {
-    setStepper((prev) => prev + 1);
+    sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
   };
 
   const maxHearingCount = 5;
