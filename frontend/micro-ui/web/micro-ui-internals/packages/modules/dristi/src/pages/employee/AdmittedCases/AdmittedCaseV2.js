@@ -247,6 +247,7 @@ const AdmittedCaseV2 = () => {
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isEmployee = useMemo(() => userType === "employee", [userType]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -263,9 +264,7 @@ const AdmittedCaseV2 = () => {
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const isCourtUser = !isCitizen && !isEpostUser && !isJudge && !isTypist; // Any other employee type than judge, typist.
-  // we removed isCourtRoomManager and isbenchClerk conditions and used one new condition for both.
-  // because according to new hrms PRD implementation there will be mainly 3 user types i.e. judge, typist and general court user.
+  const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -401,7 +400,7 @@ const AdmittedCaseV2 = () => {
         console.log(err);
       }
     };
-    if (userType === "employee") isBailBondPendingTaskPresent();
+    if (isEmployee) isBailBondPendingTaskPresent();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userType]);
@@ -957,9 +956,7 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.searchResult,
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter(
-                    (column) => !(column?.label === "ACTIONS" && userType === "employee")
-                  ),
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter((column) => !(column?.label === "ACTIONS" && isEmployee)),
                 },
               },
             },
@@ -2583,8 +2580,7 @@ const AdmittedCaseV2 = () => {
                     criteria: {
                       hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
                       tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                      ...(row?.businessObject?.hearingDetails?.courtId &&
-                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                      ...(row?.businessObject?.hearingDetails?.courtId && isEmployee && { courtId: row?.businessObject?.hearingDetails?.courtId }),
                     },
                   },
                   { tenantId: row?.businessObject?.hearingDetails?.tenantId }
@@ -3068,13 +3064,17 @@ const AdmittedCaseV2 = () => {
   );
 
   const employeeActionOptions = useMemo(() => {
-    if (isJudge)
-      return [
-        ...(currentInProgressHearing
+    if (isEmployee) {
+      if (hasHearingPriorityView) {
+        return currentInProgressHearing
           ? [
               {
-                value: "END_HEARING",
-                label: "END_HEARING",
+                value: "NEXT_HEARING",
+                label: "NEXT_HEARING",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
               },
               {
                 value: "GENERATE_ORDER",
@@ -3085,155 +3085,90 @@ const AdmittedCaseV2 = () => {
                 label: "SUBMIT_DOCUMENTS",
               },
               {
+                value: "DOWNLOAD_CASE_FILE",
+                label: "DOWNLOAD_CASE_FILE",
+              },
+              {
                 value: "GENERATE_PAYMENT_DEMAND",
                 label: "GENERATE_PAYMENT_DEMAND",
+              },
+              {
+                value: "SHOW_TIMELINE",
+                label: "SHOW_TIMELINE",
+              },
+              {
+                value: "ADD_WITNESS",
+                label: "ADD_WITNESS",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
               },
             ]
           : [
               {
-                value: "CREATE_BAIL_BOND",
-                label: "CREATE_BAIL_BOND",
+                value: "DOWNLOAD_CASE_FILE",
+                label: "DOWNLOAD_CASE_FILE",
               },
-            ]),
-        {
-          value: "DOWNLOAD_CASE_FILE",
-          label: "DOWNLOAD_CASE_FILE",
-        },
-        {
-          value: "SHOW_TIMELINE",
-          label: "SHOW_TIMELINE",
-        },
-        {
-          value: "ADD_WITNESS",
-          label: "ADD_WITNESS",
-        },
-        {
-          value: "TAKE_WITNESS_DEPOSITION",
-          label: "TAKE_WITNESS_DEPOSITION",
-        },
-      ];
-    else if (isTypist) {
-      return currentInProgressHearing
-        ? [
-            {
-              value: "END_HEARING",
-              label: "END_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "VIEW_CALENDAR",
-              label: "VIEW_CALENDAR",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
-        : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "CREATE_BAIL_BOND",
-              label: "CREATE_BAIL_BOND",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
-    } else if (isCourtUser) {
-      return currentInProgressHearing
-        ? [
-            {
-              value: "NEXT_HEARING",
-              label: "NEXT_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "GENERATE_ORDER",
-              label: "GENERATE_ORDER",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
-        : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
+              {
+                value: "SHOW_TIMELINE",
+                label: "SHOW_TIMELINE",
+              },
+              {
+                value: "ADD_WITNESS",
+                label: "ADD_WITNESS",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
+              },
+            ];
+      } else
+        return [
+          ...(currentInProgressHearing
+            ? [
+                {
+                  value: "END_HEARING",
+                  label: "END_HEARING",
+                },
+                {
+                  value: "GENERATE_ORDER",
+                  label: "GENERATE_ORDER",
+                },
+                {
+                  value: "SUBMIT_DOCUMENTS",
+                  label: "SUBMIT_DOCUMENTS",
+                },
+                {
+                  value: "GENERATE_PAYMENT_DEMAND",
+                  label: "GENERATE_PAYMENT_DEMAND",
+                },
+              ]
+            : [
+                {
+                  value: "CREATE_BAIL_BOND",
+                  label: "CREATE_BAIL_BOND",
+                },
+              ]),
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ];
     } else return [];
-  }, [isJudge, currentInProgressHearing, isTypist, isCourtUser]);
+  }, [currentInProgressHearing, hasHearingPriorityView, isEmployee]);
 
   const allowedEmployeeActionOptions = useMemo(() => {
     return employeeActionOptions?.filter((option) => {
@@ -3575,10 +3510,15 @@ const AdmittedCaseV2 = () => {
     );
   }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists]);
 
+  if (isEpostUser) {
+    history.push(homePath);
+  }
+
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
-  if ((isJudge || isCourtUser) && caseData?.cases?.status && !judgeReviewStages.includes(caseData.cases.status)) {
+
+  if (isEmployee && caseData?.cases?.status && !judgeReviewStages.includes(caseData.cases.status)) {
     history.push(homePath);
   }
 
@@ -3685,11 +3625,11 @@ const AdmittedCaseV2 = () => {
                           <React.Fragment>
                             <Button
                               variation={"outlined"}
-                              label={t(isTypist ? "CS_GENERATE_ORDER" : "CS_CASE_VIEW_CALENDAR")}
-                              onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
+                              label={t("CS_CASE_VIEW_CALENDAR")}
+                              onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            {isCourtUser && hasHearingEditAccess && (
+                            {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
                                 label={t("CS_CASE_PASS_OVER")}
@@ -3702,36 +3642,36 @@ const AdmittedCaseV2 = () => {
                                 isDisabled={apiCalled}
                               ></Button>
                             )}
-                            {(isCourtUser || ((isJudge || isTypist) && hideNextHearingButton)) && hasHearingEditAccess && (
+                            {(hasHearingPriorityView || (isJudge && !hideNextHearingButton)) && hasHearingEditAccess && (
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(isCourtUser ? "CS_CASE_END_START_NEXT_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                                children={isCourtUser ? null : isJudge || isTypist ? <RightArrow /> : null}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "CS_CASE_NEXT_HEARING")}
+                                children={hasHearingPriorityView ? null : <RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isCourtUser ? "CS_CASE_END_START_NEXT_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value: hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "NEXT_HEARING",
                                   })
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isCourtUser ? { backgroundColor: "#007e7e", border: "none" } : {}),
+                                  ...(hasHearingPriorityView ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
-                            {(isJudge || isTypist) && !hideNextHearingButton && (
+                            {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t(isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                                children={isJudge || isTypist ? <RightArrow /> : null}
+                                label={t("CS_CASE_NEXT_HEARING")}
+                                children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value: "NEXT_HEARING",
                                   })
                                 }
                               ></Button>
@@ -4414,7 +4354,7 @@ const AdmittedCaseV2 = () => {
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isEmployee={isJudge || isTypist || isCourtUser}
+          isEmployee={isEmployee}
           showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);
