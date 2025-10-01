@@ -1,5 +1,3 @@
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-
 const defaultSearchValues = {
   caseTitle: "",
 };
@@ -9,7 +7,7 @@ const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset"
 
 export const bulkWitnessDepositionSignConfig = {
   label: "CS_HOME_BULK_WITNESS_DEPOSITION_SIGN",
-  type: "inbox",
+  type: "search",
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",
     requestParam: {},
@@ -69,6 +67,10 @@ export const bulkWitnessDepositionSignConfig = {
       uiConfig: {
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_TITLE",
             jsonPath: "businessObject.artifactDetails.caseTitle",
             additionalCustomization: true,
@@ -91,10 +93,6 @@ export const bulkWitnessDepositionSignConfig = {
           {
             label: "ADVOCATES",
             jsonPath: "businessObject.artifactDetails.advocate",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
         ],

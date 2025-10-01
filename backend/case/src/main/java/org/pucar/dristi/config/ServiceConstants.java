@@ -110,11 +110,8 @@ public class ServiceConstants {
     public static final String TASK_SERVICE_ERROR = "Error occurred while creating task";
     public static final String PURPOSE = "purpose";
     // Roles required for decryption
-    public static final String JUDGE_ROLE = "JUDGE_ROLE";
-    public static final String BENCH_CLERK = "BENCH_CLERK";
-    public static final String FSO_ROLE = "FSO_ROLE";
-    public static final String BENCH_CLERK_ROLE = "BENCHCLERK_ROLE";
-    public static final String NYAY_MITRA_ROLE = "NYAY_MITRA_ROLE";
+    public static final String COURT_ASSIGNED_ROLE = "COURT_ASSIGNED_ROLE";
+    public static final String DECRYPT_DATA_ROLE = "DECRYPT_DATA_ROLE";
     public static final String INTERNAL_MICROSERVICE_ROLE = "INTERNAL_MICROSERVICE_ROLE";
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
     public static final String EMPLOYEE = "EMPLOYEE";
