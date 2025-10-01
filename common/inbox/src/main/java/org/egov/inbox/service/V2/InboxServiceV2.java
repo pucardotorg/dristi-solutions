@@ -482,59 +482,51 @@ public class InboxServiceV2 {
                                             Criteria criteria,
                                             InboxQueryConfiguration config,
                                             Consumer<Criteria> setter) {
-        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
-        // Temporarily remove substage for count-only queries without permanently mutating the original map
-        Object originalSubStage = searchCriteria.get("substage");
-        boolean hadSubStage = searchCriteria.containsKey("substage");
-        if (criteria.getIsOnlyCountRequired()) {
-            searchCriteria.remove("substage");
-        }
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
 
+        // Always add actionCategory
         searchCriteria.put("actionCategory", criteria.getActionCategory());
-
-        if (criteria.getDate() != null) {
-            searchCriteria.put("stateSla", criteria.getDate());
-        }else {
-            searchCriteria.remove("stateSla");
-        }
-
-        if (criteria.getSearchableFields() != null) {
-            searchCriteria.put("searchableFields", criteria.getSearchableFields());
-        }else{
-            searchCriteria.remove("searchableFields");
-        }
-
-        if (criteria.getStatus() != null) {
-            searchCriteria.put("status", criteria.getStatus());
-        } else {
-            searchCriteria.remove("status");
-        }
-
-        if (criteria.getReferenceEntityType() != null) {
-            searchCriteria.put("referenceEntityType", criteria.getReferenceEntityType());
-        } else {
-            searchCriteria.remove("referenceEntityType");
-        }
-
-        PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
-
-        criteria.setCount(resultData.getTotalSize());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(resultData.getRecords());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfiltered.getTotalSize());
         }
-        // Restore substage to avoid side-effects on shared moduleSearchCriteria map
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Final filtered search
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        criteria.setCount(filtered.getTotalSize());
+
         if (criteria.getIsOnlyCountRequired()) {
-            if (hadSubStage) {
-                searchCriteria.put("substage", originalSubStage);
-            } else {
-                searchCriteria.remove("substage");
-            }
+            criteria.setTotalCount(filtered.getTotalSize());
+        } else {
+            criteria.setData(filtered.getRecords());
         }
 
         setter.accept(criteria);
     }
+
+    /**
+     * Helper to either put a value into the map if not null,
+     * or remove the key if the value is null.
+     */
+    private void putOrRemove(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        } else {
+            map.remove(key);
+        }
+    }
+
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
