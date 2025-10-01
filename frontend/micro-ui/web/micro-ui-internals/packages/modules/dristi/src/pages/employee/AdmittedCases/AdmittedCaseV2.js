@@ -3739,12 +3739,11 @@ const AdmittedCaseV2 = () => {
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
             <hr className="vertical-line" />
             {advocateName && <div className="sub-details-text">{advocateName}</div>}
-            {delayCondonationData?.delayCondonationType?.code === "NO" && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && !isDelayApplicationCompleted && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                  isDelayApplicationPending ||
-                  isDelayApplicationCompleted
+                    isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>
