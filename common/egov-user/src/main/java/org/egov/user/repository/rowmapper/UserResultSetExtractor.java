@@ -110,6 +110,7 @@ public class UserResultSetExtractor implements ResultSetExtractor<List<User>> {
         return Role.builder()
                 .tenantId(rs.getString("role_tenantid"))
                 .code(code)
+                .courtId(rs.getString("role_courtid"))
                 .build();
     }
 

@@ -474,6 +474,7 @@ public class UserRepository {
                             .addValue("user_id", entityUser.getId())
                             .addValue("user_tenantid", entityUser.getTenantId())
                             .addValue("lastmodifieddate", new Date())
+                            .addValue("courtid", role.getCourtId())
                             .getValues());
         }
         namedParameterJdbcTemplate.batchUpdate(RoleQueryBuilder.INSERT_USER_ROLES,
