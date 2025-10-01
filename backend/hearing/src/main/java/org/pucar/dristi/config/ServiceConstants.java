@@ -76,7 +76,6 @@ public class ServiceConstants {
 
     public static final String ACCUSED = "ACCUSED";
     public static final String COMPLAINANT = "COMPLAINANT";
-    public static final String CASE_DISMISSED = "CASE_DISMISSED";
     public static final String COMPLETED = "COMPLETED";
     public static final String SCHEDULED = "SCHEDULED";
     public static final String HEARING_ADJOURNED = "HEARING_ADJOURNED";
