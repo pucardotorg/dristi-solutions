@@ -1507,20 +1507,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    config?.label === "PENDING_SIGN"
-                      ? unsignedModalConfig
-                      : config?.label === "SIGNED"
-                      ? signedModalConfig
-                      : config?.label === "SENT"
+                    config?.label === "SENT"
                       ? sentModalConfig
+                      : hasSignedDoc
+                      ? signedModalConfig
+                      : actionModalType === "SIGN_PENDING"
+                      ? unsignedModalConfig
                       : signedModalConfig
-                    // config?.label === "SENT"
-                    //   ? sentModalConfig
-                    //   : hasSignedDoc
-                    //   ? signedModalConfig
-                    //   : actionModalType === "SIGN_PENDING"
-                    //   ? unsignedModalConfig
-                    //   : signedModalConfig
                   }
                   currentStep={step}
                 />
