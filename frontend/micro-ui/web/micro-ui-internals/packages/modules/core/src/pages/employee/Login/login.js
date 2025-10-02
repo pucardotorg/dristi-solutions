@@ -109,13 +109,16 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       if (!employeeData || employeeData?.length === 0) {
         throw new Error(t("ES_ERROR_EMPLOYEE_NOT_FOUND"));
       }
+      const courtRooms = employeeData?.[0]?.assignments?.flatMap((assignment) => assignment?.courtroom || []) || [];
       const assignments = employeeData?.[0]?.assignments?.find((assignment) => assignment?.courtroom === data?.courtroom?.code);
       if (!assignments) {
         throw new Error(t("ES_ERROR_COURTROOM_NOT_ASSIGNED"));
       }
       localStorage.setItem("courtId", assignments?.courtroom);
+      sessionStorage.setItem("courtId", assignments?.courtroom);
       localStorage.setItem("judgeId", employee?.data?.Employees?.[0]?.code);
       localStorage.setItem("judgeName", employee?.data?.Employees?.[0]?.user?.name);
+      localStorage.setItem("accessibleCourtRooms", JSON.stringify(courtRooms));
       setUser({ info, ...tokens });
     } catch (err) {
       setShowToast(

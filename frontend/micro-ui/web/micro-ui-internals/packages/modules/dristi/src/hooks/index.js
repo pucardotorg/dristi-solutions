@@ -99,6 +99,7 @@ export const Urls = {
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
     taskSearch: "/task/v1/search",
+    userDetailsSearch: "/user/_details"
   },
   case: {
     addWitness: "/case/v1/add/witness",
