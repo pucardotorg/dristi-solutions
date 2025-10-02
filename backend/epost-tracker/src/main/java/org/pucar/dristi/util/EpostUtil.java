@@ -54,11 +54,10 @@ public class EpostUtil {
         long currentDate = System.currentTimeMillis();
 
         ZoneId istZone = ZoneId.of("Asia/Kolkata");
-        LocalDateTime istTime = Instant.ofEpochMilli(currentDate)
+        long istMillis = Instant.ofEpochMilli(currentDate)
                 .atZone(istZone)
-                .toLocalDateTime();
-
-        System.out.println("IST Time: " + istTime);
+                .toInstant()
+                .toEpochMilli();
 
 
         EPostTracker ePostTracker = EPostTracker.builder()
@@ -72,7 +71,7 @@ public class EpostUtil {
                 .deliveryStatus(DeliveryStatus.NOT_UPDATED)
                 .additionalDetails(request.getTask().getAdditionalDetails())
                 .rowVersion(0)
-                .receivedDate(currentDate)
+                .receivedDate(istMillis)
                 .auditDetails(createAuditDetails(request.getRequestInfo()))
                 .build();
 
