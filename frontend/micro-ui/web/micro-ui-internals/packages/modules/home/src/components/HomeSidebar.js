@@ -56,38 +56,32 @@ const HomeSidebar = ({
       {Object?.keys(options)?.length > 0 && (
         <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(options)?.map(
-              (key, index) =>
-                (key === "SCRUTINISE_CASES" || pendingTaskCount[key] > 0) && (
-                  <SidebarItem
-                    t={t}
-                    key={index}
-                    label={options[key]?.name}
-                    count={pendingTaskCount[key]}
-                    active={activeTab === key}
-                    onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-                  />
-                )
-            )}
+            Object?.keys(options)?.map((key, index) => (
+              <SidebarItem
+                t={t}
+                key={index}
+                label={options[key]?.name}
+                count={pendingTaskCount[key]}
+                active={activeTab === key}
+                onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+              />
+            ))}
         </HomeAccordian>
       )}
 
       {Object?.keys(applicationOptions)?.length > 0 && (
         <HomeAccordian title={t("REVIEW_APPLICATIONS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(applicationOptions)?.map(
-              (key, index) =>
-                pendingTaskCount[key] > 0 && (
-                  <SidebarItem
-                    t={t}
-                    key={index}
-                    label={applicationOptions[key]?.name}
-                    count={pendingTaskCount[key]}
-                    active={activeTab === key}
-                    onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
-                  />
-                )
-            )}
+            Object?.keys(applicationOptions)?.map((key, index) => (
+              <SidebarItem
+                t={t}
+                key={index}
+                label={applicationOptions[key]?.name}
+                count={pendingTaskCount[key]}
+                active={activeTab === key}
+                onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
+              />
+            ))}
         </HomeAccordian>
       )}
 

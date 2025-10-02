@@ -141,6 +141,9 @@ public class PendingTaskUtil {
     }
 
     private String getEntityType(String taskType) {
+        if (taskType == null) {
+            return null;
+        }
 
         return switch (taskType) {
             case SUMMON -> "task-summons";

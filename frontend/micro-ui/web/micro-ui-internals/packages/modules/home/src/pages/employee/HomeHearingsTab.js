@@ -64,11 +64,15 @@ const HomeHearingsTab = ({
   }, [userInfo]);
 
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-  const isCourtUser = userType !== "citizen" && !isEpostUser && !isJudge && !isTypist; // Any other employee type than judge, typist.
-  // we removed is CourtRoomManager and is benchClerk conditions and used one new condition for both.
-  // because according to new hrms PRD implementation there will be mainly 3 user types i.e. judge, typist and general court user.
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const hasOrderCreateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_CREATOR"), [roles]);
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isEmployee = useMemo(() => userType === "employee", [userType]);
+  const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  const isCitizen = userRoles?.includes("CITIZEN");
+
+  if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const [passOver, setPassOver] = useState(false);
   //   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -174,14 +178,6 @@ const HomeHearingsTab = ({
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                      // if (isJudge || isTypist) {
-                      //   window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
-                      // } else {
-                      //   setTimeout(() => {
-                      //     setLoader(false);
-                      //     if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
-                      //   }, 100);
-                      // }
                       setTimeout(() => {
                         setLoader(false);
                         if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
@@ -202,17 +198,10 @@ const HomeHearingsTab = ({
                 console.error("Error starting hearing", error);
               });
           } else {
-            // if (isJudge || isTypist) {
-            //   history.push(
-            //     `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            //     { homeFilteredData: filters }
-            //   );
-            // } else {
             setTimeout(() => {
               setLoader(false);
               fetchInbox(filters, setHearingCount);
             }, 100);
-            // }
           }
         }
       }
@@ -223,36 +212,7 @@ const HomeHearingsTab = ({
   const handleEditClick = useCallback(
     async (row) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
-
-      if ((isJudge || isTypist) && hasOrderCreateAccess) {
-        if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
-          history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            { homeFilteredData: filters }
-          );
-        } else {
-          try {
-            const response = await DRISTIService.getDraftOrder(
-              {
-                hearingDraftOrder: {
-                  filingNumber: hearingDetails?.filingNumber,
-                  tenantId: hearingDetails?.tenantId,
-                  hearingNumber: hearingDetails?.hearingNumber,
-                },
-              },
-              {}
-            );
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
-            );
-          } catch (error) {
-            const errorCode = error?.response?.data?.Errors?.[0]?.code;
-            const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
-            showToast("error", errorMsg, 5000);
-          }
-        }
-        return;
-      } else if (isCourtUser && hasHearingEditAccess) {
+      if (hasHearingPriorityView) {
         if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
           try {
             setLoader(true);
@@ -294,18 +254,49 @@ const HomeHearingsTab = ({
         } else if (["IN_PROGRESS"].includes(hearingDetails?.status)) {
           setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
         }
+      } else {
+        if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
+          history.push(
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+            { homeFilteredData: filters }
+          );
+        } else {
+          try {
+            const response = await DRISTIService.getDraftOrder(
+              {
+                hearingDraftOrder: {
+                  filingNumber: hearingDetails?.filingNumber,
+                  tenantId: hearingDetails?.tenantId,
+                  hearingNumber: hearingDetails?.hearingNumber,
+                },
+              },
+              {}
+            );
+            history.push(
+              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${hearingDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            );
+          } catch (error) {
+            const errorCode = error?.response?.data?.Errors?.[0]?.code;
+            const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
+            showToast("error", errorMsg, 5000);
+          }
+        }
+        return;
       }
     },
-    [history, isJudge, isTypist, t, isCourtUser, hasHearingEditAccess, hasOrderCreateAccess]
+    [history, t, hasHearingPriorityView]
   );
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(tableData)) return null;
     const getActionItems = async (row) => {
+      if (!hasHearingEditAccess) {
+        return [];
+      }
       let dropDownitems = [];
       const hearingDetails = row?.businessObject?.hearingDetails;
-      if ((isJudge || isTypist) && hasHearingEditAccess) {
-        if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
+      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
+        if (!hasHearingPriorityView) {
           dropDownitems.push({
             label: "Start Hearing",
             id: "start_hearing",
@@ -353,7 +344,9 @@ const HomeHearingsTab = ({
             },
           });
         }
-        if (hearingDetails?.status === "IN_PROGRESS") {
+      }
+      if (hearingDetails?.status === "IN_PROGRESS") {
+        if (!hasHearingPriorityView) {
           dropDownitems.push({
             label: "End Hearing",
             id: "end_hearing",
@@ -364,7 +357,7 @@ const HomeHearingsTab = ({
         }
       }
 
-      if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS") && hasHearingEditAccess) {
+      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "Mark as Passed Over",
           id: "pass_over",
@@ -485,10 +478,8 @@ const HomeHearingsTab = ({
 
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
-      const offset = page * rowsPerPage;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
-          <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
           <td>
             <Link
               to={{
@@ -533,65 +524,68 @@ const HomeHearingsTab = ({
           </td>
           <td
             style={{
-              textAlign: "center",
+              textAlign: "left",
               position: "relative",
               display: "table-cell",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
-              <div style={{ width: "50%" }}>
-                {["IN_PROGRESS"].includes(hearingDetails?.status) && (
-                  <div
-                    style={{
-                      position: "relative",
-                      cursor: "pointer",
-                      maxWidth: "80px",
-                      display: "flex",
-                      justifyContent: "start",
-                    }}
-                    onClick={() => {
-                      handleEditClick(row);
-                    }}
-                    className="edit-icon"
-                  >
-                    {isCourtUser && hasHearingEditAccess ? (
-                      <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                    ) : hasOrderCreateAccess ? (
-                      <EditIcon />
-                    ) : null}
-                  </div>
-                )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isCourtUser && hasHearingEditAccess && (
-                  <div
-                    style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
-                    onClick={() => {
-                      handleEditClick(row);
-                    }}
-                    className="edit-icon"
-                  >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-start" }}>
+              {["IN_PROGRESS"].includes(hearingDetails?.status) ? (
+                <div
+                  style={{ display: "flex", justifyContent: "flex-start", cursor: "pointer", maxWidth: "80px" }}
+                  onClick={() => {
+                    handleEditClick(row);
+                  }}
+                  className="edit-icon"
+                >
+                  {hasHearingPriorityView && hasHearingEditAccess ? (
                     <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ width: "50%" }}>
-                {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
-                  <AsyncOverlayDropdown
-                    style={{ position: "relative" }}
-                    textStyle={{ textAlign: "start" }}
-                    row={row}
-                    getDropdownItems={getActionItems}
-                    position="relative"
-                  />
-                )}
-              </div>
+                  ) : hasOrderCreateAccess ? (
+                    <EditIcon />
+                  ) : null}
+                </div>
+              ) : (
+                <div style={{ width: "24px", flexShrink: 0 }} />
+              )}
+              {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && hasHearingPriorityView && hasHearingEditAccess && (
+                <div
+                  style={{
+                    position: "relative",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    maxWidth: "80px",
+                  }}
+                  onClick={() => {
+                    handleEditClick(row);
+                  }}
+                  className="edit-icon"
+                >
+                  <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
+                </div>
+              )}
+
+              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                <AsyncOverlayDropdown
+                  style={{ position: "relative" }}
+                  textStyle={{ textAlign: "start" }}
+                  row={row}
+                  getDropdownItems={getActionItems}
+                  position="relative"
+                />
+              )}
             </div>
           </td>
         </tr>
       );
     });
-  }, [history, t, tableData, handleEditClick, hasHearingEditAccess, hasOrderCreateAccess, isCourtUser, isJudge, isTypist]);
+  }, [history, t, tableData, handleEditClick, hasHearingEditAccess, hasOrderCreateAccess, hasHearingPriorityView]);
 
   const { data: hearingLink } = useGetHearingLink();
+
+  if (isEpostUser) {
+    history.push(homePath);
+  }
 
   return (
     <div className="full-height-container">
@@ -681,7 +675,7 @@ const HomeHearingsTab = ({
             </div>
           </LabelFieldPair>
           <div className={`case-label-field-pair search-input`}>
-            <span
+            {/* <span
               className="search-icon-wrapper"
               onClick={() => {
                 if (!loading) {
@@ -692,11 +686,12 @@ const HomeHearingsTab = ({
               }}
             >
               <SmallSearchIcon />
-            </span>
+            </span> */}
             <input
               className="home-input"
               placeholder="Search Case name or number"
               type="text"
+              style={{ width: "280px" }}
               value={filters?.caseQuery}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
@@ -754,7 +749,6 @@ const HomeHearingsTab = ({
           <table className="main-table">
             <thead>
               <tr>
-                <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
                 <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>

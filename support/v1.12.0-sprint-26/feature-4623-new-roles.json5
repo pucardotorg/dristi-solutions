@@ -399,5 +399,23 @@
       "createdTime": 1758636818325,
       "lastModifiedTime": 1758636818325
     }
+  },
+  {
+    "id": "fce64a4d-358c-41fa-97d8-3884ad88c126",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_BULK_RESCHEDULE_HEARINGS",
+    "data": {
+      "code": "VIEW_BULK_RESCHEDULE_HEARINGS",
+      "name": "VIEW_BULK_RESCHEDULE_HEARINGS",
+      "description": "VIEW_BULK_RESCHEDULE_HEARINGS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1758872525566,
+      "lastModifiedTime": 1758872525566
+    }
   }
 ]

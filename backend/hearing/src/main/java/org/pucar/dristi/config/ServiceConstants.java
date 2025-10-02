@@ -122,6 +122,9 @@ public class ServiceConstants {
             + "}\n";
 
     public static final String CASE_TITLE = "caseTitle";
+    public static final String CASE_STATUS = "status";
+    public static final String CASE_OUTCOME = "outcome";
+    public static final String CASE_CNR = "status";
     public static final String CASE_ID = "id";
     public static final String SCHEDULE_HEARING_SUFFIX = "_SCHEDULE_HEARING";
     public static final String ACTION_CATEGORY_SCHEDULE_HEARING = "Schedule Hearing";
