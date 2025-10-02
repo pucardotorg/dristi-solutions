@@ -132,6 +132,13 @@ public class OrderUtil {
 
         List<String> orderTypes = new ArrayList<>(List.of(SUMMONS, WARRANT, NOTICE, PROCLAMATION, ATTACHMENT));
 
+        Order nextScheduleOrder = orderListResponse.getList().stream().filter(order -> order.getScheduledHearingNumber() != null && !order.getScheduledHearingNumber().equals(hearingId)).findFirst().orElse(null);
+        if (nextScheduleOrder != null) {
+            log.info("Found next schedule order for hearingId: {}", hearingId);
+            Long createdDate = nextScheduleOrder.getCreatedDate();
+            orderListResponse.getList().removeIf(order -> order.getCreatedDate() >= createdDate);
+        }
+
         List<Order> filteredOrders = orderListResponse.getList().stream()
                 .filter(order -> {
                     String orderType = (order.getOrderType() != null)

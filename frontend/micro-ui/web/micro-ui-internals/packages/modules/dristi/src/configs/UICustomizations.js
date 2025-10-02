@@ -1945,20 +1945,16 @@ export const UICustomizations = {
   },
   HomePendingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const tenantId = window?.Digit.ULBService.getStateId();
-      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
       const activeTab = additionalDetails?.activeTab;
       return {
         ...requestCriteria,
         body: {
-          // ...requestCriteria.body,
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
-              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
               courtId: localStorage.getItem("courtId"),
             },
             searchReviewProcess: {
@@ -1970,24 +1966,6 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
-            // searchViewApplication: {
-            //   date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-            //   isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
-            //   actionCategory: "View Application",
-            //   ...(activeTab === "VIEW_APPLICATION" &&
-            //     requestCriteria?.state?.searchForm?.caseSearchText && {
-            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-            //     }),
-            // },
-            // searchScheduleHearing: {
-            //   date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
-            //   isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
-            //   actionCategory: "Schedule Hearing",
-            //   ...(activeTab === "SCHEDULE_HEARING" &&
-            //     requestCriteria?.state?.searchForm?.caseSearchText && {
-            //       searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-            //     }),
-            // },
             searchRegisterCases: {
               date: null,
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
@@ -2005,6 +1983,8 @@ export const UICustomizations = {
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchScrutinyCases: {
               date: null,
@@ -2020,6 +2000,8 @@ export const UICustomizations = {
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
+              ...(activeTab === "RESCHEDULE_APPLICATIONS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchDelayCondonationApplication: {
               date: null,
@@ -2029,6 +2011,8 @@ export const UICustomizations = {
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
+              ...(activeTab === "DELAY_CONDONATION" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchOtherApplications: {
               date: null,
@@ -2041,6 +2025,8 @@ export const UICustomizations = {
               ...(requestCriteria?.state?.searchForm?.referenceEntityType && {
                 referenceEntityType: requestCriteria?.state?.searchForm?.referenceEntityType?.type,
               }),
+              ...(activeTab === "OTHERS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchRegisterUsers: {
               date: null,
@@ -2057,27 +2043,22 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            const reviwCount = data?.reviewProcessData?.count || 0;
-            // const applicationCount = data?.viewApplicationData?.count || 0;
-            // const scheduleCount = data?.scheduleHearingData?.count || 0;
-            const registerCount = data?.registerCasesData?.count || 0;
-            const bailBondStatusCount = data?.bailBondData?.count || 0;
-            const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
-            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.count || 0;
-            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.count || 0;
-            const otherApplicationsCount = data?.otherApplicationsData?.count || 0;
+            const reviwCount = data?.reviewProcessData?.totalCount || 0;
+            const registerCount = data?.registerCasesData?.totalCount || 0;
+            const bailBondStatusCount = data?.bailBondData?.totalCount || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.totalCount || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.totalCount || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.totalCount || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
 
-            // setPendingTaskCount();
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
-              // VIEW_APPLICATION: applicationCount,
-              // SCHEDULE_HEARING: scheduleCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
@@ -2120,18 +2101,7 @@ export const UICustomizations = {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            }
-            //  else if (activeTab === "VIEW_APPLICATION") {
-            //   return {
-            //     TotalCount: data?.viewApplicationData?.count,
-            //     data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
-            //   };
-            // } else if (activeTab === "SCHEDULE_HEARING")
-            //   return {
-            //     TotalCount: data?.scheduleHearingData?.count,
-            //     data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
-            //   };
-            else if (activeTab === "BAIL_BOND_STATUS") {
+            } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
                 TotalCount: data?.bailBondData?.count,
                 data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
@@ -2180,7 +2150,6 @@ export const UICustomizations = {
           ) : row?.tab === "BAIL_BOND_STATUS" ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
-            // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2245,6 +2214,7 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const activeTab = additionalDetails?.activeTab;
       const hasCaseReviewerAccess = additionalDetails?.hasCaseReviewerAccess;
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       return {
         ...requestCriteria,
         body: {
@@ -2266,7 +2236,7 @@ export const UICustomizations = {
               actionCategory: "Register cases",
             },
             searchBailBonds: {
-              date: null,
+              date: currentDateInMs,
               isOnlyCountRequired: true,
               actionCategory: "Bail Bond",
             },
@@ -2310,13 +2280,13 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            const reviewCount = data?.reviewProcessData?.count || 0;
-            const registerCount = data?.registerCasesData?.count || 0;
-            const bailBondStatusCount = data?.bailBondData?.count || 0;
-            const scrutinyCasesCount = data?.scrutinyCasesData?.count || 0;
-            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.count || 0;
-            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.count || 0;
-            const otherApplicationsCount = data?.otherApplicationsData?.count || 0;
+            const reviewCount = data?.reviewProcessData?.totalCount || 0;
+            const registerCount = data?.registerCasesData?.totalCount || 0;
+            const bailBondStatusCount = data?.bailBondData?.totalCount || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.totalCount || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.totalCount || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.totalCount || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
 

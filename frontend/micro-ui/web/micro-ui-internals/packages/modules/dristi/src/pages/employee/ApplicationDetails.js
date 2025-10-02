@@ -117,7 +117,11 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
-  const isAdvocateApplicationViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+  // if user is employee then ADVOCATE_APPROVER  role is needed and for citizrn ADVOCATE_APPLICATION_VIEWER role is needed.
+  const hasAdvocateApplicationViewAccess = useMemo(
+    () => userRoles?.some((role) => role === "ADVOCATE_APPLICATION_VIEWER" || role === "ADVOCATE_APPROVER"),
+    [userRoles]
+  );
 
   const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
 
@@ -262,7 +266,7 @@ const ApplicationDetails = ({ location, match }) => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
 
-  if (!isAdvocateApplicationViewer) {
+  if (!hasAdvocateApplicationViewAccess) {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
