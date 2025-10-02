@@ -32,5 +32,4 @@ export const setupRequestInterceptor = () => {
     (error) => Promise.reject(error)
   );
 
-  console.log("Court multi-tenancy request interceptor setup complete");
 };

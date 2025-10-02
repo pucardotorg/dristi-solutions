@@ -98,11 +98,7 @@ const ChangeCourt = ({ dropdown = false, ...props }) => {
   };
   
 
-  const selectedCourt = courtOptions.find((court) => court.code === selectedCourtCode) || { code: "", name: "Select Court" };
-
-  if (isCourtRoomsDataLoading) {
-    return <div>Loading courts...</div>;
-  }
+  const selectedCourt = courtOptions?.find((court) => court?.code === selectedCourtCode) || { code: "", name: "Select Court" };
 
   if (dropdown) {
     return (
