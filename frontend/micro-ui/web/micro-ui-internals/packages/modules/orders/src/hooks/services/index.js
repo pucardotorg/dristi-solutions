@@ -123,6 +123,14 @@ export const EpostService = {
       data,
       params,
     }),
+  ePostDownloadReports: (data, params) =>
+    Request({
+      url: Urls.Epost.EpostReportDownload,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
@@ -234,4 +242,4 @@ export const processManagementService = {
       data,
       params,
     }),
-};  
+};

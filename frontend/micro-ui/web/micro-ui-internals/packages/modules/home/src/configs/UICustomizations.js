@@ -12,6 +12,7 @@ import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import { EditPencilIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
+import { formatDateWithTime } from "../../../orders/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -69,13 +70,20 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "SPEED_POST_ID":
-          return t(value) || "-"
+          return t(value) || t("NOT_ASSIGNED");
         case "STATUS":
           return t(value);
         case "CS_ACTIONS":
           return <OverlayDropdown column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
         case "CS_ACTIONS_PENCIL":
           return <PencilIconEdit column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "TOTAL_CHARGES":
+          return value ? `${value} /-` : "-";
+        case "BOOKING_DATE":
+        case "BOOKING_DATE_TIME":
+          return formatDateWithTime(value) || "-";
+        case "RECIEVED_DATE":
+          return formatDateWithTime(value, true) || "-";
         default:
           return t("ES_COMMON_NA");
       }

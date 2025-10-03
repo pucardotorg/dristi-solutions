@@ -29,6 +29,7 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
+          isDataRequired: true,
           speedPostId: "",
           deliveryStatusList: [],
           pagination: {
@@ -123,6 +124,7 @@ export const TabSearchConfig = [
             {
               label: "RECIEVED_DATE",
               jsonPath: "receivedDate",
+              additionalCustomization: true,
             },
             {
               label: "ADDRESS",
@@ -162,6 +164,7 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
+          isDataRequired: true,
           speedPostId: "",
           deliveryStatusList: {
             name: "All",
@@ -283,6 +286,7 @@ export const TabSearchConfig = [
             {
               label: "BOOKING_DATE",
               jsonPath: "bookingDate",
+              additionalCustomization: true,
             },
             {
               label: "STATUS",
@@ -319,6 +323,7 @@ export const TabSearchConfig = [
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         ePostTrackerSearchCriteria: {
+          isDataRequired: false,
           speedPostId: "",
           deliveryStatusList: {},
           pagination: {
@@ -358,6 +363,16 @@ export const TabSearchConfig = [
             //   icon: "UpDownArrowIcon",
             //   populators: {},
             // },
+            {
+              label: "MONTH",
+              isMandatory: false,
+              key: "monthReports",
+              type: "month",
+              disable: false,
+              populators: {
+                name: "monthReports",
+              },
+            },
             {
               isMandatory: false,
               type: "text",
@@ -410,10 +425,12 @@ export const TabSearchConfig = [
             {
               label: "BOOKING_DATE_TIME",
               jsonPath: "bookingDate",
+              additionalCustomization: true,
             },
             {
               label: "TOTAL_CHARGES",
               jsonPath: "totalAmount",
+              additionalCustomization: true,
             },
             {
               label: "CS_ACTIONS_PENCIL",

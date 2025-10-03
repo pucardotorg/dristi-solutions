@@ -243,6 +243,34 @@
         color: #999;
       }
     }
+
+    input[type="month"] {
+      width: 10rem;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+      margin: 0px !important;
+      height: 36px;
+      padding: 9px;
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+
+    input[type="datetime-local"] {
+      width: 10rem;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+      margin: 0px !important;
+      height: 36px;
+      padding: 9px;
+
+      &::placeholder {
+        color: #999;
+      }
+    }
   }
 }
 

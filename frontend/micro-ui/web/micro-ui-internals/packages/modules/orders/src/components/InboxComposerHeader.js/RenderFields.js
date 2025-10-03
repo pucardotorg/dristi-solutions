@@ -28,6 +28,8 @@ export const renderField = (t, field, formData, setValue, register, trigger, con
   switch (field?.type) {
     case "date":
     case "text":
+    case "month":
+    case "datetime-local":
       return (
         <Controller
           name={fieldName}
@@ -61,7 +63,7 @@ export const renderField = (t, field, formData, setValue, register, trigger, con
           name={fieldName}
           control={control}
           rules={{ required: field.isMandatory ? `${t("CORE_COMMON_REQUIRED_MSG")}` : false }}
-          render={({ field : controllerField }) => (
+          render={({ field: controllerField }) => (
             <Dropdown
               t={t}
               option={field?.populators?.options || []}

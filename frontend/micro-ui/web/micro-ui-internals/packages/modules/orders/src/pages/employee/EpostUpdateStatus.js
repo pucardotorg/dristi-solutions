@@ -1,15 +1,25 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseBtn, Heading } from "../../utils/orderUtils"
+import { CloseBtn, Heading } from "../../utils/orderUtils";
+import isEqual from "lodash/isEqual";
 
-const EpostUpdateStatus = ({t, headerLabel, handleCancel, handleSubmit, defaultValue, modifiedFormConfig, saveLabel, cancelLabel, }) => {
+const EpostUpdateStatus = ({ t, headerLabel, handleCancel, handleSubmit, defaultValue, modifiedFormConfig, saveLabel, cancelLabel }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
-   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => { }
-  console.log(modifiedFormConfig);
-  
+  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    if (!isEqual(formData, formdata)) {
+      setFormData(formData);
+    }
+
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
+    }
+  };
+
   return (
     <React.Fragment>
       <Modal

@@ -170,8 +170,9 @@ export const updateEpostStatusPendingConfig = [
       {
         isMandatory: true,
         type: "date",
-        label: "Status Update Date",
+        label: "DELIEVRY_DATE",
         key: "bookingDate",
+        disable: true,
         populators: {
           name: "bookingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
@@ -186,7 +187,7 @@ export const updateEpostStatusPendingConfig = [
       {
         isMandatory: true,
         type: "text",
-        label: "Speed Post Id",
+        label: "SPEED_POST_ID",
         key: "speedPostId",
         populators: {
           name: "speedPostId",
@@ -198,7 +199,7 @@ export const updateEpostStatusPendingConfig = [
         component: "SelectCustomTextArea",
         key: "remarks",
         isMandatory: true,
-        label: "Additional Remarks",
+        label: "ADDITIONAL_REMARKS",
         populators: {
           inputs: [
             {
@@ -220,8 +221,9 @@ export const updateEpostStatusConfig = [
       {
         isMandatory: true,
         type: "date",
-        label: "Status Update Date",
+        label: "DELIEVRY_DATE",
         key: "bookingDate",
+        disable: true,
         populators: {
           name: "bookingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
@@ -245,7 +247,7 @@ export const updateEpostStatusConfig = [
           styles: { maxWidth: "100%" },
           required: true,
           isMandatory: true,
-          options:[],
+          options: [],
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
@@ -254,7 +256,7 @@ export const updateEpostStatusConfig = [
         component: "SelectCustomTextArea",
         key: "remarks",
         isMandatory: true,
-        label: "Additional Remarks",
+        label: "ADDITIONAL_REMARKS",
         populators: {
           inputs: [
             {

@@ -7,6 +7,11 @@ import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
 import SubmitBar from "../../components/SubmitBar";
 import EpostUpdateStatus from "./EpostUpdateStatus";
 import { updateEpostStatusPendingConfig, updateEpostStatusConfig } from "../../configs/EpostFormConfigs";
+import { EpostService } from "../../hooks/services";
+import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } from "../../utils";
+import Axios from "axios";
+import { Urls } from "../../hooks/services/Urls";
+import { _getDate, _toEpoch, _getStatus } from "../../utils";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -16,11 +21,28 @@ const defaultSearchValues = {
   },
   speedPostId: "",
   bookingDate: "",
+  monthReports: "",
+};
+
+const convertToFormData = (t, obj, dropdownData) => {
+  const bookingData = [null, 0]?.includes(obj?.bookingDate) ? null : obj?.bookingDate;
+  const formdata = {
+    bookingDate: _getDate(),
+    remarks: {
+      text: obj?.remarks || "",
+    },
+    speedPostId: obj?.speedPostId || "",
+    status: _getStatus(obj?.deliveryStatus, dropdownData),
+  };
+
+  return formdata;
 };
 
 const EpostTrackingPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const accessToken = window.localStorage.getItem("token");
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
@@ -34,7 +56,17 @@ const EpostTrackingPage = () => {
     return userInfo?.name || "";
   }, []);
 
-  const [searchFormData, setSearchFormData] = useState(TabSearchConfig.map(() => ({ ...defaultSearchValues })));
+  const [searchFormData, setSearchFormData] = useState(
+    TabSearchConfig.map((_, index) => {
+      if (_.label === "CS_REPORTS") {
+        return {
+          ...defaultSearchValues,
+          monthReports: new Date().toISOString().slice(0, 7),
+        };
+      }
+      return { ...defaultSearchValues };
+    })
+  );
 
   const [tabData, setTabData] = useState(
     TabSearchConfig?.map((configItem, index) => ({
@@ -110,22 +142,67 @@ const EpostTrackingPage = () => {
     }
   };
 
-  const handleDownloadList = (activeIndex) => {
+  const handleDownloadList = async (activeIndex) => {
     if (activeIndex === 2) {
-      // TODO: download Reports
-      setShowErrorToast({ label: t("Reports Downloaded"), error: false });
+      try {
+        const month = searchFormData?.[activeTabIndex]?.monthReports || new Date().toISOString().slice(0, 7);
+        const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
+        const payload = {
+          ePostTrackerSearchCriteria: {
+            bookingDateStartTime: bookingDateStartTime || "",
+            bookingDateEndTime: bookingDateEndTime || "",
+            pagination: {},
+          },
+        };
+        const response = await Axios.post(
+          Urls.Epost.EpostReportDownload,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Rainmaker",
+            },
+            ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
+          },
+          {
+            params: {
+              tenantId: tenantId,
+            },
+            responseType: "blob",
+          }
+        );
+        const [yearStr, monthNumStr] = month.split("-");
+        const monthNum = parseInt(monthNumStr, 10);
+        const dateForMonth = new Date(yearStr, monthNum - 1);
+        const monthName = dateForMonth.toLocaleString("en-US", { month: "long" });
+        const filename = `${yearStr}_${monthName}_Epost_Report.xlsx`;
+        downloadFile(response?.data, filename);
+        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      } catch (error) {
+        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error(error);
+      }
     } else {
       // TODO: download List
-      setShowErrorToast({ label: t("List Downloaded"), error: false });
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     }
   };
 
   const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
     const currentForm = searchFormData[activeTabIndex] || {};
-    const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : [];
+    const epostStausList = epostStatusDropDown?.flatMap((data) => data?.code) || [];
+    const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : epostStausList;
+    const { start: bookingDateStartTime, end: bookingDateEndTime } = currentForm?.bookingDate
+      ? getEpochRangeFromDateIST(currentForm?.bookingDate)
+      : getEpochRangeFromMonthIST(currentForm?.monthReports);
     return {
-      processNumber: currentForm?.speedPostId || "",
-      deliveryStatusList: activeTabIndex === 1 ? currentStatus : [],
+      ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria,
+      isDataRequired: true,
+      speedPostId: currentForm?.speedPostId || "",
+      deliveryStatusList: activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [],
+      bookingDateStartTime: bookingDateStartTime || "",
+      bookingDateEndTime: bookingDateEndTime || "",
       pagination: {
         ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria.pagination,
         sortBy: currentForm?.pagination?.sortBy || "",
@@ -217,7 +294,32 @@ const EpostTrackingPage = () => {
     setSearchRefreshCounter((prev) => prev + 1);
   };
 
-  const handleUpdateStatus = (formData) => {};
+  const handleUpdateStatus = async (formData) => {
+    try {
+      const deliveryStatus = activeTabIndex === 0 ? "BOOKED" : formData?.status?.code;
+      const updateStatusPayload = {
+        EPostTracker: {
+          ...selectedRowData,
+          remarks: formData?.remarks?.text || "",
+          ...(activeTabIndex === 0 &&
+            formData?.bookingDate &&
+            formData?.bookingDate !== selectedRowData?.bookingDate && {
+              bookingDate: _toEpoch(formData?.bookingDate),
+            }),
+          ...(formData?.speedPostId && { speedPostId: formData?.speedPostId }),
+          ...(deliveryStatus && { deliveryStatus: deliveryStatus }),
+        },
+      };
+      await EpostService.EpostUpdate(updateStatusPayload, { tenantId });
+      setShowUpdateStatusModal(false);
+      setSelectedRowData({});
+      setShowErrorToast({ label: t("Status Update Successfully"), error: false });
+      setSearchRefreshCounter((prev) => prev + 1);
+    } catch (error) {
+      console.error("error while updating : ", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    }
+  };
 
   const modifiedFormConfig = useMemo(() => {
     const baseConfig = activeTabIndex === 0 ? updateEpostStatusPendingConfig : updateEpostStatusConfig;
@@ -237,6 +339,12 @@ const EpostTrackingPage = () => {
       ),
     }));
   }, [activeTabIndex, epostStatusDropDownData]);
+
+  const getDefaultValue = useMemo(() => {
+    if (showUpdateStatusModal) {
+      return convertToFormData(t, selectedRowData, epostStatusDropDownData);
+    }
+  }, [epostStatusDropDownData, selectedRowData, showUpdateStatusModal, t]);
 
   useEffect(() => {
     if (showErrorToast) {
@@ -286,10 +394,10 @@ const EpostTrackingPage = () => {
       {showUpdateStatusModal && (
         <EpostUpdateStatus
           t={t}
-          headerLabel={"Update Status"}
+          headerLabel={"UPDATE_STATUS"}
           handleCancel={() => setShowUpdateStatusModal(false)}
           handleSubmit={handleUpdateStatus}
-          defaultValue={{}}
+          defaultValue={getDefaultValue}
           modifiedFormConfig={modifiedFormConfig}
           saveLabel={"CONFIRM"}
           cancelLabel={"CS_COMMON_CANCEL"}
