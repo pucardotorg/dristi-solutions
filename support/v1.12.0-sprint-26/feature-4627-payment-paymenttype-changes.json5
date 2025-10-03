@@ -1,0 +1,81 @@
+// TODO : can be done through workbench
+[
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": 5,
+      "suffix": "POST_COURT",
+      "paymentType": "Summons Post Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-summons"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "11",
+    "data": {
+      "id": 11,
+      "suffix": "POST_COURT",
+      "paymentType": "Notice Post Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-notice"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : update this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": 6,
+      // TODO : update suffix and payment type
+      "suffix": "POST_PROCESS_COURT",
+      "paymentType": "Summons Post Process Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-summons"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  // TODO : update this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": 10,
+      // TODO : update suffix and payment type
+      "suffix": "POST_PROCESS_COURT",
+      "paymentType": "Notice Post Process Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-notice"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  }
+]
