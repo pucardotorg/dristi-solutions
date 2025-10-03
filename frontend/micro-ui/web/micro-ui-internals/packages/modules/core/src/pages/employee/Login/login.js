@@ -114,7 +114,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       if (!assignments) {
         throw new Error(t("ES_ERROR_COURTROOM_NOT_ASSIGNED"));
       }
-      localStorage.setItem("courtId", assignments?.courtroom);
+      // localStorage.setItem("courtId", assignments?.courtroom);
       sessionStorage.setItem("courtId", assignments?.courtroom);
       localStorage.setItem("judgeId", employee?.data?.Employees?.[0]?.code);
       localStorage.setItem("judgeName", employee?.data?.Employees?.[0]?.user?.name);

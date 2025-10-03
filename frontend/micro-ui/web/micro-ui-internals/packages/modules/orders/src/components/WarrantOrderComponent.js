@@ -66,7 +66,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const [deliveryChannels, setDeliveryChannels] = useState([
     {
       label: "EPOST",

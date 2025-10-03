@@ -56,7 +56,7 @@ const BulkRescheduleModal = ({
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const judgeId = localStorage.getItem("judgeId");
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const [isReschedule, setIsReschedule] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
 

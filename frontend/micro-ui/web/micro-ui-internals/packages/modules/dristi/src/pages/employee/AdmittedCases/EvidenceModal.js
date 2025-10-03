@@ -595,7 +595,7 @@ const EvidenceModal = ({
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const courtId = localStorage.getItem("courtId");
+      const courtId = sessionStorage.getItem("courtId");;
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {

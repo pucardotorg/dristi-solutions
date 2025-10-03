@@ -91,7 +91,7 @@ const SummaryModal = ({
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const reqBody = {
     hearing: { tenantId },

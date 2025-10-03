@@ -181,7 +181,7 @@ export const DRISTIService = {
     const presidedBy = {
       judgeID: [localStorage.getItem("judgeId")],
       benchID: window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID",
-      courtID: localStorage.getItem("courtId"),
+      courtID: sessionStorage.getItem("courtId");,
     };
     const updatedData = {
       ...data,

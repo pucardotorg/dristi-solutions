@@ -16,7 +16,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
   const [stepper, setStepper] = useState(0);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);

@@ -238,7 +238,7 @@ const AdmittedCases = () => {
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
 
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -1060,7 +1060,7 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = localStorage.getItem("courtId");
+    const courtId = sessionStorage.getItem("courtId");;
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(

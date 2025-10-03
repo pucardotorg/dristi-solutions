@@ -48,7 +48,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
   const initial = "dayGridMonth";
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const search = window.location.search;
   const [fromDate, setFromDate] = useState(null);

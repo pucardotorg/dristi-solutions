@@ -56,7 +56,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [nextFiveDates, setNextFiveDates] = useState([]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const history = useHistory();
 
