@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.IndividualService;
@@ -15,15 +16,21 @@ import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.PartyType;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
-
+/**
+ * @author Sathvik
+ */
 @Component
 @Slf4j
 public class CaseRegistrationValidator {
@@ -31,7 +38,6 @@ public class CaseRegistrationValidator {
     private IndividualService individualService;
 
     private CaseRepository repository;
-
 
     private MdmsUtil mdmsUtil;
 
@@ -299,6 +305,73 @@ public class CaseRegistrationValidator {
         return true;
     }
 
+    public Individual validatePOAIndividual(JoinCaseV2Request joinCaseRequest) {
+        JoinCasePOA joinCasePOA = joinCaseRequest.getJoinCaseData().getPoa();
+
+        if (joinCasePOA.getIndividualId() != null) {
+            List<Individual> individual = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCasePOA.getIndividualId());
+            if (individual.isEmpty())
+                throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+
+            return individual.get(0);
+        } else {
+            throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+        }
+    }
+
+    public void validatePOAJoinCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
+        List<POARepresentingJoinCase> poaRepresenting = joinCaseData.getPoa().getPoaRepresenting();
+        Map<String, String> poaHolderRepresentingMap = getPoaHolderRepresentingMap(courtCase);
+
+        String individualIdPOA = joinCaseData.getPoa().getIndividualId();
+        for (POARepresentingJoinCase poaRepresentingJoinCase : poaRepresenting) {
+            String individualIdRepresenting = poaRepresentingJoinCase.getIndividualId();
+            Boolean isRevoking = poaRepresentingJoinCase.getIsRevoking();
+
+            validatePOAJoinCase(isRevoking, poaHolderRepresentingMap, individualIdRepresenting, individualIdPOA);
+        }
+    }
+
+    public void isStillValidPOAJoinCase(CourtCase courtCase, POAJoinCaseTaskRequest joinCaseTaskRequest) {
+        List<POAIndividualDetails> poaRepresenting = joinCaseTaskRequest.getIndividualDetails();
+        Map<String, String> poaHolderRepresentingMap = getPoaHolderRepresentingMap(courtCase);
+
+        String individualIdPOA = joinCaseTaskRequest.getPoaDetails().getIndividualId();
+        for (POAIndividualDetails poaRepresentingJoinCase : poaRepresenting) {
+            String individualIdRepresenting = poaRepresentingJoinCase.getIndividualId();
+            Boolean isRevoking = poaRepresentingJoinCase.getIsRevoking();
+            validatePOAJoinCase(isRevoking, poaHolderRepresentingMap, individualIdRepresenting, individualIdPOA);
+        }
+    }
+
+    private Map<String, String> getPoaHolderRepresentingMap(CourtCase courtCase) {
+        if(courtCase.getPoaHolders() == null){
+            courtCase.setPoaHolders(new ArrayList<>());
+        }
+        List<POAHolder> poaHolders = courtCase.getPoaHolders();
+
+        Map<String, String> poaHolderRepresentingMap = new HashMap<>();
+        for (POAHolder poaHolder : poaHolders) {
+            for (PoaParty party : poaHolder.getRepresentingLitigants()) {
+                poaHolderRepresentingMap.put(party.getIndividualId(), poaHolder.getIndividualId());
+            }
+        }
+        return poaHolderRepresentingMap;
+    }
+
+    private static void validatePOAJoinCase(Boolean isRevoking, Map<String, String> poaHolderRepresentingMap, String individualIdRepresenting, String individualIdPOA) {
+        if (isRevoking) {
+            if (!poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " don't have poa holder");
+            else if (poaHolderRepresentingMap.containsKey(individualIdRepresenting) && poaHolderRepresentingMap.get(individualIdRepresenting).equals(individualIdPOA)) {
+                throw new CustomException(VALIDATION_ERR, "POA individualId " + individualIdPOA + " already a POA holder for the litigant " + individualIdRepresenting);
+            }
+        }else {
+            if (poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " have poa holder");
+        }
+    }
+
     public void validateEditCase(CaseRequest caseRequest) throws CustomException {
 
         if (ObjectUtils.isEmpty(caseRequest.getCases().getId())) {
@@ -375,4 +448,207 @@ public class CaseRegistrationValidator {
         return masterList;
     }
 
+    public void validateWitnessRequest(WitnessDetailsRequest body, CourtCase courtCase) {
+        try {
+            log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            validateMobileNumbersInRequest(body.getWitnessDetails());
+            for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
+                validateMobileNumbers(additionalDetails, witnessDetails);
+                validateEmail(additionalDetails, witnessDetails);
+            }
+            log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
+        } catch (Exception e) {
+            log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+        }
+    }
+
+    private void validateMobileNumbersInRequest(List<WitnessDetails> witnessDetails) {
+        if(witnessDetails == null || witnessDetails.isEmpty()) {
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Witness details cannot be empty");
+        }
+        
+        Set<String> mobileNumberSet = new HashSet<>();
+        for(WitnessDetails witnessDetail : witnessDetails) {
+            List<String> mobileNumbers = extractMobileNumbers(witnessDetail);
+            for(String mobileNumber : mobileNumbers) {
+                if(!mobileNumberSet.add(mobileNumber)) {
+                    throw new CustomException(ERROR_VALIDATING_WITNESS, 
+                        "Duplicate mobile number found: " + mobileNumber + ". All witnesses must have different mobile numbers.");
+                }
+            }
+        }
+    }
+    
+    private List<String> extractMobileNumbers(WitnessDetails witnessDetail) {
+        if(witnessDetail.getPhoneNumbers() == null || witnessDetail.getPhoneNumbers().getMobileNumber() == null) {
+            return Collections.emptyList();
+        }
+        return witnessDetail.getPhoneNumbers().getMobileNumber().stream()
+                .filter(mobile -> mobile != null && !mobile.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private boolean doesWitnessExists(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+        JsonNode witnessDetailsNode = additionalDetails.get("witnessDetails");
+        if (witnessDetailsNode == null || witnessDetailsNode.get("formdata") == null || !witnessDetailsNode.get("formdata").isArray()) {
+            return false;
+        }
+        for(JsonNode witness : witnessDetailsNode.get("formdata")) {
+            if(witnessDetails.getUniqueId().equalsIgnoreCase(witness.get("uniqueId").textValue())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validateEmail(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+        List<String> emailIds = new ArrayList<>();
+        emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("respondentDetails")));
+        emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("witnessDetails")));
+
+        if (witnessDetails.getEmails() == null || witnessDetails.getEmails().getEmailId().isEmpty()) {
+            return;
+        }
+        List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
+        Set<String> emailIdSet = new HashSet<>(emailIds);
+        for(String emailId : witnessEmailIds) {
+            boolean witnessExist = doesWitnessExists(additionalDetails, witnessDetails);
+            if(emailIdSet.contains(emailId) && !witnessExist) {
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
+                        "Witness email id should not be same as existing parties email id");
+            }
+        }
+    }
+
+    public static List<String> extractEmailIdsFromDetails(JsonNode detailsNode) {
+        List<String> emailIds = new ArrayList<>();
+
+        if (detailsNode == null || !detailsNode.has("formdata")) {
+            return emailIds;
+        }
+
+        JsonNode formDataArray = detailsNode.get("formdata");
+        if (!formDataArray.isArray() || formDataArray.isEmpty()) {
+            return emailIds;
+        }
+
+        for (JsonNode formDataItem : formDataArray) {
+            JsonNode emailNode = formDataItem.at("/data/emails/emailId");
+            if (!emailNode.isMissingNode() && emailNode.isArray()) {
+                for (JsonNode node : emailNode) {
+                    if (node.isTextual() && !node.asText().trim().isEmpty()) {
+                        emailIds.add(node.asText());
+                    }
+                }
+            }
+        }
+
+        return emailIds;
+    }
+
+    private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+
+        if(witnessDetails.getPhoneNumbers() == null || witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+            return;
+        }
+        List<String> mobileNumberList = new ArrayList<>();
+
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), PartyType.COMPLAINANT));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("witnessDetails"), PartyType.WITNESS));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), PartyType.RESPONDENT));
+
+        List<String> witnessMobileNumber = witnessDetails.getPhoneNumbers().getMobileNumber();
+        Set<String> mobileNumberSet = new HashSet<>(mobileNumberList);
+        for (String witnessNumber : witnessMobileNumber) {
+            boolean isWitnessExists = doesWitnessExists(additionalDetails, witnessDetails);
+            if (mobileNumberSet.contains(witnessNumber) && !isWitnessExists) {
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
+                        "Witness mobile number should not be same as existing parties mobile number");
+            }
+        }
+    }
+
+    public static List<String> extractMobileNumbersFromDetails(JsonNode detailsNode, PartyType type) {
+        List<String> mobileNumbers = new ArrayList<>();
+        if (detailsNode == null || !detailsNode.has("formdata")) {
+            return mobileNumbers;
+        }
+        JsonNode formDataArray = detailsNode.get("formdata");
+        if (!formDataArray.isArray()) {
+            return mobileNumbers;
+        }
+        for (JsonNode formDataItem : formDataArray) {
+            JsonNode dataNode = formDataItem.get("data");
+
+            if (dataNode == null) continue;
+            switch (type) {
+                case COMPLAINANT:
+                    JsonNode complainantMobile = dataNode.at("/complainantVerification/mobileNumber");
+                    if (!complainantMobile.isMissingNode() && complainantMobile.isTextual()) {
+                        mobileNumbers.add(complainantMobile.asText());
+                    }
+                    break;
+
+                case WITNESS:
+                case RESPONDENT:
+                    JsonNode mobileNode = dataNode.at("/phonenumbers/mobileNumber");
+                    if (!mobileNode.isMissingNode() && mobileNode.isArray()) {
+                        for (JsonNode numberNode : mobileNode) {
+                            if (numberNode.isTextual() && !numberNode.asText().trim().isEmpty()) {
+                                mobileNumbers.add(numberNode.asText());
+                            }
+                        }
+                    }
+                    break;
+                case ADVOCATE:
+                    JsonNode multipleAdvocates = dataNode.at("/multipleAdvocatesAndPip/multipleAdvocateNameDetails");
+                    if (multipleAdvocates.isArray()) {
+                        for (JsonNode advocateEntry : multipleAdvocates) {
+                            JsonNode advocateNameDetails = advocateEntry.get("advocateNameDetails");
+                            if (advocateNameDetails != null) {
+                                JsonNode advocateMobile = advocateNameDetails.get("advocateMobileNumber");
+                                if (advocateMobile != null && advocateMobile.isTextual()) {
+                                    mobileNumbers.add(advocateMobile.asText());
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    log.warn("Unsupported party type for mobile number extraction: {}", type);
+                    return mobileNumbers;
+            }
+        }
+
+        return mobileNumbers;
+    }
+
+    public void validateUpdateLPRDetails(CaseRequest caseRequest) {
+
+        CourtCase courtCase = caseRequest.getCases();
+        if (courtCase == null || ObjectUtils.isEmpty(courtCase)) {
+            throw new CustomException(VALIDATION_ERR, "courtCase cannot be empty");
+        }
+        if (ObjectUtils.isEmpty(courtCase.getId())) {
+            throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
+        }
+        if (courtCase.getCourtCaseNumber() == null) {
+            throw new CustomException(VALIDATION_ERR, "courtCaseNumber cannot be empty or null");
+        }
+
+        if (courtCase.getIsLPRCase() == null || ObjectUtils.isEmpty(courtCase.getIsLPRCase())) {
+            throw new CustomException(VALIDATION_ERR, "isLPRCase cannot be empty or null");
+        }
+
+        if (courtCase.getIsLPRCase() && (courtCase.getLprNumber() != null || courtCase.getCourtCaseNumberBackup() != null)) {
+            // If trying to convert case to Long Pending Registration, it should not have LPR number or backup court case number
+            // case can only go to LPR once
+            throw new CustomException(VALIDATION_ERR, "To convert to LPR, case cannot have LPR number or backup court case number");
+        }
+
+    }
 }

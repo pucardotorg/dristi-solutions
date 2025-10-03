@@ -61,6 +61,13 @@ public class ServiceConstants {
 
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
+    public static final String GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING = "namesOfPartiesRequired";
+
+    public static final String GET_ATTENDEES_OF_EXISTING_HEARING = "attendees";
+
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+
     //
 
     public static final String CASE_ADMITTED = "CASE_ADMITTED";
@@ -71,9 +78,13 @@ public class ServiceConstants {
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
+    public static final String ABANDONED = "ABANDONED";
     public static final String CLOSE = "CLOSE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
+    public static final String SAVE_DRAFT = "SAVE_DRAFT";
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
     public static final String MANUAL = "MANUAL_";
     public static final String APPROVE = "APPROVE";
     public static final String SEND_BACK = "SEND_BACK";
@@ -89,16 +100,16 @@ public class ServiceConstants {
     public static final String SUBMIT_BAIL_DOCUMENTS = "Submission Bail Document";
     public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
     public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
+    public static final String PAYMENT_PENDING_FOR_PROCLAMATION = "PAYMENT_PENDING_FOR_PROCLAMATION";
+    public static final String PAYMENT_PENDING_FOR_ATTACHMENT = "PAYMENT_PENDING_FOR_ATTACHMENT";
     public static final String PAYMENT_PENDING = "PAYMENT_PENDING_";
     public static final String MAKE_PAYMENT_FOR_SUMMONS = "MAKE_PAYMENT_FOR_SUMMONS";
     public static final String MAKE_PAYMENT_FOR_NOTICE = "MAKE_PAYMENT_FOR_NOTICE";
     public static final String SECTION_223 = "Section 223 Notice";
-    public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String ISSUE_ORDER = "ISSUE_ORDER";
     public static final String UNSIGNED = "UNSIGNED";
     public static final String DELETE = "DELETE";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
-    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
@@ -131,10 +142,31 @@ public class ServiceConstants {
     public static final String SETTLEMENT = "SETTLEMENT";
     public static final String SUMMONS = "SUMMONS";
     public static final String WARRANT = "WARRANT";
+    public static final String PROCLAMATION = "PROCLAMATION";
+    public static final String ATTACHMENT = "ATTACHMENT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
+    public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
+    public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
 
     public static final String SMS = "SMS";
 
     public static final String EMAIL = "EMAIL";
+    public static final String APPROVAL_REJECTION_ADD_WITNESS = "APPROVAL_REJECTION_ADD_WITNESS";
+    public static final String ERROR_ADDING_WITNESS="ERROR_ADDING_WITNESS";
+    public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
+    public static final String COURT_WITNESS = "-";
+    public static final String ACCUSED = "ACCUSED";
 
+    public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION = "MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION";
+
+    public static final String SCHEDULE_HEARING_SUFFIX = "_SCHEDULE_HEARING";
+
+    public static final String ENG_LOCALE_CODE = "en_IN";
+
+    public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
+
+    public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String DOT = ". ";
 }

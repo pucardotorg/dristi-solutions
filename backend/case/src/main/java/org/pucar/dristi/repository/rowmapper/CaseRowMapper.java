@@ -78,6 +78,11 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .status(rs.getString("status"))
                             .remarks(rs.getString("remarks"))
                             .auditdetails(auditdetails)
+                            .courtCaseNumberBackup(rs.getString("courtCaseNumberBackup"))
+                            .stageBackup(rs.getString("stageBackup"))
+                            .substageBackup(rs.getString("substageBackup"))
+                            .lprNumber(rs.getString("lprNumber"))
+                            .isLPRCase(rs.getBoolean("isLPRCase"))
                             .build();
                 }
 

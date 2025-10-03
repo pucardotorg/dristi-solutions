@@ -73,6 +73,28 @@ export const formatDateYYMMDD = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+export const getFormattedDate = (epochTime) => {
+  const date = new Date(epochTime);
+  const formattedDate = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return formattedDate;
+};
+
+export const checkIfDueDatePassed = (dueDate) => {
+  if (!dueDate) return false;
+
+  const slaDate = new Date(dueDate);
+  const today = new Date();
+
+  // Set both dates to midnight to ignore time
+  slaDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return slaDate < today;
+};
+
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
   return paymentType?.find((data) => data?.businessService?.some((businessService) => businessService?.businessCode === businessCode))?.suffix || "";
 };

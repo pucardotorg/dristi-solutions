@@ -216,7 +216,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       },
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
-      .then((individualData) => {
+      .then(async (individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           let currentAddress;

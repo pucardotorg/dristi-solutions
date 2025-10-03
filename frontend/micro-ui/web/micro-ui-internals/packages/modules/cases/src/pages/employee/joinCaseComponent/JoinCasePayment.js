@@ -1,32 +1,14 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
-import { taskService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
 
-const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch, type }) => {
+const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type }) => {
   const { t } = useTranslation();
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
-  const toast = useToast();
   const [isApiCalled, setIsApiCalled] = useState(false);
-
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
 
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
@@ -41,13 +23,6 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
-
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
 
   const { paymentCalculation, totalAmount } = useMemo(() => {
     if (!task) return { paymentCalculation: [], totalAmount: "0" };
@@ -179,7 +154,7 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
                 }
                 refetch();
               } catch (error) {
-                console.log("error", error);
+                console.error("error", error);
               }
               setIsApiCalled(false);
             }}

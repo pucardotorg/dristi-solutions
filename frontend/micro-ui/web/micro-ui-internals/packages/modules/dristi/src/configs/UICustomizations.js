@@ -7,6 +7,7 @@ import { OwnerColumn } from "../components/OwnerColumn";
 import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
+import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
 import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
@@ -14,6 +15,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -478,7 +480,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseId = row?.businessObject?.billDetails?.caseId;
-      const filingNumber = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
+      const filingNumber = row?.businessObject?.billDetails?.filingNumber;
       const cmpNumber = row?.businessObject?.billDetails?.cmpNumber;
       const courtCaseNumber = row?.businessObject?.billDetails?.courtCaseNumber;
       const caseTitle = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[0].trim();
@@ -486,12 +488,13 @@ export const UICustomizations = {
       const service = row?.businessObject?.billDetails?.service;
       const billStatus = row?.businessObject?.billDetails?.billStatus;
       const paymentType = row?.businessObject?.billDetails?.paymentType;
+      const courtId = row?.businessObject?.billDetails?.courtId;
       switch (key) {
         case "CASE_NAME_ID":
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
                 {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
               </Link>
@@ -506,7 +509,7 @@ export const UICustomizations = {
             <span className="action-link">
               <Link
                 style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
                 {" "}
                 <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
@@ -600,12 +603,11 @@ export const UICustomizations = {
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
           }
+          const tooltipId = `hearing-list-${row?.businessObject?.orderNotification?.id}`;
           return (
             <div>
-              {value?.length > 2 && (
-                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
-              )}
-              <span data-tip data-for={`hearing-list`}>{`${value
+              {value?.length > 2 && <ReactTooltip id={tooltipId}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>}
+              <span data-tip data-for={tooltipId}>{`${value
                 ?.slice(0, 2)
                 ?.map((party) => party?.partyName || party?.name)
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
@@ -636,9 +638,25 @@ export const UICustomizations = {
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          if (value?.status !== OrderWorkflowState.DRAFT_IN_PROGRESS || value?.entityType === "Notification") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="orderInboxConfig" />;
         default:
           break;
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_order_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   litigantInboxConfig: {
@@ -835,7 +853,7 @@ export const UICustomizations = {
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
         case "OWNER":
-          return removeInvalidNameParts(value);
+          return value ? removeInvalidNameParts(value) : "-";
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
@@ -869,7 +887,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -907,7 +925,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1178,9 +1196,15 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const isEmployee = userInfo?.type !== "CITIZEN";
       switch (key) {
         case "FILING_NAME":
-          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : value;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle
+            ? row?.additionalDetails?.formdata?.documentTitle
+            : row?.artifactType === "WITNESS_DEPOSITION"
+            ? `${t(value)} (${row?.tag})`
+            : value;
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
@@ -1202,7 +1226,10 @@ export const UICustomizations = {
               {t("VOID")}
             </div>
           ) : row?.status ? (
-            <CustomChip text={t(row?.status)} shade={"green"} />
+            <CustomChip
+              text={t(row?.artifactType === "WITNESS_DEPOSITION" && row?.status === "COMPLETED" ? "SIGNED" : row?.status)}
+              shade={"green"}
+            />
           ) : (
             ""
           );
@@ -1213,7 +1240,16 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
+        case "EVIDENCE_STATUS":
+          return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
+            <CustomChip
+              text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
+              shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+            />
+          ) : (
+            ""
+          );
         default:
           return "N/A";
       }
@@ -1231,24 +1267,34 @@ export const UICustomizations = {
                 label: "MARK_AS_VOID",
                 id: "mark_as_void",
                 hide: false,
-                disabled: row?.status !== "SUBMITTED",
+                disabled: row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED",
                 action: column.clickFunc,
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
-        !row.isEvidence &&
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
-        !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? [
-              {
-                label: "MARK_AS_EVIDENCE",
-                id: "mark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
+        !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
+          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+            ? [
+                {
+                  label: "VIEW_MARK_AS_EVIDENCE",
+                  id: "view_mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
+            : [
+                {
+                  label: "MARK_AS_EVIDENCE",
+                  id: "mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
           : []),
         // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
         //   ? [
@@ -1277,7 +1323,7 @@ export const UICustomizations = {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
           hide: false,
-          disabled: row?.status !== "SUBMITTED" && row?.filingType === "DIRECT",
+          disabled: (row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT",
           action: column.clickFunc,
         },
       ];
@@ -1411,12 +1457,31 @@ export const UICustomizations = {
                 };
               });
 
+            const witnessDetails =
+              data?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((itemData) => {
+                const fullName = constructFullName(itemData?.data?.firstName, itemData?.data?.middleName, itemData?.data?.lastName);
+                return {
+                  code: fullName,
+                  name: fullName,
+                  uniqueId: itemData?.uniqueId,
+                  isJoined: false,
+                  associatedWith: itemData?.data?.ownerType || "COMPLAINANT",
+                  partyType: "witness",
+                  caseId: data?.criteria[0]?.responseList[0]?.id,
+                  isEditable: false,
+                  auditDetails: itemData?.data?.createdTime
+                    ? { createdTime: itemData?.data?.createdTime }
+                    : data?.criteria[0]?.responseList[0]?.auditDetails,
+                };
+              }) || [];
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
               ...joinedAndPartiallyJoinedAdvocates,
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
+              ...witnessDetails,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1440,8 +1505,13 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
-          return associatedWith;
+          const associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+              ? row?.representingList
+              : row?.partyType === "witness"
+              ? t(row?.associatedWith)
+              : "";
+          return associatedWith || "";
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
             ? t("JOINED")
@@ -1466,7 +1536,7 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType;
+          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
@@ -1522,6 +1592,622 @@ export const UICustomizations = {
           },
         },
       ];
+    },
+  },
+  HomeHearingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const updatedCriteria = {
+        processSearchCriteria: {
+          businessService: ["hearing-default"],
+          moduleName: "Hearing Service",
+          tenantId: requestCriteria?.params?.tenantId || "kl",
+        },
+        moduleSearchCriteria: {
+          fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
+          toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
+          tenantId: requestCriteria?.params?.tenantId || "kl",
+          ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
+        },
+        tenantId: requestCriteria?.params?.tenantId || "kl",
+        limit: requestCriteria?.state?.tableForm?.limit || 10,
+        offset: requestCriteria?.state?.tableForm?.offset || 0,
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          inbox: updatedCriteria,
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            if (!data || !data.items) {
+              console.error("Data or items is null or undefined");
+              return [];
+            }
+            try {
+              additionalDetails?.setCount(data?.totalCount || (Array.isArray(data) ? data.length : 0));
+              const updatedItems = data.items.map((item, index) => {
+                return {
+                  ...item,
+                  index,
+                };
+              });
+              return {
+                ...data,
+                items: updatedItems,
+              };
+            } catch (error) {
+              console.error("Error processing data:", error);
+              return data;
+            }
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        // case "ADVOCATES":
+        //   if (value === null || value === undefined || value === "undefined" || value === "null") {
+        //     return null;
+        //   }
+        //   return (
+        //     <div>
+        //       {value?.length > 2 && (
+        //         <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
+        //       )}
+        //       <span data-tip data-for={`hearing-list`}>{`${value
+        //         ?.slice(0, 2)
+        //         ?.map((party) => party?.partyName || party?.name)
+        //         ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
+        //     </div>
+        //   );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "CS_ACTIONS":
+          return (
+            <span>
+              <div
+                style={{
+                  position: "absolute",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: 40,
+                  height: 0,
+                  marginRight: 10,
+                }}
+              >
+                <div style={{ cursor: "pointer" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ActionEdit column={column} row={row} master="commonUiConfig" module="HomeHearingConfig" />{" "}
+                  </svg>
+                </div>
+              </div>
+              <div style={{ position: "absolute", display: "flex", justifyContent: "center", alignItems: "center", width: 40, height: 0 }}>
+                <div style={{ cursor: "pointer" }}>
+                  <svg width="4" height="16" viewBox="0 0 4 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="HomeHearingConfig" />{" "}
+                  </svg>
+                </div>
+              </div>
+            </span>
+          );
+        case "S.NO":
+          return row?.index ? row?.index + 1 : 1;
+        case "CASE_NAME":
+          return (
+            <Link
+              to={`/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, configs) => {
+      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const date = new Date(row.startTime);
+      const future = row.startTime > Date.now();
+      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
+      if (row?.businessObject?.hearingDetails?.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
+          {
+            label: "Start hearing",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  // hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+          {
+            label: "Mark as Passed Over",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  // hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+        ];
+      } else if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
+          {
+            label: "End hearing",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  // hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+          {
+            label: "Mark as Passed Over",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  // hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+        ];
+      }
+    },
+  },
+  HomePendingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const activeTab = additionalDetails?.activeTab;
+      return {
+        ...requestCriteria,
+        body: {
+          // ...requestCriteria.body,
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+              courtId: localStorage.getItem("courtId"),
+            },
+            searchReviewProcess: {
+              date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
+              actionCategory: "Review Process",
+              ...(activeTab === "REVIEW_PROCESS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchViewApplication: {
+              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+              actionCategory: "View Application",
+              ...(activeTab === "VIEW_APPLICATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchScheduleHearing: {
+              date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+              actionCategory: "Schedule Hearing",
+              ...(activeTab === "SCHEDULE_HEARING" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchRegisterCases: {
+              date: null,
+              isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
+              actionCategory: "Register cases",
+              ...(activeTab === "REGISTRATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchBailBonds: {
+              date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
+              actionCategory: "Bail Bond",
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const reviwCount = data?.reviewProcessData?.count || 0;
+            const applicationCount = data?.viewApplicationData?.count || 0;
+            const scheduleCount = data?.scheduleHearingData?.count || 0;
+            const registerCount = data?.registerCasesData?.count || 0;
+            const bailBondStatusCount = data?.bailBondData?.count || 0;
+
+            // setPendingTaskCount();
+            additionalDetails?.setCount({
+              REGISTRATION: registerCount,
+              REVIEW_PROCESS: reviwCount,
+              VIEW_APPLICATION: applicationCount,
+              SCHEDULE_HEARING: scheduleCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
+            });
+            const processFields = (fields) => {
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else {
+                  acc[key] = curr.value;
+                }
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
+                advocateDetails: result?.advocateDetails,
+                tab: activeTab,
+              };
+            };
+            if (activeTab === "REVIEW_PROCESS") {
+              return {
+                TotalCount: data?.reviewProcessData?.count,
+                data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "VIEW_APPLICATION") {
+              return {
+                TotalCount: data?.viewApplicationData?.count,
+                data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else if (activeTab === "SCHEDULE_HEARING")
+              return {
+                TotalCount: data?.scheduleHearingData?.count,
+                data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+              };
+            else if (activeTab === "BAIL_BOND_STATUS") {
+              return {
+                TotalCount: data?.bailBondData?.count,
+                data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else
+              return {
+                TotalCount: data?.registerCasesData?.count,
+                data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "PENDING_CASE_NAME": {
+          return row?.tab === "REGISTRATION" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/admission`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+            <OrderName rowData={row} colData={column} value={value} />
+          ) : (
+            // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        }
+        case "ADVOCATES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.complainant?.length > 0 &&
+                  `${row?.advocateDetails?.complainant?.[0]}(C)${
+                    row?.advocateDetails?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.complainant?.length > 2
+                      ? ` + ${row?.advocateDetails?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.accused?.length > 0 &&
+                  `${row?.advocateDetails?.accused?.[0]}(A)${
+                    row?.advocateDetails?.accused?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.accused?.length > 2
+                      ? ` + ${row?.advocateDetails?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+            </div>
+          );
+        case "STAGE":
+          return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+
+  BailBondConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const isCitizen = userRoles?.includes("CITIZEN");
+
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+      const bailId = requestCriteria?.state?.searchForm?.bailId;
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            ...(bailId && { bailId }),
+            ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
+            fuzzySearch: true,
+          },
+          pagination: {
+            sortBy: "bailCreatedTime",
+            order: "desc",
+            limit: limit,
+            offSet: offSet,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "BAIL_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true} />;
+        case "STAGE":
+          return t(value);
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "BAIL_ID":
+          return value;
+        default:
+          return value ? value : "-";
+      }
     },
   },
   patternValidation: (key) => {

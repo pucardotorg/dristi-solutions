@@ -65,6 +65,9 @@ public class TaskCase {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
 
+    @JsonProperty("courtId")
+    private String courtId = null;
+
     @JsonProperty("createdDate")
     @NotNull
     @Valid

@@ -25,6 +25,7 @@ import { useGetPendingTask } from "./dristi/useGetPendingTask.js";
 import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
+import useDownloadFiles from "./dristi/useDownloadFiles.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles, getFilingType } from "../Utils/index.js";
@@ -38,6 +39,7 @@ import useFetchBill from "./dristi/useFetchBill.js";
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
+    getMarkAsEvidencePdf: "/egov-pdf/evidence",
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
@@ -59,6 +61,7 @@ export const Urls = {
     searchHearings: "/hearing/v1/search",
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
+    getDraftOrder: "/order-management/v1/getDraftOrder",
     demandCreate: "/billing-service/demand/_create",
     ordersSearch: "/order/v1/search",
     ordersCreate: "/order/v1/create",
@@ -74,6 +77,7 @@ export const Urls = {
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",
     eSign: "/e-sign-svc/v1/_esign",
     paymentCalculator: "/payment-calculator/v1/case/fees/_calculate",
+    getTreasuryPaymentBreakup: "/etreasury/payment/v1/_getHeadBreakDown",
     fetchBill: "/billing-service/bill/v2/_fetchbill",
     searchBill: "/billing-service/bill/v2/_search",
     eTreasury: "/etreasury/payment/v1/_processChallan",
@@ -94,9 +98,18 @@ export const Urls = {
     createProfileRequest: "/case/v2/profilerequest/create",
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
+    taskSearch: "/task/v1/search",
   },
   case: {
     addWitness: "/case/v1/add/witness",
+    addNewWitness: "/case/v2/add/witness",
+    taskCreate: "/task/v1/create",
+    searchTasks: "/task/v1/search",
+  },
+  hearing: {
+    hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
+    uploadWitnesspdf: "/hearing/witnessDeposition/v1/uploadPdf",
+    witnessDepositionPreviewPdf: "/egov-pdf/hearing",
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
@@ -128,6 +141,7 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
+  useDownloadFiles,
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
   downloadPdfFromFile,

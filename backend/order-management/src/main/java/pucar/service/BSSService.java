@@ -2,6 +2,7 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -14,6 +15,11 @@ import pucar.util.*;
 import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
+import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.hearing.HearingRequest;
+import pucar.web.models.hearing.HearingResponse;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -33,9 +39,10 @@ public class BSSService {
     private final Configuration configuration;
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
+    private final HearingUtil hearingUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -44,6 +51,7 @@ public class BSSService {
         this.configuration = configuration;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
+        this.hearingUtil = hearingUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -210,7 +218,9 @@ public class BSSService {
                             .order(order).build();
 
                     orderProcessor.preProcessOrder(orderUpdateRequest);
-
+                    if (order.getNextHearingDate() != null) {
+                        hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
+                    }
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);

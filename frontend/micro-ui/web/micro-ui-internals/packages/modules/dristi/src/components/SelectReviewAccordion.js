@@ -38,8 +38,8 @@ const extractValue = (data, key) => {
 
 function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, formState, control, setError }) {
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isScrutiny = useMemo(() => roles.some((role) => role.code === "CASE_REVIEWER"), [roles]);
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isScrutiny = useMemo(() => roles?.some((role) => role.code === "CASE_REVIEWER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isPrevScrutiny = config?.isPrevScrutiny || false;
   const [isOpen, setOpen] = useState(true);
   const history = useHistory();
@@ -53,12 +53,14 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   const [formDataLoad, setFormDataLoad] = useState(true);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const isCitizen = useMemo(() => (userInfo?.type === "CITIZEN" ? true : false), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const { isLoading, data: caseData } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
+          ...(!isScrutiny && !isCitizen && courtId && { courtId }),
         },
       ],
       tenantId,
@@ -644,6 +646,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         titleHeading={titleHeading}
                         isPrevScrutiny={isPrevScrutiny}
                         isCaseReAssigned={isCaseReAssigned}
+                        state={state}
                       />
                     );
                   })}
