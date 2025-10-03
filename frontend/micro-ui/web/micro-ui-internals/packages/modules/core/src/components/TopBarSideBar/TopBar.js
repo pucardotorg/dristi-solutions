@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import ChangeCity from "../ChangeCity";
 import ChangeLanguage from "../ChangeLanguage";
+import ChangeCourt from "../ChangeCourt";
 import TopBarComponent from "./TopBarComponent";
 const TextToImg = (props) => (
   <span className="user-img-txt" onClick={props.toggleMenu} title={props.name}>
@@ -196,6 +197,8 @@ const TopBar = ({
                 <ChangeCity dropdown={true} t={t} />
               )}
             </div> */}
+            {/* Display court dropdown only for employee users */}
+            <div className="left"><ChangeCourt dropdown={true} /></div>
             <div className="left">{showLanguageChange && <ChangeLanguage dropdown={true} />}</div>
             {userDetails?.access_token && (
               <div className="left">

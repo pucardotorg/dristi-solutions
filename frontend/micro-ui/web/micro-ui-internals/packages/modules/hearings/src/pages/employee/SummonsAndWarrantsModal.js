@@ -108,7 +108,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {

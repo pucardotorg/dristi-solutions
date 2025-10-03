@@ -59,7 +59,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const name = "Signature";
   const pageModule = "en";
   const judgeId = localStorage.getItem("judgeId");
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
     ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))

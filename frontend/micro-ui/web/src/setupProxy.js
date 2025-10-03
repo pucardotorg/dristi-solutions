@@ -2,6 +2,10 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 const createProxy = createProxyMiddleware({
   target: process.env.REACT_APP_PROXY_URL,
   changeOrigin: true,
+  onProxyReq : (proxyReq, req, res) => { 
+    // TODO : need to be removed
+    console.log("proxying request to:", proxyReq.getHeader("courtId"));
+  }
 });
 module.exports = function (app) {
   [

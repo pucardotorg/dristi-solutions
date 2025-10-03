@@ -63,7 +63,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const name = "Signature";
   const pageModule = "en";
   const judgeId = localStorage.getItem("judgeId");
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
     ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))

@@ -104,7 +104,7 @@ const GenerateBailBond = () => {
   // Access breadcrumb context to get and set case navigation data
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   // const { data: caseData, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
   //   {

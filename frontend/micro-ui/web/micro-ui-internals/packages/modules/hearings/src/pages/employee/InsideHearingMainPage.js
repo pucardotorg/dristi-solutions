@@ -47,7 +47,7 @@ const InsideHearingMainPage = () => {
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [isItemPending, setIsItemPending] = useState(false);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const { t } = useTranslation();
   const isInitialLoad = useRef(true);
   const userInfo = Digit?.UserService?.getUser?.()?.info;

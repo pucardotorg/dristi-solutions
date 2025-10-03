@@ -11,11 +11,11 @@ import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submiss
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
+import { setupRequestInterceptor } from "./setupRequestInterceptor";
 
 import "dristi-ui-css/dist/index.min.css";
 
-window.contextPath =
-  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
+window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
 const enabledModules = [
   "DRISTI",
@@ -31,6 +31,7 @@ const moduleReducers = (initData) => ({
 });
 
 const initDigitUI = () => {
+  setupRequestInterceptor();
   window.Digit.ComponentRegistryService.setupRegistry({});
   initCoreComponents();
   initDRISTIComponents();

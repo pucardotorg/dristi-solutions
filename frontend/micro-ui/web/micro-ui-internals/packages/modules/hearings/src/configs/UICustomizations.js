@@ -48,7 +48,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-      const courtId = localStorage.getItem("courtId");
+      const courtId = sessionStorage.getItem("courtId");;
       const searchParams = new URLSearchParams();
       const showAction =
         userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;

@@ -34,7 +34,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     }
   };
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const params = location?.state.state.params;
   const taskNumber = params?.referenceId;

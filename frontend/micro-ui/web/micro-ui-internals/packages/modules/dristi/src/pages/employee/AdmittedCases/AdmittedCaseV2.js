@@ -261,7 +261,7 @@ const AdmittedCaseV2 = () => {
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
@@ -1270,7 +1270,7 @@ const AdmittedCaseV2 = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = localStorage.getItem("courtId");
+    const courtId = sessionStorage.getItem("courtId");;
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(

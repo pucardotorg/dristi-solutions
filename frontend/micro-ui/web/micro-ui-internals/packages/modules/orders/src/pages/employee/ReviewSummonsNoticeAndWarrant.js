@@ -107,7 +107,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return isJudge || hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess;
   }, [isJudge, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
 
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);

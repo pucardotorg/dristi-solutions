@@ -221,7 +221,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [deliveryChannels, setDeliveryChannels] = useState([
     { label: "SMS", type: "SMS", code: "SMS", values: [] },

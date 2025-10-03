@@ -138,7 +138,7 @@ const MarkAsEvidence = ({
 }) => {
   const [loader, setLoader] = useState(false); // Loader state for API calls
   const [stepper, setStepper] = useState(0);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);

@@ -654,7 +654,7 @@ export const UICustomizations = {
       const date = new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime();
       const fetchEntries = additionalDetails?.fetchEntries;
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
-      const courtId = localStorage.getItem("courtId");
+      const courtId = sessionStorage.getItem("courtId");;
       // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
       // sessionStorage.setItem("diaryDate", date);
       // sessionStorage.removeItem("diaryDate");

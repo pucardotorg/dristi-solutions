@@ -59,7 +59,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const [show, setShow] = useState(false);
 

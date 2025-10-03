@@ -33,7 +33,7 @@ export const WitnessDepositionSignModal = ({
   const docObj = location.state?.docObj;
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);

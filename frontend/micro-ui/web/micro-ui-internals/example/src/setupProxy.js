@@ -6,6 +6,9 @@ const createProxy = createProxyMiddleware({
   target: process.env.REACT_APP_PROXY_API || "https://works-dev.digit.org",
   changeOrigin: true,
   secure: false,
+  onProxyReq: (proxyReq, req, res) => { 
+    console.log("proxying request to:", proxyReq.getHeader("courtId") + proxyReq.path);
+  }
 });
 const assetsProxy = createProxyMiddleware({
   target: process.env.REACT_APP_PROXY_ASSETS || "https://works-dev.digit.org",

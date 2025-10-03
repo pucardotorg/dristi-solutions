@@ -55,7 +55,7 @@ function BulkSignADiaryView() {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isDiaryApprover = useMemo(() => roles?.some((role) => role.code === "DIARY_APPROVER"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const [entryDate, setEntryDate] = useState(
     parseInt(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("diaryDate")) || new Date().setHours(0, 0, 0, 0)
   );

@@ -74,7 +74,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
 
   const [bailBonds, setBailBonds] = useState([]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const formatAdvocateNames = (advocateNames) => {
     if (advocateNames.length > 0) {
       return `${advocateNames[0]}${

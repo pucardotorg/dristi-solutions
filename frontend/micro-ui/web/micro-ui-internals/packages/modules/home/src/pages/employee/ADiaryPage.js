@@ -174,7 +174,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {

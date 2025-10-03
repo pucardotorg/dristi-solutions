@@ -109,7 +109,7 @@ function CaseFileAdmission({ t, path }) {
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   // const employeeCrumbs = useMemo(
   //   () => [

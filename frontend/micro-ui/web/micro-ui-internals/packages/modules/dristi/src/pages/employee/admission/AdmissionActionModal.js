@@ -74,7 +74,7 @@ function AdmissionActionModal({
   const [label, setLabel] = useState(false);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);

@@ -98,7 +98,7 @@ const HomeView = () => {
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(

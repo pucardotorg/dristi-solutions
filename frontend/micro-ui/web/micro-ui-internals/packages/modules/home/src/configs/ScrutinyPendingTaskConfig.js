@@ -23,7 +23,7 @@ export const scrutinyPendingTaskConfig = [
           moduleSearchCriteria: {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
-            courtId: localStorage.getItem("courtId"),
+            courtId: sessionStorage.getItem("courtId"),
             assignedRole: JSON.parse(window.localStorage.getItem("user-info"))?.roles?.map((role) => role?.code),
           },
           searchScrutinyCases: {
@@ -119,7 +119,7 @@ export const scrutinyPendingTaskConfig = [
           moduleSearchCriteria: {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
-            courtId: localStorage.getItem("courtId"),
+            courtId: sessionStorage.getItem("courtId"),
             assignedRole: JSON.parse(window.localStorage.getItem("user-info"))?.roles?.map((role) => role?.code),
           },
           searchScrutinyCases: {
@@ -215,7 +215,7 @@ export const scrutinyPendingTaskConfig = [
           moduleSearchCriteria: {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
-            courtId: localStorage.getItem("courtId"),
+            courtId: sessionStorage.getItem("courtId"),
             assignedRole: JSON.parse(window.localStorage.getItem("user-info"))?.roles?.map((role) => role?.code),
           },
           searchScrutinyCases: {

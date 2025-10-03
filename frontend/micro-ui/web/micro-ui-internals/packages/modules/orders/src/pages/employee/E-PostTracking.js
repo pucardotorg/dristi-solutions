@@ -38,7 +38,7 @@ const EpostTrackingPage = () => {
   const [toast, setToast] = useState(null);
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const showToast = (type, message, duration = 5000) => {
     setToast({ key: type, action: message });
