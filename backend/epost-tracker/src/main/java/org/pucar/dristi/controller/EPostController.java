@@ -63,7 +63,7 @@ public class EPostController {
         return new ResponseEntity<>(ePostResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/epost/v1/download/excel")
+    @PostMapping("/epost/v1/download/excel")
     public ResponseEntity<byte[]> downloadExcel(@Parameter(in = ParameterIn.DEFAULT, description = "Epost Excel Download", required = true, schema = @Schema()) @Valid @RequestBody EPostTrackerSearchRequest request) throws Exception {
         log.info("Downloading Excel for request: {}", request);
         byte[] excelBytes = excelService.generateExcel(request);
