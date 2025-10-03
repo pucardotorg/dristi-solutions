@@ -1508,19 +1508,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 <DocumentModal
                   config={
                     config?.label === "PENDING_SIGN"
-                      ? unsignedModalConfig
+                      ? actionModalType !== "SIGN_PENDING"
+                        ? signedModalConfig
+                        : unsignedModalConfig
                       : config?.label === "SIGNED"
                       ? signedModalConfig
                       : config?.label === "SENT"
                       ? sentModalConfig
-                      : signedModalConfig
-                    // config?.label === "SENT"
-                    //   ? sentModalConfig
-                    //   : hasSignedDoc
-                    //   ? signedModalConfig
-                    //   : actionModalType === "SIGN_PENDING"
-                    //   ? unsignedModalConfig
-                    //   : signedModalConfig
+                      : ""
                   }
                   currentStep={step}
                 />
@@ -1558,24 +1553,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           )}
         </React.Fragment>
       )}
-      {/* Modals */}
-      {/* {showActionModal && (
-        <Modal
-          headerBarEnd={<CloseBtn onClick={handleClose} />}
-          actionSaveLabel={t("PROCEED_TO_SIGN")}
-          actionSaveOnSubmit={handleSubmit}
-          actionCancelLabel={t("BACK")}
-          actionCancelOnSubmit={handleClose}
-          formId="modal-action"
-          headerBarMain={<Heading label={t("REVIEW_DOCUMENT")} />}
-          className="case-types"
-          popupStyles={{ width: "85%" }}
-        >
-          <div style={{ padding: "20px" }}>
-            <DocumentViewerWithComment infos={infos} documents={documents} links={links} />
-          </div>
-        </Modal>
-      )}  */}
+
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
