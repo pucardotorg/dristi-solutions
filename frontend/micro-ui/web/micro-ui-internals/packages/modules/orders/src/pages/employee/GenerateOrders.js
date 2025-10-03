@@ -428,7 +428,7 @@ const GenerateOrders = () => {
     [caseData]
   );
 
-  const caseCourtId = useMemo(() => caseDetails?.courtId || sessionStorage.getItem("courtId");, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId || sessionStorage.getItem("courtId"), [caseDetails]);
 
   const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {

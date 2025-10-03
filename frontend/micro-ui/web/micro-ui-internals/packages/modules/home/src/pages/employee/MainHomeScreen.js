@@ -155,7 +155,7 @@ const MainHomeScreen = () => {
             },
             moduleSearchCriteria: {
               tenantId: tenantId,
-              courtId: sessionStorage.getItem("courtId");,
+              courtId: sessionStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
             tenantId: tenantId,
@@ -185,7 +185,7 @@ const MainHomeScreen = () => {
             },
             moduleSearchCriteria: {
               tenantId: tenantId,
-              courtId: sessionStorage.getItem("courtId");,
+              courtId: sessionStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
             tenantId: tenantId,
@@ -220,7 +220,7 @@ const MainHomeScreen = () => {
           moduleSearchCriteria: {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
-            courtId: sessionStorage.getItem("courtId");,
+            courtId: sessionStorage.getItem("courtId"),
             assignedRole: assignedRoles,
           },
           limit: 10,
@@ -475,7 +475,7 @@ const MainHomeScreen = () => {
               moduleSearchCriteria: {
                 screenType: ["home", "applicationCompositeOrder"],
                 isCompleted: false,
-                courtId: sessionStorage.getItem("courtId");,
+                courtId: sessionStorage.getItem("courtId"),
                 assignedRole: assignedRoles,
               },
               searchScrutinyCases: {

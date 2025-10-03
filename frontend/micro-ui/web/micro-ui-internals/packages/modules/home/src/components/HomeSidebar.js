@@ -111,7 +111,7 @@ const HomeSidebar = ({
                       entityType: "Order",
                       tenantId: Digit.ULBService.getCurrentTenantId(),
                       status: "PENDING_BULK_E-SIGN",
-                      courtId: sessionStorage.getItem("courtId");,
+                      courtId: sessionStorage.getItem("courtId"),
                     },
                     tenantId: Digit.ULBService.getCurrentTenantId(),
                     limit: 300,

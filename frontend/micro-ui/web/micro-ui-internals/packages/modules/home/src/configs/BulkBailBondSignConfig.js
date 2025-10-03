@@ -27,7 +27,7 @@ export const bulkBailBondSignConfig = {
         limit: limit,
         offset: offset,
         moduleSearchCriteria: {
-          courtId: sessionStorage.getItem("courtId");,
+          courtId: sessionStorage.getItem("courtId"),
           status: "PENDING_REVIEW",
         },
         processSearchCriteria: {

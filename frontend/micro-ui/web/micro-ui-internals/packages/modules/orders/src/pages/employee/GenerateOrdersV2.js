@@ -340,7 +340,7 @@ const GenerateOrdersV2 = () => {
     [caseData]
   );
 
-  const caseCourtId = useMemo(() => caseDetails?.courtId || sessionStorage.getItem("courtId");, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId || sessionStorage.getItem("courtId"), [caseDetails]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(

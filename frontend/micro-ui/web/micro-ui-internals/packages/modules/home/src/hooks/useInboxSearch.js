@@ -34,7 +34,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
             },
             moduleSearchCriteria: {
               tenantId: Digit.ULBService.getCurrentTenantId(),
-              courtId: sessionStorage.getItem("courtId");,
+              courtId: sessionStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
             tenantId: Digit.ULBService.getCurrentTenantId(),
