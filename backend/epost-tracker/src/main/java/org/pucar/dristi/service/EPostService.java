@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
+@Slf4j
 @Service
 public class EPostService {
 
@@ -50,7 +52,14 @@ public class EPostService {
             enrichSearchRequest(searchRequest);
             EPostTrackerSearchCriteria searchCriteria = searchRequest.getEPostTrackerSearchCriteria();
             if (searchCriteria.getPostalHub() != null) {
-                return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
+                if (searchCriteria.getIsDataRequired() == null || searchCriteria.getIsDataRequired()) {
+                    return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
+                } else {
+                    return EPostResponse.builder()
+                            .ePostTrackers(new ArrayList<>())
+                            .pagination(Pagination.builder().totalCount(0).build())
+                            .build();
+                }
             }
             else {
                 return EPostResponse.builder()
@@ -60,6 +69,18 @@ public class EPostService {
             }
         }
         return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(),limit,offset);
+    }
+
+    public EPostResponse getAllEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
+        if (searchRequest.getEPostTrackerSearchCriteria().getIsDataRequired() == null || searchRequest.getEPostTrackerSearchCriteria().getIsDataRequired()) {
+            return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
+        } else {
+            log.info("IsDataRequired is false, not fetching data");
+            return EPostResponse.builder()
+                    .ePostTrackers(new ArrayList<>())
+                    .pagination(Pagination.builder().totalCount(0).build())
+                    .build();
+        }
     }
 
     public EPostTracker updateEPost(EPostRequest ePostRequest) {

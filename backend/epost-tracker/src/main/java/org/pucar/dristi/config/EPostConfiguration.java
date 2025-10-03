@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Configuration
 @NoArgsConstructor
@@ -60,5 +62,31 @@ public class EPostConfiguration {
 
     @Value("${default.postal.hub}")
     private String defaultPostalHub;
+
+    @Value("${booked.delivery.status.list}")
+    private List<String> bookedDeliveryStatusList;
+
+    // Email Config
+    @Value("${email.topic}")
+    private String emailTopic;
+
+    @Value("${email.epost.subject}")
+    private String epostEmailSubject;
+
+    @Value("${email.epost.recipients}")
+    private String epostEmailRecipients;
+
+    @Value("${email.epost.template.code}")
+    private String epostEmailTemplateCode;
+
+    // Filestore Config
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+    @Value("${egov.filestore.module}")
+    private String fileStoreModule;
 
 }

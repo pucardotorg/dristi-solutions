@@ -55,6 +55,26 @@ public class EPostQueryBuilder {
             query.append(" booking_date = ? ");
             preparedStmtList.add(searchCriteria.getTrackingNumber());
         }
+        if (!ObjectUtils.isEmpty(searchCriteria.getBookingDateStartTime())) {
+            addClauseIfRequired(query,preparedStmtList);
+            query.append(" booking_date >= ? ");
+            preparedStmtList.add(searchCriteria.getBookingDateStartTime());
+        }
+        if (!ObjectUtils.isEmpty(searchCriteria.getBookingDateEndTime())) {
+            addClauseIfRequired(query,preparedStmtList);
+            query.append(" booking_date <= ? ");
+            preparedStmtList.add(searchCriteria.getBookingDateEndTime());
+        }
+        if (!ObjectUtils.isEmpty(searchCriteria.getReceivedDateStartTime())) {
+            addClauseIfRequired(query,preparedStmtList);
+            query.append(" received_date >= ? ");
+            preparedStmtList.add(searchCriteria.getReceivedDateStartTime());
+        }
+        if (!ObjectUtils.isEmpty(searchCriteria.getReceivedDateEndTime())) {
+            addClauseIfRequired(query,preparedStmtList);
+            query.append(" received_date <= ? ");
+            preparedStmtList.add(searchCriteria.getReceivedDateEndTime());
+        }
         if(!ObjectUtils.isEmpty(searchCriteria.getReceivedDate())){
             addClauseIfRequired(query,preparedStmtList);
             query.append(" received_date = ? ");

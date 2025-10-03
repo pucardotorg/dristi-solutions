@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.model.EPostResponse;
 import org.pucar.dristi.model.EPostTracker;
 import org.pucar.dristi.model.EPostTrackerSearchRequest;
@@ -24,15 +25,15 @@ public class ExcelService {
         this.ePostService = ePostService;
     }
 
-    public byte[] generateExcel(EPostTrackerSearchRequest request) throws IOException {
+    public byte[] generateExcel(EPostTrackerSearchRequest request) {
         log.info("Generating Excel for request: {}", request);
 
         // Fetch data
-        EPostResponse ePostResponse = ePostService.getEPost(request, 1000, 0);
+        EPostResponse ePostResponse = ePostService.getAllEPost(request, 1000, 0);
         List<EPostTracker> ePostTrackers = ePostResponse.getEPostTrackers();
 
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("EPost Report");
+            Sheet sheet = workbook.createSheet("Monthly E-Post Report");
 
             // Create header row
             Row headerRow = sheet.createRow(0);
@@ -92,6 +93,9 @@ public class ExcelService {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
             return outputStream.toByteArray();
+        } catch (IOException e) {
+            log.error("Error while generating Excel", e);
+            throw new CustomException("Error while generating Excel", e.getMessage());
         }
     }
 

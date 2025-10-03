@@ -29,16 +29,31 @@ public class EPostTrackerSearchCriteria {
     private List<String> deliveryStatusList;
 
     @JsonProperty("bookingDate")
-    private String bookingDate;
+    private Long bookingDate;
 
     @JsonProperty("receivedDate")
-    private String receivedDate;
+    private Long receivedDate;
+
+    @JsonProperty("bookingDateStartTime")
+    private Long bookingDateStartTime;
+
+    @JsonProperty("bookingDateEndTime")
+    private Long bookingDateEndTime;
+
+    @JsonProperty("receivedDateStartTime")
+    private Long receivedDateStartTime;
+
+    @JsonProperty("receivedDateEndTime")
+    private Long receivedDateEndTime;
 
     @JsonProperty("postalHub")
     private String postalHub;
 
     @JsonProperty("speedPostId")
     private String speedPostId;
+
+    @JsonProperty("isDataRequired")
+    private Boolean isDataRequired;
 
     @JsonProperty("pagination")
     private Pagination pagination = null;

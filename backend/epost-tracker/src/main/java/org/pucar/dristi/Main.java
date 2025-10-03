@@ -5,9 +5,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Import({ TracerConfiguration.class })
 @SpringBootApplication
+@EnableScheduling
+@EnableAsync
 @ComponentScan(basePackages = { "org.pucar.dristi", "org.pucar.dristi.controller", "org.pucar.dristi.config" })
 public class Main {
 
