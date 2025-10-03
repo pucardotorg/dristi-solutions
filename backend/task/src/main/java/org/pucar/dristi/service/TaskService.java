@@ -381,6 +381,8 @@ public class TaskService {
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
+            List<Role> userRoles = body.getRequestInfo().getUserInfo().getRoles();
+            validateUserCanSignTask(task.getTaskType(), userRoles);
 
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
@@ -981,6 +983,25 @@ public class TaskService {
             }
         }
         return updatedTasks;
+    }
+
+    public void validateUserCanSignTask(String taskType, List<Role> userRoles){
+        String signRole = getSignRoleForOrderType(taskType);
+        List<String> userRoleCodes = userRoles.stream().map(Role::getCode).toList();
+        if(!userRoleCodes.contains(signRole)){
+            throw new CustomException(VALIDATION_ERR, CANNOT_SIGN);
+        }
+    }
+
+    public String getSignRoleForOrderType(String orderType) {
+        return switch (orderType) {
+            case SUMMON -> ROLE_SIGN_PROCESS_SUMMONS;
+            case WARRANT -> ROLE_SIGN_PROCESS_WARRANT;
+            case NOTICE -> ROLE_SIGN_PROCESS_NOTICE;
+            case PROCLAMATION -> ROLE_SIGN_PROCESS_PROCLAMATION;
+            case ATTACHMENT -> ROLE_SIGN_PROCESS_ATTACHMENT;
+            default -> throw new CustomException(VALIDATION_ERR, String.format("Order type %s does not exist", orderType));
+        };
     }
 
     public void updateStatusChangeDate(Task task, String newDate) {
