@@ -511,7 +511,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
+          {/* <Button
             label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
@@ -522,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>
