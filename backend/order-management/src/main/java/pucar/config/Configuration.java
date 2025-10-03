@@ -114,6 +114,11 @@ public class Configuration {
     @Value("${dristi.case.process.profile.endpoint}")
     private String processProfileEndPoint;
 
+    @Value("${dristi.case.add.witness.endpoint}")
+    private String addWitnessEndPoint;
+
+    @Value("${dristi.case.update.lpr.details.endpoint}")
+    private String updateLprDetailsEndPoint;
 
     //Hearing config
     @Value("${dristi.hearing.host}")
@@ -187,4 +192,19 @@ public class Configuration {
     @Value("${egov.hrms.search.endpoint}")
     private String hrmsEndPoint;
 
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
 }

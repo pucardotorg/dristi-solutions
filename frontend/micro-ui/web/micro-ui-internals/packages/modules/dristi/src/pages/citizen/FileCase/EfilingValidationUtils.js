@@ -824,10 +824,10 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
-        if(!numberOfAdvocates) {
+        if (!numberOfAdvocates) {
           isNumberOfAdvocatesMissing = true;
         }
-        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
           isAdvocateCountDiffer = true;
         }
       }
@@ -1176,6 +1176,12 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       }
     }
 
+    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
     return hasError;
   } else {
     return false;
@@ -1239,6 +1245,9 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -2741,6 +2750,10 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {

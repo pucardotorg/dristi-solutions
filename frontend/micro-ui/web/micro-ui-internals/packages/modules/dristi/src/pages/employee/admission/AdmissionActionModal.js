@@ -80,9 +80,10 @@ function AdmissionActionModal({
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtStaff) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -222,7 +223,7 @@ function AdmissionActionModal({
           documents: [{}],
         },
         documents: [],
-        ...(hearingNumber && { hearingNumber }),
+        // ...(hearingNumber && { hearingNumber }),
         additionalDetails: {
           formdata: {
             orderType: {
@@ -237,7 +238,7 @@ function AdmissionActionModal({
       DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
         .then((res) => {
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",
