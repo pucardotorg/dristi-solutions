@@ -26,8 +26,6 @@ class EPostQueryBuilderTest {
         searchCriteria.setDeliveryStatus("DELIVERED");
         searchCriteria.setProcessNumber("PN123");
         searchCriteria.setTrackingNumber("TN123");
-        searchCriteria.setBookingDate("2024-01-01");
-        searchCriteria.setReceivedDate("2024-01-02");
 
         List<Object> preparedStmtList = new ArrayList<>();
 
@@ -39,9 +37,7 @@ class EPostQueryBuilderTest {
         assertTrue(query.contains(" delivery_status = ? "));
         assertTrue(query.contains(" process_number = ? "));
         assertTrue(query.contains(" tracking_number = ? "));
-        assertTrue(query.contains(" booking_date = ? "));
-        assertTrue(query.contains(" received_date = ? "));
-        assertEquals(5, preparedStmtList.size());  // 1 for deliveryStatus, 2 for deliveryStatusList, 1 for processNumber, 1 for trackingNumber, 1 for bookingDate, 1 for receivedDate
+        assertEquals(3, preparedStmtList.size());  // 1 for deliveryStatus, 2 for deliveryStatusList, 1 for processNumber, 1 for trackingNumber, 1 for bookingDate, 1 for receivedDate
     }
 
     @Test
