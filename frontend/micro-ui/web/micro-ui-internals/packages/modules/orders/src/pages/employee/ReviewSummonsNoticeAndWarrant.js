@@ -1528,7 +1528,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
             </div>
           </div>
-          {canSign && config?.label === "PENDING_SIGN" && (
+          {config?.label === "PENDING_SIGN" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
@@ -1537,11 +1537,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   disabled={hasNoSelectedItems}
                   style={{ width: "auto" }}
                 />
-                <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />
+                {canSign && <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />}
               </div>
             </div>
           )}
-          {canSign && config?.label === "SIGNED" && (
+          {config?.label === "SIGNED" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
