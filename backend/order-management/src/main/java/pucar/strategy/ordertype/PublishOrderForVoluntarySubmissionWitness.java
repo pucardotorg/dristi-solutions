@@ -11,6 +11,7 @@ import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.ApplicationUtil;
 import pucar.util.CaseUtil;
 import pucar.util.JsonUtil;
+import pucar.util.OrderUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
@@ -32,12 +33,14 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
     private final CaseUtil caseUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper mapper;
+    private final OrderUtil orderUtil;
 
-    public PublishOrderForVoluntarySubmissionWitness(ApplicationUtil applicationUtil, CaseUtil caseUtil, JsonUtil jsonUtil, ObjectMapper mapper) {
+    public PublishOrderForVoluntarySubmissionWitness(ApplicationUtil applicationUtil, CaseUtil caseUtil, JsonUtil jsonUtil, ObjectMapper mapper, OrderUtil orderUtil) {
         this.applicationUtil = applicationUtil;
         this.caseUtil = caseUtil;
         this.jsonUtil = jsonUtil;
         this.mapper = mapper;
+        this.orderUtil = orderUtil;
     }
 
     @Override
@@ -60,16 +63,14 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
     public OrderRequest postProcess(OrderRequest orderRequest) {
         log.info("operation=postProcess, result= IN_PROGRESS, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());
         Order order = orderRequest.getOrder();
-        List<String> applicationNumberList = order.getApplicationNumber();
-        for(String applicationNumber : applicationNumberList) {
-            List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
-                    .requestInfo(orderRequest.getRequestInfo())
-                    .criteria(ApplicationCriteria.builder().applicationNumber(applicationNumber).tenantId(order.getTenantId()).build())
-                    .build());
-            for(Application application : applications) {
-                if(ADDING_WITNESSES.equalsIgnoreCase(application.getApplicationType())) {
-                    addWitnessToCase(application, orderRequest.getRequestInfo());
-                }
+        String referenceId = orderUtil.getReferenceId(order);
+        List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
+                .requestInfo(orderRequest.getRequestInfo())
+                .criteria(ApplicationCriteria.builder().applicationNumber(referenceId).tenantId(order.getTenantId()).build())
+                .build());
+        for(Application application : applications) {
+            if(ADDING_WITNESSES.equalsIgnoreCase(application.getApplicationType())) {
+                addWitnessToCase(application, orderRequest.getRequestInfo());
             }
         }
         log.info("operation=postProcess, result= COMPLETED, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());

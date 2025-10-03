@@ -948,6 +948,7 @@ const EvidenceModal = ({
                 orderCategory: "COMPOSITE",
                 orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
                 compositeItems,
+                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
                 ...(hearingNumber && {
                   hearingNumber: hearingNumber,
                 }),
