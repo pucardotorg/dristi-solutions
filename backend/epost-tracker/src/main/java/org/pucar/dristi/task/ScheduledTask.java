@@ -1,86 +1,98 @@
 package org.pucar.dristi.task;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.EPostConfiguration;
-import org.pucar.dristi.model.EPostTrackerSearchCriteria;
-import org.pucar.dristi.model.EPostTrackerSearchRequest;
-import org.pucar.dristi.model.Pagination;
+import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.model.*;
+import org.pucar.dristi.model.email.Email;
+import org.pucar.dristi.model.email.EmailRequest;
+import org.pucar.dristi.service.EPostService;
 import org.pucar.dristi.service.ExcelService;
+import org.pucar.dristi.service.FileStoreService;
+import org.pucar.dristi.util.PdfServiceUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.pucar.dristi.kafka.Producer;
-import org.pucar.dristi.model.email.Email;
-import org.pucar.dristi.model.email.EmailRequest;
-import org.egov.common.contract.request.RequestInfo;
-import org.pucar.dristi.service.FileStoreService;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
-import java.util.Locale;
+import java.util.*;
 
 @Component
 @Slf4j
 public class ScheduledTask {
 
     private final ExcelService excelService;
-
     private final EPostConfiguration ePostConfiguration;
-
+    private final EPostService ePostService;
+    private final PdfServiceUtil pdfServiceUtil;
     private final Producer producer;
-
     private final FileStoreService fileStoreService;
 
+    private final EPostConfiguration configuration;
+
     @Autowired
-    public ScheduledTask(ExcelService excelService, EPostConfiguration ePostConfiguration, Producer producer, FileStoreService fileStoreService) {
+    public ScheduledTask(ExcelService excelService,
+                         EPostConfiguration ePostConfiguration,
+                         EPostService ePostService,
+                         PdfServiceUtil pdfServiceUtil,
+                         Producer producer,
+                         FileStoreService fileStoreService, EPostConfiguration configuration) {
         this.excelService = excelService;
         this.ePostConfiguration = ePostConfiguration;
+        this.ePostService = ePostService;
+        this.pdfServiceUtil = pdfServiceUtil;
         this.producer = producer;
         this.fileStoreService = fileStoreService;
+        this.configuration = configuration;
     }
 
     @Async
     @Scheduled(cron = "${epost.tracker.cron.expression}", zone = "Asia/Kolkata")
     public void sendEmailNotification() {
-        log.info("Sending email notification");
+        log.info("Starting scheduled email notification...");
 
-        EPostTrackerSearchCriteria ePostTrackerSearchCriteria = EPostTrackerSearchCriteria.builder()
+        String tenantId = ePostConfiguration.getEgovStateTenantId();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        String monthName = today.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        String excelFileName = String.format("%d_%s_Epost_Report.xlsx", today.getYear(), monthName);
+        String pdfFileName = String.format("%d_%s_Epost_Report.pdf", today.getYear(), monthName);
+
+        // Build search request
+        EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder()
                 .deliveryStatusList(ePostConfiguration.getBookedDeliveryStatusList())
                 .pagination(Pagination.builder().build())
                 .build();
 
-        EPostTrackerSearchRequest request = EPostTrackerSearchRequest.builder()
-                .ePostTrackerSearchCriteria(ePostTrackerSearchCriteria)
+        EPostTrackerSearchRequest searchRequest = EPostTrackerSearchRequest.builder()
+                .ePostTrackerSearchCriteria(searchCriteria)
                 .build();
-        byte[] excelBytes = excelService.generateExcel(request);
 
-        // Upload Excel to filestore and prepare attachment map
-        String tenantId = ePostConfiguration.getEgovStateTenantId();
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
-        String formattedDate = today.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        String monthName = today.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        String fileName = String.format("%d_%s_Epost_Report.xlsx", today.getYear(), monthName);
+        // Fetch data
+        byte[] excelBytes = excelService.generateExcel(searchRequest);
+        EPostResponse ePostResponse = ePostService.getAllEPost(searchRequest, 1000, 0);
+        List<EPostTracker> ePostTrackers = ePostResponse.getEPostTrackers();
 
-        Map<String, String> fileStoreMap = null;
+        // Upload files (PDF + Excel)
+        Map<String, String> fileStoreMap = new HashMap<>();
+        Optional.ofNullable(getFileStoreIdOfPdf(ePostTrackers, pdfFileName, monthName, today))
+                .ifPresent(fileId -> fileStoreMap.put(fileId, pdfFileName));
+
         try {
-            String fileStoreId = fileStoreService.upload(
+            String excelFileStoreId = fileStoreService.upload(
                     excelBytes,
-                    fileName,
+                    excelFileName,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     tenantId
             );
-            if (fileStoreId != null) {
-                fileStoreMap = new HashMap<>();
-                fileStoreMap.put(fileStoreId, fileName);
-                log.info("Uploaded Excel to filestore with id {}", fileStoreId);
+            if (excelFileStoreId != null) {
+                fileStoreMap.put(excelFileStoreId, excelFileName);
+                log.info("Uploaded Excel to filestore with id {}", excelFileStoreId);
             } else {
                 log.warn("Excel filestore upload returned null fileStoreId; proceeding without attachment");
             }
@@ -88,8 +100,9 @@ public class ScheduledTask {
             log.error("Failed to upload Excel to filestore: {}", ex.getMessage(), ex);
         }
 
-        String recipientsStr = ePostConfiguration.getEpostEmailRecipients();
+        // Resolve recipients
         Set<String> recipients = new HashSet<>();
+        String recipientsStr = ePostConfiguration.getEpostEmailRecipients();
         if (recipientsStr != null && !recipientsStr.isBlank()) {
             recipients.addAll(Arrays.stream(recipientsStr.split(","))
                     .map(String::trim)
@@ -97,20 +110,19 @@ public class ScheduledTask {
                     .toList());
         }
 
-        String subject = ePostConfiguration.getEpostEmailSubject();
-
+        // Build email body
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("monthName", monthName);
         bodyMap.put("year", String.valueOf(today.getYear()));
 
         Email email = Email.builder()
-                .subject(subject + " " + monthName + " " + today.getYear())
+                .subject(ePostConfiguration.getEpostEmailSubject() + " " + monthName + " " + today.getYear())
                 .body(bodyMap.toString())
                 .emailTo(recipients)
                 .isHTML(true)
                 .tenantId(tenantId)
                 .templateCode(ePostConfiguration.getEpostEmailTemplateCode())
-                .fileStoreId(fileStoreMap)
+                .fileStoreId(fileStoreMap.isEmpty() ? null : fileStoreMap)
                 .build();
 
         EmailRequest emailRequest = EmailRequest.builder()
@@ -118,11 +130,74 @@ public class ScheduledTask {
                 .email(email)
                 .build();
 
-        String topic = ePostConfiguration.getEmailTopic();
-        producer.push(topic, emailRequest);
-
-        // TODO : need to send pdf as well in email
-        log.info("Email notification sent successfully");
+        producer.push(ePostConfiguration.getEmailTopic(), emailRequest);
+        log.info("Email notification task completed successfully");
     }
 
+    private String getFileStoreIdOfPdf(List<EPostTracker> ePostTrackers, String fileName, String monthName, LocalDate today) {
+        try {
+            double totalAmount = ePostTrackers.stream()
+                    .mapToDouble(e -> parseAmount(e.getTotalAmount()))
+                    .sum();
+
+            EPostTrackerPdf ePostTrackerPdf = EPostTrackerPdf.builder()
+                    .totalAmount(String.valueOf(totalAmount))
+                    .totalBookedPost(ePostTrackers.size())
+                    .courtName(configuration.getCourtName())
+                    .monthlyReportYear(String.valueOf(today.getYear()))
+                    .reportMonthName(monthName)
+                    .generatedDateTime(getFormattedDate())
+                    .build();
+
+            EPostTrackerPdfRequest pdfRequest = EPostTrackerPdfRequest.builder()
+                    .ePostTrackerPdf(ePostTrackerPdf)
+                    .build();
+
+            byte[] pdfBytes = pdfServiceUtil.generatePdf(
+                    pdfRequest,
+                    ePostConfiguration.getEgovStateTenantId(),
+                    ePostConfiguration.getEPostPdfTemplateKey()
+            );
+
+            String fileStoreId = fileStoreService.upload(
+                    pdfBytes,
+                    fileName,
+                    "application/pdf",
+                    ePostConfiguration.getEgovStateTenantId()
+            );
+
+            log.info("Uploaded PDF to filestore with id {}", fileStoreId);
+            return fileStoreId;
+        } catch (Exception e) {
+            log.error("Failed to generate/upload PDF: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Safely parse totalAmount String to double.
+     * Handles null, empty, or invalid values by returning 0.0
+     */
+    private double parseAmount(String amount) {
+        if (amount == null || amount.trim().isEmpty()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(amount.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid totalAmount value: '{}'. Defaulting to 0.0", amount);
+            return 0.0;
+        }
+    }
+
+    private String getFormattedDate() {
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+        // Create a DateTimeFormatter with the desired format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, h:mm a z");
+
+        // Format the ZonedDateTime
+
+        return now.format(formatter);
+    }
 }

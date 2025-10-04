@@ -89,4 +89,17 @@ public class EPostConfiguration {
     @Value("${egov.filestore.module}")
     private String fileStoreModule;
 
+    // PDF Config
+    @Value("${egov.pdf.service.host}")
+    private String pdfServiceHost;
+
+    @Value("${egov.pdf.service.create.endpoint}")
+    private String pdfServiceEndpoint;
+
+    @Value("${egov.pdf.service.template.key}")
+    private String ePostPdfTemplateKey;
+
+    @Value("${court.name}")
+    private String courtName;
+
 }
