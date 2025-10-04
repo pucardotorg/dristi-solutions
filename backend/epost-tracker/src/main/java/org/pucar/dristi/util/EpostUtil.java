@@ -14,7 +14,10 @@ import org.pucar.dristi.repository.EPostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,19 +51,27 @@ public class EpostUtil {
     public EPostTracker createPostTrackerBody(TaskRequest request) throws JsonProcessingException {
         String processNumber = idgenUtil.getIdList(request.getRequestInfo(), config.getEgovStateTenantId(),
                 config.getIdName(),null,1).get(0);
-        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        long currentDate = System.currentTimeMillis();
+
+        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        long istMillis = Instant.ofEpochMilli(currentDate)
+                .atZone(istZone)
+                .toInstant()
+                .toEpochMilli();
+
 
         EPostTracker ePostTracker = EPostTracker.builder()
                 .processNumber(processNumber)
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
+                .totalAmount((request.getTask() != null && request.getTask().getAmount() != null && request.getTask().getAmount().getAmount() != null) ? request.getTask().getAmount().getAmount() : null)
                 .fileStoreId(getFileStore(request))
                 .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
                 .deliveryStatus(DeliveryStatus.NOT_UPDATED)
                 .additionalDetails(request.getTask().getAdditionalDetails())
                 .rowVersion(0)
-                .bookingDate(currentDate)
+                .receivedDate(istMillis)
                 .auditDetails(createAuditDetails(request.getRequestInfo()))
                 .build();
 
@@ -104,7 +115,8 @@ public class EpostUtil {
         ePostTracker.setDeliveryStatus(ePostRequest.getEPostTracker().getDeliveryStatus());
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
-        ePostTracker.setReceivedDate(ePostRequest.getEPostTracker().getReceivedDate());
+        ePostTracker.setBookingDate(ePostRequest.getEPostTracker().getBookingDate());
+        ePostTracker.setSpeedPostId(ePostRequest.getEPostTracker().getSpeedPostId());
 
         return ePostTracker;
 
@@ -141,12 +153,13 @@ public class EpostUtil {
             return postHubNames.get(0);
         }
         else if (postHubNames.isEmpty()) {
-            log.error("postal hub not found for pin code {}", pinCode);
+            String defaultPostalHub = config.getDefaultPostalHub();
+            log.error("postal hub not found for pin code {} setting default postal hub {}", pinCode, defaultPostalHub);
+            return defaultPostalHub;
         }
         else {
             return postHubNames.get(0);
         }
-        return null;
     }
 
 }

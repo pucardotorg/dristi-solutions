@@ -6,6 +6,10 @@ public enum DeliveryStatus {
 
     IN_TRANSIT,
 
+    BOOKED,
+
+    REFUSED,
+
     DELIVERED,
 
     NOT_UPDATED

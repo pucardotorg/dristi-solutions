@@ -37,6 +37,9 @@ public class SummonsPdf  {
     @JsonProperty("respondentAddress")
     private String respondentAddress;
 
+    @JsonProperty("address")
+    private Address address;
+
     @JsonProperty("caseName")
     private String caseName;
 
