@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -51,6 +51,7 @@ const EpostTrackingPage = () => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
+  const [hasResults, setHasResults] = useState(() => sessionStorage.getItem("epostSearchHasResults") === "true");
   const userName = useMemo(() => {
     const userInfo = Digit.UserService.getUser()?.info || {};
     return userInfo?.name || "";
@@ -251,14 +252,17 @@ const EpostTrackingPage = () => {
           },
           ...(activeTabIndex !== 1 && {
             additionalCustomization: {
-              component: ({ t, formData, setValue }) => (
-                <SubmitBar
-                  label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
-                  submit="submit"
-                  style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
-                  onSubmit={() => handleDownloadList(activeTabIndex)}
-                />
-              ),
+              component: ({ t, formData, setValue }) => {
+                return (
+                  <SubmitBar
+                    label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
+                    submit="submit"
+                    style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
+                    onSubmit={() => handleDownloadList(activeTabIndex)}
+                    disabled={!hasResults}
+                  />
+                );
+              },
               className: "custom-button-wrapper",
             },
           }),
@@ -281,14 +285,21 @@ const EpostTrackingPage = () => {
         },
       },
     };
-  }, [activeTabIndex, searchFormData]);
+  }, [activeTabIndex, searchFormData, hasResults]);
 
   const closeToast = () => setShowErrorToast(null);
 
   const onFormSubmit = (formData, isClear = false) => {
     setSearchFormData((prev) => {
       const newData = [...prev];
-      newData[activeTabIndex] = isClear ? { ...defaultSearchValues } : { ...formData };
+      newData[activeTabIndex] = isClear
+        ? activeTabIndex === 2
+          ? {
+              ...defaultSearchValues,
+              monthReports: new Date().toISOString().slice(0, 7),
+            }
+          : { ...defaultSearchValues }
+        : { ...formData };
       return newData;
     });
     setSearchRefreshCounter((prev) => prev + 1);
@@ -352,6 +363,18 @@ const EpostTrackingPage = () => {
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHasResults(sessionStorage.getItem("epostSearchHasResults") === "true");
+    };
+  
+    window.addEventListener("epostSearchHasResultsChanged", handleStorageChange);
+  
+    return () => {
+      window.removeEventListener("epostSearchHasResultsChanged", handleStorageChange);
+    };
+  }, []);
 
   if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 

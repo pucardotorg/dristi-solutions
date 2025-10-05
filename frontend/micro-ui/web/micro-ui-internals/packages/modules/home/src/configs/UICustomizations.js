@@ -64,6 +64,12 @@ export const UICustomizations = {
         },
         config: {
           ...requestCriteria?.config,
+          select: (data) => {
+            const hasResults = data?.EPostTracker?.length > 0;            
+            window.sessionStorage.setItem("epostSearchHasResults", hasResults ? "true" : "false");
+            window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+            return data;
+          },
         },
       };
     },
