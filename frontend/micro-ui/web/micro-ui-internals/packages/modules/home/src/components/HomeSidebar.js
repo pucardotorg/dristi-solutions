@@ -21,7 +21,13 @@ const HomeSidebar = ({
   const hasViewTodaysHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_TODAYS_HEARINGS"), [assignedRoles]);
   const hasViewBulkRescheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_BULK_RESCHEDULE_HEARINGS"), [assignedRoles]);
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
-  const hasViewSignProcessAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_PROCESS"), [assignedRoles]);
+  const hasViewSignProcessAccess = useMemo(
+    () =>
+      ["VIEW_PROCESS_SUMMONS", "VIEW_PROCESS_WARRANT", "VIEW_PROCESS_NOTICE", "VIEW_PROCESS_PROCLAMATION", "VIEW_PROCESS_ATTACHMENT"].some((role) =>
+        assignedRoles?.includes(role)
+      ),
+    [assignedRoles]
+  );
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);
   const hasViewSignWitnessDepositionAccess = useMemo(() => assignedRoles?.includes("VIEW_WITNESS_DEPOSITION"), [assignedRoles]);
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
@@ -56,38 +62,32 @@ const HomeSidebar = ({
       {Object?.keys(options)?.length > 0 && (
         <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(options)?.map(
-              (key, index) =>
-                (key === "SCRUTINISE_CASES" || pendingTaskCount[key] > 0) && (
-                  <SidebarItem
-                    t={t}
-                    key={index}
-                    label={options[key]?.name}
-                    count={pendingTaskCount[key]}
-                    active={activeTab === key}
-                    onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-                  />
-                )
-            )}
+            Object?.keys(options)?.map((key, index) => (
+              <SidebarItem
+                t={t}
+                key={index}
+                label={options[key]?.name}
+                count={pendingTaskCount[key]}
+                active={activeTab === key}
+                onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+              />
+            ))}
         </HomeAccordian>
       )}
 
       {Object?.keys(applicationOptions)?.length > 0 && (
         <HomeAccordian title={t("REVIEW_APPLICATIONS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(applicationOptions)?.map(
-              (key, index) =>
-                pendingTaskCount[key] > 0 && (
-                  <SidebarItem
-                    t={t}
-                    key={index}
-                    label={applicationOptions[key]?.name}
-                    count={pendingTaskCount[key]}
-                    active={activeTab === key}
-                    onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
-                  />
-                )
-            )}
+            Object?.keys(applicationOptions)?.map((key, index) => (
+              <SidebarItem
+                t={t}
+                key={index}
+                label={applicationOptions[key]?.name}
+                count={pendingTaskCount[key]}
+                active={activeTab === key}
+                onClick={() => onTabChange("REVIEW_APPLICATIONS_TAB", key)}
+              />
+            ))}
         </HomeAccordian>
       )}
 

@@ -3895,8 +3895,13 @@ const GenerateOrdersV2 = () => {
                 <Button
                   label={t("SAVE_AS_DRAFT")}
                   variation={"secondary"}
-                  onButtonClick={() => {
-                    handleSaveDraft(currentOrder);
+                  onButtonClick={async () => {
+                    try {
+                      await handleSaveDraft(currentOrder);
+                      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+                    } catch (error) {
+                      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+                    }
                   }}
                   style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
                   textStyles={{

@@ -17,7 +17,7 @@ const NewBulkRescheduleTable = ({
   allHearings,
   loading,
   handleBulkHearingSearch,
-  hasNotificationCreateAccess,
+  hasBulkRescheduleAccess,
 }) => {
   const handleSelectChange = (checked, row) => {
     const rowId = row?.hearingBookingId;
@@ -125,12 +125,10 @@ const NewBulkRescheduleTable = ({
             </div>
           </LabelFieldPair>
           <div className={`case-label-field-pair search-input`}>
-            <span className="search-icon-wrapper">
-              <SmallSearchIcon />
-            </span>
             <input
               className="home-input"
               placeholder="Search Case name or number"
+              style={{ width: "280px" }}
               type="text"
               value={bulkFormData?.searchableFields || ""}
               onChange={(e) => {
@@ -214,7 +212,7 @@ const NewBulkRescheduleTable = ({
         </div>
       </div>
       <div className="bulk-submit-bar">
-        {hasNotificationCreateAccess && (
+        {hasBulkRescheduleAccess && (
           <SubmitBar
             label={t(`RESCHEDULE_ALL_HEARINGS`)}
             submit="submit"

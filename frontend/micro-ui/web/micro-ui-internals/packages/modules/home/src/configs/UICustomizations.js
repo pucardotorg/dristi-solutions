@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
-import { formatNoticeDeliveryDate } from "../utils";
+import { formatDateDDMMYYYY, formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
@@ -514,7 +514,7 @@ export const UICustomizations = {
 
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
-      const deliveryChanel = searchForm?.channel?.name || null;
+      const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
       let resolvedApplicationStatus = "";
@@ -714,7 +714,7 @@ export const UICustomizations = {
           return <ADiaryRowClick rowData={row} colData={column} value={value} />;
 
         case "NEXT_HEARING_DATE":
-          return <span>{value || ""}</span>;
+          return <span>{value ? formatDateDDMMYYYY(value) : ""}</span>;
         default:
           return value || "";
       }

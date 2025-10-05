@@ -98,8 +98,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const hasSignWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_WARRANT"), [roles]);
   const hasSignNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_NOTICE"), [roles]);
 
+  const hasEditTaskAccess = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
+
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+
+  const canSign = useMemo(() => {
+    return isJudge || hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess;
+  }, [isJudge, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
+
   const courtId = localStorage.getItem("courtId");
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -996,7 +1003,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
       const downloadPromises = selectedItems.map(async (item, index) => {
         const fileStoreId = item?.documents?.[0]?.fileStore;
-
+        if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
           const orderTypeName = (() => {
@@ -1022,9 +1029,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const fileBase = `${sanitize(orderTypeName)}_${sanitize(caseNumber)}_${sanitize(issueDate)}`.replace(/^_+|_+$/g, "");
           const fileName = fileBase || `Document_${index + 1}`;
 
-          // Use a small delay between downloads to prevent overwhelming the browser
           await new Promise((resolve) => setTimeout(resolve, index * 100));
-
           await downloadPdf(tenantId, fileStoreId, fileName);
           return { success: true, fileName, fileStoreId };
         } else {
@@ -1032,60 +1037,46 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }
       });
 
-      Promise.all(downloadPromises)
-        .then((results) => {
-          // Wait for files to be saved to disk before showing success toast and clearing selections
+      const results = await Promise.allSettled(downloadPromises);
+      const successful = results.filter((r) => r.status === "fulfilled" && r.value?.success).length;
+      const failed = results.length - successful;
+      setTimeout(() => {
+        if (successful > 0 && failed === 0) {
+          setShowErrorToast({
+            message: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
+            error: false,
+          });
           setTimeout(() => {
-            // All downloads successful - show success toast and clear selections
-            const successful = results.length;
-            if (successful > 0) {
-              setShowErrorToast({
-                message: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
-                error: false,
-              });
-
-              // Auto-dismiss success toast after 3 seconds.
-              setTimeout(() => {
-                setShowErrorToast(null);
-              }, 3000);
-              const currentConfig = isJudge
-                ? getJudgeDefaultConfig(courtId)?.[activeTabIndex]
-                : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-              const isSignedTab = currentConfig?.label === "SIGNED";
-
-              if (isSignedTab) {
-                setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-              } else {
-                setBulkSignList((prev) => prev?.filter((item) => !selectedItems.some((selected) => selected.taskNumber === item.taskNumber)) || []);
-              }
-
-              // Force table refresh to update checkbox states
-              setReload((prev) => prev + 1);
-            }
-          }, 2000); // Wait 2 seconds for browser to finish saving files
-        })
-        .catch((error) => {
+            setShowErrorToast(null);
+          }, 3000);
+        } else if (successful > 0 && failed > 0) {
+          setShowErrorToast({
+            message: t("SOME_DOCUMENTS_FAILED_TO_DOWNLOAD", { successful, failed }),
+            error: true,
+          });
+          setTimeout(() => setShowErrorToast(null), 5000);
+        } else {
           setShowErrorToast({
             message: t("BULK_DOWNLOAD_FAILED"),
             error: true,
           });
+          setTimeout(() => setShowErrorToast(null), 5000);
+        }
+        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+        const isSignedTab = currentConfig?.label === "SIGNED";
 
-          // Auto-dismiss error toast after 5 seconds
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 5000);
+        setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+        setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
 
-          // Clear all selections and refresh table when bulk download fails
-          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-          const isSignedTab = currentConfig?.label === "SIGNED";
+        const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
 
-          if (isSignedTab) {
-            setBulkSendList([]);
-          } else {
-            setBulkSignList([]);
-          }
-          setReload((prev) => prev + 1);
-        });
+        if (isSignedTab) {
+          setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        } else {
+          setBulkSignList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        }
+        setReload((prev) => prev + 1);
+      }, 2000);
     } catch (error) {
       setShowErrorToast({
         message: t("BULK_DOWNLOAD_FAILED"),
@@ -1119,20 +1110,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setReload,
   ]);
 
-  // Handle bulk sign confirmation - now shows signature upload modal first
   const handleBulkSignConfirm = useCallback(() => {
     setShowBulkSignConfirmModal(false);
+    handleActualBulkSign();
+  }, [handleActualBulkSign]);
 
-    if (mockESignEnabled) {
-      // If mock e-sign is enabled, skip upload and proceed directly
-      handleActualBulkSign();
-    } else {
-      // Show signature upload modal
-      setShowBulkSignatureModal(true);
-    }
-  }, [mockESignEnabled, handleActualBulkSign]);
-
-  // After successful bulk sign, proceed button in success modal opens send confirm
   const handleProceedToBulkSend = useCallback(() => {
     setShowBulkSignSuccessModal(false);
     setShowBulkSendConfirmModal(true);
@@ -1221,7 +1203,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+                      submitButtonText={documents && hasEditTaskAccess ? "MARK_AS_SENT" : "CS_CLOSE"}
                       closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
@@ -1266,7 +1248,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: () => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
-      actionSaveLabel: t("MARK_AS_SENT"),
+      actionSaveLabel: hasEditTaskAccess ? t("MARK_AS_SENT") : null,
       isStepperModal: false,
       hideSubmit: isTypist,
       modalBody: (
@@ -1285,7 +1267,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: () => handleCloseActionModal(),
       heading: { label: t("DELIVERY_STATUS_AND_DETAILS") },
-      actionSaveLabel: t("UPDATE_STATUS"),
+      actionSaveLabel: hasEditTaskAccess ? t("UPDATE_STATUS") : null,
       actionCancelLabel: t("VIEW_DOCUMENT_TEXT"),
       isStepperModal: false,
       modalBody: (
@@ -1501,11 +1483,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={`bulk-esign-order-view ignore-margin-left ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
+          <div className={`bulk-esign-order-view  ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper review-process-page show-grey-placeholder">
+            <div className="inbox-search-wrapper">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}
@@ -1525,14 +1507,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    // Prefer signed modal if a signed document is present, regardless of stale documentStatus
-                    config?.label === "SENT"
-                      ? sentModalConfig
-                      : hasSignedDoc
-                      ? signedModalConfig
-                      : actionModalType === "SIGN_PENDING"
+                    config?.label === "PENDING_SIGN"
                       ? unsignedModalConfig
+                      : config?.label === "SIGNED"
+                      ? signedModalConfig
+                      : config?.label === "SENT"
+                      ? sentModalConfig
                       : signedModalConfig
+                    // config?.label === "SENT"
+                    //   ? sentModalConfig
+                    //   : hasSignedDoc
+                    //   ? signedModalConfig
+                    //   : actionModalType === "SIGN_PENDING"
+                    //   ? unsignedModalConfig
+                    //   : signedModalConfig
                   }
                   currentStep={step}
                 />
@@ -1540,7 +1528,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
             </div>
           </div>
-          {isJudge && config?.label === "PENDING_SIGN" && (
+          {config?.label === "PENDING_SIGN" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
@@ -1549,11 +1537,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   disabled={hasNoSelectedItems}
                   style={{ width: "auto" }}
                 />
-                <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />
+                {canSign && <SubmitBar label={t("SIGN_SELECTED_DOCUMENTS")} onSubmit={handleBulkSign} disabled={hasNoSelectedItems} />}
               </div>
             </div>
           )}
-          {isJudge && config?.label === "SIGNED" && (
+          {config?.label === "SIGNED" && (
             <div className={"bulk-submit-bar"}>
               <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
                 <SubmitBar
@@ -1562,7 +1550,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   disabled={hasNoSelectedItems}
                   style={{ width: "auto" }}
                 />
-                <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
+                {hasEditTaskAccess && (
+                  <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
+                )}
               </div>
             </div>
           )}
@@ -1592,14 +1582,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSignConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
-          actionSaveLabel={t("CS_BULK_SIGN_AND_PUBLISH")}
+          actionSaveLabel={t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={handleBulkSignConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
           children={
             <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_BAIL_BOND_SIGN_TEXT")}</h3>
+              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_PROCESS_SIGN_TEXT")}</h3>
             </div>
           }
         />
@@ -1628,7 +1618,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSendConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSendConfirmModal(false)}
-          actionSaveLabel={t("MARK_AS_SENT")}
+          actionSaveLabel={hasEditTaskAccess ? t("MARK_AS_SENT") : null}
           actionSaveOnSubmit={handleBulkSendConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}

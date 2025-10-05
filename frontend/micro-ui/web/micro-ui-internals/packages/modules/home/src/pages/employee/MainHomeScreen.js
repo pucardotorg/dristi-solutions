@@ -282,15 +282,13 @@ const MainHomeScreen = () => {
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-      const reviwCount = res?.reviewProcessData?.count || 0;
-      // const applicationCount = res?.viewApplicationData?.count || 0;
-      // const scheduleCount = res?.scheduleHearingData?.count || 0;
-      const registerCount = res?.registerCasesData?.count || 0;
-      const bailBondStatusCount = res?.bailBondData?.count || 0;
-      const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
-      const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.count || 0;
-      const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.count || 0;
-      const otherApplicationsCount = res?.otherApplicationsData?.count || 0;
+      const reviwCount = res?.reviewProcessData?.totalCount || 0;
+      const registerCount = res?.registerCasesData?.totalCount || 0;
+      const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
+      const scrutinyCasesCount = res?.scrutinyCasesData?.totalCount || 0;
+      const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.totalCount || 0;
+      const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.totalCount || 0;
+      const otherApplicationsCount = res?.otherApplicationsData?.totalCount || 0;
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
 
@@ -300,8 +298,6 @@ const MainHomeScreen = () => {
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
-        // VIEW_APPLICATION: applicationCount,
-        // SCHEDULE_HEARING: scheduleCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,

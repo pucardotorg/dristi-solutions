@@ -6,6 +6,7 @@ import { preHearingConfig } from "../configs/PreHearingConfig";
 // import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
+  const history = useHistory();
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -170,7 +172,8 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
           <Button
             className="border-none dristi-font-bold"
             onButtonClick={() => {
-              setStepper(1);
+              sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
+              history.push(`/${window?.contextPath}/employee/home/home-screen`);
             }}
             label={t("BULK_RESCHEDULE")}
             variation={"secondary"}
