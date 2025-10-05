@@ -174,13 +174,15 @@ public class DemandService {
         String deliveryChannel = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
-        //if (config.isTest()) {
-        //    demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task, businessService));
-        //} else {
+        if ("EPOST".equalsIgnoreCase(deliveryChannel)) {
+            log.info("creating single demand for epost");
+            DemandDetail demandDetail = createDemandDetailForEPost(calculation.getTenantId(), calculation.getBreakDown(), masterCodes);
+            demandDetailList.add(demandDetail);
+        } else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
             }
-        //}
+        }
         return demandDetailList;
     }
 
@@ -249,6 +251,14 @@ public class DemandService {
                 .tenantId(tenantId)
                 .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
                 .taxHeadMasterCode(masterCodes.getOrDefault(breakDown.getType(), ""))
+                .build();
+    }
+
+    private DemandDetail createDemandDetailForEPost(String tenantId, List<BreakDown> breakDowns, Map<String, String> masterCodes) {
+        return DemandDetail.builder()
+                .tenantId(tenantId)
+                .taxAmount(BigDecimal.valueOf(breakDowns.stream().mapToDouble(BreakDown::getAmount).sum()))
+                .taxHeadMasterCode(masterCodes.getOrDefault(config.getEPostTaxHeadMasterCode(), ""))
                 .build();
     }
 

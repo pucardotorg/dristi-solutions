@@ -320,4 +320,7 @@ public class Configuration {
 
     @Value("${dristi.evidence.create.endpoint}")
     private String evidenceCreateEndpoint;
+
+    @Value("${dristi.evidence.taxhead.master.code}")
+    private String ePostTaxHeadMasterCode;
 }
