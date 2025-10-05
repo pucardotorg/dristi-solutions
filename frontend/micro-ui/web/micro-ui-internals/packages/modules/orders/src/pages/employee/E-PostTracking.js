@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
-import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
 import SubmitBar from "../../components/SubmitBar";
@@ -41,6 +41,7 @@ const convertToFormData = (t, obj, dropdownData) => {
 const EpostTrackingPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const history = useHistory();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -52,6 +53,11 @@ const EpostTrackingPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
   const [hasResults, setHasResults] = useState(() => sessionStorage.getItem("epostSearchHasResults") === "true");
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const userName = useMemo(() => {
     const userInfo = Digit.UserService.getUser()?.info || {};
     return userInfo?.name || "";
@@ -375,6 +381,10 @@ const EpostTrackingPage = () => {
       window.removeEventListener("epostSearchHasResultsChanged", handleStorageChange);
     };
   }, []);
+
+  if(!isEpostUser){
+    history.replace(homePath);
+  }
 
   if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 
