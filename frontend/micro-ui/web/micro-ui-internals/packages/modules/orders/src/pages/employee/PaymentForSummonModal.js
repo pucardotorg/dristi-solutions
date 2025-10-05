@@ -254,8 +254,9 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
+  // temporarily POST_COURT and POST_PROCESS for epost is changed to POST_PROCESS_COURT
   const consumerCode = useMemo(() => {
-    return taskNumber ? `${taskNumber}_POST_COURT` : undefined;
+    return taskNumber ? `${taskNumber}_POST_PROCESS_COURT` : undefined;
   }, [taskNumber]);
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
@@ -263,20 +264,20 @@ const PaymentForSummonModal = ({ path }) => {
     {},
     {
       tenantId,
-      consumerCode: `${taskNumber}_POST_COURT`,
+      consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
       service: service,
     },
-    `${taskNumber}_POST_COURT_${service}`,
+    `${taskNumber}_POST_PROCESS_COURT_${service}`,
     Boolean(taskNumber && orderType)
   );
   const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
-      consumerCode: `${taskNumber}_POST_PROCESS`,
+      consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
       service: service,
     },
-    `${taskNumber}_POST_PROCESS_${service}`,
+    `${taskNumber}_POST_PROCESS_COURT_${service}`,
     Boolean(taskNumber && orderType)
   );
 
@@ -445,6 +446,7 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
+    // Temporarily disabling SBI Payment integration for ePost
     const onPayOnlineSBI = async () => {
       try {
         history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
@@ -486,7 +488,7 @@ const PaymentForSummonModal = ({ path }) => {
           amount: deliveryPartnerFeeAmount,
           isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
           action: "Pay Online",
-          onClick: onPayOnlineSBI,
+          onClick: onPayOnline,
         },
       ],
       "registered-post": [
