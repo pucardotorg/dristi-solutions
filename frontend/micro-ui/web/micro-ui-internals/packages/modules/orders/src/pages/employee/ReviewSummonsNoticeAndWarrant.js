@@ -251,11 +251,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // handleClose is declared after activeTabIndex to avoid 'used before defined' lint errors
 
   const handleSubmit = useCallback(async () => {
+    if (!hasEditTaskAccess) {
+      setShowActionModal(false);
+      return;
+    }
     setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
 
     try {
-      // Single item send (original logic for PrintAndSendDocumentComponent)
       const { data: tasksData } = await refetch();
       if (tasksData) {
         const task = tasksData?.list?.[0];
@@ -306,8 +309,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const callBulkSendApi = useCallback(
     async (selectedItems) => {
       const bulkSendUrl = window?.globalConfigs?.getConfig("BULK_SEND_URL") || "http://localhost:9000/task/v1/bulk-send";
-
-      // Build RequestInfo from current user context if available
       const user = Digit?.UserService?.getUser?.();
       const userInfo = user?.info || {};
       const authToken = localStorage.getItem("token");
@@ -328,24 +329,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       try {
         const data = await processManagementService.bulkSend(payload, {});
-
-        // Preferred: backend returns array under 'bulkSendTasks'
         const tasks = Array.isArray(data?.bulkSendTasks) ? data.bulkSendTasks : null;
         if (tasks) {
           const successful = tasks.filter((t) => t?.success).length;
           const failed = tasks.length - successful;
           return { successful, failed, total: tasks.length };
         }
-
-        // Backward compatibility: sometimes 'results' key is used
         const results = Array.isArray(data?.results) ? data?.results : null;
         if (results) {
           const successful = results.filter((r) => r?.success).length;
           const failed = results.length - successful;
           return { successful, failed, total: results.length };
         }
-
-        // If API returns a top-level success flag
         if (typeof data?.success === "boolean") {
           const successful = data.success ? selectedItems.length : 0;
           const failed = data.success ? 0 : selectedItems.length;
@@ -772,8 +767,25 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }, 5000);
       return;
     }
+    if (!(hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess)) {
+      Digit.Utils.toast.error(t("YOU_DO_NOT_HAVE_PERMISSION_TO_SIGN"));
+      return;
+    }
+    const notAllowedItems = selectedItems.filter((doc) => {
+      if (doc.type === "SUMMONS" && !hasSignSummonsAccess) return true;
+      if (doc.type === "WARRANT" && !hasSignWarrantAccess) return true;
+      if (doc.type === "NOTICE" && !hasSignNoticeAccess) return true;
+      if (doc.type === "PROCLAMATION" && !hasSignProclamationAccess) return true;
+      if (doc.type === "ATTACHMENT" && !hasSignAttachmentAccess) return true;
+      return false;
+    });
+
+    if (notAllowedItems.length > 0) {
+      Digit.Utils.toast.error(t("ONE_OR_MORE_DOCUMENTS_CANNOT_BE_SIGNED_DUE_TO_PERMISSION"));
+      return;
+    }
     setShowBulkSignConfirmModal(true);
-  }, [bulkSignList, t]);
+  }, [bulkSignList, t, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
 
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
@@ -787,12 +799,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }, 5000);
       return;
     }
-
-    // Show confirmation modal for bulk send
     setShowBulkSendConfirmModal(true);
   }, [bulkSendList, t]);
 
-  // Helper components for modal
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -1186,7 +1195,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={"CS_COMMON_CLOSE"}
+                      submitButtonText={t("CS_COMMON_CLOSE")}
                       // closeButtonText={}
                       // closeButtonAction={false}
                       submitButtonAction={() => {
@@ -1203,8 +1212,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess ? "MARK_AS_SENT" : "CS_CLOSE"}
-                      closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
+                      submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
                       t={t}
@@ -1246,18 +1255,32 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const signedModalConfig = useMemo(() => {
     return {
-      handleClose: () => handleCloseActionModal(),
+      handleClose: handleClose, //() => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: hasEditTaskAccess ? t("MARK_AS_SENT") : null,
       isStepperModal: false,
       hideSubmit: isTypist,
       modalBody: (
-        <PrintAndSendDocumentComponent
-          infos={infos}
-          documents={documents?.filter((docs) => docs.documentType === "SIGNED_TASK_DOCUMENT")}
-          links={links}
+        <CustomStepperSuccess
+          successMessage={successMessage}
+          bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+          submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : null}
+          closeButtonAction={handleClose}
+          submitButtonAction={handleSubmit}
           t={t}
+          submissionData={submissionData}
+          documents={documents}
+          deliveryChannel={deliveryChannel}
+          orderType={orderType}
+          isSubmitting={isSubmitting}
         />
+        // <PrintAndSendDocumentComponent
+        //   infos={infos}
+        //   documents={documents?.filter((docs) => docs.documentType === "SIGNED_TASK_DOCUMENT")}
+        //   links={links}
+        //   t={t}
+        // />
       ),
       actionSaveOnSubmit: handleSubmit,
     };
@@ -1507,8 +1530,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    config?.label === "PENDING_SIGN"
+                    config?.label === "PENDING_SIGN" && !isSigned
                       ? unsignedModalConfig
+                      : config?.label === "PENDING_SIGN" && isSigned
+                      ? signedModalConfig
                       : config?.label === "SIGNED"
                       ? signedModalConfig
                       : config?.label === "SENT"
