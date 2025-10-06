@@ -367,11 +367,6 @@ const EpostTrackingPage = () => {
         EPostTracker: {
           ...selectedRowData,
           remarks: formData?.remarks?.text || "",
-          ...(activeTabIndex === 0 &&
-            formData?.bookingDate &&
-            formData?.bookingDate !== selectedRowData?.bookingDate && {
-              bookingDate: _toEpoch(formData?.bookingDate),
-            }),
           ...(formData?.speedPostId && { speedPostId: formData?.speedPostId }),
           ...(deliveryStatus && { deliveryStatus: deliveryStatus }),
         },
