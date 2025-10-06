@@ -280,7 +280,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         },
       });
 
-      taskHearingNumber = orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber || "";
+      taskHearingNumber = orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber || "";
       const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
       taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
       if (taskOrderType === "NOTICE") {
