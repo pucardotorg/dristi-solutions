@@ -93,7 +93,7 @@ const HomeView = () => {
   const hasViewSignOrderAccess = useMemo(() => roles?.some((role) => role.code === "VIEW_SIGN_ORDERS"), [roles]);
   const viewDashBoards = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]); // to show Dashboards, Reports tabs.
   const viewADiary = useMemo(() => roles?.some((role) => role?.code === "DIARY_VIEWER"), [roles]); // to show A-Diary tab.
-  const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASESS"), [roles]);
+  const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
