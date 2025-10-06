@@ -68,12 +68,7 @@ const BailEsignModal = ({
           label={t("PLEASE_NOTE")}
           additionalElements={[
             <p>
-              {t("BAIL_BOND_WITNESS_POPUP_NOTES")} {" "}
-              <span style={{ fontWeight: "bold" }}>
-                {forWitnessDeposition
-                  ? t("WITNESS_DEPOSITION")
-                  : t("BAIL_BOND")}
-              </span>
+             {forWitnessDeposition ? t("WITNESS_DEPOSITION_POPUP_NOTES") : t("BAIL_BOND_WITNESS_POPUP_NOTES")}
             </p>,
           ]}
           inline
