@@ -499,14 +499,27 @@ public class PaymentService {
     private List<DemandDetail> getDemandDetailSummons(List<Calculation> calculation, String entityType, String deliveryChannel, Map<String, Map<String, JSONArray>> paymentMasterData) {
         Map<String, String> taxHeadMasterCodes = getTaxHeadMasterCodes(paymentMasterData, entityType, deliveryChannel);
         List<DemandDetail> demandDetails = new ArrayList<>();
-        for(BreakDown breakDown : calculation.get(0).getBreakDown()) {
-            String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
-            if (taxHeadCode != null) {
-                demandDetails.add(DemandDetail.builder()
-                        .tenantId(config.getEgovStateTenantId())
-                        .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
-                        .taxHeadMasterCode(taxHeadCode)
-                        .build());
+        if ("EPOST".equalsIgnoreCase(deliveryChannel)) {
+            for (BreakDown breakDown : calculation.get(0).getBreakDown()) {
+                String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
+                if (taxHeadCode != null) {
+                    demandDetails.add(DemandDetail.builder()
+                            .tenantId(config.getEgovStateTenantId())
+                            .taxAmount(BigDecimal.valueOf(calculation.get(0).getBreakDown().stream().mapToDouble(BreakDown::getAmount).sum()))
+                            .taxHeadMasterCode(taxHeadCode)
+                            .build());
+                }
+            }
+        } else {
+            for (BreakDown breakDown : calculation.get(0).getBreakDown()) {
+                String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
+                if (taxHeadCode != null) {
+                    demandDetails.add(DemandDetail.builder()
+                            .tenantId(config.getEgovStateTenantId())
+                            .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
+                            .taxHeadMasterCode(taxHeadCode)
+                            .build());
+                }
             }
         }
         return demandDetails;
