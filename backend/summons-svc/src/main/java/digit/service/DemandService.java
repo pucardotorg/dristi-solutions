@@ -174,10 +174,11 @@ public class DemandService {
         String deliveryChannel = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
-        if ("EPOST".equalsIgnoreCase(deliveryChannel)) {
-            log.info("creating single demand for epost");
+        if (E_POST.equalsIgnoreCase(deliveryChannel)) {
+            log.info("creating single demand for e post");
             DemandDetail demandDetail = createDemandDetailForEPost(calculation.getTenantId(), calculation.getBreakDown(), masterCodes);
             demandDetailList.add(demandDetail);
+            log.info("created single demand detail for e post");
         } else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
