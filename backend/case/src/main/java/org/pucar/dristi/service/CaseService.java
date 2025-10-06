@@ -1630,22 +1630,28 @@ public class CaseService {
                 for (Party litigant : courtCase.getLitigants()) {
                     if (litigant.getIndividualId().equals(representingJoinCase.getIndividualId()) && litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {
                         // Filter out PIP affidavit documents
-                        List<Document> updatedDocuments = litigant.getDocuments().stream()
-                                .filter(doc -> {
-                                    Object additionalDetails = doc.getAdditionalDetails();
-                                    if (additionalDetails == null) return true;
+                        for (Document document : litigant.getDocuments()) {
+                            Object additionalDetails = document.getAdditionalDetails();
+                            if (additionalDetails == null) continue;
 
-                                    ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-                                    String documentName = additionalDetailsNode.has("documentName")
-                                            ? additionalDetailsNode.get("documentName").asText()
-                                            : "";
+                            ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                            String documentName = additionalDetailsNode.has("documentName")
+                                    ? additionalDetailsNode.get("documentName").asText()
+                                    : "";
 
-                                    // remove if documentName == UPLOAD_PIP_AFFIDAVIT
-                                    return !UPLOAD_PIP_AFFIDAVIT.equalsIgnoreCase(documentName);
-                                })
-                                .collect(Collectors.toList());
+                            // If this is the PIP affidavit, mark inactive
+                            if (UPLOAD_PIP_AFFIDAVIT.equalsIgnoreCase(documentName)) {
+                                document.setIsActive(false);
 
-                        litigant.setDocuments(updatedDocuments);
+                                CourtCase caseObjForPipDocumentInActive = new CourtCase();
+                                caseObjForPipDocumentInActive.setId(courtCase.getId());
+                                caseObjForPipDocumentInActive.setTenantId(courtCase.getTenantId());
+                                caseObjForPipDocumentInActive.setLitigants(List.of(litigant));
+                                log.info("Pushing join case litigant details for removing pip documents :: {}", caseObjForPipDocumentInActive);
+                                producer.push(config.getLitigantJoinCaseTopic(), caseObjForPipDocumentInActive);
+                                break;
+                            }
+                        }
                     }
                 }
             }
