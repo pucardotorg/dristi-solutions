@@ -102,15 +102,18 @@ const EpostTrackingPage = () => {
     { select: (data) => data?.Epost?.status || [] }
   );
 
-  const district = useMemo(() => {
+  const loggedInUser = useMemo(() => {
     if (!userName) return "";
-    const user = epostUserData?.find((user) => user?.userName === userName);
-    return user?.district || "";
+    return epostUserData?.find((user) => user?.userName === userName);
   }, [epostUserData, userName]);
 
   const epostStatusDropDownData = useMemo(() => {
     return (epostStatusDropDown || [])?.slice()?.reverse();
   }, [epostStatusDropDown]);
+
+  const intermediateStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "INTERMEDIATE"), [
+    epostStatusDropDownData,
+  ]);
 
   const handleDownloadDocument = async (row) => {
     const { fileStoreId, processNumber } = row;
@@ -149,15 +152,18 @@ const EpostTrackingPage = () => {
     }
   };
 
-  const handleDownloadList = async (activeIndex) => {
+  const handleDownloadList = async (activeIndex, postalHub) => {
     if (activeIndex === 2) {
       try {
         const month = searchFormData?.[activeTabIndex]?.monthReports || new Date().toISOString().slice(0, 7);
+        const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
         const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
         const payload = {
           ePostTrackerSearchCriteria: {
             bookingDateStartTime: bookingDateStartTime || "",
             bookingDateEndTime: bookingDateEndTime || "",
+            speedPostId: speedPostId || "",
+            postalHub: postalHub,
             pagination: {},
           },
         };
@@ -191,14 +197,50 @@ const EpostTrackingPage = () => {
         console.error(error);
       }
     } else {
-      // TODO: download List
+      // TODO: Need to Check
+      try {
+        const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
+        const payload = {
+          ePostTrackerSearchCriteria: {
+            speedPostId: speedPostId || "",
+            deliveryStatusList: ["NOT_UPDATED"],
+            postalHub: postalHub,
+            pagination: {},
+          },
+        };
+        const response = await Axios.post(
+          Urls.Epost.EpostReportDownload,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Rainmaker",
+            },
+            ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
+          },
+          {
+            params: {
+              tenantId: tenantId,
+            },
+            responseType: "blob",
+          }
+        );
+
+        const filename = `Epost_List.xlsx`;
+        downloadFile(response?.data, filename);
+        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      } catch (error) {
+        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error(error);
+      }
       setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     }
   };
 
   const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
     const currentForm = searchFormData[activeTabIndex] || {};
-    const epostStausList = epostStatusDropDown?.flatMap((data) => data?.code) || [];
+    const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
     const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : epostStausList;
     const { start: bookingDateStartTime, end: bookingDateEndTime } = currentForm?.bookingDate
       ? getEpochRangeFromDateIST(currentForm?.bookingDate)
@@ -244,7 +286,7 @@ const EpostTrackingPage = () => {
                   ...field,
                   populators: {
                     ...field.populators,
-                    options: [{ id: 0, code: "ALL", name: "All" }, ...epostStatusDropDownData],
+                    options: [{ id: 0, code: "ALL", name: "All" }, ...intermediateStatuses],
                   },
                 };
               }
@@ -264,7 +306,7 @@ const EpostTrackingPage = () => {
                     label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
                     submit="submit"
                     style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
-                    onSubmit={() => handleDownloadList(activeTabIndex)}
+                    onSubmit={() => handleDownloadList(activeTabIndex, loggedInUser?.postHubName)}
                     disabled={!hasResults}
                   />
                 );
@@ -291,7 +333,7 @@ const EpostTrackingPage = () => {
         },
       },
     };
-  }, [activeTabIndex, searchFormData, hasResults]);
+  }, [activeTabIndex, searchFormData, hasResults, loggedInUser]);
 
   const closeToast = () => setShowErrorToast(null);
 
@@ -382,7 +424,7 @@ const EpostTrackingPage = () => {
     };
   }, []);
 
-  if(!isEpostUser){
+  if (!isEpostUser) {
     history.replace(homePath);
   }
 
@@ -410,7 +452,7 @@ const EpostTrackingPage = () => {
       )}
 
       <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px", display: "flex", flexDirection: "column", gap: "2rem" }}>
-        <div style={{ fontWeight: 700, fontSize: "2rem" }}>{`${t("HUB_CO_ORDINATOR")}, ${district}`}</div>
+        <div style={{ fontWeight: 700, fontSize: "2rem" }}>{`${t("HUB_CO_ORDINATOR")}, ${loggedInUser?.district}`}</div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <Inboxheader config={config} tabData={tabData} onTabChange={onTabChange} onFormSubmit={onFormSubmit} />
           <InboxSearchComposer
