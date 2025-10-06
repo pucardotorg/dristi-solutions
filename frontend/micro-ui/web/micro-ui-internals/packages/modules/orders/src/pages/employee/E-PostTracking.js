@@ -155,6 +155,7 @@ const EpostTrackingPage = () => {
   const handleDownloadList = async (activeIndex, postalHub) => {
     if (activeIndex === 2) {
       try {
+        setLoading(true);
         const month = searchFormData?.[activeTabIndex]?.monthReports || new Date().toISOString().slice(0, 7);
         const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
         const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
@@ -196,9 +197,13 @@ const EpostTrackingPage = () => {
         setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         console.error(error);
       }
+      finally{
+        setLoading(false);
+      }
     } else {
       // TODO: Need to Check
       try {
+        setLoading(true);
         const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
         const payload = {
           ePostTrackerSearchCriteria: {
@@ -234,7 +239,9 @@ const EpostTrackingPage = () => {
         setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         console.error(error);
       }
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      finally {
+        setLoading(false);
+      }
     }
   };
 
