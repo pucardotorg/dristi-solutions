@@ -1616,6 +1616,7 @@ public class CaseService {
         }
     }
 
+    //Check if representing is pip and updated pip related info from additional details and remove pip affidavit document from litigants document
     private void checkIfRepresentingPipAndUpdateAdditionalDetails(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
         List<String> individualIdsOfAllPIP = Optional.ofNullable(courtCase.getLitigants())
                 .orElse(Collections.emptyList())
@@ -1684,6 +1685,7 @@ public class CaseService {
         }
     }
 
+    //for updating pip related info from additional details
     private void modifyAdditionalDetailsForPIP(CourtCase courtCase, String individualIdPIPRepresenting) {
         ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
 
