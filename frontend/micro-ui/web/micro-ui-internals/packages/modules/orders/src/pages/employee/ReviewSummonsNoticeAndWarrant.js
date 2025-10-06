@@ -1259,7 +1259,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return {
       handleClose: handleClose, //() => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
-      actionSaveLabel: hasEditTaskAccess ? t("MARK_AS_SENT") : null,
+      // actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
       hideSubmit: isTypist,
       modalBody: (
@@ -1267,8 +1267,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
           submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
-          closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : null}
-          closeButtonAction={handleClose}
+          closeButtonText={t("DOWNLOAD_DOCUMENT")}
+          closeButtonAction={handleDownload}
           submitButtonAction={handleSubmit}
           t={t}
           submissionData={submissionData}
@@ -1532,9 +1532,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
               {showActionModal && (
                 <DocumentModal
                   config={
-                    config?.label === "PENDING_SIGN" && !isSigned
+                    config?.label === "PENDING_SIGN" && actionModalType === "SIGN_PENDING"
                       ? unsignedModalConfig
-                      : config?.label === "PENDING_SIGN" && isSigned
+                      : config?.label === "PENDING_SIGN" && actionModalType !== "SIGN_PENDING"
                       ? signedModalConfig
                       : config?.label === "SIGNED"
                       ? signedModalConfig
