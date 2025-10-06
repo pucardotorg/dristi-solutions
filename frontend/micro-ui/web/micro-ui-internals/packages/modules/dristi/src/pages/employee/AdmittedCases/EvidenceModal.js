@@ -928,9 +928,6 @@ const EvidenceModal = ({
                     caseNumber: caseNumber,
                     ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -947,9 +944,6 @@ const EvidenceModal = ({
                 orderCategory: "COMPOSITE",
                 orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
                 compositeItems,
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
                 workflow: {
                   action: OrderWorkflowAction.SAVE_DRAFT,
@@ -980,9 +974,6 @@ const EvidenceModal = ({
                     applicationCMPNumber: applicationCMPNumber,
                     caseNumber: caseNumber,
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -1005,9 +996,6 @@ const EvidenceModal = ({
                   documents: [{}],
                 },
                 applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
               },
             };
@@ -1075,9 +1063,6 @@ const EvidenceModal = ({
               caseNumber: caseNumber,
               ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
             },
-            ...(hearingNumber && {
-              hearingNumber: hearingNumber,
-            }),
             ...(linkedOrderNumber && { linkedOrderNumber }),
           },
         };
