@@ -308,7 +308,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
                 {hearingCount > 0 && (
                   <div className="time-hearing-type">
                     <div className="timeText">
-                      {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
+                      {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)}
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
                       <Link
