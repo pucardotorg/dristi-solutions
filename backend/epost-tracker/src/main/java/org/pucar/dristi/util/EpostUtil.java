@@ -116,7 +116,7 @@ public class EpostUtil {
         ePostTracker.setDeliveryStatus(ePostRequest.getEPostTracker().getDeliveryStatus());
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
-        if (ePostTracker.getBookingDate() == null && BOOKED.equals(ePostTracker.getDeliveryStatus())) {
+        if (ePostTracker.getBookingDate() == null && BOOKED.equals(ePostRequest.getEPostTracker().getDeliveryStatus())) {
             long currentDate = System.currentTimeMillis();
             ZoneId istZone = ZoneId.of("Asia/Kolkata");
             long istMillis = Instant.ofEpochMilli(currentDate)
