@@ -521,6 +521,25 @@
   text-align: center;
 }
 
+.bulk-esign-order-view.register-user-home-tab {
+  .options-card {
+    overflow: auto !important;
+    p {
+      margin: 0px !important;
+    }
+  }
+}
+
+.bulk-esign-order-view.offlinePayments-home-tab {
+  .options-card {
+    overflow: auto !important;
+    p {
+      height: auto !important;
+      padding-bottom: 5px !important;
+    }
+  }
+}
+
 /* Add custom tick mark */
 .custom-checkbox:checked {
   background-color: white;
