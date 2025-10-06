@@ -117,6 +117,7 @@ public class EpostUtil {
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
         if (ePostTracker.getBookingDate() == null && BOOKED.equals(ePostRequest.getEPostTracker().getDeliveryStatus())) {
+            log.info("setting booking date");
             long currentDate = System.currentTimeMillis();
             ZoneId istZone = ZoneId.of("Asia/Kolkata");
             long istMillis = Instant.ofEpochMilli(currentDate)
@@ -125,7 +126,6 @@ public class EpostUtil {
                     .toEpochMilli();
             ePostTracker.setBookingDate(istMillis);
         }
-        ePostTracker.setBookingDate(ePostRequest.getEPostTracker().getBookingDate());
         ePostTracker.setSpeedPostId(ePostRequest.getEPostTracker().getSpeedPostId());
 
         return ePostTracker;
