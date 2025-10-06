@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from "react";
 import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -146,7 +147,7 @@ const CustomReviewCardRow = ({
   );
   const renderCard = useMemo(() => {
     let bgclassname = "";
-    let showFlagIcon = isScrutiny && (!disableScrutiny || enableScrutinyField) ? true : false;
+    let showFlagIcon = isScrutiny && (caseState === CaseWorkflowState.UNDER_SCRUTINY) && (!disableScrutiny || enableScrutinyField) ? true : false;
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
       showFlagIcon = prevDataError ? true : false;
     }

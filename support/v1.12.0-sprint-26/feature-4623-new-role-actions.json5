@@ -1,0 +1,22 @@
+    [
+      {
+        "id": "a08e4e7a-1eb7-4540-948a-d63eaed1145e",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "504",
+        "data": {
+          "id": 504,
+          "actionid": 2711,
+          "rolecode": "VIEW_BULK_RESCHEDULE_HEARINGS",
+          "tenantid": "kl",
+          "actioncode": "2711"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1759219704900,
+          "lastModifiedTime": 1759219704900
+        }
+      }
+    ]

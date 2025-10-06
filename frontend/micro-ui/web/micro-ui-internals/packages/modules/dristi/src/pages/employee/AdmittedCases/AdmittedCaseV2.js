@@ -117,7 +117,8 @@ const CloseBtn = (props) => {
   );
 };
 
-const relevantStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
+const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
+const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
 
 const styles = {
@@ -167,11 +168,9 @@ const AdmittedCaseV2 = () => {
   const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const activeTab = urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
@@ -248,6 +247,7 @@ const AdmittedCaseV2 = () => {
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isEmployee = useMemo(() => userType === "employee", [userType]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -263,7 +263,10 @@ const AdmittedCaseV2 = () => {
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
+
+  const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -312,7 +315,7 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && relevantStatuses.includes(caseDetails?.status), [
+  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
     caseDetails?.status,
     userRoles,
     isCitizen,
@@ -397,11 +400,11 @@ const AdmittedCaseV2 = () => {
         console.log(err);
       }
     };
-    if (userType === "employee") isBailBondPendingTaskPresent();
+    if (isEmployee) isBailBondPendingTaskPresent();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userType]);
-  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
   useEffect(() => {
@@ -784,35 +787,32 @@ const AdmittedCaseV2 = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
-        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+      if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+        history.push(
+          `/${window?.contextPath}/${
+            isCitizen ? "citizen" : "employee"
+          }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+        );
+      }
+      if (
+        [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+      ) {
+        if (createdByUuid === userInfo?.uuid) {
           history.push(
             `/${window?.contextPath}/${
               isCitizen ? "citizen" : "employee"
-            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+            }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
           );
         }
-        if (
-          [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          if (createdByUuid === userInfo?.uuid) {
-            history.push(
-              `/${window?.contextPath}/${
-                isCitizen ? "citizen" : "employee"
-              }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
-            );
-          }
-        } else {
-          setDocumentSubmission(docObj);
-          setShow(true);
-        }
       } else {
-        if (
-          ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          setDocumentSubmission(docObj);
-          setShow(true);
-        }
+        setDocumentSubmission(docObj);
+        setShow(true);
+      }
+      if (
+        ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+      ) {
+        setDocumentSubmission(docObj);
+        setShow(true);
       }
     };
 
@@ -854,7 +854,7 @@ const AdmittedCaseV2 = () => {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);
@@ -956,9 +956,7 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.searchResult,
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter(
-                    (column) => !(column?.label === "ACTIONS" && userType === "employee")
-                  ),
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter((column) => !(column?.label === "ACTIONS" && isEmployee)),
                 },
               },
             },
@@ -1242,8 +1240,6 @@ const AdmittedCaseV2 = () => {
     caseDetails,
     artifacts,
     userType,
-    isBenchClerk,
-    isCourtRoomManager,
     downloadPdf,
     ordersService,
     caseCourtId,
@@ -1479,8 +1475,8 @@ const AdmittedCaseV2 = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return isFSO ? true : !relevantStatuses.includes(caseDetails?.status);
-  }, [caseDetails?.status, isFSO]);
+    return !viewEnabledStatuses.includes(caseDetails?.status);
+  }, [caseDetails?.status]);
 
   const isCaseAdmitted = useMemo(() => {
     return caseDetails?.status === "CASE_ADMITTED";
@@ -1769,7 +1765,7 @@ const AdmittedCaseV2 = () => {
                 referenceId: `MANUAL_${res?.order?.orderNumber}`,
                 status: "DRAFT_IN_PROGRESS",
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: ["PENDING_TASK_ORDER"],
                 cnrNumber: updatedCaseDetails?.cnrNumber,
                 filingNumber: caseDetails?.filingNumber,
                 caseId: caseDetails?.id,
@@ -1915,7 +1911,7 @@ const AdmittedCaseV2 = () => {
                 referenceId: `MANUAL_${res?.order?.orderNumber}`,
                 status: "DRAFT_IN_PROGRESS",
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: ["PENDING_TASK_ORDER"],
                 cnrNumber,
                 filingNumber,
                 caseId: caseDetails?.id,
@@ -2020,7 +2016,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "PENDING_ADMISSION_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -2097,7 +2093,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "SCHEDULE_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -2584,8 +2580,7 @@ const AdmittedCaseV2 = () => {
                     criteria: {
                       hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
                       tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                      ...(row?.businessObject?.hearingDetails?.courtId &&
-                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                      ...(row?.businessObject?.hearingDetails?.courtId && isEmployee && { courtId: row?.businessObject?.hearingDetails?.courtId }),
                     },
                   },
                   { tenantId: row?.businessObject?.hearingDetails?.tenantId }
@@ -2968,7 +2963,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_${res.order.orderNumber}`,
             status: "DRAFT_IN_PROGRESS",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -3021,14 +3016,65 @@ const AdmittedCaseV2 = () => {
     []
   );
 
+  const employeeActionsPermissionsMapping = useMemo(
+    () => [
+      {
+        label: "END_HEARING",
+        requiredRoles: ["HEARING_APPROVER"], // update hearing api validation
+      },
+      {
+        label: "GENERATE_ORDER",
+        requiredRoles: ["ORDER_CREATOR"], // order create api validation
+      },
+      {
+        label: "SUBMIT_DOCUMENTS", // /evidence/v1/_create api, then /evidence/v1/_update api for signing
+        requiredRoles: ["EVIDENCE_CREATOR", "EVIDENCE_EDITOR"],
+      },
+      {
+        label: "GENERATE_PAYMENT_DEMAND",
+        requiredRoles: ["TASK_CREATOR"], // task create api validation
+      },
+      {
+        label: "CREATE_BAIL_BOND",
+        requiredRoles: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+        // The employee which has this role, wil receive this pending task so for create button also we are using same role.
+      },
+      {
+        label: "DOWNLOAD_CASE_FILE",
+        requiredRoles: [],
+      },
+      {
+        label: "SHOW_TIMELINE",
+        requiredRoles: [],
+      },
+      {
+        label: "ADD_WITNESS",
+        requiredRoles: ["ALLOW_ADD_WITNESS"], // add witness api validation
+      },
+      {
+        label: "TAKE_WITNESS_DEPOSITION",
+        requiredRoles: ["EVIDENCE_EDITOR"], // update evidence api validation
+      },
+      {
+        label: "VIEW_CALENDAR",
+        requiredRoles: [],
+      },
+    ],
+    []
+  );
+
   const employeeActionOptions = useMemo(() => {
-    if (isJudge)
-      return [
-        ...(currentInProgressHearing
+    if (isEmployee) {
+      if (hasHearingPriorityView) {
+        return currentInProgressHearing
           ? [
               {
-                value: "END_HEARING",
-                label: "END_HEARING",
+                value: "NEXT_HEARING",
+                label: "NEXT_HEARING",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
               },
               {
                 value: "GENERATE_ORDER",
@@ -3039,155 +3085,111 @@ const AdmittedCaseV2 = () => {
                 label: "SUBMIT_DOCUMENTS",
               },
               {
+                value: "DOWNLOAD_CASE_FILE",
+                label: "DOWNLOAD_CASE_FILE",
+              },
+              {
                 value: "GENERATE_PAYMENT_DEMAND",
                 label: "GENERATE_PAYMENT_DEMAND",
+              },
+              {
+                value: "SHOW_TIMELINE",
+                label: "SHOW_TIMELINE",
+              },
+              {
+                value: "ADD_WITNESS",
+                label: "ADD_WITNESS",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
               },
             ]
           : [
               {
-                value: "CREATE_BAIL_BOND",
-                label: "CREATE_BAIL_BOND",
+                value: "DOWNLOAD_CASE_FILE",
+                label: "DOWNLOAD_CASE_FILE",
               },
-            ]),
-        {
-          value: "DOWNLOAD_CASE_FILE",
-          label: "DOWNLOAD_CASE_FILE",
-        },
-        {
-          value: "SHOW_TIMELINE",
-          label: "SHOW_TIMELINE",
-        },
-        {
-          value: "ADD_WITNESS",
-          label: "ADD_WITNESS",
-        },
-        {
-          value: "TAKE_WITNESS_DEPOSITION",
-          label: "TAKE_WITNESS_DEPOSITION",
-        },
-      ];
-    else if (isBenchClerk || isCourtRoomManager) {
-      return currentInProgressHearing
-        ? [
-            {
-              value: "NEXT_HEARING",
-              label: "NEXT_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "GENERATE_ORDER",
-              label: "GENERATE_ORDER",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
-        : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
-    } else if (isTypist) {
-      return currentInProgressHearing
-        ? [
-            {
-              value: "END_HEARING",
-              label: "END_HEARING",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-            {
-              value: "SUBMIT_DOCUMENTS",
-              label: "SUBMIT_DOCUMENTS",
-            },
-            {
-              value: "VIEW_CALENDAR",
-              label: "VIEW_CALENDAR",
-            },
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "GENERATE_PAYMENT_DEMAND",
-              label: "GENERATE_PAYMENT_DEMAND",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ]
-        : [
-            {
-              value: "DOWNLOAD_CASE_FILE",
-              label: "DOWNLOAD_CASE_FILE",
-            },
-            {
-              value: "SHOW_TIMELINE",
-              label: "SHOW_TIMELINE",
-            },
-            {
-              value: "CREATE_BAIL_BOND",
-              label: "CREATE_BAIL_BOND",
-            },
-            {
-              value: "ADD_WITNESS",
-              label: "ADD_WITNESS",
-            },
-            {
-              value: "TAKE_WITNESS_DEPOSITION",
-              label: "TAKE_WITNESS_DEPOSITION",
-            },
-          ];
-    }
-  }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist, isCourtRoomManager]);
+              {
+                value: "SHOW_TIMELINE",
+                label: "SHOW_TIMELINE",
+              },
+              {
+                value: "ADD_WITNESS",
+                label: "ADD_WITNESS",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
+              },
+            ];
+      } else
+        return [
+          ...(currentInProgressHearing
+            ? [
+                {
+                  value: "END_HEARING",
+                  label: "END_HEARING",
+                },
+                {
+                  value: "GENERATE_ORDER",
+                  label: "GENERATE_ORDER",
+                },
+                {
+                  value: "SUBMIT_DOCUMENTS",
+                  label: "SUBMIT_DOCUMENTS",
+                },
+                {
+                  value: "GENERATE_PAYMENT_DEMAND",
+                  label: "GENERATE_PAYMENT_DEMAND",
+                },
+              ]
+            : [
+                {
+                  value: "CREATE_BAIL_BOND",
+                  label: "CREATE_BAIL_BOND",
+                },
+              ]),
+          {
+            value: "DOWNLOAD_CASE_FILE",
+            label: "DOWNLOAD_CASE_FILE",
+          },
+          {
+            value: "SHOW_TIMELINE",
+            label: "SHOW_TIMELINE",
+          },
+          {
+            value: "ADD_WITNESS",
+            label: "ADD_WITNESS",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+        ];
+    } else return [];
+  }, [currentInProgressHearing, hasHearingPriorityView, isEmployee]);
+
+  const allowedEmployeeActionOptions = useMemo(() => {
+    return employeeActionOptions?.filter((option) => {
+      // Find matching permission mapping for this action
+      const permissionMapping = employeeActionsPermissionsMapping.find((mapping) => mapping.label === option.label);
+
+      // If no mapping found, allow the action (no restrictions)
+      if (!permissionMapping) {
+        return true;
+      }
+
+      // If no required roles specified, allow the action
+      if (!permissionMapping.requiredRoles || permissionMapping.requiredRoles.length === 0) {
+        return true;
+      }
+
+      // Check if user has all required roles
+      const userRoleCodes = roles?.map((role) => role.code) || [];
+      return permissionMapping.requiredRoles.every((requiredRole) => userRoleCodes.includes(requiredRole));
+    });
+  }, [employeeActionOptions, roles, employeeActionsPermissionsMapping]);
 
   const courtActionOptions = useMemo(
     () => [
@@ -3199,7 +3201,30 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND")], [t]);
+  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
+
+  const allowedTakeActionOptions = useMemo(() => {
+    return takeActionOptions
+      .filter((option) => {
+        // Find matching permission mapping for this action
+        const permissionMapping = employeeActionsPermissionsMapping.find((mapping) => mapping.label === option.label);
+
+        // If no mapping found, allow the action (no restrictions)
+        if (!permissionMapping) {
+          return true;
+        }
+
+        // If no required roles specified, allow the action
+        if (!permissionMapping.requiredRoles || permissionMapping.requiredRoles.length === 0) {
+          return true;
+        }
+
+        // Check if user has all required roles
+        const userRoleCodes = roles?.map((role) => role.code) || [];
+        return permissionMapping.requiredRoles.every((requiredRole) => userRoleCodes.includes(requiredRole));
+      })
+      ?.map((obj) => t(obj?.label));
+  }, [takeActionOptions, employeeActionsPermissionsMapping, roles, t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3265,16 +3290,16 @@ const AdmittedCaseV2 = () => {
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
-      !caseDetails?.outcome && [
-        primaryAction.action,
-        secondaryAction.action,
-        tertiaryAction.action,
-        caseDetails?.status,
-        caseDetails?.outcome,
-        isCitizen,
-        isCourtRoomManager,
-        currentInProgressHearing,
-      ]
+      !caseDetails?.outcome,
+    [
+      primaryAction.action,
+      secondaryAction.action,
+      tertiaryAction.action,
+      caseDetails?.status,
+      caseDetails?.outcome,
+      isCitizen,
+      currentInProgressHearing,
+    ]
   );
 
   const viewActionBar = useMemo(() => {
@@ -3348,7 +3373,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
             actionCategory: "Bail Bond",
             cnrNumber,
             filingNumber,
@@ -3485,14 +3510,15 @@ const AdmittedCaseV2 = () => {
     );
   }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists]);
 
+  if (isEpostUser) {
+    history.push(homePath);
+  }
+
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
-  if (
-    (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCH_CLERK") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
-    caseData?.cases?.status &&
-    !judgeReviewStages.includes(caseData.cases.status)
-  ) {
+
+  if (isEmployee && caseData?.cases?.status && !judgeReviewStages.includes(caseData.cases.status)) {
     history.push(homePath);
   }
 
@@ -3599,11 +3625,11 @@ const AdmittedCaseV2 = () => {
                           <React.Fragment>
                             <Button
                               variation={"outlined"}
-                              label={t(isTypist ? "CS_GENERATE_ORDER" : "CS_CASE_VIEW_CALENDAR")}
-                              onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
+                              label={t("CS_CASE_VIEW_CALENDAR")}
+                              onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            {(isBenchClerk || isCourtRoomManager) && (
+                            {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
                                 label={t("CS_CASE_PASS_OVER")}
@@ -3616,47 +3642,36 @@ const AdmittedCaseV2 = () => {
                                 isDisabled={apiCalled}
                               ></Button>
                             )}
-                            {(isBenchClerk || isCourtRoomManager || ((isJudge || isTypist) && !hideNextHearingButton)) && (
+                            {(hasHearingPriorityView || (isJudge && !hideNextHearingButton)) && hasHearingEditAccess && (
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(
-                                  isBenchClerk || isCourtRoomManager
-                                    ? "CS_CASE_END_START_NEXT_HEARING"
-                                    : isJudge || isTypist
-                                    ? "CS_CASE_NEXT_HEARING"
-                                    : ""
-                                )}
-                                children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "CS_CASE_NEXT_HEARING")}
+                                children={hasHearingPriorityView ? null : <RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value:
-                                      isBenchClerk || isCourtRoomManager
-                                        ? "CS_CASE_END_START_NEXT_HEARING"
-                                        : isJudge || isTypist
-                                        ? "NEXT_HEARING"
-                                        : "",
+                                    value: hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "NEXT_HEARING",
                                   })
                                 }
                                 style={{
                                   boxShadow: "none",
-                                  ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#007e7e", border: "none" } : {}),
+                                  ...(hasHearingPriorityView ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
                               ></Button>
                             )}
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
-                            {(isJudge || isTypist) && !hideNextHearingButton && (
+                            {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t(isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                                children={isJudge || isTypist ? <RightArrow /> : null}
+                                label={t("CS_CASE_NEXT_HEARING")}
+                                children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
                                   handleEmployeeAction({
-                                    value: isJudge || isTypist ? "NEXT_HEARING" : "",
+                                    value: "NEXT_HEARING",
                                   })
                                 }
                               ></Button>
@@ -3670,7 +3685,11 @@ const AdmittedCaseV2 = () => {
                               className={"take-action-btn-class"}
                             ></ActionButton>
                             {showMenu && (
-                              <Menu textStyles={{ cursor: "pointer" }} options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>
+                              <Menu
+                                textStyles={{ cursor: "pointer" }}
+                                options={allowedTakeActionOptions}
+                                onSelect={(option) => handleSelect(option)}
+                              ></Menu>
                             )}
                           </React.Fragment>
                         )}
@@ -3694,7 +3713,7 @@ const AdmittedCaseV2 = () => {
                           <Menu
                             t={t}
                             localeKeyPrefix={"CS_CASE"}
-                            options={employeeActionOptions}
+                            options={allowedEmployeeActionOptions}
                             optionKey={"label"}
                             onSelect={handleEmployeeAction}
                           ></Menu>
@@ -3797,14 +3816,14 @@ const AdmittedCaseV2 = () => {
       )}
       {config?.label !== "Overview" && config?.label !== "caseFileOverview" && config?.label !== "Complaint" && config?.label !== "History" && (
         <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
-          <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
+          <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label?.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (
               <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
-          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtRoomManager) && config?.label === "Parties" && (
+          {(showMakeSubmission || userRoles?.includes("ALLOW_ADD_WITNESS")) && config?.label === "Parties" && (
             <Button
               label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
@@ -4238,10 +4257,8 @@ const AdmittedCaseV2 = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowOrderModal(false);
           }}
@@ -4267,10 +4284,8 @@ const AdmittedCaseV2 = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowWitnessModal(false);
           }}
@@ -4339,7 +4354,7 @@ const AdmittedCaseV2 = () => {
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isEmployee={isJudge || isBenchClerk || isTypist || isCourtRoomManager}
+          isEmployee={isEmployee}
           showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);

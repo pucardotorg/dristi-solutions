@@ -218,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -511,7 +511,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
+          {/* <Button
             label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
@@ -522,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>

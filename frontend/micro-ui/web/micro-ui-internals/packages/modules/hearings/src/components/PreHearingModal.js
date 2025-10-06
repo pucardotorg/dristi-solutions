@@ -3,14 +3,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
 import { preHearingConfig } from "../configs/PreHearingConfig";
-import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
+// import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
   // const roles = Digit.UserService.getUser()?.info?.roles;
-  // const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   // const [totalCount, setTotalCount] = useState(count);
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
@@ -20,10 +20,8 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
+  const history = useHistory();
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -47,15 +45,15 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const updatedPreHearingConfig = useMemo(() => {
     const configCopy = structuredClone(preHearingConfig);
 
-    // Filter out Actions column for judge, bench clerk, and typist
-    if (isJudge || isBenchClerk || isTypist || isCourtRoomManager) {
+    // Filter out Actions column for employees
+    if (isEmployee) {
       configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
         (column) => column.label !== "Actions"
       );
     }
 
     return configCopy;
-  }, [isJudge, isBenchClerk, isTypist, isCourtRoomManager]);
+  }, [isEmployee]);
 
   const updatedConfig = useMemo(() => {
     const configCopy = structuredClone(updatedPreHearingConfig);
@@ -174,16 +172,17 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
           <Button
             className="border-none dristi-font-bold"
             onButtonClick={() => {
-              setStepper(1);
+              sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
+              history.push(`/${window?.contextPath}/employee/home/home-screen`);
             }}
             label={t("BULK_RESCHEDULE")}
             variation={"secondary"}
           />
         )}
       </div>
-      {purposeModalOpen && (
+      {/* {purposeModalOpen && (
         <ReschedulingPurpose rescheduleAll={rescheduleAll} courtData={courtData} closeFunc={closeFunc} caseDetails={purposeModalData} />
-      )}
+      )} */}
       <BulkReschedule
         stepper={stepper}
         setStepper={setStepper}
