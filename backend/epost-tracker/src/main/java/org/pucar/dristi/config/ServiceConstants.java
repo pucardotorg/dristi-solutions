@@ -52,4 +52,19 @@ public class ServiceConstants {
 
 
     public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
+
 }

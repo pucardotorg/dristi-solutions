@@ -2,6 +2,7 @@ package org.pucar.dristi.task;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
@@ -10,6 +11,7 @@ import org.pucar.dristi.model.email.EmailRequest;
 import org.pucar.dristi.service.EPostService;
 import org.pucar.dristi.service.ExcelService;
 import org.pucar.dristi.service.FileStoreService;
+import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.util.PdfServiceUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -23,6 +25,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 
+import static org.pucar.dristi.config.ServiceConstants.msgId;
+
 @Component
 @Slf4j
 public class ScheduledTask {
@@ -33,6 +37,7 @@ public class ScheduledTask {
     private final PdfServiceUtil pdfServiceUtil;
     private final Producer producer;
     private final FileStoreService fileStoreService;
+    private final UserService userService;
 
     private final EPostConfiguration configuration;
 
@@ -42,13 +47,14 @@ public class ScheduledTask {
                          EPostService ePostService,
                          PdfServiceUtil pdfServiceUtil,
                          Producer producer,
-                         FileStoreService fileStoreService, EPostConfiguration configuration) {
+                         FileStoreService fileStoreService, UserService userService, EPostConfiguration configuration) {
         this.excelService = excelService;
         this.ePostConfiguration = ePostConfiguration;
         this.ePostService = ePostService;
         this.pdfServiceUtil = pdfServiceUtil;
         this.producer = producer;
         this.fileStoreService = fileStoreService;
+        this.userService = userService;
         this.configuration = configuration;
     }
 
@@ -151,6 +157,7 @@ public class ScheduledTask {
 
             EPostTrackerPdfRequest pdfRequest = EPostTrackerPdfRequest.builder()
                     .ePostTrackerPdf(ePostTrackerPdf)
+                    .requestInfo(createInternalRequestInfo())
                     .build();
 
             byte[] pdfBytes = pdfServiceUtil.generatePdf(
@@ -200,4 +207,13 @@ public class ScheduledTask {
 
         return now.format(formatter);
     }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(configuration.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
 }

@@ -102,4 +102,14 @@ public class EPostConfiguration {
     @Value("${court.name}")
     private String courtName;
 
+    // User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
+    @Value("${egov.user.create.path}")
+    private String userCreateEndpoint;
+
 }
