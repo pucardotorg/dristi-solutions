@@ -115,6 +115,10 @@ const EpostTrackingPage = () => {
     epostStatusDropDownData,
   ]);
 
+  const terminalStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "TERMINAL"), [
+    epostStatusDropDownData,
+  ]);
+
   const handleDownloadDocument = async (row) => {
     const { fileStoreId, processNumber } = row;
     if (!fileStoreId) {
@@ -248,6 +252,7 @@ const EpostTrackingPage = () => {
   const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
     const currentForm = searchFormData[activeTabIndex] || {};
     const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
+    const terminalStatusesList = terminalStatuses?.flatMap((data) => data?.code) || [];
     const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : epostStausList;
     const { start: bookingDateStartTime, end: bookingDateEndTime } = currentForm?.bookingDate
       ? getEpochRangeFromDateIST(currentForm?.bookingDate)
@@ -256,7 +261,7 @@ const EpostTrackingPage = () => {
       ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria,
       isDataRequired: true,
       speedPostId: currentForm?.speedPostId || "",
-      deliveryStatusList: activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [],
+      deliveryStatusList: activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [...epostStausList, ...terminalStatusesList],
       bookingDateStartTime: bookingDateStartTime || "",
       bookingDateEndTime: bookingDateEndTime || "",
       pagination: {

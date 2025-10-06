@@ -191,7 +191,11 @@ export const updateEpostStatusPendingConfig = [
         key: "speedPostId",
         populators: {
           name: "speedPostId",
-          error: "CORE_REQUIRED_FIELD_ERROR",
+          error: "Please enter only alphanumeric characters (A–Z, a–z, 0–9)",
+          validation: {
+            pattern: /^[0-9A-Za-z]+$/i,
+            message: "Please enter only alphanumeric characters (A–Z, a–z, 0–9)",
+          },
         },
       },
       {
