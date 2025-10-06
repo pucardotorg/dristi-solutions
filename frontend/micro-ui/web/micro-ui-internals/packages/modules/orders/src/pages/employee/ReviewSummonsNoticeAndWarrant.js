@@ -781,10 +781,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     });
 
     if (notAllowedItems.length > 0) {
-      const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => doc.type))];
-      const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED", {
-        types: notAllowedTypes.join(", "),
-      });
+      const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => t(doc.type)))];
+      const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes.join(", ");
       Digit.Utils.toast.error(msg);
       return;
     }
