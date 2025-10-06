@@ -1990,7 +1990,7 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
               actionCategory: "Scrutinise cases",
-              status: ["UNDER_SCRUTINY"],
+              status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
             },
             searchRescheduleHearingsApplication: {
               date: null,
