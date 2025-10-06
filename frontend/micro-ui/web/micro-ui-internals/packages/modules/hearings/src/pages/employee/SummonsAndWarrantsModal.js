@@ -253,7 +253,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               (taskOrderType === "NOTICE"
                 ? item?.orderType === "NOTICE"
                 : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
-              (order?.hearingNumber || order?.scheduledHearingNumber) === hearingId
+              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
             ...order,
@@ -266,7 +266,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return (taskOrderType === "NOTICE"
           ? order?.orderType === "NOTICE"
           : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
-          (order?.hearingNumber || order?.scheduledHearingNumber) === hearingId
+          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
       }
