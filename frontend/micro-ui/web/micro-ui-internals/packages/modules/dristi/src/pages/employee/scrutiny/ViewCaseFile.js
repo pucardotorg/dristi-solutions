@@ -92,6 +92,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [toastMsg, setToastMsg] = useState(null);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const [loading, setLoading] = useState(false);
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
@@ -454,6 +455,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   }, [isScrutiny, caseDetails]);
 
   const updateCaseDetails = async (action, filterSigned = false) => {
+    setLoading(true);
     let filteredDocuments = caseDetails?.documents;
     if (filterSigned) {
       filteredDocuments = caseDetails?.documents?.filter(
@@ -611,12 +613,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
   const handleRegisterCase = () => {
     updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
-      setActionModal("caseRegisterSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseRegisterSuccess");
+      }, 2000);
     });
   };
   const handleSendCaseBack = () => {
     updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
-      setActionModal("caseSendBackSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseSendBackSuccess");
+      }, 2000);
     });
   };
   const handlePotentialConfirm = () => {
@@ -869,6 +877,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "sendCaseBack" && (
             <SendCaseBackModal
+              loading={loading}
               comment={commentSendBack}
               setComment={setCommentSendBack}
               actionCancelLabel={"CS_COMMON_BACK"}
@@ -883,6 +892,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "registerCase" && (
             <SendCaseBackModal
+              loading={loading}
               comment={comment}
               setComment={setComment}
               actionCancelLabel={"CS_COMMON_BACK"}
