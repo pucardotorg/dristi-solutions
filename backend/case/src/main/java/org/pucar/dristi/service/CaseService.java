@@ -402,7 +402,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -465,7 +465,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-           // removeInactiveDocuments(documentToDelete);
+            // removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -1610,27 +1610,45 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
 
         } else {
-            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest, courtCase);
-            if (!isValid) {
-                log.info("Not a valid request since litigant is now pip");
-                return;
-            }
+            checkIfRepresentingPipAndUpdateAdditionalDetails(joinCaseRequest, courtCase);
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
             joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
         }
     }
 
-    private boolean checkIsValidRequestForAdding(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
+    private void checkIfRepresentingPipAndUpdateAdditionalDetails(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
         List<String> individualIdsOfAllPIP = Optional.ofNullable(courtCase.getLitigants())
                 .orElse(Collections.emptyList())
                 .stream().filter(litigant -> isPIP(litigant, courtCase)).map(Party::getIndividualId).toList();
 
         for (RepresentingJoinCase representingJoinCase : joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()) {
             if (individualIdsOfAllPIP.contains(representingJoinCase.getIndividualId())) {
-                return false;
+                //update additional details
+                modifyAdditionalDetailsForPIP(courtCase, representingJoinCase.getIndividualId());
+
+                for (Party litigant : courtCase.getLitigants()) {
+                    if (litigant.getIndividualId().equals(representingJoinCase.getIndividualId()) && litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {
+                        // Filter out PIP affidavit documents
+                        List<Document> updatedDocuments = litigant.getDocuments().stream()
+                                .filter(doc -> {
+                                    Object additionalDetails = doc.getAdditionalDetails();
+                                    if (additionalDetails == null) return true;
+
+                                    ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                                    String documentName = additionalDetailsNode.has("documentName")
+                                            ? additionalDetailsNode.get("documentName").asText()
+                                            : "";
+
+                                    // remove if documentName == UPLOAD_PIP_AFFIDAVIT
+                                    return !UPLOAD_PIP_AFFIDAVIT.equalsIgnoreCase(documentName);
+                                })
+                                .collect(Collectors.toList());
+
+                        litigant.setDocuments(updatedDocuments);
+                    }
+                }
             }
         }
-        return true;
     }
 
     private boolean isPIP(Party litigant, CourtCase courtCase) {
@@ -1665,6 +1683,49 @@ public class CaseService {
             return false;
         }
     }
+
+    private void modifyAdditionalDetailsForPIP(CourtCase courtCase, String individualIdPIPRepresenting) {
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
+
+        try {
+            if (additionalDetailsNode.has("advocateDetails")) {
+                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+
+                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
+                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+
+                    for (JsonNode formDataItem : formData) {
+                        if (!formDataItem.has("data")) continue;
+                        ObjectNode dataNode = (ObjectNode) formDataItem.get("data");
+
+                        if (!dataNode.has("multipleAdvocatesAndPip")) continue;
+                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
+
+                        if (!multipleAdvocatesAndPip.has("boxComplainant")) continue;
+                        ObjectNode boxComplainant = (ObjectNode) multipleAdvocatesAndPip.get("boxComplainant");
+
+                        if (!boxComplainant.has("individualId") || !boxComplainant.get("individualId").asText().equalsIgnoreCase(individualIdPIPRepresenting)) {
+                            continue;
+                        }
+
+                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
+                        isComplainantPipNode.put("code", "NO");
+                        isComplainantPipNode.put("name", "No");
+                        isComplainantPipNode.put("isEnabled", true);
+                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
+
+                        multipleAdvocatesAndPip.putNull("pipAffidavitFileUpload");
+                    }
+                }
+            }
+
+            courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
+
+        } catch (Exception e) {
+            log.error("Error modifying additionalDetails for pip: {}", e.getMessage(), e);
+        }
+    }
+
 
     private boolean isValidReplacement(CourtCase courtCase, JoinCaseRepresentative representative, RepresentingJoinCase representingJoinCase) {
         String litigantId = representingJoinCase.getIndividualId();
@@ -4413,42 +4474,42 @@ public class CaseService {
                             .documents(Collections.singletonList(documentPoaAuth))
                             .build();
 
-                        Optional<POAHolder> existingPoaHolder = courtCase.getPoaHolders()
-                                .stream()
-                                .filter(poaHolder -> poaHolder.getIndividualId().equalsIgnoreCase(poaIndividualId))
-                                .findFirst();
+                    Optional<POAHolder> existingPoaHolder = courtCase.getPoaHolders()
+                            .stream()
+                            .filter(poaHolder -> poaHolder.getIndividualId().equalsIgnoreCase(poaIndividualId))
+                            .findFirst();
 
-                        if (existingPoaHolder.isPresent()) {
-                            existingPoaHolder.get().getRepresentingLitigants().add(newPoaParty);
-                        } else {
-                            POAHolder newPoaHolder = new POAHolder();
-                            newPoaHolder.setIndividualId(poaIndividualId);
-                            newPoaHolder.setCaseId(courtCase.getId().toString());
-                            newPoaHolder.setHasSigned(false);
-                            List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
-                                            joinCaseRequest.getPoaDetails().getMiddleName(),
-                                            joinCaseRequest.getPoaDetails().getLastName())
-                                    .filter(part -> part != null && !part.isEmpty())
-                                    .toList();
+                    if (existingPoaHolder.isPresent()) {
+                        existingPoaHolder.get().getRepresentingLitigants().add(newPoaParty);
+                    } else {
+                        POAHolder newPoaHolder = new POAHolder();
+                        newPoaHolder.setIndividualId(poaIndividualId);
+                        newPoaHolder.setCaseId(courtCase.getId().toString());
+                        newPoaHolder.setHasSigned(false);
+                        List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
+                                        joinCaseRequest.getPoaDetails().getMiddleName(),
+                                        joinCaseRequest.getPoaDetails().getLastName())
+                                .filter(part -> part != null && !part.isEmpty())
+                                .toList();
 
-                            String fullName = String.join(" ", nameParts);
-                            newPoaHolder.setName(fullName);
-                            newPoaHolder.setId(UUID.randomUUID().toString());
-                            newPoaHolder.setAuditDetails(auditDetails);
-                            newPoaHolder.setIsActive(true);
-                            newPoaHolder.setPoaType("poa.regular");
+                        String fullName = String.join(" ", nameParts);
+                        newPoaHolder.setName(fullName);
+                        newPoaHolder.setId(UUID.randomUUID().toString());
+                        newPoaHolder.setAuditDetails(auditDetails);
+                        newPoaHolder.setIsActive(true);
+                        newPoaHolder.setPoaType("poa.regular");
 
-                            Map<String, String> additionalDetails = new HashMap<>();
-                            additionalDetails.put("uuid", joinCaseRequest.getPoaDetails().getUserUuid());
+                        Map<String, String> additionalDetails = new HashMap<>();
+                        additionalDetails.put("uuid", joinCaseRequest.getPoaDetails().getUserUuid());
 
-                            newPoaHolder.setAdditionalDetails(additionalDetails);
+                        newPoaHolder.setAdditionalDetails(additionalDetails);
 
-                            newPoaHolder.setTenantId(courtCase.getTenantId());
-                            newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
+                        newPoaHolder.setTenantId(courtCase.getTenantId());
+                        newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
 
-                            newPoaHolder.setRepresentingLitigants(new ArrayList<>(List.of(newPoaParty)));
-                            courtCase.getPoaHolders().add(newPoaHolder);
-                        }
+                        newPoaHolder.setRepresentingLitigants(new ArrayList<>(List.of(newPoaParty)));
+                        courtCase.getPoaHolders().add(newPoaHolder);
+                    }
 
                     if (poaIndividualDetails.getUniqueId() == null) {
                         enrichAdditionalDetailsPOAComplainant(courtCase, joinCaseRequest.getPoaDetails(), poaIndividualDetails);
@@ -5799,7 +5860,6 @@ public class CaseService {
             existingWitness.setOwnerType(witnessDetails.getOwnerType());
         }
     }
-
 
 
     /**
