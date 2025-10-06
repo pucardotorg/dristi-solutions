@@ -32,4 +32,7 @@ public class DeliveryChannel {
 
     @JsonProperty("channelDetails")
     private Map<String, String> channelDetails;
+
+    @JsonProperty("fees")
+    private Double fees;
 }

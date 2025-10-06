@@ -17,6 +17,8 @@ public class ServiceConstants {
     public static final String EPOST_TRACKER_ERROR = "EPOST_ERROR";
     public static final String INVALID_EPOST_TRACKER_FIELD = "Invalid EPost Tracker field with processNumber : ";
 
+    public static final String DUPLICATE_SPEED_POST_ERROR = "Duplicate speed post id found  : ";
+
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
 
     public static final String RES_MSG_ID = "uief87324";

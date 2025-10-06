@@ -65,7 +65,7 @@ public class EpostUtil {
                 .processNumber(processNumber)
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
-                .totalAmount((request.getTask() != null && request.getTask().getAmount() != null && request.getTask().getAmount().getAmount() != null) ? request.getTask().getAmount().getAmount() : null)
+                .totalAmount(getTotalAmount(request))
                 .fileStoreId(getFileStore(request))
                 .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
@@ -79,6 +79,15 @@ public class EpostUtil {
         enrichPostHub(ePostTracker);
 
         return ePostTracker;
+    }
+
+    private String getTotalAmount(TaskRequest request) {
+        return request.getTask() != null
+                && request.getTask().getTaskDetails() != null
+                && request.getTask().getTaskDetails().getDeliveryChannel() != null
+                && request.getTask().getTaskDetails().getDeliveryChannel().getFees() != null
+                ? String.valueOf(request.getTask().getTaskDetails().getDeliveryChannel().getFees())
+                : null;
     }
 
     private String getFileStore(TaskRequest request) {
