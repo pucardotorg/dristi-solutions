@@ -1,0 +1,1 @@
+check the pdf-service config need to add new file path for email pdf
