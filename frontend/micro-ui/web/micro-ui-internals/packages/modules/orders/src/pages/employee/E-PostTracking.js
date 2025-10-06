@@ -115,9 +115,7 @@ const EpostTrackingPage = () => {
     epostStatusDropDownData,
   ]);
 
-  const terminalStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "TERMINAL"), [
-    epostStatusDropDownData,
-  ]);
+  const terminalStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "TERMINAL"), [epostStatusDropDownData]);
 
   const handleDownloadDocument = async (row) => {
     const { fileStoreId, processNumber } = row;
@@ -200,8 +198,7 @@ const EpostTrackingPage = () => {
       } catch (error) {
         setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         console.error(error);
-      }
-      finally{
+      } finally {
         setLoading(false);
       }
     } else {
@@ -242,8 +239,7 @@ const EpostTrackingPage = () => {
       } catch (error) {
         setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         console.error(error);
-      }
-      finally {
+      } finally {
         setLoading(false);
       }
     }
@@ -261,7 +257,8 @@ const EpostTrackingPage = () => {
       ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria,
       isDataRequired: true,
       speedPostId: currentForm?.speedPostId || "",
-      deliveryStatusList: activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [...epostStausList, ...terminalStatusesList],
+      deliveryStatusList:
+        activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [...epostStausList, ...terminalStatusesList],
       bookingDateStartTime: bookingDateStartTime || "",
       bookingDateEndTime: bookingDateEndTime || "",
       pagination: {
@@ -383,7 +380,9 @@ const EpostTrackingPage = () => {
       setSearchRefreshCounter((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating : ", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("SOMETHING_WENT_WRONG");
+      setShowErrorToast({ label: errorMsg, error: true });
     }
   };
 
@@ -423,9 +422,9 @@ const EpostTrackingPage = () => {
     const handleStorageChange = () => {
       setHasResults(sessionStorage.getItem("epostSearchHasResults") === "true");
     };
-  
+
     window.addEventListener("epostSearchHasResultsChanged", handleStorageChange);
-  
+
     return () => {
       window.removeEventListener("epostSearchHasResultsChanged", handleStorageChange);
     };
