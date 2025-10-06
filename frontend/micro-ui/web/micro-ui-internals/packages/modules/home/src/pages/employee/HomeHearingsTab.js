@@ -530,7 +530,7 @@ const HomeHearingsTab = ({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-start" }}>
-              {["IN_PROGRESS"].includes(hearingDetails?.status) ? (
+              {["IN_PROGRESS"].includes(hearingDetails?.status) && (
                 <div
                   style={{ display: "flex", justifyContent: "flex-start", cursor: "pointer", maxWidth: "80px" }}
                   onClick={() => {
@@ -539,13 +539,11 @@ const HomeHearingsTab = ({
                   className="edit-icon"
                 >
                   {hasHearingPriorityView && hasHearingEditAccess ? (
-                    <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
+                    <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING_HOME")}</span>
                   ) : hasOrderCreateAccess ? (
                     <EditIcon />
                   ) : null}
                 </div>
-              ) : (
-                <div style={{ width: "24px", flexShrink: 0 }} />
               )}
               {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && hasHearingPriorityView && hasHearingEditAccess && (
                 <div
@@ -561,7 +559,7 @@ const HomeHearingsTab = ({
                   }}
                   className="edit-icon"
                 >
-                  <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
+                  <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING_HOME")}</span>
                 </div>
               )}
 
