@@ -77,7 +77,7 @@ function OfflinePaymentsHomeTab() {
   return (
     <React.Fragment>
       <div className="home-screen-wrapper payment-inbox" style={{ minHeight: "calc(100vh - 90px)", width: "100%" }}>
-        <div className={"bulk-esign-order-view"}>
+        <div className={"bulk-esign-order-view offlinePayments-home-tab"}>
           <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
             {t("COLLECT_OFFLINE_PAYMENTS")}
           </div>

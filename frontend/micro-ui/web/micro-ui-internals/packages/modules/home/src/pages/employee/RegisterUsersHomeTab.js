@@ -29,7 +29,7 @@ const RegisterUsersHomeTab = ({ tenants }) => {
     history.push(homePath);
   }
   return (
-    <div className={"bulk-esign-order-view"}>
+    <div className={"bulk-esign-order-view register-user-home-tab"}>
       <div className="header">{t("REGISTER_USERS_HOME")}</div>
       <InboxSearchComposer customStyle={sectionsParentStyle} configs={registerUserConfig}></InboxSearchComposer>
     </div>
