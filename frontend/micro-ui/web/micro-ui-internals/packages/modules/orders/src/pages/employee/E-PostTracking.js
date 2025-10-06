@@ -158,6 +158,8 @@ const EpostTrackingPage = () => {
     if (activeIndex === 2) {
       try {
         setLoading(true);
+        const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
+        const terminalStatusesList = terminalStatuses?.flatMap((data) => data?.code) || [];
         const month = searchFormData?.[activeTabIndex]?.monthReports || new Date().toISOString().slice(0, 7);
         const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
         const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
@@ -166,6 +168,7 @@ const EpostTrackingPage = () => {
             bookingDateStartTime: bookingDateStartTime || "",
             bookingDateEndTime: bookingDateEndTime || "",
             speedPostId: speedPostId || "",
+            deliveryStatusList: [...epostStausList, ...terminalStatusesList],
             postalHub: postalHub,
             pagination: {},
           },
