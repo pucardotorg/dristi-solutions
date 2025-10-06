@@ -781,7 +781,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     });
 
     if (notAllowedItems.length > 0) {
-      Digit.Utils.toast.error(t("ONE_OR_MORE_DOCUMENTS_CANNOT_BE_SIGNED_DUE_TO_PERMISSION"));
+      const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => doc.type))];
+      const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED", {
+        types: notAllowedTypes.join(", "),
+      });
+      Digit.Utils.toast.error(msg);
       return;
     }
     setShowBulkSignConfirmModal(true);
