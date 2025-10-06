@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.model.DeliveryStatus.BOOKED;
 
 @Slf4j
 @Component
@@ -115,6 +116,15 @@ public class EpostUtil {
         ePostTracker.setDeliveryStatus(ePostRequest.getEPostTracker().getDeliveryStatus());
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
+        if (ePostTracker.getBookingDate() == null && BOOKED.equals(ePostTracker.getDeliveryStatus())) {
+            long currentDate = System.currentTimeMillis();
+            ZoneId istZone = ZoneId.of("Asia/Kolkata");
+            long istMillis = Instant.ofEpochMilli(currentDate)
+                    .atZone(istZone)
+                    .toInstant()
+                    .toEpochMilli();
+            ePostTracker.setBookingDate(istMillis);
+        }
         ePostTracker.setBookingDate(ePostRequest.getEPostTracker().getBookingDate());
         ePostTracker.setSpeedPostId(ePostRequest.getEPostTracker().getSpeedPostId());
 
