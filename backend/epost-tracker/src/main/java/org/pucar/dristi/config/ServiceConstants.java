@@ -15,6 +15,8 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_UPDATING_SUMMONS = "Error occurred when sending Update Summons Request";
 
     public static final String EPOST_TRACKER_ERROR = "EPOST_ERROR";
+
+    public static final String DUPLICATE_SPEED_POST_ID_ERROR = "DUPLICATE_SPEED_POST_ID_ERROR";
     public static final String INVALID_EPOST_TRACKER_FIELD = "Invalid EPost Tracker field with processNumber : ";
 
     public static final String DUPLICATE_SPEED_POST_ERROR = "Duplicate speed post id found  : ";

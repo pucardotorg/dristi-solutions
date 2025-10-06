@@ -31,7 +31,7 @@ public class EPostValidator {
             EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder().speedPostId(speedPostId).build();
             List<EPostTracker> ePostTrackers = ePostRepository.getEPostTrackerList(searchCriteria,5,0);
             if (!ePostTrackers.isEmpty()) {
-                throw new CustomException(EPOST_TRACKER_ERROR,DUPLICATE_SPEED_POST_ERROR + speedPostId);
+                throw new CustomException(DUPLICATE_SPEED_POST_ID_ERROR,DUPLICATE_SPEED_POST_ERROR + speedPostId);
             }
         }
     }

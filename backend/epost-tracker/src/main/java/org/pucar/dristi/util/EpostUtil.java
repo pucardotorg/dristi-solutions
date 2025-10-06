@@ -84,9 +84,9 @@ public class EpostUtil {
     private String getTotalAmount(TaskRequest request) {
         return request.getTask() != null
                 && request.getTask().getTaskDetails() != null
-                && request.getTask().getTaskDetails().getDeliveryChannel() != null
-                && request.getTask().getTaskDetails().getDeliveryChannel().getFees() != null
-                ? String.valueOf(request.getTask().getTaskDetails().getDeliveryChannel().getFees())
+                && request.getTask().getTaskDetails().getDeliveryChannels() != null
+                && request.getTask().getTaskDetails().getDeliveryChannels().getFees() != null
+                ? String.valueOf(request.getTask().getTaskDetails().getDeliveryChannels().getFees())
                 : null;
     }
 
