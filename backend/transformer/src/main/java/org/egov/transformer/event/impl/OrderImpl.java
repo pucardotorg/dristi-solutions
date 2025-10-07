@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COMPOSITE;
@@ -52,7 +53,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
 
-        String businessOfTheDay = getBusinessOfTheDay(event,requestInfo);
+        String businessOfTheDay = getBusinessOfTheDay(event, requestInfo);
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
@@ -181,23 +182,26 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                     String status = entry.getKey(); // "Present", "Absent"
                     List<String> roles = entry.getValue();
 
-                    if("Present".equalsIgnoreCase(status)) {
+                    if ("Present".equalsIgnoreCase(status)) {
                         if (roles != null) {
                             roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
                         }
-                    }
-                    else {
+                    } else {
                         if (roles != null) {
                             roles.forEach(role -> rolesLocalizedAbsentee.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
                         }
                     }
                 }
 
-                String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                sb.append(linePresent).append(DOT);
+                if (!rolesLocalizedPresent.isEmpty()) {
+                    String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                    sb.append(linePresent).append(DOT);
+                }
 
-                String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                sb.append(lineAbsent).append(DOT);
+                if (!rolesLocalizedAbsentee.isEmpty()) {
+                    String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                    sb.append(lineAbsent).append(DOT);
+                }
             }
 
             // Item Text
@@ -216,10 +220,11 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
             // Next Hearing Date
             if (order.getNextHearingDate() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of(properties.getApplicationZoneId()))
                         .toLocalDate()
-                        .toString();
+                        .format(formatter);
                 sb.append("Date of Next Hearing: ")
                         .append(dateStr).append(DOT);
             }
