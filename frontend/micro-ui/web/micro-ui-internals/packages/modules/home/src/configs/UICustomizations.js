@@ -503,8 +503,8 @@ export const UICustomizations = {
         body: {
           ...requestCriteria.body,
           criteria: {
-            completeStatus: completeStatusData,
             ...filterList,
+            completeStatus: completeStatusData,
             orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
