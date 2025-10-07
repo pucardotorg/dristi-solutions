@@ -1,8 +1,8 @@
 const defaultSearchValues = {
   searchText: "",
   // applicationStatus: "",
-  // orderType: "", //{ code: "", name: "PROCESS_TYPE" },
-  // channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
+  orderType: "", //{ code: "", name: "PROCESS_TYPE" },
+  channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
   // completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
   // noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
@@ -12,6 +12,8 @@ const defaultSearchValues = {
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
   hearingDate: "",
+  orderType: "",
+  channel: "",
   // applicationStatus: {
   //   id: 2,
   //   code: "SIGN_PENDING",
@@ -30,12 +32,22 @@ export const defaultSearchValuesForJudgeSent = {
   searchText: "",
   applicationStatus: "",
   hearingDate: "",
+  orderType: "",
+  channel: "",
   // orderType: {
   //   id: 2,
   //   code: "WARRANT",
   //   name: "Warrant",
   //   isActive: true,
   // },
+};
+const defaultSearchValuesForCompleted = {
+  applicationStatus: "",
+  searchText: "",
+  hearingDate: "",
+  orderType: "",
+  channel: "",
+  completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
 };
 
 export const SummonsTabsConfig = {
@@ -700,30 +712,7 @@ export const SummonsTabsConfig = {
                 },
               },
               // hidden
-              {
-                label: "STATUS",
-                isMandatory: false,
-                key: "completeStatus",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "completeStatus",
-                  optionsKey: "code",
-                  mdmsConfig: {
-                    moduleName: "Order",
-                    masterName: "SentStatus",
-                    select: "(data) => {return data['Order'].SentStatus?.map((item) => {return item;});}",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                  styles: {
-                    maxWidth: "200px",
-                    minWidth: "150px",
-                  },
-                },
-                hideInForm: true,
-              },
+
               // Case Name or number
               {
                 label: "CS_CASE_NAME_ID",
@@ -837,7 +826,7 @@ export const SummonsTabsConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: defaultSearchValuesForCompleted,
             fields: [
               // subheading
               // {
