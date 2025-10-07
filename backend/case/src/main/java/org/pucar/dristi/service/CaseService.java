@@ -1649,6 +1649,7 @@ public class CaseService {
                                 caseObjForPipDocumentInActive.setLitigants(List.of(litigant));
                                 log.info("Pushing join case litigant details for removing pip documents :: {}", caseObjForPipDocumentInActive);
                                 producer.push(config.getLitigantJoinCaseTopic(), caseObjForPipDocumentInActive);
+                                litigant.getDocuments().remove(document);
                                 break;
                             }
                         }
