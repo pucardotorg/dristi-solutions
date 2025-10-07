@@ -92,6 +92,8 @@ public class EPostFeeService implements Payment {
         Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0));
         Double postFee = speedPostUtil.calculateEPostFee(config.getNumberOfPgOfSummon(), classification, speedPostConfigParams);
 
+        postFee = Math.ceil(postFee);
+
         List<BreakDown> breakDowns = taskUtil.getFeeBreakdown(courtFees, postFee);
 
         double totalAmount = Math.ceil(courtFees + postFee);
