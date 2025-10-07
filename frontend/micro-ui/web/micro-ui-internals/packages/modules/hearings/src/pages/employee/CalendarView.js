@@ -60,7 +60,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasBulkRescheduleAccess = useMemo(
-    () => ["NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
+    () => ["BULK_RESCHEDULE_UPDATE_ACCESS","NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
     [assignedRoles]
   );
 

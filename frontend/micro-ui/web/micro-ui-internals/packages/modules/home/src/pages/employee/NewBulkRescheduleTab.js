@@ -95,7 +95,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
   const hasBulkRescheduleAccess = useMemo(
-    () => ["NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
+    () =>
+      ["BULK_RESCHEDULE_UPDATE_ACCESS", "NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) =>
+        assignedRoles?.includes(role)
+      ),
     [assignedRoles]
   );
 
