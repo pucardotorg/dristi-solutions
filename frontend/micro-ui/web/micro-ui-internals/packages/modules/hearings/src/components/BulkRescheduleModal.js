@@ -88,7 +88,7 @@ const BulkRescheduleModal = ({
       setIsReschedule(!isReschedule);
       setNewHearingData(tentativeDates?.Hearings);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoader(false);
     }

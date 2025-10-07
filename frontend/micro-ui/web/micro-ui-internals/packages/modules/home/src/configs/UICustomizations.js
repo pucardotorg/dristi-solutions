@@ -45,7 +45,6 @@ const handleTaskDetails = (taskDetails) => {
 };
 
 const handleNavigate = (path) => {
-  console.log("Funvtion called ");
   const contextPath = window?.contextPath || "";
 
   window.location.href = `/${contextPath}${path}`;
@@ -104,7 +103,6 @@ export const UICustomizations = {
       return false;
     },
     preProcess: (data) => {
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {

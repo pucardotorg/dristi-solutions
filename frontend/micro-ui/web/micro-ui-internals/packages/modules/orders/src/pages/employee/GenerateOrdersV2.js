@@ -1023,7 +1023,7 @@ const GenerateOrdersV2 = () => {
           setIsBailBondTaskExists(true);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
@@ -3005,7 +3005,7 @@ const GenerateOrdersV2 = () => {
         }, 1000);
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setBailBondLoading(false);
 
       setShowErrorToast({
