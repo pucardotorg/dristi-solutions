@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import CasesResponse from "./CasesResponse";
 import JoinCaseHome from "./JoinCaseHome";
-import AdvocateRegistration from "./advocateRegistration";
+// import AdvocateRegistration from "./advocateRegistration";
 import SearchCase from "./SearchCase";
 import AdvocateMain from "../advocate/AdvocateMain";
 import Vakalath from "../advocate/Vakalath";
@@ -44,18 +44,13 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    if (isJudge || isTypist || isBenchClerk || isCourtStaff) {
-      history.push(`/${window?.contextPath}/employee/home/home-screen`);
-    } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    if (!isEpostUser) history.push(`/${window?.contextPath}/employee/home/home-screen`);
+    else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
 
   return (
@@ -66,7 +61,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         </React.Fragment>
         <PrivateRoute path={`${path}/cases-response`} component={() => <CasesResponse></CasesResponse>} />
         <PrivateRoute path={`${path}/join-case`} component={() => <JoinCaseHome t={t} />} />
-        <PrivateRoute path={`${path}/join-case-litigant`} component={() => <AdvocateRegistration></AdvocateRegistration>} />
+        {/* <PrivateRoute path={`${path}/join-case-litigant`} component={() => <AdvocateRegistration></AdvocateRegistration>} /> */}
         <PrivateRoute path={`${path}/search-case`} component={() => <SearchCase />} />
         <PrivateRoute path={`${path}/join-case-advocate`} component={() => <AdvocateMain />} />
         <PrivateRoute path={`${path}/advocate-vakalath`} component={() => <Vakalath />} />

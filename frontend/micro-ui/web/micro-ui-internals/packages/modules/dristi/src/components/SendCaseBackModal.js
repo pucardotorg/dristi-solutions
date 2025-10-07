@@ -1,10 +1,11 @@
 import React from "react";
 import Modal from "./Modal";
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, Loader, TextArea } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 function SendCaseBackModal({
+  loading,
   comment,
   setComment,
   totalErrors,
@@ -73,24 +74,34 @@ function SendCaseBackModal({
       headerBarMain={<Heading label={t(heading)} />}
       className="case-types"
     >
-      <div style={{ padding: "16px 24px" }}>
-        <div>
-          <SelectCustomNote
-            config={nodeConfig}
-            t={t}
-            onClick={() => {
-              handleCloseModal ? handleCloseModal() : onCancel();
-            }}
-          />
+      {loading ? (
+        <Loader />
+      ) : (
+        <div style={{ padding: "16px 24px" }}>
+          <div>
+            <SelectCustomNote
+              config={nodeConfig}
+              t={t}
+              onClick={() => {
+                handleCloseModal ? handleCloseModal() : onCancel();
+              }}
+            />
+          </div>
+          <p>{subtexts[type]}</p>
+          {(type === "registerCase" || type === "sendCaseBack") && (
+            <React.Fragment>
+              <p>{textAreaHeader[type]}</p>
+              <TextArea
+                style={{ marginBottom: "0px" }}
+                name={textAreaHeader[type]}
+                value={comment}
+                onChange={handleChange}
+                maxlength="1000"
+              ></TextArea>
+            </React.Fragment>
+          )}
         </div>
-        <p>{subtexts[type]}</p>
-        {(type === "registerCase" || type === "sendCaseBack") && (
-          <React.Fragment>
-            <p>{textAreaHeader[type]}</p>
-            <TextArea style={{ marginBottom: "0px" }} name={textAreaHeader[type]} value={comment} onChange={handleChange} maxlength="1000"></TextArea>
-          </React.Fragment>
-        )}
-      </div>
+      )}
     </Modal>
   );
 }

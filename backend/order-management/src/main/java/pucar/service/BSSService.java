@@ -2,7 +2,6 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -15,11 +14,6 @@ import pucar.util.*;
 import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.courtCase.CaseCriteria;
-import pucar.web.models.courtCase.CaseSearchRequest;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingResponse;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -218,6 +212,7 @@ public class BSSService {
                             .order(order).build();
 
                     orderProcessor.preProcessOrder(orderUpdateRequest);
+
                     if (order.getNextHearingDate() != null) {
                         hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
                     }

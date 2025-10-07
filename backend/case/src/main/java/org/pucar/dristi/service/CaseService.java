@@ -5637,7 +5637,7 @@ public class CaseService {
             }
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
-            updateCaseAdditionalDetails(body.getWitnessDetails(), courtCase);
+            updateWitnessDetailsInCase(body.getWitnessDetails(), courtCase);
             CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(body.getTenantId(), caseObj);
             producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
@@ -5649,6 +5649,29 @@ public class CaseService {
         }
     }
 
+    private void updateWitnessDetailsInCase(List<WitnessDetails> witnessDetails, CourtCase courtCase) {
+        Map<String, WitnessDetails> mergedMap = new LinkedHashMap<>(); // preserves order
+        List<WitnessDetails> existing = Optional.ofNullable(courtCase.getWitnessDetails()).orElse(Collections.emptyList());
+        List<WitnessDetails> updates = Optional.ofNullable(witnessDetails).orElse(Collections.emptyList());
+        if (updates.stream().anyMatch(w -> w == null || w.getUniqueId() == null)) {
+            throw new CustomException(VALIDATION_ERR, "Each witnessDetails item must have non-null uniqueId");
+        }
+        for (WitnessDetails w : existing) {
+            if (w != null && w.getUniqueId() != null) {
+                mergedMap.put(w.getUniqueId(), w);
+            }
+        }
+
+        for (WitnessDetails w : updates) {
+            if (w != null && w.getUniqueId() != null) {
+                mergedMap.put(w.getUniqueId(), w);  // replaces the element if uniqueId already exists
+            }
+        }
+
+        courtCase.setWitnessDetails(new ArrayList<>(mergedMap.values()));
+    }
+
+    @Deprecated
     private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
         if (updatedWitnessDetails == null || courtCase == null) {
             log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");
@@ -5675,8 +5698,12 @@ public class CaseService {
                         uniqueId != null &&
                         uniqueId.equals(existingNode.get("uniqueId").asText())) {
 
-                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
-                    ((ObjectNode) existingNode).set("data", updatedDataNode);
+                    JsonNode data = existingNode.get("data");
+                    WitnessDetails existingWitness = objectMapper.convertValue(data, WitnessDetails.class);
+                    updateWitnessDetails(existingWitness, witnessDetails);
+                    ObjectNode existingObjectNode = (ObjectNode) existingNode;
+                    JsonNode updatedDataNode = objectMapper.convertValue(existingWitness, JsonNode.class);
+                    existingObjectNode.set("data", updatedDataNode);
                     found = true;
                     log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
                     break;

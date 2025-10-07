@@ -172,6 +172,9 @@ public class IndexerUtils {
         String screenType = pendingTask.getScreenType();
         String caseNumber = filingNumber;
         String actionCategory = pendingTask.getActionCategory();
+        Long filingDate = pendingTask.getFilingDate();
+        String sectionAndSubSection = pendingTask.getSectionAndSubSection();
+        String referenceEntityType = pendingTask.getReferenceEntityType();
 
 
         String courtId = null;
@@ -229,7 +232,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType
         );
     }
 
@@ -265,9 +268,8 @@ public class IndexerUtils {
         Long businessServiceSla = businessServiceSlaObj != null ? ((Number) businessServiceSlaObj).longValue() : null;
         List<Object> assignedToList = JsonPath.read(jsonItem, ASSIGNES_PATH);
         List<String> assignedRoleList = JsonPath.read(jsonItem, ASSIGNED_ROLE_PATH);
-        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        List<Object> defaultRoles = null;
         String assignedTo = new JSONArray(assignedToList).toString();
-        String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
         boolean isCompleted;
@@ -290,12 +292,30 @@ public class IndexerUtils {
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
         String actionCategory = details.get("actionCategory");
+        String referenceEntityType = details.get("referenceEntityType");
         Long stateSlaFromMdms = details.get("stateSla") != null ? Long.parseLong(details.get("stateSla")) : null;
         if (stateSlaFromMdms != null) {
             stateSla = stateSlaFromMdms + clock.millis();
         }
+
+        if (details.get("defaultRoles") != null && !details.get("defaultRoles").isEmpty()) {
+            String defaultRolesString = details.get("defaultRoles");
+            defaultRoles = new JSONArray(defaultRolesString).toList();
+
+            if (defaultRoles != null) {
+                for (Object roleObj : defaultRoles) {
+                    String role = String.valueOf(roleObj);
+                    assignedRoleList.add(role);
+                }
+            }
+        }
+        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        String assignedRole = new JSONArray(assignedRoleSet).toString();
+
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         Long createdTime = clock.millis();
+        Long filingDate = details.get("filingDate") != null ? Long.parseLong(details.get("filingDate")) : null;
+        String sectionAndSubSection = details.get("sectionAndSubSection");
 
         JsonNode caseDetails = null;
 
@@ -443,7 +463,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType
         );
     }
 
@@ -534,6 +554,7 @@ public class IndexerUtils {
         String actionCategory = null;
         Long stateSla = null;
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
+        List<String> defaultRoles = null;
 
         List<PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -548,6 +569,7 @@ public class IndexerUtils {
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
                 referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
+                defaultRoles = pendingTaskType.getDefaultRoles();
                 stateSla = extractSlaFromMdms(pendingTaskType.getStateSla());
                 break;
             }
@@ -564,13 +586,24 @@ public class IndexerUtils {
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
         // Update name based on referenceEntityType and referenceEntityTypeNameMapping
-        name = getUpdatedTaskName(entityDetails, referenceEntityTypeMappings, name);
+
+        Map<String, String> updatedTaskNameAndActionCategory = getUpdatedTaskNameAndActionCategory(entityDetails, referenceEntityTypeMappings);
+
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("name") != null) {
+            name = updatedTaskNameAndActionCategory.get("name");
+        }
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("actionCategory") != null) {
+            actionCategory = updatedTaskNameAndActionCategory.get("actionCategory");
+        }
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
         caseDetails.put("actionCategory", actionCategory);
+        if (defaultRoles != null) {
+            caseDetails.put("defaultRoles", defaultRoles.toString());
+        }
         caseDetails.put("actors", actors);
         if (stateSla != null) {
             caseDetails.put("stateSla", String.valueOf(stateSla));
@@ -661,12 +694,17 @@ public class IndexerUtils {
 
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        Long caseFilingDate = JsonPath.read(caseObject.toString(), CASE_FILING_DATE_PATH);
+        // TODO: Get section and sub-section from case object
+        String sectionAndSubSection = config.getCaseSectionAndSubSection();
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
+        caseDetails.put("filingDate", String.valueOf(caseFilingDate));
+        caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
     }
@@ -836,27 +874,31 @@ public class IndexerUtils {
         return stateSla;
     }
 
-    private String getUpdatedTaskName(Map<String, String> entityDetails,
-                                      List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings,
-                                      String currentName) {
+    private Map<String, String> getUpdatedTaskNameAndActionCategory(Map<String, String> entityDetails,
+                                                                    List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings) {
 
         if (referenceEntityTypeMappings == null || referenceEntityTypeMappings.isEmpty()
                 || entityDetails.isEmpty()
                 || entityDetails.get("referenceEntityType") == null
                 || !entityDetails.containsKey("referenceEntityType")) {
-            return currentName;
+            return null;
         }
 
         String applicationType = entityDetails.get("referenceEntityType");
 
+        Map<String, String> updatedTaskNameAndActionCategory = new HashMap<>();
+
         // Check if referenceEntityTypeMappings has any mappings
         for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
-            if (applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
-                return mapping.getPendingTaskName();
+            if (mapping.getPendingTaskName() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("name", mapping.getPendingTaskName());
+            }
+            if (mapping.getActionCategory() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("actionCategory", mapping.getActionCategory());
             }
         }
 
-        return currentName;
+        return updatedTaskNameAndActionCategory;
     }
 
 }

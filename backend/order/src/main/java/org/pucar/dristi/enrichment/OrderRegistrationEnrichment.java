@@ -155,7 +155,7 @@ public class OrderRegistrationEnrichment {
 
                                 if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");
-                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString(),orderRequest.getRequestInfo(),orderRequest.getOrder().getTenantId());
+                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString(), orderRequest.getRequestInfo(), orderRequest.getOrder().getTenantId());
                                     if (itemTextMdms != null) {
                                         String itemText = orderRequest.getOrder().getItemText();
                                         if (itemText != null) {
@@ -181,48 +181,48 @@ public class OrderRegistrationEnrichment {
     public void enrichItemTextForIntermediateOrder(OrderRequest orderRequest) {
         if (INTERMEDIATE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
             JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
-            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString(),orderRequest.getRequestInfo(),orderRequest.getOrder().getTenantId());
+            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString(), orderRequest.getRequestInfo(), orderRequest.getOrder().getTenantId());
             if (itemTextMdms != null) {
                 String itemText = orderRequest.getOrder().getItemText();
                 if ("<p></p>\n".equalsIgnoreCase(itemText) || itemText == null)
-                 orderRequest.getOrder().setItemText("<p>"+itemTextMdms+"</p>\n");
+                    orderRequest.getOrder().setItemText("<p>" + itemTextMdms + "</p>\n");
             }
+    }
+}
+
+public String processOrderText(String orderType, String orderSchema, RequestInfo requestInfo, String tenantId) {
+
+    List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
+            .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
+            .toList();
+
+    try {
+
+        if (itemTextMdmsMatches.size() == 1) {
+            String text = itemTextMdmsMatches.get(0).getItemText();
+            List<String> paths = itemTextMdmsMatches.get(0).getPath();
+
+            if (paths == null || paths.isEmpty()) {
+                return text;
+            }
+            return getText(orderSchema, paths, text, requestInfo, tenantId);
+
+        } else if (itemTextMdmsMatches.size() == 2) {
+            String action = JsonPath.read(orderSchema, "$.orderDetails.action");
+            ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
+            String text = itemTextMdms.getItemText();
+            List<String> paths = itemTextMdms.getPath();
+            if (paths == null || paths.isEmpty()) {
+                return text;
+            }
+            return getText(orderSchema, paths, text, requestInfo, tenantId);
         }
+    } catch (Exception e) {
+        log.error("Error enriching item text :: {}", e.toString());
     }
 
-    public String processOrderText(String orderType, String orderSchema,RequestInfo requestInfo,String tenantId) {
-
-        List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
-                .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
-                .toList();
-
-        try {
-
-            if (itemTextMdmsMatches.size() == 1) {
-                String text = itemTextMdmsMatches.get(0).getItemText();
-                List<String> paths = itemTextMdmsMatches.get(0).getPath();
-
-                if (paths == null || paths.isEmpty()) {
-                    return text;
-                }
-                return getText(orderSchema, paths, text,requestInfo,tenantId);
-
-            } else if (itemTextMdmsMatches.size() == 2) {
-                String action = JsonPath.read(orderSchema, "$.orderDetails.action");
-                ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
-                String text = itemTextMdms.getItemText();
-                List<String> paths = itemTextMdms.getPath();
-                if (paths == null || paths.isEmpty()) {
-                    return text;
-                }
-                return getText(orderSchema, paths, text, requestInfo,tenantId);
-            }
-        } catch (Exception e) {
-            log.error("Error enriching item text :: {}", e.toString());
-        }
-
-        return null;
-    }
+    return null;
+}
 
     private String getText(String orderSchema, List<String> paths, String text,RequestInfo requestInfo,String tenantId) {
         for (String path : paths) {

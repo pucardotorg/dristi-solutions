@@ -180,10 +180,10 @@ const EpostTrackingPage = () => {
             actionCategory: "Review Process",
             name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
             entityType: "order-default",
-            referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber || orderData?.list[0]?.scheduledHearingNumber}`,
+            referenceId: `MANUAL_${orderData?.list[0]?.scheduledHearingNumber || orderData?.list[0]?.hearingNumber}`,
             status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: [orderType === "NOTICE" ? "PENDING_TASK_REISSUE_NOTICE" : "PENDING_TASK_REISSUE_SUMMON"],
             cnrNumber: taskData?.list[0]?.cnrNumber,
             filingNumber: taskData?.list[0]?.filingNumber,
             caseId: taskData?.list[0]?.caseId,
@@ -198,7 +198,7 @@ const EpostTrackingPage = () => {
       showToast("success", t("CORE_COMMON_PROFILE_UPDATE_SUCCESS_WITH_PASSWORD"), 50000);
       setShow(false);
     } catch (error) {
-      console.log("error updating Status");
+      console.error("error updating Status");
     }
   };
 

@@ -194,6 +194,7 @@ public class OrderUtil {
                         }
                     }
                 }
+
                 if (!rolesLocalizedPresent.isEmpty()) {
                     String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
                     sb.append(linePresent).append(DOT);
@@ -231,6 +232,7 @@ public class OrderUtil {
             }
 
             return sb.toString().trim();
+
         } catch (Exception e) {
             log.error("Error extracting order text", e);
             throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");

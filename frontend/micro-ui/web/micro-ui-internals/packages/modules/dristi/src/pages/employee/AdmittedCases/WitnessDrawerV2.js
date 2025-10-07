@@ -412,35 +412,24 @@ const WitnessDrawerV2 = ({
 
   const witnesses = useMemo(
     () =>
-      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => {
-        const mobileNumber = witness?.data?.phonenumbers?.mobileNumber;
-        const address = formatAddress(witness?.data?.addressDetails?.[0]?.addressDetails);
-        const tag = witness?.data?.witnessTag;
-        const uniqueId = witness?.uniqueId || witness?.data?.uuid;
+      caseDetails?.witnessDetails?.map((witness) => {
+        const mobileNumber = witness?.phonenumbers?.mobileNumber;
+        const address = formatAddress(witness?.addressDetails?.[0]?.addressDetails);
+        const tag = witness?.witnessTag;
+        const uniqueId = witness?.uniqueId || witness?.uuid;
 
         return {
-          name: getFormattedName(
-            witness?.data?.firstName,
-            witness?.data?.middleName,
-            witness?.data?.lastName,
-            witness?.data?.witnessDesignation,
-            "(Witness)"
-          ),
-          age: witness?.data?.witnessAge || "",
-          gender: witness?.data?.gender,
-          designation: witness?.data?.witnessDesignation || "",
+          name: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation, "(Witness)"),
+          age: witness?.witnessAge || "",
+          gender: witness?.gender,
+          designation: witness?.witnessDesignation || "",
           address,
           uniqueId,
           partyType: "witness",
           witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
-          sourceName: getFormattedName(
-            witness?.data?.firstName,
-            witness?.data?.middleName,
-            witness?.data?.lastName,
-            witness?.data?.witnessDesignation
-          ),
+          sourceName: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation),
           tag,
-          ownerType: witness?.data?.ownerType || "",
+          ownerType: witness?.ownerType || "",
         };
       }) || [],
     [caseDetails]

@@ -377,45 +377,156 @@ public class InboxServiceV2 {
         IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
         ActionCategorySearchResponse response = new ActionCategorySearchResponse();
 
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
+        if (indexSearchCriteria.getSearchReviewProcess() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        }
+        if (indexSearchCriteria.getSearchScheduleHearing() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        }
+        if (indexSearchCriteria.getSearchViewApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(), inboxQueryConfiguration, response::setViewApplicationData);
+        }
+        if (indexSearchCriteria.getSearchDelayCondonationApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchDelayCondonationApplication(), inboxQueryConfiguration, response::setDelayCondonationApplicationData);
+        }
+        if (indexSearchCriteria.getSearchRescheduleHearingsApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRescheduleHearingsApplication(), inboxQueryConfiguration, response::setRescheduleHearingsData);
+        }
+        if (indexSearchCriteria.getSearchOtherApplications() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
+        }
+        if (indexSearchCriteria.getSearchRegisterCases() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+        }
+        if (indexSearchCriteria.getSearchBailBonds() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
+        }
+        if (indexSearchCriteria.getSearchOfflinePayments() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchOfflinePayments(), config.getBillingServiceModuleName(), response::setOfflinePaymentsData);
+        }
+        if (indexSearchCriteria.getSearchRegisterUsers() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchRegisterUsers(), config.getAdvocateModuleName(), response::setRegisterUsersData);
+        }
+        // TODO : Any search implementation that requires courtId filter needs to be above this.
+        if (indexSearchCriteria.getSearchScrutinyCases() != null) {
+            // Remove courtId filter if searching for scrutiny cases
+            Object courtId = moduleSearchCriteria.get("courtId");
+            moduleSearchCriteria.remove("courtId");
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScrutinyCases(), inboxQueryConfiguration, response::setScrutinyCasesData);
+            // Add courtId back to moduleSearchCriteria for other searches
+            if (courtId != null) {
+                moduleSearchCriteria.put("courtId", courtId);
+            }
+        }
 
         return response;
+    }
+
+    private void populateActionCategoryDataForOtherIndexes(SearchRequest searchRequest, Criteria criteria, String moduleName, Consumer<Criteria> setter) {
+
+        ProcessInstanceSearchCriteria processInstanceSearchCriteria = null;
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("billing"))
+                    .build();
+
+            moduleSearchCriteria.put("billStatus", "ACTIVE");
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+            moduleSearchCriteria.put("sortOrder", "DESC");
+        }
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("user-registration-advocate"))
+                    .build();
+
+            moduleSearchCriteria.put("isActive", false);
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+        }
+
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                .limit(searchRequest.getIndexSearchCriteria().getLimit())
+                .offset(searchRequest.getIndexSearchCriteria().getOffset())
+                .processSearchCriteria(processInstanceSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .build();
+
+        InboxRequest inboxRequest = InboxRequest.builder()
+                .RequestInfo(searchRequest.getRequestInfo())
+                .inbox(inboxSearchCriteria)
+                .build();
+        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            inboxResponse = getInboxResponse(inboxRequest);
+        }
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            inboxResponse = getIndexResponse(inboxRequest);
+        }
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setCount(inboxResponse.getTotalCount());
+            setter.accept(criteria);
+        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,
                                             Criteria criteria,
                                             InboxQueryConfiguration config,
                                             Consumer<Criteria> setter) {
-        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
         searchCriteria.put("actionCategory", criteria.getActionCategory());
-
-        if (criteria.getDate() != null) {
-            searchCriteria.put("stateSla", criteria.getDate());
-        }else {
-            searchCriteria.remove("stateSla");
-        }
-
-        if (criteria.getSearchableFields() != null) {
-            searchCriteria.put("searchableFields", criteria.getSearchableFields());
-        }else{
-            searchCriteria.remove("searchableFields");
-        }
-
-        PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
-
-        criteria.setCount(resultData.getTotalSize());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(resultData.getRecords());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfiltered.getTotalSize());
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Final filtered search
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        criteria.setCount(filtered.getTotalSize());
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filtered.getTotalSize());
+        } else {
+            criteria.setData(filtered.getRecords());
         }
 
         setter.accept(criteria);
     }
+
+    /**
+     * Helper to either put a value into the map if not null,
+     * or remove the key if the value is null.
+     */
+    private void putOrRemove(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        } else {
+            map.remove(key);
+        }
+    }
+
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);

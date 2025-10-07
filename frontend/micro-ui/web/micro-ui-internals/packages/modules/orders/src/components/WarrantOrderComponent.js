@@ -80,7 +80,12 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ) && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+      label: "VIA_POLICE",
+      type: "Via Police",
+      code: "POLICE",
+      values: [],
+    },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
@@ -138,7 +143,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
+        const witnessData = caseDetails?.witnessDetails || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -160,17 +165,16 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           },
         }));
         const updatedWitnessData = witnessData.map((item, index) => ({
-          ...item,
           data: {
-            ...item?.data,
-            firstName: item?.data?.firstName,
-            lastName: item?.data?.lastName,
-            witnessDesignation: item?.data?.witnessDesignation,
-            address: mapAddressDetails(item?.data?.addressDetails),
+            ...item,
+            firstName: item?.firstName,
+            lastName: item?.lastName,
+            witnessDesignation: item?.witnessDesignation,
+            address: mapAddressDetails(item?.addressDetails),
             partyType: "Witness",
-            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-            email: item?.data?.emails?.emailId || [],
-            uuid: item?.data?.uuid,
+            phone_numbers: item?.phonenumbers?.mobileNumber || [],
+            email: item?.emails?.emailId || [],
+            uuid: item?.uuid,
             partyIndex: `Witness_${index}`,
           },
         }));
@@ -353,7 +357,12 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ) && { label: "SEND_ICOPS", type: "Via Police", code: "POLICE", values: address || [] },
+          (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+            label: "SEND_ICOPS",
+            type: "Via Police",
+            code: "POLICE",
+            values: address || [],
+          },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)

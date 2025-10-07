@@ -258,9 +258,9 @@ const GenerateOrdersV2 = () => {
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
@@ -592,9 +592,9 @@ const GenerateOrdersV2 = () => {
 
   const witnesses = useMemo(() => {
     return (
-      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
-        const fullName = getFormattedName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName, data?.data?.witnessDesignation, null);
-        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
+      caseDetails?.witnessDetails?.map((data) => {
+        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
+        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.uuid, partyType: "witness" };
       }) || []
     );
   }, [caseDetails]);
@@ -1023,7 +1023,7 @@ const GenerateOrdersV2 = () => {
           setIsBailBondTaskExists(true);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
@@ -2455,7 +2455,6 @@ const GenerateOrdersV2 = () => {
         caseDetails?.courtCaseNumber ||
         caseDetails?.cmpNumber ||
         caseDetails?.filingNumber;
-
       orderSchema = {
         ...orderSchema,
         orderDetails: {
@@ -2986,7 +2985,7 @@ const GenerateOrdersV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
             actionCategory: "Bail Bond",
             cnrNumber: caseDetails?.cnrNumber,
             filingNumber,
@@ -3006,7 +3005,7 @@ const GenerateOrdersV2 = () => {
         }, 1000);
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setBailBondLoading(false);
 
       setShowErrorToast({
@@ -3248,7 +3247,7 @@ const GenerateOrdersV2 = () => {
 
   const handleBulkCloseSuccessModal = () => {
     setShowBulkModal(false);
-    history.replace(`/${window.contextPath}/${userInfoType}/home/bulk-esign-order`);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
   };
 
   const createPendingTask = async ({ order, createTask = false, taskStatus = "CREATE_SUBMISSION", taskName = "", orderEntityType = null }) => {
@@ -3864,41 +3863,25 @@ const GenerateOrdersV2 = () => {
             )}
           </div>
         </div>
-        <ActionBar
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: "#fff",
-            padding: "16px 24px",
-            boxShadow: "none",
-            borderTop: "1px solid #BBBBBD",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <Button
-              label={t("CS_COMMON_BACK")}
-              variation={"secondary"}
-              onButtonClick={handleGoBack}
-              style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
-              textStyles={{
-                fontFamily: "Roboto",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: "18.75px",
-                textAlign: "center",
-                color: "#007E7E",
-              }}
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+        {hasOrderUpdateAccess && (
+          <ActionBar
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: "#fff",
+              padding: "16px 24px",
+              boxShadow: "none",
+              borderTop: "1px solid #BBBBBD",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
               <Button
-                label={t("SAVE_AS_DRAFT")}
+                label={t("CS_COMMON_BACK")}
                 variation={"secondary"}
-                onButtonClick={() => {
-                  handleSaveDraft(currentOrder);
-                }}
-                style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                onButtonClick={handleGoBack}
+                style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
                 textStyles={{
                   fontFamily: "Roboto",
                   fontSize: "16px",
@@ -3908,10 +3891,33 @@ const GenerateOrdersV2 = () => {
                   color: "#007E7E",
                 }}
               />
-              <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                <Button
+                  label={t("SAVE_AS_DRAFT")}
+                  variation={"secondary"}
+                  onButtonClick={async () => {
+                    try {
+                      await handleSaveDraft(currentOrder);
+                      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+                    } catch (error) {
+                      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+                    }
+                  }}
+                  style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                  textStyles={{
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#007E7E",
+                  }}
+                />
+                <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              </div>
             </div>
-          </div>
-        </ActionBar>
+          </ActionBar>
+        )}
       </div>
       {showEditOrderModal && (
         <EditSendBackModal

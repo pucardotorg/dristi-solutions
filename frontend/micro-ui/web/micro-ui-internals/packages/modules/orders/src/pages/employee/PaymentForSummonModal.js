@@ -335,7 +335,6 @@ const PaymentForSummonModal = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!courtBillResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -359,7 +358,6 @@ const PaymentForSummonModal = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(courtBillResponse);
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return null;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });
@@ -373,7 +371,7 @@ const PaymentForSummonModal = ({ path }) => {
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
                 status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,

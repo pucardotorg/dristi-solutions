@@ -230,6 +230,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
             }
 
             return sb.toString().trim();
+
         } catch (Exception e) {
             log.error("Error extracting order text", e);
             throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");

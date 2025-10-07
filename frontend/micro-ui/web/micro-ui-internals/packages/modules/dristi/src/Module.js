@@ -90,11 +90,8 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isLoading) {
     return <Loader />;
   }
@@ -108,16 +105,14 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    if (isJudge || isTypist || isBenchClerk || isCourtStaff) {
-      history.push(`/${window?.contextPath}/employee/home/home-screen`);
-    } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    if (!isEpostUser) history.push(`/${window?.contextPath}/employee/home/home-screen`);
+    else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
 
   Digit.SessionStorage.set("DRISTI_TENANTS", tenants);
   const urlParams = new URLSearchParams(window.location.search);
   const result = urlParams.get("result");
   const fileStoreId = urlParams.get("filestoreId");
-  console.log(result, fileStoreId, "result");
   if (userType === "citizen" && userInfo?.type !== "EMPLOYEE") {
     return (
       <ToastProvider>

@@ -84,7 +84,7 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
@@ -174,25 +174,5 @@ public class OrderService {
         // add validation here
         CourtCase courtCase = cases.get(0);
         return courtCase.getCnrNumber();
-    }
-
-    //remove this
-    public void createHearingForMissedOrder(HearingCreateMissedOrder body) {
-        for (String orderNumber : body.getOrderNumbers()) {
-            try {
-                OrderCriteria criteria = OrderCriteria.builder()
-                        .orderNumber(orderNumber)
-                        .build();
-                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
-                        .criteria(criteria).build();
-
-                OrderListResponse orders = orderUtil.getOrders(searchRequest);
-                Order order = orders.getList().get(0);
-                hearingUtil.preProcessScheduleNextHearing(OrderRequest.builder().requestInfo(body.getRequestInfo()).order(order).build());
-            }catch (Exception e) {
-                log.error("Exception in creating hearing for orderNumber :: {}", orderNumber);
-            }
-
-        }
     }
 }

@@ -22,6 +22,7 @@ import useSearchEvidenceService from "../../../../../submissions/src/hooks/submi
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
+import DOMPurify from "dompurify";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -62,7 +63,6 @@ const EvidenceModal = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const user = Digit.UserService.getUser()?.info?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
-  const isCourtRoomManager = useMemo(() => userInfo?.roles?.some((role) => ["COURT_ROOM_MANAGER"].includes(role?.code)), [userInfo?.roles]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -929,9 +929,6 @@ const EvidenceModal = ({
                     caseNumber: caseNumber,
                     ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -948,10 +945,6 @@ const EvidenceModal = ({
                 orderCategory: "COMPOSITE",
                 orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
                 compositeItems,
-                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
                 workflow: {
                   action: OrderWorkflowAction.SAVE_DRAFT,
@@ -982,9 +975,6 @@ const EvidenceModal = ({
                     applicationCMPNumber: applicationCMPNumber,
                     caseNumber: caseNumber,
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -1007,9 +997,6 @@ const EvidenceModal = ({
                   documents: [{}],
                 },
                 applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
               },
             };
@@ -1026,7 +1013,7 @@ const EvidenceModal = ({
               referenceId: `MANUAL_${response?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber,
               caseId,
@@ -1077,9 +1064,6 @@ const EvidenceModal = ({
               caseNumber: caseNumber,
               ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
             },
-            ...(hearingNumber && {
-              hearingNumber: hearingNumber,
-            }),
             ...(linkedOrderNumber && { linkedOrderNumber }),
           },
         };
@@ -1100,7 +1084,7 @@ const EvidenceModal = ({
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber,
               caseId,
@@ -1555,7 +1539,7 @@ const EvidenceModal = ({
                       <div
                         className="info-value"
                         dangerouslySetInnerHTML={{
-                          __html: documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || "",
+                          __html: DOMPurify.sanitize(documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || ""),
                         }}
                       ></div>
                     </div>
@@ -1591,8 +1575,8 @@ const EvidenceModal = ({
                 </div>
               )} */}
             </div>
-            {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
-              <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>
+            {(userRoles.includes("SUBMISSION_RESPONDER") || userType === "employee") && (
+              <div className={`application-comment`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
                   <div className="comment-main">

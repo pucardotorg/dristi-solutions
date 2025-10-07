@@ -227,7 +227,7 @@ public class HearingUtil {
                 .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
-              //  .hearingSummary(order.getHearingSummary())
+                //.hearingSummary(order.getHearingSummary())
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -262,7 +262,7 @@ public class HearingUtil {
                 .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(order.getNextHearingDate())
                 .endTime(order.getNextHearingDate())
-             //   .hearingSummary(orderUtil.getHearingSummary(order,requestInfo))
+               //.hearingSummary(orderUtil.getHearingSummary(order,requestInfo))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -433,10 +433,5 @@ public class HearingUtil {
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
-
-        //Remove this
-        log.info("--------------------------------------------------");
-        log.info("update dristi_orders set scheduledhearingnumber='{}' where ordernumber='{}' and scheduledhearingnumber is null;", newHearing.getHearing().getHearingId(), order.getOrderNumber());
-        log.info("--------------------------------------------------");
     }
 }

@@ -27,20 +27,17 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
   }, []);
 
   const joinRoom = () => {
-    console.log(websocket, "websocket join room", WebSocket.OPEN);
     if (websocket && websocket.readyState === WebSocket.OPEN) {
       const message = {
         type: "joined_room",
         room_id: roomId,
       };
-      console.log(websocket, message, "websocket join room success");
 
       websocket.send(JSON.stringify(message));
     }
   };
 
   const createRoom = () => {
-    console.log(websocket, "websocket create room");
     if (websocket && websocket.readyState === WebSocket.OPEN) {
       const message = {
         type: "create_room",
@@ -54,19 +51,16 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
     const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
 
     if (!websocketAddress) {
-      console.log("WebSocket address is required.");
       return;
     }
 
     const ws = new WebSocket(websocketAddress);
 
     ws.onopen = () => {
-      console.log("WebSocket connection established");
       setWebSocketStatus("Connected");
     };
 
     ws.onclose = (event) => {
-      console.log("WebSocket connection closed", event);
       setWebSocketStatus("Not Connected");
     };
 

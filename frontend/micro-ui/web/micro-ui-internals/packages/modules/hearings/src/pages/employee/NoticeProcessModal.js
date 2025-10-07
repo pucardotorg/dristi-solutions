@@ -446,7 +446,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               }}
             />
           )}
-          {isButtonVisible && currentHearingId && userType === "employee" && (
+          {/* {isButtonVisible && currentHearingId && userType === "employee" && (
             <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
               <Button
                 label={`Re-Issue ${t(orderType)}`}
@@ -461,7 +461,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 textStyles={headingStyle}
               />
             </div>
-          )}
+          )} */}
         </React.Fragment>
       )}
     </div>

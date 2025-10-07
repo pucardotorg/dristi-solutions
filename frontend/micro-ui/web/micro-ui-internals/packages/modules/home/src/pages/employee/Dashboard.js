@@ -64,8 +64,6 @@ const DashboardPage = () => {
           passwordField.dispatchEvent(new Event("input", { bubbles: true }));
           passwordField.dispatchEvent(new Event("change", { bubbles: true }));
           submitButton.click();
-        } else {
-          console.log("Already logged in or fields missing", iframeDoc, usernameField);
         }
       } catch (err) {
         console.error("Login failed due to cross-origin access issue", err);
@@ -169,7 +167,6 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
     const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
     const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
@@ -230,8 +227,6 @@ const DashboardPage = () => {
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-          } else {
-            console.log(`Attempt ${attemptCount}: Report not ready yet.`);
           }
         }
       };
@@ -249,13 +244,10 @@ const DashboardPage = () => {
     const userInfo = window?.Digit?.UserService?.getUser()?.info;
     const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
     const roles = useMemo(() => userInfo?.roles, [userInfo]);
+    const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-    const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-    const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-    const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-    const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
     let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-    if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+    if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
     const crumbs = [
       {
         path: homePath,
@@ -311,9 +303,7 @@ const DashboardPage = () => {
                       onClick={() => {
                         setStepper(1);
                         setHeadingTxt(data.code + "_HEADING");
-                        setMetabaseUrl(data.code === "HEARINGS_DS"
-                          ? `${METABASE_URL}?tab=89-hearings-progress`
-                          : METABASE_URL)
+                        setMetabaseUrl(data.code === "HEARINGS_DS" ? `${METABASE_URL}?tab=89-hearings-progress` : METABASE_URL);
                         setJobID(data.jobId);
                       }}
                     >
@@ -344,7 +334,7 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {headingTxt === 'AVAILABLE_REPORTS' && !isNaN(stepper) && headingTxt?.trim() && (
+          {headingTxt === "AVAILABLE_REPORTS" && !isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
               <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
@@ -361,13 +351,7 @@ const DashboardPage = () => {
             ) */}
             <div className="content-area">
               <style>{customStyles}</style>
-              {stepper === 1 && (
-                <iframe
-                  src={metabaseUrl}
-                  height="700"
-                  width="100%"
-                ></iframe>
-              )}{" "}
+              {stepper === 1 && <iframe src={metabaseUrl} height="700" width="100%"></iframe>}{" "}
               {stepper === 2 && (
                 <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 4 }}>

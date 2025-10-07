@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 
 @Component
 @Import({TracerConfiguration.class})
@@ -286,4 +288,7 @@ public class Configuration {
 
     @Value("${schedule.hearing.sla}")
     private int scheduleHearingSla;
+
+    @Value("${hearing.statuses.to.filter}")
+    private List<String> hearingStatusesToFilter;
 }

@@ -164,14 +164,26 @@ public class EvidenceService {
             String uniqueId = body.getArtifact().getSourceID();
 
             JsonNode courtCase = searchCaseDetails(body, filingNumber);
-            JsonNode formdata = extractWitnessFormData(courtCase, filingNumber);
 
-            boolean witnessFound = processWitnessRecords(body, filingNumber, uniqueId, formdata);
-            if(!witnessFound) {
+            JsonNode witnessDetailsNode = courtCase.get("witnessDetails");
+            if (StringUtils.isBlank(uniqueId) || witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+                log.info("Witness list missing/invalid or uniqueId blank; falling back to legacy path. uniqueIdPresent={}", StringUtils.isNotBlank(uniqueId));
+                updateWitnessDeposition(body, courtCase);
+                return;
+            }
+            List<WitnessDetails> witnessDetails = objectMapper.convertValue(witnessDetailsNode, new TypeReference<>() {});
+            WitnessDetails witness = witnessDetails.stream()
+                    .filter(w -> StringUtils.isNotBlank(w.getUniqueId()) && StringUtils.equalsIgnoreCase(w.getUniqueId(), uniqueId))
+                    .findFirst()
+                    .orElse(null);
+            if (witness != null) {
+                log.info("Updating witness found by uniqueId");
+                updateWitnessRecord(body, uniqueId, witness);
+            } else {
+                log.info("No matching witness by uniqueId; using legacy update path");
                 updateWitnessDeposition(body, courtCase);
             }
-            log.info("Successfully completed updateCaseWitness for filing number: {}",
-                    filingNumber);
+            log.info("Successfully completed updateCaseWitness for filing number: {}", filingNumber);
 
         } catch (CustomException e) {
             log.error("Unexpected error in updateCaseWitness for filing number: {}",
@@ -268,6 +280,7 @@ public class EvidenceService {
         }
     }
 
+    @Deprecated
     public JsonNode extractWitnessFormData(JsonNode courtCase, String filingNumber) {
         JsonNode additionalDetails = courtCase.get("additionalDetails");
         JsonNode witnessDetails = additionalDetails.get("witnessDetails");
@@ -282,6 +295,7 @@ public class EvidenceService {
         return formdata;
     }
 
+    @Deprecated
     private boolean processWitnessRecords(EvidenceRequest body, String filingNumber, String uniqueId, JsonNode formdata) {
         boolean witnessFound = false;
         for (int i = 0; i < formdata.size(); i++) {
@@ -295,7 +309,6 @@ public class EvidenceService {
                 String witnessUniqueId = data.get("uniqueId").textValue();
                 if (witnessUniqueId != null && witnessUniqueId.equals(uniqueId)) {
                     witnessFound = true;
-                    updateWitnessRecord(body, uniqueId, data);
                     break;
                 }
             } catch (CustomException e) {
@@ -313,14 +326,15 @@ public class EvidenceService {
         return witnessFound;
     }
 
-    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, JsonNode data) {
-        WitnessDetails witness = objectMapper.convertValue(data.get("data"), WitnessDetails.class);
+    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        // Remark: may need to add email laters to witness details
+        // Remark: may need to add email later to witness details
 //        updateWitnessEmails(body, witness);
-        updateWitnessMobileNumbers(body, witness);
+        if(body.getArtifact().getWitnessMobileNumbers() != null && !body.getArtifact().getWitnessMobileNumbers().isEmpty()){
+            updateWitnessMobileNumbers(body, witness);
+        }
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
                 .requestInfo(body.getRequestInfo())
@@ -481,7 +495,7 @@ public class EvidenceService {
 
         return requestInfo.getUserInfo().getRoles().stream()
                 .anyMatch(role ->
-                        tenantId.equals(role.getTenantId()) && (BENCH_CLERK.equals(role.getCode()) || JUDGE_ROLE.equals(role.getCode()) || TYPIST_ROLE.equals(role.getCode()) || COURT_ROOM_MANAGER.equalsIgnoreCase(role.getCode()))
+                        tenantId.equals(role.getTenantId()) && (EVIDENCE_SIGNER.equals(role.getCode()))
                 );
     }
 

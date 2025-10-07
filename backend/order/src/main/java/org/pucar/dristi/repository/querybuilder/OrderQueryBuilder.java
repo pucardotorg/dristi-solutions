@@ -17,7 +17,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class OrderQueryBuilder {
 
-    private static final String BASE_ORDER_QUERY = " SELECT orders.id as id, orders.tenantid as tenantid, orders.hearingnumber as hearingnumber, orders.scheduledhearingnumber as scheduledhearingnumber, " +
+    private static final String BASE_ORDER_QUERY = " SELECT orders.id as id, orders.tenantid as tenantid, orders.hearingnumber as hearingnumber, orders.scheduledhearingnumber as scheduledhearingnumber," +
             "orders.filingnumber as filingnumber, orders.courtId as courtId, orders.comments as comments, orders.cnrnumber as cnrnumber, orders.linkedordernumber as linkedordernumber, orders.ordernumber as ordernumber, orders.applicationnumber as applicationnumber," +
             "orders.createddate as createddate, orders.ordertype as ordertype, orders.orderdetails as orderdetails, orders.issuedby as issuedby, orders.ordercategory as ordercategory,  orders.attendance as attendance,  orders.itemText as itemtext, orders.purposeofnexthearing as purposeofnexthearing, orders.nexthearingdate as nexthearingdate," +
             "orders.status as status, orders.isactive as isactive, orders.additionaldetails as additionaldetails, orders.compositeitems as compositeitems, orders.ordertitle as ordertitle, orders.createdby as createdby," +

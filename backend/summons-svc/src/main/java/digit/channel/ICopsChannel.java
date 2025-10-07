@@ -3,12 +3,14 @@ package digit.channel;
 import digit.config.Configuration;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import static digit.config.ServiceConstants.*;
@@ -37,10 +39,18 @@ public class ICopsChannel implements ExternalChannel {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<TaskRequest> requestEntity = new HttpEntity<>(request, headers);
-        ResponseEntity<ChannelResponse> responseEntity = restTemplate.postForEntity(uri.toString(),
-                requestEntity, ChannelResponse.class);
-        log.info("Response Body: {}", responseEntity.getBody());
-        return responseEntity.getBody().getChannelMessage();
+       try{
+           ResponseEntity<ChannelResponse> responseEntity = restTemplate.postForEntity(uri.toString(),
+                   requestEntity, ChannelResponse.class);
+           ChannelResponse body = responseEntity.getBody();
+           if (body == null || body.getChannelMessage() == null) {
+               throw new CustomException(ICOPS_EXCEPTION, "Failed to receive valid response from ICops");
+           }
+           log.info("Response Body: {}", body);
+           return body.getChannelMessage();
+       } catch (Exception e) {
+           throw new CustomException(EXTERNAL_SERVICE_EXCEPTION, e.getMessage());
+       }
     }
 
     private void updateDocSubType(TaskRequest request) {

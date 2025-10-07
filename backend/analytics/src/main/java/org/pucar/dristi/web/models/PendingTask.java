@@ -98,4 +98,13 @@ public class PendingTask {
     @JsonProperty("expiryDate")
     private Long expiryDate = null;
 
+    @JsonProperty("sectionAndSubSection")
+    private String sectionAndSubSection = null;
+
+    @JsonProperty("filingDate")
+    private Long filingDate = null;
+
+    @JsonProperty("referenceEntityType")
+    private String referenceEntityType = null;
+
 }

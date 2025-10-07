@@ -161,10 +161,9 @@ const AdmittedCases = () => {
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
-  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
+  const activeTab = urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
@@ -217,10 +216,7 @@ const AdmittedCases = () => {
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
-  const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
-
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
 
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
@@ -233,7 +229,7 @@ const AdmittedCases = () => {
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -671,7 +667,7 @@ const AdmittedCases = () => {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+            history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);
@@ -1268,8 +1264,8 @@ const AdmittedCases = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return isFSO ? true : !relevantStatuses.includes(caseDetails?.status);
-  }, [caseDetails?.status, isFSO]);
+    return !relevantStatuses.includes(caseDetails?.status);
+  }, [caseDetails?.status]);
 
   const isCaseAdmitted = useMemo(() => {
     return caseDetails?.status === "CASE_ADMITTED";
@@ -1548,7 +1544,7 @@ const AdmittedCases = () => {
                 referenceId: `MANUAL_${res?.order?.orderNumber}`,
                 status: "DRAFT_IN_PROGRESS",
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: ["PENDING_TASK_ORDER"],
                 cnrNumber: updatedCaseDetails?.cnrNumber,
                 filingNumber: caseDetails?.filingNumber,
                 caseId: caseDetails?.id,
@@ -1626,11 +1622,9 @@ const AdmittedCases = () => {
 
   const updateCaseDetails = useCallback(
     async (action, data = {}) => {
-      let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-      let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
       const newcasedetails = {
         ...caseDetails,
-        additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+        additionalDetails: { ...caseDetails.additionalDetails, judge: data },
       };
       const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
       let assignees = [];
@@ -1728,7 +1722,7 @@ const AdmittedCases = () => {
                 referenceId: `MANUAL_${res?.order?.orderNumber}`,
                 status: "DRAFT_IN_PROGRESS",
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: ["PENDING_TASK_ORDER"],
                 cnrNumber,
                 filingNumber,
                 caseId: caseDetails?.id,
@@ -1739,9 +1733,7 @@ const AdmittedCases = () => {
                 tenantId,
               },
             });
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`
-            );
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
           } catch (error) {}
         }
       } catch (error) {}
@@ -1836,7 +1828,7 @@ const AdmittedCases = () => {
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "PENDING_ADMISSION_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1914,7 +1906,7 @@ const AdmittedCases = () => {
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "SCHEDULE_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -2519,7 +2511,7 @@ const AdmittedCases = () => {
             referenceId: `MANUAL_${res.order.orderNumber}`,
             status: "DRAFT_IN_PROGRESS",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -2824,7 +2816,7 @@ const AdmittedCases = () => {
             )}
           </div>
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
-            {(isCitizen || isCourtStaff) && (
+            {isCitizen && (
               <Button
                 variation={"outlined"}
                 label={t("DOWNLOAD_CASE_FILE")}
@@ -3012,7 +3004,7 @@ const AdmittedCases = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
-          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtStaff) && config?.label === "Parties" && (
+          {(showMakeSubmission || userType === "employee") && config?.label === "Parties" && (
             <Button
               label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
@@ -3342,7 +3334,7 @@ const AdmittedCases = () => {
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isEmployee={isJudge || isBenchClerk || isTypist || isCourtStaff}
+          isEmployee={userType === "employee"}
           showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);
