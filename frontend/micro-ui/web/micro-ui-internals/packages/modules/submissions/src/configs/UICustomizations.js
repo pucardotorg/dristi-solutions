@@ -60,7 +60,6 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -120,7 +119,7 @@ export const UICustomizations = {
       min: new Date().toISOString().split("T")[0],
     };
   },
-  
+
   maxTodayDateValidation: () => {
     return {
       max: new Date().toISOString().split("T")[0],

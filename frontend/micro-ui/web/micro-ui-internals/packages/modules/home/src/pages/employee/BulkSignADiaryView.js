@@ -130,7 +130,7 @@ function BulkSignADiaryView() {
           setIsSelectedDataSigned(false);
         }
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
       } finally {
         if (entryDate !== date) {
           setEntryDate(date);
@@ -234,7 +234,7 @@ function BulkSignADiaryView() {
         sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -315,7 +315,7 @@ function BulkSignADiaryView() {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setSignedDocumentUploadID("");
       sessionStorage.removeItem("fileStoreId");

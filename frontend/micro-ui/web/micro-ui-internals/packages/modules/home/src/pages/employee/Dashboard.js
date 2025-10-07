@@ -64,8 +64,6 @@ const DashboardPage = () => {
           passwordField.dispatchEvent(new Event("input", { bubbles: true }));
           passwordField.dispatchEvent(new Event("change", { bubbles: true }));
           submitButton.click();
-        } else {
-          console.log("Already logged in or fields missing", iframeDoc, usernameField);
         }
       } catch (err) {
         console.error("Login failed due to cross-origin access issue", err);
@@ -169,7 +167,6 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
     const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
     const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
@@ -230,8 +227,6 @@ const DashboardPage = () => {
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-          } else {
-            console.log(`Attempt ${attemptCount}: Report not ready yet.`);
           }
         }
       };
