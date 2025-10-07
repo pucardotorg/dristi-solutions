@@ -137,13 +137,38 @@ public class NotificationQueryBuilder {
         }
 
         Class<?> clazz = obj.getClass();
+
+        boolean isFuzzySearch = false;
+
+        // First, try to detect if the object has a field "isFuzzySearch"
+        try {
+            Field fuzzyField = clazz.getDeclaredField("isFuzzySearch");
+            fuzzyField.setAccessible(true);
+            Object value = fuzzyField.get(obj);
+            if (value instanceof Boolean && (Boolean) value) {
+                isFuzzySearch = true;
+            }
+        } catch (NoSuchFieldException ignored) {
+            // If field doesn't exist, skip fuzzy logic
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to access isFuzzySearch field", e);
+        }
+
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
             try {
                 if (field.get(obj) != null) {
                     addClause(sb);
-                    sb.append(field.getName()).append(" = ?");
-                    preparedStmtList.add(field.get(obj));
+                    if (isFuzzySearch && (field.getName().equalsIgnoreCase("notificationNumber"))) {
+                        sb.append("LOWER(").append(field.getName()).append(") LIKE LOWER(?)");
+                        preparedStmtList.add("%" + field.get(obj) + "%");
+                    } else if(!isFuzzySearch && field.getName().equalsIgnoreCase("notificationNumber")){
+                        sb.append("LOWER(").append(field.getName()).append(") = LOWER(?)");
+                        preparedStmtList.add(field.get(obj));
+                    }else if(!field.getName().equalsIgnoreCase("notificationNumber")) {
+                        sb.append(field.getName()).append(" = ?");
+                        preparedStmtList.add(field.get(obj));
+                    }
                     preparedStmtArgList.add(Types.VARCHAR); // here for this use case its varchar only
                 }
             } catch (IllegalAccessException e) {
