@@ -5,6 +5,7 @@ import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
+import DOMPurify from "dompurify";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -147,7 +148,7 @@ const CustomReviewCardRow = ({
   );
   const renderCard = useMemo(() => {
     let bgclassname = "";
-    let showFlagIcon = isScrutiny && (caseState === CaseWorkflowState.UNDER_SCRUTINY) && (!disableScrutiny || enableScrutinyField) ? true : false;
+    let showFlagIcon = isScrutiny && caseState === CaseWorkflowState.UNDER_SCRUTINY && (!disableScrutiny || enableScrutinyField) ? true : false;
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
       showFlagIcon = prevDataError ? true : false;
     }
@@ -545,12 +546,13 @@ const CustomReviewCardRow = ({
                 className="value"
                 style={{ overflowY: "auto", maxHeight: "310px" }}
                 dangerouslySetInnerHTML={{
-                  __html:
+                  __html: DOMPurify.sanitize(
                     formattedValue && typeof formattedValue === "string"
                       ? formattedValue
                       : isLocalizationRequired
                       ? t(formattedValue)
-                      : formattedValue || (dependentValue && t(textDependentValue)) || t(notAvailable) || t(""),
+                      : formattedValue || (dependentValue && t(textDependentValue)) || t(notAvailable) || t("")
+                  ),
                 }}
               ></div>
               {showFlagIcon && (

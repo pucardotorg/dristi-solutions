@@ -397,7 +397,7 @@ const AdmittedCaseV2 = () => {
           setIsBailBondTaskExists(true);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     if (isEmployee) isBailBondPendingTaskPresent();
@@ -3393,7 +3393,7 @@ const AdmittedCaseV2 = () => {
         }, 1000);
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setBailBondLoading(false);
 
       showToast({

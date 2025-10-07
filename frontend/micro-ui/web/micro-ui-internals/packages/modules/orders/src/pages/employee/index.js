@@ -7,7 +7,7 @@ import React, { useMemo, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import OrdersResponse from "./OrdersResponse";
-import OrdersCreate from "./OrdersCreate";
+// import OrdersCreate from "./OrdersCreate";
 import OrdersHome from "./OrdersHome";
 import GenerateOrdersV2 from "./GenerateOrdersV2";
 import PaymentStatus from "../../components/PaymentStatus";
@@ -93,7 +93,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
       <AppContainer className="ground-container order-submission">
         <React.Fragment>{isProcessViewer ? null : <ProjectBreadCrumb location={window.location} />}</React.Fragment>
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
-        <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
+        {/* <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} /> */}
         <PrivateRoute path={`${path}/orders-home`} component={() => <OrdersHome />} />
         <PrivateRoute path={`${path}/generate-order`} component={() => <GenerateOrdersV2 />} />
         {/* <PrivateRoute path={`${path}/make-submission`} component={() => <MakeSubmission />} /> */}

@@ -108,10 +108,14 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
 
       const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
       if (popup) {
-        popup.document.body.innerHTML = `
-        <h2>Mock Payment in Progress.It will take 15-60 seconds</h2>
-        <p>Please wait while we process your payment.Pop up will close automatically after payment.</p>
-      `;
+        const title = popup.document.createElement("h2");
+        title.textContent = "Mock Payment in Progress. It will take 15-60 seconds";
+
+        const message = popup.document.createElement("p");
+        message.textContent = "Please wait while we process your payment. Pop up will close automatically after payment.";
+        popup.document.body.appendChild(title);
+        popup.document.body.appendChild(message);
+
         setPaymentLoader(true);
       }
 

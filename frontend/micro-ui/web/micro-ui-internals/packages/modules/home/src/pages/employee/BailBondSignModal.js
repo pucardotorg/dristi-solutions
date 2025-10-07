@@ -167,7 +167,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         setBailBondSignedPdf(uploadedFileId?.[0]?.fileStoreId);
         clearBailBondSessionData();
       } catch (error) {
-        console.log("error", error);
+        console.error("error", error);
       } finally {
         setLoader(false);
       }
@@ -297,7 +297,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
       handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
     } catch (error) {
-      console.log("E-sign navigation error:", error);
+      console.error("E-sign navigation error:", error);
       setLoader(false);
     } finally {
       setLoader(false);
@@ -319,7 +319,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         fileStoreId: newFilestore,
       });
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setBailBondSignedPdf("");
       setFormData({});
@@ -428,9 +428,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("CS_COMMON_SUBMIT")}
           isDisabled={!isSigned}
-          actionSaveOnSubmit={() => {
-            console.log("submiteed");
-          }}
+          actionSaveOnSubmit={() => {}}
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">

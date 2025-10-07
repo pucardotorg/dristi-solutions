@@ -105,10 +105,6 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
               itemPdf.getPageIndices()
             );
             copiedPages.forEach((page) => mergedPdf.addPage(page));
-
-            console.log(
-              `Successfully appended pages from fileStoreId: ${item.fileStoreId}`
-            );
           } else {
             console.error(
               `Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`
@@ -163,8 +159,6 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
 
       index.fileStoreId = fileStoreId;
       index.pdfCreatedDate = Date.now();
-
-      console.log(`PDF created and stored with fileStoreId: ${fileStoreId}`);
 
       return { ...index, pageCount: mergedPages.length };
     } finally {
