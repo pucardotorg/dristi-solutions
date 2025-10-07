@@ -212,6 +212,7 @@ export const offlinePaymentsConfig = {
                     overflowX: "hidden",
                   },
                 },
+                hideInForm: true,
               },
               {
                 label: "NYAY_PAYMENT_TYPE",
