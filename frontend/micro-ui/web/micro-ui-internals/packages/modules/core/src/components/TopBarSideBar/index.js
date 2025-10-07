@@ -38,21 +38,21 @@ const TopBarSideBar = ({
     setShowDialog(true);
   };
   const handleOnSubmit = async () => {
-  try {
-    await Digit.UserService.logoutUser();  // ✅ added await
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-    
-    if (CITIZEN) {
-      window.location.replace(`/${window?.contextPath}/citizen`);
-    } else {
-      window.location.replace(`/${window?.contextPath}/employee/user/language-selection`);
-    }
+    try {
+      await Digit.UserService.logoutUser(); // ✅ added await
+      window.localStorage.clear();
+      window.sessionStorage.clear();
 
-    setShowDialog(false);
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
+      if (CITIZEN) {
+        window.location.replace(`/${window?.contextPath}/citizen`);
+      } else {
+        window.location.replace(`/${window?.contextPath}/employee/user/language-selection`);
+      }
+
+      setShowDialog(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
   const handleOnCancel = () => {
     setShowDialog(false);
