@@ -2956,7 +2956,7 @@ function EFilingCases({ path }) {
                   });
                   onSaveDraft(true);
                 } catch (error) {
-                  console.log(error);
+                  console.error(error);
                 }
 
                 history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
