@@ -365,7 +365,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       const { successful, failed, total } = await callBulkSendApi(selectedItems);
       if (successful === total && total > 0) {
-        setShowErrorToast({ message: t("DOCUMENTS_SENT_SUCCESSFULLY", { successful, total }), error: false });
+        setShowErrorToast({ message: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
         setTimeout(() => setShowErrorToast(null), 3000);
         setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((s) => s.taskNumber === item.taskNumber)) || []);
         setReload(!reload);
@@ -768,27 +768,38 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return;
     }
     if (!(hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess)) {
-      Digit.Utils.toast.error(t("YOU_DO_NOT_HAVE_PERMISSION_TO_SIGN"));
+      setShowErrorToast({
+        message: t("YOU_DO_NOT_HAVE_PERMISSION_TO_SIGN"),
+        error: true,
+      });
+      setTimeout(() => {
+        setShowErrorToast(null);
+      }, 5000);
       return;
     }
     const notAllowedItems = selectedItems.filter((doc) => {
-      if (doc.type === "SUMMONS" && !hasSignSummonsAccess) return true;
-      if (doc.type === "WARRANT" && !hasSignWarrantAccess) return true;
-      if (doc.type === "NOTICE" && !hasSignNoticeAccess) return true;
-      if (doc.type === "PROCLAMATION" && !hasSignProclamationAccess) return true;
-      if (doc.type === "ATTACHMENT" && !hasSignAttachmentAccess) return true;
+      if (doc.taskType === "SUMMONS" && !hasSignSummonsAccess) return true;
+      if (doc.taskType === "WARRANT" && !hasSignWarrantAccess) return true;
+      if (doc.taskType === "NOTICE" && !hasSignNoticeAccess) return true;
+      if (doc.taskType === "PROCLAMATION" && !hasSignProclamationAccess) return true;
+      if (doc.taskType === "ATTACHMENT" && !hasSignAttachmentAccess) return true;
       return false;
     });
-
+    debugger;
     if (notAllowedItems.length > 0) {
-      const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => t(doc.type)))];
+      const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => t(doc.taskType)))];
       const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes.join(", ");
-      Digit.Utils.toast.error(msg);
+      setShowErrorToast({
+        message: msg,
+        error: true,
+      });
+      setTimeout(() => {
+        setShowErrorToast(null);
+      }, 5000);
       return;
     }
     setShowBulkSignConfirmModal(true);
   }, [bulkSignList, t, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
-
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
@@ -1214,7 +1225,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
                       closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
@@ -1266,7 +1277,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <CustomStepperSuccess
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-          submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
           submitButtonAction={handleSubmit}
@@ -1631,10 +1642,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           <CustomSubmitModal
             t={t}
             submitModalInfo={{
-              header:
-                t("YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT") !== "YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT"
-                  ? t("YOU_HAVE_SUCCESSFULLY_SIGNED_THE_DOCUMENT")
-                  : "You have successfully signed the document",
+              header: t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT"),
             }}
           />
         </Modal>
