@@ -295,7 +295,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
       setStepper(0);

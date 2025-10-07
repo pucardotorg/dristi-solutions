@@ -335,7 +335,6 @@ const PaymentForSummonModal = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!courtBillResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -359,7 +358,6 @@ const PaymentForSummonModal = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(courtBillResponse);
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return null;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });

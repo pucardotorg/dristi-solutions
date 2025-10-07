@@ -247,7 +247,7 @@ const HomeHearingsTab = ({
               });
             return;
           } catch (e) {
-            console.log(e);
+            console.error(e);
             setLoader(false);
             showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
           }
@@ -337,7 +337,7 @@ const HomeHearingsTab = ({
                     }
                   });
               } catch (e) {
-                console.log(e);
+                console.error(e);
                 setLoader(false);
                 showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
               }
@@ -463,7 +463,7 @@ const HomeHearingsTab = ({
                 }
               }
             } catch (e) {
-              console.log(e);
+              console.error(e);
               setLoader(false);
               showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
             } finally {

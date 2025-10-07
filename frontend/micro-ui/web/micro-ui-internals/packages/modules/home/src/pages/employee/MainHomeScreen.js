@@ -171,7 +171,7 @@ const MainHomeScreen = () => {
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     } else {
       const { fromDate, toDate } = getTodayRange();
@@ -205,7 +205,7 @@ const MainHomeScreen = () => {
         // }
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     }
   };
@@ -305,7 +305,7 @@ const MainHomeScreen = () => {
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-      console.log(err);
+      console.error(err);
     }
   };
 

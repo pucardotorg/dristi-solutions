@@ -198,7 +198,7 @@ const EpostTrackingPage = () => {
       showToast("success", t("CORE_COMMON_PROFILE_UPDATE_SUCCESS_WITH_PASSWORD"), 50000);
       setShow(false);
     } catch (error) {
-      console.log("error updating Status");
+      console.error("error updating Status");
     }
   };
 

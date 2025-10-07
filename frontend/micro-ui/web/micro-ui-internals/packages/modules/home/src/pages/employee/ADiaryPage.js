@@ -194,7 +194,7 @@ const ADiaryPage = ({ path }) => {
         sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -258,7 +258,7 @@ const ADiaryPage = ({ path }) => {
           setIsSelectedDataSigned(false);
         }
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
       }
     };
     getDiarySearch();
@@ -304,7 +304,7 @@ const ADiaryPage = ({ path }) => {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setSignedDocumentUploadID("");
       sessionStorage.removeItem("fileStoreId");

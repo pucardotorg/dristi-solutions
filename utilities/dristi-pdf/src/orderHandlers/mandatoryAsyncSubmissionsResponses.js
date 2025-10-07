@@ -204,7 +204,7 @@ async function mandatoryAsyncSubmissionsResponses(
         return renderError(res, "Failed to send PDF response", 500, err);
       });
   } catch (ex) {
-    console.log(ex);
+    console.error(ex);
     return renderError(
       res,
       "Failed to generate PDF for order for mandatory async submission",

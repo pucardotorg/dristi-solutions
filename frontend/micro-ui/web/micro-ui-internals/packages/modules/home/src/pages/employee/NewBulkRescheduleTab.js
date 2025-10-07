@@ -289,7 +289,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
       setStepper(1);
@@ -468,7 +468,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoader(false);
     }

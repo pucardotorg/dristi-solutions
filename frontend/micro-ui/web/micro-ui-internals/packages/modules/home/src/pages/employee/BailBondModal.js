@@ -144,7 +144,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         }));
         setBailBonds(formattedBailBonds);
       } catch (e) {
-        console.log(e);
+        console.error(e);
       } finally {
         setBailBondsLoading(false);
       }
@@ -205,7 +205,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
       history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
       setShowBailModal(false);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setLoader(false);
     }
