@@ -158,6 +158,7 @@ public class NotificationQueryBuilder {
             field.setAccessible(true);
             try {
                 if (field.get(obj) != null) {
+                    if ("isFuzzySearch".equalsIgnoreCase(field.getName())) continue;
                     addClause(sb);
                     if (isFuzzySearch && (field.getName().equalsIgnoreCase("notificationNumber"))) {
                         sb.append("LOWER(").append(field.getName()).append(") LIKE LOWER(?)");
