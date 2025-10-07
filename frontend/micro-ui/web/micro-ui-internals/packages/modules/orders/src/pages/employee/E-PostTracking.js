@@ -12,6 +12,7 @@ import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } fro
 import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
 import { _getDate, _toEpoch, _getStatus } from "../../utils";
+import EmptyTable from "../../components/InboxComposerHeader.js/EmptyTable";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -45,7 +46,9 @@ const EpostTrackingPage = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const [isClearing, setIsClearing] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [initialSearchPerformed, setInitialSearchPerformed] = useState({ 0: true, 1: true, 2: false });
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState({});
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
@@ -275,7 +278,57 @@ const EpostTrackingPage = () => {
   const config = useMemo(() => {
     const baseConfig = TabSearchConfig?.[activeTabIndex];
     if (!baseConfig) return null;
-
+  
+    const defaultValues = {
+      ...baseConfig.sections.search.uiConfig.defaultValues,
+      ...searchFormData[activeTabIndex],
+    };
+  
+    // Shared SubmitBar customization
+    const submitBarCustomization =
+      activeTabIndex !== 1
+        ? {
+            additionalCustomization: {
+              component: ({ t, formData, setValue }) => (
+                <SubmitBar
+                  label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
+                  submit="submit"
+                  style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
+                  onSubmit={() => handleDownloadList(activeTabIndex, loggedInUser?.postHubName)}
+                  disabled={activeTabIndex === 2 && !initialSearchPerformed?.[2] ? true : !hasResults}
+                />
+              ),
+              className: "custom-button-wrapper",
+            },
+          }
+        : {};
+  
+    // Initial load for tab 2: no API call
+    if (activeTabIndex === 2 && !initialSearchPerformed?.[2]) {
+      return {
+        ...baseConfig,
+        apiDetails: {},
+        sections: {
+          ...baseConfig.sections,
+          search: {
+            ...baseConfig.sections.search,
+            uiConfig: {
+              ...baseConfig.sections.search.uiConfig,
+              defaultValues,
+            },
+            ...submitBarCustomization,
+          },
+          searchResult: {
+            ...baseConfig.sections.searchResult,
+            uiConfig: {
+              ...baseConfig.sections.searchResult.uiConfig,
+            },
+          },
+        },
+      };
+    }
+  
+    // Default case with API call
     return {
       ...baseConfig,
       apiDetails: {
@@ -292,60 +345,35 @@ const EpostTrackingPage = () => {
           ...baseConfig.sections.search,
           uiConfig: {
             ...baseConfig.sections.search.uiConfig,
-            fields: baseConfig.sections.search.uiConfig.fields?.map((field) => {
-              if (field.key === "deliveryStatusList") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [{ id: 0, code: "ALL", name: "All" }, ...intermediateStatuses],
-                  },
-                };
-              }
-
-              return field;
-            }),
-            defaultValues: {
-              ...baseConfig.sections.search.uiConfig.defaultValues,
-              ...searchFormData[activeTabIndex],
-            },
+            fields: baseConfig.sections.search.uiConfig.fields?.map((field) =>
+              field.key === "deliveryStatusList"
+                ? {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [{ id: 0, code: "ALL", name: "All" }, ...intermediateStatuses],
+                    },
+                  }
+                : field
+            ),
+            defaultValues,
           },
-          ...(activeTabIndex !== 1 && {
-            additionalCustomization: {
-              component: ({ t, formData, setValue }) => {
-                return (
-                  <SubmitBar
-                    label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
-                    submit="submit"
-                    style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
-                    onSubmit={() => handleDownloadList(activeTabIndex, loggedInUser?.postHubName)}
-                    disabled={!hasResults}
-                  />
-                );
-              },
-              className: "custom-button-wrapper",
-            },
-          }),
+          ...submitBarCustomization,
         },
         searchResult: {
           ...baseConfig.sections.searchResult,
           uiConfig: {
             ...baseConfig.sections.searchResult.uiConfig,
-            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) => {
-              switch (column.label) {
-                case "CS_ACTIONS":
-                  return { ...column, clickFunc: handleActionItems };
-                case "CS_ACTIONS_PENCIL":
-                  return { ...column, clickFunc: handleActionItems };
-                default:
-                  return column;
-              }
-            }),
+            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) =>
+              ["CS_ACTIONS", "CS_ACTIONS_PENCIL"].includes(column.label)
+                ? { ...column, clickFunc: handleActionItems }
+                : column
+            ),
           },
         },
       },
     };
-  }, [activeTabIndex, searchFormData, hasResults, loggedInUser]);
+  }, [activeTabIndex, initialSearchPerformed, searchFormData, intermediateStatuses, hasResults, loggedInUser?.postHubName]);  
 
   const closeToast = () => setShowErrorToast(null);
 
@@ -362,6 +390,22 @@ const EpostTrackingPage = () => {
         : { ...formData };
       return newData;
     });
+    // Mark that we've performed a search on this tab
+    setInitialSearchPerformed((prev) => ({
+      ...prev,
+      [activeTabIndex]: activeTabIndex === 2 ? (isClear ? false : true) : true,
+    }));
+
+    if (isClear) {
+      setIsClearing(true);
+      setTimeout(() => setIsClearing(false), 100);
+    }
+
+    if (isClear) {
+      window.sessionStorage.setItem("epostSearchHasResults", "true");
+      window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+    }
+
     setSearchRefreshCounter((prev) => prev + 1);
   };
 
@@ -437,6 +481,20 @@ const EpostTrackingPage = () => {
     history.replace(homePath);
   }
 
+  const isApiSuppressed = !config?.apiDetails || Object.keys(config.apiDetails).length === 0;
+
+  const showCustomEmptyTable = isApiSuppressed || (initialSearchPerformed?.[activeTabIndex] && hasResults === false && !isClearing);
+
+  useEffect(() => {
+    if (activeTabIndex === 0 || activeTabIndex === 1) {
+      const storedValue = sessionStorage.getItem("epostSearchHasResults");
+      if (storedValue !== "true") {
+        window.sessionStorage.setItem("epostSearchHasResults", "true");
+        window.dispatchEvent(new Event("epostSearchHasResultsChanged")); 
+      }
+    }
+  }, [activeTabIndex]); 
+
   if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 
   return (
@@ -462,15 +520,19 @@ const EpostTrackingPage = () => {
 
       <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px", display: "flex", flexDirection: "column", gap: "2rem" }}>
         <div style={{ fontWeight: 700, fontSize: "2rem" }}>{`${t("HUB_CO_ORDINATOR")}, ${loggedInUser?.district}`}</div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", flexDirection: "column" }} key={`e-post-${hasResults}-${searchRefreshCounter}-${showCustomEmptyTable}`}>
           <Inboxheader config={config} tabData={tabData} onTabChange={onTabChange} onFormSubmit={onFormSubmit} />
-          <InboxSearchComposer
-            key={`e-post-track-${activeTabIndex}-${searchRefreshCounter}`}
-            configs={config}
-            showTab={false}
-            tabData={tabData}
-            onTabChange={onTabChange}
-          />
+          {showCustomEmptyTable ? (
+            <EmptyTable config={config} t={t} message={"NO_DATA_TO_DISPLAY"} subText={"PLEASE_REFINE_SEARCH"} />
+          ) : (
+            <InboxSearchComposer
+              key={`e-post-track-${activeTabIndex}-${searchRefreshCounter}`}
+              configs={config}
+              showTab={false}
+              tabData={tabData}
+              onTabChange={onTabChange}
+            />
+          )}
         </div>
 
         {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
