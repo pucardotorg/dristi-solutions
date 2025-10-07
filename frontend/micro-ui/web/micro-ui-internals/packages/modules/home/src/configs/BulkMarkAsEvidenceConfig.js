@@ -16,7 +16,7 @@ export const bulkMarkAsEvidenceConfig = {
         limit: limit,
         offset: offset,
         moduleSearchCriteria: {
-          courtId: localStorage.getItem("courtId"),
+          courtId: sessionStorage.getItem("courtId"),
           evidenceMarkedStatus: "PENDING_BULK_E-SIGN",
         },
         processSearchCriteria: {

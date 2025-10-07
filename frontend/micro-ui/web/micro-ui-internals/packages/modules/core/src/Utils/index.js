@@ -1,4 +1,15 @@
 import Axios from "axios";
+
+Axios.interceptors.request.use(
+  (config) => {
+    if (!config.headers.courtId) {
+      config.headers.courtId = sessionStorage.getItem("courtId") || "KLKM52";
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 Axios.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -95,6 +106,7 @@ export const Request = async ({
   const headers1 = {
     "Content-Type": "application/json",
     Accept: window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE") ? "application/pdf,application/json" : "application/pdf",
+    "courtId": sessionStorage.getItem("courtId") || "KLKM52",
   };
 
   if (authHeader) headers = { ...headers, ...authHeaders() };
@@ -129,7 +141,11 @@ export const Request = async ({
       url: _url,
       data: multipartData.data,
       params,
-      headers: { "Content-Type": "multipart/form-data", "auth-token": window?.Digit.UserService.getUser()?.access_token || null },
+      headers: { 
+        "Content-Type": "multipart/form-data", 
+        "auth-token": window?.Digit.UserService.getUser()?.access_token || null,
+        "courtId": sessionStorage.getItem("courtId") || "KLKM52", 
+      },
     });
     return multipartFormDataRes;
   }

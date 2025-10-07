@@ -10,7 +10,7 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
   const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   const hearingCriteria = useMemo(
     () => ({

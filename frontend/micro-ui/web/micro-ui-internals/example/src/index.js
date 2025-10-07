@@ -13,6 +13,7 @@ import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import "dristi-ui-css";
 
 import { UICustomizations } from "./UICustomizations";
+import { setupRequestInterceptor } from "./setupRequestInterceptor";
 
 var Digit = window.Digit || {};
 
@@ -52,6 +53,10 @@ const initDigitUI = () => {
   window.Digit.Customizations = {
     commonUiConfig: UICustomizations,
   };
+  
+  // Setup request interceptor for multi-tenancy (court ID headers)
+  setupRequestInterceptor();
+  
   window?.Digit.ComponentRegistryService.setupRegistry({});
   initCoreComponents();
   initDRISTIComponents();

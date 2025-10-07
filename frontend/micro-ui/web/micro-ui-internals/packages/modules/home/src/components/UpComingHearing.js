@@ -83,7 +83,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
   const [hearingCaseList, setHearingCaseList] = useState([]);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
 
   // Get the current date
   // eslint-disable-next-line react-hooks/exhaustive-deps

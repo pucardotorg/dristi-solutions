@@ -45,7 +45,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const [witnessDepositionPaginationData, setWitnessDepositionPaginationData] = useState({});
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-  const courtId = localStorage.getItem("courtId");
+  const courtId = sessionStorage.getItem("courtId");;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
   const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);

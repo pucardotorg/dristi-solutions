@@ -10,7 +10,7 @@ const defaultSearchValues = {
 
 const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10);
 const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset") || 0);
-const courtId = localStorage.getItem("courtId");
+const courtId = sessionStorage.getItem("courtId");;
 
 export const bulkADiarySignConfig = {
   label: "CS_HOME_BULK_ADIARY_SIGN",
