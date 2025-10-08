@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -11,7 +11,7 @@ import { EpostService } from "../../hooks/services";
 import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } from "../../utils";
 import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
-import { _getDate, _toEpoch, _getStatus } from "../../utils";
+import { _getDate, _getStatus } from "../../utils";
 import EmptyTable from "../../components/InboxComposerHeader.js/EmptyTable";
 
 const defaultSearchValues = {
@@ -28,7 +28,7 @@ const defaultSearchValues = {
 const convertToFormData = (t, obj, dropdownData) => {
   const bookingData = [null, 0]?.includes(obj?.bookingDate) ? null : obj?.bookingDate;
   const formdata = {
-    bookingDate: _getDate(),
+    statusDate: _getDate(),
     remarks: {
       text: obj?.remarks || "",
     },
@@ -50,6 +50,8 @@ const EpostTrackingPage = () => {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [initialSearchPerformed, setInitialSearchPerformed] = useState({ 0: true, 1: true, 2: false });
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
+  const setFormErrors = useRef({});
+  const clearFormErrors = useRef({});
   const [selectedRowData, setSelectedRowData] = useState({});
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -365,15 +367,13 @@ const EpostTrackingPage = () => {
           uiConfig: {
             ...baseConfig.sections.searchResult.uiConfig,
             columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) =>
-              ["CS_ACTIONS", "CS_ACTIONS_PENCIL"].includes(column.label)
-                ? { ...column, clickFunc: handleActionItems }
-                : column
+              ["CS_ACTIONS", "CS_ACTIONS_PENCIL"].includes(column.label) ? { ...column, clickFunc: handleActionItems } : column
             ),
           },
         },
       },
     };
-  }, [activeTabIndex, initialSearchPerformed, searchFormData, intermediateStatuses, hasResults, loggedInUser?.postHubName]);  
+  }, [activeTabIndex, initialSearchPerformed, searchFormData, intermediateStatuses, hasResults, loggedInUser?.postHubName]);
 
   const closeToast = () => setShowErrorToast(null);
 
@@ -411,6 +411,13 @@ const EpostTrackingPage = () => {
 
   const handleUpdateStatus = async (formData) => {
     try {
+      const { start: selectedStartDate, end: selectedEndDate } = getEpochRangeFromDateIST(formData?.statusDate);
+      if (selectedRowData?.receivedDate > selectedEndDate) {
+        setFormErrors?.current("statusDate", {
+          message: `${t("DATE_STATUS_ERROR")} (${_getDate(selectedRowData?.receivedDate, true)})`,
+        });
+        return;
+      }
       const deliveryStatus = activeTabIndex === 0 ? "BOOKED" : formData?.status?.code;
       const updateStatusPayload = {
         EPostTracker: {
@@ -438,17 +445,38 @@ const EpostTrackingPage = () => {
 
     return baseConfig.map((section) => ({
       ...section,
-      body: section.body.map((field) =>
-        field.key === "status"
-          ? {
-              ...field,
+      body: section.body.map((field) => {
+        let updatedField = { ...field };
+
+        if (updatedField.key === "status") {
+          updatedField = {
+            ...updatedField,
+            populators: {
+              ...updatedField.populators,
+              options: epostStatusDropDownData,
+            },
+          };
+        }
+
+        const customValidationFn = updatedField?.populators?.validation?.customValidationFn;
+        if (customValidationFn) {
+          const customValidations = Digit?.Customizations?.[customValidationFn?.moduleName]?.[customValidationFn?.masterName];
+
+          if (typeof customValidations === "function") {
+            updatedField = {
+              ...updatedField,
               populators: {
-                ...field.populators,
-                options: epostStatusDropDownData,
+                ...updatedField.populators,
+                validation: {
+                  ...updatedField.populators.validation,
+                  ...customValidations(),
+                },
               },
-            }
-          : field
-      ),
+            };
+          }
+        }
+        return updatedField;
+      }),
     }));
   }, [activeTabIndex, epostStatusDropDownData]);
 
@@ -490,10 +518,10 @@ const EpostTrackingPage = () => {
       const storedValue = sessionStorage.getItem("epostSearchHasResults");
       if (storedValue !== "true") {
         window.sessionStorage.setItem("epostSearchHasResults", "true");
-        window.dispatchEvent(new Event("epostSearchHasResultsChanged")); 
+        window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
       }
     }
-  }, [activeTabIndex]); 
+  }, [activeTabIndex]);
 
   if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 
@@ -534,8 +562,6 @@ const EpostTrackingPage = () => {
             />
           )}
         </div>
-
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
       </div>
       {showUpdateStatusModal && (
         <EpostUpdateStatus
@@ -547,7 +573,14 @@ const EpostTrackingPage = () => {
           modifiedFormConfig={modifiedFormConfig}
           saveLabel={"CONFIRM"}
           cancelLabel={"CS_COMMON_CANCEL"}
+          closeToast={closeToast}
+          showErrorToast={showErrorToast}
+          setFormErrors={setFormErrors}
+          clearFormErrors={clearFormErrors}
         />
+      )}
+      {showErrorToast && !showUpdateStatusModal && (
+        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />
       )}
     </React.Fragment>
   );

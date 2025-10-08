@@ -396,6 +396,14 @@ $tab-underline: #0a5757;
           margin-bottom: 0px !important;
         }
 
+        .custom-text-area-main-div {
+          .custom-text-area-header-div{
+            flex-direction: row !important;
+            margin-top: 13.28px;
+            gap: 2px !important;
+          }
+        }
+
         .field {
           .field-container {
             .text-input {
@@ -409,6 +417,7 @@ $tab-underline: #0a5757;
 
       .card-label-error {
         margin: 0 !important;
+        width: 100% !important;
       }
     }
   }

@@ -1,14 +1,31 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseBtn, Heading } from "../../utils/orderUtils";
 import isEqual from "lodash/isEqual";
 
-const EpostUpdateStatus = ({ t, headerLabel, handleCancel, handleSubmit, defaultValue, modifiedFormConfig, saveLabel, cancelLabel }) => {
+const EpostUpdateStatus = ({
+  t,
+  headerLabel,
+  handleCancel,
+  handleSubmit,
+  defaultValue,
+  modifiedFormConfig,
+  saveLabel,
+  cancelLabel,
+  closeToast,
+  showErrorToast,
+  setFormErrors,
+  clearFormErrors,
+}) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    if (formData?.statusDate && formData?.statusDate !== formdata?.statusDate && Object.keys(formState?.errors).includes("statusDate")) {
+      clearFormErrors?.current("statusDate");
+    }
+
     if (!isEqual(formData, formdata)) {
       setFormData(formData);
     }
@@ -18,6 +35,9 @@ const EpostUpdateStatus = ({ t, headerLabel, handleCancel, handleSubmit, default
     } else {
       setIsSubmitDisabled(false);
     }
+
+    setFormErrors.current = setError;
+    clearFormErrors.current = clearErrors;
   };
 
   return (
@@ -50,6 +70,7 @@ const EpostUpdateStatus = ({ t, headerLabel, handleCancel, handleSubmit, default
           </div>
         </div>
       </Modal>
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
     </React.Fragment>
   );
 };

@@ -171,15 +171,15 @@ export const updateEpostStatusPendingConfig = [
         isMandatory: true,
         type: "date",
         label: "DELIEVRY_DATE",
-        key: "bookingDate",
-        disable: true,
+        key: "statusDate",
+        disable: false,
         populators: {
-          name: "bookingDate",
+          name: "statusDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
+              masterName: "maxTodayDateValidation",
             },
           },
         },
@@ -202,14 +202,16 @@ export const updateEpostStatusPendingConfig = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "remarks",
-        isMandatory: true,
-        label: "ADDITIONAL_REMARKS",
+        isMandatory: false,
+        withoutLabel: true,
+        // label: "ADDITIONAL_REMARKS",
         populators: {
           inputs: [
             {
               name: "text",
               placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
+              textAreaHeader: "ADDITIONAL_REMARKS",
+              isOptional: true,
               type: "TextAreaComponent",
             },
           ],
@@ -226,15 +228,15 @@ export const updateEpostStatusConfig = [
         isMandatory: true,
         type: "date",
         label: "DELIEVRY_DATE",
-        key: "bookingDate",
-        disable: true,
+        key: "statusDate",
+        disable: false,
         populators: {
-          name: "bookingDate",
+          name: "statusDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
+              masterName: "maxTodayDateValidation",
             },
           },
         },
@@ -259,14 +261,16 @@ export const updateEpostStatusConfig = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "remarks",
-        isMandatory: true,
-        label: "ADDITIONAL_REMARKS",
+        isMandatory: false,
+        withoutLabel: true,
+        // label: "ADDITIONAL_REMARKS",
         populators: {
           inputs: [
             {
               name: "text",
               placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
+              textAreaHeader: "ADDITIONAL_REMARKS",
+              isOptional: true,
               type: "TextAreaComponent",
             },
           ],

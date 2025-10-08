@@ -263,7 +263,7 @@ export const formatDateWithTime = (dateInput, showTime = false) => {
   return formattedDate;
 };
 
-export const _getDate = (epoch) => {
+export const _getDate = (epoch, formatDate = false) => {
   const date = epoch ? new Date(epoch) : new Date();
 
   const options = { timeZone: "Asia/Kolkata" };
@@ -272,6 +272,10 @@ export const _getDate = (epoch) => {
   const year = istDate.getFullYear();
   const month = String(istDate.getMonth() + 1).padStart(2, "0");
   const day = String(istDate.getDate()).padStart(2, "0");
+
+  if (formatDate) {
+    return `${day}-${month}-${year}`;
+  }
 
   return `${year}-${month}-${day}`;
 };
