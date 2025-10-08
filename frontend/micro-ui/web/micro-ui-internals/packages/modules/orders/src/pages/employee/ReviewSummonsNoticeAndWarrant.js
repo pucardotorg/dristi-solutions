@@ -58,7 +58,6 @@ export const getJudgeDefaultConfig = (courtId) => {
           ...item?.sections?.search,
           uiConfig: {
             ...item?.sections?.search?.uiConfig,
-            defaultValues: index === 0 ? defaultSearchValuesForJudgePending : defaultSearchValues,
           },
         },
       },
@@ -1229,7 +1228,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
                       closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
@@ -1281,7 +1280,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <CustomStepperSuccess
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
           submitButtonAction={handleSubmit}
