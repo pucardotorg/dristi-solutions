@@ -976,6 +976,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...it,
             isSelected: true,
             documentStatus: "SIGNED",
+            documents: it.documents.map((doc) => ({
+              ...doc,
+              documentType: "SIGNED_TASK_DOCUMENT",
+            })),
           }));
           setBulkSendList((prev) => {
             const prevArr = Array.isArray(prev) ? prev : [];
@@ -1028,7 +1032,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
         return;
       }
       const downloadPromises = selectedItems.map(async (item, index) => {
-        const fileStoreId = item?.documents?.[0]?.fileStore;
+        const fileStoreId = isSignedTab
+          ? item?.documents?.filter((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore
+          : item?.documents?.[0]?.fileStore;
         if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
@@ -1175,7 +1181,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         {
           heading: { label: t("ADD_SIGNATURE") },
           actionSaveLabel:
-            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
@@ -1638,9 +1644,24 @@ const ReviewSummonsNoticeAndWarrant = () => {
       )}
       {showBulkSignSuccessModal && (
         <Modal
-          actionCancelLabel={"Close"}
-          actionCancelOnSubmit={() => setShowBulkSignSuccessModal(false)}
-          actionSaveLabel={"Mark as Send"}
+          headerBarMain={<Heading label="" />}
+          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignSuccessModal(false)} />}
+          actionCancelLabel={t("DOWNLOAD_DOCUMENTS")}
+          popupModuleActionBarStyles={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: "500px",
+            margin: "0px 24px 0px",
+          }}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          actionCancelOnSubmit={handleBulkDownload}
+          actionSaveLabel={t("MARK_AS_SEND")}
           actionSaveOnSubmit={handleProceedToBulkSend}
         >
           <CustomSubmitModal
