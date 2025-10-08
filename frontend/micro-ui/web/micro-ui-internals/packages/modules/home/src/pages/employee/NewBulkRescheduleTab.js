@@ -275,7 +275,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {

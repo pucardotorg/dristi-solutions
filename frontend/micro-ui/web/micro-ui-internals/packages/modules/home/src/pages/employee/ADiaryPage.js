@@ -376,7 +376,7 @@ const ADiaryPage = ({ path }) => {
         { diaryEntry: entry }
       );
     }
-    if (entry?.referenceType === "bulkreschedule") {
+    if (entry?.referenceType === "notice") {
       history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry });
     }
   };

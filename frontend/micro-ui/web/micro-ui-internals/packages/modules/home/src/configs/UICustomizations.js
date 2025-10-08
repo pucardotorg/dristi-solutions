@@ -653,9 +653,6 @@ export const UICustomizations = {
       const fetchEntries = additionalDetails?.fetchEntries;
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
       const courtId = localStorage.getItem("courtId");
-      // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
-      // sessionStorage.setItem("diaryDate", date);
-      // sessionStorage.removeItem("diaryDate");
 
       return {
         ...requestCriteria,
@@ -675,6 +672,7 @@ export const UICustomizations = {
 
             return {
               ...data,
+              totalCount: data?.pagination?.totalCount,
             };
           },
         },
