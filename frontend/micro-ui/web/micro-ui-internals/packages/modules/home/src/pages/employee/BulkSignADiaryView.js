@@ -1,4 +1,4 @@
-import { InboxSearchComposer, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader, Button, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useCallback } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,8 @@ import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import axios from "axios";
+import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -71,6 +73,9 @@ function BulkSignADiaryView() {
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
   const [loader, setLoader] = useState(false);
+  const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
+  const [toastMsg, setToastMsg] = useState(null);
+  const [reload, setReload] = useState(false);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -85,11 +90,12 @@ function BulkSignADiaryView() {
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
-  // useEffect(() => {
-  //   return () => {
-  //     sessionStorage.removeItem("diaryDate");
-  //   };
-  // }, []);
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
+  };
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -144,20 +150,69 @@ function BulkSignADiaryView() {
     const setADiaryFunc = async (entry) => {
       // sessionStorage.setItem("diaryDate", entry?.entryDate);
       if (entry?.referenceType === "Order") {
-        history.push(
-          `/${window?.contextPath}/${userInfoType}/orders/generate-order?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
-          { diaryEntry: entry }
-        );
+        try {
+          const response = await DRISTIService.searchOrders(
+            {
+              criteria: {
+                filingNumber: entry?.additionalDetails?.filingNumber,
+                orderNumber: entry?.referenceId,
+                status: "PUBLISHED",
+
+                ...(courtId && { courtId: courtId }),
+              },
+              tenantId,
+            },
+            { tenantId: tenantId }
+          );
+          const order = response?.list?.[0];
+          setShowDocumentPdfModal({ show: true, rowData: { document: order?.documents?.[0], rowData: entry } });
+        } catch (error) {
+          console.error("error: ", error);
+          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        }
       }
 
       if (entry?.referenceType === "Documents") {
-        history.push(
-          `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${entry?.additionalDetails?.caseId}&filingNumber=${entry?.additionalDetails?.filingNumber}&tab=Documents&artifactNumber=${entry?.referenceId}`,
-          { diaryEntry: entry }
-        );
+        try {
+          const response = await DRISTIService.searchEvidence(
+            {
+              criteria: {
+                ...(courtId && { courtId: courtId }),
+                filingNumber: entry?.additionalDetails?.filingNumber,
+                artifactNumber: entry?.referenceId,
+                tenantId,
+              },
+              tenantId,
+            },
+            {}
+          );
+          setShowDocumentPdfModal({ show: true, rowData: { document: response?.artifacts?.[0]?.file, rowData: entry } });
+        } catch (error) {
+          console.error("error: ", error);
+          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        }
       }
-      if (entry?.referenceType === "bulkreschedule") {
-        history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry, aDiarySigned: isSelectedDataSigned });
+      if (entry?.referenceType === "notice") {
+        try {
+          const notificationResponse = await Digit.HearingService.searchNotification({
+            criteria: {
+              tenantId: tenantId,
+              notificationNumber: entry?.referenceId,
+              ...(courtId && { courtId: courtId }),
+            },
+            pagination: {
+              limit: 100,
+            },
+          });
+          const notification = notificationResponse?.list?.[0];
+          setShowDocumentPdfModal({
+            show: true,
+            rowData: { document: notification?.documents?.[notification?.documents?.length - 1], rowData: entry },
+          });
+        } catch (error) {
+          console.error("error: ", error);
+          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        }
       }
     };
 
@@ -192,7 +247,7 @@ function BulkSignADiaryView() {
   const MemoInboxSearchComposer = useMemo(() => {
     return (
       <InboxSearchComposer
-        // key={`entryDate-${entryDate}`}
+        // key={`entryDate-${}`}
         // pageSizeLimit={sessionStorage.getItem("bulkBailBondSignlimit") || 10}
         configs={config}
         // customStyle={sectionsParentStyle}
@@ -573,6 +628,26 @@ function BulkSignADiaryView() {
               <span>{t("NO_ADIARY_TEXT")}</span>
             </div>
           </Modal>
+        )}
+        {showDocumentPdfModal?.show && (
+          <ADiaryDocumentPdfModal
+            t={t}
+            tenantId={tenantId}
+            data={showDocumentPdfModal?.rowData}
+            setShowDocumentPdfModal={setShowDocumentPdfModal}
+            isSelectedDataSigned={isSelectedDataSigned}
+            setReload={setReload}
+            reload={reload}
+          />
+        )}
+        {toastMsg && (
+          <Toast
+            error={toastMsg.key === "error"}
+            label={t(toastMsg.action)}
+            onClose={() => setToastMsg(null)}
+            isDleteBtn={true}
+            style={{ maxWidth: "500px" }}
+          />
         )}
       </div>
     </React.Fragment>
