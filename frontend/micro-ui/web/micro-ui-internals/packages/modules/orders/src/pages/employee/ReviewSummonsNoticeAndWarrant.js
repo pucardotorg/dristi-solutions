@@ -257,6 +257,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("homeActiveTab");
 
     try {
       const { data: tasksData } = await refetch();
@@ -487,6 +488,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("esignProcess");
       sessionStorage.removeItem("ESignSummons");
       sessionStorage.removeItem("delieveryChannel");
+      sessionStorage.removeItem("homeActiveTab");
     }
   }, []);
 
@@ -494,6 +496,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("homeActiveTab");
     setShowActionModal(false);
     // If navigated via deep-link, go back to listing route without forcing a data reload
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
@@ -694,6 +697,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             }
           : null;
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
       const reqBody = {
         task: {
