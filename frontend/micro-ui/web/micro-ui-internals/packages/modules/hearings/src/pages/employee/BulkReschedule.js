@@ -278,7 +278,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {
