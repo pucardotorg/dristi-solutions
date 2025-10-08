@@ -48,7 +48,6 @@ const handleTaskDetails = (taskDetails) => {
 };
 
 const handleNavigate = (path) => {
-  console.log("Funvtion called ");
   const contextPath = window?.contextPath || "";
 
   window.location.href = `/${contextPath}${path}`;
@@ -133,7 +132,6 @@ export const UICustomizations = {
       return false;
     },
     preProcess: (data) => {
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -532,8 +530,8 @@ export const UICustomizations = {
         body: {
           ...requestCriteria.body,
           criteria: {
-            completeStatus: completeStatusData,
             ...filterList,
+            completeStatus: completeStatusData,
             orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
@@ -684,9 +682,6 @@ export const UICustomizations = {
       const fetchEntries = additionalDetails?.fetchEntries;
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
       const courtId = localStorage.getItem("courtId");
-      // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
-      // sessionStorage.setItem("diaryDate", date);
-      // sessionStorage.removeItem("diaryDate");
 
       return {
         ...requestCriteria,
@@ -706,6 +701,7 @@ export const UICustomizations = {
 
             return {
               ...data,
+              totalCount: data?.pagination?.totalCount,
             };
           },
         },

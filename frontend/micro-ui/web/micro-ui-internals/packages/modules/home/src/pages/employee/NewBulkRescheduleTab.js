@@ -95,7 +95,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
   const hasBulkRescheduleAccess = useMemo(
-    () => ["NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
+    () =>
+      ["BULK_RESCHEDULE_UPDATE_ACCESS", "NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) =>
+        assignedRoles?.includes(role)
+      ),
     [assignedRoles]
   );
 
@@ -272,7 +275,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {
@@ -289,7 +292,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
       setStepper(1);
@@ -468,7 +471,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoader(false);
     }

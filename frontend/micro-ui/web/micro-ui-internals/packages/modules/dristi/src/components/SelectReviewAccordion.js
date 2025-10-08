@@ -494,7 +494,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       <div style={{ maxHeight: "fit-content" }} className={`accordion-item ${!isOpen ? "collapsed" : ""}`}>
         <div className="accordion-content">
           {inputs.map((input, index) => {
-            showFlagIcon = isScrutiny && !input?.disableScrutiny ? true : false;
+            showFlagIcon = isScrutiny && (state === CaseWorkflowState.UNDER_SCRUTINY) && !input?.disableScrutiny ? true : false;
             const sectionValue = formData && formData[config.key] && formData[config.key]?.[input.name];
             const sectionError = sectionValue?.scrutinyMessage?.FSOError;
             const prevSectionError = input?.prevErrors?.scrutinyMessage?.FSOError;

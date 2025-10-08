@@ -22,6 +22,7 @@ import useSearchEvidenceService from "../../../../../submissions/src/hooks/submi
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
+import DOMPurify from "dompurify";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -928,9 +929,6 @@ const EvidenceModal = ({
                     caseNumber: caseNumber,
                     ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -947,6 +945,7 @@ const EvidenceModal = ({
                 orderCategory: "COMPOSITE",
                 orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
                 compositeItems,
+                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
                 ...(hearingNumber && {
                   hearingNumber: hearingNumber,
                 }),
@@ -980,9 +979,6 @@ const EvidenceModal = ({
                     applicationCMPNumber: applicationCMPNumber,
                     caseNumber: caseNumber,
                   },
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
                   ...(linkedOrderNumber && { linkedOrderNumber }),
                   ...(applicationNumber && {
                     applicationNumber: applicationNumber,
@@ -1005,9 +1001,6 @@ const EvidenceModal = ({
                   documents: [{}],
                 },
                 applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
               },
             };
@@ -1075,9 +1068,6 @@ const EvidenceModal = ({
               caseNumber: caseNumber,
               ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
             },
-            ...(hearingNumber && {
-              hearingNumber: hearingNumber,
-            }),
             ...(linkedOrderNumber && { linkedOrderNumber }),
           },
         };
@@ -1553,7 +1543,7 @@ const EvidenceModal = ({
                       <div
                         className="info-value"
                         dangerouslySetInnerHTML={{
-                          __html: documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || "",
+                          __html: DOMPurify.sanitize(documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || ""),
                         }}
                       ></div>
                     </div>

@@ -171,7 +171,7 @@ const MainHomeScreen = () => {
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     } else {
       const { fromDate, toDate } = getTodayRange();
@@ -205,7 +205,7 @@ const MainHomeScreen = () => {
         // }
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     }
   };
@@ -254,7 +254,7 @@ const MainHomeScreen = () => {
             date: null,
             isOnlyCountRequired: true,
             actionCategory: "Scrutinise cases",
-            status: ["UNDER_SCRUTINY"],
+            status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
           },
           searchRescheduleHearingsApplication: {
             date: null,
@@ -305,7 +305,7 @@ const MainHomeScreen = () => {
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -639,20 +639,22 @@ const MainHomeScreen = () => {
             <BulkESignView />
           </div>
         ) : (
-          <div
-            className="inbox-search-wrapper"
-            style={{
-              width: "100%",
-              maxHeight: "calc(100vh - 90px)",
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-              scrollbarColor: "#c5c5c5 #f9fafb",
-              padding: "26px",
-            }}
-          >
+          // <div
+          //   className="inbox-search-wrapper"
+          //   style={{
+          //     width: "100%",
+          //     maxHeight: "calc(100vh - 90px)",
+          //     overflowY: "auto",
+          //     scrollbarWidth: "thin",
+          //     scrollbarColor: "#c5c5c5 #f9fafb",
+          //     padding: "26px",
+          //   }}
+          // >
+          <div className={`bulk-esign-order-view`}>
             <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
-            {activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}
+            <div className="inbox-search-wrapper">{activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}</div>
           </div>
+          // </div>
         )}
         {showBailBondModal && (
           <BailBondModal
