@@ -56,14 +56,7 @@ public class EPostService {
             enrichSearchRequest(searchRequest);
             EPostTrackerSearchCriteria searchCriteria = searchRequest.getEPostTrackerSearchCriteria();
             if (searchCriteria.getPostalHub() != null) {
-                if (searchCriteria.getIsDataRequired() == null || searchCriteria.getIsDataRequired()) {
-                    return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
-                } else {
-                    return EPostResponse.builder()
-                            .ePostTrackers(new ArrayList<>())
-                            .pagination(Pagination.builder().totalCount(0).build())
-                            .build();
-                }
+                return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
             }
             else {
                 return EPostResponse.builder()
@@ -76,15 +69,7 @@ public class EPostService {
     }
 
     public EPostResponse getAllEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
-        if (searchRequest.getEPostTrackerSearchCriteria().getIsDataRequired() == null || searchRequest.getEPostTrackerSearchCriteria().getIsDataRequired()) {
-            return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
-        } else {
-            log.info("IsDataRequired is false, not fetching data");
-            return EPostResponse.builder()
-                    .ePostTrackers(new ArrayList<>())
-                    .pagination(Pagination.builder().totalCount(0).build())
-                    .build();
-        }
+        return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
     }
 
     public EPostTracker updateEPost(EPostRequest ePostRequest) {

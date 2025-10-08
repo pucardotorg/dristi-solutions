@@ -36,6 +36,8 @@ public enum DeliveryStatus {
 
     UNCLAIMED,
 
-    MISSENT
+    MISSENT,
+
+    INTERMEDIATE
 
 }

@@ -52,9 +52,6 @@ public class EPostTrackerSearchCriteria {
     @JsonProperty("speedPostId")
     private String speedPostId;
 
-    @JsonProperty("isDataRequired")
-    private Boolean isDataRequired;
-
     @JsonProperty("pagination")
     private Pagination pagination = null;
 }

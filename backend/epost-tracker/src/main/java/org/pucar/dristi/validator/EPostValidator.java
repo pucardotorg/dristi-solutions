@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -30,7 +31,7 @@ public class EPostValidator {
         if (speedPostId != null) {
             EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder().speedPostId(speedPostId).build();
             List<EPostTracker> ePostTrackers = ePostRepository.getEPostTrackerList(searchCriteria,5,0);
-            if (!ePostTrackers.isEmpty()) {
+            if (!ePostTrackers.isEmpty() && (!Objects.equals(ePostTrackers.get(0).getTaskNumber(), ePostTracker.getTaskNumber()))) {
                 throw new CustomException(DUPLICATE_SPEED_POST_ID_ERROR,DUPLICATE_SPEED_POST_ERROR + speedPostId);
             }
         }

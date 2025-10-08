@@ -22,6 +22,7 @@ public class EPostTracker {
     private Integer rowVersion;
     private Long bookingDate;
     private Long receivedDate;
+    private Long statusUpdateDate;
     private String postalHub;
     private AuditDetails auditDetails;
     private String totalAmount;
