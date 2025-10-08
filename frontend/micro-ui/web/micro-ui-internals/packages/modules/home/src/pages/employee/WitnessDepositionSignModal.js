@@ -19,6 +19,7 @@ export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("signStatus");
   sessionStorage.removeItem("bulkWitnessDepositionSignlimit");
   sessionStorage.removeItem("bulkWitnessDepositionSignoffset");
+  sessionStorage.removeItem("homeActiveTab");
 };
 
 export const WitnessDepositionSignModal = ({
@@ -380,6 +381,12 @@ export const WitnessDepositionSignModal = ({
       </React.Fragment>
     );
   }, [witnessDepositionDocuments, tenantId]);
+
+  useEffect(() => {
+    return () => {
+      clearWitnessDepositionSessionData();
+    };
+  });
 
   return (
     <div>
