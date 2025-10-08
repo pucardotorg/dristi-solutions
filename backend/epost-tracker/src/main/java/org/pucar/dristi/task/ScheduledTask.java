@@ -64,14 +64,31 @@ public class ScheduledTask {
         log.info("Starting scheduled email notification...");
 
         String tenantId = ePostConfiguration.getEgovStateTenantId();
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
-        String monthName = today.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        String excelFileName = String.format("%d_%s_Epost_Report.xlsx", today.getYear(), monthName);
-        String pdfFileName = String.format("%d_%s_Epost_Report.pdf", today.getYear(), monthName);
+        ZoneId kolkataZone = ZoneId.of("Asia/Kolkata");
+        LocalDate today = LocalDate.now(kolkataZone);
+
+        // Calculate previous month's date range
+        LocalDate previousMonth = today.minusMonths(1);
+        LocalDate startOfMonth = previousMonth.withDayOfMonth(1);
+        LocalDate endOfMonth = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth());
+
+        // Convert to epoch milliseconds (start of day and end of day in Asia/Kolkata timezone)
+        Long bookingDateStartTime = startOfMonth.atStartOfDay(kolkataZone).toInstant().toEpochMilli();
+        Long bookingDateEndTime = endOfMonth.atTime(23, 59, 59, 999_999_999)
+                .atZone(kolkataZone)
+                .toInstant()
+                .toEpochMilli();
+
+        String monthName = previousMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        String excelFileName = String.format("%d_%s_Epost_Report.xlsx", previousMonth.getYear(), monthName);
+        String pdfFileName = String.format("%d_%s_Epost_Report.pdf", previousMonth.getYear(), monthName);
+
+        log.info("Generating report for {} {} (from {} to {})", monthName, previousMonth.getYear(), startOfMonth, endOfMonth);
 
         // Build search request
         EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder()
-                .deliveryStatusList(ePostConfiguration.getBookedDeliveryStatusList())
+                .bookingDateStartTime(bookingDateStartTime)
+                .bookingDateEndTime(bookingDateEndTime)
                 .pagination(Pagination.builder().build())
                 .build();
 
@@ -86,7 +103,7 @@ public class ScheduledTask {
 
         // Upload files (PDF + Excel)
         Map<String, String> fileStoreMap = new HashMap<>();
-        Optional.ofNullable(getFileStoreIdOfPdf(ePostTrackers, pdfFileName, monthName, today))
+        Optional.ofNullable(getFileStoreIdOfPdf(ePostTrackers, pdfFileName, monthName, previousMonth))
                 .ifPresent(fileId -> fileStoreMap.put(fileId, pdfFileName));
 
         try {

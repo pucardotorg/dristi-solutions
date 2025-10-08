@@ -63,9 +63,6 @@ public class EPostConfiguration {
     @Value("${default.postal.hub}")
     private String defaultPostalHub;
 
-    @Value("${booked.delivery.status.list}")
-    private List<String> bookedDeliveryStatusList;
-
     // Email Config
     @Value("${email.topic}")
     private String emailTopic;
