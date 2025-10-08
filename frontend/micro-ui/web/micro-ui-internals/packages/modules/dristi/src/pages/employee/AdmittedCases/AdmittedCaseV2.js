@@ -95,6 +95,12 @@ const HearingWorkflowState = {
   SCHEDULED: "SCHEDULED",
 };
 
+const homeTabEnum = {
+  RESCHEDULE_APPLICATIONS: "HOME_RESCHEDULE_APPLICATIONS",
+  DELAY_CONDONATION: "HOME_DELAY_CONDONATION_APPLICATIONS",
+  OTHERS: "HOME_OTHER_APPLICATIONS",
+};
+
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
@@ -3237,6 +3243,13 @@ const AdmittedCaseV2 = () => {
         homeActiveTab: homeActiveTab,
       },
       {
+        path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
+        content: t(homeTabEnum[homeActiveTab]),
+        show: ["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"]?.includes(homeActiveTab),
+        homeActiveTab: homeActiveTab,
+        isLast: false,
+      },
+      {
         path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-pending-task`,
         content: t("OPEN_ALL_CASES"),
         show: fromHome || isCitizen ? false : true,
@@ -3249,7 +3262,7 @@ const AdmittedCaseV2 = () => {
         isLast: true,
       },
     ],
-    [t, homeFilteredData, fromHome, isCitizen, path]
+    [t, homeFilteredData, fromHome, isCitizen, path, homeActiveTab]
   );
 
   const advocateName = useMemo(() => {
