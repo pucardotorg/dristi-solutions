@@ -91,6 +91,22 @@ const EpostTrackingPage = () => {
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n })));
     setActiveTabIndex(n);
+    setInitialSearchPerformed((prev) => ({
+      ...prev,
+      [activeTabIndex]: activeTabIndex === 2 ? false : true,
+    }));
+    setSearchFormData((prev) => {
+      const newData = [...prev];
+      newData[activeTabIndex] =
+        activeTabIndex === 2
+          ? {
+              ...defaultSearchValues,
+              monthReports: new Date().toISOString().slice(0, 7),
+            }
+          : { ...defaultSearchValues };
+
+      return newData;
+    });
   };
 
   const { data: epostUserData, isLoading: isEpostUserDataLoading } = Digit.Hooks.useCustomMDMS(
@@ -280,12 +296,12 @@ const EpostTrackingPage = () => {
   const config = useMemo(() => {
     const baseConfig = TabSearchConfig?.[activeTabIndex];
     if (!baseConfig) return null;
-  
+
     const defaultValues = {
       ...baseConfig.sections.search.uiConfig.defaultValues,
       ...searchFormData[activeTabIndex],
     };
-  
+
     // Shared SubmitBar customization
     const submitBarCustomization =
       activeTabIndex !== 1
@@ -304,7 +320,7 @@ const EpostTrackingPage = () => {
             },
           }
         : {};
-  
+
     // Initial load for tab 2: no API call
     if (activeTabIndex === 2 && !initialSearchPerformed?.[2]) {
       return {
@@ -329,7 +345,7 @@ const EpostTrackingPage = () => {
         },
       };
     }
-  
+
     // Default case with API call
     return {
       ...baseConfig,
@@ -430,7 +446,7 @@ const EpostTrackingPage = () => {
       await EpostService.EpostUpdate(updateStatusPayload, { tenantId });
       setShowUpdateStatusModal(false);
       setSelectedRowData({});
-      setShowErrorToast({ label: t("Status Update Successfully"), error: false });
+      setShowErrorToast({ label: t("STATUS_UPDATE_SUCCESSFULLY"), error: false });
       setSearchRefreshCounter((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating : ", error);
