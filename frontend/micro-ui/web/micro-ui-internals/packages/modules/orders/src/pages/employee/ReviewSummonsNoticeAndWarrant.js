@@ -1641,7 +1641,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       {showBulkSignSuccessModal && (
         <Modal
           headerBarMain={<Heading label="" />}
-          headerBarEnd={<CloseBtn onClick={() => setShowBulkSendConfirmModal(false)} />}
+          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignSuccessModal(false)} />}
           actionCancelLabel={t("DOWNLOAD_DOCUMENTS")}
           popupModuleActionBarStyles={{
             display: "flex",
@@ -1657,7 +1657,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             justifyContent: "center",
           }}
           actionCancelOnSubmit={handleBulkDownload}
-          actionSaveLabel={"MARK_AS_SEND"}
+          actionSaveLabel={t("MARK_AS_SEND")}
           actionSaveOnSubmit={handleProceedToBulkSend}
         >
           <CustomSubmitModal
