@@ -287,8 +287,8 @@ const EpostTrackingPage = () => {
       bookingDateEndTime: bookingDateEndTime || "",
       pagination: {
         ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria.pagination,
-        sortBy: currentForm?.pagination?.sortBy || "",
-        order: currentForm?.pagination?.order || "",
+        sortBy: currentForm?.pagination?.sortBy || activeTabIndex !== 0 ? "bookingDate" : "receivedDate",
+        orderBy: currentForm?.pagination?.orderBy || "asc",
       },
     };
   };
@@ -438,9 +438,11 @@ const EpostTrackingPage = () => {
       const updateStatusPayload = {
         EPostTracker: {
           ...selectedRowData,
-          remarks: formData?.remarks?.text || "",
           ...(formData?.speedPostId && { speedPostId: formData?.speedPostId }),
+          ...(!selectedRowData?.bookingDate && { bookingDate: selectedEndDate }),
           ...(deliveryStatus && { deliveryStatus: deliveryStatus }),
+          remarks: formData?.remarks?.text || "",
+          statusUpdateDate: selectedEndDate,
         },
       };
       await EpostService.EpostUpdate(updateStatusPayload, { tenantId });
