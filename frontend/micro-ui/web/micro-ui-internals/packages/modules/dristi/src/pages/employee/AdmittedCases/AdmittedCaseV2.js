@@ -3240,7 +3240,6 @@ const AdmittedCaseV2 = () => {
         show: true,
         isLast: false,
         homeFilteredData: homeFilteredData,
-        homeActiveTab: homeActiveTab,
       },
       {
         path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
