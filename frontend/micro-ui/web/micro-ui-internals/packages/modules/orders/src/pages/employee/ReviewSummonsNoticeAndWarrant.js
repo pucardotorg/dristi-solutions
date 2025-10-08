@@ -785,7 +785,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       if (doc.taskType === "ATTACHMENT" && !hasSignAttachmentAccess) return true;
       return false;
     });
-    debugger;
+
     if (notAllowedItems.length > 0) {
       const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => t(doc.taskType)))];
       const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes.join(", ");
