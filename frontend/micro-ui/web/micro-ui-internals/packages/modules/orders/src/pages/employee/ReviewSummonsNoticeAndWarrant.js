@@ -58,7 +58,6 @@ export const getJudgeDefaultConfig = (courtId) => {
           ...item?.sections?.search,
           uiConfig: {
             ...item?.sections?.search?.uiConfig,
-            defaultValues: index === 0 ? defaultSearchValuesForJudgePending : defaultSearchValues,
           },
         },
       },
@@ -257,6 +256,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("homeActiveTab");
 
     try {
       const { data: tasksData } = await refetch();
@@ -487,6 +487,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("esignProcess");
       sessionStorage.removeItem("ESignSummons");
       sessionStorage.removeItem("delieveryChannel");
+      sessionStorage.removeItem("homeActiveTab");
     }
   }, []);
 
@@ -494,6 +495,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("homeActiveTab");
     setShowActionModal(false);
     // If navigated via deep-link, go back to listing route without forcing a data reload
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
@@ -694,6 +696,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             }
           : null;
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
       const reqBody = {
         task: {
@@ -972,6 +975,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...it,
             isSelected: true,
             documentStatus: "SIGNED",
+            documents: it.documents.map((doc) => ({
+              ...doc,
+              documentType: "SIGNED_TASK_DOCUMENT",
+            })),
           }));
           setBulkSendList((prev) => {
             const prevArr = Array.isArray(prev) ? prev : [];
@@ -1024,7 +1031,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
         return;
       }
       const downloadPromises = selectedItems.map(async (item, index) => {
-        const fileStoreId = item?.documents?.[0]?.fileStore;
+        const fileStoreId = isSignedTab
+          ? item?.documents?.filter((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore
+          : item?.documents?.[0]?.fileStore;
         if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
@@ -1171,7 +1180,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         {
           heading: { label: t("ADD_SIGNATURE") },
           actionSaveLabel:
-            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
@@ -1225,7 +1234,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
                       closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
                       closeButtonAction={handleClose}
                       submitButtonAction={handleSubmit}
@@ -1277,7 +1286,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <CustomStepperSuccess
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "POLICE" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
           submitButtonAction={handleSubmit}
@@ -1634,9 +1643,24 @@ const ReviewSummonsNoticeAndWarrant = () => {
       )}
       {showBulkSignSuccessModal && (
         <Modal
-          actionCancelLabel={"Close"}
-          actionCancelOnSubmit={() => setShowBulkSignSuccessModal(false)}
-          actionSaveLabel={"Mark as Send"}
+          headerBarMain={<Heading label="" />}
+          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignSuccessModal(false)} />}
+          actionCancelLabel={t("DOWNLOAD_DOCUMENTS")}
+          popupModuleActionBarStyles={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: "500px",
+            margin: "0px 24px 0px",
+          }}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          actionCancelOnSubmit={handleBulkDownload}
+          actionSaveLabel={t("MARK_AS_SEND")}
           actionSaveOnSubmit={handleProceedToBulkSend}
         >
           <CustomSubmitModal
