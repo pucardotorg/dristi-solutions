@@ -30,14 +30,11 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
-  const homeActiveTab = location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB";
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
-      homeActiveTab: homeActiveTab,
       isLast: false,
     },
     {
@@ -53,10 +50,25 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
     {
-      path: `${path}/registration-requests`,
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
       content: t("ES_REGISTRATION_REQUESTS"),
       show: location.pathname.includes("/registration-requests"),
       isLast: !location.pathname.includes("/details"),
+      homeActiveTab: "REGISTER_USERS",
+    },
+    {
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_OFFLINE_PAYMENTS"),
+      show: location.pathname.includes("/pending-payment-inbox"),
+      isLast: !location.pathname.includes("/pending-payment-details"),
+      homeActiveTab: "OFFLINE_PAYMENTS",
+    },
+    {
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_SCRUTINISE_CASES"),
+      show: location.pathname.includes("dristi/case"),
+      isLast: false,
+      homeActiveTab: "SCRUTINISE_CASES",
     },
     {
       path: `${path}/pending-payment-inbox/pending-payment-details`,

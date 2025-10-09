@@ -16,8 +16,7 @@ const ReviewCard = ({ data, userInfoType }) => {
             <div className="review-card-action-arrow">
               <span
                 onClick={() => {
-                  history.push(`/${window?.contextPath}/${userInfoType}/home/home-screen`);
-                  sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
+                  history.push(`/${window?.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_PROCESS" });
                 }}
               >
                 <ArrowRightInbox />
