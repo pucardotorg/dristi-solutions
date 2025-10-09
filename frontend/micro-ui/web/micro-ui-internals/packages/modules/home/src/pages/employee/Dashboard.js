@@ -140,7 +140,7 @@ const DashboardPage = () => {
   const baseUrl = window.location.origin;
 
   const handleClick = () => {
-    history.push(`/${window?.contextPath}/${userInfoType}/home/dashboard/adiary`);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
   };
 
   const { data: kibanaData, isLoading: isDashboardJobIDsLoading } = Digit.Hooks.useCustomMDMS(
