@@ -5,6 +5,7 @@ const defaultSearchValues = {
   channel: "", //{ code: "", displayLabel: "DELIVERY_CHANNEL" },
   // completeStatus: "", //{ code: "", name: "STATUS" },
   hearingDate: "",
+  compStatus: "",
   // noticeType: "", //{ code: "", name: "NOTICE_TYPE" },
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
@@ -14,6 +15,7 @@ export const defaultSearchValuesForJudgePending = {
   hearingDate: "",
   orderType: "",
   channel: "",
+  compStatus: "",
   // applicationStatus: {
   //   id: 2,
   //   code: "SIGN_PENDING",
@@ -34,6 +36,7 @@ export const defaultSearchValuesForJudgeSent = {
   hearingDate: "",
   orderType: "",
   channel: "",
+  compStatus: "",
   // orderType: {
   //   id: 2,
   //   code: "WARRANT",
@@ -47,6 +50,7 @@ const defaultSearchValuesForCompleted = {
   hearingDate: "",
   orderType: "",
   channel: "",
+  compStatus: "",
   completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
 };
 
@@ -912,11 +916,11 @@ export const SummonsTabsConfig = {
               {
                 label: "STATUS",
                 isMandatory: false,
-                key: "completeStatus",
+                key: "compStatus",
                 type: "dropdown",
                 // disable: false,
                 populators: {
-                  name: "completeStatus",
+                  name: "compStatus",
                   optionsKey: "name",
                   // defaultValue: { code: "", name: "STATUS" },
                   mdmsConfig: {
