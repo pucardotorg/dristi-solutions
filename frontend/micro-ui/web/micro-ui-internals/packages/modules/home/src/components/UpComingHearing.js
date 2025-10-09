@@ -312,7 +312,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
                   <div style={{ display: "flex", gap: "8px" }}>
                     <Link
                       className="hearingType"
-                      to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString() }}
+                      to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString(), state: { fromHome: true } }}
                     >
                       {userInfoType === "citizen"
                         ? hearingCaseList

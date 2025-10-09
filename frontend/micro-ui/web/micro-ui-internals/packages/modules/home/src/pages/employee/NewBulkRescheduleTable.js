@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { TextInput, LabelFieldPair, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
-import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
+import React, { useEffect } from "react";
+import { TextInput, LabelFieldPair, SubmitBar } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
-import { SmallSearchIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import { has } from "lodash";
 
 const NewBulkRescheduleTable = ({
   t,
@@ -15,6 +12,7 @@ const NewBulkRescheduleTable = ({
   bulkFormData,
   setBulkFormData,
   allHearings,
+  setAllHearings,
   loading,
   handleBulkHearingSearch,
   hasBulkRescheduleAccess,
@@ -87,6 +85,11 @@ const NewBulkRescheduleTable = ({
       i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
     );
     setNewHearingData(updatedTableData);
+    setAllHearings((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
+      )
+    );
   };
 
   return (
@@ -144,7 +147,7 @@ const NewBulkRescheduleTable = ({
           </button>
         </div>
       </div>
-      <div className="main-table-card">
+      <div className="main-table-card" style={{ paddingBottom: "50px" }}>
         <div className="table-scroll">
           <table className="main-table">
             <thead>
@@ -211,7 +214,7 @@ const NewBulkRescheduleTable = ({
           </table>
         </div>
       </div>
-      <div className="bulk-submit-bar">
+      <div className="bulk-submit-bar" style={{ backgroundColor: "#FFFFFF" }}>
         {hasBulkRescheduleAccess && (
           <SubmitBar
             label={t(`RESCHEDULE_ALL_HEARINGS`)}

@@ -21,7 +21,13 @@ const HomeSidebar = ({
   const hasViewTodaysHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_TODAYS_HEARINGS"), [assignedRoles]);
   const hasViewBulkRescheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_BULK_RESCHEDULE_HEARINGS"), [assignedRoles]);
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
-  const hasViewSignProcessAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_PROCESS"), [assignedRoles]);
+  const hasViewSignProcessAccess = useMemo(
+    () =>
+      ["VIEW_PROCESS_SUMMONS", "VIEW_PROCESS_WARRANT", "VIEW_PROCESS_NOTICE", "VIEW_PROCESS_PROCLAMATION", "VIEW_PROCESS_ATTACHMENT"].some((role) =>
+        assignedRoles?.includes(role)
+      ),
+    [assignedRoles]
+  );
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);
   const hasViewSignWitnessDepositionAccess = useMemo(() => assignedRoles?.includes("VIEW_WITNESS_DEPOSITION"), [assignedRoles]);
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);

@@ -4,7 +4,6 @@
 const HOST = process.env.EGOV_HOST || "localhost";
 
 if (!HOST) {
-  console.log("You need to set the HOST variable");
   process.exit(1);
 }
 

@@ -45,7 +45,6 @@ const handleTaskDetails = (taskDetails) => {
 };
 
 const handleNavigate = (path) => {
-  console.log("Funvtion called ");
   const contextPath = window?.contextPath || "";
 
   window.location.href = `/${contextPath}${path}`;
@@ -104,7 +103,6 @@ export const UICustomizations = {
       return false;
     },
     preProcess: (data) => {
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -491,7 +489,7 @@ export const UICustomizations = {
 
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
-      const deliveryChanel = searchForm?.channel?.name || null;
+      const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
       let resolvedApplicationStatus = "";
@@ -503,8 +501,8 @@ export const UICustomizations = {
         body: {
           ...requestCriteria.body,
           criteria: {
-            completeStatus: completeStatusData,
             ...filterList,
+            completeStatus: completeStatusData,
             orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
@@ -655,9 +653,6 @@ export const UICustomizations = {
       const fetchEntries = additionalDetails?.fetchEntries;
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
       const courtId = localStorage.getItem("courtId");
-      // const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
-      // sessionStorage.setItem("diaryDate", date);
-      // sessionStorage.removeItem("diaryDate");
 
       return {
         ...requestCriteria,
@@ -677,6 +672,7 @@ export const UICustomizations = {
 
             return {
               ...data,
+              totalCount: data?.pagination?.totalCount,
             };
           },
         },

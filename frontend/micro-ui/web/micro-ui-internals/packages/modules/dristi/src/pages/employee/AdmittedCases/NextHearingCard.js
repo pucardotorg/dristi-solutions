@@ -187,7 +187,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
           <Button
             variation={"outlined"}
             onButtonClick={handleButtonClick}
-            isDisabled={roles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED"}
+            isDisabled={scheduledHearing?.status !== "IN_PROGRESS"}
             label={
               scheduledHearing?.status === "SCHEDULED"
                 ? t("AWAIT_START_HEARING")
@@ -195,6 +195,9 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
                 ? t("JOIN_HEARING")
                 : t("PASSED_OVER")
             }
+            style={{
+             ...(scheduledHearing?.status !== "IN_PROGRESS" ? {cursor: "default"} : {cursor: "pointer"})
+            }}
           />
         )}
       </div>

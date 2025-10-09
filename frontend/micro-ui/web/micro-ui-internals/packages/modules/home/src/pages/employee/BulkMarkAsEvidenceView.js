@@ -83,8 +83,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
                 return {
                   ...column,
                   clickFunc: (evidence) => {
-                    console.log("evidence", evidence);
-
                     setSelectedEvidence(evidence);
                     setShowMakeAsEvidenceModal(true);
                   },

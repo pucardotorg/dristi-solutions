@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { SearchIconSvg } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@googlemaps/js-api-loader";
 
@@ -214,7 +214,7 @@ const mapStyles = [
   },
 ];
 
-const setLocationText = (location, onChange, isPlaceRequired = false, index) => {
+const setLocationText = (location, onChange, isPlaceRequired = false, index, inputRef) => {
   const geocoder = new window.google.maps.Geocoder();
   geocoder.geocode(
     {
@@ -224,7 +224,7 @@ const setLocationText = (location, onChange, isPlaceRequired = false, index) => 
       if (status === "OK") {
         if (results[0]) {
           let pincode = GetPinCode(results[0]);
-          const infoWindowContent = document.getElementById("pac-input-" + index);
+          const infoWindowContent = inputRef.current;
           if (infoWindowContent) {
             infoWindowContent.value = getName(results[0]);
             if (onChange) {
@@ -238,7 +238,7 @@ const setLocationText = (location, onChange, isPlaceRequired = false, index) => 
   );
 };
 
-const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index) => {
+const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index, inputRef) => {
   if (!marker) return;
   const { latLng } = marker;
   const currLat = latLng.lat();
@@ -247,23 +247,23 @@ const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index) => {
     lat: currLat,
     lng: currLang,
   };
-  if (isPlaceRequired) setLocationText(location, onChange, true, index);
-  else setLocationText(location, onChange, false, index);
+  if (isPlaceRequired) setLocationText(location, onChange, true, index, inputRef);
+  else setLocationText(location, onChange, false, index, inputRef);
 };
 
-const initAutocomplete = (onChange, position, isPlaceRequired = false, index) => {
+const initAutocomplete = (onChange, position, isPlaceRequired = false, index, inputRef, mapRef) => {
   const coordinates = {
     lat: parseFloat(position?.lat),
     lng: parseFloat(position?.lng),
   };
-  const map = new window.google.maps.Map(document.getElementById("map-" + index), {
+  const map = new window.google.maps.Map(mapRef.current, {
     center: coordinates,
     zoom: 15,
     mapTypeId: "roadmap",
     styles: mapStyles,
   }); // Create the search box and link it to the UI element.
 
-  const input = document.getElementById("pac-input-" + index);
+  const input = inputRef.current;
   updateDefaultBounds(position);
   const options = {
     bounds: defaultBounds,
@@ -295,7 +295,7 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
 
   // Listen for the event fired when the user selects a prediction and retrieve
   // more details for that place.
-  markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index));
+  markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index, inputRef));
   searchBox.addListener("place_changed", () => {
     const place = searchBox.getPlace();
 
@@ -338,7 +338,7 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
         clickable: true,
       })
     );
-    markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index));
+    markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index, inputRef));
     if (place.geometry.viewport) {
       // Only geocodes have viewport.
       bounds.union(place.geometry.viewport);
@@ -358,10 +358,19 @@ export const defaultCoordinates = {
 const LocationSearch = (props) => {
   const { setCoordinateData, isAutoFilledDisabled = false } = props;
   const [coordinates, setCoordinates] = useState({ ...defaultCoordinates });
+  const inputRef = useRef(null);
+  const mapRef = useRef(null);
   useEffect(() => {
     async function mapScriptCall() {
       const getLatLng = (position) => {
-        initAutocomplete(props.onChange, { lat: position.coords.latitude, lng: position.coords.longitude }, props.isPlaceRequired, props?.index);
+        initAutocomplete(
+          props.onChange,
+          { lat: position.coords.latitude, lng: position.coords.longitude },
+          props.isPlaceRequired,
+          props?.index,
+          inputRef,
+          mapRef
+        );
       };
       const getLatLngError = (error) => {
         let defaultLatLong = {};
@@ -372,7 +381,7 @@ const LocationSearch = (props) => {
             ...defaultCoordinates,
           };
         }
-        initAutocomplete(props.onChange, defaultLatLong, props.isPlaceRequired, props?.index);
+        initAutocomplete(props.onChange, defaultLatLong, props.isPlaceRequired, props?.index, inputRef, mapRef);
       };
 
       const initMaps = () => {
@@ -389,22 +398,16 @@ const LocationSearch = (props) => {
     }
     mapScriptCall();
     setCoordinateData({ callbackFunc: setCoordinates });
-  }, [coordinates]);
+  }, [coordinates, inputRef, mapRef]);
 
   return (
     <div className={`map-wrap${props?.disable ? "-disable" : ""}`} style={props?.locationStyle}>
       <div className="map-search-bar-wrap">
         {/* <img src={searchicon} className="map-search-bar-icon" alt=""/> */}
         <SearchIconSvg className="map-search-bar-icon" />
-        <input
-          id={"pac-input-" + props?.index}
-          className="map-search-bar"
-          type="text"
-          placeholder="Search for a building, street, or area"
-          autoComplete="off"
-        />
+        <input ref={inputRef} className="map-search-bar" type="text" placeholder="Search for a building, street, or area" autoComplete="off" />
       </div>
-      <div id={"map-" + props?.index} className="map"></div>
+      <div ref={mapRef} className="map"></div>
     </div>
   );
 };

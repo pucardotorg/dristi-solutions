@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import CasesResponse from "./CasesResponse";
 import JoinCaseHome from "./JoinCaseHome";
-import AdvocateRegistration from "./advocateRegistration";
+// import AdvocateRegistration from "./advocateRegistration";
 import SearchCase from "./SearchCase";
 import AdvocateMain from "../advocate/AdvocateMain";
 import Vakalath from "../advocate/Vakalath";
@@ -61,7 +61,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         </React.Fragment>
         <PrivateRoute path={`${path}/cases-response`} component={() => <CasesResponse></CasesResponse>} />
         <PrivateRoute path={`${path}/join-case`} component={() => <JoinCaseHome t={t} />} />
-        <PrivateRoute path={`${path}/join-case-litigant`} component={() => <AdvocateRegistration></AdvocateRegistration>} />
+        {/* <PrivateRoute path={`${path}/join-case-litigant`} component={() => <AdvocateRegistration></AdvocateRegistration>} /> */}
         <PrivateRoute path={`${path}/search-case`} component={() => <SearchCase />} />
         <PrivateRoute path={`${path}/join-case-advocate`} component={() => <AdvocateMain />} />
         <PrivateRoute path={`${path}/advocate-vakalath`} component={() => <Vakalath />} />
