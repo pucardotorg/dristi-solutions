@@ -53,7 +53,7 @@ public class OrderService {
         
         // Update order details with base64 content if available
         if (base64Content != null) {
-            orderDetails.put("order_base64", base64Content);
+            orderDetails.put("order_details", base64Content);
         }
         
         // Update common order fields

@@ -5,18 +5,22 @@ import com.dristi.njdg_transformer.model.advocate.AdvocateSerialNumber;
 import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.cases.Party;
+import com.dristi.njdg_transformer.model.cases.StatuteSection;
 import com.dristi.njdg_transformer.repository.AdvocateRepository;
+import com.dristi.njdg_transformer.utils.MdmsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLAINANT_PRIMARY;
-import static com.dristi.njdg_transformer.config.ServiceConstants.RESPONDENT_PRIMARY;
+import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -26,10 +30,12 @@ public class NJDGEnrichment {
     
     private final ObjectMapper objectMapper;
     private final AdvocateRepository repository;
+    private final MdmsUtil mdmsUtil;
 
-    public NJDGEnrichment(ObjectMapper objectMapper, AdvocateRepository repository) {
+    public NJDGEnrichment(ObjectMapper objectMapper, AdvocateRepository repository, MdmsUtil mdmsUtil) {
         this.objectMapper = objectMapper;
         this.repository = repository;
+        this.mdmsUtil = mdmsUtil;
     }
 
 
@@ -326,5 +332,10 @@ public class NJDGEnrichment {
             log.error("Error processing {} details", partyType, e);
         }
         return extraParties.isEmpty() ? null : extraParties;
+    }
+
+    public void enrichStatuteSection(RequestInfo requestInfo, CourtCase courtCase, NJDGTransformRecord record) {
+        List<StatuteSection> statutesAndSections = courtCase.getStatutesAndSections();
+        Map<String, Map<String, JSONArray>> acts = mdmsUtil.fetchMdmsData(requestInfo, courtCase.getTenantId(), NJDG_MODULE, List.of(ACT_MASTER));
     }
 }

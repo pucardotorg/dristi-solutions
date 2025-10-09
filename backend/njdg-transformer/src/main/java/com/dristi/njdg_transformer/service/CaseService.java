@@ -52,10 +52,11 @@ public class CaseService {
             
             NJDGTransformRecord record = convertToNJDGRecord(courtCase);
 
-            //todo: enrich njdg record with pet & res, mdms data for court, hearing, order
             enrichment.enrichPartyDetails(courtCase, record);
             enrichment.enrichAdvocateDetails(courtCase, record);
             enrichment.enrichExtraParties(courtCase, record);
+            enrichment.enrichStatuteSection(requestInfo, courtCase, record);
+            //todo: enrich court master data
             log.debug("Upserting NJDGTransformRecord with CINO: {}", record.getCino());
             
             boolean recordExists = checkIfRecordExists(record.getCino());
