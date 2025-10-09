@@ -138,6 +138,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [isBulkSigned, setIsBulkSigned] = useState(false);
   const [bulkSignatureId, setBulkSignatureId] = useState("");
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
+  const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
@@ -1022,6 +1023,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } finally {
       setIsBulkLoading(false);
     }
+    const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+    setAllSelectedPolice(isPolice ? true : false);
   }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
   const handleBulkDownload = useCallback(async () => {
     try {
@@ -1533,10 +1536,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewWarrantAccess,
     hasViewNoticeAccess,
   ]);
-
-  const allSelectedPolice =
-    bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE") || false;
-
   return (
     <React.Fragment>
       {isLoading ? (
