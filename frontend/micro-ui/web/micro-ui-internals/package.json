@@ -71,5 +71,9 @@
     "react-i18next": "11.16.2",
     "react-query": "3.6.1",
     "react-router-dom": "5.3.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
   }
 }
