@@ -14,6 +14,7 @@ import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/
 import { SubmissionDocumentWorkflowAction, SubmissionDocumentWorkflowState } from "../../utils/submissionDocumentsWorkflow";
 import { Urls } from "../../hooks/services/Urls";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { sanitizeFormData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -266,6 +267,7 @@ const SubmissionDocuments = ({ path }) => {
     try {
       let evidenceReqBody = {};
       let evidence = {};
+      const sanitisedFormdata = sanitizeFormData(formdata)
       if (![SubmissionDocumentWorkflowState.PENDING_ESIGN, SubmissionDocumentWorkflowState.SUBMITTED].includes(currentSubmissionStatus)) {
         const documentFile = (await Promise.all(combinedDocumentFile?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
         let file = null;
@@ -278,7 +280,7 @@ const SubmissionDocuments = ({ path }) => {
           };
           evidenceReqBody = {
             artifact: {
-              artifactType: formdata?.documentType?.code,
+              artifactType: sanitisedFormdata?.documentType?.code,
               caseId: caseDetails?.id,
               filingNumber,
               tenantId,
@@ -289,7 +291,7 @@ const SubmissionDocuments = ({ path }) => {
               filingType: filingType,
               additionalDetails: {
                 uuid: userInfo?.uuid,
-                formdata,
+                sanitisedFormdata,
               },
               workflow: {
                 action: SubmissionDocumentWorkflowAction.CREATE,
