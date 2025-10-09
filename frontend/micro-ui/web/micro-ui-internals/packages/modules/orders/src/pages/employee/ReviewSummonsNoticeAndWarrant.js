@@ -1399,30 +1399,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onFormValueChange = useCallback(
     (form) => {
-      if (form?.searchResult?.length > 0) {
-        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-        const isSignedTab = currentConfig?.label === "SIGNED";
-        const existingSignList = bulkSignList || [];
-        const existingSendList = bulkSendList || [];
-        const allExistingSelections = [...existingSignList, ...existingSendList].filter((item) => item?.isSelected);
-
-        const updatedData = form.searchResult.map((item) => {
-          const wasSelected = allExistingSelections.some((existing) => existing?.taskNumber === item?.taskNumber);
-
-          return {
-            ...item,
-            isSelected: wasSelected,
-          };
-        });
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+      const isSignedTab = currentConfig?.label === "SIGNED";
+      if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
+        const updatedData = form.searchResult.map((item) => ({
+          ...item,
+          isSelected: false,
+        }));
 
         if (isSignedTab) {
           setBulkSendList(updatedData);
         } else {
           setBulkSignList(updatedData);
         }
+        return;
+      }
+      if (isSignedTab) {
+        setBulkSendList([]);
+      } else {
+        setBulkSignList([]);
       }
     },
-    [activeTabIndex, isJudge, courtId, bulkSignList, bulkSendList]
+    [activeTabIndex, isJudge, courtId]
   );
 
   const hasNoSelectedItems = useMemo(() => {
