@@ -1676,7 +1676,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           }}
           actionCancelOnSubmit={handleBulkDownload}
           actionSaveLabel={!allSelectedPolice ? t("MARK_AS_SEND") : t("CS_COMMON_CLOSE")}
-          actionSaveOnSubmit={t("MARK_AS_SEND") ? handleProceedToBulkSend : handleClose}
+          actionSaveOnSubmit={!allSelectedPolice ? handleProceedToBulkSend : handleClose}
         >
           <CustomSubmitModal
             t={t}
