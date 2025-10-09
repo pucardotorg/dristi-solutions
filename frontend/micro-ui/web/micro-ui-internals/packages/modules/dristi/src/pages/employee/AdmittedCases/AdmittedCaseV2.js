@@ -47,7 +47,6 @@ import Button from "../../../components/Button";
 import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
-import AddParty from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddParty";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -1820,11 +1819,9 @@ const AdmittedCaseV2 = () => {
 
   const updateCaseDetails = useCallback(
     async (action, data = {}) => {
-      let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-      let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
       const newcasedetails = {
         ...caseDetails,
-        additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+        additionalDetails: { ...caseDetails.additionalDetails, judge: data },
       };
       const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
       let assignees = [];

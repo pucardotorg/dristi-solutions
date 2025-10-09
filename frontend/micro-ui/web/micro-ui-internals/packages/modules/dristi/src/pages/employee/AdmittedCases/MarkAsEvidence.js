@@ -390,8 +390,8 @@ const MarkAsEvidence = ({
         },
         {}
       );
-      const witnessList = response?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((witness) => {
-        const data = witness?.data || {};
+      const witnessList = response?.criteria[0]?.responseList[0]?.witnessDetails?.map((witness) => {
+        const data = witness || {};
         return data?.witnessTag
           ? {
               witnessTag: data.witnessTag || "",
