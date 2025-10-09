@@ -955,7 +955,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        const updateTaskResponse = await processManagementService.updateSignedProcess(
+        await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
@@ -970,8 +970,22 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setTimeout(() => {
           setShowErrorToast(null);
         }, 3000);
+
+        const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+
+        const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
+        if (policeTasks.length > 0) {
+          try {
+            await callBulkSendApi(policeTasks);
+            console.log(`Bulk sent ${policeTasks.length} POLICE tasks`);
+          } catch (err) {
+            console.error("Bulk send for POLICE tasks failed:", err);
+            setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS"), error: true });
+            setTimeout(() => setShowErrorToast(null), 5000);
+          }
+        }
         try {
-          const preselectedForSend = selectedItems.map((it) => ({
+          const preselectedForSend = nonPoliceTasks.map((it) => ({
             ...it,
             isSelected: true,
             documentStatus: "SIGNED",
@@ -990,7 +1004,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return Array.from(map.values());
           });
 
-          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !preselectedForSend.some((s) => s.taskNumber === p.taskNumber)) : []));
+          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !selectedItems.some((s) => s.taskNumber === p.taskNumber)) : []));
           setReload((prev) => prev + 1);
           setShowBulkSignSuccessModal(true);
         } catch (e) {
@@ -1010,7 +1024,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } finally {
       setIsBulkLoading(false);
     }
-  }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest]);
+  }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
   const handleBulkDownload = useCallback(async () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
@@ -1234,10 +1248,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
-                      closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
+                      submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
-                      submitButtonAction={handleSubmit}
+                      submitButtonAction={t("MARK_AS_SENT") ? handleSubmit : handleClose}
                       t={t}
                       submissionData={submissionData}
                       documents={documents}
@@ -1286,10 +1300,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <CustomStepperSuccess
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          submitButtonText={documents && hasEditTaskAccess ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
-          submitButtonAction={handleSubmit}
+          submitButtonAction={t("MARK_AS_SENT") ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
           documents={documents}
@@ -1522,6 +1536,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewNoticeAccess,
   ]);
 
+  const allSelectedPolice = bulkSignList
+    ?.filter((item) => item?.isSelected)
+    ?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+
   return (
     <React.Fragment>
       {isLoading ? (
@@ -1660,8 +1678,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             justifyContent: "center",
           }}
           actionCancelOnSubmit={handleBulkDownload}
-          actionSaveLabel={t("MARK_AS_SEND")}
-          actionSaveOnSubmit={handleProceedToBulkSend}
+          actionSaveLabel={!allSelectedPolice ? t("MARK_AS_SEND") : t("CS_COMMON_CLOSE")}
+          actionSaveOnSubmit={t("MARK_AS_SEND") ? handleProceedToBulkSend : handleClose}
         >
           <CustomSubmitModal
             t={t}
@@ -1677,7 +1695,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSendConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSendConfirmModal(false)}
-          actionSaveLabel={hasEditTaskAccess ? t("MARK_AS_SENT") : null}
+          actionSaveLabel={!hasEditTaskAccess ? t("MARK_AS_SENT") : null}
           actionSaveOnSubmit={handleBulkSendConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
