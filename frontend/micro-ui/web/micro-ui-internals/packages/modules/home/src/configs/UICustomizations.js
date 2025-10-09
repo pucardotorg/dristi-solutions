@@ -480,9 +480,6 @@ export const UICustomizations = {
         },
       });
       let completeStatusData = requestCriteria.body?.criteria?.completeStatus || [];
-      if (completeStatusData?.length === 0 || (typeof completeStatusData === "object" && !Array.isArray(completeStatusData))) {
-        completeStatusData = sentData;
-      }
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
       const courtId = requestCriteria?.body?.criteria?.courtId;
@@ -492,6 +489,12 @@ export const UICustomizations = {
       const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
+      const compStatus = searchForm?.compStatus?.code || "";
+      if (Array.isArray(completeStatusData)) {
+        completeStatusData = compStatus ? [compStatus] : completeStatusData;
+      } else {
+        completeStatusData = compStatus ? [compStatus] : sentData;
+      }
       let resolvedApplicationStatus = "";
       if (activeTabIndex === 0) resolvedApplicationStatus = "SIGN_PENDING";
       else if (activeTabIndex === 1) resolvedApplicationStatus = "SIGNED";
