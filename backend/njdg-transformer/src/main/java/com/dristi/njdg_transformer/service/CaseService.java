@@ -55,6 +55,7 @@ public class CaseService {
             //todo: enrich njdg record with pet & res, mdms data for court, hearing, order
             enrichment.enrichPartyDetails(courtCase, record);
             enrichment.enrichAdvocateDetails(courtCase, record);
+            enrichment.enrichExtraParties(courtCase, record);
             log.debug("Upserting NJDGTransformRecord with CINO: {}", record.getCino());
             
             boolean recordExists = checkIfRecordExists(record.getCino());
