@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import "./index.css";
 import App from "./App";
@@ -55,9 +55,11 @@ if (!user || !user.access_token || !user.info) {
   // end
 }
 
-ReactDOM.render(
+const container = document.getElementById("root");
+if (!container) throw new Error("Root element #root not found");
+const root = createRoot(container);
+root.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
-  document.getElementById("root")
+  </React.StrictMode>
 );

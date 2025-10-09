@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
 import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
@@ -65,10 +65,10 @@ const initDigitUI = () => {
   const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "pb";
   initTokens(stateCode);
 
-  ReactDOM.render(
-    <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />,
-    document.getElementById("root")
-  );
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Root element #root not found");
+  const root = createRoot(container);
+  root.render(<DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />);
 };
 
 initLibraries().then(() => {
