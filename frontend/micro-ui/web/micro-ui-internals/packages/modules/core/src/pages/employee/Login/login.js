@@ -109,6 +109,15 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       if (!employeeData || employeeData?.length === 0) {
         throw new Error(t("ES_ERROR_EMPLOYEE_NOT_FOUND"));
       }
+      if (employeeData?.length > 0) {
+        const userAccountExpiryDate = employeeData?.[0]?.assignments?.[0]?.toDate;
+        const date = new Date(userAccountExpiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date < today) {
+          throw new Error(t("USER_ACCOUNT_VALIDITY_EXPIRED"));
+        }
+      }
       const assignments = employeeData?.[0]?.assignments?.find((assignment) => assignment?.courtroom === data?.courtroom?.code);
       if (!assignments) {
         throw new Error(t("ES_ERROR_COURTROOM_NOT_ASSIGNED"));
@@ -121,6 +130,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       setShowToast(
         err?.response?.data?.error_description ||
           (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
+          (err?.message === "USER_ACCOUNT_VALIDITY_EXPIRED" && t("USER_ACCOUNT_VALIDITY_EXPIRED")) ||
           err?.response?.data?.Errors[0]?.message ||
           t("INVALID_LOGIN_CREDENTIALS")
       );
