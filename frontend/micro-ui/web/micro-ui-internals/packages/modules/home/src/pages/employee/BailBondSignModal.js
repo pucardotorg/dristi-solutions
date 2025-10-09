@@ -18,6 +18,7 @@ export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("signStatus");
   sessionStorage.removeItem("bulkBailBondSignlimit");
   sessionStorage.removeItem("bulkBailBondSignoffset");
+  sessionStorage.removeItem("homeActiveTab");
 };
 
 export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () => {}, bailBondPaginationData, setCounter = () => {} }) => {
@@ -360,6 +361,12 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       </React.Fragment>
     );
   }, [bailDocuments, tenantId]);
+
+  useEffect(() => {
+    return () => {
+      clearBailBondSessionData();
+    };
+  });
 
   return (
     <div>
