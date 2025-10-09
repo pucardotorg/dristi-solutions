@@ -138,6 +138,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [isBulkSigned, setIsBulkSigned] = useState(false);
   const [bulkSignatureId, setBulkSignatureId] = useState("");
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
+  const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
@@ -497,6 +498,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     sessionStorage.removeItem("SignedFileStoreID");
     sessionStorage.removeItem("homeActiveTab");
     setShowActionModal(false);
+    setShowBulkSendConfirmModal(false);
     // If navigated via deep-link, go back to listing route without forcing a data reload
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
 
@@ -955,7 +957,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        const updateTaskResponse = await processManagementService.updateSignedProcess(
+        await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
@@ -970,8 +972,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setTimeout(() => {
           setShowErrorToast(null);
         }, 3000);
+
+        const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+
+        const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
+        if (policeTasks.length > 0) {
+          try {
+            await callBulkSendApi(policeTasks);
+          } catch (err) {
+            console.error("Bulk send for POLICE tasks failed:", err);
+          }
+        }
         try {
-          const preselectedForSend = selectedItems.map((it) => ({
+          const preselectedForSend = nonPoliceTasks.map((it) => ({
             ...it,
             isSelected: true,
             documentStatus: "SIGNED",
@@ -990,7 +1003,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return Array.from(map.values());
           });
 
-          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !preselectedForSend.some((s) => s.taskNumber === p.taskNumber)) : []));
+          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !selectedItems.some((s) => s.taskNumber === p.taskNumber)) : []));
           setReload((prev) => prev + 1);
           setShowBulkSignSuccessModal(true);
         } catch (e) {
@@ -1010,7 +1023,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } finally {
       setIsBulkLoading(false);
     }
-  }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest]);
+    const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+    setAllSelectedPolice(isPolice ? true : false);
+  }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
   const handleBulkDownload = useCallback(async () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
@@ -1235,9 +1250,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
                       submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
-                      closeButtonText={documents ? t("CS_CLOSE") : t("DOWNLOAD_DOCUMENT")}
+                      closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
-                      submitButtonAction={handleSubmit}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
                       t={t}
                       submissionData={submissionData}
                       documents={documents}
@@ -1289,7 +1304,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
-          submitButtonAction={handleSubmit}
+          submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
           documents={documents}
@@ -1384,30 +1399,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onFormValueChange = useCallback(
     (form) => {
-      if (form?.searchResult?.length > 0) {
-        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-        const isSignedTab = currentConfig?.label === "SIGNED";
-        const existingSignList = bulkSignList || [];
-        const existingSendList = bulkSendList || [];
-        const allExistingSelections = [...existingSignList, ...existingSendList].filter((item) => item?.isSelected);
-
-        const updatedData = form.searchResult.map((item) => {
-          const wasSelected = allExistingSelections.some((existing) => existing?.taskNumber === item?.taskNumber);
-
-          return {
-            ...item,
-            isSelected: wasSelected,
-          };
-        });
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+      const isSignedTab = currentConfig?.label === "SIGNED";
+      if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
+        const updatedData = form.searchResult.map((item) => ({
+          ...item,
+          isSelected: false,
+        }));
 
         if (isSignedTab) {
           setBulkSendList(updatedData);
         } else {
           setBulkSignList(updatedData);
         }
+        return;
+      }
+      if (isSignedTab) {
+        setBulkSendList([]);
+      } else {
+        setBulkSignList([]);
       }
     },
-    [activeTabIndex, isJudge, courtId, bulkSignList, bulkSendList]
+    [activeTabIndex, isJudge, courtId]
   );
 
   const hasNoSelectedItems = useMemo(() => {
@@ -1521,7 +1534,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewWarrantAccess,
     hasViewNoticeAccess,
   ]);
-
   return (
     <React.Fragment>
       {isLoading ? (
@@ -1660,8 +1672,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             justifyContent: "center",
           }}
           actionCancelOnSubmit={handleBulkDownload}
-          actionSaveLabel={t("MARK_AS_SEND")}
-          actionSaveOnSubmit={handleProceedToBulkSend}
+          actionSaveLabel={!allSelectedPolice ? t("MARK_AS_SEND") : t("CS_COMMON_CLOSE")}
+          actionSaveOnSubmit={!allSelectedPolice ? handleProceedToBulkSend : handleClose}
         >
           <CustomSubmitModal
             t={t}
