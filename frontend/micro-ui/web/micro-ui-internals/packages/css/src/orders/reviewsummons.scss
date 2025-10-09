@@ -416,6 +416,8 @@ $tab-underline: #0a5757;
   }
 }
 
+$date-input-color: #000;
+
 .e-post-update-modal {
   width: 536px;
   border-radius: 4px;
@@ -439,6 +441,10 @@ $tab-underline: #0a5757;
 
         .select-wrap {
           margin-bottom: 0px !important;
+          .options-card {
+            max-height: 230px !important;
+            top: 40px !important;
+          }
         }
 
         .custom-text-area-main-div {
@@ -454,6 +460,24 @@ $tab-underline: #0a5757;
             .text-input {
               input {
                 margin-bottom: 0px !important;
+
+                input[type="date"] {
+                  -webkit-appearance: none;
+                  -moz-appearance: textfield;
+                  appearance: none;
+                  color: $date-input-color;
+
+                  &::-webkit-inner-spin-button,
+                  &::-webkit-calendar-picker-indicator {
+                    display: none;
+                    -webkit-appearance: none;
+                  }
+
+                  &::-moz-focus-inner {
+                    border: 0;
+                    padding: 0;
+                  }
+                }
               }
             }
           }

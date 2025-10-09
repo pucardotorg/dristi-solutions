@@ -64,10 +64,13 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            const hasResults = data?.EPostTracker?.length > 0;            
+            const hasResults = data?.EPostTracker?.length > 0;
             window.sessionStorage.setItem("epostSearchHasResults", hasResults ? "true" : "false");
             window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
-            return data;
+            return {
+              ...data,
+              count: data?.pagination?.totalCount || data?.length,
+            };
           },
         },
       };
@@ -83,12 +86,12 @@ export const UICustomizations = {
         case "CS_ACTIONS_PENCIL":
           return <PencilIconEdit column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
         case "TOTAL_CHARGES":
-          return value ? `${value} /-` : "-";
+          return value ? `${Math.round(value)}/-` : "-";
         case "BOOKING_DATE":
         case "BOOKING_DATE_TIME":
           return formatDateWithTime(value) || "-";
         case "RECIEVED_DATE":
-          return formatDateWithTime(value, true) || "-";
+          return formatDateWithTime(value) || "-";
         default:
           return t("ES_COMMON_NA");
       }

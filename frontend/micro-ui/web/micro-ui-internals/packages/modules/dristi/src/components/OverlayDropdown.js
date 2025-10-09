@@ -23,6 +23,7 @@ const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [],
       <div
         style={{
           cursor: "pointer",
+          padding: "10px 20px"
         }}
         onClick={toggleDropdown}
       >

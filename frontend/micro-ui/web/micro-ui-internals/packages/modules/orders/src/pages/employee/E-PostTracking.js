@@ -129,7 +129,7 @@ const EpostTrackingPage = () => {
   }, [epostUserData, userName]);
 
   const epostStatusDropDownData = useMemo(() => {
-    return (epostStatusDropDown || [])?.slice()?.reverse();
+    return (epostStatusDropDown || [])?.slice()?.sort((a, b) => a?.code?.localeCompare(b?.code));
   }, [epostStatusDropDown]);
 
   const intermediateStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "INTERMEDIATE"), [
@@ -417,11 +417,8 @@ const EpostTrackingPage = () => {
       setTimeout(() => setIsClearing(false), 100);
     }
 
-    if (isClear) {
-      window.sessionStorage.setItem("epostSearchHasResults", "true");
-      window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
-    }
-
+    window.sessionStorage.setItem("epostSearchHasResults", "true");
+    window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
     setSearchRefreshCounter((prev) => prev + 1);
   };
 
@@ -454,6 +451,13 @@ const EpostTrackingPage = () => {
       console.error("error while updating : ", error);
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("SOMETHING_WENT_WRONG");
+
+      if (errorCode === "DUPLICATE_SPEED_POST_ID_ERROR") {
+        setFormErrors?.current("speedPostId", {
+          message: `${t("DUPLICATE_SPEED_POST_ID_ERROR")}`,
+        });
+        return;
+      }
       setShowErrorToast({ label: errorMsg, error: true });
     }
   };
@@ -493,10 +497,29 @@ const EpostTrackingPage = () => {
             };
           }
         }
+
+        if (updatedField?.key === "statusDate") {
+          const today = new Date();
+          const receivedDateEpoch = selectedRowData?.receivedDate;
+          const receivedDate = receivedDateEpoch ? new Date(receivedDateEpoch) : null;
+          const effectiveMinDate = receivedDate && receivedDate <= today ? receivedDate : today;
+
+          updatedField = {
+            ...updatedField,
+            populators: {
+              ...updatedField.populators,
+              validation: {
+                ...updatedField.populators?.validation,
+                min: effectiveMinDate.toISOString().split("T")[0],
+                max: today.toISOString().split("T")[0],
+              },
+            },
+          };
+        }
         return updatedField;
       }),
     }));
-  }, [activeTabIndex, epostStatusDropDownData]);
+  }, [activeTabIndex, epostStatusDropDownData, selectedRowData]);
 
   const getDefaultValue = useMemo(() => {
     if (showUpdateStatusModal) {

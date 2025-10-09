@@ -177,10 +177,6 @@ export const updateEpostStatusPendingConfig = [
           name: "statusDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "maxTodayDateValidation",
-            },
           },
         },
       },
@@ -213,6 +209,7 @@ export const updateEpostStatusPendingConfig = [
               textAreaHeader: "ADDITIONAL_REMARKS",
               isOptional: true,
               type: "TextAreaComponent",
+              maxLength: 300,
             },
           ],
         },
@@ -272,6 +269,7 @@ export const updateEpostStatusConfig = [
               textAreaHeader: "ADDITIONAL_REMARKS",
               isOptional: true,
               type: "TextAreaComponent",
+              maxLength: 300,
             },
           ],
         },

@@ -26,6 +26,10 @@ const EpostUpdateStatus = ({
       clearFormErrors?.current("statusDate");
     }
 
+    if (formData?.speedPostId && formData?.speedPostId?.trim() !== formdata?.speedPostId?.trim() && Object.keys(formState?.errors).includes("speedPostId")) {
+      clearFormErrors?.current("speedPostId");
+    }
+
     if (!isEqual(formData, formdata)) {
       setFormData(formData);
     }
