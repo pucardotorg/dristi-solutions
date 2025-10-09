@@ -1252,7 +1252,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
                       closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
-                      submitButtonAction={t("MARK_AS_SENT") ? handleSubmit : handleClose}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
                       t={t}
                       submissionData={submissionData}
                       documents={documents}
@@ -1304,7 +1304,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
-          submitButtonAction={t("MARK_AS_SENT") ? handleSubmit : handleClose}
+          submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
           documents={documents}
