@@ -55,6 +55,7 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
         },
         {}
       );
+      showToast("success", t("BUSINESS_OF_THE_DAY_UPDATED_SUCCESSFULLY"), 5000);
     } catch (error) {
       console.error("error: ", error);
       showToast("error", t("BUSINESS_OF_THE_DAY_UPDATE_FAILED"), 5000);

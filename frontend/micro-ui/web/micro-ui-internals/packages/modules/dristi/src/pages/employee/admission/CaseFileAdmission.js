@@ -253,7 +253,18 @@ function CaseFileAdmission({ t, path }) {
         show: true,
         isLast: false,
         homeFilteredData: homeFilterData,
+      },
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("HOME_REGISTER_CASES"),
+        show: homeActiveTab === "REGISTRATION",
         homeActiveTab: homeActiveTab,
+        isLast: false,
+      },
+      {
+        content: t("VIEW"),
+        show: homeActiveTab === "REGISTRATION",
+        isLast: true,
       },
     ],
     [userInfoType, t, homeFilterData, homeActiveTab]

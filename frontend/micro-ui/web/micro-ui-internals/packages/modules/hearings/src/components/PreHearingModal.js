@@ -172,8 +172,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
           <Button
             className="border-none dristi-font-bold"
             onButtonClick={() => {
-              sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-              history.push(`/${window?.contextPath}/employee/home/home-screen`);
+              history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_BULK_RESCHEDULE" });
             }}
             label={t("BULK_RESCHEDULE")}
             variation={"secondary"}

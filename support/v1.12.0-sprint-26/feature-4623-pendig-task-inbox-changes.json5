@@ -6,7 +6,8 @@
     "index": "pending-tasks-index",
     "module": "Pending Tasks Service",
     "sortBy": {
-      "path": "Data.isCompleted",
+      // TODO : update path field value
+      "path": "Data.createdTime",
       "defaultOrder": "ASC"
     },
     "sourceFilterPathList": [
