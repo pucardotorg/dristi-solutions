@@ -384,11 +384,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } finally {
       setIsSubmitting(false);
       setIsBulkSending(false);
+      setShowBulkSendConfirmModal(false);
     }
   }, [bulkSendList, t, reload, callBulkSendApi]);
 
   const handleBulkSendConfirm = useCallback(() => {
-    setShowBulkSendConfirmModal(false);
     handleBulkSendSubmit();
   }, [bulkSendList, t, handleBulkSendSubmit]);
 
@@ -1022,6 +1022,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setReload((prev) => prev + 1);
     } finally {
       setIsBulkLoading(false);
+      setShowBulkSignConfirmModal(false);
     }
     const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
     setAllSelectedPolice(isPolice ? true : false);
@@ -1029,7 +1030,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleBulkDownload = useCallback(async () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-      const isSignedTab = currentConfig?.label === "SIGNED";
+      const isSignedTab = bulkSendList?.some((item) => item?.isSelected && item?.documentStatus === "SIGNED") || currentConfig?.label === "SIGNED";
 
       const selectedItems = isSignedTab
         ? bulkSendList?.filter((item) => item?.isSelected) || []
@@ -1157,7 +1158,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   ]);
 
   const handleBulkSignConfirm = useCallback(() => {
-    setShowBulkSignConfirmModal(false);
     handleActualBulkSign();
   }, [handleActualBulkSign]);
 
@@ -1302,8 +1302,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
           submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
-          closeButtonText={t("DOWNLOAD_DOCUMENT")}
-          closeButtonAction={handleDownload}
+          closeButtonText={t("DOWNLOAD_DOCUMENTS")}
+          closeButtonAction={handleBulkDownload}
           submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
@@ -1573,13 +1573,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       : config?.label === "SENT"
                       ? sentModalConfig
                       : signedModalConfig
-                    // config?.label === "SENT"
-                    //   ? sentModalConfig
-                    //   : hasSignedDoc
-                    //   ? signedModalConfig
-                    //   : actionModalType === "SIGN_PENDING"
-                    //   ? unsignedModalConfig
-                    //   : signedModalConfig
                   }
                   currentStep={step}
                 />
@@ -1635,6 +1628,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
           </div>
         </Modal>
       )}  */}
+      {(isBulkLoading || isBulkSending) && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 11000,
+          }}
+        >
+          <Loader />
+        </div>
+      )}
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
