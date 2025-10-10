@@ -152,8 +152,12 @@ public class CaseService {
             return null;
         }
         String[] parts = filingNumber.split("-");
-        return parts.length > 2 ? parts[2] : filingNumber;
+        if (parts.length < 2) {
+            return filingNumber;
+        }
+        return parts[1].replaceFirst("^0+(?!$)", "");
     }
+
 
     /**
      * Extracts year from a timestamp

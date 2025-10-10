@@ -57,7 +57,7 @@ public class NJDGEnrichment {
             if (!complainantDetails.isMissingNode()) {
                 JsonNode formData = complainantDetails.path("formdata").path(0).path("data");
                 if (!formData.isMissingNode()) {
-                    String individualId = formData.path("individualId").asText(null);
+                    String individualId = formData.path("complainantVerification").path("individualDetails").path("individualId").asText(null);
 
                     Party complainantLitigant = findLitigantByIndividualId(litigants, individualId);
 
@@ -81,13 +81,12 @@ public class NJDGEnrichment {
 
             JsonNode respondentDetails = additionalDetails.path("respondentDetails");
             if (!respondentDetails.isMissingNode()) {
-                JsonNode formData = respondentDetails.path("formdata").path(0).path("data");
+                JsonNode formData = respondentDetails.path("formdata").path(0);
                 if (!formData.isMissingNode()) {
                     String uniqueId = formData.path("uniqueId").asText(null);
 
-                    Party respondentLitigant = findLitigantByUniqueId(litigants, uniqueId);
-
-                    if (respondentLitigant != null) {
+//                    Party respondentLitigant = findLitigantByUniqueId(litigants, uniqueId);
+//                    if (respondentLitigant != null) {
                         String firstName = formData.path("respondentFirstName").asText("").trim();
                         String lastName = formData.path("respondentLastName").asText("").trim();
                         String resName = (firstName + " " + lastName).trim();
@@ -102,9 +101,9 @@ public class NJDGEnrichment {
                         record.setResAddress(address);
 
                         log.debug("Matched respondent with uniqueId: {}", uniqueId);
-                    } else {
-                        log.warn("No matching litigant found for respondent with uniqueId: {}", uniqueId);
-                    }
+//                    } else {
+//                        log.warn("No matching litigant found for respondent with uniqueId: {}", uniqueId);
+//                    }
                 }
             }
         } catch (Exception e) {
@@ -125,32 +124,32 @@ public class NJDGEnrichment {
                 .orElse(null);
     }
 
-    /**
-     * Helper method to find a litigant by uniqueId from additionalDetails
-     */
-    private Party findLitigantByUniqueId(List<Party> litigants, String uniqueId) {
-        if (uniqueId == null || litigants == null) {
-            return null;
-        }
-
-        return litigants.stream()
-                .filter(litigant -> {
-                    try {
-                        if (litigant.getAdditionalDetails() == null) {
-                            return false;
-                        }
-                        String litigantUniqueId = objectMapper.readTree(objectMapper.writeValueAsString(litigant.getAdditionalDetails()))
-                                .path("uniqueId")
-                                .asText(null);
-                        return uniqueId.equals(litigantUniqueId) && RESPONDENT_PRIMARY.equalsIgnoreCase(litigant.getPartyType());
-                    } catch (Exception e) {
-                        log.warn("Error processing litigant additionalDetails", e);
-                        return false;
-                    }
-                })
-                .findFirst()
-                .orElse(null);
-    }
+//    /**
+//     * Helper method to find a litigant by uniqueId from additionalDetails
+//     */
+//    private Party findLitigantByUniqueId(List<Party> litigants, String uniqueId) {
+//        if (uniqueId == null || litigants == null) {
+//            return null;
+//        }
+//
+//        return litigants.stream()
+//                .filter(litigant -> {
+//                    try {
+//                        if (litigant.getAdditionalDetails() == null) {
+//                            return false;
+//                        }
+//                        String litigantUniqueId = objectMapper.readTree(objectMapper.writeValueAsString(litigant.getAdditionalDetails()))
+//                                .path("uuid")
+//                                .asText(null);
+//                        return uniqueId.equals(litigantUniqueId));
+//                    } catch (Exception e) {
+//                        log.warn("Error processing litigant additionalDetails", e);
+//                        return false;
+//                    }
+//                })
+//                .findFirst()
+//                .orElse(null);
+//    }
 
     private String extractAddress(JsonNode addressNode) {
         if (addressNode == null || addressNode.isMissingNode()) {
@@ -193,7 +192,7 @@ public class NJDGEnrichment {
                     advocateName = additionalDetails.path("advocateName").asText(null);
                 }
                 AdvocateSerialNumber advocateInfo = getAdvDetails(advocateUuid);
-                if (advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty()) {
+                if (advocateInfo != null && advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty()) {
                     for (Party party : advocateMapping.getRepresenting()) {
                         String partyType = party.getPartyType();
                         
@@ -201,12 +200,10 @@ public class NJDGEnrichment {
                         if (partyType != null) {
                             if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType)) {
                                 record.setPetAdv(advocateName);
-                                assert advocateInfo != null;
                                 record.setPetAdvCd(advocateInfo.getSerialNo().toString());
                                 record.setPetAdvBarReg(advocateInfo.getBarRegNo());
                             } else if (RESPONDENT_PRIMARY.equalsIgnoreCase(partyType)) {
                                 record.setResAdv(advocateName);
-                                assert advocateInfo != null;
                                 record.setResAdvCd(advocateInfo.getSerialNo().toString());
                                 record.setResAdvBarReg(advocateInfo.getBarRegNo());
                             }

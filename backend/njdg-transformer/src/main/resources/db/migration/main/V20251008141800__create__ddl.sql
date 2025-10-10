@@ -48,5 +48,5 @@ CREATE TABLE njdg_transform_record (
     act JSONB CHECK (jsonb_typeof(act) = 'array'),
     historyofcasehearing JSONB CHECK (jsonb_typeof(historyofcasehearing) = 'array'),
     interimorder JSONB CHECK (jsonb_typeof(interimorder) = 'array'),
-    iafiling JSONB CHECK (jsonb_typeof(iafiling) = 'array'),
+    iafiling JSONB CHECK (jsonb_typeof(iafiling) = 'array')
 );

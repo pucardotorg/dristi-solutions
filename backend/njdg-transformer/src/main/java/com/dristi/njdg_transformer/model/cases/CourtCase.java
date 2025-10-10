@@ -109,7 +109,7 @@ public class CourtCase {
     private Long judgementDate = null;
 
     @JsonProperty("caseDetails")
-    private CourtCase caseDetails = null;
+    private Object caseDetails = null;
 
     @JsonProperty("caseCategory")
     private String caseCategory = null;
