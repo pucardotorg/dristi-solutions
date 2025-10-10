@@ -1302,8 +1302,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
           submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
-          closeButtonText={t("DOWNLOAD_DOCUMENTS")}
-          closeButtonAction={handleBulkDownload}
+          closeButtonText={t("DOWNLOAD_DOCUMENT")}
+          closeButtonAction={handleDownload}
           submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
