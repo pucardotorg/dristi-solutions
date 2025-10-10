@@ -20,6 +20,7 @@ import SBIPaymentStatus from "./components/SBIPaymentStatus";
 import WarrantOrderComponent from "./components/WarrantOrderComponent";
 import OrderTypeControls from "./components/OrderTypeControls";
 import OrderTypeControlItem from "./components/OrderTypeControlItem";
+import EpostTrackingPage from "./pages/employee/E-PostTracking";
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
   const moduleCode = ["orders", "hearings", "common", "case", "workflow"];
@@ -56,6 +57,7 @@ const componentsToRegister = {
   WarrantOrderComponent,
   OrderTypeControls,
   OrderTypeControlItem,
+  EpostTrackingPage,
 };
 
 export const initOrdersComponents = () => {

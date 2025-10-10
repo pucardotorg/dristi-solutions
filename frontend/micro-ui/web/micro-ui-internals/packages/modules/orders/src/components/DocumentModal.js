@@ -73,6 +73,16 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
     }
   };
 
+  const modalClassName =
+    config?.className ||
+    (config?.isStepperModal
+      ? config.steps[step]?.type === "document"
+        ? "custom-modal-stepper"
+        : "custom-modal-stepper-non-doc"
+      : config?.type === "document"
+      ? "custom-modal-stepper"
+      : "custom-modal-stepper-non-doc");
+
   return (
     <Modal
       headerBarEnd={
@@ -96,15 +106,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
         )
       }
       hideModalActionbar={config?.isStepperModal ? config?.steps[step]?.hideModalActionbar || false : config?.hideModalActionbar || false}
-      className={
-        config?.isStepperModal
-          ? config.steps[step]?.type === "document"
-            ? "custom-modal-stepper"
-            : "custom-modal-stepper-non-doc"
-          : config?.type === "document"
-          ? "custom-modal-stepper"
-          : "custom-modal-stepper-non-doc"
-      }
+      className={modalClassName}
       popUpStyleMain={documentStyle}
       isDisabled={isDisabled}
       textStyle={submitButtonTextStyle}

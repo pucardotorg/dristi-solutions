@@ -59,12 +59,12 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     }
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
     const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-    function hasPostManagerRole() {
-      return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
-    }
-    if (hasPostManagerRole()) {
-      redirectPath = `/${window?.contextPath}/${userType}/orders/tracking`;
-    }
+    // function hasPostManagerRole() {
+    //   return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
+    // }
+    // if (hasPostManagerRole()) {
+    //   redirectPath = `/${window?.contextPath}/${userType}/home/epost-home-screen`;
+    // }
     history.replace(redirectPath);
   }, [user]);
 

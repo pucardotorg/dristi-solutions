@@ -273,6 +273,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       city: address?.addressDetails?.city || address?.city || "",
       district: address?.addressDetails?.district || address?.addressLine2 || "",
       pincode: address?.addressDetails?.pincode || address?.pincode || "",
+      state: address?.addressDetails?.state || address?.state || "",
       address: isIndividualData ? undefined : address?.addressDetails,
       id: address?.id,
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
@@ -482,11 +483,11 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           )?.value?.geoLocationDetails?.policeStation;
           policeStationIdMapping.push({ id: item?.id, policeStation: policeStationInOrderSaved || item?.geoLocationDetails?.policeStation });
           if (item?.pincode) {
-            const verifiedPincode = await getRespondentPincodeDetails(item.pincode);
-            if (Boolean(verifiedPincode)) {
-              return item;
-            }
-            return null;
+            // const verifiedPincode = await getRespondentPincodeDetails(item.pincode);
+            // if (Boolean(verifiedPincode)) {
+            //   return item;
+            // }
+            return item;
           }
           return null;
         })
