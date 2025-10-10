@@ -1109,20 +1109,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           });
           setTimeout(() => setShowErrorToast(null), 5000);
         }
-        const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-        const isSignedTab = currentConfig?.label === "SIGNED";
+        // const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+        // const isSignedTab = currentConfig?.label === "SIGNED";
 
-        setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
-        setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+        // setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
+        // setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
 
-        const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
+        // const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
 
-        if (isSignedTab) {
-          setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
-        } else {
-          setBulkSignList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
-        }
-        setReload((prev) => prev + 1);
+        // if (isSignedTab) {
+        //   setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        // } else {
+        //   setBulkSignList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
+        // }
+        // setReload((prev) => prev + 1);
       }, 2000);
     } catch (error) {
       setShowErrorToast({
