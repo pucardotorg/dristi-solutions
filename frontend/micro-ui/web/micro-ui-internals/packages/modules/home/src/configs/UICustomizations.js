@@ -378,7 +378,7 @@ export const UICustomizations = {
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
         }),
-        ...(requestCriteria?.state?.searchForm?.outcome && {
+        ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
         ...(requestCriteria?.state?.searchForm?.substage && {
