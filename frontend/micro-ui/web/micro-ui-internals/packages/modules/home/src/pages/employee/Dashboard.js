@@ -8,6 +8,8 @@ import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
 import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 
+const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/0020f4d2-9d56-439b-bbaa-4c7ab391eef1";
+
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { select } = Digit.Hooks.useQueryParams();
@@ -29,6 +31,7 @@ const DashboardPage = () => {
   const [taskType, setTaskType] = useState({});
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
+  const [metabaseUrl, setMetabaseUrl] = useState(METABASE_URL);
   const [showPicker, setShowPicker] = useState(false);
   const [dateRange, setDateRange] = useState([
     {
@@ -61,8 +64,6 @@ const DashboardPage = () => {
           passwordField.dispatchEvent(new Event("input", { bubbles: true }));
           passwordField.dispatchEvent(new Event("change", { bubbles: true }));
           submitButton.click();
-        } else {
-          console.log("Already logged in or fields missing", iframeDoc, usernameField);
         }
       } catch (err) {
         console.error("Login failed due to cross-origin access issue", err);
@@ -139,7 +140,7 @@ const DashboardPage = () => {
   const baseUrl = window.location.origin;
 
   const handleClick = () => {
-    history.push(`/${window?.contextPath}/${userInfoType}/home/dashboard/adiary`);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
   };
 
   const { data: kibanaData, isLoading: isDashboardJobIDsLoading } = Digit.Hooks.useCustomMDMS(
@@ -166,9 +167,8 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
-    const username = process.env.REACT_APP_KIBANA_USERNAME || "michaelGeorge";
-    const password = process.env.REACT_APP_KIBANA_PASSWORD || "ONcourts*247";
+    const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
+    const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
     const config = {
       headers: {
@@ -227,8 +227,6 @@ const DashboardPage = () => {
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-          } else {
-            console.log(`Attempt ${attemptCount}: Report not ready yet.`);
           }
         }
       };
@@ -245,10 +243,14 @@ const DashboardPage = () => {
     const { t } = useTranslation();
     const userInfo = window?.Digit?.UserService?.getUser()?.info;
     const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+    const roles = useMemo(() => userInfo?.roles, [userInfo]);
+    const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
+    let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+    if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
     const crumbs = [
       {
-        path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+        path: homePath,
         content: t("ES_COMMON_HOME"),
         show: true,
       },
@@ -301,6 +303,7 @@ const DashboardPage = () => {
                       onClick={() => {
                         setStepper(1);
                         setHeadingTxt(data.code + "_HEADING");
+                        setMetabaseUrl(data.code === "HEARINGS_DS" ? `${METABASE_URL}?tab=89-hearings-progress` : METABASE_URL);
                         setJobID(data.jobId);
                       }}
                     >
@@ -331,31 +334,24 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {!isNaN(stepper) && headingTxt?.trim() && (
+          {headingTxt === "AVAILABLE_REPORTS" && !isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
               <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
           )}
 
           <div className="dashboard-content">
-            {stepper === 1 && (
+            {/*stepper === 1 && (
               <div className="date-filter">
                 <CustomDateRangePicker setDateRange={setDateRange} dateRange={dateRange} showPicker={showPicker} setShowPicker={setShowPicker} />
                 <button onClick={handleSubmit} className="filter-button">
                   <FilterIcon /> {t("ADD_FILTER")}
                 </button>
               </div>
-            )}
+            ) */}
             <div className="content-area">
               <style>{customStyles}</style>
-              {stepper === 1 && (
-                <iframe
-                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&chrome=false&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
-                  height="600"
-                  width="100%"
-                  title="case"
-                ></iframe>
-              )}{" "}
+              {stepper === 1 && <iframe src={metabaseUrl} height="700" width="100%"></iframe>}{" "}
               {stepper === 2 && (
                 <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 4 }}>

@@ -58,7 +58,7 @@ async function newHearingDateAfterReschedule(
     // Search for case details
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -68,7 +68,7 @@ async function newHearingDateAfterReschedule(
 
     const resHearing = await handleApiCall(
       res,
-      () => search_hearing(tenantId, cnrNumber, requestInfo),
+      () => search_hearing(tenantId, cnrNumber, requestInfo, order?.courtId),
       "Failed to query hearing service"
     );
     const hearing = resHearing?.data?.HearingList?.find(
@@ -139,7 +139,13 @@ async function newHearingDateAfterReschedule(
       : order?.additionalDetails?.formdata?.newHearingDate
       ? formatDate(order?.additionalDetails?.formdata?.newHearingDate)
       : "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

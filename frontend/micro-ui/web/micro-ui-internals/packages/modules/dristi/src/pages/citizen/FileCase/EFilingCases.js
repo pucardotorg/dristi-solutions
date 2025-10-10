@@ -54,6 +54,7 @@ import {
   showDemandNoticeModal,
   showToastForComplainant,
   signatureValidation,
+  transformCaseDataForFetching,
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
@@ -384,12 +385,11 @@ function EFilingCases({ path }) {
     }
   }, [getAllKeys, selected]);
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseData?.criteria?.[0]?.responseList?.[0] || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
+    return updatedCaseData;
+  }, [caseData]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants
@@ -734,6 +734,16 @@ function EFilingCases({ path }) {
           errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
           formdata[index]?.data
         );
+      }
+
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "complainantDetails") {
+        if ("transferredPOA" in formdata?.[index].data && !formdata?.[index]?.data?.transferredPOA) {
+          setFormDataValue.current?.("transferredPOA", {
+            code: "NO",
+            name: "NO",
+            showPoaDetails: false,
+          });
+        }
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
@@ -1327,9 +1337,14 @@ function EFilingCases({ path }) {
                 let key = formComponent.key || formComponent.populators?.name;
                 if (formComponent.type === "component") {
                   if (
-                    ["SelectCustomDragDrop", "SelectBulkInputs", "SelectCustomTextArea", "SelectUploadFiles", "SelectUserTypeComponent"].includes(
-                      formComponent.component
-                    )
+                    [
+                      "SelectCustomDragDrop",
+                      "SelectBulkInputs",
+                      "SelectCustomTextArea",
+                      "SelectUploadFiles",
+                      "SelectCustomFormatterTextArea",
+                      "SelectUserTypeComponent",
+                    ].includes(formComponent.component)
                   ) {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }
@@ -1359,7 +1374,13 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "poaComplainantId") {
                   key = "poaVerification.individualDetails.document";
                 }
-                const modifiedFormComponent = cloneDeep(formComponent);
+                const { labelChildren, state, tooltipValue, ...safePart } = formComponent;
+
+                let modifiedFormComponent = structuredClone
+                  ? { ...structuredClone(safePart), labelChildren, state, tooltipValue }
+                  : { ...JSON.parse(JSON.stringify(safePart)), labelChildren, state, tooltipValue };
+                // const modifiedFormComponent = cloneDeep(formComponent);
+
                 if (modifiedFormComponent?.labelChildren === "optional") {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
@@ -2935,7 +2956,7 @@ function EFilingCases({ path }) {
                   });
                   onSaveDraft(true);
                 } catch (error) {
-                  console.log(error);
+                  console.error(error);
                 }
 
                 history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);

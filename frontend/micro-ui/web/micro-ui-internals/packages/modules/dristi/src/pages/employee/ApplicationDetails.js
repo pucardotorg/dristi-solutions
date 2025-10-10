@@ -117,7 +117,11 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
-  const isAdvocateApplicationViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+  // if user is employee then ADVOCATE_APPROVER  role is needed and for citizrn ADVOCATE_APPLICATION_VIEWER role is needed.
+  const hasAdvocateApplicationViewAccess = useMemo(
+    () => userRoles?.some((role) => role === "ADVOCATE_APPLICATION_VIEWER" || role === "ADVOCATE_APPROVER"),
+    [userRoles]
+  );
 
   const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
 
@@ -245,7 +249,12 @@ const ApplicationDetails = ({ location, match }) => {
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
         doc: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
+          <DocViewerWrapper
+            fileStoreId={identifierIdDetails?.fileStoreId}
+            tenantId={tenantId}
+            displayFilename={identifierIdDetails?.filename}
+            docViewerCardClassName={"doc-card"}
+          />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
@@ -257,7 +266,7 @@ const ApplicationDetails = ({ location, match }) => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
 
-  if (!isAdvocateApplicationViewer) {
+  if (!hasAdvocateApplicationViewAccess) {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
@@ -356,10 +365,8 @@ const ApplicationDetails = ({ location, match }) => {
                   onClick={() => {
                     setShowInfoModal({ isOpen: false, status: "" });
                     history.push(
-                      userType === "ADVOCATE_CLERK"
-                        ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                        : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                      { isSentBack: true }
+                      `/${window?.contextPath}/employee/home/home-screen`,
+                      { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                     );
                   }}
                 />
@@ -368,10 +375,8 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 setShowInfoModal({ isOpen: false, status: "" });
                 history.push(
-                  userType === "ADVOCATE_CLERK"
-                    ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                    : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                  { isSentBack: true }
+                  `/${window?.contextPath}/employee/home/home-screen`,
+                  { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                 );
               }}
               style={{ backgroundColor: "#BB2C2F" }}

@@ -9,6 +9,7 @@ import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -78,6 +79,13 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .status(rs.getString("status"))
                             .remarks(rs.getString("remarks"))
                             .auditdetails(auditdetails)
+                            .courtCaseNumberBackup(rs.getString("courtCaseNumberBackup"))
+                            .stageBackup(rs.getString("stageBackup"))
+                            .substageBackup(rs.getString("substageBackup"))
+                            .lprNumber(rs.getString("lprNumber"))
+                            .isLPRCase(rs.getBoolean("isLPRCase"))
+                            .witnessDetails(getObjectListFromJson(rs.getString("witnessdetails"), new TypeReference<>() {
+                            }))
                             .build();
                 }
 
