@@ -85,8 +85,8 @@ public class NJDGEnrichment {
                 if (!formData.isMissingNode()) {
                     String uniqueId = formData.path("uniqueId").asText(null);
 
-//                    Party respondentLitigant = findLitigantByUniqueId(litigants, uniqueId);
-//                    if (respondentLitigant != null) {
+                    Party respondentLitigant = findLitigantByUniqueId(litigants, uniqueId);
+                    if (respondentLitigant != null) {
                         String firstName = formData.path("respondentFirstName").asText("").trim();
                         String lastName = formData.path("respondentLastName").asText("").trim();
                         String resName = (firstName + " " + lastName).trim();
@@ -101,9 +101,9 @@ public class NJDGEnrichment {
                         record.setResAddress(address);
 
                         log.debug("Matched respondent with uniqueId: {}", uniqueId);
-//                    } else {
-//                        log.warn("No matching litigant found for respondent with uniqueId: {}", uniqueId);
-//                    }
+                    } else {
+                        log.warn("No matching litigant found for respondent with uniqueId: {}", uniqueId);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -124,32 +124,32 @@ public class NJDGEnrichment {
                 .orElse(null);
     }
 
-//    /**
-//     * Helper method to find a litigant by uniqueId from additionalDetails
-//     */
-//    private Party findLitigantByUniqueId(List<Party> litigants, String uniqueId) {
-//        if (uniqueId == null || litigants == null) {
-//            return null;
-//        }
-//
-//        return litigants.stream()
-//                .filter(litigant -> {
-//                    try {
-//                        if (litigant.getAdditionalDetails() == null) {
-//                            return false;
-//                        }
-//                        String litigantUniqueId = objectMapper.readTree(objectMapper.writeValueAsString(litigant.getAdditionalDetails()))
-//                                .path("uuid")
-//                                .asText(null);
-//                        return uniqueId.equals(litigantUniqueId));
-//                    } catch (Exception e) {
-//                        log.warn("Error processing litigant additionalDetails", e);
-//                        return false;
-//                    }
-//                })
-//                .findFirst()
-//                .orElse(null);
-//    }
+    /**
+     * Helper method to find a litigant by uniqueId from additionalDetails
+     */
+    private Party findLitigantByUniqueId(List<Party> litigants, String uniqueId) {
+        if (uniqueId == null || litigants == null) {
+            return null;
+        }
+
+        return litigants.stream()
+                .filter(litigant -> {
+                    try {
+                        if (litigant.getAdditionalDetails() == null) {
+                            return false;
+                        }
+                        String litigantUniqueId = objectMapper.readTree(objectMapper.writeValueAsString(litigant.getAdditionalDetails()))
+                                .path("uuid")
+                                .asText(null);
+                        return uniqueId.equals(litigantUniqueId) && RESPONDENT_PRIMARY.equalsIgnoreCase(litigant.getPartyType());
+                    } catch (Exception e) {
+                        log.warn("Error processing litigant additionalDetails", e);
+                        return false;
+                    }
+                })
+                .findFirst()
+                .orElse(null);
+    }
 
     private String extractAddress(JsonNode addressNode) {
         if (addressNode == null || addressNode.isMissingNode()) {
