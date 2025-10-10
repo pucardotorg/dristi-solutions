@@ -16,4 +16,5 @@ public class ServiceConstants {
     public static final String NJDG_MODULE ="NJDG";
     public static final String PURPOSE_MASTER = "HearingPurpose";
     public static final String ACT_MASTER = "Act";
+    public static final String POLICE_MASTER = "PoliceStation";
 }

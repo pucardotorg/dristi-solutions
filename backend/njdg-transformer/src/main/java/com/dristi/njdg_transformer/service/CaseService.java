@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.service;
 
+import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.NJDGEnrichment;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
@@ -27,6 +28,7 @@ public class CaseService {
 
     private final NJDGRepository njdgRepository;
     private final NJDGEnrichment enrichment;
+    private final TransformerProperties properties;
     /**
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
      * 
@@ -56,7 +58,7 @@ public class CaseService {
             enrichment.enrichAdvocateDetails(courtCase, record);
             enrichment.enrichExtraParties(courtCase, record);
             enrichment.enrichStatuteSection(requestInfo, courtCase, record);
-            //todo: enrich court master data
+            enrichment.enrichPoliceStationDetails(requestInfo, courtCase, record);
             log.debug("Upserting NJDGTransformRecord with CINO: {}", record.getCino());
             
             boolean recordExists = checkIfRecordExists(record.getCino());
@@ -132,6 +134,10 @@ public class CaseService {
                 .filYear(extractYear(courtCase.getFilingDate()))
                 .regNo(extractCaseNumber(courtCase.getCourtCaseNumber()))
                 .regYear(extractYear(courtCase.getRegistrationDate()))
+                .pendDisp(courtCase.getStatus().equals("DISPOSED") ? "D" : "P")
+                .dateOfDecision(formatDate(courtCase.getJudgementDate()))
+                .desgname(properties.getJudgeDesignation())
+                .estCode(courtCase.getCourtId())
                 .build();
     }
 
@@ -176,42 +182,24 @@ public class CaseService {
     }
 
     /**
-     * Extracts state code from tenantId (format: state.district)
+     * Finds a case by its CNR number
+     * 
+     * @param cnrNumber The CNR number to search for
+     * @return The NJDGTransformRecord if found, null otherwise
+     * @throws IllegalArgumentException if cnrNumber is null or empty
      */
-    private String extractStateCode(String tenantId) {
-        if (tenantId == null || !tenantId.contains(".")) {
-            return null;
+    public NJDGTransformRecord findByCnrNumber(String cnrNumber) {
+        log.debug("Searching for case with CNR: {}", cnrNumber);
+        
+        if (cnrNumber == null || cnrNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("CNR number cannot be null or empty");
         }
-        return tenantId.split("\\.")[0];
-    }
-
-    /**
-     * Extracts district code from tenantId (format: state.district)
-     */
-    private String extractDistCode(String tenantId) {
-        if (tenantId == null || !tenantId.contains(".")) {
-            return null;
+        
+        try {
+            return njdgRepository.findByCino(cnrNumber);
+        } catch (Exception e) {
+            log.error("Error while searching for case with CNR {}: {}", cnrNumber, e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch case with CNR: " + cnrNumber, e);
         }
-        return tenantId.split("\\.")[1];
-    }
-
-    /**
-     * Extracts petitioner name from litigants
-     */
-    private String extractPetitionerName(CourtCase courtCase) {
-        if (courtCase.getLitigants() == null || courtCase.getLitigants().isEmpty()) {
-            return null;
-        }
-        return courtCase.getLitigants().get(0).getIndividualId();
-    }
-
-    /**
-     * Extracts respondent name from litigants
-     */
-    private String extractRespondentName(CourtCase courtCase) {
-        if (courtCase.getLitigants() == null || courtCase.getLitigants().size() < 2) {
-            return null;
-        }
-        return courtCase.getLitigants().get(1).getIndividualId();
     }
 }

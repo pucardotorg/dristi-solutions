@@ -336,6 +336,146 @@ public class NJDGEnrichment {
 
     public void enrichStatuteSection(RequestInfo requestInfo, CourtCase courtCase, NJDGTransformRecord record) {
         List<StatuteSection> statutesAndSections = courtCase.getStatutesAndSections();
-        Map<String, Map<String, JSONArray>> acts = mdmsUtil.fetchMdmsData(requestInfo, courtCase.getTenantId(), NJDG_MODULE, List.of(ACT_MASTER));
+        if (statutesAndSections == null || statutesAndSections.isEmpty()) {
+            return;
+        }
+
+        // Fetch MDMS data for act master
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(
+            requestInfo, 
+            courtCase.getTenantId(), 
+            NJDG_MODULE, 
+            List.of(ACT_MASTER)
+        );
+
+        if (mdmsData == null || mdmsData.isEmpty() || !mdmsData.containsKey(NJDG_MODULE)) {
+            log.warn("No MDMS data found for module: {}", NJDG_MODULE);
+            return;
+        }
+
+        JSONArray actMasterData = mdmsData.get(NJDG_MODULE).get(ACT_MASTER);
+        if (actMasterData == null || actMasterData.isEmpty()) {
+            log.warn("No act master data found in MDMS response");
+            return;
+        }
+
+        List<JsonNode> actNodes = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+        
+        for (StatuteSection statuteSection : statutesAndSections) {
+            if (statuteSection.getStatute() == null || 
+                statuteSection.getSections() == null || 
+                statuteSection.getSections().isEmpty()) {
+                continue;
+            }
+
+            for (Object actObj : actMasterData) {
+                if (actObj instanceof Map) {
+                    Map<String, Object> actData = (Map<String, Object>) actObj;
+                    String code = (String) actData.get("code");
+                    
+                    if (statuteSection.getStatute().equals(code)) {
+                        ObjectNode actNode = mapper.createObjectNode();
+                        actNode.put("act_code", code);
+                        actNode.put("act_name", actData.get("name").toString());
+                        
+                        // Get the first section from the list
+                        String section = statuteSection.getSections().get(0);
+                        actNode.put("act_section", section);
+                        
+                        actNodes.add(actNode);
+                        break; // Found matching act, move to next statute section
+                    }
+                }
+            }
+        }
+        
+        // Set the act nodes in the record if any were found
+        if (!actNodes.isEmpty()) {
+            record.setAct(actNodes);
+        }
+    }
+
+    /**
+     * Enriches the record with police station details by matching the police station code from case details
+     * with the MDMS police station master data.
+     * 
+     * @param requestInfo The request info containing user and auth details
+     * @param courtCase The court case containing additional details
+     * @param record The NJDG record to be enriched with police station details
+     */
+    public void enrichPoliceStationDetails(RequestInfo requestInfo, CourtCase courtCase, NJDGTransformRecord record) {
+        try {
+            // Get police station details from case additional details
+            JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+            if (caseDetails == null || caseDetails.path("chequeDetails").isMissingNode()) {
+                log.debug("No cheque details found in case additional details");
+                return;
+            }
+
+            JsonNode chequeDetails = caseDetails.path("chequeDetails");
+            if (chequeDetails.path("formdata").isMissingNode() || !chequeDetails.path("formdata").isArray() || chequeDetails.path("formdata").isEmpty()) {
+                log.debug("No formdata found in cheque details");
+                return;
+            }
+
+            // Extract police station code from case details
+            JsonNode policeStationNode = chequeDetails.path("formdata").get(0)
+                .path("data")
+                .path("policeStationJurisDictionCheque");
+                
+            if (policeStationNode.isMissingNode()) {
+                log.debug("No police station details found in cheque details");
+                return;
+            }
+
+            String policeStationCode = policeStationNode.path("code").asText();
+            if (policeStationCode == null || policeStationCode.isEmpty()) {
+                log.debug("No police station code found in cheque details");
+                return;
+            }
+
+            // Fetch police station master data from MDMS
+            Map<String, Map<String, JSONArray>> policeMaster = mdmsUtil.fetchMdmsData(
+                requestInfo,
+                courtCase.getTenantId(),
+                NJDG_MODULE,
+                List.of(POLICE_MASTER)
+            );
+
+            if (policeMaster == null || policeMaster.isEmpty() || !policeMaster.containsKey(NJDG_MODULE) || 
+                !policeMaster.get(NJDG_MODULE).containsKey(POLICE_MASTER)) {
+                log.warn("No police master data found in MDMS response");
+                return;
+            }
+
+            JSONArray policeMasterData = policeMaster.get(NJDG_MODULE).get(POLICE_MASTER);
+            if (policeMasterData == null || policeMasterData.isEmpty()) {
+                log.warn("Empty police master data in MDMS response");
+                return;
+            }
+
+            // Find matching police station in MDMS data
+            for (Object policeObj : policeMasterData) {
+                if (policeObj instanceof Map) {
+                    Map<String, Object> policeData = (Map<String, Object>) policeObj;
+                    String code = String.valueOf(policeData.get("code"));
+                    
+                    if (policeStationCode.equals(code)) {
+                        // Set the police station details in the record
+                        record.setPoliceStCode(String.valueOf(policeData.get("policeStationCode")));
+                        record.setPoliceNcode(String.valueOf(policeData.get("nationalCode")));
+                        record.setPoliceStation(String.valueOf(policeData.get("name")));
+                        log.debug("Successfully set police station details: {}", policeData);
+                        return;
+                    }
+                }
+            }
+            
+            log.warn("No matching police station found in MDMS for code: {}", policeStationCode);
+            
+        } catch (Exception e) {
+            log.error("Error while enriching police station details: ", e);
+        }
     }
 }
