@@ -2,14 +2,18 @@ package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.order.Order;
+import com.dristi.njdg_transformer.model.order.OrderCriteria;
+import com.dristi.njdg_transformer.model.order.OrderListResponse;
+import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.repository.NJDGRepository;
 import com.dristi.njdg_transformer.utils.FileStoreUtil;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.dristi.njdg_transformer.utils.OrderUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +22,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER;
 
@@ -29,39 +32,77 @@ public class OrderService {
 
     private final NJDGRepository repository;
     private final FileStoreUtil fileStoreUtil;
+    private final OrderUtil orderUtil;
+    private final ObjectMapper objectMapper;
 
-    public OrderService(NJDGRepository repository, FileStoreUtil fileStoreUtil) {
+    public OrderService(NJDGRepository repository, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, ObjectMapper objectMapper) {
         this.repository = repository;
         this.fileStoreUtil = fileStoreUtil;
+        this.orderUtil = orderUtil;
+        this.objectMapper = objectMapper;
     }
 
-    @Transactional
     public void updateDataForOrder(Order order, RequestInfo requestInfo) {
-        String cnrNumber = order.getCnrNumber();
-        String orderNumber = order.getOrderNumber();
-        
-        // Find or create the record for the CNR number
-        NJDGTransformRecord record = repository.findByCino(cnrNumber);
-        // Process the document if present
-        String base64Content = null;
-        if (order.getDocuments() != null && !order.getDocuments().isEmpty()) {
-            base64Content = processDocument(order, requestInfo);
-        }
+        try {
+            String cnrNumber = order.getCnrNumber();
 
-        // Find existing order or create new one
-        ObjectNode orderDetails = findOrCreateOrderDetails(record, orderNumber);
-        
-        // Update order details with base64 content if available
-        if (base64Content != null) {
-            orderDetails.put("order_details", base64Content);
-        }
-        
-        // Update common order fields
-        updateCommonOrderFields(order, orderDetails);
+            NJDGTransformRecord record = repository.findByCino(cnrNumber);
+            if (record == null) {
+                log.warn("No record found for CNR: {}", cnrNumber);
+                return;
+            }
 
-        // Save the updated record
-        repository.updateData(record);
-        log.info("Successfully processed order {} for cnr {}", orderNumber, cnrNumber);
+            if (record.getInterimOrder() == null) {
+                record.setInterimOrder(new ArrayList<>());
+            } else {
+                record.getInterimOrder().clear();
+            }
+
+            // Search for all orders by filing number
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(OrderCriteria.builder()
+                            .filingNumber(order.getFilingNumber())
+                            .build())
+                    .build();
+
+            OrderListResponse response = orderUtil.getOrders(searchRequest);
+            if (response == null || response.getList() == null || response.getList().isEmpty()) {
+                log.info("No orders found for filing number: {}", order.getFilingNumber());
+                return;
+            }
+
+            // Rebuild interim orders from the response
+            int serialNo = 1;
+            for (Order orderItem : response.getList()) {
+                ObjectNode orderDetails = objectMapper.createObjectNode();
+                
+                // Process document if available
+                if (orderItem.getDocuments() != null && !orderItem.getDocuments().isEmpty()) {
+                    String base64Content = processDocument(orderItem, requestInfo);
+                    if (base64Content != null) {
+                        orderDetails.put("order_details", base64Content);
+                    }
+                }
+
+                orderDetails.put("sr_no", serialNo);
+                orderDetails.put("order_date", formatDate(order.getCreatedDate()));
+                orderDetails.put("order_number", order.getOrderNumber());
+                // Add to interim orders
+                record.getInterimOrder().add(orderDetails);
+                serialNo++;
+            }
+
+            // Save the updated record
+            repository.updateData(record);
+            log.info("Successfully processed {} orders for CNR: {}", 
+                    response.getList().size(), cnrNumber);
+        } catch (Exception e) {
+            log.error("Error updating order data for CNR {}: {}", 
+                    order.getCnrNumber(), e.getMessage(), e);
+            throw new CustomException("ORDER_UPDATE_ERROR",
+                    "Error updating order data: " + e.getMessage());
+        }
     }
     
     private String processDocument(Order order, RequestInfo requestInfo) {
@@ -83,91 +124,6 @@ public class OrderService {
             log.error("Error processing document for order {}: {}", order.getOrderNumber(), e.getMessage(), e);
         }
         return null;
-    }
-    
-    private ObjectNode findOrCreateOrderDetails(NJDGTransformRecord record, String orderNumber) {
-        List<JsonNode> interimOrders = record.getInterimOrder();
-        ObjectMapper mapper = new ObjectMapper();
-        
-        // First, ensure all existing orders have serial numbers
-        updateSerialNumbers(interimOrders);
-        
-        // Find existing order
-        for (JsonNode interimOrder : interimOrders) {
-            if (orderNumber.equalsIgnoreCase(interimOrder.path("order_no").asText())) {
-                return (ObjectNode) interimOrder;
-            }
-        }
-        
-        // Create new order details if not found
-        ObjectNode newOrder = mapper.createObjectNode();
-        newOrder.put("order_no", orderNumber);
-        
-        // Add to list first to include in serial number calculation
-        interimOrders.add(newOrder);
-        
-        // Update all serial numbers including the new order
-        updateSerialNumbers(interimOrders);
-        
-        return newOrder;
-    }
-    
-    private void updateCommonOrderFields(Order order, ObjectNode orderDetails) {
-        // Update any common fields from the order to orderDetails
-        if (order.getCreatedDate() != null) {
-            orderDetails.put("order_date", formatDate(order.getCreatedDate()));
-        }
-        
-        // Ensure sr_no is set (in case it was missing from existing records)
-        if (!orderDetails.has("sr_no") || orderDetails.get("sr_no").isNull()) {
-            orderDetails.put("sr_no", 1);
-        }
-    }
-
-    /**
-     * Formats a timestamp to dd/MM/yyyy string
-     */
-    /**
-     * Updates serial numbers for all orders in the list to maintain sequential numbering
-     * Orders are sorted by order_date if available, otherwise by insertion order
-     */
-    private void updateSerialNumbers(List<JsonNode> orders) {
-        if (orders == null || orders.isEmpty()) {
-            return;
-        }
-        
-        // Create a list of orders with their indices for sorting
-        List<java.util.Map.Entry<JsonNode, Integer>> ordersWithIndices = new ArrayList<>();
-        for (int i = 0; i < orders.size(); i++) {
-            ordersWithIndices.add(new java.util.AbstractMap.SimpleEntry<>(orders.get(i), i));
-        }
-        
-        // Sort by order_date if available, otherwise by original order
-        ordersWithIndices.sort((a, b) -> {
-            JsonNode nodeA = a.getKey();
-            JsonNode nodeB = b.getKey();
-            
-            // Try to sort by date if both have dates
-            if (nodeA.has("order_date") && nodeB.has("order_date")) {
-                try {
-                    String dateA = nodeA.get("order_date").asText();
-                    String dateB = nodeB.get("order_date").asText();
-                    return dateA.compareTo(dateB);
-                } catch (Exception e) {
-                    log.warn("Error comparing dates for sorting: {}", e.getMessage());
-                }
-            }
-            
-            // Fall back to original order if dates are not available or invalid
-            return Integer.compare(a.getValue(), b.getValue());
-        });
-        
-        // Update serial numbers based on sorted order
-        int serialNo = 1;
-        for (java.util.Map.Entry<JsonNode, Integer> entry : ordersWithIndices) {
-            ObjectNode orderNode = (ObjectNode) entry.getKey();
-            orderNode.put("sr_no", serialNo++);
-        }
     }
     
     /**

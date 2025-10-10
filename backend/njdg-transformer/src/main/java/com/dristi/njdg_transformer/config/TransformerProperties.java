@@ -42,7 +42,22 @@ public class TransformerProperties {
     @Value("${judge.code}")
     private String judgeCode;
 
-//    @Value("${egov.case.host}")
+
+    //Order
+    @Value("${dristi.order.host}")
+    private String orderHost;
+
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
+
+    //Hearing
+    @Value("${egov.hearing.host}")
+    private String hearingHost;
+
+    @Value("${egov.hearing.search.path}")
+    private String hearingSearchPath;
+
+    //    @Value("${egov.case.host}")
 //    private String caseSearchUrlHost;
 //
 //    @Value("${egov.case.path}")

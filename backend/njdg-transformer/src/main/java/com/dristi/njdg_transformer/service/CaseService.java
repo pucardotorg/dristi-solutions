@@ -4,16 +4,20 @@ import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.NJDGEnrichment;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.hearing.Hearing;
+import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.repository.NJDGRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER;
 
@@ -29,6 +33,10 @@ public class CaseService {
     private final NJDGRepository njdgRepository;
     private final NJDGEnrichment enrichment;
     private final TransformerProperties properties;
+    private final OrderService orderService;
+    private final HearingService hearingService;
+
+
     /**
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
      * 
@@ -65,15 +73,21 @@ public class CaseService {
 
             if (recordExists) {
                 log.debug("Updating existing record with CINO: {}", record.getCino());
-                return njdgRepository.updateData(record);
+                njdgRepository.updateData(record);
             } else {
                 log.debug("Inserting new record with CINO: {}", record.getCino());
-                return njdgRepository.insertData(record);
+                njdgRepository.insertData(record);
             }
-            
+            try{
+                orderService.updateDataForOrder(Order.builder().cnrNumber(courtCase.getCnrNumber()).filingNumber(courtCase.getFilingNumber()).build(), requestInfo);
+                hearingService.updateDataForHearing(Hearing.builder().cnrNumbers(List.of(courtCase.getCnrNumber())).filingNumber(List.of(courtCase.getFilingNumber())).build(), requestInfo);
+            } catch (CustomException e){
+                log.error("Error updating hearing and order data:: {}", e.getMessage());
+            }
+            return njdgRepository.findByCino(courtCase.getCnrNumber());
         } catch (Exception e) {
-            log.error("Error processing CourtCase with CNR: {}. Error: {}", 
-                    courtCase != null ? courtCase.getCnrNumber() : "null", 
+            log.error("Error processing CourtCase with CNR: {}. Error: {}",
+                    courtCase.getCnrNumber(),
                     e.getMessage(), e);
             throw new RuntimeException("Failed to process and upsert case: " + e.getMessage(), e);
         }

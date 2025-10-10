@@ -3,13 +3,17 @@ package com.dristi.njdg_transformer.service;
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
-import com.dristi.njdg_transformer.model.hrms.Assignment;
-import com.dristi.njdg_transformer.model.hrms.Employee;
-import com.dristi.njdg_transformer.model.hrms.EmployeeResponse;
+import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
+import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
+import com.dristi.njdg_transformer.model.order.Order;
+import com.dristi.njdg_transformer.model.order.OrderCriteria;
+import com.dristi.njdg_transformer.model.order.OrderListResponse;
+import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.repository.NJDGRepository;
+import com.dristi.njdg_transformer.utils.HearingUtil;
 import com.dristi.njdg_transformer.utils.HrmsUtil;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.dristi.njdg_transformer.utils.OrderUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -39,12 +43,17 @@ public class HearingService {
 
     private final TransformerProperties properties;
 
+    private final HearingUtil hearingUtil;
 
-    public HearingService(NJDGRepository njdgTransformRepository, HrmsUtil hrmsUtil, MdmsUtil mdmsUtil, TransformerProperties properties) {
+    private final OrderUtil orderUtil;
+
+    public HearingService(NJDGRepository njdgTransformRepository, HrmsUtil hrmsUtil, MdmsUtil mdmsUtil, TransformerProperties properties, HearingUtil hearingUtil, OrderUtil orderUtil) {
         this.njdgTransformRepository = njdgTransformRepository;
         this.hrmsUtil = hrmsUtil;
         this.mdmsUtil = mdmsUtil;
         this.properties = properties;
+        this.hearingUtil = hearingUtil;
+        this.orderUtil = orderUtil;
     }
 
     public void updateDataForHearing(Hearing hearing, RequestInfo requestInfo) {
@@ -61,7 +70,10 @@ public class HearingService {
                 log.warn("First CNR number is empty in hearing: {}", hearing.getId());
                 return;
             }
-
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .criteria(HearingCriteria.builder().filingNumber(hearing.getFilingNumber().get(0)).build())
+                    .requestInfo(requestInfo)
+                    .build();
             // Find record by CNR number
             NJDGTransformRecord record = njdgTransformRepository.findByCino(cnrNumber);
             if (record == null) {
@@ -69,9 +81,63 @@ public class HearingService {
                 return;
             }
 
-            ObjectNode hearingDetails = findOrCreateHearingDetails(record);
+            // Clear existing hearing history or initialize if null
+            if (record.getHistoryOfCaseHearing() == null) {
+                record.setHistoryOfCaseHearing(new ArrayList<>());
+            } else {
+                record.getHistoryOfCaseHearing().clear();
+            }
 
-            updateHearingDetails(hearingDetails, hearing, requestInfo);
+            // Get all hearings for the case
+            List<Hearing> hearings = hearingUtil.fetchHearingDetails(request);
+            
+            // Process each hearing and add to history
+            for (Hearing hearingItem : hearings) {
+                ObjectNode hearingDetails = new ObjectMapper().createObjectNode();
+                
+                // Set hearing date
+                String hearingDate = formatDate(hearingItem.getStartTime());
+                hearingDetails.put("hearing_date", hearingDate);
+                
+                // Set other hearing details
+                hearingDetails.put("purpose_of_listing", getPurposeOfListing(requestInfo, hearingItem));
+                hearingDetails.put("desg_name", properties.getJudgeDesignation());
+                hearingDetails.put("judge_code", properties.getJudgeCode());
+
+                // Fetch order using hearing number to get next hearing date
+                if (hearingItem.getHearingId() != null && !hearingItem.getHearingId().isEmpty()) {
+                    try {
+                        // Create search request for orders with this hearing number
+                        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                                .requestInfo(requestInfo)
+                                .criteria(OrderCriteria.builder()
+                                        .hearingNumber(hearingItem.getHearingId())
+                                        .build())
+                                .build();
+                        
+                        // Fetch orders for this hearing
+                        OrderListResponse orderResponse = orderUtil.getOrders(orderSearchRequest);
+
+                        // If we found orders, and they have next hearing date, set it
+                        if (orderResponse != null && orderResponse.getList() != null && !orderResponse.getList().isEmpty()) {
+                            for (Order order : orderResponse.getList()) {
+                                if (order.getNextHearingDate() != null) {
+                                    String nextDate = formatDate(order.getNextHearingDate());
+                                    hearingDetails.put("next_date", nextDate);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("Error fetching next hearing date for hearing {}: {}", 
+                                hearingItem.getHearingId(), e.getMessage());
+                    }
+                }
+
+                // Add to history
+                record.getHistoryOfCaseHearing().add(hearingDetails);
+            }
+            
             // Save the updated record
             njdgTransformRepository.updateData(record);
 
@@ -81,13 +147,6 @@ public class HearingService {
             log.error("Error updating hearing data for hearing: " + hearing.getId(), e);
             throw new RuntimeException("Failed to update hearing data", e);
         }
-    }
-
-    private void updateHearingDetails(ObjectNode hearingDetails, Hearing hearing, RequestInfo requestInfo) {
-        hearingDetails.put("hearing_date", formatDate(hearing.getStartTime()));
-        hearingDetails.put("purpose_of_listing", getPurposeOfListing(requestInfo, hearing));
-        hearingDetails.put("desg_name", properties.getJudgeDesignation());
-        hearingDetails.put("judge_code", properties.getJudgeCode());
     }
 
     private String getPurposeOfListing(RequestInfo requestInfo, Hearing hearing) {
@@ -109,77 +168,6 @@ public class HearingService {
         return "";
     }
 
-    private void enrichJudgeDetails(ObjectNode hearingDetails, Hearing hearing, RequestInfo requestInfo) {
-        String judgeId = hearing.getPresidedBy().getJudgeID().get(0);
-        EmployeeResponse employeeResponse = hrmsUtil.getEmployeeDetails(hearing.getTenantId(), judgeId, requestInfo);
-        Employee employee = employeeResponse.getEmployees().get(0);
-        Assignment assignment = employee.getAssignments().get(0);
-
-        hearingDetails.put("desg_name", assignment.getDesignation());
-        hearingDetails.put("desg_code", "");
-    }
-
-    private ObjectNode findOrCreateHearingDetails(NJDGTransformRecord record) {
-        List<JsonNode> hearingHistory = record.getHistoryOfCaseHearing();
-        ObjectMapper mapper = new ObjectMapper();
-        
-        // First, ensure all existing hearings have serial numbers
-        updateHearingSerialNumbers(hearingHistory);
-
-        // Create new hearing details if not found
-        ObjectNode newHearing = mapper.createObjectNode();
-        
-        hearingHistory.add(newHearing);
-        
-        // Update all serial numbers including the new hearing
-        updateHearingSerialNumbers(hearingHistory);
-        
-        return newHearing;
-    }
-    
-    /**
-     * Updates serial numbers for all hearings in the list to maintain sequential numbering
-     * Hearings are sorted by hearing_date if available, otherwise by insertion order
-     */
-    private void updateHearingSerialNumbers(List<JsonNode> hearings) {
-        if (hearings == null || hearings.isEmpty()) {
-            return;
-        }
-        
-        // Create a list of hearings with their indices for sorting
-        List<java.util.Map.Entry<JsonNode, Integer>> hearingsWithIndices = new ArrayList<>();
-        for (int i = 0; i < hearings.size(); i++) {
-            hearingsWithIndices.add(new java.util.AbstractMap.SimpleEntry<>(hearings.get(i), i));
-        }
-        
-        // Sort by hearing_date if available, otherwise by original order
-        hearingsWithIndices.sort((a, b) -> {
-            JsonNode nodeA = a.getKey();
-            JsonNode nodeB = b.getKey();
-            
-            // Try to sort by date if both have dates
-            if (nodeA.has("hearing_date") && nodeB.has("hearing_date")) {
-                try {
-                    String dateA = nodeA.get("hearing_date").asText();
-                    String dateB = nodeB.get("hearing_date").asText();
-                    return dateA.compareTo(dateB);
-                } catch (Exception e) {
-                    log.warn("Error comparing hearing dates for sorting: {}", e.getMessage());
-                }
-            }
-            
-            // Fall back to original order if dates are not available or invalid
-            return Integer.compare(a.getValue(), b.getValue());
-        });
-        
-        // Update serial numbers based on sorted order
-        int serialNo = 1;
-        for (java.util.Map.Entry<JsonNode, Integer> entry : hearingsWithIndices) {
-            ObjectNode hearingNode = (ObjectNode) entry.getKey();
-            hearingNode.put("sr_no", serialNo++);
-        }
-    }
-    
     /**
      * Formats a timestamp to dd/MM/yyyy string
      */

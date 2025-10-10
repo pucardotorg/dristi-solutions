@@ -32,7 +32,7 @@ CREATE TABLE njdg_transform_record (
     fir_no VARCHAR(50),
     police_station TEXT,
     fir_year VARCHAR(10),
-    date_last_list DATE,
+    date_last_list VARCHAR(50),
     main_matter_cino VARCHAR(50),
 
     pet_extra_party JSONB CHECK (jsonb_typeof(pet_extra_party) = 'array'),
