@@ -214,7 +214,7 @@ const PaymentForSummonModal = ({ path }) => {
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
@@ -245,13 +245,13 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber,
+        hearingId: orderData?.list?.[0]?.scheduledHearingNumber || orderData?.list?.[0]?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderData?.list?.[0]?.hearingNumber,
-    Boolean(orderData?.list?.[0]?.hearingNumber && caseCourtId)
+    orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+    Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {
@@ -335,7 +335,6 @@ const PaymentForSummonModal = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!courtBillResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -359,7 +358,6 @@ const PaymentForSummonModal = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(courtBillResponse);
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return null;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });
@@ -373,7 +371,7 @@ const PaymentForSummonModal = ({ path }) => {
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
                 status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -588,7 +586,7 @@ const PaymentForSummonModal = ({ path }) => {
     };
   }, [feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
 
-  if (isOrdersLoading || isSummonsBreakUpLoading || isCourtBillLoading || isEPOSTBillLoading || isTaskLoading || isHearingLoading) {
+  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isEPOSTBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
   }
 

@@ -20,6 +20,8 @@ const { handleApiCall } = require("../utils/handleApiCall");
 const { search_application } = require("../api");
 const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 const applicationProfileEdit = require("../applicationHandlers/applicationProfileEdit");
+const applicationWitnessDeposition = require("../applicationHandlers/applicationWitnessDeposition");
+const applicationPoaClaim = require("../applicationHandlers/applicationPoaClaim");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -177,6 +179,24 @@ router.post(
           break;
         case "application-profile-edit":
           await applicationProfileEdit(
+            req,
+            res,
+            qrCode,
+            application,
+            courtCaseJudgeDetails
+          );
+          break;
+        case "application-witness-deposition":
+          await applicationWitnessDeposition(
+            req,
+            res,
+            qrCode,
+            application,
+            courtCaseJudgeDetails
+          );
+          break;
+        case "poa-claim-application":
+          await applicationPoaClaim(
             req,
             res,
             qrCode,

@@ -20,8 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.JOIN_CASE_PAYMENT;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -72,10 +71,27 @@ public class TaskRegistrationEnrichment {
                 enrichConsumerCodeInTaskDetails(task);
             }
 
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
+            }
+
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private void enrichCaseDetails(TaskRequest taskRequest) {
+        log.info("case details not found in task, enriching case details for task {}", taskRequest.getTask().getTaskNumber());
+        List<CourtCase> cases = caseUtil.getCaseDetails(taskRequest);
+        if (cases.isEmpty()) {
+            log.error("No case found for the given task.");
+            return;
+        }
+        String caseId = cases.get(0).getId().toString();
+        String caseTitle = cases.get(0).getCaseTitle();
+        taskRequest.getTask().setCaseTitle(caseTitle);
+        taskRequest.getTask().setCaseId(caseId);
     }
 
     private void enrichCourtId(TaskRequest taskRequest) {
@@ -113,6 +129,10 @@ public class TaskRegistrationEnrichment {
                         document.setDocumentUid(document.getId());
                     }
                 });
+            }
+
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
             }
 
         } catch (Exception e) {

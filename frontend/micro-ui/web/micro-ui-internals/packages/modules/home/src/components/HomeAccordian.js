@@ -5,17 +5,18 @@ const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div style={{ borderBottom: "1px solid #E6E6E6" }}>
+    <div style={{ paddingTop: 20 }}>
       <div
         style={{
-          fontSize: 20,
+          fontSize: 14,
           fontWeight: 700,
+          padding: "4px 0px",
+          marginBottom: 10,
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
           cursor: "pointer",
-          padding: 16,
-          background: "#F9FAFB",
-          // background: open ? "#f7f7f7" : "#fff",
+          color: "#3D3C3C",
         }}
         onClick={() => setOpen((prev) => !prev)}
       >
@@ -34,7 +35,7 @@ const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
             {count}
           </span>
         )}
-        {open ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />}
+        {/* {open ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />} */}
       </div>
       {open && children}
     </div>

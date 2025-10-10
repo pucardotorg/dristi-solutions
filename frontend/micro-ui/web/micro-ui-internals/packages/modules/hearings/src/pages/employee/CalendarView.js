@@ -57,6 +57,15 @@ const MonthlyCalendar = ({ hideRight }) => {
   const [slotId, setSlotId] = useState(null);
   const [initialView, setInitialView] = useState(initial);
   const [count, setCount] = useState(0);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
+  const hasBulkRescheduleAccess = useMemo(
+    () =>
+      ["BULK_RESCHEDULE_UPDATE_ACCESS", "NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) =>
+        assignedRoles?.includes(role)
+      ),
+    [assignedRoles]
+  );
 
   useEffect(() => {
     const searchParams = new URLSearchParams(search);
@@ -282,7 +291,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   };
 
   const onSubmit = () => {
-    setStepper((prev) => prev + 1);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_BULK_RESCHEDULE" });
   };
 
   const maxHearingCount = 5;
@@ -292,7 +301,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   // }
   return (
     <React.Fragment>
-      {Digit.UserService.getType() === "employee" && !hideRight && (
+      {Digit.UserService.getType() === "employee" && !hideRight && hasBulkRescheduleAccess && (
         <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
           <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
         </div>

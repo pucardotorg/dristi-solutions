@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 
 @Component
 @Import({TracerConfiguration.class})
@@ -233,4 +235,60 @@ public class Configuration {
     // template for generic message of hearing types
     @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
     private String smsNotificationVariableHearingScheduled;
+
+    // Order service
+
+    @Value("${dristi.order.host}")
+    private String orderHost;
+
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
+
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
+
+    // Task Config
+    @Value("${dristi.task.host}")
+    private String taskServiceHost;
+
+    @Value("${dristi.task.search.endpoint}")
+    private String taskSearchEndpoint;
+
+    @Value("${dristi.task.update.endpoint}")
+    private String taskUpdateEndpoint;
+
+    // Billing Config
+    @Value("${egov.billingservice.host}")
+    private String billingServiceHost;
+
+    @Value("${egov.billingservice.search.bill}")
+    private String searchBillEndpoint;
+
+    @Value("${egov.billingservice.demand.search.endpoint}")
+    private String searchDemandEndpoint;
+
+    @Value("${egov.billingservice.demand.update.endpoint}")
+    private String updateDemandEndpoint;
+
+    @Value("${egov.mdms.payment.business.service.name}")
+    private String paymentBusinessServiceName;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    @Value("${dristi.pending.task.name}")
+    private String pendingTaskName;
+
+    @Value("${order.businessservice}")
+    private String orderEntityType;
+
+    @Value("${schedule.hearing.sla}")
+    private int scheduleHearingSla;
+
+    @Value("${hearing.statuses.to.filter}")
+    private List<String> hearingStatusesToFilter;
 }

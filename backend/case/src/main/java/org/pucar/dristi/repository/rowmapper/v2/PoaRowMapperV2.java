@@ -57,7 +57,10 @@ public class PoaRowMapperV2 implements ResultSetExtractor<Map<UUID, List<POAHold
         try {
             List<PoaParty> poaPartyList = objectMapper.readValue(json, new TypeReference<List<PoaParty>>() {});
             List<PoaPartyV2> poaPartyV2List = new ArrayList<>();
-            poaPartyList.stream().map(PoaParty::getIndividualId).forEach(individualId -> poaPartyV2List.add(PoaPartyV2.builder().individualId(individualId).build()));
+            poaPartyList.stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getIsActive()))
+                    .map(PoaParty::getIndividualId)
+                    .forEach(individualId -> poaPartyV2List.add(PoaPartyV2.builder().individualId(individualId).build()));
 
             return poaPartyV2List;
         } catch (Exception e) {

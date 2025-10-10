@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -74,6 +73,7 @@ public class OrderRegistrationService {
 
             enrichmentUtil.enrichOrderRegistration(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+            enrichmentUtil.enrichItemTextForIntermediateOrder(body);
 
             workflowUpdate(body);
 
@@ -116,7 +116,7 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
-
+            enrichmentUtil.enrichItemTextForIntermediateOrder(body);
 
             workflowUpdate(body);
 
@@ -214,6 +214,7 @@ public class OrderRegistrationService {
 
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setRequestInfo(body.getRequestInfo());
+            order.setItemText(body.getOrder().getItemText());
             orderRequest.setOrder(order);
             enrichmentUtil.enrichAuditDetails(orderRequest);
 

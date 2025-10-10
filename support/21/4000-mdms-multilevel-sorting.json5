@@ -21,18 +21,19 @@
           "id": {
             "type": "integer"
           },
+          "priority": {
+            "type": "integer"
+          },
           "code": {
             "type": "string"
           },
           "status": {
             "type": "string"
-          },
-          "priority": {
-            "type": "integer"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "isActive": true
+      "isActive": true,
     },
     // INBOX.InboxSortConfiguration
     {
@@ -42,7 +43,6 @@
       "definition": {
         "type": "object",
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "isActive": true,
         "required": [
           "module",
           "index",
@@ -63,32 +63,36 @@
             "items": {
               "type": "object",
               "required": [
+                "path",
                 "orderType",
                 "isActive",
-                "code"
+                "code",
+                "script"
               ],
               "properties": {
-                "code": {
-                  "type": "string"
-                },
                 "path": {
                   "type": "string"
                 },
-                "script": {
+                "orderType": {
                   "type": "string"
                 },
                 "isActive": {
                   "type": "boolean"
                 },
-                "orderType": {
+                "code": {
+                  "type": "string"
+                },
+                "script": {
                   "type": "string"
                 }
-              }
-            }
-          }
-        }
-      },
-      "isActive": true
+              },
+              "additionalProperties": false
+            },
+          },
+          "additionalProperties": false
+        },
+        "isActive": true
+      }
     }
   ]
 }

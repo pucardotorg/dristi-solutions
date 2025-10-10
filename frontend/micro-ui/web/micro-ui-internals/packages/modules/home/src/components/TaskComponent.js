@@ -24,6 +24,7 @@ export const CaseWorkflowAction = {
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
+const LITIGANT_REVIEW_TASK_NAME = "Review Litigant Details Change";
 const TasksComponent = ({
   taskType,
   setTaskType,
@@ -40,20 +41,20 @@ const TasksComponent = ({
   compositeOrderObj,
   pendingSignOrderList,
   tableView = false,
+  needRefresh = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
-  const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudgeOrBenchClerk = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK");
+  const hasViewSignOrderAccess = userInfo?.roles?.some((role) => role.code === "VIEW_SIGN_ORDERS");
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
@@ -125,7 +126,7 @@ const TasksComponent = ({
 
   useEffect(() => {
     refetch();
-  }, [refetch, filingNumber]);
+  }, [refetch, filingNumber, needRefresh]);
 
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
@@ -176,7 +177,7 @@ const TasksComponent = ({
   );
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -232,6 +233,7 @@ const TasksComponent = ({
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
           compositeOrderObj: compositeOrderObj,
+          isApplicationAccepted: isApplicationAccepted,
         });
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
@@ -288,7 +290,7 @@ const TasksComponent = ({
               referenceId: `MANUAL_${referenceId}`,
               status: "SAVE_DRAFT",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber: filingNumber,
               caseId,
@@ -299,7 +301,7 @@ const TasksComponent = ({
               tenantId,
             },
           });
-        history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       } catch (error) {}
     },
     [history, tenantId]
@@ -331,9 +333,17 @@ const TasksComponent = ({
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
+      const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
-      const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
+      const defaultObj = {
+        referenceId: updateReferenceId,
+        id: caseId,
+        cnrNumber,
+        filingNumber,
+        caseTitle,
+        ...(applicationType && { applicationType }),
+      };
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
@@ -356,6 +366,10 @@ const TasksComponent = ({
       pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
       });
+
+      if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+        searchParams.set("applicationType", applicationType);
+      }
       const redirectUrl = isCustomFunction
         ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
         : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
@@ -363,6 +377,7 @@ const TasksComponent = ({
       return {
         actionName: actionName || pendingTaskActions?.[status]?.actionName,
         status,
+        entityType,
         individualId,
         caseId,
         caseTitle,
@@ -385,6 +400,7 @@ const TasksComponent = ({
           litigantIndId,
           dateOfApplication,
           uniqueId,
+          applicationType,
         },
         isCustomFunction,
         referenceId,
@@ -393,10 +409,10 @@ const TasksComponent = ({
     });
 
     const filteredTasks = tasks.filter((task) => {
-      if (isCourtRoomManager) {
-        // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
-        return false;
-      } else return true;
+      const excludeForComposite = isApplicationCompositeOrder
+        ? (task?.actionName || "").trim().toLowerCase() !== LITIGANT_REVIEW_TASK_NAME.toLowerCase()
+        : true;
+      return excludeForComposite;
     });
     if (taskType?.code)
       return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
@@ -405,7 +421,6 @@ const TasksComponent = ({
     handleCreateOrder,
     handleReviewOrder,
     handleReviewSubmission,
-    isCourtRoomManager,
     isLoading,
     isOptionsLoading,
     pendingTaskActionDetails,
@@ -414,6 +429,7 @@ const TasksComponent = ({
     taskTypeCode,
     todayDate,
     userType,
+    isApplicationCompositeOrder,
   ]);
 
   const submitResponse = useCallback(
@@ -649,16 +665,39 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
+
+  if (isApplicationCompositeOrder) {
+    if (pendingTasks?.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="task-section">
+        <PendingTaskAccordion
+          pendingTasks={pendingTasks}
+          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+          accordionHeader={"ALL_OTHER_TASKS"}
+          t={t}
+          totalCount={pendingTasks?.length}
+          setShowSubmitResponseModal={setShowSubmitResponseModal}
+          setResponsePendingTask={setResponsePendingTask}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          isApplicationCompositeOrder={isApplicationCompositeOrder}
+        />
+      </div>
+    );
+  }
+
   return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
-        {isJudgeOrBenchClerk && pendingSignOrderList && (
+        {hasViewSignOrderAccess && pendingSignOrderList && (
           <Button
             label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
             textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
             style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
-            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
+            onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" })}
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}

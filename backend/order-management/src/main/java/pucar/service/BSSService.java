@@ -33,9 +33,10 @@ public class BSSService {
     private final Configuration configuration;
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
+    private final HearingUtil hearingUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -44,6 +45,7 @@ public class BSSService {
         this.configuration = configuration;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
+        this.hearingUtil = hearingUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -211,6 +213,9 @@ public class BSSService {
 
                     orderProcessor.preProcessOrder(orderUpdateRequest);
 
+                    if (order.getNextHearingDate() != null) {
+                        hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
+                    }
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);

@@ -3,6 +3,10 @@ const {
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { search_task_v2 } = require("../../api");
+const {
+  duplicateExistingFileStore,
+} = require("../utils/duplicateExistingFileStore");
 
 async function processPaymentReceipts(
   courtCase,
@@ -21,67 +25,113 @@ async function processPaymentReceipts(
     (s) => s.name === "paymentreceipts"
   );
 
+  const paymentReceiptsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "paymentreceipts"
+  );
+
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
     sectionPosition
   );
 
-  if (paymentReceiptSection?.length !== 0) {
+  const casePaymentReceipt = courtCase.documents
+    .filter((doc) => doc.documentType === "PAYMENT_RECEIPT")
+    .sort((a, b) =>
+      (a?.additionalDetails?.consumerCode || "").localeCompare(
+        b?.additionalDetails?.consumerCode || ""
+      )
+    );
+  const genericTaskDocument = await search_task_v2(
+    tenantId,
+    requestInfo,
+    {
+      tenantId: tenantId,
+      filingNumber: courtCase.filingNumber,
+      taskType: "GENERIC",
+      courtId: courtCase.courtId,
+      status: "COMPLETED",
+    },
+    {
+      sortBy: "createdDate",
+      order: "asc",
+      limit: 100,
+    }
+  );
+
+  const taskReceipts = genericTaskDocument.data.list
+    .filter((task) => task?.documents && task?.documents?.length > 0)
+    .map((task) => task?.documents?.[0]);
+  const documentList = casePaymentReceipt.concat(taskReceipts);
+
+  if (paymentReceiptSection?.length !== 0 && documentList?.length !== 0) {
     const section = paymentReceiptSection[0];
-    const paymentReceiptFileStoreId = courtCase.documents.find(
-      (doc) => doc.documentType === "PAYMENT_RECEIPT"
-    )?.fileStore;
+    const paymentReceiptLineItems = await Promise.all(
+      documentList.map(async (doc, index) => {
+        const paymentReceiptFileStoreId = doc.fileStore;
 
-    if (paymentReceiptFileStoreId) {
-      let newFileStoreId = paymentReceiptFileStoreId;
+        if (!paymentReceiptFileStoreId) {
+          return null;
+        }
 
-      if (section.docketpagerequired === "yes") {
-        const complainant = courtCase.litigants?.find((litigant) =>
-          litigant.partyType.includes("complainant.primary")
-        );
-        const docketComplainantName = complainant.additionalDetails.fullName;
-        const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
-          adv.representing?.find(
-            (party) => party.individualId === complainant.individualId
-          )
-        )?.additionalDetails?.advocateName;
+        let newFileStoreId;
 
-        const docketCounselFor = docketNameOfAdvocate
-          ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
-          : "";
+        if (section.docketpagerequired === "yes") {
+          const complainant = courtCase.litigants?.find((litigant) =>
+            litigant.partyType.includes("complainant.primary")
+          );
+          const docketComplainantName = complainant.additionalDetails.fullName;
+          const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
+            adv.representing?.find(
+              (party) => party.individualId === complainant.individualId
+            )
+          )?.additionalDetails?.advocateName;
 
-        newFileStoreId = await applyDocketToDocument(
-          paymentReceiptFileStoreId,
-          {
-            docketApplicationType: section.section.toUpperCase(),
-            docketCounselFor: docketCounselFor,
-            docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
-            docketDateOfSubmission: new Date(
-              courtCase.registrationDate
-            ).toLocaleDateString("en-IN"),
-            documentPath: `${dynamicSectionNumber}.1 Case Filing Payment in ${dynamicSectionNumber} ${section.section}`,
-          },
-          courtCase,
-          tenantId,
-          requestInfo,
-          TEMP_FILES_DIR
-        );
-      }
+          const docketCounselFor = docketNameOfAdvocate
+            ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
+            : "";
 
-      // update index
-      const paymentReceiptIndexSection = indexCopy.sections.find(
-        (section) => section.name === "paymentreceipts"
-      );
-      paymentReceiptIndexSection.lineItems = [
-        {
+          newFileStoreId = await applyDocketToDocument(
+            paymentReceiptFileStoreId,
+            {
+              docketApplicationType: section.section.toUpperCase(),
+              docketCounselFor: docketCounselFor,
+              docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
+              docketDateOfSubmission: new Date(
+                courtCase.registrationDate
+              ).toLocaleDateString("en-IN"),
+              documentPath: `${dynamicSectionNumber}.${
+                index + 1
+              } Case Filing Payment in ${dynamicSectionNumber} ${
+                section.section
+              }`,
+            },
+            courtCase,
+            tenantId,
+            requestInfo,
+            TEMP_FILES_DIR
+          );
+        } else {
+          newFileStoreId = await duplicateExistingFileStore(
+            tenantId,
+            paymentReceiptFileStoreId,
+            requestInfo,
+            TEMP_FILES_DIR
+          );
+        }
+
+        return {
           createPDF: false,
           sourceId: paymentReceiptFileStoreId,
           fileStoreId: newFileStoreId,
           content: "paymentreceipts",
-          sortParam: null,
-        },
-      ];
-    }
+          sortParam: index + 1,
+        };
+      })
+    );
+    paymentReceiptsIndexSection.lineItems =
+      paymentReceiptLineItems.filter(Boolean);
+  } else {
+    paymentReceiptsIndexSection.lineItems = [];
   }
 }
 
