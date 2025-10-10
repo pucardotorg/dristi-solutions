@@ -56,6 +56,8 @@ public class EPostRowMapper implements RowMapper<EPostTracker> {
                 .totalAmount(rs.getString("total_amount"))
                 .speedPostId(rs.getString("speed_post_id"))
                 .statusUpdateDate(rs.getLong("status_update_date") == 0 ? null : rs.getLong("status_update_date"))
+                .taskType(rs.getString("task_type"))
+                .respondentName(rs.getString("respondent_name"))
                 .auditDetails(
                         AuditDetails.builder()
                                 .createdBy(rs.getString("createdBy"))

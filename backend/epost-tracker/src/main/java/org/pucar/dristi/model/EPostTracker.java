@@ -11,6 +11,8 @@ import org.egov.common.contract.models.AuditDetails;
 public class EPostTracker {
     private String processNumber;
     private String tenantId;
+    private String taskType;
+    private String respondentName;
     private String taskNumber;
     private String fileStoreId;
     private String trackingNumber;

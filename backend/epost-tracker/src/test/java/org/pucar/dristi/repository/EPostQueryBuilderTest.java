@@ -68,7 +68,7 @@ class EPostQueryBuilderTest {
         String actualQuery = queryBuilder.getEPostTrackerSearchQuery(searchCriteria, preparedStmtList);
 
         // Define expected query
-        String expectedQuery = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, createdBy, lastModifiedBy, createdTime, lastModifiedTime FROM dristi_epost_tracker ";
+        String expectedQuery = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, task_type, respondent_name, createdBy, lastModifiedBy, createdTime, lastModifiedTime FROM dristi_epost_tracker ";
 
         // Normalize whitespace before assertion
         String normalizedExpected = expectedQuery.trim().replaceAll("\\s+", " ");

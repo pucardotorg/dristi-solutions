@@ -73,6 +73,8 @@ public class EpostUtil {
                 .additionalDetails(request.getTask().getAdditionalDetails())
                 .rowVersion(0)
                 .receivedDate(istMillis)
+                .taskType(request.getTask().getTaskType())
+                .respondentName(request.getTask().getTaskDetails().getRespondentDetails().getName())
                 .auditDetails(createAuditDetails(request.getRequestInfo()))
                 .build();
 
