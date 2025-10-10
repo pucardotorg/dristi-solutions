@@ -15,7 +15,11 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_UPDATING_SUMMONS = "Error occurred when sending Update Summons Request";
 
     public static final String EPOST_TRACKER_ERROR = "EPOST_ERROR";
+
+    public static final String DUPLICATE_SPEED_POST_ID_ERROR = "DUPLICATE_SPEED_POST_ID_ERROR";
     public static final String INVALID_EPOST_TRACKER_FIELD = "Invalid EPost Tracker field with processNumber : ";
+
+    public static final String DUPLICATE_SPEED_POST_ERROR = "Duplicate speed post id found  : ";
 
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
 
@@ -52,4 +56,19 @@ public class ServiceConstants {
 
 
     public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
+
 }

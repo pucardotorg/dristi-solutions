@@ -11,6 +11,8 @@ import org.egov.common.contract.models.AuditDetails;
 public class EPostTracker {
     private String processNumber;
     private String tenantId;
+    private String taskType;
+    private String respondentName;
     private String taskNumber;
     private String fileStoreId;
     private String trackingNumber;
@@ -20,8 +22,11 @@ public class EPostTracker {
     private String remarks;
     private Object additionalDetails;
     private Integer rowVersion;
-    private String bookingDate;
-    private String receivedDate;
+    private Long bookingDate;
+    private Long receivedDate;
+    private Long statusUpdateDate;
     private String postalHub;
     private AuditDetails auditDetails;
+    private String totalAmount;
+    private String speedPostId;
 }
