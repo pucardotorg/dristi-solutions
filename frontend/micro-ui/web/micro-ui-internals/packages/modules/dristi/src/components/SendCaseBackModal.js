@@ -61,7 +61,7 @@ function SendCaseBackModal({
       headerBarEnd={
         <CloseBtn
           onClick={() => {
-            handleCloseModal ? handleCloseModal() : onCancel();
+            if (!loading) handleCloseModal ? handleCloseModal() : onCancel();
           }}
         />
       }
@@ -70,7 +70,8 @@ function SendCaseBackModal({
       actionSaveLabel={t(actionSaveLabel)}
       actionSaveOnSubmit={onSubmit}
       formId="modal-action"
-      isDisabled={isDisabled}
+      isDisabled={isDisabled || loading}
+      isBackButtonDisabled={loading}
       headerBarMain={<Heading label={t(heading)} />}
       className="case-types"
     >

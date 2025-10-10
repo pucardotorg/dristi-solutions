@@ -102,6 +102,7 @@ export const clearEvidenceSessionData = () => {
   sessionStorage.removeItem("bulkMarkAsEvidenceOffset");
   sessionStorage.removeItem("homeActiveTab");
   sessionStorage.removeItem("bulkMarkAsEvidenceSignCaseTitle");
+  sessionStorage.removeItem("homeActiveTab");
 };
 
 const Heading = (props) => {
@@ -809,6 +810,12 @@ const MarkAsEvidence = ({
       setLoader(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      clearEvidenceSessionData();
+    };
+  });
 
   if (isLoading) return <Loader />;
 

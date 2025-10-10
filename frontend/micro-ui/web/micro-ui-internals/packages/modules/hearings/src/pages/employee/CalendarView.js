@@ -60,7 +60,10 @@ const MonthlyCalendar = ({ hideRight }) => {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasBulkRescheduleAccess = useMemo(
-    () => ["BULK_RESCHEDULE_UPDATE_ACCESS","NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) => assignedRoles?.includes(role)),
+    () =>
+      ["BULK_RESCHEDULE_UPDATE_ACCESS", "NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) =>
+        assignedRoles?.includes(role)
+      ),
     [assignedRoles]
   );
 
@@ -288,8 +291,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   };
 
   const onSubmit = () => {
-    sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-    history.push(`/${window?.contextPath}/employee/home/home-screen`);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_BULK_RESCHEDULE" });
   };
 
   const maxHearingCount = 5;

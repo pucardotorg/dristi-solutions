@@ -8,8 +8,6 @@ const defaultSearchValues = {
   date: todayStr
 };
 
-const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10);
-const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset") || 0);
 const courtId = localStorage.getItem("courtId");
 
 export const bulkADiarySignConfig = {
@@ -28,7 +26,6 @@ export const bulkADiarySignConfig = {
       },
       pagination: {
         limit: 10,
-        offSet: 0,
       },
     },
     minParametersForSearchForm: 0,
@@ -88,8 +85,8 @@ export const bulkADiarySignConfig = {
         ],
         resultsJsonPath: "entries",
         customDefaultPagination: {
-          limit: limit,
-          offset: offset,
+          limit: 10,
+          offset: 0,
         },
         manualPagination: true,
         enableColumnSort: true,
