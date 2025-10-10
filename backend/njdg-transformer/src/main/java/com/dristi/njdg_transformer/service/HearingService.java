@@ -90,8 +90,10 @@ public class HearingService {
 
             // Get all hearings for the case
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(request);
-            
+
+
             // Process each hearing and add to history
+            int serialNo = 1;
             for (Hearing hearingItem : hearings) {
                 ObjectNode hearingDetails = new ObjectMapper().createObjectNode();
                 
@@ -136,6 +138,7 @@ public class HearingService {
 
                 // Add to history
                 record.getHistoryOfCaseHearing().add(hearingDetails);
+                serialNo++;
             }
             
             // Save the updated record
