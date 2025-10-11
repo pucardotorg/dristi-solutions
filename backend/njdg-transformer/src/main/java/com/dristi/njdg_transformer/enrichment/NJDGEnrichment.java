@@ -316,10 +316,8 @@ public class NJDGEnrichment {
                             party.put("party_name", partyName);
                             party.put("party_no", partyNo);
                             party.put("party_address", partyAddress);
-                            if (!partyAge.isEmpty()) {
-                                party.put("party_age", partyAge);
-                            }
-                            
+                            party.put("party_age", !partyAge.isEmpty() ? partyAge : "");
+
                             extraParties.add(party);
                         }
                     }
@@ -377,7 +375,7 @@ public class NJDGEnrichment {
                         actNode.put("act_name", actData.get("name").toString());
                         
                         // Get the first section from the list
-                        String section = statuteSection.getSections().get(0);
+                        String section = statuteSection.getSections() != null && !statuteSection.getSections().isEmpty() ? statuteSection.getSections().get(0) : "";
                         actNode.put("act_section", section);
                         
                         actNodes.add(actNode);

@@ -63,7 +63,7 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         record.setAct(parseJsonArray(rs.getObject("act")));
         record.setHistoryOfCaseHearing(parseJsonArray(rs.getObject("historyofcasehearing")));
         record.setIaFiling(parseJsonArray(rs.getObject("iafiling")));
-
+        record.setInterimOrder(parseJsonArray(rs.getObject("interimorder")));
         return record;
     }
 

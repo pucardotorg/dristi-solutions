@@ -78,14 +78,12 @@ public class OrderService {
                 // Process document if available
                 if (orderItem.getDocuments() != null && !orderItem.getDocuments().isEmpty()) {
                     String base64Content = processDocument(orderItem, requestInfo);
-                    if (base64Content != null) {
-                        orderDetails.put("order_details", base64Content);
-                    }
+                    orderDetails.put("order_details", base64Content != null ? base64Content : "");
                 }
 
                 orderDetails.put("sr_no", serialNo);
-                orderDetails.put("order_date", formatDate(order.getCreatedDate()));
-                orderDetails.put("order_number", order.getOrderNumber());
+                orderDetails.put("order_date", formatDate(orderItem.getCreatedDate()));
+                orderDetails.put("order_number", orderItem.getOrderNumber());
                 // Add to interim orders
                 record.getInterimOrder().add(orderDetails);
                 serialNo++;

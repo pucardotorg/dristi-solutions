@@ -99,12 +99,15 @@ public class HearingService {
                 
                 // Set hearing date
                 String hearingDate = formatDate(hearingItem.getStartTime());
+                hearingDetails.put("sr_no", serialNo);
                 hearingDetails.put("hearing_date", hearingDate);
                 
                 // Set other hearing details
                 hearingDetails.put("purpose_of_listing", getPurposeOfListing(requestInfo, hearingItem));
                 hearingDetails.put("desg_name", properties.getJudgeDesignation());
                 hearingDetails.put("judge_code", properties.getJudgeCode());
+                hearingDetails.put("jocode", "");
+                hearingDetails.put("desg_code", "");
 
                 // Fetch order using hearing number to get next hearing date
                 if (hearingItem.getHearingId() != null && !hearingItem.getHearingId().isEmpty()) {
@@ -128,6 +131,7 @@ public class HearingService {
                                     hearingDetails.put("next_date", nextDate);
                                     break;
                                 }
+                                hearingDetails.put("next_date", "");
                             }
                         }
                     } catch (Exception e) {
@@ -176,7 +180,7 @@ public class HearingService {
      */
     private String formatDate(Long timestamp) {
         if (timestamp == null) {
-            return null;
+            return "";
         }
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())
