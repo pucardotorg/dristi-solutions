@@ -21,7 +21,7 @@ import java.util.Map;
 import net.minidev.json.JSONArray;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER;
+import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 /**
  * Service class for handling case-related operations
@@ -157,21 +157,20 @@ public class CaseService {
 
     private String getCaseTypeValue(CourtCase courtCase, RequestInfo requestInfo) {
         if (courtCase == null || courtCase.getCaseType() == null) {
-            return null;
+            return "";
         }
 
         try {
             // Fetch case types from MDMS
-            String moduleName = "njdg";
-            List<String> masterNames = List.of("CaseType");
+            List<String> masterNames = List.of(CASE_TYPE_MASTER);
             Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
-                    requestInfo, courtCase.getTenantId(), moduleName, masterNames);
+                    requestInfo, courtCase.getTenantId(), NJDG_MODULE, masterNames);
 
             // Extract CaseType array from MDMS response
-            JSONArray caseTypes = mdmsResponse.get(moduleName).get("CaseType");
+            JSONArray caseTypes = mdmsResponse.get(NJDG_MODULE).get(CASE_TYPE_MASTER);
             if (caseTypes == null || caseTypes.isEmpty()) {
                 log.warn("No case types found in MDMS for tenant: {}", courtCase.getTenantId());
-                return null;
+                return "";
             }
 
             // Find matching case type and return nationalCode
@@ -183,11 +182,11 @@ public class CaseService {
             }
 
             log.warn("No matching case type found in MDMS for: {}", courtCase.getCaseType());
-            return null;
+            return "";
 
         } catch (Exception e) {
             log.error("Error while fetching case type from MDMS: ", e);
-            return null;
+            return "";
         }
     }
     
@@ -199,7 +198,7 @@ public class CaseService {
      */
     private String extractFilingNumber(String filingNumber) {
         if (filingNumber == null || filingNumber.isEmpty()) {
-            return null;
+            return "";
         }
         String[] parts = filingNumber.split("-");
         if (parts.length < 2) {
@@ -214,7 +213,7 @@ public class CaseService {
      */
     private String extractYear(Long timestamp) {
         if (timestamp == null) {
-            return null;
+            return "";
         }
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())

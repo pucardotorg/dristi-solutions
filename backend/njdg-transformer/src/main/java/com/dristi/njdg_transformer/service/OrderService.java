@@ -127,7 +127,7 @@ public class OrderService {
      */
     private String formatDate(Long timestamp) {
         if (timestamp == null) {
-            return null;
+            return "";
         }
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())
