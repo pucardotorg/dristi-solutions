@@ -81,7 +81,8 @@ public class NJDGTransformRecord {
     private String policeStation = "";
     @Builder.Default
     private String firYear = "";
-    private String dateLastList;
+    @Builder.Default
+    private String dateLastList="";
     @Builder.Default
     private String mainMatterCino = "";
 
