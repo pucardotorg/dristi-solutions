@@ -2,6 +2,7 @@ package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.Pagination;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
 import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
@@ -73,6 +74,7 @@ public class HearingService {
             HearingSearchRequest request = HearingSearchRequest.builder()
                     .criteria(HearingCriteria.builder().filingNumber(hearing.getFilingNumber().get(0)).build())
                     .requestInfo(requestInfo)
+                    .pagination(Pagination.builder().sortBy("startTime").order(com.dristi.njdg_transformer.model.enums.Order.ASC).build())
                     .build();
             // Find record by CNR number
             NJDGTransformRecord record = njdgTransformRepository.findByCino(cnrNumber);
@@ -146,6 +148,7 @@ public class HearingService {
             }
             
             // Save the updated record
+            record.setDateFirstList(formatDate(!hearings.isEmpty() ? hearings.get(0).getStartTime() : null));
             njdgTransformRepository.updateData(record);
 
             log.info("Successfully updated hearing history for case reference number: {}", hearing.getCaseReferenceNumber());

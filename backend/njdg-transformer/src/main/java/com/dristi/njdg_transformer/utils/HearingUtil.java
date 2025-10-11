@@ -33,8 +33,8 @@ public class HearingUtil {
         StringBuilder uri = new StringBuilder();
         uri.append(properties.getHearingHost()).append(properties.getHearingSearchPath());
 
-        Object response = new HashMap<>();
-        HearingListResponse hearingListResponse = new HearingListResponse();
+        Object response;
+        HearingListResponse hearingListResponse;
         try {
             response = restTemplate.postForObject(uri.toString(), hearingSearchRequest, Map.class);
             hearingListResponse = mapper.convertValue(response, HearingListResponse.class);
