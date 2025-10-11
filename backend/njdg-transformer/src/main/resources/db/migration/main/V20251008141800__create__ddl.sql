@@ -1,5 +1,5 @@
 CREATE TABLE njdg_transform_record (
-    cino VARCHAR(50) NOT NULL,
+    cino VARCHAR(50) PRIMARY KEY,
     date_of_filing VARCHAR(50),
     dt_regis VARCHAR(50),
     case_type VARCHAR(50),

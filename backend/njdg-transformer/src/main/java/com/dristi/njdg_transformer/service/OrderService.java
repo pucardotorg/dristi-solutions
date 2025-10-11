@@ -16,7 +16,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -27,7 +26,6 @@ import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER
 
 @Service
 @Slf4j
-@Transactional
 public class OrderService {
 
     private final NJDGRepository repository;
