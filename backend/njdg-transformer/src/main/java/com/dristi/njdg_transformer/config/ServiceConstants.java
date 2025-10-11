@@ -18,5 +18,6 @@ public class ServiceConstants {
     public static final String ACT_MASTER = "Act";
     public static final String POLICE_MASTER = "PoliceStation";
     public static final String DISTRICT_MASTER = "District";
+    public static final String CASE_TYPE_MASTER = "CaseType";
     public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
 }

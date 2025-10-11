@@ -17,6 +17,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import net.minidev.json.JSONArray;
+import com.dristi.njdg_transformer.utils.MdmsUtil;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER;
 
@@ -33,6 +36,7 @@ public class CaseService {
     private final TransformerProperties properties;
     private final OrderService orderService;
     private final HearingService hearingService;
+    private final MdmsUtil mdmsUtil;
 
 
     /**
@@ -58,7 +62,7 @@ public class CaseService {
         try {
             log.info("Processing CourtCase with CNR: {}", courtCase.getCnrNumber());
             
-            NJDGTransformRecord record = convertToNJDGRecord(courtCase);
+            NJDGTransformRecord record = convertToNJDGRecord(courtCase, requestInfo);
 
             enrichment.enrichPartyDetails(courtCase, record);
             enrichment.enrichAdvocateDetails(courtCase, record);
@@ -136,27 +140,61 @@ public class CaseService {
         return caseNumber;
     }
     
-    private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase) {
+    private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase, RequestInfo requestInfo) {
         return NJDGTransformRecord.builder()
                 .cino(courtCase.getCnrNumber())
                 .dateOfFiling(formatDate(courtCase.getFilingDate()))// Using CNR as CINO
                 .dtRegis(formatDate(courtCase.getRegistrationDate()))
-                .caseType(courtCase.getCaseType())
+                .caseType(getCaseTypeValue(courtCase, requestInfo))
                 .filNo(extractFilingNumber(courtCase.getFilingNumber()))
                 .filYear(extractYear(courtCase.getFilingDate()))
                 .regNo(extractCaseNumber(courtCase.getCourtCaseNumber()))
                 .regYear(extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(courtCase.getStatus().equals("DISPOSED") ? "D" : "P")
                 .dateOfDecision(formatDate(courtCase.getJudgementDate()))
-                .desgname(properties.getJudgeDesignation())
-                .estCode(courtCase.getCourtId())
                 .build();
     }
 
+    private String getCaseTypeValue(CourtCase courtCase, RequestInfo requestInfo) {
+        if (courtCase == null || courtCase.getCaseType() == null) {
+            return null;
+        }
+
+        try {
+            // Fetch case types from MDMS
+            String moduleName = "njdg";
+            List<String> masterNames = List.of("CaseType");
+            Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
+                    requestInfo, courtCase.getTenantId(), moduleName, masterNames);
+
+            // Extract CaseType array from MDMS response
+            JSONArray caseTypes = mdmsResponse.get(moduleName).get("CaseType");
+            if (caseTypes == null || caseTypes.isEmpty()) {
+                log.warn("No case types found in MDMS for tenant: {}", courtCase.getTenantId());
+                return null;
+            }
+
+            // Find matching case type and return nationalCode
+            for (Object obj : caseTypes) {
+                Map<String, Object> caseType = (Map<String, Object>) obj;
+                if (courtCase.getCaseType().equals(caseType.get("type"))) {
+                    return (String) caseType.get("nationalCode");
+                }
+            }
+
+            log.warn("No matching case type found in MDMS for: {}", courtCase.getCaseType());
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error while fetching case type from MDMS: ", e);
+            return null;
+        }
+    }
+    
     /**
-     * Extracts the filing number from the full filing number string
-     * 
-     * @param filingNumber The full filing number string (e.g., "FIL-2023-1234")
+     * Extracts the filing number from a string.
+     *
+     * @param filingNumber The filing number string (e.g., "F-1234")
      * @return The extracted filing number (e.g., "1234"), or the original string if pattern doesn't match
      */
     private String extractFilingNumber(String filingNumber) {
