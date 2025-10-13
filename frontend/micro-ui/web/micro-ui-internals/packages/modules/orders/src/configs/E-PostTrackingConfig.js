@@ -122,6 +122,10 @@ export const TabSearchConfig = [
               additionalCustomization: true,
             },
             {
+              label:"TASK_TYPE",
+              jsonPath:"taskType",
+            },
+            {
               label: "RECIEVED_DATE",
               jsonPath: "receivedDate",
               additionalCustomization: true,
@@ -129,6 +133,7 @@ export const TabSearchConfig = [
             {
               label: "ADDRESS",
               jsonPath: "address",
+              additionalCustomization: true,
             },
             {
               label: "PINCODE",

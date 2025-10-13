@@ -92,6 +92,8 @@ export const UICustomizations = {
           return formatDateWithTime(value) || "-";
         case "RECIEVED_DATE":
           return formatDateWithTime(value) || "-";
+        case "ADDRESS":
+          return `${row?.respondentName}, ${value}`;
         default:
           return t("ES_COMMON_NA");
       }
