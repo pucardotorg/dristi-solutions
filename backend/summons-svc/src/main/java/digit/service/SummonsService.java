@@ -194,6 +194,11 @@ public class SummonsService {
             } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
                 workflow = Workflow.builder().action("TRANSIT").build();
             }
+            else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            }
             else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
