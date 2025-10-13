@@ -66,7 +66,6 @@ public class EmailNotificationListener {
             log.info("Email sent to {}", properties.getMailSenderTest() ? properties.getTestEmail() : emailRequest.getEmail().getEmailTo());
         } catch (IllegalArgumentException e) {
             log.error("Error while sending email", e);
-            throw new CustomException("ERR_MAIL_SEND", "Error while sending email");
         }
     }
 
