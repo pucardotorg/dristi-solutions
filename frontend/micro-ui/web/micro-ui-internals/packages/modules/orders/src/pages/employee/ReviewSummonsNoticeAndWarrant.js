@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Header, ActionBar, InboxSearchComposer, SubmitBar, Toast, CloseSvg, BreadCrumb, Loader } from "@egovernments/digit-ui-react-components";
+import { Header, ActionBar, InboxSearchComposer, SubmitBar, Toast, CloseSvg, BreadCrumb, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -20,7 +20,6 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import CustomSubmitModal from "@egovernments/digit-ui-module-dristi/src/components/CustomSubmitModal";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -1510,12 +1509,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           uiConfig: {
             ...baseConfig?.sections?.searchResult?.uiConfig,
             columns: baseConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
-              return column.label === "SELECT"
-                ? {
-                    ...column,
-                    updateOrderFunc: updateTaskFunc,
-                  }
-                : column;
+              if (column.label === "SELECT") {
+                return {
+                  ...column,
+                  updateOrderFunc: updateTaskFunc,
+                };
+              }
+              if (column.label === "CASE_TITLE") {
+                return {
+                  ...column,
+                  clickFunc: handleRowClick,
+                };
+              } else {
+                return column;
+              }
             }),
           },
         },
@@ -1554,11 +1561,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 tabData={tabData}
                 onTabChange={onTabChange}
                 onFormValueChange={onFormValueChange}
-                additionalConfig={{
-                  resultsTable: {
-                    onClickRow: handleRowClick,
-                  },
-                }}
                 customStyle={sectionsParentStyle}
               ></InboxSearchComposer>
               {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
@@ -1667,29 +1669,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarMain={<Heading label="" />}
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSignSuccessModal(false)} />}
           actionCancelLabel={t("DOWNLOAD_DOCUMENTS")}
-          popupModuleActionBarStyles={{
-            display: "flex",
-            justifyContent: "space-between",
-            width: "100%",
-            maxWidth: "500px",
-            margin: "0px 24px 0px",
-          }}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
           actionCancelOnSubmit={handleBulkDownload}
           actionSaveLabel={!allSelectedPolice ? t("MARK_AS_SEND") : t("CS_COMMON_CLOSE")}
           actionSaveOnSubmit={!allSelectedPolice ? handleProceedToBulkSend : handleClose}
+          className="process-bulk-success-modal"
         >
-          <CustomSubmitModal
-            t={t}
-            submitModalInfo={{
-              header: t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT"),
-            }}
-          />
+          <div style={{ width: "100%", textAlign: "center" }}>
+            <Banner
+              whichSvg={"tick"}
+              successful={true}
+              message={t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT")}
+              headerStyles={{ fontSize: "32px" }}
+              style={{ minWidth: "100%", marginTop: "0px" }}
+            />
+          </div>
         </Modal>
       )}
       {showBulkSendConfirmModal && (

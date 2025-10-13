@@ -1151,3 +1151,56 @@
     }
   }
 }
+
+.process-bulk-success-modal {
+  &.popup-module {
+    width: 40vw;
+
+    .header-wrap {
+      border-bottom: none !important;
+      margin-bottom: 12px !important;
+    }
+    .header-wrap .header-end{
+      margin: 4px 8px 0 auto !important;
+    }
+
+    .popup-module-main {
+      padding: 0 40px 40px !important; 
+
+      .card-label {
+        font-size: 16px;
+        font-weight: 400;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .popup-module-action-bar {
+        display: flex;
+        flex-direction: row; 
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin: 0 !important;
+
+        .selector-button-primary,
+        .selector-button-border,
+        .selector-button-tertiary {
+          flex: 1 1 0;
+          min-width: 0;
+          width: auto;
+          height: 40px;
+          padding: 10px 24px;
+
+          h2 {
+            font-family: Roboto;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 18.75px;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}
+
