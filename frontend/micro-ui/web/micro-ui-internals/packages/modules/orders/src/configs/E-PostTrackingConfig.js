@@ -124,6 +124,7 @@ export const TabSearchConfig = [
             {
               label:"TASK_TYPE",
               jsonPath:"taskType",
+              additionalCustomization: true,
             },
             {
               label: "RECIEVED_DATE",

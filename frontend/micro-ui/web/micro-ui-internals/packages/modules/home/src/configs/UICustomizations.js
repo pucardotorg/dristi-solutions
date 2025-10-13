@@ -94,6 +94,8 @@ export const UICustomizations = {
           return formatDateWithTime(value) || "-";
         case "ADDRESS":
           return `${row?.respondentName}, ${value}`;
+        case "TASK_TYPE":
+          return t(value) || t("ES_COMMON_NA");
         default:
           return t("ES_COMMON_NA");
       }
