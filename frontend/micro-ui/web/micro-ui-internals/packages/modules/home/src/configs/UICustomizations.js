@@ -466,7 +466,6 @@ export const UICustomizations = {
           }),
           {}
         );
-      // Remove UI-only fields that should not be sent to backend as-is
       if (filterList?.channel) delete filterList.channel;
       if (filterList?.deliveryChannel) delete filterList.deliveryChannel;
       if (filterList?.hearingDate) delete filterList.hearingDate;
@@ -562,6 +561,15 @@ export const UICustomizations = {
               style={{
                 textDecoration: "underline",
                 cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
               }}
             >{`${row?.caseName}`}</span>
           );
