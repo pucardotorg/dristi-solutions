@@ -198,6 +198,7 @@ const NewBulkRescheduleTable = ({
                           disableColor="#D6D5D4"
                           disableBorderColor="#D6D5D4"
                           disableBackgroundColor="white"
+                          styles={{ marginBottom: 0 }}
                         />
                       </td>
                     </tr>
