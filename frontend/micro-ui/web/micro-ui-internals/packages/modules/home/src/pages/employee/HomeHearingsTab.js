@@ -478,8 +478,10 @@ const HomeHearingsTab = ({
 
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
+      const offset = page * rowsPerPage;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
+          <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
           <td>
             <Link
               to={{
@@ -747,6 +749,7 @@ const HomeHearingsTab = ({
           <table className="main-table">
             <thead>
               <tr>
+                <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
                 <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>

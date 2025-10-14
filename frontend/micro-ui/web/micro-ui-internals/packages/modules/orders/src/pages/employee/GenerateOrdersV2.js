@@ -244,7 +244,7 @@ const GenerateOrdersV2 = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
-  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
+  const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
@@ -3999,7 +3999,7 @@ const GenerateOrdersV2 = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
-          saveSignLater={canSaveSignLater}
+          saveSignLater={canSaveSignLater && !currentDiaryEntry}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
