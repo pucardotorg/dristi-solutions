@@ -186,6 +186,7 @@ const EpostTrackingPage = () => {
         const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
         const payload = {
           ePostTrackerSearchCriteria: {
+            excelSheetType:"REPORTS_TAB",
             bookingDateStartTime: bookingDateStartTime || "",
             bookingDateEndTime: bookingDateEndTime || "",
             speedPostId: speedPostId || "",
@@ -232,6 +233,7 @@ const EpostTrackingPage = () => {
         const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
         const payload = {
           ePostTrackerSearchCriteria: {
+            excelSheetType:"PENDING_BOOKING_TAB",
             speedPostId: speedPostId || "",
             deliveryStatusList: ["NOT_UPDATED"],
             postalHub: postalHub,
