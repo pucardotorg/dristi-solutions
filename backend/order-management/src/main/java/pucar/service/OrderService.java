@@ -54,7 +54,6 @@ public class OrderService {
     public Order createOrder(@Valid OrderRequest request) {
         log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
         OrderResponse orderResponse = orderUtil.createOrder(request);
-        updateHearingSummary(request);
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
@@ -105,7 +104,9 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        updateHearingSummary(request);
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+            updateHearingSummary(request);
+        }
 
         return orderResponse.getOrder();
     }
