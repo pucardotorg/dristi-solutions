@@ -502,6 +502,13 @@
     color: #0a0a0a;
   }
 
+  .toast-success.error {
+    h2 {
+      font-weight: normal !important;
+      color: white !important;
+    }
+  }
+
   .custom-text-area-main-div {
     .custom-text-area-header-div {
       gap: 12px !important;
