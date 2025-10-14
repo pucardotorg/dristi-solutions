@@ -54,4 +54,7 @@ public class EPostTrackerSearchCriteria {
 
     @JsonProperty("pagination")
     private Pagination pagination = null;
+
+    @JsonProperty("excelSheetType")
+    private ExcelSheetType excelSheetType = null;
 }

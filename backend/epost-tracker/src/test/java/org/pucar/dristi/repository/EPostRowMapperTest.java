@@ -59,6 +59,8 @@ class EPostRowMapperTest {
         when(resultSet.getString("speed_post_id")).thenReturn("speedPostId1");
         when(resultSet.getString("task_type")).thenReturn("taskType1");
         when(resultSet.getString("respondent_name")).thenReturn("respondentName1");
+        when(resultSet.getString("phone")).thenReturn("999999999");
+        when(resultSet.getString("address_obj")).thenReturn(null);
 
         // Act
         EPostTracker result = ePostRowMapper.mapRow(resultSet, 1);

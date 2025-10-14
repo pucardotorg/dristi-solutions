@@ -109,4 +109,42 @@ public class EPostConfiguration {
     @Value("${egov.user.create.path}")
     private String userCreateEndpoint;
 
+    // excel sheet configs
+
+    @Value("${epost.physical.weight}")
+    private String epostPhysicalWeight;
+
+    @Value("${epost.reg}")
+    private String epostReg;
+
+    @Value("${epost.otp}")
+    private String epostOtp;
+
+    @Value("${epost.ack}")
+    private String epostAck;
+
+    @Value("${epost.sender.mobile.no}")
+    private String epostSenderMobileNo;
+
+    @Value("${epost.sender.name}")
+    private String epostSenderName;
+
+    @Value("${epost.sender.city}")
+    private String epostSenderCity;
+
+    @Value("${epost.sender.state}")
+    private String epostSenderState;
+
+    @Value("${epost.sender.pin.code}")
+    private String epostSenderPinCode;
+
+    @Value("${epost.sender.address.line.one}")
+    private String epostSenderAddressLineOne;
+
+    @Value("${epost.sender.address.line.two}")
+    private String epostSenderAddressLineTwo;
+
+    @Value("${epost.alt.address.flag}")
+    private String epostAltAddressFlag;
+
 }

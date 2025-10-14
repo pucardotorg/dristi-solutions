@@ -68,6 +68,8 @@ public class EpostUtil {
                 .totalAmount(getTotalAmount(request))
                 .fileStoreId(getFileStore(request))
                 .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
+                .addressObj(request.getTask().getTaskDetails().getRespondentDetails().getAddress())
+                .phone(request.getTask().getTaskDetails().getRespondentDetails().getPhone())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
                 .deliveryStatus(DeliveryStatus.NOT_UPDATED)
                 .additionalDetails(request.getTask().getAdditionalDetails())

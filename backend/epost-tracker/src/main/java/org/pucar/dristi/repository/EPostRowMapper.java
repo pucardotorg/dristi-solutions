@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.model.AdditionalFields;
+import org.pucar.dristi.model.Address;
 import org.pucar.dristi.model.DeliveryStatus;
 import org.pucar.dristi.model.EPostTracker;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,14 @@ public class EPostRowMapper implements RowMapper<EPostTracker> {
         DeliveryStatus deliveryStatus = deliveryStatusStr != null ? DeliveryStatus.valueOf(deliveryStatusStr) : null;
 
         AdditionalFields additionalFields = new AdditionalFields();
+
+        Address address = new Address();
         try {
             additionalFields = objectMapper.readValue(rs.getString("additional_details"), AdditionalFields.class);
+            String addressObjString = rs.getString("address_obj");
+            if (addressObjString != null) {
+                address = objectMapper.readValue(rs.getString("address_obj"), Address.class);
+            }
         } catch (JsonProcessingException e) {
             throw new SQLException(e);
         }
@@ -58,6 +65,8 @@ public class EPostRowMapper implements RowMapper<EPostTracker> {
                 .statusUpdateDate(rs.getLong("status_update_date") == 0 ? null : rs.getLong("status_update_date"))
                 .taskType(rs.getString("task_type"))
                 .respondentName(rs.getString("respondent_name"))
+                .phone(rs.getString("phone"))
+                .addressObj(address)
                 .auditDetails(
                         AuditDetails.builder()
                                 .createdBy(rs.getString("createdBy"))

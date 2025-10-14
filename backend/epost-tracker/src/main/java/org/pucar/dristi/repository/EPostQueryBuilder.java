@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 public class EPostQueryBuilder {
 
-    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, task_type, respondent_name, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
+    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, task_type, respondent_name, phone, address_obj, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
 
     private static final String FROM_TABLES = " FROM dristi_epost_tracker ";
 

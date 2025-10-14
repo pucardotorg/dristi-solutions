@@ -17,6 +17,8 @@ public class EPostTracker {
     private String fileStoreId;
     private String trackingNumber;
     private String address;
+    private Address addressObj;
+    private String phone;
     private String pinCode;
     private DeliveryStatus deliveryStatus;
     private String remarks;

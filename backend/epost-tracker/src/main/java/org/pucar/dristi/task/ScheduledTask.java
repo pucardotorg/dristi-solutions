@@ -89,6 +89,7 @@ public class ScheduledTask {
         EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder()
                 .bookingDateStartTime(bookingDateStartTime)
                 .bookingDateEndTime(bookingDateEndTime)
+                .excelSheetType(ExcelSheetType.MONTHLY_REPORT_EMAIL)
                 .pagination(Pagination.builder().build())
                 .build();
 
