@@ -130,7 +130,7 @@ const NewBulkRescheduleTable = ({
           <div className={`case-label-field-pair search-input`}>
             <input
               className="home-input"
-              placeholder="Search Case name or number"
+              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")} 
               style={{ width: "280px" }}
               type="text"
               value={bulkFormData?.searchableFields || ""}
