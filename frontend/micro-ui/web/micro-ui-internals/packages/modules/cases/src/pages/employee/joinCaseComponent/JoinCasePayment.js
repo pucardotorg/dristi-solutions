@@ -3,6 +3,7 @@ import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
+import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type }) => {
   const { t } = useTranslation();
@@ -10,6 +11,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
 
+  const { triggerSurvey, SurveyUI } = useSurveyManager();
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
@@ -141,15 +143,18 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
                 const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
                 const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
                 if (paymentStatus) {
-                  setPendingTaskActionModals((pendingTaskActionModals) => {
-                    const data = pendingTaskActionModals?.data;
-                    delete data.filingNumber;
-                    delete data.taskNumber;
-                    return {
-                      ...pendingTaskActionModals,
-                      joinCasePaymentModal: false,
-                      data: data,
-                    };
+                  // in-portal survey
+                  triggerSurvey("payment_success", () => {
+                    setPendingTaskActionModals((pendingTaskActionModals) => {
+                      const data = pendingTaskActionModals?.data;
+                      delete data.filingNumber;
+                      delete data.taskNumber;
+                      return {
+                        ...pendingTaskActionModals,
+                        joinCasePaymentModal: false,
+                        data: data,
+                      };
+                    });
                   });
                 }
                 refetch();
@@ -163,6 +168,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           />
         </div>
       )}
+      {SurveyUI}
     </div>
   );
 };

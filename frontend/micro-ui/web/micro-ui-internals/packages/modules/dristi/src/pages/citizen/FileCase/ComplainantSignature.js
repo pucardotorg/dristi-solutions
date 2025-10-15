@@ -13,6 +13,7 @@ import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
+import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -209,6 +210,8 @@ const ComplainantSignature = ({ path }) => {
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const { triggerSurvey, SurveyUI } = useSurveyManager();
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -859,7 +862,10 @@ const ComplainantSignature = ({ path }) => {
           } else {
             setLoader(false);
             if (isSelectedUploadDoc) {
-              history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+              // in-portal survey
+              triggerSurvey("payment_success", () => {
+                history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+              });
             }
           }
         })
@@ -1140,6 +1146,7 @@ const ComplainantSignature = ({ path }) => {
           }}
         ></Modal>
       )}
+      {SurveyUI}
     </div>
   );
 };

@@ -38,6 +38,7 @@ import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-modu
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -138,6 +139,8 @@ const SubmissionsCreate = ({ path }) => {
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const { triggerSurvey, SurveyUI } = useSurveyManager();
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -1380,11 +1383,15 @@ const SubmissionsCreate = ({ path }) => {
   const handleBack = () => {
     if (!paymentLoader) {
       if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+        // in-portal
         history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
-        history.replace(
-          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
-        );
+        // in-portal
+        triggerSurvey("payment_success", () => {
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        });
       }
     }
   };
@@ -1645,6 +1652,7 @@ const SubmissionsCreate = ({ path }) => {
           }
         />
       )}
+      {SurveyUI}
     </div>
   );
 };

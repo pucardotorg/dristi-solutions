@@ -6,6 +6,7 @@ import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
 import SelectCustomNote from "../../../components/SelectCustomNote";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { useSurveyManager } from "../../../hooks/dristi/useSurveyManager";
 
 const customNoteConfig = {
   populators: {
@@ -48,6 +49,7 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
   const fileStoreId = location.state.state.fileStoreId;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
+  const { triggerSurvey, SurveyUI } = useSurveyManager();
 
   const commonProps = {
     whichSvg: "tick",
@@ -92,7 +94,10 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onButtonClick={() => {
-                history.push(`${path}/e-filing-payment?caseId=${caseId}`);
+                // in-portal
+                triggerSurvey("payment_success", () => {
+                  history.push(`${path}/e-filing-payment?caseId=${caseId}`);
+                });
               }}
             />
           ) : (
@@ -121,11 +126,15 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onButtonClick={() => {
-              history.push(`/${window?.contextPath}/citizen/dristi/home`);
+              // in-portal
+              triggerSurvey("payment_success", () => {
+                history.push(`/${window?.contextPath}/citizen/dristi/home`);
+              });
             }}
           />
         </div>
       </div>
+      {SurveyUI}
     </div>
   );
 }
