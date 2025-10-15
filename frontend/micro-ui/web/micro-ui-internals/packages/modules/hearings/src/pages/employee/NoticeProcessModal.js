@@ -97,7 +97,7 @@ function groupOrdersByParty(filteredOrders) {
   return accusedWiseOrdersList;
 }
 
-const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseDetails }) => {
+const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseDetails, showModal = true }) => {
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
@@ -113,20 +113,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `dristi-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -134,11 +121,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const hearingDetails = useMemo(() => {
@@ -171,10 +159,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -185,7 +173,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     const filteredOrders = ordersData?.list?.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
         return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT"].includes(item?.orderType))
+          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType))
           ?.map((item) => ({
             ...order,
             orderType: item?.orderType,
@@ -194,7 +182,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             itemId: item?.id,
           }));
       } else {
-        return ["NOTICE", "SUMMONS", "WARRANT"].includes(order?.orderType) ? [order] : [];
+        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType) ? [order] : [];
       }
     });
 
@@ -322,52 +310,62 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return partyName.replace(/\s*\(Accused\)$/, "");
   }
 
-  return (
-    <React.Fragment>
-      <Modal
-        isOpen={true}
-        headerBarEnd={<CloseButton onClick={handleCloseModal} />}
-        popupStyles={modalPopup}
-        popupModuleActionBarStyles={{
-          display: "none",
-        }}
-        formId="modal-action"
-        headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
-        popupModuleMianStyles={{
-          height: "calc(100% - 90px)",
-          overFlowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <div className="summon-modal" style={{ width: "100%" }}>
-          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
-            {orderListFiltered.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  setActiveIndex({ partyIndex: index, orderIndex: 0 });
-                  setOrderLoading(true);
-                  setOrderList(item?.ordersList);
-                  setOrderNumber(item?.ordersList?.[0]?.orderNumber);
-                  setOrderType(item?.ordersList?.[0]?.orderType);
-                  setOrderId(item?.ordersList?.[0]?.id);
-                  setItemId(item?.ordersList?.[0]?.itemId);
-                  setTimeout(() => {
-                    setOrderLoading((prev) => !prev);
-                  }, 0);
-                }}
-                className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
-              >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span>{removeAccusedSuffix(item?.partyName)}</span>
-                  <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
-                </div>
-              </div>
-            ))}
+  const modalContent = (
+    <div className="summon-modal" style={{ width: "100%" }}>
+      {!showModal && (
+        <h1 className="heading-m" style={{ margin: 0 }}>
+          {t("PROCESS_SUMMARY")}
+        </h1>
+      )}
+      <div className="rounds-of-delivery" style={{ cursor: "pointer", margin: "24px 0px" }}>
+        {orderListFiltered.map((item, index) => (
+          <div
+            key={index}
+            onClick={() => {
+              setActiveIndex({ partyIndex: index, orderIndex: 0 });
+              setOrderLoading(true);
+              setOrderList(item?.ordersList);
+              setOrderNumber(item?.ordersList?.[0]?.orderNumber);
+              setOrderType(item?.ordersList?.[0]?.orderType);
+              setOrderId(item?.ordersList?.[0]?.id);
+              setItemId(item?.ordersList?.[0]?.itemId);
+              setTimeout(() => {
+                setOrderLoading((prev) => !prev);
+              }, 0);
+            }}
+            className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
+            style={{
+              fontWeight: index === activeIndex?.partyIndex ? "700" : "400",
+              margin: 0,
+              paddingRight: index === orderListFiltered?.length - 1 ? "0px" : "16px",
+              paddingBottom: 0,
+              paddingLeft: "0px",
+              borderBottom: "1px solid #6F767E",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "8px",
+                paddingBottom: "1rem",
+                borderBottom: index === activeIndex?.partyIndex ? "3px solid #0A5757" : "",
+              }}
+            >
+              <span style={{ color: index === activeIndex?.partyIndex ? "#0A5757" : "#6F767E" }}>
+                {item?.partyType} {item?.partyType === "Accused" && index + 1}
+              </span>
+              <span style={{ color: index === activeIndex?.partyIndex ? "#0A5757" : "#6F767E" }}>{`(${removeAccusedSuffix(item?.partyName)})`}</span>
+            </div>
           </div>
-          {caseInfo}
-          <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
-          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+        ))}
+      </div>
+      {orderListFiltered?.length === 0 && <h1 style={{ marginLeft: "15px" }}>{t("NO_PROCESS_DONE_YET")}</h1>}
+      {showModal && caseInfo}
+      {orderListFiltered?.length > 0 && (
+        <React.Fragment>
+          {/* <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1> */}
+          <div className="rounds-of-delivery" style={{ cursor: "pointer", margin: "24px 0px" }}>
             {orderList.map((item, index) => (
               <div
                 key={index}
@@ -383,6 +381,21 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                   }, 0);
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
+                style={{
+                  gap: "4px",
+                  fontWeight: "400",
+                  height: "40px",
+                  paddingTop: "12px",
+                  paddingRight: "16px",
+                  paddingBottom: "12px",
+                  paddingLeft: "16px",
+                  borderWidth: "1px",
+                  borderRadius: "4px",
+                  backgroundColor: index === activeIndex?.orderIndex ? "#59A9A91A" : "white",
+                  borderColor: index === activeIndex?.orderIndex ? "#007E7E" : "#B5B5B5",
+                  marginRight: "18px",
+                  color: "black",
+                }}
               >
                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
                   <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
@@ -392,14 +405,15 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
           </div>
 
           {orderList?.[activeIndex?.orderIndex] && (
-            <div className="case-info" style={{ height: "auto" }}>
-              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
-                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                  <span>{t("ORDER_ISSUED_ON")}</span>
+            <div className="case-info" style={{ height: "auto", padding: "16px 12px", fontSize: "16px", margin: "24px 0px", width: "100%" }}>
+              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px", flexDirection: "row" }}>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("ORDER_ISSUED_ON")}:</span>
                   <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
                 </div>
-                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                  <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
+                <hr className="vertical-line" />
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
                   <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
                 </div>
               </div>
@@ -407,7 +421,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 <a
                   href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
                   className="case-info-link"
-                  style={{ color: "black" }}
+                  style={{ color: "#0A7E7E", fontWeight: "600" }}
                 >
                   {t("View Order")}
                 </a>
@@ -432,10 +446,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               }}
             />
           )}
-          {isButtonVisible && currentHearingId && userType === "employee" && (
-            <div className="action-buttons" style={actionButtonStyle}>
+          {/* {isButtonVisible && currentHearingId && userType === "employee" && (
+            <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
               <Button
-                label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+                label={`Re-Issue ${t(orderType)}`}
                 onButtonClick={() => {
                   handleNavigate();
                 }}
@@ -447,9 +461,34 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 textStyles={headingStyle}
               />
             </div>
-          )}
-        </div>
-      </Modal>
+          )} */}
+        </React.Fragment>
+      )}
+    </div>
+  );
+
+  return (
+    <React.Fragment>
+      {showModal ? (
+        <Modal
+          isOpen={true}
+          headerBarEnd={<CloseButton onClick={handleCloseModal} />}
+          popupStyles={modalPopup}
+          popupModuleActionBarStyles={{ display: "none" }}
+          formId="modal-action"
+          headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
+          popupModuleMianStyles={{
+            height: "calc(100% - 90px)",
+            overFlowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          {modalContent}
+        </Modal>
+      ) : (
+        <div>{modalContent}</div>
+      )}
+
       {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
     </React.Fragment>
   );

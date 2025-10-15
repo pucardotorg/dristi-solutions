@@ -1,0 +1,28 @@
+{
+  "tenantId": "kl",
+  "moduleName": "CaseManagement",
+  "masterName": "case_bundle_state_master",
+  "mdmsPayload": [
+    {
+      "id": "779955ab-6a2f-4925-8d62-fea0c67fe3ad",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "14",
+      "data": {
+        "id": "14",
+        "state": "COMPLETED",
+        "topic": "save-wf-transition",
+        "moduleName": "task",
+        "businessservice": "task-generic",
+        "isDelayRequired": true
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1751284591644,
+        "lastModifiedTime": 1751284591644
+      }
+    }
+  ]
+}

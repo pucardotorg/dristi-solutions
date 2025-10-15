@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -17,6 +17,7 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import { use } from "react";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
@@ -71,8 +72,10 @@ const delayCondonationTextStyle = {
 
 function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const history = useHistory();
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const caseId = searchParams.get("caseId");
@@ -87,6 +90,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [comment, setComment] = useState("");
   const [commentSendBack, setCommentSendBack] = useState("");
   const [toastMsg, setToastMsg] = useState(null);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const [loading, setLoading] = useState(false);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -135,6 +144,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       criteria: [
         {
           caseId: caseId,
+          ...(inViewCase && userInfoType === "employee" && courtId && { courtId }),
         },
       ],
       tenantId,
@@ -261,6 +271,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const isDisabled = useMemo(() => totalErrors?.total > 0);
 
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
+
+  const transformedData = useCallback(
+    (input) => {
+      if (input?.key === "witnessDetails") {
+        return (caseDetails?.witnessDetails || [])?.map((details) => ({
+          data: { ...(details || {}) },
+        }));
+      }
+      return caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+    },
+    [caseDetails]
+  );
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
@@ -408,7 +430,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                     } else
                       return {
                         ...input,
-                        data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
+                        data: transformedData(input),
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                   }),
@@ -418,21 +440,22 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
+  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
 
   const primaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_REGISTER_CASE";
     }
     //write admission condition here
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
   const secondaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_SEND_BACK";
     }
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
 
   const updateCaseDetails = async (action, filterSigned = false) => {
+    setLoading(true);
     let filteredDocuments = caseDetails?.documents;
     if (filterSigned) {
       filteredDocuments = caseDetails?.documents?.filter(
@@ -482,14 +505,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handlePrimaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       // setActionModal("sendCaseBackPotential");
       setActionModal("registerCase");
     }
     // Write isAdmission condition here
   };
   const handleSecondaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       setActionModal("sendCaseBack");
     }
     // Write isAdmission condition here
@@ -503,7 +526,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+    const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
@@ -590,12 +613,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
   const handleRegisterCase = () => {
     updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
-      setActionModal("caseRegisterSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseRegisterSuccess");
+      }, 2000);
     });
   };
   const handleSendCaseBack = () => {
     updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
-      setActionModal("caseSendBackSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseSendBackSuccess");
+      }, 2000);
     });
   };
   const handlePotentialConfirm = () => {
@@ -672,8 +701,8 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     );
   };
 
-  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
+    history.push(homePath);
   }
 
   const Heading = (props) => {
@@ -848,6 +877,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "sendCaseBack" && (
             <SendCaseBackModal
+              loading={loading}
               comment={commentSendBack}
               setComment={setCommentSendBack}
               actionCancelLabel={"CS_COMMON_BACK"}
@@ -862,6 +892,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "registerCase" && (
             <SendCaseBackModal
+              loading={loading}
               comment={comment}
               setComment={setComment}
               actionCancelLabel={"CS_COMMON_BACK"}

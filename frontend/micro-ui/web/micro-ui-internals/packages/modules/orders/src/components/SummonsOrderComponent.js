@@ -7,6 +7,8 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import { Toast } from "@egovernments/digit-ui-components";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -219,6 +221,8 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
+  const courtId = localStorage.getItem("courtId");
+  const [showErrorToast, setShowErrorToast] = useState(null);
   const [deliveryChannels, setDeliveryChannels] = useState([
     { label: "SMS", type: "SMS", code: "SMS", values: [] },
     { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
@@ -239,13 +243,13 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
 
   const { data: caseData, refetch } = useSearchCaseService(
     {
-      criteria: [{ filingNumber: filingNumber }],
+      criteria: [{ filingNumber: filingNumber, ...(courtId && { courtId }) }],
       tenantId,
     },
     {},
     `dristi-${filingNumber}`,
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && courtId)
   );
   const caseDetails = useMemo(
     () => ({
@@ -275,12 +279,25 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     }));
   };
 
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
   useEffect(() => {
     const fetchUsers = async () => {
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
+        const witnessData = caseDetails?.witnessDetails || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -302,18 +319,18 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           },
         }));
         const updatedWitnessData = witnessData.map((item, index) => ({
-          ...item,
           data: {
-            ...item?.data,
-            firstName: item?.data?.firstName,
-            lastName: item?.data?.lastName,
-            witnessDesignation: item?.data?.witnessDesignation,
-            address: mapAddressDetails(item?.data?.addressDetails),
+            ...item,
+            firstName: item?.firstName,
+            lastName: item?.lastName,
+            witnessDesignation: item?.witnessDesignation,
+            address: mapAddressDetails(item?.addressDetails),
             partyType: "Witness",
-            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-            email: item?.data?.emails?.emailId || [],
-            uuid: item?.data?.uuid,
+            phone_numbers: item?.phonenumbers?.mobileNumber || [],
+            email: item?.emails?.emailId || [],
+            uuid: item?.uuid,
             partyIndex: `Witness_${index}`,
+            ownerType: item?.ownerType,
           },
         }));
         users = [...updatedRespondentData, ...updatedWitnessData];
@@ -543,7 +560,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
-              {
+              {input?.addWitness && (
                 <Button
                   onButtonClick={handleAddParty}
                   className="add-party-btn"
@@ -567,7 +584,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                   }}
                   label={t("+ Add new witness")}
                 />
-              }
+              )}
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -583,17 +600,19 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
+        <AddWitnessModal
           tenantId={tenantId}
-          caseData={caseData}
+          onCancel={handleAddParty}
+          caseDetails={caseDetails}
+          isEmployee={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+          showToast={setShowErrorToast}
+        ></AddWitnessModal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

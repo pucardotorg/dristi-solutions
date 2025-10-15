@@ -6,7 +6,6 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "./AdmittedCases/AdmittedCase";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
 import PaymentInbox from "./Payment/PaymentInbox";
@@ -16,6 +15,7 @@ import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
+import AdmittedCaseV2 from "./AdmittedCases/AdmittedCaseV2";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -25,12 +25,11 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
   const roles = window?.Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
+  const isJudge = roles?.some((role) => role.code === "CASE_APPROVER");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
@@ -51,16 +50,25 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
     {
-      path: `${path}/registration-requests`,
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
       content: t("ES_REGISTRATION_REQUESTS"),
       show: location.pathname.includes("/registration-requests"),
       isLast: !location.pathname.includes("/details"),
+      homeActiveTab: "REGISTER_USERS",
     },
     {
-      path: `${path}/pending-payment-inbox`,
-      content: t("CS_PENDING_PAYMENT_INBOX"),
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_OFFLINE_PAYMENTS"),
       show: location.pathname.includes("/pending-payment-inbox"),
-      isLast: !location.pathname.includes("/pending-payment-inbox"),
+      isLast: !location.pathname.includes("/pending-payment-details"),
+      homeActiveTab: "OFFLINE_PAYMENTS",
+    },
+    {
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_SCRUTINISE_CASES"),
+      show: location.pathname.includes("dristi/case"),
+      isLast: false,
+      homeActiveTab: "SCRUTINISE_CASES",
     },
     {
       path: `${path}/pending-payment-inbox/pending-payment-details`,
@@ -75,9 +83,17 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
   ];
-  const showBreadCrumbs = useMemo(() => location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true, [
-    location.pathname,
-  ]);
+  const showBreadCrumbs = useMemo(
+    () =>
+      location.pathname.includes("/review-litigant-details")
+        ? true
+        : location.pathname.includes("/view-case")
+        ? false
+        : location.pathname.includes("/admission")
+        ? false
+        : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
+    [location.pathname]
+  );
   if (result) {
     sessionStorage.setItem("isSignSuccess", result);
   }
@@ -111,13 +127,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
           <PrivateRoute exact path={`${path}/registration-requests`} component={Inbox} />
           <PrivateRoute exact path={`${path}/registration-requests/details`} component={(props) => <ApplicationDetails {...props} />} />
-          <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} />
+          {/* <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} /> */}
           <PrivateRoute exact path={`${path}/pending-payment-inbox/response`} component={EFilingPaymentResponse} />
           <PrivateRoute exact path={`${path}/pending-payment-inbox/pending-payment-details`} component={ViewPaymentDetails} />
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases />} />
+          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCaseV2 />} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

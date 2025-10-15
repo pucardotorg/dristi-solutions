@@ -141,8 +141,8 @@ public class PublishOrder implements OrderUpdateStrategy {
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
                 .caseNumber(courtCase.getCmpNumber())
                 .caseId(courtCase.getId().toString())
-                .courtId(configuration.getCourtId())  // take confirmation
-                .businessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()))
+                .courtId(courtCase.getCourtId())
+                .businessOfDay(orderUtil.getBusinessOfTheDay(order,requestInfo))
                 .referenceId(order.getOrderNumber())
                 .referenceType("Order")
                 .hearingDate(hearingDate)

@@ -92,4 +92,7 @@ public class ServiceConstants {
 
     public static final String msgId = "1730882648558|en_IN";
 
+    public static final String COMMON_MASTER_MODULE = "common-masters";
+    public static final String COURT_ROOM_MASTER = "Court_Rooms";
+
 }

@@ -468,7 +468,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const respondentMobileNumbersArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
@@ -478,21 +478,21 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+      ?.map((data) => {
+        return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const respondentEmailsArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -502,14 +502,14 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
+      ?.map((data) => {
+        return data?.emails?.emailId;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
@@ -824,10 +824,10 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
-        if(!numberOfAdvocates) {
+        if (!numberOfAdvocates) {
           isNumberOfAdvocatesMissing = true;
         }
-        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
           isAdvocateCountDiffer = true;
         }
       }
@@ -1037,7 +1037,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
           const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
           return (
             isEmpty ||
-            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+            !address?.[addressKey]?.[data?.name]?.match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
           );
         })
       )
@@ -1060,7 +1060,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         );
         return (
           isEmpty ||
-          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]?.match(
             window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
           )
         );
@@ -1075,7 +1075,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
           return (
             isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name].match(
+            !formData?.poaAddressDetails?.[data?.name]?.match(
               window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
             )
           );
@@ -1176,6 +1176,12 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       }
     }
 
+    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
     return hasError;
   } else {
     return false;
@@ -1200,7 +1206,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
     : {};
   const identifierType = documentData
     ? isComplainant
-      ? data?.complainantId?.complainantId?.selectIdTypeType?.type
+      ? data?.complainantId?.complainantId?.selectIdTypeType?.type || data?.complainantId?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
   let Individual = {
@@ -1239,6 +1245,9 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -1627,6 +1636,25 @@ export const updateCaseDetails = async ({
     }
   };
 
+  function transformFileData(inputArray, tenantId = "kl", fileType = "application/pdf") {
+    if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
+
+    const { fileStore, documentName } = inputArray[0];
+
+    return {
+      file: {
+        files: [
+          {
+            fileStoreId: fileStore,
+            tenantId,
+          },
+        ],
+      },
+      fileType,
+      filename: documentName,
+    };
+  }
+
   if (selected === "complainantDetails") {
     let litigants = [];
     let poaHolders = [];
@@ -1641,7 +1669,10 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.complainantVerification?.individualDetails?.document) {
+            if (
+              data?.data?.complainantVerification?.individualDetails?.document &&
+              data?.data?.complainantVerification?.individualDetails?.individualId
+            ) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1712,12 +1743,19 @@ export const updateCaseDetails = async ({
             } else {
               if (data?.data?.complainantId?.complainantId && data?.data?.complainantVerification?.isUserVerified) {
                 if (data?.data?.complainantId?.verificationType !== "AADHAR") {
-                  const documentData = await onDocumentUpload(
-                    documentsTypeMapping["complainantId"],
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                    tenantId
-                  );
+                  let documentData = {};
+
+                  if (data?.data?.complainantVerification?.individualDetails?.document) {
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document);
+                  } else {
+                    documentData = await onDocumentUpload(
+                      documentsTypeMapping["complainantId"],
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                      tenantId
+                    );
+                  }
+
                   litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
@@ -2159,6 +2197,8 @@ export const updateCaseDetails = async ({
           const poaIdProof = {
             poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
+
+          const userSelectedIdType = isCompleted ? null : data?.data?.complainantId?.complainantId?.selectIdTypeType;
           const individualDetails = {};
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2189,6 +2229,7 @@ export const updateCaseDetails = async ({
                   },
                 ],
               ],
+              ...(userSelectedIdType && { selectIdTypeType: userSelectedIdType }),
             };
             docList.push(doc);
             individualDetails.document = [uploadedData];
@@ -2709,6 +2750,10 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {
@@ -3004,7 +3049,10 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+            let updatedAdvocateDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedAdvocateDetails.vakalatnamaFileUpload = vakalatnamaDocumentData?.vakalatnamaFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedAdvocateDetails);
           }
           const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
           if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
@@ -3029,7 +3077,11 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+            let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedPipDetails);
+            // setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
           }
           const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
           updateTempDocListMultiForm(docList, advocateDetailsDocTypes);
@@ -3278,6 +3330,7 @@ export const updateCaseDetails = async ({
     }
     return doc;
   });
+  const updatedData = transformCaseDataForUpdate(data, "witnessDetails");
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3285,7 +3338,7 @@ export const updateCaseDetails = async ({
         ...caseDetails,
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-        ...data,
+        ...updatedData,
         documents: updatedTempDocList,
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
@@ -3300,4 +3353,55 @@ export const updateCaseDetails = async ({
     },
     tenantId
   );
+};
+
+export const transformCaseDataForFetching = (caseDetails, key) => {
+  if (key === "witnessDetails" && caseDetails?.witnessDetails?.length > 0) {
+    let updatedCaseData = structuredClone(caseDetails || {});
+    updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+    let isCompleted = true;
+
+    const formdata = (caseDetails?.witnessDetails).map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
+      if (!uiData?.isCompleted) {
+        isCompleted = false;
+      }
+      return {
+        data: witnessFormData,
+        isenabled: uiData?.isenabled,
+        displayindex: uiData?.displayIndex || 0,
+        uniqueId,
+      };
+    });
+
+    updatedCaseData.additionalDetails[key] = {
+      formdata,
+      ...(isCompleted && { isCompleted }),
+    };
+    return updatedCaseData;
+  }
+  return caseDetails;
+};
+
+export const transformCaseDataForUpdate = (caseDetails, key) => {
+  const updatedCaseData = structuredClone(caseDetails || {});
+
+  if (key === "witnessDetails") {
+    const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
+    if (formdata?.length > 0) {
+      const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+        return {
+          ...data,
+          uniqueId,
+          uiData: {
+            isenabled,
+            displayIndex: displayindex,
+            isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
+          },
+        };
+      });
+      delete updatedCaseData.additionalDetails[key];
+      updatedCaseData.witnessDetails = witnessDetails;
+    }
+  }
+  return updatedCaseData;
 };
