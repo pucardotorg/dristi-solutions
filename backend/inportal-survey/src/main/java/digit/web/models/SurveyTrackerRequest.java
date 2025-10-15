@@ -11,7 +11,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * FeedBackRequest
+ * SurveyTrackerRequest
  */
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-10-14T19:19:54.104875784+05:30[Asia/Kolkata]")
@@ -19,15 +19,16 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FeedBackRequest {
+public class SurveyTrackerRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
-    private RequestInfo requestInfo;
+    @NotNull
+    private RequestInfo requestInfo = null;
 
-    @JsonProperty("feedBack")
+    @JsonProperty("surveyTracker")
     @Valid
     @NotNull
-    private FeedBack feedBack;
+    private SurveyTracker surveyTracker = null;
 
 }

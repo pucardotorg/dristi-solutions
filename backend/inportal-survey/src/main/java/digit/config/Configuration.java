@@ -15,8 +15,25 @@ import org.springframework.stereotype.Component;
 @Getter
 public class Configuration {
 
-    @Value("${egov.user.host}")
-    private String userHost;
+    @Value("${create.survey.tracker.topic}")
+    private String createSurveyTrackerTopic;
 
+    @Value("${update.survey.tracker.topic}")
+    private String updateSurveyTrackerTopic;
+
+    @Value("${update.expiry.date.topic}")
+    private String updateExpiryDateTopic;
+
+    @Value("${create.feed.back.topic}")
+    private String createFeedBackTopic;
+
+    @Value("${max.no.of.attempts}")
+    private Integer maxNoOfAttempts;
+
+    @Value("${no.of.days.for.remind.me.later}")
+    private Long noOfDaysForRemindMeLater;
+
+    @Value("${no.of.days.for.expiry.after.feed.back}")
+    private Long noOfDaysForExpiryAfterFeedBack;
 
 }

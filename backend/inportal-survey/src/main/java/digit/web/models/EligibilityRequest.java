@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
@@ -20,8 +21,9 @@ import lombok.Builder;
 @Builder
 public class EligibilityRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     @Valid
+    @NotNull
     private RequestInfo requestInfo = null;
 
 }

@@ -1,6 +1,5 @@
 package digit.web.models;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +11,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * FeedBack
+ * SurveyTracker
  */
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-10-14T19:19:54.104875784+05:30[Asia/Kolkata]")
@@ -20,31 +19,36 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FeedBack {
+public class SurveyTracker {
 
-    @JsonProperty("uuid")
+    @JsonProperty("userUuid")
     @Valid
-    private String uuid;
+    @NotNull
+    private String userUuid = null;
 
     @JsonProperty("tenantId")
     @Valid
-    private String tenantId;
-
-    @JsonProperty("rating")
-    @Valid
     @NotNull
-    private Rating rating;
+    private String tenantId = null;
 
-    @JsonProperty("feedback")
+    @JsonProperty("userType")
     @Valid
-    private String feedback;
+    private String userType = null;
 
-    @JsonProperty("category")
+    @JsonProperty("remindMeLater")
     @Valid
-    private String category;
+    private Boolean remindMeLater = null;
+
+    @JsonProperty("expiryDate")
+    @Valid
+    private Long expiryDate = null;
+
+    @JsonProperty("attempts")
+    @Valid
+    private Integer attempts = null;
 
     @JsonProperty("auditDetails")
     @Valid
-    private AuditDetails auditDetails;
+    private AuditDetails auditDetails = null;
 
 }
