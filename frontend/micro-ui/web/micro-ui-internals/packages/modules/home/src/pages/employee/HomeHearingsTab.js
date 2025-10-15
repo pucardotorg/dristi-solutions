@@ -689,7 +689,7 @@ const HomeHearingsTab = ({
             </span> */}
             <input
               className="home-input"
-              placeholder="Search Case name or number"
+              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")} 
               type="text"
               style={{ width: "280px" }}
               value={filters?.caseQuery}
