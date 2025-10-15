@@ -173,7 +173,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     const filteredOrders = ordersData?.list?.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
         return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT"].includes(item?.orderType))
+          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType))
           ?.map((item) => ({
             ...order,
             orderType: item?.orderType,
@@ -182,7 +182,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             itemId: item?.id,
           }));
       } else {
-        return ["NOTICE", "SUMMONS", "WARRANT"].includes(order?.orderType) ? [order] : [];
+        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType) ? [order] : [];
       }
     });
 
@@ -446,10 +446,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               }}
             />
           )}
-          {isButtonVisible && currentHearingId && userType === "employee" && (
+          {/* {isButtonVisible && currentHearingId && userType === "employee" && (
             <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
               <Button
-                label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+                label={`Re-Issue ${t(orderType)}`}
                 onButtonClick={() => {
                   handleNavigate();
                 }}
@@ -461,7 +461,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 textStyles={headingStyle}
               />
             </div>
-          )}
+          )} */}
         </React.Fragment>
       )}
     </div>

@@ -2,21 +2,21 @@ import React from "react";
 
 const sharedStyle = {
   fontSize: 16,
-  fontWeight: 400,
   display: "flex",
   alignItems: "center",
-  color: "#77787B",
   cursor: "pointer",
-  padding: "10px 16px 10px 32px",
+  padding: "8px",
   background: "#F9FAFB",
-  borderTop: "1px solid #E6E6E6",
 };
 
 const SidebarItem = ({ t, label, count, active, onClick, href }) => {
   const style = {
     ...sharedStyle,
     // borderLeft: active ? "4px solid #f47738" : "none",
+    fontWeight: active ? 600 : 400,
+    color: active ? "#231F20" : "#3D3C3C",
     background: active ? "#E8E8E8" : "#F9FAFB",
+    borderRadius: active ? "4px" : "0px",
     textDecoration: "none",
   };
 

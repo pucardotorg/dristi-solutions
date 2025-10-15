@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.ServiceCallException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.BulkReschedule;
 import org.pucar.dristi.web.models.OpenHearing;
 import org.pucar.dristi.web.models.inbox.*;
 import org.springframework.stereotype.Component;
@@ -180,6 +181,36 @@ public class InboxUtil {
 
         return InboxRequest.builder()
                 .RequestInfo(requestInfo)
+                .inbox(inboxSearchCriteria)
+                .build();
+    }
+
+    public InboxRequest getInboxRequestForOpenHearing(BulkReschedule bulkReschedule) {
+
+        Long fromDate = bulkReschedule.getStartTime();
+        Long toDate = bulkReschedule.getEndTime();
+        String searchableFields = bulkReschedule.getSearchableFields();
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        moduleSearchCriteria.put("fromDate", fromDate);
+        moduleSearchCriteria.put("searchableFields", searchableFields);
+        moduleSearchCriteria.put("toDate", toDate);
+        moduleSearchCriteria.put("status", configuration.getHearingStatusesToFilter());
+        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .moduleName("Hearing Service")
+                .tenantId(bulkReschedule.getTenantId())
+                .businessService(Collections.singletonList("hearing-default"))
+                .build();
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .processSearchCriteria(processSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .tenantId(bulkReschedule.getTenantId())
+                .limit(300)
+                .offset(0)
+                .build();
+
+        return InboxRequest.builder()
                 .inbox(inboxSearchCriteria)
                 .build();
     }
