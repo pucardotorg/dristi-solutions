@@ -54,7 +54,7 @@ const TasksComponent = ({
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const hasViewSignOrderAccess = userInfo?.roles?.some((role) => role.code === "VIEW_SIGN_ORDERS");
+  const hasSignOrderAccess = userInfo?.roles?.some((role) => role.code === "ORDER_ESIGN");
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
@@ -692,7 +692,7 @@ const TasksComponent = ({
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
-        {hasViewSignOrderAccess && pendingSignOrderList && (
+        {hasSignOrderAccess && pendingSignOrderList && (
           <Button
             label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
             textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}

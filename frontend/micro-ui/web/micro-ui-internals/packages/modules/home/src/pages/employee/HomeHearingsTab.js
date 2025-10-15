@@ -478,8 +478,10 @@ const HomeHearingsTab = ({
 
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
+      const offset = page * rowsPerPage;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
+          <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
           <td>
             <Link
               to={{
@@ -492,7 +494,7 @@ const HomeHearingsTab = ({
             </Link>
           </td>
           <td>{hearingDetails?.caseNumber || "-"}</td>
-          <td style={{ whiteSpace: "pre-line", padding: "12px 0px" }}>
+          <td style={{ whiteSpace: "pre-line", padding: "12px 8px" }}>
             <div>
               <p data-tip data-for={`hearing-list`}>
                 {hearingDetails?.advocate?.complainant?.length > 0 &&
@@ -687,7 +689,7 @@ const HomeHearingsTab = ({
             </span> */}
             <input
               className="home-input"
-              placeholder="Search Case name or number"
+              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")} 
               type="text"
               style={{ width: "280px" }}
               value={filters?.caseQuery}
@@ -747,6 +749,7 @@ const HomeHearingsTab = ({
           <table className="main-table">
             <thead>
               <tr>
+                <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
                 <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>

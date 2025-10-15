@@ -414,7 +414,7 @@ export const UICustomizations = {
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
         }),
-        ...(requestCriteria?.state?.searchForm?.outcome && {
+        ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
         ...(requestCriteria?.state?.searchForm?.substage && {
@@ -502,7 +502,6 @@ export const UICustomizations = {
           }),
           {}
         );
-      // Remove UI-only fields that should not be sent to backend as-is
       if (filterList?.channel) delete filterList.channel;
       if (filterList?.deliveryChannel) delete filterList.deliveryChannel;
       if (filterList?.hearingDate) delete filterList.hearingDate;
@@ -516,9 +515,6 @@ export const UICustomizations = {
         },
       });
       let completeStatusData = requestCriteria.body?.criteria?.completeStatus || [];
-      if (completeStatusData?.length === 0 || (typeof completeStatusData === "object" && !Array.isArray(completeStatusData))) {
-        completeStatusData = sentData;
-      }
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
       const courtId = requestCriteria?.body?.criteria?.courtId;
@@ -528,6 +524,12 @@ export const UICustomizations = {
       const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
       const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
+      const compStatus = searchForm?.compStatus?.code || "";
+      if (Array.isArray(completeStatusData)) {
+        completeStatusData = compStatus ? [compStatus] : completeStatusData;
+      } else {
+        completeStatusData = compStatus ? [compStatus] : sentData;
+      }
       let resolvedApplicationStatus = "";
       if (activeTabIndex === 0) resolvedApplicationStatus = "SIGN_PENDING";
       else if (activeTabIndex === 1) resolvedApplicationStatus = "SIGNED";
@@ -595,6 +597,15 @@ export const UICustomizations = {
               style={{
                 textDecoration: "underline",
                 cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
               }}
             >{`${row?.caseName}`}</span>
           );

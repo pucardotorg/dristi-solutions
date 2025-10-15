@@ -8,7 +8,7 @@ import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
 import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 
-const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/0020f4d2-9d56-439b-bbaa-4c7ab391eef1";
+const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/981a30b4-c33a-4f11-96a6-1242d95717e2";
 
 const DashboardPage = () => {
   const { t } = useTranslation();
@@ -140,7 +140,7 @@ const DashboardPage = () => {
   const baseUrl = window.location.origin;
 
   const handleClick = () => {
-    history.push(`/${window?.contextPath}/${userInfoType}/home/dashboard/adiary`);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
   };
 
   const { data: kibanaData, isLoading: isDashboardJobIDsLoading } = Digit.Hooks.useCustomMDMS(
@@ -303,7 +303,7 @@ const DashboardPage = () => {
                       onClick={() => {
                         setStepper(1);
                         setHeadingTxt(data.code + "_HEADING");
-                        setMetabaseUrl(data.code === "HEARINGS_DS" ? `${METABASE_URL}?tab=89-hearings-progress` : METABASE_URL);
+                        setMetabaseUrl(data.code === "HEARINGS_DS" ? `${METABASE_URL}?tab=122-hearings-progress` : METABASE_URL);
                         setJobID(data.jobId);
                       }}
                     >
