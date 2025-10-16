@@ -59,7 +59,7 @@ for hub, pins in postal_hub.items():
 
     try:
         response = requests.post(url, headers=headers, json=body)
-        if response.status_code == 200:
+        if response.status_code == 202:
             print(f"✅ Successfully created hub: {hub}")
         else:
             print(f"❌ Failed for {hub}: {response.status_code} - {response.text}")
