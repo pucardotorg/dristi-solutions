@@ -11,8 +11,8 @@ public class InPortalSurveyUtil {
         return System.currentTimeMillis();
     }
 
-    public Long getExpiryTimeInMilliSec(Long noOfDays) {
-        return getCurrentTimeInMilliSec() + noOfDays * 24 * 60 * 60 * 1000;
+    public Long getExpiryTimeInMilliSec(Long noOfDaysInMilliSec) {
+        return getCurrentTimeInMilliSec() + noOfDaysInMilliSec;
     }
 
     public UUID generateUUID() {

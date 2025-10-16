@@ -75,10 +75,11 @@ public class InPortalSurveyService {
             existingTracker = enrichment.enrichSurveyTrackerForEligibilityCheck(request, existingTracker);
 
             SurveyTrackerRequest trackerRequest = buildSurveyTrackerRequest(request.getRequestInfo(), existingTracker);
-            producer.push(config.getUpdateSurveyTrackerTopic(), trackerRequest);
 
             // Step 4: Validate eligibility
             boolean isEligible = validations.validateEligibility(existingTracker);
+
+            producer.push(config.getUpdateSurveyTrackerTopic(), trackerRequest);
 
             log.info("Survey tracker updated successfully for userUuid={}, eligibility={}", userUuid, isEligible);
             return Eligibility.builder().isEligible(isEligible).build();

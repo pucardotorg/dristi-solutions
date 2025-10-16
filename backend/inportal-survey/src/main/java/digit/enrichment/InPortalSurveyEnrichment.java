@@ -47,7 +47,6 @@ public class InPortalSurveyEnrichment {
                 .userUuid(userUuid)
                 .userType(getUserType(eligibilityRequest.getRequestInfo()))
                 .tenantId(eligibilityRequest.getRequestInfo().getUserInfo().getTenantId())
-                .attempts(1)
                 .auditDetails(auditDetails)
                 .build();
 
@@ -55,8 +54,6 @@ public class InPortalSurveyEnrichment {
 
     public SurveyTracker enrichSurveyTrackerForEligibilityCheck(EligibilityRequest eligibilityRequest, SurveyTracker surveyTracker) {
 
-        surveyTracker.setAttempts((surveyTracker.getAttempts() + 1));
-        
         AuditDetails auditDetails = surveyTracker.getAuditDetails();
         if (auditDetails != null) {
             auditDetails.setLastModifiedBy(eligibilityRequest.getRequestInfo().getUserInfo().getUuid());
@@ -73,6 +70,7 @@ public class InPortalSurveyEnrichment {
 
         surveyTracker.setRemindMeLater(true);
         surveyTracker.setExpiryDate(expiryTime);
+        surveyTracker.setAttempts(0);
         
         AuditDetails auditDetails = surveyTracker.getAuditDetails();
         if (auditDetails != null) {

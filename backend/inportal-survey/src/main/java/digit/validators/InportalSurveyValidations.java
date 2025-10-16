@@ -67,13 +67,12 @@ public class InportalSurveyValidations {
 
         Integer maxNoOfAttempts = configuration.getMaxNoOfAttempts();
 
-        // this is edge case of closing the tab without performing any action just reached trigger points
-        if ((expiryDate == null || remindMeLater == null) && (attempts % maxNoOfAttempts == 0)) {
-            return true;
-        } else if (expiryDate == null) {
-            return attempts % maxNoOfAttempts == 0;
+        if (remindMeLater != null && remindMeLater) {
+            attempts = attempts +1;
+            surveyTracker.setAttempts(attempts);
+            return attempts > maxNoOfAttempts && expiryDate < currentTimeInMilliSec;
         } else {
-            return (expiryDate < currentTimeInMilliSec) && attempts % maxNoOfAttempts == 0;
+            return expiryDate == null || expiryDate < currentTimeInMilliSec;
         }
 
     }
