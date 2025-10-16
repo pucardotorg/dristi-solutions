@@ -1,0 +1,87 @@
+// NOTE : can be added through workbench
+[
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+      "paymentType": "Notice Post Process Fee",
+      "businessService": "task-notice",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_COURT_FEES",
+      "paymentType": "Notice Post Court Fee",
+      "businessService": "task-notice",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_SUMMON_ADVANCE_CARRYFORWARD_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_SUMMON_ADVANCE_CARRYFORWARD_COURT_FEES",
+      "paymentType": "Summons Post Court Fee",
+      "businessService": "task-summons",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : in activate this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_SUMMON_ADVANCE_CARRYFORWARD_I_POST",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_SUMMON_ADVANCE_CARRYFORWARD_I_POST",
+      "paymentType": "Summons Post Process Fee",
+      "businessService": "task-summons",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": false
+  },
+  // TODO : add this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_PROCESS_COURT_FEES",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_NOTICE_ADVANCE_CARRYFORWARD_POST_PROCESS_COURT_FEES",
+      "paymentType": "Notice Post Process Court Fee",
+      "businessService": "task-notice",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  // TODO : add this data
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_SUMMONS_ADVANCE_CARRYFORWARD_POST_PROCESS_COURT_FEES",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_SUMMONS_ADVANCE_CARRYFORWARD_POST_PROCESS_COURT_FEES",
+      "paymentType": "Summons Post Process Court Fee",
+      "businessService": "task-summons",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  }
+]
