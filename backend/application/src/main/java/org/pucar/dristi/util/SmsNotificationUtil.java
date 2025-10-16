@@ -48,6 +48,7 @@ public class SmsNotificationUtil {
             String owner = additionalData.get("onBehalOfName").asText();
             String party = getPartyTypeByName(caseDetails.get("litigants"), owner);
             JsonNode formData = additionalData.path("formdata");
+            String partyType = additionalData.get("partyType").asText();
 
             boolean isVoluntarySubmission = null == applicationRequest.getApplication().getReferenceId();
 
@@ -60,7 +61,8 @@ public class SmsNotificationUtil {
 
                 String receiver = getReceiverParty(smsTopic, party);
 
-                Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
+                boolean shouldMatchPartyType = !SUBMISSION_MADE.equalsIgnoreCase(messageCode);
+                Set<String> individualIds = extractIndividualIds(caseDetails, receiver, shouldMatchPartyType);
 
                 if (receiver != null && receiver.equalsIgnoreCase(COMPLAINANT)) {
                     extractPoaHoldersIndividualIds(caseDetails, individualIds);
@@ -74,6 +76,7 @@ public class SmsNotificationUtil {
                         .applicationType(applicationType)
                         .originalHearingDate(formData.has("initialHearingDate") ? formData.get("initialHearingDate").textValue() : "")
                         .reScheduledHearingDate(formData.has("changedHearingDate") ? formData.get("changedHearingDate").textValue() : "")
+                        .partyType(partyType)
                         .tenantId(applicationRequest.getApplication().getTenantId()).build();
 
                 for (String number : phoneNumbers) {
@@ -207,15 +210,17 @@ public class SmsNotificationUtil {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver, boolean shouldMatchPartyType) {
         Set<String> uuids = new HashSet<>();
-        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
+        String partyTypeToMatch = (shouldMatchPartyType && receiver != null && !receiver.isEmpty())
+                ? receiver.toLowerCase()
+                : null;
 
         JsonNode litigantNode = caseDetails.get("litigants");
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String partyType = node.get("partyType").asText().toLowerCase();
-                if (partyType.contains(partyTypeToMatch)) {
+                if (!shouldMatchPartyType || (partyTypeToMatch != null && partyType.contains(partyTypeToMatch))) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
                     if (!uuid.isEmpty()) {
                         uuids.add(uuid);
@@ -229,7 +234,7 @@ public class SmsNotificationUtil {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if (partyType.contains(partyTypeToMatch)) {
+                    if (!shouldMatchPartyType || (partyTypeToMatch != null && partyType.contains(partyTypeToMatch))) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
                         if (!uuid.isEmpty()) {
                             uuids.add(uuid);

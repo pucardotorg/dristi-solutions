@@ -286,6 +286,12 @@ public class Configuration {
 	@Value("${egov.sms.notification.reject.profile.request.template.id}")
 	private String smsNotificationRejectProfileRequestTemplateId;
 
+	@Value("${egov.sms.notification.errors.pending.template.id}")
+	private String smsNotificationErrorsPendingTemplateId;
+
+	@Value("${egov.sms.notification.vakalatnama.filed.template.id}")
+	private String smsNotificationVakalatnamaFiledTemplateId;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -431,4 +437,14 @@ public class Configuration {
     @Value("${lpr.sub.stage}")
     private String lprSubStage;
 
+	// Time config for async SMS
+	@Value("${egov.sms.case.filed.time}")
+	private String smsCaseFiledTime;
+
+	// Order
+	@Value("${egov.order.host}")
+	private String orderHost;
+
+	@Value("${egov.order.search.endpoint}")
+	private String orderSearchEndpoint;
 }

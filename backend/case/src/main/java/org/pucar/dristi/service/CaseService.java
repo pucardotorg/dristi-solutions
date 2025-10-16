@@ -1,12 +1,10 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +85,7 @@ public class CaseService {
     private final CaseUtil caseUtil;
 
     private final FileStoreUtil fileStoreUtil;
+    private final OrderUtil orderUtil;
 
 
     @Autowired
@@ -102,7 +101,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -125,6 +124,7 @@ public class CaseService {
         this.evidenceValidator = evidenceValidator;
         this.caseUtil = caseUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.orderUtil = orderUtil;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -1564,6 +1564,31 @@ public class CaseService {
                 joinCaseV2Response.setPaymentTaskNumber(taskResponse.getTask().getTaskNumber());
             }
 
+            List <RepresentingJoinCase> representingList = Optional.ofNullable(joinCaseRequest)
+                    .map(JoinCaseV2Request::getJoinCaseData)
+                    .map(JoinCaseDataV2::getRepresentative)
+                    .map(JoinCaseRepresentative::getRepresenting)
+                    .orElse(Collections.emptyList());
+
+            for(RepresentingJoinCase representing: representingList){
+                List<Document> documents = representing.getDocuments();
+                if(documents != null){
+                    documents.forEach(document -> {
+                        if(isDocumentVakalatnama(document)){
+                            String hearingDate = String.valueOf(getNextHearingDate(courtCase.getFilingNumber()));
+                            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                                    .cmpNumber(courtCase.getCmpNumber())
+                                    .courtCaseNumber(courtCase.getCourtCaseNumber())
+                                    .hearingDate(hearingDate)
+                                    .build();
+                            RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+                            callNotificationServiceForAdvocates(courtCase, requestInfo, VAKALATNAMA_FILED, smsTemplateData);
+                            callNotificationServiceForLitigants(courtCase, requestInfo, VAKALATNAMA_FILED, smsTemplateData);
+                        }
+                    });
+                }
+            }
+
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -1572,6 +1597,55 @@ public class CaseService {
         }
         joinCaseV2Response.setIsVerified(true);
         return joinCaseV2Response;
+    }
+
+    private boolean isDocumentVakalatnama(Document document) {
+        if (document.getAdditionalDetails() instanceof Map<?, ?> additionalDetailsMap) {
+            Object docName = additionalDetailsMap.get("documentName");
+            return VAKALATNAMA.equalsIgnoreCase(String.valueOf(docName));
+        }
+        return false;
+    }
+
+    public void callNotificationServiceForAdvocates(CourtCase courtCase, RequestInfo requestInfo, String messageCode, SmsTemplateData smsTemplateData) {
+        List<String> uuids = courtCase.getRepresentatives().stream()
+                .map(advocateMapping -> advocateMapping.getAuditDetails().getCreatedBy())
+                .toList();
+        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
+        individuals.forEach(individual -> {
+            notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, individual.getMobileNumber());
+        });
+    }
+
+    public void callNotificationServiceForLitigants(CourtCase courtCase, RequestInfo requestInfo, String messageCode, SmsTemplateData smsTemplateData) {
+        List<String> uuids = courtCase.getLitigants().stream()
+                .map(Party::getIndividualId)
+                .toList();
+        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
+        individuals.forEach(individual -> {
+            notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, individual.getMobileNumber());
+        });
+    }
+
+    private Long getNextHearingDate(String filingNumber) {
+        HearingCriteria criteria = HearingCriteria.builder()
+                .filingNumber(filingNumber)
+                .status(SCHEDULED)
+                .build();
+
+        // If multiple hearings are scheuled the earliest one is considered
+        Pagination pagination = Pagination.builder()
+                .sortBy("startTime")
+                .order(Order.ASC)
+                .build();
+
+        HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(pagination)
+                .build();
+
+        List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
+        return hearings.get(0).getStartTime();
     }
 
     private List<Calculation> getPaymentCalculations(JoinCaseV2Request joinCaseRequest, JoinCaseDataV2 joinCaseData, CourtCase courtCase) {

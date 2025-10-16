@@ -72,6 +72,11 @@ public class NotificationService {
         else {
             pushNotification(courtCase, message, individual, config.getSmsNotificationTemplateId());
         }
+
+        if(ERRORS_PENDING.equalsIgnoreCase(notificationStatus)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationErrorsPendingTemplateId());
+        }
+
     }
 
     private void pushNotification(CourtCase courtCase, String message, Individual individual, String templateId) {

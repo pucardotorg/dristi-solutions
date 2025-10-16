@@ -92,6 +92,7 @@ public class SmsNotificationService {
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
         smsDetails.put("cmpNumber",smsTemplateData.getCmpNumber());
+        smsDetails.put("subStage", smsTemplateData.getSubStage());
 
         return smsDetails;
     }
@@ -128,7 +129,8 @@ public class SmsNotificationService {
                 .replace("{{efilingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
+                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
+                .replace("{{subStage}}", Optional.ofNullable(userDetailsForSMS.get("subStage")).orElse(""));
         return message;
     }
 

@@ -104,7 +104,8 @@ public class EvidenceService {
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
             String tag = body.getArtifact().getTag();
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
+            String artifactType = body.getArtifact().getArtifactType();
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) &&
                     SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
                 if(tag != null && !hasNumberSuffix(tag)){
@@ -112,10 +113,7 @@ public class EvidenceService {
                 }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
-            if ((body.getArtifact().getArtifactType() != null &&
-                    body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) ||
-                    (body.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()))) {
+            if (artifactType != null && artifactType.equals(DEPOSITION) || body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -124,7 +122,17 @@ public class EvidenceService {
             if(tag != null && !tag.isEmpty()) {
                 body.getArtifact().setTag(tag);
             }
-            callNotificationService(body,false,true);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(body.getRequestInfo(), body.getArtifact().getFilingNumber());
+            JsonNode caseNode = caseUtil.searchCaseDetails(caseSearchRequest);
+            String stage = Optional.ofNullable(caseNode)
+                    .map(n -> n.path("stage"))
+                    .map(n -> n.asText(""))
+                    .orElse("");
+
+            if(!WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) ||
+                    (WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) && Trial.equalsIgnoreCase(stage))) {
+                callNotificationService(body,false,true);
+            }
             return body.getArtifact();
         } catch (CustomException e) {
             log.error("Custom Exception occurred while creating evidence");

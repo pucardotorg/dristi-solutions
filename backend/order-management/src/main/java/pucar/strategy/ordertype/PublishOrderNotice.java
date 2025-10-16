@@ -7,12 +7,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.config.StateSlaMap;
+import pucar.service.IndividualService;
+import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.SMSTemplateData;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
@@ -22,6 +27,7 @@ import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -35,15 +41,19 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
     private final TaskUtil taskUtil;
+    private final SmsNotificationService smsNotificationService;
+    private final UserUtil userUtil;
 
     @Autowired
-    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil) {
+    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, SmsNotificationService smsNotificationService, UserUtil userUtil) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
         this.taskUtil = taskUtil;
+        this.smsNotificationService = smsNotificationService;
+        this.userUtil = userUtil;
     }
 
     @Override
@@ -250,6 +260,22 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
                     pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
                     ).pendingTask(pendingTask).build());
+
+                    String partyType = getPartyType(order);
+                    String orderType = order.getOrderType();
+                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(SUMMONS));
+                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                            .partyType(partyType)
+                            .orderType(orderType)
+                            .days(days)
+                            .courtCaseNumber(courtCase.getCourtCaseNumber())
+                            .cmpNumber(courtCase.getCmpNumber())
+                            .build();
+                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
+                    if(pendingTask.getName().contains(RPAD)){
+                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
+
+                    }
                 }
 
 
@@ -259,6 +285,40 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+
+    private String getPartyType(Order order) {
+        Object additionalDetails = order.getAdditionalDetails();
+        JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+
+        JsonNode partyTypeNode = additionalDetailsNode
+                .path("formdata")
+                .path("noticeOrder")
+                .path("party")
+                .path("partyType");
+
+        return partyTypeNode.textValue();
+    }
+
+    private void callNotificationService(OrderRequest orderRequest, String messageCode, SMSTemplateData smsTemplateData, List<User> users) {
+        try {
+            List<String> uuids = users.stream()
+                   .map(User::getUuid)
+                   .toList();
+
+           List<User> userList = userUtil.getUserListFromUserUuid(uuids);
+           List<String> phoneNumbers = userList.stream()
+                   .map(User::getMobileNumber)
+                   .toList();
+
+            for (String number : phoneNumbers) {
+                smsNotificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
     }
 
     @Override

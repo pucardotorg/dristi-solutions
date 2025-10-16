@@ -72,6 +72,9 @@ public class SmsNotificationService {
         } else if (messageCode.equalsIgnoreCase(WARRANT_NOT_DELIVERED)) {
             pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantNotDeliveredTemplateId());
         }
+        else if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)){
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationProcessFeePaymentTemplateId());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {

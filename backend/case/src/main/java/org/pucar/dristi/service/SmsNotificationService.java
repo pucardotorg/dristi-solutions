@@ -9,11 +9,14 @@ import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.web.models.SmsTemplateData;
 import org.pucar.dristi.web.models.SMSRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -31,12 +34,18 @@ public class SmsNotificationService {
 
     private final IndividualService individualService;
 
+    private final TaskScheduler taskScheduler;
+
+    private final DateUtil dateUtil;
+
     @Autowired
-    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository, IndividualService individualService) {
+    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository, IndividualService individualService, TaskScheduler taskScheduler, DateUtil dateUtil) {
         this.config = config;
         this.producer = producer;
         this.repository = repository;
         this.individualService = individualService;
+        this.taskScheduler = taskScheduler;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -70,8 +79,9 @@ public class SmsNotificationService {
         else if(messageCode.equalsIgnoreCase(CASE_SUBMITTED)) {
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
         }
-        else if(messageCode.equalsIgnoreCase(CASE_PAYMENT_COMPLETED)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
+        else if(messageCode.equalsIgnoreCase(CASE_FILED)){
+            Instant instant = dateUtil.getInstantFrom(config.getSmsCaseFiledTime());
+            schedulePushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId(), instant);
         }
         else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
@@ -105,6 +115,9 @@ public class SmsNotificationService {
         } else if(messageCode.equalsIgnoreCase(REJECT_PROFILE_REQUEST)) {
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationRejectProfileRequestTemplateId());
         }
+        else if(VAKALATNAMA_FILED.equalsIgnoreCase(messageCode)) {
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationVakalatnamaFiledTemplateId());
+        }
     }
 
     private void pushNotification(SmsTemplateData smsTemplateData, String message, String mobileNumber, String templateId) {
@@ -126,6 +139,11 @@ public class SmsNotificationService {
         log.info("push message {}", smsRequest);
 
         producer.push(config.getSmsNotificationTopic(), smsRequest);
+    }
+
+    private void schedulePushNotification(SmsTemplateData smsTemplateData, String message, String mobileNumber, String templateId, Instant instant){
+        log.info("Scheduling notification for template id {}", templateId);
+        taskScheduler.schedule(() -> pushNotification(smsTemplateData, message, mobileNumber, templateId), instant);
     }
 
     private Map<String, String> getDetailsForSMS(SmsTemplateData smsTemplateData, String mobileNumber) {

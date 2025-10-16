@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -14,6 +13,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.HearingUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -32,6 +32,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class OrderRegistrationService {
 
+    private final HearingUtil hearingUtil;
     private OrderRegistrationValidator validator;
 
     private OrderRegistrationEnrichment enrichmentUtil;
@@ -53,7 +54,7 @@ public class OrderRegistrationService {
     private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil, HearingUtil hearingUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -65,6 +66,7 @@ public class OrderRegistrationService {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.fileStoreUtil = fileStoreUtil;
+        this.hearingUtil = hearingUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -76,6 +78,7 @@ public class OrderRegistrationService {
             enrichmentUtil.enrichItemTextForIntermediateOrder(body);
 
             workflowUpdate(body);
+            callNotificationService(body, body.getOrder().getStatus(), body.getOrder().getOrderType());
 
             producer.push(config.getSaveOrderKafkaTopic(), body);
 
@@ -295,6 +298,9 @@ public class OrderRegistrationService {
 //        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(APPEARANCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
 //            return APPEARANCE_PUBLISHED;
 //        }
+        if(SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType)){
+            return HEARING_SCHEDULED;
+        }
         if (orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NEXT_HEARING_SCHEDULED;
         }
@@ -354,7 +360,8 @@ public class OrderRegistrationService {
 
             String receiver = getReceiverParty(messageCode);
 
-            Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
+            boolean shouldMatchPartyType = !HEARING_SCHEDULED.equalsIgnoreCase(messageCode);
+            Set<String> individualIds = extractIndividualIds(caseDetails, receiver, shouldMatchPartyType);
 
             if (receiver == null || receiver.equalsIgnoreCase(COMPLAINANT)) {
                 extractPowerOfAttorneyIds(caseDetails, individualIds);
@@ -365,11 +372,25 @@ public class OrderRegistrationService {
                     : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
                     : "";
 
+            String hearingNumber = orderRequest.getOrder().getHearingNumber();
+            HearingCriteria criteria = HearingCriteria.builder()
+                    .hearingId(hearingNumber)
+                    .build();
+            HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                    .criteria(criteria)
+                    .build();
+            Hearing hearing = hearingUtil.getHearings(hearingSearchRequest)
+                    .getHearingList()
+                    .get(0);
+            String oldHearingDate = String.valueOf(hearing.getStartTime());
+
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(hearingDate)
                     .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").textValue() : "")
+                    .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").textValue() : "")
+                    .oldHearingDate(oldHearingDate)
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             if (receiver != null && receiver.equalsIgnoreCase(RESPONDENT)) {
@@ -380,7 +401,7 @@ public class OrderRegistrationService {
             }
 
             for (String number : phonenumbers) {
-                notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+                notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number, orderRequest.getOrder());
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
@@ -436,16 +457,18 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver, boolean shouldMatchPartyType) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
-        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
+        String partyTypeToMatch = (shouldMatchPartyType && receiver != null && !receiver.isEmpty())
+                ? receiver.toLowerCase()
+                : null;
         Set<String> uuids = new HashSet<>();
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String partyType = node.get("partyType").asText().toLowerCase();
-                if (partyType.contains(partyTypeToMatch)) {
+                if ((partyTypeToMatch != null && partyType.contains(partyTypeToMatch)) || !shouldMatchPartyType) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
                     if (!uuid.isEmpty()) {
                         uuids.add(uuid);
@@ -459,7 +482,7 @@ public class OrderRegistrationService {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if (partyType.contains(partyTypeToMatch)) {
+                    if ((partyTypeToMatch != null && partyType.contains(partyTypeToMatch)) || !shouldMatchPartyType) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
                         if (!uuid.isEmpty()) {
                             uuids.add(uuid);

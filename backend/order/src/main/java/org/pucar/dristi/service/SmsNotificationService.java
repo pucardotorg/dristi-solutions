@@ -1,5 +1,7 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -8,12 +10,20 @@ import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.web.models.HearingCriteria;
+import org.pucar.dristi.web.models.HearingListResponse;
+import org.pucar.dristi.web.models.HearingSearchRequest;
+import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.SMSRequest;
 import org.pucar.dristi.web.models.SmsTemplateData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +41,25 @@ public class SmsNotificationService {
 
     private final ServiceRequestRepository repository;
 
+    private final TaskScheduler taskScheduler;
+
+    private final DateUtil dateUtil;
+
+    private final ServiceRequestRepository serviceRequestRepository;
+    private final ObjectMapper objectMapper;
+
     @Autowired
-    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository) {
+    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository, TaskScheduler taskScheduler, DateUtil dateUtil, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
         this.config = config;
         this.producer = producer;
         this.repository = repository;
+        this.taskScheduler = taskScheduler;
+        this.dateUtil = dateUtil;
+        this.serviceRequestRepository = serviceRequestRepository;
+        this.objectMapper = objectMapper;
     }
 
-    public void sendNotification(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String notificationStatus, String mobileNumber) {
+    public void sendNotification(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String notificationStatus, String mobileNumber, Order order) {
         try {
 
             String message = getMessage(requestInfo,smsTemplateData, notificationStatus);
@@ -46,7 +67,7 @@ public class SmsNotificationService {
                 log.info("SMS content has not been configured for this case");
                 return;
             }
-            pushNotificationBasedOnNotificationStatus(smsTemplateData, notificationStatus, message, mobileNumber);
+            pushNotificationBasedOnNotificationStatus(smsTemplateData, notificationStatus, message, mobileNumber, order);
 
         } catch (Exception e){
             log.error("Error in Sending Message To Notification Service: " , e);
@@ -54,13 +75,56 @@ public class SmsNotificationService {
 
     }
 
-    private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
+    private boolean wereHearingsScheduledTodayForCase(String filingNumber){
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getHearingHost()).append(config.getHearingSearchPath());
+        ZoneId zoneId = ZoneId.of(config.getZoneId());
+        LocalDate currentDate = LocalDate.now(zoneId);
+        Long fromDate = dateUtil.getEPochFromLocalDate(currentDate);
+        HearingCriteria criteria = HearingCriteria.builder()
+                .filingNumber(filingNumber)
+                .status(SCHEDULED)
+                .fromDate(fromDate)
+                .build();
+        HearingSearchRequest request = HearingSearchRequest.builder()
+                .criteria(criteria)
+                .build();
+
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        HearingListResponse hearingListResponse = objectMapper.convertValue(response, new TypeReference<>(){});
+
+        return !hearingListResponse.getHearingList().isEmpty();
+    }
+
+    private boolean isProcessOrder(String orderType){
+        return SUMMONS.equalsIgnoreCase(orderType) ||
+                WARRANT.equalsIgnoreCase(orderType) ||
+                NOTICE.equalsIgnoreCase(orderType) ||
+                PROCLAMATION.equalsIgnoreCase(orderType) ||
+                ATTACHMENT.equalsIgnoreCase(orderType);
+    }
+
+    private boolean shouldSendNotificationForOrderIssued(Order order){
+
+        return isProcessOrder(order.getOrderType()) ||
+                !wereHearingsScheduledTodayForCase(order.getFilingNumber());
+
+    }
+
+    private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber, Order order) {
 
 //        if(messageCode.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
 //            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAdmissionHearingScheduledTemplateId());
 //        }
         if(messageCode.equalsIgnoreCase(ORDER_ISSUED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationJudgeIssueOrderTemplateId());
+            if(shouldSendNotificationForOrderIssued(order)){
+                Instant instant = dateUtil.getInstantFrom(config.getSmsOrderIssuedTime());
+                schedulePushNotification(templateData, message, mobileNumber, config.getSmsNotificationJudgeIssueOrderTemplateId(), instant);
+            }
+        }
+        if(HEARING_SCHEDULED.equalsIgnoreCase(messageCode)){
+            Instant instant = dateUtil.getInstantFrom(config.getSmsHearingScheduledTime());
+            schedulePushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingScheduledTemplateId(), instant);
         }
         if(messageCode.equalsIgnoreCase(NOTICE_ISSUED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeIssuedTemplateId());
@@ -124,6 +188,11 @@ public class SmsNotificationService {
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }
 
+    private void schedulePushNotification(SmsTemplateData smsTemplateData, String message, String mobileNumber, String templateId, Instant instant){
+        log.info("Scheduling notification for template id {} at time {}", templateId, instant);
+        taskScheduler.schedule(() -> pushNotification(smsTemplateData, message, mobileNumber, templateId), instant);
+    }
+
     private Map<String, String> getDetailsForSMS(SmsTemplateData smsTemplateData, String mobileNumber) {
         Map<String, String> smsDetails = new HashMap<>();
 
@@ -133,6 +202,8 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("submissionDate", smsTemplateData.getSubmissionDate());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("efilingNumber", smsTemplateData.getFilingNumber());
+        smsDetails.put("oldHearingDate", smsTemplateData.getOldHearingDate());
 
         return smsDetails;
     }
@@ -172,7 +243,8 @@ public class SmsNotificationService {
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{submissionDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDate")).orElse(""))
                 .replace("{{cmpNumber}}",getPreferredCaseIdentifier(userDetailsForSMS))
-                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
+                .replace("{{oldHearingDate}}", Optional.ofNullable(userDetailsForSMS.get("oldHearingDate")).orElse(""));
         return message;
     }
 

@@ -79,6 +79,8 @@ public class SmsNotificationService {
             put(REQUEST_FOR_BAIL_GRANTED,config.getSmsNotificationBailApplicationGrantedTemplateId());
             put(PAYMENT_COMPLETED_SUCCESSFULLY,config.getRescheduleRequestSubmissionPayment());
             put(REQUEST_FOR_WITH_DRAW_SUBMITTED,config.getSmsNotificationWithDraw());
+            put(DOCUMENT_SUBMITTED, config.getSmsNotificationDocumentSubmittedTemplateId());
+            put(SUBMISSION_MADE, config.getSmsNotificationSubmissionMadeTemplateId());
         }};
         String templateId = messageCodeToTemplateIdMap.get(messageCode);
         if (templateId != null) {

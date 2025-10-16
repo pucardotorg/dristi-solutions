@@ -17,8 +17,6 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.HearingUtil;
-import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseOutcome;
 import org.pucar.dristi.web.models.CaseOutcomeType;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -155,14 +152,14 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-				sendSmsForCaseStatusChange(filingNumber,requestInfo);
+				sendSmsForCaseStatusChange(filingNumber,requestInfo, statusType.getSubstage());
 				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
 		return null;
 	}
 
-	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo) {
+	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo, String subStage) {
 		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
 		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 		String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
@@ -179,16 +176,18 @@ public class CaseOverallStatusUtil {
 			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
 		}
 		individualIds.addAll(representativeIds);
-		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, courtCaseNumber, requestInfo);
+		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, courtCaseNumber, requestInfo, subStage);
 		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String courtCaseNumber, RequestInfo requestInfo) {
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String courtCaseNumber, RequestInfo requestInfo,
+												  String subStage) {
 		return SmsTemplateData.builder()
 				.efilingNumber(filingNumber)
+				.subStage(subStage)
 				.courtCaseNumber(courtCaseNumber)
 				.tenantId(requestInfo.getUserInfo().getTenantId())
 				.build();

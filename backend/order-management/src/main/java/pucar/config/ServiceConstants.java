@@ -169,4 +169,20 @@ public class ServiceConstants {
     public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
     public static final String DOT = ". ";
+
+    public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+    public static final String RPAD_SUBMISSION = "RPAD_SUBMISSION";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String PROCESS_FEE_PAYMENT_PENDING = "PROCESS_FEE_PAYMENT_PENDING";
+    public static final String RPAD_SUBMISSION_PENDING = "RPAD_SUBMISSION_PENDING";
+    public static final String MANDATORY_SUBMISSION_PENDING = "MANDATORY_SUBMISSION_PENDING";
+
+    public static final String RPAD = "RPAD";
+
 }

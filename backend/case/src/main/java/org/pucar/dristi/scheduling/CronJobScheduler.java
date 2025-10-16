@@ -6,11 +6,14 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.NotificationService;
+import org.pucar.dristi.service.WorkflowService;
 import org.pucar.dristi.util.RequestInfoGenerator;
 import org.pucar.dristi.web.models.AdvocateMapping;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Pagination;
+import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -18,6 +21,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -27,6 +32,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import static org.pucar.dristi.config.ServiceConstants.CASE_REASSIGNED;
+import static org.pucar.dristi.config.ServiceConstants.ERRORS_PENDING;
 
 @Component
 @Slf4j
@@ -38,15 +46,17 @@ public class CronJobScheduler {
     private final NotificationService notificationService;
     private final Configuration config;
     private final ExecutorService executorService;
+    private final WorkflowService workflowService;
 
     @Autowired
     public CronJobScheduler(CaseRepository caseRepository, RequestInfoGenerator requestInfoGenerator,
-                            NotificationService notificationService, Configuration config) {
+                            NotificationService notificationService, Configuration config, WorkflowService workflowService) {
         this.caseRepository = caseRepository;
         this.requestInfoGenerator = requestInfoGenerator;
         this.notificationService = notificationService;
         this.config = config;
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.workflowService = workflowService;
     }
 
     @Async
@@ -67,6 +77,15 @@ public class CronJobScheduler {
         if (config.getIsSMSEnabled()) {
             log.info("Starting Cron Job For Sending Notification To Payment Pending");
             processNotifications("PENDING_PAYMENT", ServiceConstants.PAYMENT_PENDING);
+        }
+    }
+
+    @Async
+    @Scheduled(cron = "0 0 18 * * *", zone = "Asia/Kolkata")
+    public void sendNotificationToCaseReassigned() {
+        if (config.getIsSMSEnabled()) {
+            log.info("Starting Cron Job For Sending Notification To Case Reassigned");
+            processNotifications(CASE_REASSIGNED, ERRORS_PENDING);
         }
     }
 
@@ -139,10 +158,67 @@ public class CronJobScheduler {
             } else {
                 notificationService.sendNotification(requestInfo, courtCase, notificationType, courtCase.getAuditdetails().getCreatedBy());
             }
+
+            if(ERRORS_PENDING.equalsIgnoreCase(notificationType)){
+                ProcessInstance processInstance = workflowService.getCurrentWorkflow(requestInfo, config.getTenantId(), courtCase.getFilingNumber());
+                Long createdTime = processInstance.getAuditDetails().getCreatedTime();
+                if(shouldTriggerSms(createdTime)){
+                    if (courtCase.getRepresentatives() != null) {
+                        callNotificationServiceForAdvocates(courtCase, requestInfo, notificationType);
+                    }
+                    else{
+                        notificationService.sendNotification(requestInfo, courtCase, notificationType, courtCase.getAuditdetails().getCreatedBy());
+                    }
+                    callNotificationServiceForLitigants(courtCase, requestInfo, notificationType);
+                }
+
+            }
+
             return true;
         } catch (Exception e) {
             log.error("Error processing case: {}", courtCase.getId(), e);
             return false;
+        }
+    }
+
+    public boolean shouldTriggerSms(long createdTime) {
+
+        Instant currentTime = Instant.now();
+        Instant createdInstant = Instant.ofEpochMilli(createdTime);
+        long threeDaysInMillis = Duration.ofDays(3).toMillis();
+        long twentyDaysInMillis = Duration.ofDays(20).toMillis();
+
+        // Get the time difference in milliseconds from createdTime
+        long timeSinceCreation = Duration.between(createdInstant, currentTime).toMillis();
+
+        // If more than 20 days have passed since creation, do not trigger
+        if (timeSinceCreation > twentyDaysInMillis) {
+            return false;
+        }
+
+        // Find the closest multiple of 3 days (72 hours)
+        long nextTriggerTimeMillis = (timeSinceCreation / threeDaysInMillis) * threeDaysInMillis + threeDaysInMillis;
+
+        // Calculate the ±6 hours window around the next trigger time
+        long toleranceMillis = Duration.ofHours(6).toMillis();
+        long windowStartMillis = nextTriggerTimeMillis - toleranceMillis;
+        long windowEndMillis = nextTriggerTimeMillis + toleranceMillis;
+
+        // Check if the current time is within the tolerance window around the next trigger time
+        return currentTime.toEpochMilli() >= windowStartMillis && currentTime.toEpochMilli() <= windowEndMillis;
+    }
+
+
+
+    public void callNotificationServiceForAdvocates(CourtCase courtCase, RequestInfo requestInfo, String messageCode) {
+        for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
+            notificationService.sendNotification(requestInfo, courtCase, messageCode, mapping.getAuditDetails().getCreatedBy());
+        }
+    }
+
+    public void callNotificationServiceForLitigants(CourtCase courtCase, RequestInfo requestInfo, String messageCode) {
+        for (Party litigant : courtCase.getLitigants()) {
+            notificationService.sendNotification(requestInfo, courtCase, messageCode, litigant.getIndividualId());
         }
     }
 

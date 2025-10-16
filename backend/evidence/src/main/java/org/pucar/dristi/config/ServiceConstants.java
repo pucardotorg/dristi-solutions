@@ -234,4 +234,6 @@ public class ServiceConstants {
 			+ "}"
 			+ "}"
 			+ "}\n";
+
+	public static final String Trial = "Trial";
 }
