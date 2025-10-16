@@ -20,6 +20,7 @@ export const Urls = {
   FileFetchById: "/filestore/v1/files/id",
   Epost: {
     EpostUpdate: "/epost-tracker/epost/v1/_updateEPost",
+    EpostReportDownload : "/epost-tracker/epost/v1/download/excel",
   },
   Scheduler: {
     reschedule: "/scheduler/hearing/v1/_reschedule",

@@ -10,6 +10,8 @@ import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/component
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
+import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
+import { formatDateWithTime } from "../../../orders/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -53,45 +55,78 @@ const handleNavigate = (path) => {
 export const UICustomizations = {
   EpostTrackingUiConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const ePostTrackerSearchCriteria = {
-        ...requestCriteria?.body?.ePostTrackerSearchCriteria,
-        processNumber: requestCriteria?.state?.searchForm?.processNumber ? requestCriteria?.state?.searchForm?.processNumber : "",
-        deliveryStatusList: requestCriteria?.state?.searchForm?.deliveryStatusList?.selected
-          ? [requestCriteria?.state?.searchForm?.deliveryStatusList?.selected]
-          : requestCriteria?.body?.ePostTrackerSearchCriteria.deliveryStatusList,
-        pagination: {
-          sortBy: requestCriteria?.state?.searchForm?.pagination?.sortBy
-            ? requestCriteria?.state?.searchForm?.pagination?.sortBy
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.sortBy,
-          orderBy: requestCriteria?.state?.searchForm?.pagination?.order
-            ? requestCriteria?.state?.searchForm?.pagination?.order
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.orderBy,
-        },
-      };
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ePostTrackerSearchCriteria,
-          processNumber: "",
-          deliveryStatusList: {},
-          pagination: {
-            sortBy: "",
-            order: "",
-          },
         },
         config: {
           ...requestCriteria?.config,
+          select: (data) => {
+            const hasResults = data?.EPostTracker?.length > 0;
+            window.sessionStorage.setItem("epostSearchHasResults", hasResults ? "true" : "false");
+            window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+            return {
+              ...data,
+              count: data?.pagination?.totalCount || data?.length,
+            };
+          },
         },
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
-        case "Delivery Status":
+        case "SPEED_POST_ID":
+          return t(value) || t("NOT_ASSIGNED");
+        case "STATUS":
           return t(value);
+        case "CS_ACTIONS":
+          return <OverlayDropdown column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "CS_ACTIONS_PENCIL":
+          return <PencilIconEdit column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "TOTAL_CHARGES":
+          return value ? `${Math.round(value)}/-` : "-";
+        case "BOOKING_DATE":
+        case "BOOKING_DATE_TIME":
+          return formatDateWithTime(value) || "-";
+        case "RECIEVED_DATE":
+          return formatDateWithTime(value) || "-";
+        case "ADDRESS":
+          return `${row?.respondentName}, ${value}` || "-";
+        case "TASK_TYPE":
+          return t(value) || t("ES_COMMON_NA");
         default:
           return t("ES_COMMON_NA");
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "PRINT_DOCUMENT",
+          id: "print_document",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+        {
+          label: "UPDATE_STATUS",
+          id: "update_status",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
+    },
+    actionItems: (row, column) => {
+      return [
+        {
+          label: "PENCIL_EDIT",
+          id: "pencil_edit",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   SearchHearingsConfig: {

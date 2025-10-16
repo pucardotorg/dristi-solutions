@@ -100,7 +100,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />
         <PrivateRoute path={`${path}/payment-modal`} component={() => <PaymentForSummonModal />} />
-        <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} />
+        {/* <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} /> */}
       </AppContainer>
     </Switch>
   );
