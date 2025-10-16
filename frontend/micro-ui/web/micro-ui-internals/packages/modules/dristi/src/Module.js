@@ -213,7 +213,7 @@ const componentsToRegister = {
   SuretyComponent,
   EditSendBackModal,
   DownloadButton,
-  PencilIconEdit
+  PencilIconEdit,
 };
 
 const overrideHooks = () => {

@@ -395,7 +395,9 @@ const SubmissionsCreate = ({ path }) => {
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
-            (application) => !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+            (application) =>
+              !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
+              "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
     [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
@@ -1181,11 +1183,11 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      
+
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      const documentsFile = (mockESignEnabled)
+      const documentsFile = mockESignEnabled
         ? [
             {
               documentType: "SIGNED",

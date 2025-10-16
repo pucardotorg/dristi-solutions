@@ -20,7 +20,7 @@ export const Urls = {
   FileFetchById: "/filestore/v1/files/id",
   Epost: {
     EpostUpdate: "/epost-tracker/epost/v1/_updateEPost",
-    EpostReportDownload : "/epost-tracker/epost/v1/download/excel",
+    EpostReportDownload: "/epost-tracker/epost/v1/download/excel",
   },
   Scheduler: {
     reschedule: "/scheduler/hearing/v1/_reschedule",
@@ -37,9 +37,9 @@ export const Urls = {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
-  processManagement:{
-    getProcessToSign:"/task/v1/_getTasksToSign",
-    updateSignedProcess:"/task/v1/_updateSignedTasks",
-    bulkSend:"/task/v1/bulk-send",
-  }
+  processManagement: {
+    getProcessToSign: "/task/v1/_getTasksToSign",
+    updateSignedProcess: "/task/v1/_updateSignedTasks",
+    bulkSend: "/task/v1/bulk-send",
+  },
 };

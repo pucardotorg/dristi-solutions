@@ -176,8 +176,7 @@ export const updateEpostStatusPendingConfig = [
         populators: {
           name: "statusDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-          },
+          validation: {},
         },
       },
       {
