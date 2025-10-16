@@ -10,7 +10,6 @@ import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/component
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
-import { EditPencilIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import { formatDateWithTime } from "../../../orders/src/utils";
 
@@ -93,7 +92,7 @@ export const UICustomizations = {
         case "RECIEVED_DATE":
           return formatDateWithTime(value) || "-";
         case "ADDRESS":
-          return `${row?.respondentName}, ${value}`;
+          return `${row?.respondentName}, ${value}` || "-";
         case "TASK_TYPE":
           return t(value) || t("ES_COMMON_NA");
         default:
@@ -103,14 +102,14 @@ export const UICustomizations = {
     dropDownItems: (row, column) => {
       return [
         {
-          label: "Print Document",
+          label: "PRINT_DOCUMENT",
           id: "print_document",
           hide: false,
           disabled: false,
           action: column.clickFunc,
         },
         {
-          label: "Update Status",
+          label: "UPDATE_STATUS",
           id: "update_status",
           hide: false,
           disabled: false,
@@ -121,7 +120,7 @@ export const UICustomizations = {
     actionItems: (row, column) => {
       return [
         {
-          label: "Pencil Edit",
+          label: "PENCIL_EDIT",
           id: "pencil_edit",
           hide: false,
           disabled: false,

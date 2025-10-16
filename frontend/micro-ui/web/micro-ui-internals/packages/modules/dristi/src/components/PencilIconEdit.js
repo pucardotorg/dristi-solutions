@@ -5,10 +5,10 @@ import { EditPencilIcon } from "../icons/svgIndex";
 
 export const Context = React.createContext();
 
-const PencilIconEdit = ({ column, row, master, module, cutomDropdownItems = [], position = "absolute", textStyle = {} }) => {
+const PencilIconEdit = ({ column, row, master, module, customDropdownItems = [], position = "absolute", textStyle = {} }) => {
   const { t } = useTranslation();
   const history = useHistory();
-  const actionItemsArray = master ? Digit.Customizations[master]?.[module]?.actionItems?.(row, column, t) || [] : cutomDropdownItems || [];
+  const actionItemsArray = master ? Digit.Customizations[master]?.[module]?.actionItems?.(row, column, t) || [] : customDropdownItems || [];
 
   const actionItem = actionItemsArray[0];
 

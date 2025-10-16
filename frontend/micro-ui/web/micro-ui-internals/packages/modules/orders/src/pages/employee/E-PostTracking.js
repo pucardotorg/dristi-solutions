@@ -181,8 +181,8 @@ const EpostTrackingPage = () => {
         setLoading(true);
         const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
         const terminalStatusesList = terminalStatuses?.flatMap((data) => data?.code) || [];
-        const month = searchFormData?.[activeTabIndex]?.monthReports || new Date().toISOString().slice(0, 7);
-        const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
+        const month = searchFormData?.[activeIndex]?.monthReports || new Date().toISOString().slice(0, 7);
+        const speedPostId = searchFormData?.[activeIndex]?.speedPostId;
         const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
         const payload = {
           ePostTrackerSearchCriteria: {
@@ -230,7 +230,7 @@ const EpostTrackingPage = () => {
       // TODO: Need to Check
       try {
         setLoading(true);
-        const speedPostId = searchFormData?.[activeTabIndex]?.speedPostId;
+        const speedPostId = searchFormData?.[activeIndex]?.speedPostId;
         const payload = {
           ePostTrackerSearchCriteria: {
             excelSheetType:"PENDING_BOOKING_TAB",
@@ -548,10 +548,6 @@ const EpostTrackingPage = () => {
     };
   }, []);
 
-  if (!isEpostUser) {
-    history.replace(homePath);
-  }
-
   const isApiSuppressed = !config?.apiDetails || Object.keys(config.apiDetails).length === 0;
 
   const showCustomEmptyTable = isApiSuppressed || (initialSearchPerformed?.[activeTabIndex] && hasResults === false && !isClearing);
@@ -565,6 +561,11 @@ const EpostTrackingPage = () => {
       }
     }
   }, [activeTabIndex]);
+
+  if (!isEpostUser) {
+    history.replace(homePath);
+    return;
+  }
 
   if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 

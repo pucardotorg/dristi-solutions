@@ -187,10 +187,10 @@ export const updateEpostStatusPendingConfig = [
         key: "speedPostId",
         populators: {
           name: "speedPostId",
-          error: "Please enter only alphanumeric characters (A–Z, a–z, 0–9)",
+          error: "ALPHANUMERIC_VALIDATION_ERROR",
           validation: {
             pattern: /^[0-9A-Za-z]+$/i,
-            message: "Please enter only alphanumeric characters (A–Z, a–z, 0–9)",
+            message: "ALPHANUMERIC_VALIDATION_ERROR",
           },
         },
       },
