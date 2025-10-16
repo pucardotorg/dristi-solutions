@@ -15,7 +15,7 @@ with open("postal-hub-mapping.csv", newline="") as csvfile:
         else:
             postal_hub[hub_name] = {pincode}
 
-url = "https://oncourts.kerala.gov.in/egov-mdms-service/v2/_create"
+url = "https://{{env}}/egov-mdms-service/v2/_create"
 headers = {
     "Accept": "application/json, text/plain, */*",
     "Content-Type": "application/json;charset=UTF-8",
