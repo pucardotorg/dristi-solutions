@@ -402,7 +402,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-            // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -465,7 +465,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-            // removeInactiveDocuments(documentToDelete);
+           // removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -4483,42 +4483,42 @@ public class CaseService {
                             .documents(Collections.singletonList(documentPoaAuth))
                             .build();
 
-                    Optional<POAHolder> existingPoaHolder = courtCase.getPoaHolders()
-                            .stream()
-                            .filter(poaHolder -> poaHolder.getIndividualId().equalsIgnoreCase(poaIndividualId))
-                            .findFirst();
+                        Optional<POAHolder> existingPoaHolder = courtCase.getPoaHolders()
+                                .stream()
+                                .filter(poaHolder -> poaHolder.getIndividualId().equalsIgnoreCase(poaIndividualId))
+                                .findFirst();
 
-                    if (existingPoaHolder.isPresent()) {
-                        existingPoaHolder.get().getRepresentingLitigants().add(newPoaParty);
-                    } else {
-                        POAHolder newPoaHolder = new POAHolder();
-                        newPoaHolder.setIndividualId(poaIndividualId);
-                        newPoaHolder.setCaseId(courtCase.getId().toString());
-                        newPoaHolder.setHasSigned(false);
-                        List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
-                                        joinCaseRequest.getPoaDetails().getMiddleName(),
-                                        joinCaseRequest.getPoaDetails().getLastName())
-                                .filter(part -> part != null && !part.isEmpty())
-                                .toList();
+                        if (existingPoaHolder.isPresent()) {
+                            existingPoaHolder.get().getRepresentingLitigants().add(newPoaParty);
+                        } else {
+                            POAHolder newPoaHolder = new POAHolder();
+                            newPoaHolder.setIndividualId(poaIndividualId);
+                            newPoaHolder.setCaseId(courtCase.getId().toString());
+                            newPoaHolder.setHasSigned(false);
+                            List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
+                                            joinCaseRequest.getPoaDetails().getMiddleName(),
+                                            joinCaseRequest.getPoaDetails().getLastName())
+                                    .filter(part -> part != null && !part.isEmpty())
+                                    .toList();
 
-                        String fullName = String.join(" ", nameParts);
-                        newPoaHolder.setName(fullName);
-                        newPoaHolder.setId(UUID.randomUUID().toString());
-                        newPoaHolder.setAuditDetails(auditDetails);
-                        newPoaHolder.setIsActive(true);
-                        newPoaHolder.setPoaType("poa.regular");
+                            String fullName = String.join(" ", nameParts);
+                            newPoaHolder.setName(fullName);
+                            newPoaHolder.setId(UUID.randomUUID().toString());
+                            newPoaHolder.setAuditDetails(auditDetails);
+                            newPoaHolder.setIsActive(true);
+                            newPoaHolder.setPoaType("poa.regular");
 
-                        Map<String, String> additionalDetails = new HashMap<>();
-                        additionalDetails.put("uuid", joinCaseRequest.getPoaDetails().getUserUuid());
+                            Map<String, String> additionalDetails = new HashMap<>();
+                            additionalDetails.put("uuid", joinCaseRequest.getPoaDetails().getUserUuid());
 
-                        newPoaHolder.setAdditionalDetails(additionalDetails);
+                            newPoaHolder.setAdditionalDetails(additionalDetails);
 
-                        newPoaHolder.setTenantId(courtCase.getTenantId());
-                        newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
+                            newPoaHolder.setTenantId(courtCase.getTenantId());
+                            newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
 
-                        newPoaHolder.setRepresentingLitigants(new ArrayList<>(List.of(newPoaParty)));
-                        courtCase.getPoaHolders().add(newPoaHolder);
-                    }
+                            newPoaHolder.setRepresentingLitigants(new ArrayList<>(List.of(newPoaParty)));
+                            courtCase.getPoaHolders().add(newPoaHolder);
+                        }
 
                     if (poaIndividualDetails.getUniqueId() == null) {
                         enrichAdditionalDetailsPOAComplainant(courtCase, joinCaseRequest.getPoaDetails(), poaIndividualDetails);
@@ -5869,6 +5869,7 @@ public class CaseService {
             existingWitness.setOwnerType(witnessDetails.getOwnerType());
         }
     }
+
 
 
     /**
