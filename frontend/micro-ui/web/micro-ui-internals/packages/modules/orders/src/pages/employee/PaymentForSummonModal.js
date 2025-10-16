@@ -579,7 +579,7 @@ const PaymentForSummonModal = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
-      className : "payment-modal",
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}

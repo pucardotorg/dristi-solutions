@@ -21,7 +21,7 @@ const DRISTICard = () => {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (isProcessViewer) {
     history.push(`/${window?.contextPath}/employee/orders/Summons&Notice`);
-  } else if( isEpostUser ){
+  } else if (isEpostUser) {
     history.push(`/${window?.contextPath}/employee/home/epost-home-screen`);
   }
 
