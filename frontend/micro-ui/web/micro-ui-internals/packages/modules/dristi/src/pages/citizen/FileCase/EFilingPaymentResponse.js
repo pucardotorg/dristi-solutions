@@ -51,6 +51,8 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
   const caseId = location.state.state.caseId;
   const { triggerSurvey, SurveyUI } = useSurveyManager();
 
+  const triggerSurveyContext = receiptData?.casePrevStatus === "PENDING_PAYMENT" ? "FILING_PAYMENT" : "DEFECT_CORRECTION_PAYMENT";
+
   const commonProps = {
     whichSvg: "tick",
     headerStyles: { fontSize: "32px" },
@@ -95,7 +97,7 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
               labelClassName={"secondary-label-selector"}
               onButtonClick={() => {
                 // in-portal
-                triggerSurvey("payment_success", () => {
+                triggerSurvey(triggerSurveyContext, () => {
                   history.push(`${path}/e-filing-payment?caseId=${caseId}`);
                 });
               }}
@@ -127,7 +129,7 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
             labelClassName={"tertiary-label-selector"}
             onButtonClick={() => {
               // in-portal
-              triggerSurvey("payment_success", () => {
+              triggerSurvey(triggerSurveyContext, () => {
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               });
             }}

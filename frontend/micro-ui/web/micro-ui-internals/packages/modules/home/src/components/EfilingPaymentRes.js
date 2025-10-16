@@ -7,7 +7,6 @@ import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/component
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { useTranslation } from "react-i18next";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const customNoteConfig = {
   populators: {
@@ -52,7 +51,6 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
   const caseId = location.state.state.caseId;
   const { t } = useTranslation();
   const { downloadPdf } = useDownloadCasePdf();
-  const { triggerSurvey, SurveyUI } = useSurveyManager();
 
   const commonProps = {
     whichSvg: "tick",
@@ -97,10 +95,7 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onButtonClick={() => {
-                // in-portal
-                triggerSurvey("payment_success", () => {
-                  history.push(`${path}/e-filing-payment?caseId=${caseId}`);
-                });
+                history.push(`${path}/e-filing-payment?caseId=${caseId}`);
               }}
             />
           ) : (
@@ -129,15 +124,11 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onButtonClick={() => {
-              // in-portal
-              triggerSurvey("payment_success", () => {
-                history.push(`/${window?.contextPath}/citizen/dristi/home`);
-              });
+              history.push(`/${window?.contextPath}/citizen/dristi/home`);
             }}
           />
         </div>
       </div>
-      {SurveyUI}
     </div>
   );
 }

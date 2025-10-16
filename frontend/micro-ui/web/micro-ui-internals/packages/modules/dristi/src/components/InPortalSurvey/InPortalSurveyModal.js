@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { surveyConfig } from "../../configs/InPortalSurveyConfig";
 
-const InPortalSurveyModal = ({ context, onClose, onSubmit }) => {
+const InPortalSurveyModal = ({ context, onRemindMeLater, onSubmit }) => {
   const [rating, setRating] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ const InPortalSurveyModal = ({ context, onClose, onSubmit }) => {
         />
 
         <div className="survey-actions">
-          <button className="remind-btn" onClick={onClose} disabled={loading}>
+          <button className="remind-btn" onClick={onRemindMeLater} disabled={loading}>
             {surveyConfig.buttons.remindLater}
           </button>
 

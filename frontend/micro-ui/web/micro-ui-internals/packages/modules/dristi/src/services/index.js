@@ -518,4 +518,23 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getInportalEligibility: (data, tenantId) =>
+    Request({
+      url: Urls.dristi.eligibility,
+      useCache: false,
+      userService: true
+    }),
+  postInportalFeedback: (data, tenantId) =>
+    Request({
+      url: Urls.dristi.feedback,
+      useCache: false,
+      userService: true,
+      data
+    }),
+  postInportalRemindMeLater: (data, tenantId) =>
+    Request({
+      url: Urls.dristi.remindMeLater,
+      useCache: false,
+      userService: true
+    }),
 };

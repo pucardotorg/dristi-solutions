@@ -1386,12 +1386,18 @@ const SubmissionsCreate = ({ path }) => {
         // in-portal
         history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
-        // in-portal
-        triggerSurvey("payment_success", () => {
+        // in-portal 
+        if(showSuccessModal){
+          triggerSurvey("APPLICATION_PAYMENT", () => {
+            history.replace(
+              `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+            );
+          });
+        } else {
           history.replace(
             `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
           );
-        });
+        }
       }
     }
   };

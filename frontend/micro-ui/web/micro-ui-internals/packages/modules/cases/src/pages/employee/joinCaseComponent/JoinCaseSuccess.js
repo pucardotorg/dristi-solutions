@@ -129,7 +129,7 @@ const JoinCaseSuccess = ({
               className={"selector-button-border"}
               label={t("BACK_HOME")}
               onButtonClick={() => {
-                triggerSurvey("payment_success", () => {
+                triggerSurvey("JOIN_CASE_PAYMENT", () => {
                   closeModal();
                   if (refreshInbox) refreshInbox();
                 });
@@ -146,7 +146,7 @@ const JoinCaseSuccess = ({
                   );
                 } else {
                   // in-portal
-                  triggerSurvey("payment_success", () => {
+                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
                     if (type === "external") {
                       closeModal();
                       if (refreshInbox) refreshInbox();

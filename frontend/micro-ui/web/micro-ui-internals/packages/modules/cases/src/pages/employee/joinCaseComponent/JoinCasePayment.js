@@ -144,7 +144,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
                 const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
                 if (paymentStatus) {
                   // in-portal survey
-                  triggerSurvey("payment_success", () => {
+                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
                     setPendingTaskActionModals((pendingTaskActionModals) => {
                       const data = pendingTaskActionModals?.data;
                       delete data.filingNumber;

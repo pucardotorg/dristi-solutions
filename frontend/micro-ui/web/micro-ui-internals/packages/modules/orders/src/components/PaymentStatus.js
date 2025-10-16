@@ -96,7 +96,7 @@ const PaymentStatus = ({ path }) => {
               labelClassName={"secondary-label-selector"}
               onClick={() => {
                 // in-portal
-                triggerSurvey("payment_success", () => {
+                triggerSurvey("TASK_PAYMENT", () => {
                   history.goBack();
                 });
               }}
@@ -118,7 +118,7 @@ const PaymentStatus = ({ path }) => {
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onClick={() => {
-              triggerSurvey("payment_success", () => {
+              triggerSurvey("TASK_PAYMENT", () => {
                 history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
               });
               // in-portal
