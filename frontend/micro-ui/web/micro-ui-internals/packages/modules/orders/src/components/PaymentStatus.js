@@ -20,7 +20,7 @@ const PaymentStatus = ({ path }) => {
   const orderType = receiptData?.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const { triggerSurvey, SurveyUI } = useSurveyManager();
+  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
 
   const commonProps = {
     whichSvg: "tick",
@@ -95,7 +95,6 @@ const PaymentStatus = ({ path }) => {
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onClick={() => {
-                // in-portal
                 triggerSurvey("TASK_PAYMENT", () => {
                   history.goBack();
                 });
@@ -121,7 +120,6 @@ const PaymentStatus = ({ path }) => {
               triggerSurvey("TASK_PAYMENT", () => {
                 history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
               });
-              // in-portal
             }}
           />
         </div>

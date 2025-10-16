@@ -51,7 +51,6 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
   const caseId = location.state.state.caseId;
   const { t } = useTranslation();
   const { downloadPdf } = useDownloadCasePdf();
-
   const commonProps = {
     whichSvg: "tick",
     headerStyles: { fontSize: "32px" },

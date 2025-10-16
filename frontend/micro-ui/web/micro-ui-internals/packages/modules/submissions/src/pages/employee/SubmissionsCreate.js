@@ -140,7 +140,7 @@ const SubmissionsCreate = ({ path }) => {
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
-  const { triggerSurvey, SurveyUI } = useSurveyManager();
+  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -1383,10 +1383,8 @@ const SubmissionsCreate = ({ path }) => {
   const handleBack = () => {
     if (!paymentLoader) {
       if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
-        // in-portal
         history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
-        // in-portal 
         if(showSuccessModal){
           triggerSurvey("APPLICATION_PAYMENT", () => {
             history.replace(

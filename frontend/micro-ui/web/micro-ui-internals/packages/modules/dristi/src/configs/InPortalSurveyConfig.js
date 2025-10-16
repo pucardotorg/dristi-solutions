@@ -1,21 +1,27 @@
 // survey.config.js
 export const surveyConfig = {
   contexts: {
-    payment_success: {
+    JOIN_CASE_PAYMENT: {
       question: "How convenient was your payment experience on the ON Court Platform?",
     },
-    case_filing: {
+    TASK_PAYMENT: {
       question: "How convenient was the case filing process on the ON Court Platform?",
     },
-    login_flow: {
+    APPLICATION_PAYMENT: {
+      question: "How convenient was the login experience on the ON Court Platform?",
+    },
+    FILING_PAYMENT: {
+      question: "How convenient was the login experience on the ON Court Platform?",
+    },
+    DEFECT_CORRECTION_PAYMENT: {
       question: "How convenient was the login experience on the ON Court Platform?",
     },
   },
   ratings: [
-    { label: "Very convenient", value: "very_convenient" },
-    { label: "Convenient", value: "convenient" },
-    { label: "Moderately convenient", value: "moderate" },
-    { label: "Needs improvement", value: "needs_improvement" },
+    { label: "Very convenient", value: "VERY_CONVENIENT" },
+    { label: "Convenient", value: "CONVENIENT" },
+    { label: "Moderately convenient", value: "MODERATELY_CONVENIENT" },
+    { label: "Needs improvement", value: "NEEDS_IMPROVEMENT" },
   ],
   feedbackPlaceholder:
     "Please share any feedback — what worked well or what could be improved? (optional)",

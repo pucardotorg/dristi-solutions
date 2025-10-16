@@ -210,7 +210,6 @@ const ComplainantSignature = ({ path }) => {
   const [calculationResponse, setCalculationResponse] = useState({});
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
-
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -1141,7 +1140,6 @@ const ComplainantSignature = ({ path }) => {
           }}
         ></Modal>
       )}
-      {SurveyUI}
     </div>
   );
 };

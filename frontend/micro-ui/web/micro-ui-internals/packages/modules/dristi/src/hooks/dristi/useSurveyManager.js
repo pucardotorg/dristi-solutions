@@ -4,7 +4,7 @@ import InPortalSurveyModal from "../../components/InPortalSurvey/InPortalSurveyM
 import InPortalSurveyRes from "../../components/InPortalSurvey/InPortalSurveyRes";
 import { DRISTIService } from "../../services";
 
-export const useSurveyManager = () => {
+export const useSurveyManager = (params) => {
   const [surveyData, setSurveyData] = useState(null);
   const [isSurveyOpen, setSurveyOpen] = useState(false);
   const [isResultOpen, setResultOpen] = useState(false);
@@ -14,7 +14,7 @@ export const useSurveyManager = () => {
   // Call backend to check eligibility
   const checkEligibility = async () => {
     try {
-      const {data, isLoading, error} = await DRISTIService.getInportalEligibility();
+      const data = await DRISTIService.getInportalEligibility(params);
       return data?.Eligibility?.isEligible;
     } catch (err) {
       console.error("Survey eligibility check failed:", err);
@@ -51,11 +51,14 @@ export const useSurveyManager = () => {
   // Handle survey submission
   const handleSurveySubmit = async ({context, rating, feedback}) => {
     try {
-      const {data, isLoading, error} = await DRISTIService.postInportalFeedback({
-        catagory: context,
-        rating,
-        feedback
-      });
+      const payload = {
+        feedBack: {
+          rating,
+          category: context,
+          feedback
+        }
+      };
+      const data = await DRISTIService.postInportalFeedback(payload, params);
 
       setSurveyOpen(false);
       setResultOpen(true);
@@ -70,7 +73,7 @@ export const useSurveyManager = () => {
 
   const handleRemindMeLater = async () => {
     try {
-      const {data, isLoading, error} = await DRISTIService.postInportalRemindMeLater();
+      const data = await DRISTIService.postInportalRemindMeLater(params);
     } catch (err) {
       console.error("Survey submission failed:", err);
     } finally {

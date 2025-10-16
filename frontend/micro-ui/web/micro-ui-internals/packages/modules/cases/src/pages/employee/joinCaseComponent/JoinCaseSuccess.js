@@ -23,10 +23,11 @@ const JoinCaseSuccess = ({
   const { t } = useTranslation();
 
   const history = useHistory();
+  const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const { triggerSurvey, SurveyUI } = useSurveyManager();
+  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -145,7 +146,6 @@ const JoinCaseSuccess = ({
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
                   );
                 } else {
-                  // in-portal
                   triggerSurvey("JOIN_CASE_PAYMENT", () => {
                     if (type === "external") {
                       closeModal();
