@@ -27,6 +27,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const WitnessDepositionSignaturePage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionSignaturePage");
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
   const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
+  const PaymentLoginPage = Digit?.ComponentRegistryService?.getComponent("PaymentLoginPage");
 
   const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
@@ -136,6 +137,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     "/registration/email",
     "/home/evidence-sign",
     "/home/evidence-login",
+    "/home/payment-login",
   ];
 
   const whiteListedRoutes = [
@@ -160,6 +162,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/access-expired`,
     `${path}/home/evidence-sign`,
     `${path}/home/evidence-login`,
+    `${path}/home/payment-login`,
   ];
   const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
@@ -305,6 +308,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/home/evidence-sign`}>
             <WitnessDepositionSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/payment-login`}>
+            <PaymentLoginPage />
           </Route>
         </React.Fragment>
       </Switch>

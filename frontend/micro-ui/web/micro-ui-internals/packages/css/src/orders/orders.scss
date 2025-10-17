@@ -1366,3 +1366,53 @@
     }
   }
 }
+
+@media (max-width: 450px) and (orientation: portrait) {
+  .payment-login-page {
+    background-color: #ffffff;
+    width: 100% !important;
+    min-height: calc(100vh - 72px) !important;
+    align-items: flex-start !important;
+    padding-top: 20px !important;
+    .citizen-form-wrapper {
+      width: 100% !important;
+      .login-form {
+        padding: 0px 5px !important;
+        margin-bottom: 88px !important;
+        .card {
+          .card-header {
+            font-size: 24px !important;
+            font-weight: 700;
+            line-height: 37.5px;
+            text-align: left !important;
+          }
+          .submit-bar,
+          .submit-bar-disabled {
+            position: fixed !important;
+            margin: 0px !important;
+            bottom: 20px;
+            padding: 10px;
+            border-top: 1px solid #e8e8e8;
+            box-shadow: 0px 0px 8px 0px #00000026;
+          }
+
+          .submit-bar {
+            header {
+              margin-top: 0px !important;
+              background-color: #007e7e;
+              padding: 0px;
+            }
+          }
+
+          .submit-bar-disabled {
+            header {
+              margin-top: 0px !important;
+              background-color: #77787b;
+              padding: 0px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
