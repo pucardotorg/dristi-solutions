@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class CaseService {
 
     private final CaseRepository caseRepository;

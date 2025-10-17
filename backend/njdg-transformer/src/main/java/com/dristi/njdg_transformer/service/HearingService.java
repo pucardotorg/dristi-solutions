@@ -2,6 +2,7 @@ package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.Pagination;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
 import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
@@ -73,6 +74,7 @@ public class HearingService {
             HearingSearchRequest request = HearingSearchRequest.builder()
                     .criteria(HearingCriteria.builder().filingNumber(hearing.getFilingNumber().get(0)).build())
                     .requestInfo(requestInfo)
+                    .pagination(Pagination.builder().sortBy("startTime").order(com.dristi.njdg_transformer.model.enums.Order.ASC).build())
                     .build();
             // Find record by CNR number
             NJDGTransformRecord record = njdgTransformRepository.findByCino(cnrNumber);
@@ -99,12 +101,15 @@ public class HearingService {
                 
                 // Set hearing date
                 String hearingDate = formatDate(hearingItem.getStartTime());
+                hearingDetails.put("sr_no", serialNo);
                 hearingDetails.put("hearing_date", hearingDate);
                 
                 // Set other hearing details
                 hearingDetails.put("purpose_of_listing", getPurposeOfListing(requestInfo, hearingItem));
                 hearingDetails.put("desg_name", properties.getJudgeDesignation());
                 hearingDetails.put("judge_code", properties.getJudgeCode());
+                hearingDetails.put("jocode", "");
+                hearingDetails.put("desg_code", "");
 
                 // Fetch order using hearing number to get next hearing date
                 if (hearingItem.getHearingId() != null && !hearingItem.getHearingId().isEmpty()) {
@@ -128,6 +133,7 @@ public class HearingService {
                                     hearingDetails.put("next_date", nextDate);
                                     break;
                                 }
+                                hearingDetails.put("next_date", "");
                             }
                         }
                     } catch (Exception e) {
@@ -142,6 +148,7 @@ public class HearingService {
             }
             
             // Save the updated record
+            record.setDateFirstList(formatDate(!hearings.isEmpty() ? hearings.get(0).getStartTime() : null));
             njdgTransformRepository.updateData(record);
 
             log.info("Successfully updated hearing history for case reference number: {}", hearing.getCaseReferenceNumber());
@@ -176,7 +183,7 @@ public class HearingService {
      */
     private String formatDate(Long timestamp) {
         if (timestamp == null) {
-            return null;
+            return "";
         }
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())

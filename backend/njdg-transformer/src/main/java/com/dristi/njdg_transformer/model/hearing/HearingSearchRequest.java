@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.model.hearing;
 
+import com.dristi.njdg_transformer.model.Pagination;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.Builder;
@@ -23,5 +24,7 @@ public class HearingSearchRequest {
     @Valid
     private HearingCriteria criteria;
 
-
+    @JsonProperty("pagination")
+    @Valid
+    private Pagination pagination;
 }
