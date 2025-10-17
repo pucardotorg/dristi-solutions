@@ -1,4 +1,4 @@
-package com.dristi.njdg_transformer.repository;
+package com.dristi.njdg_transformer.repository.rowmapper;
 
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.fasterxml.jackson.core.type.TypeReference;

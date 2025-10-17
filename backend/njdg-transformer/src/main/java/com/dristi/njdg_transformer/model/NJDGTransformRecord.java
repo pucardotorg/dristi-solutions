@@ -1,13 +1,12 @@
 package com.dristi.njdg_transformer.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -15,100 +14,126 @@ import java.util.List;
 @AllArgsConstructor
 public class NJDGTransformRecord {
 
-    @Builder.Default
+    @JsonProperty("cino")
     private String cino = "";
-    @Builder.Default
-    private String dateOfFiling = "";
-    @Builder.Default
-    private String dtRegis = "";
-    @Builder.Default
-    private String caseType = "";
-    @Builder.Default
-    private String filNo = "";
-    @Builder.Default
-    private String filYear = "";
-    @Builder.Default
-    private String regNo = "";
-    @Builder.Default
-    private String regYear = "";
-    @Builder.Default
-    private String dateFirstList = "";
-    @Builder.Default
-    private String dateNextList = "";
-    @Builder.Default
-    private String pendDisp = "";
-    @Builder.Default
-    private String dateOfDecision = "";
-    @Builder.Default
+
+    @JsonProperty("date_of_filing")
+    private LocalDate dateOfFiling = null;
+
+    @JsonProperty("dt_regis")
+    private LocalDate dtRegis = null;
+
+    @JsonProperty("case_type")
+    private Integer caseType;
+
+    @JsonProperty("fil_no")
+    private Integer filNo;
+
+    @JsonProperty("fil_year")
+    private Integer filYear;
+
+    @JsonProperty("reg_no")
+    private Integer regNo;
+
+    @JsonProperty("reg_year")
+    private Integer regYear;
+
+    @JsonProperty("date_first_list")
+    private LocalDate dateFirstList = null;
+
+    @JsonProperty("date_next_list")
+    private LocalDate dateNextList = null;
+
+    @JsonProperty("pend_disp")
+    private Character pendDisp;
+
+    @JsonProperty("date_of_decision")
+    private LocalDate dateOfDecision = null;
+
+    @JsonProperty("disp_reason")
     private String dispReason = "";
-    @Builder.Default
-    private String dispNature = "";
-    @Builder.Default
+
+    @JsonProperty("disp_nature")
+    private Character dispNature;
+
+    @JsonProperty("desgname")
     private String desgname = "";
-    @Builder.Default
-    private String courtNo = "";
-    @Builder.Default
+
+    @JsonProperty("court_no")
+    private Integer courtNo;
+
+    @JsonProperty("est_code")
     private String estCode = "";
-    @Builder.Default
-    private String stateCode = "";
-    @Builder.Default
-    private String distCode = "";
-    @Builder.Default
-    private String purposeCode = "";
-    @Builder.Default
+
+    @JsonProperty("state_code")
+    private Integer stateCode;
+
+    @JsonProperty("dist_code")
+    private Integer distCode;
+
+    @JsonProperty("purpose_code")
+    private Integer purposeCode;
+
+    @JsonProperty("pet_name")
     private String petName = "";
-    @Builder.Default
+
+    @JsonProperty("pet_adv")
     private String petAdv = "";
-    @Builder.Default
-    private String petAdvCd = "";
-    @Builder.Default
+
+    @JsonProperty("pet_adv_cd")
+    private Integer petAdvCd;
+
+    @JsonProperty("res_name")
     private String resName = "";
-    @Builder.Default
+
+    @JsonProperty("res_adv")
     private String resAdv = "";
-    @Builder.Default
-    private String resAdvCd = "";
-    @Builder.Default
+
+    @JsonProperty("res_adv_cd")
+    private Integer resAdvCd;
+
+    @JsonProperty("pet_adv_bar_reg")
     private String petAdvBarReg = "";
-    @Builder.Default
+
+    @JsonProperty("res_adv_bar_reg")
     private String resAdvBarReg = "";
-    @Builder.Default
-    private String policeStCode = "";
-    @Builder.Default
+
+    @JsonProperty("police_st_code")
+    private Integer policeStCode;
+
+    @JsonProperty("police_ncode")
     private String policeNcode = "";
-    @Builder.Default
-    private String firNo = "";
-    @Builder.Default
+
+    @JsonProperty("fir_no")
+    private Integer firNo;
+
+    @JsonProperty("police_station")
     private String policeStation = "";
-    @Builder.Default
-    private String firYear = "";
-    private String dateLastList;
-    @Builder.Default
+
+    @JsonProperty("fir_year")
+    private Integer firYear;
+
+    @JsonProperty("date_last_list")
+    private LocalDate dateLastList = null;
+
+    @JsonProperty("main_matter_cino")
     private String mainMatterCino = "";
 
-    @Builder.Default
-    private List<JsonNode> petExtraParty = new ArrayList<>(); // JSONB array
-    @Builder.Default
-    private List<JsonNode> resExtraParty = new ArrayList<>(); // JSONB array
-    @Builder.Default
-    private String petAge = "";
-    @Builder.Default
-    private String resAge = "";
-    @Builder.Default
+    @JsonProperty("pet_age")
+    private Integer petAge;
+
+    @JsonProperty("res_age")
+    private Integer resAge;
+
+    @JsonProperty("pet_address")
     private String petAddress = "";
-    @Builder.Default
+
+    @JsonProperty("res_address")
     private String resAddress = "";
-    @Builder.Default
+
+    @JsonProperty("jocode")
     private String jocode = "";
-    @Builder.Default
-    private String cicriType = "";
 
-    @Builder.Default
-    private List<JsonNode> act = new ArrayList<>(); // JSONB array
-    @Builder.Default
-    private List<JsonNode> historyOfCaseHearing = new ArrayList<>(); // JSONB array
-    @Builder.Default
-    private List<JsonNode> interimOrder = new ArrayList<>(); // JSONB array
-    @Builder.Default
-    private List<JsonNode> iaFiling = new ArrayList<>(); // JSONB array
+    @JsonProperty("cicri_type")
+    private Character cicriType = ' ';
 }
-

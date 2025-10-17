@@ -9,7 +9,7 @@ import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderCriteria;
 import com.dristi.njdg_transformer.model.order.OrderListResponse;
 import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
-import com.dristi.njdg_transformer.repository.NJDGRepository;
+import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.utils.HearingUtil;
 import com.dristi.njdg_transformer.utils.HrmsUtil;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
@@ -35,7 +35,7 @@ import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 public class HearingService {
 
     @Autowired
-    private final NJDGRepository njdgTransformRepository;
+    private final CaseRepository njdgTransformRepository;
 
     private final HrmsUtil hrmsUtil;
 
@@ -47,7 +47,7 @@ public class HearingService {
 
     private final OrderUtil orderUtil;
 
-    public HearingService(NJDGRepository njdgTransformRepository, HrmsUtil hrmsUtil, MdmsUtil mdmsUtil, TransformerProperties properties, HearingUtil hearingUtil, OrderUtil orderUtil) {
+    public HearingService(CaseRepository njdgTransformRepository, HrmsUtil hrmsUtil, MdmsUtil mdmsUtil, TransformerProperties properties, HearingUtil hearingUtil, OrderUtil orderUtil) {
         this.njdgTransformRepository = njdgTransformRepository;
         this.hrmsUtil = hrmsUtil;
         this.mdmsUtil = mdmsUtil;

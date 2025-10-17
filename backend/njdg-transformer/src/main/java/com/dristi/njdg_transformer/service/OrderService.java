@@ -5,7 +5,7 @@ import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderCriteria;
 import com.dristi.njdg_transformer.model.order.OrderListResponse;
 import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
-import com.dristi.njdg_transformer.repository.NJDGRepository;
+import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.utils.FileStoreUtil;
 import com.dristi.njdg_transformer.utils.OrderUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,12 +30,12 @@ import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER
 @Transactional
 public class OrderService {
 
-    private final NJDGRepository repository;
+    private final CaseRepository repository;
     private final FileStoreUtil fileStoreUtil;
     private final OrderUtil orderUtil;
     private final ObjectMapper objectMapper;
 
-    public OrderService(NJDGRepository repository, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, ObjectMapper objectMapper) {
+    public OrderService(CaseRepository repository, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, ObjectMapper objectMapper) {
         this.repository = repository;
         this.fileStoreUtil = fileStoreUtil;
         this.orderUtil = orderUtil;
