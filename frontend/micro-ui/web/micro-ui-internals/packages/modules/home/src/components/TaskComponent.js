@@ -44,6 +44,7 @@ const TasksComponent = ({
   needRefresh = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
+  const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
   const { t } = useTranslation();
@@ -57,9 +58,12 @@ const TasksComponent = ({
   const hasSignOrderAccess = userInfo?.roles?.some((role) => role.code === "ORDER_ESIGN");
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
+  const [showCourierServiceModal, setShowCourierServiceModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const [courierData, setCourierData] = useState({});
+  const [selectedAddresses, setSelectedAddresses] = useState([]);
   const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
@@ -127,6 +131,61 @@ const TasksComponent = ({
   useEffect(() => {
     refetch();
   }, [refetch, filingNumber, needRefresh]);
+
+  // Initialize courier data when modal opens
+  useEffect(() => {
+    if (showCourierServiceModal) {
+      // Initialize with default data or fetch from API
+      setCourierData({
+        addressDetails: courierData?.addressDetails || [
+          {
+            id: 1,
+            addressDetails: {
+              city: "Kollam",
+              state: "Kollam",
+              pincode: "691008",
+              district: "dsaas",
+              locality: "Kadapakkada",
+            },
+          },
+          {
+            id: 2,
+            addressDetails: {
+              city: "Kollam",
+              state: "Kollam",
+              pincode: "691008",
+              district: "dsaas",
+              locality: "Kadapakkada",
+            },
+          },
+        ],
+        noticeCourierService: null,
+        summonsCourierService: null,
+      });
+      setSelectedAddresses([
+        {
+          id: 1,
+          addressDetails: {
+            city: "Kollam",
+            state: "Kollam",
+            pincode: "691008",
+            district: "dsaas",
+            locality: "Kadapakkada",
+          },
+        },
+        {
+          id: 2,
+          addressDetails: {
+            city: "Kollam",
+            state: "Kollam",
+            pincode: "691008",
+            district: "dsaas",
+            locality: "Kadapakkada",
+          },
+        },
+      ]);
+    }
+  }, [showCourierServiceModal, courierData]);
 
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
@@ -661,6 +720,120 @@ const TasksComponent = ({
     };
   }, [t, data, refetch, setPendingTaskActionModals]);
 
+  // Courier service options
+  const courierOptions = useMemo(
+    () => [
+      { code: "registered_post", name: t("CS_REGISTERED_POST") },
+      { code: "speed_post", name: t("CS_SPEED_POST") },
+      { code: "courier", name: t("CS_COURIER") },
+      { code: "hand_delivery", name: t("CS_HAND_DELIVERY") },
+    ],
+    [t]
+  );
+
+  // Handle courier service selection
+  const handleCourierServiceChange = useCallback((value, type) => {
+    setCourierData((prev) => ({
+      ...prev,
+      [type === "notice" ? "noticeCourierService" : "summonsCourierService"]: value,
+    }));
+  }, []);
+
+  // Handle address selection
+  const handleAddressSelection = useCallback((addressDetails, id, isSelected) => {
+    setSelectedAddresses((prev) => {
+      if (isSelected) {
+        return [...prev, { addressDetails, id }];
+      } else {
+        return prev.filter((addr) => (addr.id && id ? addr.id !== id : JSON.stringify(addr.addressDetails) !== JSON.stringify(addressDetails)));
+      }
+    });
+  }, []);
+
+  // Courier service modal configuration
+  const courierServiceConfig = useMemo(() => {
+    return {
+      handleClose: () => {
+        setShowCourierServiceModal(false);
+      },
+      heading: {
+        label: t("CS_TAKE_STEPS_NOTICE"),
+      },
+      isStepperModal: true,
+      actionSaveLabel: t("CS_NEXT"),
+      actionCancelLabel: t("CS_GO_BACK"),
+      steps: [
+        {
+          type: "modal",
+          className: "process-courier-service",
+          heading: { label: t("CS_COURIER_SERVICE") },
+          actionSaveLabel: t("CS_NEXT"),
+          modalBody: (
+            <CourierService
+              t={t}
+              processCourierData={{
+                ...courierData,
+                index: 0,
+                isDelayCondonation: true,
+                addressDetails: courierData?.addressDetails || [
+                  {
+                    id: 1,
+                    addressDetails: {
+                      city: "Kollam",
+                      state: "Kollam",
+                      pincode: "691008",
+                      district: "dsaas",
+                      locality: "Kadapakkada",
+                    },
+                  },
+                  {
+                    id: 2,
+                    addressDetails: {
+                      city: "Kollam",
+                      state: "Kollam",
+                      pincode: "691008",
+                      district: "dsaas",
+                      locality: "Kadapakkada",
+                    },
+                  },
+                ],
+              }}
+              courierOptions={courierOptions}
+              handleCourierServiceChange={handleCourierServiceChange}
+              selectedAddresses={selectedAddresses}
+              handleAddressSelection={handleAddressSelection}
+            />
+          ),
+          actionSaveOnSubmit: () => {
+            // Process courier data
+            console.log("Courier data submitted:", courierData, selectedAddresses);
+            return { continue: true };
+          },
+          isDisabled: selectedAddresses.length === 0 || (!courierData?.noticeCourierService && !courierData?.summonsCourierService),
+        },
+        {
+          type: "success",
+          hideSubmit: true,
+          modalBody: (
+            <CustomStepperSuccess
+              successMessage={"CS_COURIER_SERVICE_SUCCESS"}
+              submitButtonAction={() => {
+                setShowCourierServiceModal(false);
+                // Additional actions after successful submission
+              }}
+              submitButtonText={t("CS_VIEW_CASE_FILE")}
+              closeButtonText={t("CS_BACK_HOME")}
+              closeButtonAction={() => {
+                setShowCourierServiceModal(false);
+              }}
+              t={t}
+            />
+          ),
+        },
+      ],
+    };
+  }, [t, courierData, courierOptions, selectedAddresses, handleCourierServiceChange, handleAddressSelection]);
+
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -683,6 +856,7 @@ const TasksComponent = ({
           setResponsePendingTask={setResponsePendingTask}
           setPendingTaskActionModals={setPendingTaskActionModals}
           isApplicationCompositeOrder={isApplicationCompositeOrder}
+          setShowCourierServiceModal={setShowCourierServiceModal}
         />
       </div>
     );
@@ -757,6 +931,7 @@ const TasksComponent = ({
                         setShowSubmitResponseModal={setShowSubmitResponseModal}
                         setResponsePendingTask={setResponsePendingTask}
                         setPendingTaskActionModals={setPendingTaskActionModals}
+                        setShowCourierServiceModal={setShowCourierServiceModal}
                       />
                     </div>
                   ) : (
@@ -773,6 +948,7 @@ const TasksComponent = ({
                           setShowSubmitResponseModal={setShowSubmitResponseModal}
                           setResponsePendingTask={setResponsePendingTask}
                           setPendingTaskActionModals={setPendingTaskActionModals}
+                          setShowCourierServiceModal={setShowCourierServiceModal}
                         />
                       </div>
                       <div className="task-section">
@@ -785,6 +961,7 @@ const TasksComponent = ({
                           setShowSubmitResponseModal={setShowSubmitResponseModal}
                           setResponsePendingTask={setResponsePendingTask}
                           setPendingTaskActionModals={setPendingTaskActionModals}
+                          setShowCourierServiceModal={setShowCourierServiceModal}
                         />
                       </div>
                     </React.Fragment>
@@ -811,6 +988,7 @@ const TasksComponent = ({
       </React.Fragment>
 
       {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
+      {showCourierServiceModal && <DocumentModal config={courierServiceConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
@@ -835,6 +1013,7 @@ const TasksComponent = ({
                       setShowSubmitResponseModal={setShowSubmitResponseModal}
                       setResponsePendingTask={setResponsePendingTask}
                       setPendingTaskActionModals={setPendingTaskActionModals}
+                      setShowCourierServiceModal={setShowCourierServiceModal}
                       tableView={true}
                     />
                   </Card>
@@ -843,6 +1022,7 @@ const TasksComponent = ({
             </React.Fragment>
           )}
           {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
+          {showCourierServiceModal && <DocumentModal config={courierServiceConfig} />}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
         </React.Fragment>

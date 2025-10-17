@@ -32,6 +32,7 @@ function PendingTaskAccordion({
   setPendingTaskActionModals,
   tableView = false,
   isApplicationCompositeOrder = false,
+  setShowCourierServiceModal,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -210,7 +211,7 @@ function PendingTaskAccordion({
                           );
                         } else {
                           setResponsePendingTask(item);
-                          setShowSubmitResponseModal(true);
+                          setShowCourierServiceModal(true);
                         }
                       } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                     }}
@@ -238,7 +239,7 @@ function PendingTaskAccordion({
         </div>
       );
     },
-    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
+    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowCourierServiceModal, t, sortedPendingTasks]
   );
 
   const orderPageTaskView = useCallback(() => {
@@ -344,6 +345,7 @@ function PendingTaskAccordion({
                   key={`${item?.filingNumber}-${item?.referenceId}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
+                    debugger;
                     if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                       setShowOfflineStampEnvelopeModal(true);
                       return;
@@ -397,7 +399,7 @@ function PendingTaskAccordion({
                         );
                       } else {
                         setResponsePendingTask(item);
-                        setShowSubmitResponseModal(true);
+                        setShowCourierServiceModal(true);
                       }
                     } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                   }}

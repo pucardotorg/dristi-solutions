@@ -78,6 +78,8 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
     (config?.isStepperModal
       ? config.steps[step]?.type === "document"
         ? "custom-modal-stepper"
+        : config.steps[step]?.type === "modal"
+        ? config.steps[step]?.className
         : "custom-modal-stepper-non-doc"
       : config?.type === "document"
       ? "custom-modal-stepper"

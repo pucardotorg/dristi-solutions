@@ -864,6 +864,47 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   return allErrorData;
 };
 
+export const getProcessCourierRemainingFields = (formdata, t) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+
+    let errorObject = {
+      NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
+      SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
+    };
+    const isDelayCondonation = formData?.multipleAccusedProcessCourier?.isDelayCondonation;
+    if (isDelayCondonation) {
+      if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
+        errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    } else {
+      if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
+        errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    }
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
+    }
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: formData?.multipleAccusedProcessCourier?.index,
+        type: "Accused",
+        complainant: formData?.multipleAccusedProcessCourier?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
+  }
+  return allErrorData;
+};
+
 export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
   if (selected === "advocateDetails") {
     const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
@@ -3271,6 +3312,15 @@ export const updateCaseDetails = async ({
       ...caseDetails.additionalDetails,
       advocateDetails: {
         formdata: newFormData,
+        isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+      },
+    };
+  }
+  if (selected === "processCourierService") {
+    data.additionalDetails = {
+      ...caseDetails.additionalDetails,
+      processCourierService: {
+        formdata: updatedFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
       },
     };

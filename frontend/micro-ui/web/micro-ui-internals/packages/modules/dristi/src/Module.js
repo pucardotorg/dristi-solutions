@@ -77,6 +77,8 @@ import SuretyComponent from "./components/SuretyComponent";
 import EditSendBackModal from "./components/EditSendBackModal";
 import DownloadButton from "./components/DownloadButton";
 import PencilIconEdit from "./components/PencilIconEdit";
+import ProcessCourierService from "./components/ProcessCourierService";
+import CourierService from "./components/CourierService";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -214,6 +216,8 @@ const componentsToRegister = {
   EditSendBackModal,
   DownloadButton,
   PencilIconEdit,
+  ProcessCourierService,
+  CourierService,
 };
 
 const overrideHooks = () => {
