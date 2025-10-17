@@ -5,6 +5,7 @@ import { Banner } from "@egovernments/digit-ui-react-components";
 import { Button, InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
+import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const PaymentStatus = ({ path }) => {
   const location = useLocation();
@@ -19,6 +20,7 @@ const PaymentStatus = ({ path }) => {
   const orderType = receiptData?.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
 
   const commonProps = {
     whichSvg: "tick",
@@ -93,7 +95,9 @@ const PaymentStatus = ({ path }) => {
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onClick={() => {
-                history.goBack();
+                triggerSurvey("TASK_PAYMENT", () => {
+                  history.goBack();
+                });
               }}
             />
           ) : (
@@ -113,11 +117,14 @@ const PaymentStatus = ({ path }) => {
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onClick={() => {
-              history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              triggerSurvey("TASK_PAYMENT", () => {
+                history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              });
             }}
           />
         </div>
       </div>
+      {SurveyUI}
     </div>
   );
 };
