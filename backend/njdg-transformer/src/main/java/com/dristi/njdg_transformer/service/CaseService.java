@@ -1,7 +1,7 @@
 package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.config.TransformerProperties;
-import com.dristi.njdg_transformer.enrichment.NJDGEnrichment;
+import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.repository.CaseRepository;
@@ -33,6 +33,7 @@ public class CaseService {
     private final CaseRepository caseRepository;
     private final TransformerProperties properties;
     private final ObjectMapper objectMapper;
+    private final CaseEnrichment caseEnrichment;
 
     /**
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
@@ -45,6 +46,10 @@ public class CaseService {
     public NJDGTransformRecord processAndUpsertCase(CourtCase courtCase, RequestInfo requestInfo) {
         try {
             NJDGTransformRecord record = convertToNJDGRecord(courtCase);
+            caseEnrichment.enrichPetitionerDetails(courtCase, record);
+            caseEnrichment.enrichRespondentDetails(courtCase, record);
+            caseEnrichment.enrichExtraParties(courtCase, record);
+            caseEnrichment.enrichAdvocateDetails(courtCase, record);
             return record;
         } catch (CustomException exception) {
             log.error("Error processing CourtCase with CNR: {}. Error: {}", courtCase.getCnrNumber(), exception.getMessage());
