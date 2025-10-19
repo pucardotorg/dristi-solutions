@@ -4,6 +4,7 @@ import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,6 +20,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLAINANT_PRIMARY;
+import static com.dristi.njdg_transformer.config.ServiceConstants.RESPONDENT_PRIMARY;
 
 /**
  * Service class for handling case-related operations
@@ -33,6 +36,7 @@ public class CaseService {
     private final TransformerProperties properties;
     private final ObjectMapper objectMapper;
     private final CaseEnrichment caseEnrichment;
+    private final Producer producer;
 
     /**
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
@@ -42,13 +46,15 @@ public class CaseService {
      * @return The upserted NJDGTransformRecord
      * @throws IllegalArgumentException if the input is invalid
      */
-    public NJDGTransformRecord processAndUpsertCase(CourtCase courtCase, RequestInfo requestInfo) {
+    public NJDGTransformRecord processAndUpsertCase(CourtCase courtCase) {
         try {
             NJDGTransformRecord record = convertToNJDGRecord(courtCase);
-            caseEnrichment.enrichPetitionerDetails(courtCase, record);
-            caseEnrichment.enrichRespondentDetails(courtCase, record);
-            caseEnrichment.enrichExtraParties(courtCase, record);
-            caseEnrichment.enrichAdvocateDetails(courtCase, record);
+            caseEnrichment.enrichPrimaryPartyDetails(courtCase, record, COMPLAINANT_PRIMARY);
+            caseEnrichment.enrichPrimaryPartyDetails(courtCase, record, RESPONDENT_PRIMARY);
+            caseEnrichment.enrichAdvocateDetails(courtCase, record, COMPLAINANT_PRIMARY);
+            caseEnrichment.enrichAdvocateDetails(courtCase, record, RESPONDENT_PRIMARY);
+            caseEnrichment.enrichPoliceStationDetails(courtCase, record);
+            producer.push("save-case-details", record);
             return record;
         } catch (CustomException exception) {
             log.error("Error processing CourtCase with CNR: {}. Error: {}", courtCase.getCnrNumber(), exception.getMessage());
@@ -72,11 +78,14 @@ public class CaseService {
                 .dateOfDecision(formatDate(courtCase.getJudgementDate()))
                 .dispReason(getDisposalReason(courtCase.getOutcome()))
                 .dispNature('1')//todo: configure on contested(1) and uncontested(2)
-                .desgname(properties.getJudgeDesignation())
+                .desgname(properties.getJudgeDesignation())//todo: configure to get from desg_type table
                 .courtNo(1)//todo: configure for different courts
                 .estCode(courtCase.getCourtId())
                 .stateCode(32)//todo: need to configure for multiple state
                 .distCode(getDistrictCode(courtCase))
+                .purposeCode(0)//todo: need to extract from hearings:: extract code for latest hearing
+                .jocode(properties.getJudgeCode())//todo: configure from judge_t table
+                .cicriType('1')//get actual character value of cicritype
                 .build();
     }
 
@@ -91,7 +100,6 @@ public class CaseService {
             log.debug("No formdata found in cheque details");
         }
 
-        // Extract police station code from case details
         JsonNode policeStationNode = chequeDetails.path("formdata").get(0)
                 .path("data")
                 .path("policeStationJurisDictionCheque");
@@ -116,8 +124,8 @@ public class CaseService {
         if(outcome == null) {
             return 'P';
         } else {
-            Integer disposalType =  caseRepository.getDisposalStatus(outcome);
-            if(disposalType != null) {
+            Integer disposalTypeCode =  caseRepository.getDisposalStatus(outcome);
+            if(disposalTypeCode != null) {
                 return 'D';
             } else {
                 return 'P';

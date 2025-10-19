@@ -1,11 +1,12 @@
 package com.dristi.njdg_transformer.repository;
 
-import com.dristi.njdg_transformer.model.advocate.AdvocateSerialNumber;
+import com.dristi.njdg_transformer.model.AdvocateDetails;
+import com.dristi.njdg_transformer.model.AdvocateSerialNumber;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import java.sql.Types;
 
 @Repository
 public class AdvocateRepository {
@@ -15,18 +16,10 @@ public class AdvocateRepository {
     public AdvocateRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-    
-    public AdvocateSerialNumber findAdvocateSerialNumber(String advocateId) {
-        try {
-            String sql = "SELECT serial_no as serialNo, advocate_id as advocateId, bar_reg_no as barRegNo " +
-                       "FROM advocate_serial_numbers WHERE advocate_id = ?";
-            return jdbcTemplate.queryForObject(
-                sql,
-                new Object[]{advocateId},
-                new BeanPropertyRowMapper<>(AdvocateSerialNumber.class)
-            );
-        } catch (Exception e) {
-            return null;
-        }
+
+
+    public AdvocateDetails getAdvocateDetails(String advocateId) {
+        String sql = "SELECT advocate_name as advocateName, advocate_code as advocateCode, bar_reg_no as barRegNo, advocate_id as advocateId FROM advocate_master WHERE advocate_id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{advocateId}, new int[]{Types.VARCHAR}, AdvocateDetails.class);
     }
 }

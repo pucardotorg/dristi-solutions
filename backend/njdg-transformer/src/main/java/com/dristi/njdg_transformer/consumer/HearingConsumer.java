@@ -37,13 +37,6 @@ public class HearingConsumer {
     }
 
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
-        try {
-            JsonNode hearingRequest = objectMapper.convertValue(payload.value(), JsonNode.class);
-            Hearing hearing = objectMapper.convertValue(hearingRequest.get("hearing"), Hearing.class);
-            RequestInfo requestInfo = objectMapper.convertValue(hearingRequest.get("RequestInfo"), RequestInfo.class);
-            hearingService.updateDataForHearing(hearing, requestInfo);
-        } catch (Exception e) {
-            log.error("Error in case for hearings:: {}", e.getMessage());
-        }
+
     }
 }

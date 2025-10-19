@@ -1,57 +1,159 @@
 package com.dristi.njdg_transformer.enrichment;
 
+import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
-import com.dristi.njdg_transformer.model.advocate.AdvocateSerialNumber;
+import com.dristi.njdg_transformer.model.PoliceStationDetails;
 import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.cases.Party;
-import com.dristi.njdg_transformer.model.cases.StatuteSection;
 import com.dristi.njdg_transformer.repository.AdvocateRepository;
+import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
-import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class CaseEnrichment {
     
 
     
     private final ObjectMapper objectMapper;
-    private final AdvocateRepository repository;
-    private final MdmsUtil mdmsUtil;
+    private final AdvocateRepository advocateRepository;
+    private final CaseRepository repository;
 
-    public CaseEnrichment(ObjectMapper objectMapper, AdvocateRepository repository, MdmsUtil mdmsUtil) {
-        this.objectMapper = objectMapper;
-        this.repository = repository;
-        this.mdmsUtil = mdmsUtil;
+
+    public void enrichPrimaryPartyDetails(CourtCase courtCase, NJDGTransformRecord record, String partyType) {
+        JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        if (additionalDetails == null) {
+            log.warn("No additional details found in court case");
+            return;
+        }
+
+        List<Party> litigants = courtCase.getLitigants();
+        if (litigants == null || litigants.isEmpty()) {
+            log.warn("No litigants found in court case");
+            return;
+        }
+
+        Party primaryParty = findPrimaryParty(litigants, partyType);
+        if (primaryParty == null) {
+            log.warn("No primary {} found in court case", partyType);
+            return;
+        }
+
+        String individualId = primaryParty.getIndividualId();
+        if (individualId == null || individualId.isEmpty()) {
+            log.warn("Primary {} has no individualId", partyType);
+            return;
+        }
+
+        String detailsKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantDetails"
+                : "respondentDetails";
+        String verificationKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantVerification"
+                : "respondentVerification";
+        String ageKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantAge"
+                : "respondentAge";
+
+        JsonNode partyDetails = additionalDetails.path(detailsKey);
+        JsonNode formDataArray = partyDetails.path("formdata");
+
+        if (!formDataArray.isArray() || formDataArray.isEmpty()) {
+            log.warn("No formdata found for {}", partyType);
+            return;
+        }
+
+        for (JsonNode formDataNode : formDataArray) {
+            JsonNode dataNode = formDataNode.path("data");
+            String formIndividualId = dataNode
+                    .path(verificationKey)
+                    .path("individualDetails")
+                    .path("individualId")
+                    .asText(null);
+
+            if (individualId.equals(formIndividualId)) {
+                String firstName = dataNode.path("firstName").asText("").trim();
+                String lastName = dataNode.path("lastName").asText("").trim();
+                String fullName = (firstName + " " + lastName).trim();
+                String ageStr = dataNode.path(ageKey).asText(null);
+                JsonNode addressNode = dataNode.path("addressDetails");
+                String address = extractAddress(addressNode);
+
+                try {
+                    int age = (ageStr != null && !ageStr.isEmpty()) ? Integer.parseInt(ageStr) : 0;
+
+                    if (partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)) {
+                        record.setPetName(fullName.isEmpty() ? null : fullName);
+                        if (age > 0) record.setPetAge(age);
+                        record.setPetAddress(address);
+                    } else if (partyType.equalsIgnoreCase(RESPONDENT_PRIMARY)) {
+                        record.setResName(fullName.isEmpty() ? null : fullName);
+                        if (age > 0) record.setResAge(age);
+                        record.setResAddress(address);
+                    }
+
+                    log.debug("Matched {} with individualId: {}", partyType.toLowerCase(), individualId);
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid {} age format: {}", partyType.toLowerCase(), ageStr);
+                }
+                return;
+            }
+        }
+
+        log.warn("No matching formdata entry found for {} individualId: {}", partyType, individualId);
     }
 
-    public void enrichPetitionerDetails(CourtCase courtCase, NJDGTransformRecord record) {
 
-    }
-
-    public void enrichRespondentDetails(CourtCase courtCase, NJDGTransformRecord record) {
-
+    private Party findPrimaryParty(List<Party> litigants, String partyType) {
+        return litigants.stream().filter(party -> partyType.equalsIgnoreCase(party.getPartyType())).findFirst().orElse(null);
     }
 
     public void enrichExtraParties(CourtCase courtCase, NJDGTransformRecord record) {
 
     }
 
-    public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record) {
+    public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record, String party) {
+        List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
 
+        String advocateId = null;
+        for(AdvocateMapping advocateMapping : advocateMappings) {
+            Party litigant = findPrimaryParty(advocateMapping.getRepresenting(), party);
+            if(litigant == null) {
+                continue;
+            }
+            advocateId = advocateMapping.getAdvocateId();
+        }
+        if(advocateId == null){
+            log.warn("No Advocate found for {}", party);
+            return;
+        }
+        AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
+
+        if(advocateDetails == null) {
+            log.info("No Advocate details found for {}", advocateId);
+            return;
+        }
+        if(COMPLAINANT_PRIMARY.equalsIgnoreCase(party)){
+            record.setPetAdvCd(advocateDetails.getAdvocateCode());
+            record.setPetAdvBarReg(advocateDetails.getBarRegNo());
+            record.setPetAdv(advocateDetails.getAdvocateName());
+        } else if(RESPONDENT_PRIMARY.equalsIgnoreCase(party)) {
+            record.setResAdvCd(advocateDetails.getAdvocateCode());
+            record.setResAdvBarReg(advocateDetails.getBarRegNo());
+            record.setResAdv(advocateDetails.getAdvocateName());
+        }
     }
 
 
@@ -143,50 +245,69 @@ public class CaseEnrichment {
 //    /**
 //     * Helper method to find a litigant by uniqueId from additionalDetails
 //     */
-//    private Party findLitigantByUniqueId(List<Party> litigants, String uniqueId) {
-//        if (uniqueId == null || litigants == null) {
-//            return null;
-//        }
 //
-//        return litigants.stream()
-//                .filter(litigant -> {
-//                    try {
-//                        if (litigant.getAdditionalDetails() == null) {
-//                            return false;
-//                        }
-//                        String litigantUniqueId = objectMapper.readTree(objectMapper.writeValueAsString(litigant.getAdditionalDetails()))
-//                                .path("uuid")
-//                                .asText(null);
-//                        return uniqueId.equals(litigantUniqueId) && RESPONDENT_PRIMARY.equalsIgnoreCase(litigant.getPartyType());
-//                    } catch (Exception e) {
-//                        log.warn("Error processing litigant additionalDetails", e);
-//                        return false;
-//                    }
-//                })
-//                .findFirst()
-//                .orElse(null);
-//    }
-//
-//    private String extractAddress(JsonNode addressNode) {
-//        if (addressNode == null || addressNode.isMissingNode()) {
-//            return null;
-//        }
-//
-//        List<String> addressParts = new ArrayList<>();
-//        addIfNotEmpty(addressParts, addressNode.path("locality").asText(null));
-//        addIfNotEmpty(addressParts, addressNode.path("city").asText(null));
-//        addIfNotEmpty(addressParts, addressNode.path("district").asText(null));
-//        addIfNotEmpty(addressParts, addressNode.path("state").asText(null));
-//        addIfNotEmpty(addressParts, addressNode.path("pincode").asText(null));
-//
-//        return addressParts.isEmpty() ? null : String.join(", ", addressParts);
-//    }
-//
-//    private void addIfNotEmpty(List<String> list, String value) {
-//        if (value != null && !value.trim().isEmpty()) {
-//            list.add(value);
-//        }
-//    }
+    private String extractAddress(JsonNode addressNode) {
+        if (addressNode == null || addressNode.isMissingNode()) {
+            return null;
+        }
+
+        List<String> addressParts = new ArrayList<>();
+        addIfNotEmpty(addressParts, addressNode.path("locality").asText(null));
+        addIfNotEmpty(addressParts, addressNode.path("city").asText(null));
+        addIfNotEmpty(addressParts, addressNode.path("district").asText(null));
+        addIfNotEmpty(addressParts, addressNode.path("state").asText(null));
+        addIfNotEmpty(addressParts, addressNode.path("pincode").asText(null));
+
+        return addressParts.isEmpty() ? null : String.join(", ", addressParts);
+    }
+
+    private void addIfNotEmpty(List<String> list, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            list.add(value);
+        }
+    }
+
+    public void enrichPoliceStationDetails(CourtCase courtCase, NJDGTransformRecord record) {
+        try {
+            JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+            if (caseDetails == null || caseDetails.path("chequeDetails").isMissingNode()) {
+                log.debug("No cheque details found in case additional details");
+                return;
+            }
+
+            JsonNode chequeDetails = caseDetails.path("chequeDetails");
+            if (chequeDetails.path("formdata").isMissingNode() || !chequeDetails.path("formdata").isArray() || chequeDetails.path("formdata").isEmpty()) {
+                log.debug("No formdata found in cheque details");
+                return;
+            }
+
+            JsonNode policeStationNode = chequeDetails.path("formdata").get(0)
+                .path("data")
+                .path("policeStationJurisDictionCheque");
+
+            if (policeStationNode.isMissingNode()) {
+                log.debug("No police station details found in cheque details");
+                return;
+            }
+
+            String policeStationCode = policeStationNode.path("code").asText();
+            if (policeStationCode == null || policeStationCode.isEmpty()) {
+                log.debug("No police station code found in cheque details");
+                return;
+            }
+            PoliceStationDetails policeStationDetails = repository.getPoliceStationDetails(policeStationCode);
+            if(policeStationDetails == null) {
+                log.debug("Police details not found in data for code:: {}", policeStationCode);
+                return;
+            }
+            record.setPoliceStCode(policeStationDetails.getPoliceStationCode());
+            record.setPoliceNcode(policeStationDetails.getNatCode());
+            record.setPoliceStation(policeStationDetails.getStName());
+        } catch (Exception e) {
+            log.error("Error while enriching police station details: ", e);
+        }
+    }
+}
 //
 //    public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record) {
 //        try {
@@ -208,7 +329,7 @@ public class CaseEnrichment {
 //                    advocateName = additionalDetails.path("advocateName").asText(null);
 //                }
 //                AdvocateSerialNumber advocateInfo = getAdvDetails(advocateUuid);
-//                if (advocateInfo != null && advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty()) {
+//                if (advocateInfo != null &&8 advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty()) {
 //                    for (Party party : advocateMapping.getRepresenting()) {
 //                        String partyType = party.getPartyType();
 //
@@ -491,4 +612,4 @@ public class CaseEnrichment {
 //            log.error("Error while enriching police station details: ", e);
 //        }
 //    }
-}
+

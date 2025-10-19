@@ -37,13 +37,6 @@ public class OrderConsumer {
     }
 
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
-        try {
-            JsonNode orderRequest = objectMapper.convertValue(payload.value(), JsonNode.class);
-            Order order = objectMapper.convertValue(orderRequest.get("order"), Order.class);
-            RequestInfo requestInfo = objectMapper.convertValue(orderRequest.get("RequestInfo"), RequestInfo.class);
-            orderService.updateDataForOrder(order, requestInfo);
-        } catch (Exception e) {
-            log.info("Error in enriching order:: {}", e.getMessage());
-        }
+
     }
 }

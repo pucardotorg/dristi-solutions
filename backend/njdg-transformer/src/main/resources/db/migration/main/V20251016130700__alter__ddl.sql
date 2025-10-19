@@ -3,3 +3,4 @@ ALTER TABLE advocate_master ADD COLUMN advocate_id VARCHAR(255) DEFAULT '';
 ALTER TABLE judge_t ADD COLUMN judge_username VARCHAR(255) DEFAULT '';
 ALTER TABLE disp_type ADD COLUMN nat_code TEXT DEFAULT '';
 ALTER TABLE desg_type ADD COLUMN court_desg_code VARCHAR(255) DEFAULT '';
+ALTER TABLE police_t ADD COLUMN police_code TEXT DEFAULT '';

@@ -39,7 +39,7 @@ public class CaseConsumer {
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
         try {
             CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
-            caseService.processAndUpsertCase(caseRequest.getCourtCase(), caseRequest.getRequestInfo());
+            caseService.processAndUpsertCase(caseRequest.getCourtCase());
         } catch (Exception e) {
             log.error("Error in updating PendingTask for join case.", e);
         }

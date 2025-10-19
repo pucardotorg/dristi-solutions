@@ -1,12 +1,18 @@
 package com.dristi.njdg_transformer.repository;
 
+import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.PoliceStationDetails;
 import com.dristi.njdg_transformer.repository.querybuilder.CaseQueryBuilder;
+import com.dristi.njdg_transformer.repository.rowmapper.NJDGTransformRecordRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 @Slf4j
@@ -31,4 +37,224 @@ public class CaseRepository {
         String query = queryBuilder.getDistrictQuery();
         return jdbcTemplate.queryForObject(query, new Object[]{districtName}, new int[]{Types.VARCHAR}, Integer.class);
     }
+
+    public PoliceStationDetails getPoliceStationDetails(String policeStationCode) {
+        String query = queryBuilder.getPoliceStationQuery();
+        return jdbcTemplate.queryForObject(query, new Object[]{policeStationCode}, new int[]{Types.VARCHAR}, PoliceStationDetails.class);
+    }
+
+    public NJDGTransformRecord findByCino(String cino) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgsList = new ArrayList<>();
+        String query = queryBuilder.getCaseQuery(cino, preparedStmtList, preparedStmtArgsList);
+        try {
+            return jdbcTemplate.queryForObject(
+                query,
+                preparedStmtList.toArray(),
+                preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray(),
+                new NJDGTransformRecordRowMapper()
+            );
+        } catch (Exception e) {
+            log.error("Error finding case by cino: " + cino, e);
+            return null;
+        }
+    }
+
+    public void updateRecord(NJDGTransformRecord record) {
+        String updateQuery = """
+            UPDATE cases SET
+                date_of_filing = ?,
+                dt_regis = ?,
+                case_type = ?,
+                fil_no = ?,
+                fil_year = ?,
+                reg_no = ?,
+                reg_year = ?,
+                date_first_list = ?,
+                date_next_list = ?,
+                pend_disp = ?,
+                date_of_decision = ?,
+                disp_reason = ?,
+                disp_nature = ?,
+                desgname = ?,
+                court_no = ?,
+                est_code = ?,
+                state_code = ?,
+                dist_code = ?,
+                purpose_code = ?,
+                pet_name = ?,
+                pet_adv = ?,
+                pet_adv_cd = ?,
+                res_name = ?,
+                res_adv = ?,
+                res_adv_cd = ?,
+                pet_adv_bar_reg = ?,
+                res_adv_bar_reg = ?,
+                police_st_code = ?,
+                police_ncode = ?,
+                fir_no = ?,
+                police_station = ?,
+                fir_year = ?,
+                date_last_list = ?,
+                main_matter_cino = ?,
+                pet_age = ?,
+                res_age = ?,
+                pet_address = ?,
+                res_address = ?,
+                jocode = ?,
+                cicri_type = ?
+            WHERE cino = ?
+            """;
+
+        try {
+            int updated = jdbcTemplate.update(updateQuery,
+                record.getDateOfFiling(),
+                record.getDtRegis(),
+                record.getCaseType(),
+                record.getFilNo(),
+                record.getFilYear(),
+                record.getRegNo(),
+                record.getRegYear(),
+                record.getDateFirstList(),
+                record.getDateNextList(),
+                record.getPendDisp() != null ? record.getPendDisp().toString() : null,
+                record.getDateOfDecision(),
+                record.getDispReason(),
+                record.getDispNature() != null ? record.getDispNature().toString() : null,
+                record.getDesgname(),
+                record.getCourtNo(),
+                record.getEstCode(),
+                record.getStateCode(),
+                record.getDistCode(),
+                record.getPurposeCode(),
+                record.getPetName(),
+                record.getPetAdv(),
+                record.getPetAdvCd(),
+                record.getResName(),
+                record.getResAdv(),
+                record.getResAdvCd(),
+                record.getPetAdvBarReg(),
+                record.getResAdvBarReg(),
+                record.getPoliceStCode(),
+                record.getPoliceNcode(),
+                record.getFirNo(),
+                record.getPoliceStation(),
+                record.getFirYear(),
+                record.getDateLastList(),
+                record.getMainMatterCino(),
+                record.getPetAge(),
+                record.getResAge(),
+                record.getPetAddress(),
+                record.getResAddress(),
+                record.getJocode(),
+                record.getCicriType() != null ? record.getCicriType().toString() : null,
+                record.getCino()
+            );
+            
+            log.debug("Updated {} record(s) with CINO: {}", updated, record.getCino());
+        } catch (Exception e) {
+            log.error("Error updating record with CINO: {}. Error: {}", record.getCino(), e.getMessage(), e);
+            throw new RuntimeException("Failed to update record", e);
+        }
+    }
+
+    public void insertRecord(NJDGTransformRecord record) {
+        String insertQuery = """
+        INSERT INTO cases (
+            cino,
+            date_of_filing,
+            dt_regis,
+            case_type,
+            fil_no,
+            fil_year,
+            reg_no,
+            reg_year,
+            date_first_list,
+            date_next_list,
+            pend_disp,
+            date_of_decision,
+            disp_reason,
+            disp_nature,
+            desgname,
+            court_no,
+            est_code,
+            state_code,
+            dist_code,
+            purpose_code,
+            pet_name,
+            pet_adv,
+            pet_adv_cd,
+            res_name,
+            res_adv,
+            res_adv_cd,
+            pet_adv_bar_reg,
+            res_adv_bar_reg,
+            police_st_code,
+            police_ncode,
+            fir_no,
+            police_station,
+            fir_year,
+            date_last_list,
+            main_matter_cino,
+            pet_age,
+            res_age,
+            pet_address,
+            res_address,
+            jocode,
+            cicri_type
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """;
+
+        try {
+            int inserted = jdbcTemplate.update(insertQuery,
+                    record.getCino(),
+                    record.getDateOfFiling(),
+                    record.getDtRegis(),
+                    record.getCaseType(),
+                    record.getFilNo(),
+                    record.getFilYear(),
+                    record.getRegNo(),
+                    record.getRegYear(),
+                    record.getDateFirstList(),
+                    record.getDateNextList(),
+                    record.getPendDisp() != null ? record.getPendDisp().toString() : null,
+                    record.getDateOfDecision(),
+                    record.getDispReason(),
+                    record.getDispNature() != null ? record.getDispNature().toString() : null,
+                    record.getDesgname(),
+                    record.getCourtNo(),
+                    record.getEstCode(),
+                    record.getStateCode(),
+                    record.getDistCode(),
+                    record.getPurposeCode(),
+                    record.getPetName(),
+                    record.getPetAdv(),
+                    record.getPetAdvCd(),
+                    record.getResName(),
+                    record.getResAdv(),
+                    record.getResAdvCd(),
+                    record.getPetAdvBarReg(),
+                    record.getResAdvBarReg(),
+                    record.getPoliceStCode(),
+                    record.getPoliceNcode(),
+                    record.getFirNo(),
+                    record.getPoliceStation(),
+                    record.getFirYear(),
+                    record.getDateLastList(),
+                    record.getMainMatterCino(),
+                    record.getPetAge(),
+                    record.getResAge(),
+                    record.getPetAddress(),
+                    record.getResAddress(),
+                    record.getJocode(),
+                    record.getCicriType() != null ? record.getCicriType().toString() : null
+            );
+
+            log.debug("Inserted {} record(s) with CINO: {}", inserted, record.getCino());
+        } catch (Exception e) {
+            log.error("Error inserting record with CINO: {}. Error: {}", record.getCino(), e.getMessage(), e);
+            throw new RuntimeException("Failed to insert record", e);
+        }
+    }
+
 }

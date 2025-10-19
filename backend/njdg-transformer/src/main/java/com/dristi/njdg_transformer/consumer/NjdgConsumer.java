@@ -19,7 +19,7 @@ public class NjdgConsumer {
     private final CaseRepository caseRepository;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "${kafka.topics.case}")
+    @KafkaListener(topics = "save-case-details")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received message: {}", payload);
@@ -27,12 +27,12 @@ public class NjdgConsumer {
             boolean recordExists = checkIfRecordExists(record.getCino());
             if (recordExists) {
                 log.debug("Updating existing record with CINO: {}", record.getCino());
-                caseRepository.updateData(record);
+                caseRepository.updateRecord(record);
             } else {
                 log.debug("Inserting new record with CINO: {}", record.getCino());
-                caseRepository.insertData(record);
+                caseRepository.insertRecord(record);
             }
-            log.info("Message processed successfully.");
+            log.info("Message processed successfully. {}", payload);
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage());
         }

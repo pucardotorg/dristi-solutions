@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,53 +19,73 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
     @Override
     public NJDGTransformRecord mapRow(ResultSet rs, int rowNum) throws SQLException {
         NJDGTransformRecord record = new NJDGTransformRecord();
+        // String fields
         record.setCino(rs.getString("cino"));
-        record.setDateOfFiling(rs.getString("date_of_filing"));
-        record.setDtRegis(rs.getString("dt_regis"));
-        record.setCaseType(rs.getString("case_type"));
-        record.setFilNo(rs.getString("fil_no"));
-        record.setFilYear(rs.getString("fil_year"));
-        record.setRegNo(rs.getString("reg_no"));
-        record.setRegYear(rs.getString("reg_year"));
-        record.setDateFirstList(rs.getString("date_first_list"));
-        record.setDateNextList(rs.getString("date_next_list"));
-        record.setPendDisp(rs.getString("pend_disp"));
-        record.setDateOfDecision(rs.getString("date_of_decision"));
         record.setDispReason(rs.getString("disp_reason"));
-        record.setDispNature(rs.getString("disp_nature"));
         record.setDesgname(rs.getString("desgname"));
-        record.setCourtNo(rs.getString("court_no"));
         record.setEstCode(rs.getString("est_code"));
-        record.setStateCode(rs.getString("state_code"));
-        record.setDistCode(rs.getString("dist_code"));
-        record.setPurposeCode(rs.getString("purpose_code"));
-        record.setPetName(rs.getString("pet_name"));
-        record.setPetAdv(rs.getString("pet_adv"));
-        record.setPetAdvCd(rs.getString("pet_adv_cd"));
-        record.setResName(rs.getString("res_name"));
-        record.setResAdv(rs.getString("res_adv"));
-        record.setResAdvCd(rs.getString("res_adv_cd"));
-        record.setPetAdvBarReg(rs.getString("pet_adv_bar_reg"));
-        record.setResAdvBarReg(rs.getString("res_adv_bar_reg"));
-        record.setPoliceStCode(rs.getString("police_st_code"));
         record.setPoliceNcode(rs.getString("police_ncode"));
-        record.setFirNo(rs.getString("fir_no"));
         record.setPoliceStation(rs.getString("police_station"));
-        record.setFirYear(rs.getString("fir_year"));
-        record.setDateLastList(rs.getString("date_last_list"));
         record.setMainMatterCino(rs.getString("main_matter_cino"));
-        record.setPetAge(rs.getString("pet_age"));
-        record.setResAge(rs.getString("res_age"));
         record.setPetAddress(rs.getString("pet_address"));
         record.setResAddress(rs.getString("res_address"));
-
-        record.setPetExtraParty(parseJsonArray(rs.getObject("pet_extra_party")));
-        record.setResExtraParty(parseJsonArray(rs.getObject("res_extra_party")));
-        record.setAct(parseJsonArray(rs.getObject("act")));
-        record.setHistoryOfCaseHearing(parseJsonArray(rs.getObject("historyofcasehearing")));
-        record.setIaFiling(parseJsonArray(rs.getObject("iafiling")));
-        record.setInterimOrder(parseJsonArray(rs.getObject("interimorder")));
+        record.setJocode(rs.getString("jocode"));
+        
+        // Character fields
+        String pendDisp = rs.getString("pend_disp");
+        record.setPendDisp(pendDisp != null && !pendDisp.isEmpty() ? pendDisp.charAt(0) : null);
+        
+        String dispNature = rs.getString("disp_nature");
+        record.setDispNature(dispNature != null && !dispNature.isEmpty() ? dispNature.charAt(0) : null);
+        
+        String cicriType = rs.getString("cicri_type");
+        record.setCicriType(cicriType != null && !cicriType.isEmpty() ? cicriType.charAt(0) : ' ');
+        
+        // Integer fields
+        record.setCaseType(getInteger(rs, "case_type"));
+        record.setFilNo(getInteger(rs, "fil_no"));
+        record.setFilYear(getInteger(rs, "fil_year"));
+        record.setRegNo(getInteger(rs, "reg_no"));
+        record.setRegYear(getInteger(rs, "reg_year"));
+        record.setCourtNo(getInteger(rs, "court_no"));
+        record.setStateCode(getInteger(rs, "state_code"));
+        record.setDistCode(getInteger(rs, "dist_code"));
+        record.setPurposeCode(getInteger(rs, "purpose_code"));
+        record.setPetAdvCd(getInteger(rs, "pet_adv_cd"));
+        record.setResAdvCd(getInteger(rs, "res_adv_cd"));
+        record.setPoliceStCode(getInteger(rs, "police_st_code"));
+        record.setFirNo(getInteger(rs, "fir_no"));
+        record.setFirYear(getInteger(rs, "fir_year"));
+        record.setPetAge(getInteger(rs, "pet_age"));
+        record.setResAge(getInteger(rs, "res_age"));
+        
+        // LocalDate fields
+        record.setDateOfFiling(parseLocalDate(rs, "date_of_filing"));
+        record.setDtRegis(parseLocalDate(rs, "dt_regis"));
+        record.setDateFirstList(parseLocalDate(rs, "date_first_list"));
+        record.setDateNextList(parseLocalDate(rs, "date_next_list"));
+        record.setDateOfDecision(parseLocalDate(rs, "date_of_decision"));
+        record.setDateLastList(parseLocalDate(rs, "date_last_list"));
+        
+        // String fields for names and addresses
+        record.setPetName(rs.getString("pet_name"));
+        record.setPetAdv(rs.getString("pet_adv"));
+        record.setResName(rs.getString("res_name"));
+        record.setResAdv(rs.getString("res_adv"));
+        record.setPetAdvBarReg(rs.getString("pet_adv_bar_reg"));
+        record.setResAdvBarReg(rs.getString("res_adv_bar_reg"));
+        
         return record;
+    }
+    
+    private Integer getInteger(ResultSet rs, String column) throws SQLException {
+        int value = rs.getInt(column);
+        return rs.wasNull() ? null : value;
+    }
+    
+    private LocalDate parseLocalDate(ResultSet rs, String column) throws SQLException {
+        String dateStr = rs.getString(column);
+        return dateStr != null && !dateStr.isEmpty() ? LocalDate.parse(dateStr) : null;
     }
 
     private List<JsonNode> parseJsonArray(Object obj) throws SQLException {

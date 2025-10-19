@@ -1,4 +1,4 @@
-package com.dristi.njdg_transformer.model.advocate;
+package com.dristi.njdg_transformer.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -89,4 +89,8 @@ public class CaseQueryBuilder {
     public String getDistrictQuery() {
         return "SELECT district_code FROM district_t WHERE name = ?";
     }
+
+    public String getPoliceStationQuery() {
+        return "SELECT police_st_code as policeStationCode, st_name as stName, nat_code as natCode, police_code as policeCode FROM police_t WHERE police_code = ?";
+    }
 }
