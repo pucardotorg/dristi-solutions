@@ -1416,3 +1416,519 @@
     }
   }
 }
+
+.sms-payment-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+
+  .sms-payment-header {
+    padding: 10px 0 20px;
+    border-bottom: 1px solid #e8e8e8;
+
+    h1 {
+      font-family: Roboto, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0a0a0a;
+      margin: 0;
+    }
+  }
+
+  .sms-payment-courier-page,
+  .sms-payment-details-page {
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .info-section {
+    display: flex;
+    flex-direction: column;
+    background-color: #ecf3fd;
+    border-radius: 4px;
+    padding: 16px;
+
+    .info-header {
+      display: flex !important;
+      align-items: center;
+      margin-bottom: 8px;
+
+      svg {
+        margin-right: 8px;
+      }
+
+      h3 {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0a0a0a;
+        margin: 0;
+      }
+    }
+
+    .info-content {
+      p {
+        font-family: Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        color: #505a5f;
+        margin: 0;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  h2 {
+    font-family: Roboto, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0a0a0a;
+    margin: 0 0 8px 0;
+  }
+
+  h3 {
+    font-family: Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0a0a0a;
+    margin: 0 0 12px 0;
+  }
+
+  .notice-header {
+    font-family: Roboto, sans-serif;
+    color: #0a0a0a;
+    margin: 0 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .notice-text {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .notice-subtitle {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+
+  .notice-section {
+    padding: 16px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-family: Roboto, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0a0a0a;
+    }
+
+    .notice-header {
+      font-family: Roboto, sans-serif;
+      color: #0a0a0a;
+      margin: 0 0 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .notice-text {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .notice-subtitle {
+        font-size: 16px;
+        font-weight: 400;
+      }
+    }
+
+    .courier-selection-section,
+    .address-selection-section {
+      h3 {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0a0a0a;
+      }
+    }
+
+    .address-note {
+      font-family: Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: #d97706;
+      font-style: italic;
+      margin: -8px 0 16px 0;
+    }
+  }
+
+  .courier-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .courier-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    position: relative;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    input[type="checkbox"] {
+      min-width: 20px;
+      width: 20px;
+      height: 20px;
+      border: 1px solid #007e7e;
+      border-radius: 2px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+
+      &:checked {
+        background-color: #ffffff;
+        border: 1px solid #007e7e;
+
+        &:after {
+          content: "";
+          position: absolute;
+          top: 2px;
+          left: 6px;
+          width: 5px;
+          height: 10px;
+          border: solid #007e7e;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+      }
+    }
+
+    .courier-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: center;
+
+      .courier-name {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        color: #3d3c3c;
+        line-height: 20px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+
+      .delivery-time {
+        font-family: Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        color: #505a5f;
+      }
+    }
+  }
+
+  .address-note {
+    font-family: Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #505a5f;
+    margin: 0 0 16px 0;
+  }
+
+  .address-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .address-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    input[type="checkbox"] {
+      min-width: 20px;
+      width: 20px;
+      height: 20px;
+      border: 1px solid #007e7e;
+      border-radius: 2px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+
+      &:checked {
+        background-color: #ffffff;
+        border: 1px solid #007e7e;
+
+        &:after {
+          content: "";
+          position: absolute;
+          top: 2px;
+          left: 6px;
+          width: 5px;
+          height: 10px;
+          border: solid #007e7e;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+      }
+    }
+
+    .address-text {
+      font-family: Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: #0a0a0a;
+      line-height: 20px;
+      flex: 1;
+      padding-right: 10px;
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .add-more-address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #007e7e;
+    font-family: Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 8px 0;
+    margin-top: 8px;
+    font-size: 16px;
+
+    svg {
+      width: 10px;
+      height: 10px;
+      fill: #007e7e;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #e8e8e8;
+    gap: 10px;
+
+    button {
+      height: 40px;
+      border-radius: 4px;
+      font-family: Roboto, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 0 24px;
+      cursor: pointer;
+    }
+
+    .back-button {
+      background-color: #ffffff;
+      color: #007e7e;
+      border: 1px solid #007e7e;
+    }
+
+    .next-button {
+      background-color: #007e7e;
+      color: #ffffff;
+      border: none;
+
+      &.disabled {
+        background-color: #77787b;
+        color: #ffffff !important;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .payment-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .fee-section {
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 16px !important;
+
+    .fee-header {
+      display: flex;
+      align-items: center;
+      padding: 0 0 12px 0;
+      background-color: white;
+      border-bottom: 1px solid #e8e8e8;
+
+      h3 {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0a0a0a;
+        margin: 0;
+      }
+
+      .status-tag {
+        font-family: Roboto, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 12px;
+        margin-left: 10px;
+        margin-right: auto;
+
+        &.pending {
+          color: #9e400a;
+          background-color: #fff6e8;
+        }
+
+        &.processing {
+          color: #007e7e;
+          background-color: #e0f2f1;
+        }
+
+        &.completed {
+          color: #00703c;
+          background-color: #e8f5e9;
+        }
+
+        &.failed {
+          color: #d32f2f;
+          background-color: #ffebee;
+        }
+      }
+
+      .total-amount {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0a0a0a;
+      }
+    }
+
+    .fee-details {
+      padding: 12px 0;
+    }
+
+    .fee-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 4px 0;
+      margin-bottom: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .fee-name {
+        font-family: Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        color: #505a5f;
+        flex-grow: 1;
+        padding-right: 12px;
+      }
+
+      .fee-amount {
+        font-family: Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        color: #0a0a0a;
+        flex-shrink: 0;
+        min-width: 60px;
+        text-align: right;
+      }
+    }
+
+    .pay-online-button {
+      width: 100%;
+      height: 40px;
+      background-color: #ffffff;
+      color: #007e7e;
+      border: 1px solid #007e7e;
+      border-radius: 0;
+      font-family: Roboto, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .sms-payment-container {
+    padding: 0;
+
+    .sms-payment-header {
+      padding: 10px 16px;
+    }
+
+    .sms-payment-courier-page,
+    .sms-payment-details-page {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: clamp(80px, 10vh, 120px);
+    }
+
+    .navigation-buttons {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background-color: #ffffff;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
