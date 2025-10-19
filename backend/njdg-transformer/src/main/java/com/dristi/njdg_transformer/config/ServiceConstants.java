@@ -20,4 +20,5 @@ public class ServiceConstants {
     public static final String DISTRICT_MASTER = "District";
     public static final String CASE_TYPE_MASTER = "CaseType";
     public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
+    public static final String SIGNED_ORDER = "SIGNED";
 }

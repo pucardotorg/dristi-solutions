@@ -1,9 +1,12 @@
 package com.dristi.njdg_transformer.controller;
 
+import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
+import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.service.CaseService;
+import com.dristi.njdg_transformer.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.dristi.njdg_transformer.repository.OrderRepository;
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/njdg/v1")
@@ -20,6 +25,8 @@ import java.util.Collections;
 public class NJDGController {
 
     private final CaseService caseService;
+    private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     /**
      * Process and upsert a court case into NJDG format
@@ -27,7 +34,7 @@ public class NJDGController {
      * @param request The case request containing court case details
      * @return ResponseEntity containing the processed case in NJDG format
      */
-    @PostMapping("/_process")
+    @PostMapping("/_processcase")
     public ResponseEntity<CaseResponse> processAndUpsertCase(
             @Valid @RequestBody CaseRequest request) {
         
@@ -127,5 +134,15 @@ public class NJDGController {
                 .build();
     }
 
-
+    @PostMapping("_processorder")
+    public ResponseEntity<List<InterimOrder>> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
+        try {
+            orderService.processAndUpsertOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+            List<InterimOrder> orders = orderRepository.getInterimOrderByCino(orderRequest.getOrder().getCnrNumber());
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            log.error("Error processing order: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+    }
 }

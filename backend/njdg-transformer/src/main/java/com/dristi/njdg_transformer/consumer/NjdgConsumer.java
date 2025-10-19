@@ -1,7 +1,9 @@
 package com.dristi.njdg_transformer.consumer;
 
+import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.repository.CaseRepository;
+import com.dristi.njdg_transformer.repository.OrderRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class NjdgConsumer {
 
     private final CaseRepository caseRepository;
+    private final OrderRepository orderRepository;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "save-case-details")
@@ -52,6 +55,18 @@ public class NjdgConsumer {
         } catch (Exception e) {
             log.warn("Error checking if record exists with CINO: {}. Error: {}", cino, e.getMessage());
             return false; // Assume record doesn't exist if there's an error checking
+        }
+    }
+
+    @KafkaListener(topics = "save-order-details")
+    public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received message: {}, on topic: {}", payload, topic);
+            InterimOrder interimOrder = objectMapper.convertValue(payload, InterimOrder.class);
+            orderRepository.insertInterimOrder(interimOrder);
+            log.info("Message processed successfully. {}", payload);
+        } catch (Exception e) {
+            log.error("Error in processing message:: {}", e.getMessage());
         }
     }
 }
