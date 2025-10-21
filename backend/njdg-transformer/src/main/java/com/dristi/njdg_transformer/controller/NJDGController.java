@@ -5,7 +5,6 @@ import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
-import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.repository.HearingRepository;
@@ -50,7 +49,7 @@ public class NJDGController {
         
         try {
             // Process the case
-            NJDGTransformRecord njdgRecord = caseService.processAndUpsertCase(
+            NJDGTransformRecord njdgRecord = caseService.processAndUpdateCase(
                     request.getCourtCase()
             );
             
@@ -75,7 +74,7 @@ public class NJDGController {
             log.error("Error processing case: {}", e.getMessage(), e);
             return new ResponseEntity<>(
                     buildErrorResponse("PROCESSING_ERROR", "Failed to process case: " + e.getMessage()),
-                    HttpStatus.INTERNAL_SERVER_ERROR
+                    HttpStatus.BAD_REQUEST
             );
         }
     }
@@ -94,26 +93,35 @@ public class NJDGController {
     }
 
     @PostMapping("_processorder")
-    public ResponseEntity<List<InterimOrder>> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<InterimOrder> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
         try {
-            orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
-            List<InterimOrder> orders = orderRepository.getInterimOrderByCino(orderRequest.getOrder().getCnrNumber());
-            return ResponseEntity.ok(orders);
+            InterimOrder order = orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+            return ResponseEntity.ok(order);
         } catch (Exception e) {
             log.error("Error processing order: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new InterimOrder());
         }
     }
 
     @PostMapping("_processhearing")
-    public ResponseEntity<List<HearingDetails>> processAndUpdateHearing(@Valid @RequestBody HearingRequest request) {
+    public ResponseEntity<HearingDetails> processAndUpdateHearing(@Valid @RequestBody HearingRequest request) {
         try {
-            hearingService.processAndUpdateHearings(request.getHearing());
-            List<HearingDetails> hearings = hearingRepository.getHearingDetailsByCino(request.getHearing().getCnrNumbers().get(0));
-            return ResponseEntity.ok(hearings);
+            HearingDetails hearingDetail = hearingService.processAndUpdateHearings(request.getHearing());
+            return ResponseEntity.ok(hearingDetail);
         } catch (Exception e) {
             log.error("Error processing hearing: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new HearingDetails());
+        }
+    }
+
+    @PostMapping("_search")
+    public ResponseEntity<NJDGTransformRecord> getNjdgTransformRecord(@Valid @RequestParam String cino) {
+        try {
+            NJDGTransformRecord record = caseService.getNjdgTransformRecord(cino);
+            return ResponseEntity.ok(record);
+        } catch (Exception e) {
+            log.error("No record found for cino:: {}", cino);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new NJDGTransformRecord());
         }
     }
 }

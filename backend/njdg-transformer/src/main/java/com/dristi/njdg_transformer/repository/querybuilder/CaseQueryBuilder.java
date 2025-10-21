@@ -1,6 +1,7 @@
 package com.dristi.njdg_transformer.repository.querybuilder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
@@ -96,5 +97,108 @@ public class CaseQueryBuilder {
 
     public String getJudgeMasterQuery(){
         return "SELECT judge_code as judge_code, judge_name as judge_name, jocode as jocode, judge_username as judge_username FROM judge_t WHERE judge_username = ?";
+    }
+
+    public String getPartyQuery() {
+        return "SELECT party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age FROM extra_parties WHERE cino = ? AND party_type = ?";
+    }
+
+    public String getUpdatePartyQuery() {
+        return "INSERT INTO extra_parties (id, cino, party_type, party_no, party_name, party_address, party_age) VALUES(?, ?, ?, ?, ?, ?, ?)";
+    }
+
+    public String getUpdateQuery() {
+        return """
+                UPDATE cases SET
+                    date_of_filing = ?,
+                    dt_regis = ?,
+                    case_type = ?,
+                    fil_no = ?,
+                    fil_year = ?,
+                    reg_no = ?,
+                    reg_year = ?,
+                    date_first_list = ?,
+                    date_next_list = ?,
+                    pend_disp = ?,
+                    date_of_decision = ?,
+                    disp_reason = ?,
+                    disp_nature = ?,
+                    desgname = ?,
+                    court_no = ?,
+                    est_code = ?,
+                    state_code = ?,
+                    dist_code = ?,
+                    purpose_code = ?,
+                    pet_name = ?,
+                    pet_adv = ?,
+                    pet_adv_cd = ?,
+                    res_name = ?,
+                    res_adv = ?,
+                    res_adv_cd = ?,
+                    pet_adv_bar_reg = ?,
+                    res_adv_bar_reg = ?,
+                    police_st_code = ?,
+                    police_ncode = ?,
+                    fir_no = ?,
+                    police_station = ?,
+                    fir_year = ?,
+                    date_last_list = ?,
+                    main_matter_cino = ?,
+                    pet_age = ?,
+                    res_age = ?,
+                    pet_address = ?,
+                    res_address = ?,
+                    jocode = ?,
+                    cicri_type = ?
+                WHERE cino = ?
+                """;
+    }
+
+    public String getInsertQuery() {
+        return """
+                INSERT INTO cases (
+                    cino,
+                    date_of_filing,
+                    dt_regis,
+                    case_type,
+                    fil_no,
+                    fil_year,
+                    reg_no,
+                    reg_year,
+                    date_first_list,
+                    date_next_list,
+                    pend_disp,
+                    date_of_decision,
+                    disp_reason,
+                    disp_nature,
+                    desgname,
+                    court_no,
+                    est_code,
+                    state_code,
+                    dist_code,
+                    purpose_code,
+                    pet_name,
+                    pet_adv,
+                    pet_adv_cd,
+                    res_name,
+                    res_adv,
+                    res_adv_cd,
+                    pet_adv_bar_reg,
+                    res_adv_bar_reg,
+                    police_st_code,
+                    police_ncode,
+                    fir_no,
+                    police_station,
+                    fir_year,
+                    date_last_list,
+                    main_matter_cino,
+                    pet_age,
+                    res_age,
+                    pet_address,
+                    res_address,
+                    jocode,
+                    cicri_type
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """;
     }
 }

@@ -2,13 +2,15 @@ package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
-import com.dristi.njdg_transformer.model.JudgeDetails;
-import com.dristi.njdg_transformer.model.NJDGTransformRecord;
-import com.dristi.njdg_transformer.model.PartyDetails;
+import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.cases.StatuteSection;
+import com.dristi.njdg_transformer.model.enums.PartyType;
+import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
+import com.dristi.njdg_transformer.repository.HearingRepository;
+import com.dristi.njdg_transformer.repository.OrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +43,8 @@ public class CaseService {
     private final ObjectMapper objectMapper;
     private final CaseEnrichment caseEnrichment;
     private final Producer producer;
-
+    private final OrderRepository orderRepository;
+    private final HearingRepository hearingRepository;
     /**
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
      * 
@@ -49,7 +52,7 @@ public class CaseService {
      * @return The upserted NJDGTransformRecord
      * @throws IllegalArgumentException if the input is invalid
      */
-    public NJDGTransformRecord processAndUpsertCase(CourtCase courtCase) {
+    public NJDGTransformRecord processAndUpdateCase(CourtCase courtCase) {
         try {
             NJDGTransformRecord record = convertToNJDGRecord(courtCase);
             caseEnrichment.enrichPrimaryPartyDetails(courtCase, record, COMPLAINANT_PRIMARY);
@@ -122,14 +125,23 @@ public class CaseService {
                 .dispReason(getDisposalReason(courtCase.getOutcome()))
                 .dispNature('1')//todo: configure on contested(1) and uncontested(2)
                 .desgname(properties.getJudgeDesignation())//todo: configure to get from desg_type table
-                .courtNo(1)//todo: configure for different courts
+                .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
-                .stateCode(32)//todo: configure value in properties
+                .stateCode(properties.getStateCode())
                 .distCode(getDistrictCode(courtCase))
-                .purposeCode(0)//todo: need to extract from hearings:: extract code for latest hearing
+                .purposeCode(getPurposeCode(courtCase))
                 .jocode(getJoCodeForJudge(courtCase.getJudgeId()))
-                .cicriType('3') //todo: configure in properties
+                .cicriType(properties.getCicriType())
                 .build();
+    }
+
+    private Integer getPurposeCode(CourtCase courtCase) {
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(courtCase.getCnrNumber());
+        if(hearingDetails != null && !hearingDetails.isEmpty()) {
+            int n = hearingDetails.size();
+            return Integer.valueOf(hearingDetails.get(n-1).getPurposeOfListing());
+        }
+        return null;
     }
 
     private String getJoCodeForJudge(String judgeId) {
@@ -241,5 +253,30 @@ public class CaseService {
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    public NJDGTransformRecord getNjdgTransformRecord(String cino) {
+        NJDGTransformRecord record = caseRepository.findByCino(cino);
+        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
+        if(interimOrders != null && !interimOrders.isEmpty()){
+            record.setInterimOrders(interimOrders);
+        }
+        List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);
+        if(complainantParty != null && !complainantParty.isEmpty()){
+            record.setPetExtraParty(complainantParty);
+        }
+        List<PartyDetails> respondentParty = caseRepository.getPartyDetails(cino, PartyType.RES);
+        if(respondentParty != null && !respondentParty.isEmpty()){
+            record.setResExtraParty(respondentParty);
+        }
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
+        if(hearingDetails != null && !hearingDetails.isEmpty()){
+            record.setHistoryOfCaseHearing(hearingDetails);
+        }
+        if(record == null) {
+            log.error("No record found for cino:: {}", cino);
+            return null;
+        }
+        return record;
     }
 }

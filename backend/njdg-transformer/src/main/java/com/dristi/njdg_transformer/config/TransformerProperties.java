@@ -57,6 +57,15 @@ public class TransformerProperties {
     @Value("${egov.hearing.search.path}")
     private String hearingSearchPath;
 
+    @Value("${court.number}")
+    private Integer courtNumber;
+
+    @Value("${state.code}")
+    private Integer stateCode;
+
+    @Value("{cicri.type}")
+    private Character cicriType;
+
     //    @Value("${egov.case.host}")
 //    private String caseSearchUrlHost;
 //

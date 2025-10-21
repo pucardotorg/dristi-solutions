@@ -10,8 +10,6 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 @Component
 @Slf4j
 public class CaseConsumer {
@@ -27,9 +25,9 @@ public class CaseConsumer {
     @KafkaListener(topics = "#{'${kafka.topics.case}'.split(',')}")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
-            log.info("Received message: {}", payload);
+            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             processAndUpdateCase(payload);
-            log.info("Message processed successfully.");
+            log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
             log.error("Error in processing message:: {}", e.getMessage());
         }
@@ -39,7 +37,7 @@ public class CaseConsumer {
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
         try {
             CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
-            caseService.processAndUpsertCase(caseRequest.getCourtCase());
+            caseService.processAndUpdateCase(caseRequest.getCourtCase());
         } catch (Exception e) {
             log.error("Error in updating PendingTask for join case.", e);
         }

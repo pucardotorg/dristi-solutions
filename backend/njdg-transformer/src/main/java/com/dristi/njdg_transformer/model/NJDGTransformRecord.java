@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -136,4 +137,19 @@ public class NJDGTransformRecord {
 
     @JsonProperty("cicri_type")
     private Character cicriType = ' ';
+
+    @JsonProperty("pet_extra_party")
+    private List<PartyDetails> petExtraParty;
+
+    @JsonProperty("res_extra_party")
+    private List<PartyDetails> resExtraParty;
+
+    @JsonProperty("act")
+    private List<Act> acts;
+
+    @JsonProperty("historyofcasehearing")
+    private List<HearingDetails> historyOfCaseHearing;
+
+    @JsonProperty("interimorder")
+    private List<InterimOrder> interimOrders;
 }

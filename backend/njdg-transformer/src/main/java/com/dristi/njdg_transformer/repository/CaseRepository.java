@@ -2,11 +2,15 @@ package com.dristi.njdg_transformer.repository;
 
 import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.PartyDetails;
 import com.dristi.njdg_transformer.model.PoliceStationDetails;
+import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.repository.querybuilder.CaseQueryBuilder;
 import com.dristi.njdg_transformer.repository.rowmapper.NJDGTransformRecordRowMapper;
+import com.dristi.njdg_transformer.repository.rowmapper.PartyRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -65,52 +69,36 @@ public class CaseRepository {
         }
     }
 
-    public void updateRecord(NJDGTransformRecord record) {
-        String updateQuery = """
-            UPDATE cases SET
-                date_of_filing = ?,
-                dt_regis = ?,
-                case_type = ?,
-                fil_no = ?,
-                fil_year = ?,
-                reg_no = ?,
-                reg_year = ?,
-                date_first_list = ?,
-                date_next_list = ?,
-                pend_disp = ?,
-                date_of_decision = ?,
-                disp_reason = ?,
-                disp_nature = ?,
-                desgname = ?,
-                court_no = ?,
-                est_code = ?,
-                state_code = ?,
-                dist_code = ?,
-                purpose_code = ?,
-                pet_name = ?,
-                pet_adv = ?,
-                pet_adv_cd = ?,
-                res_name = ?,
-                res_adv = ?,
-                res_adv_cd = ?,
-                pet_adv_bar_reg = ?,
-                res_adv_bar_reg = ?,
-                police_st_code = ?,
-                police_ncode = ?,
-                fir_no = ?,
-                police_station = ?,
-                fir_year = ?,
-                date_last_list = ?,
-                main_matter_cino = ?,
-                pet_age = ?,
-                res_age = ?,
-                pet_address = ?,
-                res_address = ?,
-                jocode = ?,
-                cicri_type = ?
-            WHERE cino = ?
-            """;
+    public List<PartyDetails> getPartyDetails(String cino, PartyType partyType) {
+        String partyQuery = queryBuilder.getPartyQuery();
+        return jdbcTemplate.query(partyQuery, new Object[]{cino, partyType.toString()}, new int[]{Types.VARCHAR, Types.VARCHAR}, new PartyRowMapper());
+    }
 
+    public void updateExtraParties(PartyDetails partyDetails) {
+        String updatePartyQuery = queryBuilder.getUpdatePartyQuery();
+        jdbcTemplate.update(updatePartyQuery,
+                new Object[]{
+                        partyDetails.getId(),
+                        partyDetails.getCino(),
+                        partyDetails.getPartyType(),
+                        partyDetails.getPartyNo(),
+                        partyDetails.getPartyName(),
+                        partyDetails.getPartyAddress(),
+                        partyDetails.getPartyAge()
+                },
+                new int[]{
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.VARCHAR,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.VARCHAR,
+                        Types.INTEGER
+                }
+        );
+    }
+    public void updateRecord(NJDGTransformRecord record) {
+        String updateQuery = queryBuilder.getUpdateQuery();
         try {
             int updated = jdbcTemplate.update(updateQuery,
                 record.getDateOfFiling(),
@@ -164,52 +152,7 @@ public class CaseRepository {
     }
 
     public void insertRecord(NJDGTransformRecord record) {
-        String insertQuery = """
-        INSERT INTO cases (
-            cino,
-            date_of_filing,
-            dt_regis,
-            case_type,
-            fil_no,
-            fil_year,
-            reg_no,
-            reg_year,
-            date_first_list,
-            date_next_list,
-            pend_disp,
-            date_of_decision,
-            disp_reason,
-            disp_nature,
-            desgname,
-            court_no,
-            est_code,
-            state_code,
-            dist_code,
-            purpose_code,
-            pet_name,
-            pet_adv,
-            pet_adv_cd,
-            res_name,
-            res_adv,
-            res_adv_cd,
-            pet_adv_bar_reg,
-            res_adv_bar_reg,
-            police_st_code,
-            police_ncode,
-            fir_no,
-            police_station,
-            fir_year,
-            date_last_list,
-            main_matter_cino,
-            pet_age,
-            res_age,
-            pet_address,
-            res_address,
-            jocode,
-            cicri_type
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """;
-
+        String insertQuery = queryBuilder.getInsertQuery();
         try {
             int inserted = jdbcTemplate.update(insertQuery,
                     record.getCino(),
@@ -261,5 +204,7 @@ public class CaseRepository {
             throw new RuntimeException("Failed to insert record", e);
         }
     }
+
+
 
 }

@@ -26,7 +26,7 @@ public class HearingService {
     private final Producer producer;
     private final CaseRepository caseRepository;
 
-    public void processAndUpdateHearings(Hearing hearing) {
+    public HearingDetails processAndUpdateHearings(Hearing hearing) {
         String cino = hearing.getCnrNumbers().get(0);
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
 
@@ -61,6 +61,7 @@ public class HearingService {
                 .build();
 
         producer.push("save-hearing-details", newHearingDetail);
+        return newHearingDetail;
     }
 
     private LocalDate formatDate(Long timestamp) {

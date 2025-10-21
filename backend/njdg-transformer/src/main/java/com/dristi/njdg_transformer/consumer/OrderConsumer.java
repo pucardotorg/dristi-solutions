@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.consumer;
 
+import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+
+import static com.dristi.njdg_transformer.config.ServiceConstants.PUBLISHED_ORDER;
 
 @Component
 @Slf4j
@@ -34,6 +37,13 @@ public class OrderConsumer {
     }
 
     private void processAndUpdateOrder(ConsumerRecord<String, Object> payload) {
-        //todo: configure for published order
+        try {
+            OrderRequest orderRequest = objectMapper.convertValue(payload.value(), OrderRequest.class);
+            if(PUBLISHED_ORDER.equals(orderRequest.getOrder().getStatus())){
+                orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+            }
+        } catch (Exception e) {
+            log.error("Error in processing message:: {}", e.getMessage());
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.consumer;
 
+import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.service.HearingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,11 @@ public class HearingConsumer {
     }
 
     private void processAndUpdateHearing(ConsumerRecord<String, Object> payload) {
-        //todo: implement for scheduled hearings
+        try {
+            HearingRequest hearingRequest = objectMapper.convertValue(payload.value(), HearingRequest.class);
+            hearingService.processAndUpdateHearings(hearingRequest.getHearing());
+        } catch (Exception e) {
+            log.error("Error in processing message:: {}", e.getMessage());
+        }
     }
 }

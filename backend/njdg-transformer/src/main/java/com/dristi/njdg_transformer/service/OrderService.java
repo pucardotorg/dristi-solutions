@@ -28,7 +28,7 @@ public class OrderService {
     private final FileStoreUtil fileStoreUtil;
     private final Producer producer;
 
-    public void processAndUpdateOrder(Order order, RequestInfo requestInfo) {
+    public InterimOrder processAndUpdateOrder(Order order, RequestInfo requestInfo) {
         String cino = order.getCnrNumber();
         List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
 
@@ -57,6 +57,7 @@ public class OrderService {
                 .build();
 
         producer.push("save-order-details", newOrder);
+        return newOrder;
     }
 
 
