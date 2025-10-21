@@ -63,7 +63,7 @@ public class TransformerProperties {
     @Value("${state.code}")
     private Integer stateCode;
 
-    @Value("{cicri.type}")
+    @Value("${cicri.type}")
     private Character cicriType;
 
     //    @Value("${egov.case.host}")

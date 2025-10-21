@@ -45,13 +45,7 @@ public class CaseService {
     private final Producer producer;
     private final OrderRepository orderRepository;
     private final HearingRepository hearingRepository;
-    /**
-     * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
-     * 
-     * @param courtCase The CourtCase data to be processed and upserted
-     * @return The upserted NJDGTransformRecord
-     * @throws IllegalArgumentException if the input is invalid
-     */
+
     public NJDGTransformRecord processAndUpdateCase(CourtCase courtCase) {
         try {
             NJDGTransformRecord record = convertToNJDGRecord(courtCase);

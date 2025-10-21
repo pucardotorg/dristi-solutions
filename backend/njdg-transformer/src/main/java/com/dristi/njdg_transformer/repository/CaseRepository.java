@@ -140,7 +140,7 @@ public class CaseRepository {
                 record.getPetAddress(),
                 record.getResAddress(),
                 record.getJocode(),
-                record.getCicriType() != null ? record.getCicriType().toString() : null,
+                record.getCicriType() != null ? record.getCicriType() : null,
                 record.getCino()
             );
             
