@@ -38,6 +38,7 @@ import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-modu
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -138,6 +139,8 @@ const SubmissionsCreate = ({ path }) => {
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -395,7 +398,9 @@ const SubmissionsCreate = ({ path }) => {
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
-            (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+            (application) =>
+              !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
+              "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
     [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
@@ -447,8 +452,6 @@ const SubmissionsCreate = ({ path }) => {
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
-                      isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
-                    }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
@@ -1183,11 +1186,11 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      
+
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      const documentsFile = (mockESignEnabled)
+      const documentsFile = mockESignEnabled
         ? [
             {
               documentType: "SIGNED",
@@ -1384,9 +1387,17 @@ const SubmissionsCreate = ({ path }) => {
       if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
         history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
-        history.replace(
-          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
-        );
+        if(showSuccessModal){
+          triggerSurvey("APPLICATION_PAYMENT", () => {
+            history.replace(
+              `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+            );
+          });
+        } else {
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
       }
     }
   };
@@ -1647,6 +1658,7 @@ const SubmissionsCreate = ({ path }) => {
           }
         />
       )}
+      {SurveyUI}
     </div>
   );
 };

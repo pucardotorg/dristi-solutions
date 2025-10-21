@@ -245,7 +245,7 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber,
+        hearingId: orderData?.list?.[0]?.scheduledHearingNumber || orderData?.list?.[0]?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
@@ -254,8 +254,9 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
+  // temporarily POST_COURT and POST_PROCESS for epost is changed to POST_PROCESS_COURT
   const consumerCode = useMemo(() => {
-    return taskNumber ? `${taskNumber}_POST_COURT` : undefined;
+    return taskNumber ? `${taskNumber}_POST_PROCESS_COURT` : undefined;
   }, [taskNumber]);
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
@@ -263,22 +264,22 @@ const PaymentForSummonModal = ({ path }) => {
     {},
     {
       tenantId,
-      consumerCode: `${taskNumber}_POST_COURT`,
+      consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
       service: service,
     },
-    `${taskNumber}_POST_COURT_${service}`,
+    `${taskNumber}_POST_PROCESS_COURT_${service}`,
     Boolean(taskNumber && orderType)
   );
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    {
-      tenantId,
-      consumerCode: `${taskNumber}_POST_PROCESS`,
-      service: service,
-    },
-    `${taskNumber}_POST_PROCESS_${service}`,
-    Boolean(taskNumber && orderType)
-  );
+  // const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
+  //   {},
+  //   {
+  //     tenantId,
+  //     consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
+  //     service: service,
+  //   },
+  //   `${taskNumber}_POST_PROCESS_COURT_${service}`,
+  //   Boolean(taskNumber && orderType)
+  // );
 
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
@@ -312,9 +313,9 @@ const PaymentForSummonModal = ({ path }) => {
     totalAmount: courtFeeAmount,
   });
 
-  const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
-    breakupResponse,
-  ]);
+  // const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
+  //   breakupResponse,
+  // ]);
 
   const mockSubmitModalInfo = useMemo(
     () =>
@@ -335,12 +336,13 @@ const PaymentForSummonModal = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!courtBillResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
-          setIsCaseLocked(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? true : false);
-          setPayOnlineButtonTitle(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
+          // setIsCaseLocked(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? true : false);
+          // setPayOnlineButtonTitle(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
+          setIsCaseLocked(courtBillResponse?.Bill?.[0]?.status === "PAID" ? true : false);
+          setPayOnlineButtonTitle(courtBillResponse?.Bill?.[0]?.status === "PAID" ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
           return;
         }
         const caseLockStatus = await DRISTIService.getCaseLockStatus(
@@ -356,15 +358,15 @@ const PaymentForSummonModal = ({ path }) => {
           return;
         }
         await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
-        const billPaymentStatus = await openPaymentPortal(courtBillResponse);
+        const billPaymentStatus = await openPaymentPortal(freshBillResponse, freshBillResponse?.Bill?.[0]?.totalAmount);
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return null;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
-        if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
+        // Removed condition 'ePostBillResponse?.Bill?.[0]?.status === "PAID"' since there is only one payment record
+        if (fileStoreId) {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
@@ -373,7 +375,7 @@ const PaymentForSummonModal = ({ path }) => {
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
                 status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -445,28 +447,29 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
-    const onPayOnlineSBI = async () => {
-      try {
-        history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
-          state: {
-            billData: ePostBillResponse,
-            serviceNumber: taskNumber,
-            businessService: service,
-            caseDetails: caseDetails,
-            consumerCode: `${taskNumber}_POST_PROCESS`,
-            orderData: orderData,
-            partyIndex: partyIndex,
-            filteredTasks: filteredTasks,
-            filingNumber: filingNumber,
-            isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
-            hearingId: orderData?.list?.[0]?.hearingNumber,
-            orderType: orderType,
-          },
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
+    // Temporarily disabling SBI Payment integration for ePost
+    // const onPayOnlineSBI = async () => {
+    //   try {
+    //     history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
+    //       state: {
+    //         billData: ePostBillResponse,
+    //         serviceNumber: taskNumber,
+    //         businessService: service,
+    //         caseDetails: caseDetails,
+    //         consumerCode: `${taskNumber}_POST_PROCESS`,
+    //         orderData: orderData,
+    //         partyIndex: partyIndex,
+    //         filteredTasks: filteredTasks,
+    //         filingNumber: filingNumber,
+    //         isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
+    //         hearingId: orderData?.list?.[0]?.hearingNumber,
+    //         orderType: orderType,
+    //       },
+    //     });
+    //   } catch (error) {
+    //     console.error(error);
+    //   }
+    // };
     return {
       "e-post": [
         {
@@ -475,19 +478,26 @@ const PaymentForSummonModal = ({ path }) => {
           action: "Actions",
         },
         {
-          label: "Court Fees",
-          amount: courtFeeAmount,
+          label: "E-post Fee",
+          amount: courtBillResponse?.Bill?.[0]?.totalAmount,
           isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
           action: "Pay Online",
           onClick: onPayOnline,
         },
-        {
-          label: "Delivery Partner Fee",
-          amount: deliveryPartnerFeeAmount,
-          isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
-          action: "Pay Online",
-          onClick: onPayOnlineSBI,
-        },
+        // {
+        //   label: "Court Fees",
+        //   amount: courtFeeAmount,
+        //   isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
+        //   action: "Pay Online",
+        //   onClick: onPayOnline,
+        // },
+        // {
+        //   label: "Delivery Partner Fee",
+        //   amount: deliveryPartnerFeeAmount,
+        //   isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
+        //   action: "Pay Online",
+        //   onClick: onPayOnline,
+        // },
       ],
       "registered-post": [
         {
@@ -508,8 +518,6 @@ const PaymentForSummonModal = ({ path }) => {
     filteredTasks,
     courtFeeAmount,
     courtBillResponse,
-    deliveryPartnerFeeAmount,
-    ePostBillResponse,
     openPaymentPortal,
     tenantId,
     mockSubmitModalInfo,
@@ -571,6 +579,7 @@ const PaymentForSummonModal = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}
@@ -588,7 +597,7 @@ const PaymentForSummonModal = ({ path }) => {
     };
   }, [feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
 
-  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isEPOSTBillLoading || isTaskLoading || isHearingLoading) {
+  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
   }
 

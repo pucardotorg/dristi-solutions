@@ -64,7 +64,6 @@ const UpdateDeliveryStatusComponent = ({
             onChange={(e) => {
               setDate(e?.target?.value);
               setUpdateStatusDate(e?.target?.value);
-              console.log("date :>> ", e.target.value);
             }}
           />
         </LabelFieldPair>
@@ -78,7 +77,6 @@ const UpdateDeliveryStatusComponent = ({
           name={"remarks"}
           onChange={(e) => {
             setRemarks(e?.target?.value);
-            console.log("remarks :>> ", e.target.value);
           }}
         />
       </LabelFieldPair>

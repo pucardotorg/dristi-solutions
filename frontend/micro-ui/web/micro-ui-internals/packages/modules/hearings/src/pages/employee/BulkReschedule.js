@@ -86,6 +86,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     : null;
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
+  const isADiarySigned = history.location?.state?.aDiarySigned;
   const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
   const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
   const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
@@ -277,7 +278,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {
@@ -294,7 +295,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
       setStepper(0);
@@ -622,6 +623,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           setNewHearingData={setNewHearingData}
           newHearingData={newHearingData}
           bulkFormData={bulkFormData}
+          isADiarySigned={isADiarySigned}
         />
       )}
       {stepper === 2 && (

@@ -72,6 +72,9 @@ export const Urls = {
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
     applicationCreate: "/application/v1/create",
+    eligibility: "/inportal-survey/v1/eligibility",
+    feedback: "/inportal-survey/v1/feedback",
+    remindMeLater: "/inportal-survey/v1/remind-me-later",
 
     //Solutions
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",

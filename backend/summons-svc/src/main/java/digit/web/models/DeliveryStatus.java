@@ -15,5 +15,8 @@ public enum DeliveryStatus {
     STATUS_UNKNOWN,
     EXECUTED,
 
-    NOT_EXECUTED
+    NOT_EXECUTED,
+
+    // epost intermediate status
+    INTERMEDIATE
 }

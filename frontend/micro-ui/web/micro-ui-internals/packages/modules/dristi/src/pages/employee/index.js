@@ -6,7 +6,6 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "./AdmittedCases/AdmittedCase";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
 import PaymentInbox from "./Payment/PaymentInbox";
@@ -31,15 +30,11 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
-  const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role.code));
-  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
-      homeActiveTab: homeActiveTab,
       isLast: false,
     },
     {
@@ -55,16 +50,25 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
     {
-      path: `${path}/registration-requests`,
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
       content: t("ES_REGISTRATION_REQUESTS"),
       show: location.pathname.includes("/registration-requests"),
       isLast: !location.pathname.includes("/details"),
+      homeActiveTab: "REGISTER_USERS",
     },
     {
-      path: `${path}/pending-payment-inbox`,
-      content: t("CS_PENDING_PAYMENT_INBOX"),
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_OFFLINE_PAYMENTS"),
       show: location.pathname.includes("/pending-payment-inbox"),
-      isLast: !location.pathname.includes("/pending-payment-inbox"),
+      isLast: !location.pathname.includes("/pending-payment-details"),
+      homeActiveTab: "OFFLINE_PAYMENTS",
+    },
+    {
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_SCRUTINISE_CASES"),
+      show: location.pathname.includes("dristi/case"),
+      isLast: false,
+      homeActiveTab: "SCRUTINISE_CASES",
     },
     {
       path: `${path}/pending-payment-inbox/pending-payment-details`,
@@ -123,17 +127,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
           <PrivateRoute exact path={`${path}/registration-requests`} component={Inbox} />
           <PrivateRoute exact path={`${path}/registration-requests/details`} component={(props) => <ApplicationDetails {...props} />} />
-          <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} />
+          {/* <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} /> */}
           <PrivateRoute exact path={`${path}/pending-payment-inbox/response`} component={EFilingPaymentResponse} />
           <PrivateRoute exact path={`${path}/pending-payment-inbox/pending-payment-details`} component={ViewPaymentDetails} />
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute
-            exact
-            path={`${path}/home/view-case`}
-            component={isJudgeView ? (props) => <AdmittedCaseV2 /> : (props) => <AdmittedCases />}
-          />
+          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCaseV2 />} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

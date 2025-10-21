@@ -51,6 +51,8 @@ public class ServiceConstants {
     public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
+    public static final String RE_SCHEDULE_PENDING_TASK_ACTION_CATEGORY = "Reschedule Applications";
+    public static final String RE_SCHEDULE_APPLICATION_TYPE  = "RE_SCHEDULE";
     public static final String SCHEDULE_HEARING_ACTION_CATEGORY = "Schedule Hearing";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
@@ -123,4 +125,6 @@ public class ServiceConstants {
 
     public static final String EXPIRED = "EXPIRED";
 
+    // roles
+    public static final String VIEW_RE_SCHEDULE_APPLICATION = "VIEW_RE_SCHEDULE_APPLICATION";
 }

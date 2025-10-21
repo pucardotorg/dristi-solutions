@@ -84,6 +84,13 @@ const ViewPaymentDetails = ({ location, match }) => {
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
   const [tasksData, setTasksData] = useState(null);
   const [genericTaskData, setGenericTaskData] = useState(null);
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const hasViewCollectOfflinePaymentsAccess = useMemo(() => roles?.some((role) => role?.code === "PAYMENT_COLLECTOR"), [roles]);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -126,10 +133,10 @@ const ViewPaymentDetails = ({ location, match }) => {
     {},
     {
       tenantId,
-      consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS`,
+      consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
       service: businessService,
     },
-    `${consumerCodeWithoutSuffix}_POST_PROCESS`,
+    `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
     Boolean(consumerCodeWithoutSuffix && businessService)
   );
 
@@ -210,12 +217,14 @@ const ViewPaymentDetails = ({ location, match }) => {
     "dristi" + channelId,
     Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData && channelId)
   );
-  const courtFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee"), [
-    breakupResponse?.Calculation,
-  ]);
-  const processFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type !== "Court Fee"), [
-    breakupResponse?.Calculation,
-  ]);
+  // const courtFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee"), [
+  //   breakupResponse?.Calculation,
+  // ]);
+  // const processFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type !== "Court Fee"), [
+  //   breakupResponse?.Calculation,
+  // ]);
+
+  const feeBreakUpResponse = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown, [breakupResponse?.Calculation]);
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || currentBillDetails?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
@@ -229,7 +238,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         ? genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown || []
         : paymentType === "Join Case Advocate Fee"
         ? tasksData?.taskDetails?.paymentBreakdown
-        : calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
+        : calculationResponse?.Calculation?.[0]?.breakDown || feeBreakUpResponse || [];
     const updatedCalculation = breakdown?.map((item) => ({
       key: item?.type || item?.code,
       value: item?.amount,
@@ -246,9 +255,8 @@ const ViewPaymentDetails = ({ location, match }) => {
     return updatedCalculation;
   }, [
     calculationResponse?.Calculation,
-    courtFeeBreakup,
     paymentType,
-    processFeeBreakup,
+    feeBreakUpResponse,
     tasksData?.taskDetails?.paymentBreakdown,
     totalAmount,
     genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown,
@@ -273,7 +281,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         },
       });
 
-      taskHearingNumber = orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber || "";
+      taskHearingNumber = orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber || "";
       const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
       taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
       if (taskOrderType === "NOTICE") {
@@ -292,7 +300,6 @@ const ViewPaymentDetails = ({ location, match }) => {
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
     if (!Object.keys(bill || regenerateBill || {}).length) {
       toast.error(t("CS_BILL_NOT_AVAILABLE"));
-      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`);
       return;
     }
     try {
@@ -343,7 +350,7 @@ const ViewPaymentDetails = ({ location, match }) => {
             referenceId: taskHearingNumber,
             status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: [taskOrderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
             cnrNumber: demandBill?.additionalDetails?.cnrNumber,
             filingNumber: filingNumber,
             caseId: caseId,
@@ -420,6 +427,10 @@ const ViewPaymentDetails = ({ location, match }) => {
     }),
     [caseTitle, cmpNumber, courtCaseNumber, filingNumber, paymentType, t]
   );
+
+  if (!hasViewCollectOfflinePaymentsAccess) {
+    history.push(homePath);
+  }
 
   if (isFetchBillLoading || isPaymentLoading || isBillLoading || isEPOSTBillLoading || isSummonsBreakUpLoading) {
     return <Loader />;

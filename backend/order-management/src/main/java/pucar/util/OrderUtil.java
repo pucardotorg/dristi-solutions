@@ -18,6 +18,7 @@ import pucar.web.models.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
@@ -221,10 +222,11 @@ public class OrderUtil {
 
             // Next Hearing Date
             if (order.getNextHearingDate() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of(configuration.getZoneId()))
                         .toLocalDate()
-                        .toString();
+                        .format(formatter);
                 sb.append("Date of Next Hearing: ")
                         .append(dateStr).append(DOT);
             }

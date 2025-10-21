@@ -7,7 +7,7 @@ import React, { useMemo, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import OrdersResponse from "./OrdersResponse";
-import OrdersCreate from "./OrdersCreate";
+// import OrdersCreate from "./OrdersCreate";
 import OrdersHome from "./OrdersHome";
 import GenerateOrdersV2 from "./GenerateOrdersV2";
 import PaymentStatus from "../../components/PaymentStatus";
@@ -35,15 +35,10 @@ const ProjectBreadCrumb = ({ location }) => {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
-
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   if (isProcessViewer) homePath = `/${window?.contextPath}/${userType}/orders/Summons&Notice`;
   const crumbs = useMemo(
     () => [
@@ -82,15 +77,12 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) {
+    if (!isEpostUser) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
@@ -101,14 +93,14 @@ const App = ({ path, stateCode, userType, tenants }) => {
       <AppContainer className="ground-container order-submission">
         <React.Fragment>{isProcessViewer ? null : <ProjectBreadCrumb location={window.location} />}</React.Fragment>
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
-        <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
+        {/* <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} /> */}
         <PrivateRoute path={`${path}/orders-home`} component={() => <OrdersHome />} />
         <PrivateRoute path={`${path}/generate-order`} component={() => <GenerateOrdersV2 />} />
         {/* <PrivateRoute path={`${path}/make-submission`} component={() => <MakeSubmission />} /> */}
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />
         <PrivateRoute path={`${path}/payment-modal`} component={() => <PaymentForSummonModal />} />
-        <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} />
+        {/* <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} /> */}
       </AppContainer>
     </Switch>
   );

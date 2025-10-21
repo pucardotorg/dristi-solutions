@@ -1610,27 +1610,53 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
 
         } else {
-            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest, courtCase);
-            if (!isValid) {
-                log.info("Not a valid request since litigant is now pip");
-                return;
-            }
+            checkIfRepresentingPipAndUpdateAdditionalDetails(joinCaseRequest, courtCase);
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
             joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
         }
     }
 
-    private boolean checkIsValidRequestForAdding(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
+    //Check if representing is pip and updated pip related info from additional details and remove pip affidavit document from litigants document
+    private void checkIfRepresentingPipAndUpdateAdditionalDetails(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
         List<String> individualIdsOfAllPIP = Optional.ofNullable(courtCase.getLitigants())
                 .orElse(Collections.emptyList())
                 .stream().filter(litigant -> isPIP(litigant, courtCase)).map(Party::getIndividualId).toList();
 
         for (RepresentingJoinCase representingJoinCase : joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()) {
             if (individualIdsOfAllPIP.contains(representingJoinCase.getIndividualId())) {
-                return false;
+                //update additional details
+                modifyAdditionalDetailsForPIP(courtCase, representingJoinCase.getIndividualId());
+
+                for (Party litigant : courtCase.getLitigants()) {
+                    if (litigant.getIndividualId().equals(representingJoinCase.getIndividualId()) && litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {
+                        // Filter out PIP affidavit documents
+                        for (Document document : litigant.getDocuments()) {
+                            Object additionalDetails = document.getAdditionalDetails();
+                            if (additionalDetails == null) continue;
+
+                            ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                            String documentName = additionalDetailsNode.has("documentName")
+                                    ? additionalDetailsNode.get("documentName").asText()
+                                    : "";
+
+                            // If this is the PIP affidavit, mark inactive
+                            if (UPLOAD_PIP_AFFIDAVIT.equalsIgnoreCase(documentName)) {
+                                document.setIsActive(false);
+
+                                CourtCase caseObjForPipDocumentInActive = new CourtCase();
+                                caseObjForPipDocumentInActive.setId(courtCase.getId());
+                                caseObjForPipDocumentInActive.setTenantId(courtCase.getTenantId());
+                                caseObjForPipDocumentInActive.setLitigants(List.of(litigant));
+                                log.info("Pushing join case litigant details for removing pip documents :: {}", caseObjForPipDocumentInActive);
+                                producer.push(config.getLitigantJoinCaseTopic(), caseObjForPipDocumentInActive);
+                                litigant.getDocuments().remove(document);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
-        return true;
     }
 
     private boolean isPIP(Party litigant, CourtCase courtCase) {
@@ -1665,6 +1691,50 @@ public class CaseService {
             return false;
         }
     }
+
+    //for updating pip related info from additional details
+    private void modifyAdditionalDetailsForPIP(CourtCase courtCase, String individualIdPIPRepresenting) {
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
+
+        try {
+            if (additionalDetailsNode.has("advocateDetails")) {
+                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+
+                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
+                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+
+                    for (JsonNode formDataItem : formData) {
+                        if (!formDataItem.has("data")) continue;
+                        ObjectNode dataNode = (ObjectNode) formDataItem.get("data");
+
+                        if (!dataNode.has("multipleAdvocatesAndPip")) continue;
+                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
+
+                        if (!multipleAdvocatesAndPip.has("boxComplainant")) continue;
+                        ObjectNode boxComplainant = (ObjectNode) multipleAdvocatesAndPip.get("boxComplainant");
+
+                        if (!boxComplainant.has("individualId") || !boxComplainant.get("individualId").asText().equalsIgnoreCase(individualIdPIPRepresenting)) {
+                            continue;
+                        }
+
+                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
+                        isComplainantPipNode.put("code", "NO");
+                        isComplainantPipNode.put("name", "No");
+                        isComplainantPipNode.put("isEnabled", true);
+                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
+
+                        multipleAdvocatesAndPip.putNull("pipAffidavitFileUpload");
+                    }
+                }
+            }
+
+            courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
+
+        } catch (Exception e) {
+            log.error("Error modifying additionalDetails for pip: {}", e.getMessage(), e);
+        }
+    }
+
 
     private boolean isValidReplacement(CourtCase courtCase, JoinCaseRepresentative representative, RepresentingJoinCase representingJoinCase) {
         String litigantId = representingJoinCase.getIndividualId();

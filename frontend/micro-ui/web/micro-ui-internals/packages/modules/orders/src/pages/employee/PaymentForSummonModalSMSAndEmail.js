@@ -147,7 +147,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     if (caseData) {
       const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       if (id) {
-        console.log(id, "id");
         setCaseId(id); // Set the caseId in state
       } else {
         console.error("caseId is undefined or not available");
@@ -244,7 +243,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+        hearingId: orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
@@ -257,8 +256,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
-      PROCLAMATION: paymentType.TASK_WARRANT,
-      ATTACHMENT: paymentType.TASK_WARRANT,
+      PROCLAMATION: paymentType.TASK_PROCLAMATION,
+      ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
     };
     return businessServiceMap?.[orderType];
@@ -386,7 +385,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -411,7 +409,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
 
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
@@ -548,6 +545,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: () => onPayOnline("SMS"),
         },
       ],
+      // not sure it is using here
       EPOST: [
         {
           label: "Fee Type",
@@ -676,7 +674,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const links = useMemo(() => {
     const onViewOrderClick = () => {
-      console.log(caseId, "caseID");
       history.push(
         `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
       );
@@ -701,6 +698,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}

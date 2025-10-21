@@ -1633,7 +1633,7 @@ public class CaseServiceTest {
         witnessDetails.setLastName("Doe");
         witnessDetails.setMiddleName("Smith");
         witnessDetails.setUniqueId("witness-001");
-        
+
         return WitnessDetailsRequest.builder()
                 .requestInfo(requestInfo)
                 .caseFilingNumber("CASE-2024-001")

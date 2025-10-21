@@ -18,7 +18,9 @@ function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleClos
     subHeader: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST_SUBTEXT",
     caseInfo: [
       {
-        key: `${t("ORDER_ID")} : ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t("ORDER_TYPE_" + order?.orderType)}`,
+        key: `${t("ORDER_ID")} : ${
+          order?.orderCategory === "COMPOSITE" ? order?.orderTitle : order?.orderType ? t(`ORDER_TYPE_${order?.orderType}`) : order?.orderTitle
+        }`,
         value: order?.orderNumber,
         copyData: true,
         isLocalization: false,

@@ -54,7 +54,6 @@ public class OrderService {
     public Order createOrder(@Valid OrderRequest request) {
         log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
         OrderResponse orderResponse = orderUtil.createOrder(request);
-        updateHearingSummary(request);
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
@@ -85,7 +84,7 @@ public class OrderService {
         orderProcessor.preProcessOrder(request);
 
         if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
-            preProcessScheduleNextHearing(request);
+            hearingUtil.preProcessScheduleNextHearing(request);
         }
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
@@ -105,33 +104,11 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        updateHearingSummary(request);
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+            updateHearingSummary(request);
+        }
 
         return orderResponse.getOrder();
-    }
-
-    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
-                Order order = orderRequest.getOrder();
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
-        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
-
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        // add validation here
-        CourtCase courtCase = cases.get(0);
-
-        HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
-
-        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
-
-        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
-
-        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
-        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
-
-        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {

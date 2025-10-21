@@ -19,6 +19,7 @@ export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("signStatus");
   sessionStorage.removeItem("bulkWitnessDepositionSignlimit");
   sessionStorage.removeItem("bulkWitnessDepositionSignoffset");
+  sessionStorage.removeItem("homeActiveTab");
 };
 
 export const WitnessDepositionSignModal = ({
@@ -190,7 +191,7 @@ export const WitnessDepositionSignModal = ({
         setWitnessDepositionSignedPdf(uploadedFileId?.[0]?.fileStoreId);
         clearWitnessDepositionSessionData();
       } catch (error) {
-        console.log("error", error);
+        console.error("error", error);
       } finally {
         setLoader(false);
       }
@@ -313,7 +314,7 @@ export const WitnessDepositionSignModal = ({
       if (witnessDepositionPaginationData?.offset) sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
       handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Judicial Magistrate of First Class");
     } catch (error) {
-      console.log("E-sign navigation error:", error);
+      console.error("E-sign navigation error:", error);
       setLoader(false);
     } finally {
       setLoader(false);
@@ -338,7 +339,7 @@ export const WitnessDepositionSignModal = ({
         fileStoreId: newFilestore,
       });
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setWitnessDepositionSignedPdf("");
       setFormData({});
@@ -380,6 +381,12 @@ export const WitnessDepositionSignModal = ({
       </React.Fragment>
     );
   }, [witnessDepositionDocuments, tenantId]);
+
+  useEffect(() => {
+    return () => {
+      clearWitnessDepositionSessionData();
+    };
+  });
 
   return (
     <div>
@@ -448,9 +455,7 @@ export const WitnessDepositionSignModal = ({
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("CS_COMMON_SUBMIT")}
           isDisabled={!isSigned}
-          actionSaveOnSubmit={() => {
-            console.log("submiteed");
-          }}
+          actionSaveOnSubmit={() => {}}
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">

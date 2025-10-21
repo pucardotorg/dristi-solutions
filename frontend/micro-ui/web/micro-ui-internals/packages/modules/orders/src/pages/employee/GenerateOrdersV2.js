@@ -244,7 +244,7 @@ const GenerateOrdersV2 = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
-  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
+  const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
@@ -258,9 +258,9 @@ const GenerateOrdersV2 = () => {
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
 
@@ -1023,7 +1023,7 @@ const GenerateOrdersV2 = () => {
           setIsBailBondTaskExists(true);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
@@ -1720,10 +1720,13 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateForHearing = "";
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
@@ -1764,10 +1767,13 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateForHearing = "";
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
@@ -1812,10 +1818,13 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
+        } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
-        } else if (currentOrder?.nextHearingDate) {
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.dateOfHearing = "";
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
@@ -2976,7 +2985,7 @@ const GenerateOrdersV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
             actionCategory: "Bail Bond",
             cnrNumber: caseDetails?.cnrNumber,
             filingNumber,
@@ -2996,7 +3005,7 @@ const GenerateOrdersV2 = () => {
         }, 1000);
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setBailBondLoading(false);
 
       setShowErrorToast({
@@ -3238,7 +3247,7 @@ const GenerateOrdersV2 = () => {
 
   const handleBulkCloseSuccessModal = () => {
     setShowBulkModal(false);
-    history.replace(`/${window.contextPath}/${userInfoType}/home/bulk-esign-order`);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
   };
 
   const createPendingTask = async ({ order, createTask = false, taskStatus = "CREATE_SUBMISSION", taskName = "", orderEntityType = null }) => {
@@ -3854,41 +3863,25 @@ const GenerateOrdersV2 = () => {
             )}
           </div>
         </div>
-        <ActionBar
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: "#fff",
-            padding: "16px 24px",
-            boxShadow: "none",
-            borderTop: "1px solid #BBBBBD",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <Button
-              label={t("CS_COMMON_BACK")}
-              variation={"secondary"}
-              onButtonClick={handleGoBack}
-              style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
-              textStyles={{
-                fontFamily: "Roboto",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: "18.75px",
-                textAlign: "center",
-                color: "#007E7E",
-              }}
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+        {hasOrderUpdateAccess && (
+          <ActionBar
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: "#fff",
+              padding: "16px 24px",
+              boxShadow: "none",
+              borderTop: "1px solid #BBBBBD",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
               <Button
-                label={t("SAVE_AS_DRAFT")}
+                label={t("CS_COMMON_BACK")}
                 variation={"secondary"}
-                onButtonClick={() => {
-                  handleSaveDraft(currentOrder);
-                }}
-                style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                onButtonClick={handleGoBack}
+                style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
                 textStyles={{
                   fontFamily: "Roboto",
                   fontSize: "16px",
@@ -3898,10 +3891,33 @@ const GenerateOrdersV2 = () => {
                   color: "#007E7E",
                 }}
               />
-              <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                <Button
+                  label={t("SAVE_AS_DRAFT")}
+                  variation={"secondary"}
+                  onButtonClick={async () => {
+                    try {
+                      await handleSaveDraft(currentOrder);
+                      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+                    } catch (error) {
+                      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+                    }
+                  }}
+                  style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
+                  textStyles={{
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#007E7E",
+                  }}
+                />
+                <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
+              </div>
             </div>
-          </div>
-        </ActionBar>
+          </ActionBar>
+        )}
       </div>
       {showEditOrderModal && (
         <EditSendBackModal
@@ -3983,7 +3999,7 @@ const GenerateOrdersV2 = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
-          saveSignLater={canSaveSignLater}
+          saveSignLater={canSaveSignLater && !currentDiaryEntry}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}

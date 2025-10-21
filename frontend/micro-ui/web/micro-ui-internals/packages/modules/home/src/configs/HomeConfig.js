@@ -118,9 +118,872 @@ export const userTypeOptions = [
   },
 ];
 
+export const TabUnifiedEmployeeSearchConfig = {
+  tenantId: Digit.ULBService.getCurrentTenantId(),
+  moduleName: "homeJudgeUIConfig",
+  showTab: true,
+  TabSearchConfig: [
+    {
+      label: "CS_ALL",
+      type: "search",
+      apiDetails: {
+        serviceName: "/case/v2/search/list",
+        requestParam: {},
+        requestBody: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          criteria: {
+            stage: ["Pre-Trial", "Trial", "Post-Trial", "Long Pending Register"],
+            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "homeJudgeUIConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody",
+        filterFormJsonPath: "requestBody",
+        searchFormJsonPath: "requestBody",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: {
+              caseSearchText: "",
+              caseType: "NIA S138",
+              substage: "",
+            },
+            fields: [
+              {
+                label: "CASE_TYPE",
+                isMandatory: false,
+                key: "caseType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "caseType",
+                  options: ["NIA S138"],
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_STAGE",
+                isMandatory: false,
+                key: "stage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "substage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SubStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_NAME_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "CS_CASE_NAME",
+                jsonPath: "caseTitle",
+              },
+              {
+                label: "CS_STAGE",
+                jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_FILING_DATE",
+                jsonPath: "filingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "caseList",
+          },
+          show: true,
+        },
+      },
+    },
+    {
+      label: "CD_ONGOING",
+      type: "search",
+      apiDetails: {
+        serviceName: "/case/v2/search/list",
+        requestParam: {},
+        requestBody: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          criteria: {
+            stage: ["Trial"],
+            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "homeJudgeUIConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody",
+        filterFormJsonPath: "requestBody",
+        searchFormJsonPath: "requestBody",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: {
+              caseSearchText: "",
+              caseType: "NIA S138",
+              substage: "",
+            },
+            fields: [
+              {
+                label: "CASE_TYPE",
+                isMandatory: false,
+                key: "caseType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "caseType",
+                  options: ["NIA S138"],
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_STAGE",
+                isMandatory: false,
+                key: "stage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "substage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SubStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_NAME_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "CS_CASE_NAME",
+                jsonPath: "caseTitle",
+              },
+              {
+                label: "CS_STAGE",
+                jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_FILING_DATE",
+                jsonPath: "filingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "caseList",
+          },
+          show: true,
+        },
+      },
+    },
+    {
+      label: "CS_REGISTERED",
+      type: "search",
+      apiDetails: {
+        serviceName: "/case/v2/search/list",
+        requestParam: {},
+        requestBody: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          criteria: {
+            stage: ["Pre-Trial"],
+            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "homeJudgeUIConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody",
+        filterFormJsonPath: "requestBody",
+        searchFormJsonPath: "requestBody",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: {
+              caseSearchText: "",
+              caseType: "NIA S138",
+              substage: "",
+            },
+            fields: [
+              {
+                type: "component",
+                component: "CustomSortComponent",
+                isMandatory: false,
+                disable: false,
+                name: "Filed",
+                key: "sortCaseListByDate",
+                sortBy: "createdtime",
+                ascText: "First",
+                descText: "Last",
+                showAdditionalText: true,
+                showIcon: true,
+                icon: "UpDownArrowIcon",
+                populators: {},
+              },
+              {
+                label: "CASE_TYPE",
+                isMandatory: false,
+                key: "caseType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "caseType",
+                  options: ["NIA S138"],
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_STAGE",
+                isMandatory: false,
+                key: "stage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "substage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SubStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_NAME_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "CS_CASE_NAME",
+                jsonPath: "caseTitle",
+              },
+              {
+                label: "CS_STAGE",
+                jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_FILING_DATE",
+                jsonPath: "filingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "caseList",
+          },
+          show: true,
+        },
+        additionalDetails: {
+          sortBy: "sortCaseListByDate",
+        },
+      },
+    },
+    {
+      label: "CD_CLOSED",
+      type: "search",
+      apiDetails: {
+        serviceName: "/case/v2/search/list",
+        requestParam: {},
+        requestBody: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          criteria: {
+            outcome: [],
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "homeJudgeUIConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody",
+        filterFormJsonPath: "requestBody",
+        searchFormJsonPath: "requestBody",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: {
+              caseSearchText: "",
+              caseType: "NIA S138",
+              substage: "",
+            },
+            fields: [
+              {
+                type: "component",
+                component: "CustomSortComponent",
+                isMandatory: false,
+                disable: false,
+                name: "Closed:",
+                key: "sortCaseListByDate",
+                sortBy: "createdtime",
+                ascText: "new first",
+                descText: "old first",
+                showAdditionalText: true,
+                showIcon: true,
+                icon: "UpDownArrowIcon",
+                populators: {},
+              },
+              {
+                label: "CASE_TYPE",
+                isMandatory: false,
+                key: "caseType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "caseType",
+                  options: ["NIA S138"],
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CD_OUTCOME",
+                isMandatory: false,
+                key: "outcome",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "outcome",
+                  optionsKey: "outcome",
+                  mdmsConfig: {
+                    masterName: "OutcomeType",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_NAME_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "CS_CASE_NAME",
+                jsonPath: "caseTitle",
+              },
+              {
+                label: "CD_OUTCOME",
+                jsonPath: "outcome",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_FILING_DATE",
+                jsonPath: "filingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "caseList",
+          },
+          show: true,
+        },
+      },
+      additionalDetails: {
+        sortBy: "sortCaseListByDate",
+      },
+    },
+    {
+      label: "CS_LPR",
+      type: "search",
+      apiDetails: {
+        serviceName: "/case/v2/search/list",
+        requestParam: {},
+        requestBody: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          criteria: {
+            isLPRCase: true,
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "homeJudgeUIConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody",
+        filterFormJsonPath: "requestBody",
+        searchFormJsonPath: "requestBody",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: {
+              caseSearchText: "",
+              caseType: "NIA S138",
+              substage: "",
+            },
+            fields: [
+              {
+                type: "component",
+                component: "CustomSortComponent",
+                isMandatory: false,
+                disable: false,
+                name: "Closed:",
+                key: "sortCaseListByDate",
+                sortBy: "createdtime",
+                ascText: "new first",
+                descText: "old first",
+                showAdditionalText: true,
+                showIcon: true,
+                icon: "UpDownArrowIcon",
+                populators: {},
+              },
+              {
+                label: "CASE_TYPE",
+                isMandatory: false,
+                key: "caseType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "caseType",
+                  options: ["NIA S138"],
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_NAME_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "CS_CASE_NAME",
+                jsonPath: "caseTitle",
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_FILING_DATE",
+                jsonPath: "filingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "caseList",
+          },
+          show: true,
+        },
+      },
+      additionalDetails: {
+        sortBy: "sortCaseListByDate",
+      },
+    },
+  ],
+};
+
+export const CaseReviewerAdditionalTab = {
+  label: "CS_SCRUTINY_DUE",
+  type: "search",
+  apiDetails: {
+    serviceName: "/case/v2/search/list",
+    requestParam: {},
+    requestBody: {
+      tenantId: Digit.ULBService.getCurrentTenantId(),
+      criteria: {
+        status: ["UNDER_SCRUTINY"],
+      },
+    },
+    masterName: "commonUiConfig",
+    moduleName: "homeJudgeUIConfig",
+    minParametersForSearchForm: 0,
+    tableFormJsonPath: "requestBody",
+    filterFormJsonPath: "requestBody",
+    searchFormJsonPath: "requestBody",
+  },
+  sections: {
+    search: {
+      uiConfig: {
+        formClassName: "custom-both-clear-search",
+        primaryLabel: "ES_COMMON_SEARCH",
+        secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+        minReqFields: 0,
+        defaultValues: {
+          caseSearchText: "",
+          caseType: "NIA S138",
+          substage: "",
+          sortCaseListByDate: {
+            sortBy: "createdtime",
+            order: "desc",
+          },
+        },
+        fields: [
+          {
+            type: "component",
+            component: "CustomSortComponent",
+            isMandatory: false,
+            disable: false,
+            name: "Filed",
+            key: "sortCaseListByDate",
+            sortBy: "createdtime",
+            ascText: "(old first)",
+            descText: "(new first)",
+            showAdditionalText: true,
+            showIcon: true,
+            icon: "UpDownArrowIcon",
+            populators: {},
+          },
+          {
+            label: "CASE_TYPE",
+            isMandatory: false,
+            key: "caseType",
+            type: "dropdown",
+            disable: false,
+            populators: {
+              name: "caseType",
+              options: ["NIA S138"],
+              styles: {
+                maxWidth: "200px",
+                minWidth: "150px",
+              },
+              optionsCustomStyle: {
+                overflowX: "hidden",
+              },
+            },
+          },
+          {
+            label: "CS_STAGE",
+            isMandatory: false,
+            key: "stage",
+            type: "dropdown",
+            disable: false,
+            populators: {
+              name: "substage",
+              optionsKey: "code",
+              mdmsConfig: {
+                masterName: "SubStage",
+                moduleName: "case",
+                select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+              },
+              styles: {
+                maxWidth: "250px",
+                minWidth: "200px",
+              },
+              optionsCustomStyle: {
+                overflowX: "hidden",
+              },
+            },
+          },
+          {
+            label: "CS_CASE_NAME_ID",
+            type: "text",
+            isMandatory: false,
+            disable: false,
+            populators: {
+              name: "caseSearchText",
+              error: "BR_PATTERN_ERR_MSG",
+              validation: {
+                pattern: {},
+                minlength: 2,
+              },
+            },
+          },
+        ],
+      },
+      show: true,
+    },
+    searchResult: {
+      tenantId: Digit.ULBService.getCurrentTenantId(),
+      uiConfig: {
+        columns: [
+          {
+            label: "CS_CASE_NAME",
+            jsonPath: "caseTitle",
+          },
+          {
+            label: "CS_SCRUTINY_STATUS",
+            jsonPath: "status",
+            additionalCustomization: true,
+          },
+          {
+            label: "CS_CASE_NUMBER_HOME",
+            jsonPath: "filingNumber",
+            additionalCustomization: true,
+          },
+          {
+            label: "CASE_TYPE",
+            jsonPath: "",
+            additionalCustomization: true,
+          },
+          {
+            label: "CS_DAYS_FILING",
+            jsonPath: "lastModifiedTime",
+            additionalCustomization: true,
+          },
+        ],
+        enableColumnSort: true,
+        resultsJsonPath: "caseList",
+      },
+      show: true,
+    },
+  },
+  additionalDetails: {
+    sortBy: "sortCaseListByDate",
+  },
+};
+
+export const getUnifiedEmployeeConfig = (roles) => {
+  const baseConfig = { ...TabUnifiedEmployeeSearchConfig };
+  const hasCaseReviewerRole = roles?.some((role) => role.code === "CASE_REVIEWER");
+  const allTabs = [...baseConfig.TabSearchConfig];
+  // Add the 6th tab i.e. scrutiny only if user has CASE_REVIEWER role.
+  const sixthTab = {
+    ...CaseReviewerAdditionalTab,
+    showForRoles: ["CASE_REVIEWER"],
+    isConditional: true,
+  };
+  if (hasCaseReviewerRole) {
+    allTabs.push(sixthTab);
+  }
+  baseConfig.TabSearchConfig = allTabs;
+  return baseConfig;
+};
+
+export const getOnRowClickConfig = (roles) => {
+  const hasCaseReviewerRole = roles?.some((role) => role.code === "CASE_REVIEWER");
+
+  if (hasCaseReviewerRole) {
+    return {
+      dependentUrl: "/dristi/case",
+      urlDependentOn: "status",
+      urlDependentValue: "UNDER_SCRUTINY",
+      params: [{ key: "caseId", value: "id" }],
+    };
+  } else {
+    return {
+      dependentUrl: "/dristi/admission",
+      urlDependentOn: "status",
+      urlDependentValue: "",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
+    };
+  }
+};
+
 export const rolesToConfigMapping = [
   {
-    roles: ["CASE_VIEWER", "JUDGE_ROLE"],
+    roles: ["CASE_VIEWER", "JUDGE_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isJudge: true,
     onRowClickRoute: {
@@ -133,8 +996,14 @@ export const rolesToConfigMapping = [
       ],
     },
   },
+  // {
+  //   roles: ["CASE_VIEWER"],
+  //   config: getUnifiedEmployeeConfig(["CASE_VIEWER"]),
+  //   isJudge: true,
+  //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER"]),
+  // },
   {
-    roles: ["TYPIST_ROLE"],
+    roles: ["TYPIST_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isTypist: true,
     onRowClickRoute: {
@@ -148,7 +1017,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "HEARING_CREATOR"],
+    roles: ["CASE_VIEWER", "HEARING_CREATOR"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabJudgeSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -162,7 +1031,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "CASE_REVIEWER"],
+    roles: ["CASE_VIEWER", "CASE_REVIEWER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabFSOSearchConfig,
     isFSO: true,
     onRowClickRoute: {
@@ -172,8 +1041,14 @@ export const rolesToConfigMapping = [
       params: [{ key: "caseId", value: "id" }],
     },
   },
+  // {
+  //   roles: ["CASE_VIEWER", "CASE_REVIEWER"],
+  //   config: getUnifiedEmployeeConfig(["CASE_VIEWER", "CASE_REVIEWER"]),
+  //   isFSO: true,
+  //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER", "CASE_REVIEWER"]),
+  // },
   {
-    roles: ["CASE_VIEWER", "BENCH_CLERK"],
+    roles: ["CASE_VIEWER", "BENCH_CLERK"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabBenchSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -187,7 +1062,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"],
+    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
     config: TabCourtRoomSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -200,19 +1075,20 @@ export const rolesToConfigMapping = [
       ],
     },
   },
-  {
-    roles: ["CASE_VIEWER"],
-    config: TabLitigantSearchConfig,
-    isLitigant: true,
-    showJoinFileOption: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/home/file-case/case",
-      urlDependentOn: "status",
-      urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"],
-      params: [{ key: "caseId", value: "id" }],
-    },
-  },
 ];
+
+export const litigantConfig = {
+  roles: ["CASE_VIEWER"],
+  config: TabLitigantSearchConfig,
+  isLitigant: true,
+  showJoinFileOption: true,
+  onRowClickRoute: {
+    dependentUrl: "/dristi/home/file-case/case",
+    urlDependentOn: "status",
+    urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"],
+    params: [{ key: "caseId", value: "id" }],
+  },
+};
 
 export const caseTypes = [{ name: "NIA S138", code: "NIA S138" }];
 

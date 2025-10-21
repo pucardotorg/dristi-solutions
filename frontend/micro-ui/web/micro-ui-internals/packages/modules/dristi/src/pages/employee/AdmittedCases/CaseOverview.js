@@ -41,17 +41,10 @@ const CaseOverview = ({
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
-  const isJudge = useMemo(() => userRoles.some((role) => role.code === "CASE_APPROVER"), [userRoles]);
-  const isBenchClerk = useMemo(() => userRoles.some((role) => role.code === "BENCH_CLERK"), [userRoles]);
-  const isCourtRoomManager = useMemo(() => userRoles.some((role) => role.code === "COURT_ROOM_MANAGER"), [userRoles]);
-  const isTypist = useMemo(() => userRoles.some((role) => role.code === "TYPIST_ROLE"), [userRoles]);
+  const isEpostUser = useMemo(() => userRoles?.some((role) => role?.code === "POST_MANAGER"), [userRoles]);
+
   let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
-  const advocateIds = caseData?.case?.representatives?.map((representative) => {
-    return {
-      id: representative?.advocateId,
-    };
-  });
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
 
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case)[userInfo?.uuid], [caseData?.case, userInfo]);
   const isAdvocatePresent = useMemo(

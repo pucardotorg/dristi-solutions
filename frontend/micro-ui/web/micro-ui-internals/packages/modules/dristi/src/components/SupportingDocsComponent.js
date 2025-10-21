@@ -15,8 +15,6 @@ const CloseBtn = () => {
 const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
   const disable = config?.disable;
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const isBenchClerk = userRoles.includes("BENCH_CLERK");
 
   const inputs = useMemo(
     () =>
@@ -47,20 +45,20 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
   const modifiedInputs = useMemo(
     () =>
-      inputs.map(input => {
+      inputs.map((input) => {
         const temp = {
           ...input,
           populators: {
             ...input?.populators,
             mdmsConfig: {
               ...input?.populators?.mdmsConfig,
-              select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isBenchClerk});});}`,
-            }
-          }
-        }
-        return temp
-      }) ,
-    [inputs, isBenchClerk]
+              select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS");});}`,
+            },
+          },
+        };
+        return temp;
+      }),
+    [inputs]
   );
 
   const addAnotherForm = () => {

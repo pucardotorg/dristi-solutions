@@ -7,7 +7,7 @@ const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset")) || 0
 
 export const bulkMarkAsEvidenceConfig = {
   label: "CS_HOME_BULK_MARK_AS_EVIDENCE",
-  type: "inbox",
+  type: "search",
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",
     requestParam: {},
@@ -67,6 +67,10 @@ export const bulkMarkAsEvidenceConfig = {
       uiConfig: {
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_TITLE",
             jsonPath: "businessObject.artifactDetails.caseTitle",
             additionalCustomization: true,
@@ -84,10 +88,6 @@ export const bulkMarkAsEvidenceConfig = {
           {
             label: "EVIDENCE_NUMBER",
             jsonPath: "businessObject.artifactDetails.evidenceNumber",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
         ],

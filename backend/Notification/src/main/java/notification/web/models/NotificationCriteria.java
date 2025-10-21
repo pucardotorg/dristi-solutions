@@ -35,5 +35,7 @@ public class NotificationCriteria {
     @JsonProperty("courtId")
     private String courtId = null;
 
+    @JsonProperty("isFuzzySearch")
+    private Boolean isFuzzySearch = false;
 
 }

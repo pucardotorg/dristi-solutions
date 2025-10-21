@@ -218,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -253,7 +253,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               (taskOrderType === "NOTICE"
                 ? item?.orderType === "NOTICE"
                 : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
-              (order?.hearingNumber || order?.scheduledHearingNumber) === hearingId
+              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
             ...order,
@@ -266,7 +266,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return (taskOrderType === "NOTICE"
           ? order?.orderType === "NOTICE"
           : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
-          (order?.hearingNumber || order?.scheduledHearingNumber) === hearingId
+          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
       }
@@ -511,7 +511,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
+          {/* <Button
             label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
@@ -522,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>

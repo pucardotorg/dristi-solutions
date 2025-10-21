@@ -115,6 +115,22 @@ export const EpostService = {
       data,
       params,
     }),
+  epostUser: (data, params) =>
+    Request({
+      url: Urls.Epost.mdmsSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
+  ePostDownloadReports: (data, params) =>
+    Request({
+      url: Urls.Epost.EpostReportDownload,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
@@ -194,6 +210,33 @@ export const orderManagementService = {
   updateSignedOrders: (data, params) =>
     Request({
       url: Urls.orderManagement.updateSignedOrders,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};
+
+export const processManagementService = {
+  getProcessToSign: (data, params) =>
+    Request({
+      url: Urls.processManagement.getProcessToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedProcess: (data, params) =>
+    Request({
+      url: Urls.processManagement.updateSignedProcess,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  bulkSend: (data, params) =>
+    Request({
+      url: Urls.processManagement.bulkSend,
       useCache: false,
       userService: true,
       data,

@@ -93,7 +93,7 @@ const ADiaryPage = ({ path }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
+  const userRoles = useMemo(() => userInfo?.roles, [userInfo]);
   const styles = getStyles();
   const [selectedDate, setSelectedDate] = useState(
     getCurrentDate(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate") || "")
@@ -101,6 +101,11 @@ const ADiaryPage = ({ path }) => {
   const [entryDate, setEntryDate] = useState(
     parseInt(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate")) || new Date().setHours(0, 0, 0, 0)
   );
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => userRoles?.some((role) => role?.code === "POST_MANAGER"), [userRoles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const hasViewSignADiaryAccess = useMemo(() => userRoles?.some((role) => role?.code === "DIARY_VIEWER"), [userRoles]);
 
   const [offSet, setOffset] = useState(0);
   const limit = 10;
@@ -127,7 +132,7 @@ const ADiaryPage = ({ path }) => {
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const isDiaryApprover = useMemo(() => roles?.some((role) => role?.code === "DIARY_APPROVER"), [roles]);
 
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
@@ -189,7 +194,7 @@ const ADiaryPage = ({ path }) => {
         sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -253,7 +258,7 @@ const ADiaryPage = ({ path }) => {
           setIsSelectedDataSigned(false);
         }
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
       }
     };
     getDiarySearch();
@@ -299,7 +304,7 @@ const ADiaryPage = ({ path }) => {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setSignedDocumentUploadID("");
       sessionStorage.removeItem("fileStoreId");
@@ -371,10 +376,14 @@ const ADiaryPage = ({ path }) => {
         { diaryEntry: entry }
       );
     }
-    if (entry?.referenceType === "bulkreschedule") {
+    if (entry?.referenceType === "notice") {
       history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry });
     }
   };
+
+  if (!hasViewSignADiaryAccess) {
+    history.push(homePath);
+  }
 
   if (isDiaryEntriesLoading || generateAdiaryLoader) {
     return <Loader />;
@@ -417,7 +426,7 @@ const ADiaryPage = ({ path }) => {
                           <td style={styles.rowDataStyle}>{index + 1}</td>
                           <td style={styles.rowDataStyle}>{entry?.caseNumber}</td>
                           <td
-                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle , whiteSpace: "pre-line"}}
+                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle, whiteSpace: "pre-line" }}
                             onClick={() => handleRowClick(entry)}
                             onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
                             onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
@@ -465,7 +474,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {isJudge && (
+          {isDiaryApprover && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&

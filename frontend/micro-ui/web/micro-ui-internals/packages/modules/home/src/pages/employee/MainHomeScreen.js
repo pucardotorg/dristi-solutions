@@ -1,18 +1,23 @@
-import React, { useMemo, useState, useEffect } from "react";
-import HomeHeader from "../../components/HomeHeader";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom";
-import { Loader, Toast, InboxSearchComposer, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
-import { BailBondSignModal } from "./BailBondSignModal";
 import BailBondModal from "./BailBondModal";
 import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
 import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
+import NewBulkRescheduleTab from "./NewBulkRescheduleTab";
+import BulkESignView from "./BulkESignView";
+import BulkSignADiaryView from "./BulkSignADiaryView";
+import RegisterUsersHomeTab from "./RegisterUsersHomeTab";
+import OfflinePaymentsHomeTab from "./OfflinePaymentsHomeTab";
+import { scrutinyPendingTaskConfig } from "../../configs/ScrutinyPendingTaskConfig";
+import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/src/pages/employee/ReviewSummonsNoticeAndWarrant";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -26,21 +31,31 @@ const MainHomeScreen = () => {
   const history = useHistory();
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
-  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "HEARINGS_TAB";
+  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB";
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
+  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
+  const [tabData, setTabData] = useState(null);
+
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
+    REGISTER_USERS: 0,
+    OFFLINE_PAYMENTS: 0,
+    SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
     REVIEW_PROCESS: 0,
-    VIEW_APPLICATION: 0,
-    SCHEDULE_HEARING: 0,
+    // VIEW_APPLICATION: 0,
+    // SCHEDULE_HEARING: 0,
     BAIL_BOND_STATUS: 0,
+    RESCHEDULE_APPLICATIONS: 0,
+    DELAY_CONDONATION: 0,
+    OTHERS: 0,
   });
+  const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
@@ -48,11 +63,20 @@ const MainHomeScreen = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("ADVOCATE_APPROVER"), [assignedRoles]);
+  const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("PAYMENT_COLLECTOR"), [assignedRoles]);
+  const hasViewScrutinyCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_SCRUTINY_CASES"), [assignedRoles]);
+  const hasViewRegisterCasesAccess = useMemo(() => assignedRoles?.includes("VIEW_REGISTER_CASES"), [assignedRoles]);
+  const hasViewReissueProcessAccess = useMemo(() => assignedRoles?.includes("VIEW_REISSUE_PROCESS"), [assignedRoles]);
+  const hasViewReviewBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_REVIEW_BAIL_BOND"), [assignedRoles]);
+  const hasViewDelayCondonationAccess = useMemo(() => assignedRoles?.includes("VIEW_DELAY_CONDONATION_APPLICATION"), [assignedRoles]);
+  const hasViewReschedulApplicationAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULE_APPLICATION"), [assignedRoles]);
+  const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
+  const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
+
   const today = new Date();
 
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -71,11 +95,17 @@ const MainHomeScreen = () => {
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
+    if (isEpostUser || userType === "citizen") {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    } else if (location?.state?.registerUsersTab) {
+      setActiveTab("REGISTER_USERS");
+    } else if (location?.state?.offlinePaymentsTab) {
+      setActiveTab("OFFLINE_PAYMENTS");
+    } else if (location?.state?.homeActiveTab === "CS_HOME_ORDERS") {
+      setActiveTab("CS_HOME_ORDERS");
     }
     // sessionStorage.removeItem("homeActiveTab");
-  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
+  }, [userType, history, isEpostUser, location]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -107,7 +137,7 @@ const MainHomeScreen = () => {
     }, duration);
   };
   const fetchHearingCount = async (filters, activeTab) => {
-    if (filters && activeTab === "HEARINGS_TAB" && filters.date) {
+    if (filters && activeTab === "TOTAL_HEARINGS_TAB" && filters.date) {
       try {
         let fromDate, toDate;
         if (filters.date) {
@@ -141,7 +171,7 @@ const MainHomeScreen = () => {
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     } else {
       const { fromDate, toDate } = getTodayRange();
@@ -175,7 +205,7 @@ const MainHomeScreen = () => {
         // }
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-        console.log(err);
+        console.error(err);
       }
     }
   };
@@ -191,43 +221,7 @@ const MainHomeScreen = () => {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
             courtId: localStorage.getItem("courtId"),
-            assignedRole: [
-              "DIARY_APPROVER",
-              "HEARING_VIEWER",
-              "WORKFLOW_ABANDON",
-              "ORDER_ESIGN",
-              "WORKFLOW_ADMIN",
-              "APPLICATION_CREATOR",
-              "DEPOSITION_PUBLISHER",
-              "HEARING_APPROVER",
-              "SUBMISSION_RESPONDER",
-              "ORDER_VIEWER",
-              "ORDER_REASSIGN",
-              "CASE_EDITOR",
-              "TASK_CREATOR",
-              "APPLICATION_APPROVER",
-              "DIARY_VIEWER",
-              "EMPLOYEE",
-              "ORDER_DELETE",
-              "NOTIFICATION_APPROVER",
-              "CASE_VIEWER",
-              "TASK_EDITOR",
-              "APPLICATION_REJECTOR",
-              "HEARING_EDITOR",
-              "DIARY_EDITOR",
-              "ORDER_APPROVER",
-              "NOTIFICATION_CREATOR",
-              "HEARING_CREATOR",
-              "EVIDENCE_CREATOR",
-              "ORDER_CREATOR",
-              "CALCULATION_VIEWER",
-              "JUDGE_ROLE",
-              "EVIDENCE_EDITOR",
-              "CASE_APPROVER",
-              "SUBMISSION_APPROVER",
-              "TASK_VIEWER",
-              "HEARING_SCHEDULER",
-            ],
+            assignedRole: assignedRoles,
           },
           limit: 10,
           offset: 0,
@@ -256,25 +250,62 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Bail Bond",
           },
+          searchScrutinyCases: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Scrutinise cases",
+            status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
+          },
+          searchRescheduleHearingsApplication: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Reschedule Applications",
+          },
+          searchDelayCondonationApplication: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Delay Condonation",
+          },
+          searchOtherApplications: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Others",
+          },
+          searchRegisterUsers: {
+            date: null,
+            isOnlyCountRequired: true,
+          },
+          searchOfflinePayments: {
+            date: null,
+            isOnlyCountRequired: true,
+          },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-      const reviwCount = res?.reviewProcessData?.count || 0;
-      const applicationCount = res?.viewApplicationData?.count || 0;
-      const scheduleCount = res?.scheduleHearingData?.count || 0;
-      const registerCount = res?.registerCasesData?.count || 0;
-      const bailBondStatusCount = res?.bailBondData?.count || 0;
+      const reviwCount = res?.reviewProcessData?.totalCount || 0;
+      const registerCount = res?.registerCasesData?.totalCount || 0;
+      const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
+      const scrutinyCasesCount = res?.scrutinyCasesData?.totalCount || 0;
+      const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.totalCount || 0;
+      const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.totalCount || 0;
+      const otherApplicationsCount = res?.otherApplicationsData?.totalCount || 0;
+      const registerUsersCount = res?.registerUsersData?.count || 0;
+      const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
 
       setPendingTaskCount({
+        REGISTER_USERS: registerUsersCount,
+        OFFLINE_PAYMENTS: offlinePaymentsCount,
+        SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
-        VIEW_APPLICATION: applicationCount,
-        SCHEDULE_HEARING: scheduleCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
+        RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+        DELAY_CONDONATION: delayCondonationApplicationCount,
+        OTHERS: otherApplicationsCount,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -283,23 +314,44 @@ const MainHomeScreen = () => {
     fetchHearingCount(filters, activeTab);
   }, []);
 
-  const options = {
-    REGISTRATION: {
-      name: "Register Cases",
-    },
-    REVIEW_PROCESS: {
-      name: "Review Process",
-    },
-    VIEW_APPLICATION: {
-      name: "View Applications",
-    },
-    SCHEDULE_HEARING: {
-      name: "Schedule Hearing",
-    },
-    BAIL_BOND_STATUS: {
-      name: "Bail Bonds Status",
-    },
-  };
+  const options = {};
+  if (hasViewRegisterUserAccess) {
+    options.REGISTER_USERS = { name: "HOME_REGISTER_USERS" };
+  }
+  if (hasViewCollectOfflinePaymentsAccess) {
+    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
+  }
+  if (hasViewScrutinyCasesAccess) {
+    options.SCRUTINISE_CASES = { name: "HOME_SCRUTINISE_CASES" };
+  }
+  if (hasViewRegisterCasesAccess) {
+    options.REGISTRATION = { name: "HOME_REGISTER_CASES" };
+  }
+  if (hasViewReissueProcessAccess) {
+    options.REVIEW_PROCESS = { name: "HOME_REISSUE_PROCESS" };
+  }
+  if (hasViewReviewBailBondAccess) {
+    options.BAIL_BOND_STATUS = { name: "HOME_BAIL_BONDS_STATUS" };
+  }
+
+  // VIEW_APPLICATION: {
+  //   name: "View Applications",
+  // },
+  // SCHEDULE_HEARING: {
+  //   name: "Schedule Hearing",
+  // },
+
+  const applicationOptions = {};
+  if (hasViewReschedulApplicationAccess) {
+    applicationOptions.RESCHEDULE_APPLICATIONS = { name: "HOME_RESCHEDULE_APPLICATIONS" };
+  }
+  if (hasViewDelayCondonationAccess) {
+    applicationOptions.DELAY_CONDONATION = { name: "HOME_DELAY_CONDONATION_APPLICATIONS" };
+  }
+  if (hasViewOthers) {
+    applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
+  }
+
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
     const openBailBondModal = (row) => {
@@ -326,6 +378,61 @@ const MainHomeScreen = () => {
         },
       ];
     }
+
+    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
+      updatedConfig.sections.search.uiConfig.fields = [
+        {
+          label: "STAGE",
+          isMandatory: false,
+          key: "stage",
+          type: "dropdown",
+          populators: {
+            name: "stage",
+            optionsKey: "code",
+            mdmsConfig: {
+              masterName: "SubStage",
+              moduleName: "case",
+              select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+            },
+          },
+        },
+        {
+          label: "CS_CASE_NAME_ADVOCATE",
+          type: "text",
+          key: "caseSearchText",
+          isMandatory: false,
+          disable: false,
+          populators: {
+            name: "caseSearchText",
+            error: "BR_PATTERN_ERR_MSG",
+            validation: {
+              pattern: {},
+              minlength: 2,
+            },
+          },
+        },
+      ];
+    }
+
+    if (activeTab === "OTHERS") {
+      updatedConfig.sections.search.uiConfig.fields.push({
+        label: "APPLICATION_TYPE",
+        isMandatory: false,
+        key: "referenceEntityType",
+        type: "dropdown",
+        populators: {
+          name: "referenceEntityType",
+          optionsKey: "name",
+          mdmsConfig: {
+            masterName: "ApplicationType",
+            moduleName: "Application",
+            select:
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+          },
+        },
+      });
+    }
+
     updatedConfig = {
       ...updatedConfig,
       sections: {
@@ -334,14 +441,16 @@ const MainHomeScreen = () => {
           ...updatedConfig.sections.searchResult,
           uiConfig: {
             ...updatedConfig.sections.searchResult.uiConfig,
-            columns: updatedConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
-              return column?.label === "PENDING_CASE_NAME"
-                ? {
-                    ...column,
-                    clickFunc: openBailBondModal,
-                  }
-                : column;
-            }),
+            columns: updatedConfig?.sections?.searchResult?.uiConfig?.columns
+              ?.map((column) => {
+                return column?.label === "PENDING_CASE_NAME"
+                  ? {
+                      ...column,
+                      clickFunc: openBailBondModal,
+                    }
+                  : column;
+              })
+              ?.filter((column) => (activeTab !== "OTHERS" ? column?.label !== "APPLICATION_TYPE" : true)),
           },
         },
       },
@@ -355,17 +464,62 @@ const MainHomeScreen = () => {
     setConfig(updatedConfig);
   }, [activeTab]);
 
+  const getTotalCountForTab = useCallback(
+    async function (tabConfig) {
+      const updatedTabData = await Promise.all(
+        tabConfig?.map(async (configItem, index) => {
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            SearchCriteria: {
+              moduleName: "Pending Tasks Service",
+              tenantId: tenantId,
+              moduleSearchCriteria: {
+                screenType: ["home", "applicationCompositeOrder"],
+                isCompleted: false,
+                courtId: localStorage.getItem("courtId"),
+                assignedRole: assignedRoles,
+              },
+              searchScrutinyCases: {
+                date: null,
+                isOnlyCountRequired: true,
+                actionCategory: "Scrutinise cases",
+                status: configItem?.apiDetails?.requestBody?.SearchCriteria?.searchScrutinyCases?.status,
+              },
+              limit: 10,
+              offset: 0,
+            },
+          });
+          const totalCount = response?.scrutinyCasesData?.count;
+          return {
+            key: index,
+            label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
+            active: index === 0 ? true : false,
+          };
+        }) || []
+      );
+      setTabData(updatedTabData);
+    },
+    [tenantId, assignedRoles, t]
+  );
+
+  useEffect(() => {
+    getTotalCountForTab(scrutinyPendingTaskConfig);
+  }, [scrutinyPendingTaskConfig]);
+
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
-      if (activeTabTitle === "HEARINGS_TAB") {
+      if (activeTabTitle === "TOTAL_HEARINGS_TAB") {
         fetchHearingCount();
       } else {
         fetchPendingTaskCounts();
       }
     }
-    sessionStorage.setItem("homeActiveTab", label || title);
     setActiveTab(label || title);
     setActiveTabTitle(title);
+  };
+
+  const onInternalTabChange = (n) => {
+    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
+    setScrutinyConfig(scrutinyPendingTaskConfig?.[n]);
   };
 
   const inboxSearchComposer = useMemo(
@@ -373,6 +527,30 @@ const MainHomeScreen = () => {
       <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
     [activeTab, updateCounter, modifiedConfig]
+  );
+
+  const scrutinyInboxSearchComposer = useMemo(
+    () =>
+      tabData ? (
+        <InboxSearchComposer
+          key={`${activeTab}-${scrutinyConfig?.label}`}
+          customStyle={sectionsParentStyle}
+          configs={{
+            ...scrutinyConfig,
+            additionalDetails: {
+              setCount: setPendingTaskCount,
+              activeTab: activeTab,
+              hasCaseReviewerAccess: hasCaseReviewerAccess,
+            },
+          }}
+          showTab={true}
+          tabData={tabData}
+          onTabChange={onInternalTabChange}
+        ></InboxSearchComposer>
+      ) : (
+        <Loader />
+      ),
+    [tabData, activeTab, scrutinyConfig, hasCaseReviewerAccess]
   );
 
   return (
@@ -397,20 +575,20 @@ const MainHomeScreen = () => {
           <Loader />
         </div>
       )}
-      <HomeHeader t={t} />
-      <div className="main-home-screen" style={{ display: "flex", width: "100vw", height: "calc(100vh - 173px)" }}>
+      <div className="main-home-screen">
         <HomeSidebar
           t={t}
           onTabChange={handleTabChange}
           activeTab={activeTab}
           options={options}
           isOptionsLoading={false}
+          applicationOptions={applicationOptions}
           hearingCount={hearingCount}
           pendingTaskCount={pendingTaskCount}
           showToast={showToast}
         />
-        {activeTab === "HEARINGS_TAB" ? (
-          <div style={{ width: "100%" }}>
+        {activeTab === "TOTAL_HEARINGS_TAB" ? (
+          <div className="home-bulk-reschedule">
             <HomeHearingsTab
               t={t}
               setHearingCount={setHearingCount}
@@ -423,22 +601,59 @@ const MainHomeScreen = () => {
               hearingCount={hearingCount}
             />
           </div>
+        ) : activeTab === "CS_HOME_BULK_RESCHEDULE" ? (
+          <div className="home-bulk-reschedule">
+            <NewBulkRescheduleTab stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
+          </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkBailBondSignView showToast={showToast} />
           </div>
+        ) : activeTab === "REGISTER_USERS" ? (
+          <div className="home-bulk-sign">
+            <RegisterUsersHomeTab />
+          </div>
+        ) : activeTab === "OFFLINE_PAYMENTS" ? (
+          <div className="home-bulk-sign">
+            <OfflinePaymentsHomeTab />
+          </div>
+        ) : activeTab === "CS_HOME_PROCESS" ? (
+          <div className="home-bulk-sign">
+            <ReviewSummonsNoticeAndWarrant />
+          </div>
+        ) : activeTab === "CS_HOME_A_DAIRY" ? (
+          <div className="home-bulk-sign">
+            <BulkSignADiaryView showToast={showToast} />
+          </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkMarkAsEvidenceView showToast={showToast} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
-          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+          <div className="home-bulk-sign">
             <BulkWitnessDepositionView showToast={showToast} />
           </div>
-        ) : (
-          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
-            {inboxSearchComposer}
+        ) : activeTab === "CS_HOME_ORDERS" ? (
+          <div className="home-bulk-sign">
+            <BulkESignView />
           </div>
+        ) : (
+          // <div
+          //   className="inbox-search-wrapper"
+          //   style={{
+          //     width: "100%",
+          //     maxHeight: "calc(100vh - 90px)",
+          //     overflowY: "auto",
+          //     scrollbarWidth: "thin",
+          //     scrollbarColor: "#c5c5c5 #f9fafb",
+          //     padding: "26px",
+          //   }}
+          // >
+          <div className={`bulk-esign-order-view`}>
+            <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
+            <div className="inbox-search-wrapper">{activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}</div>
+          </div>
+          // </div>
         )}
         {showBailBondModal && (
           <BailBondModal
@@ -458,7 +673,7 @@ const MainHomeScreen = () => {
             style={{ maxWidth: "500px" }}
           />
         )}
-      </div>{" "}
+      </div>
     </React.Fragment>
   );
 };
