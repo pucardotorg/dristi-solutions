@@ -2,15 +2,17 @@ package com.dristi.njdg_transformer.service;
 
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
+import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.PartyDetails;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.cases.StatuteSection;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +46,6 @@ public class CaseService {
      * Processes and upserts (inserts or updates) a CourtCase in the NJDG format in the database
      * 
      * @param courtCase The CourtCase data to be processed and upserted
-     * @param requestInfo The request info containing metadata about the request
      * @return The upserted NJDGTransformRecord
      * @throws IllegalArgumentException if the input is invalid
      */
@@ -54,6 +57,9 @@ public class CaseService {
             caseEnrichment.enrichAdvocateDetails(courtCase, record, COMPLAINANT_PRIMARY);
             caseEnrichment.enrichAdvocateDetails(courtCase, record, RESPONDENT_PRIMARY);
             caseEnrichment.enrichPoliceStationDetails(courtCase, record);
+
+            processAndUpdateExtraParties(courtCase);
+            processAndUpdateActs(courtCase);
             producer.push("save-case-details", record);
             return record;
         } catch (CustomException exception) {
@@ -62,6 +68,43 @@ public class CaseService {
         }
     }
 
+    private void processAndUpdateActs(CourtCase courtCase) {
+        List<StatuteSection> statuteSections = courtCase.getStatutesAndSections();
+
+        if(statuteSections == null || statuteSections.isEmpty()){
+            log.info("No Statutes present for case with cino:: {}", courtCase.getCnrNumber());
+            return;
+        }
+        for(StatuteSection statuteSection : statuteSections) {
+            //todo: update act details for the case
+        }
+    }
+
+    private void processAndUpdateExtraParties(CourtCase courtCase) {
+        List<PartyDetails> extraParties = new ArrayList<>();
+
+        // Fetch extra complainants (non-primary)
+        List<PartyDetails> extraComplainants = caseEnrichment.enrichExtraPartyDetails(courtCase, COMPLAINANT_PRIMARY);
+        if (extraComplainants != null && !extraComplainants.isEmpty()) {
+            extraParties.addAll(extraComplainants);
+            log.debug("Added {} extra complainant parties", extraComplainants.size());
+        }
+
+        // Fetch extra respondents (non-primary)
+        List<PartyDetails> extraRespondents = caseEnrichment.enrichExtraPartyDetails(courtCase, RESPONDENT_PRIMARY);
+        if (extraRespondents != null && !extraRespondents.isEmpty()) {
+            extraParties.addAll(extraRespondents);
+            log.debug("Added {} extra respondent parties", extraRespondents.size());
+        }
+
+        // Handle or persist the combined list
+        if (!extraParties.isEmpty()) {
+            producer.push("save-extra-parties", extraParties);
+            log.info("Processed total {} extra parties for case {}", extraParties.size(), courtCase.getCnrNumber());
+        } else {
+            log.info("No extra parties found for case {}", courtCase.getCnrNumber());
+        }
+    }
 
 
     private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase) {
@@ -81,12 +124,20 @@ public class CaseService {
                 .desgname(properties.getJudgeDesignation())//todo: configure to get from desg_type table
                 .courtNo(1)//todo: configure for different courts
                 .estCode(courtCase.getCourtId())
-                .stateCode(32)//todo: need to configure for multiple state
+                .stateCode(32)//todo: configure value in properties
                 .distCode(getDistrictCode(courtCase))
                 .purposeCode(0)//todo: need to extract from hearings:: extract code for latest hearing
-                .jocode(properties.getJudgeCode())//todo: configure from judge_t table
-                .cicriType('1')//get actual character value of cicritype
+                .jocode(getJoCodeForJudge(courtCase.getJudgeId()))
+                .cicriType('3') //todo: configure in properties
                 .build();
+    }
+
+    private String getJoCodeForJudge(String judgeId) {
+        JudgeDetails judgeDetails = caseRepository.getJudge(judgeId);
+        if(judgeDetails != null) {
+            return judgeDetails.getJocode();
+        }
+        return "";
     }
 
     private Integer getDistrictCode(CourtCase courtCase) {

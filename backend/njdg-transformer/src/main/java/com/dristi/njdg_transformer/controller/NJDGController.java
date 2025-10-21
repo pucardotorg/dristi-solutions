@@ -1,11 +1,16 @@
 package com.dristi.njdg_transformer.controller;
 
+import com.dristi.njdg_transformer.model.HearingDetails;
 import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
+import com.dristi.njdg_transformer.model.hearing.Hearing;
+import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
+import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.CaseService;
+import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +32,8 @@ public class NJDGController {
     private final CaseService caseService;
     private final OrderService orderService;
     private final OrderRepository orderRepository;
+    private final HearingService hearingService;
+    private final HearingRepository hearingRepository;
 
     /**
      * Process and upsert a court case into NJDG format
@@ -72,55 +79,7 @@ public class NJDGController {
             );
         }
     }
-    
-    /**
-     * Fetches a case by its CNR number
-     * 
-     * @param cnrNumber The CNR number of the case to fetch
-     * @return ResponseEntity containing the case data if found
-     */
-//    @GetMapping("/_search")
-//    public ResponseEntity<CaseResponse> getCaseByCnrNumber(
-//            @RequestParam(value = "cnrNumber", required = true) String cnrNumber) {
-//
-//        log.info("Received request to fetch case with CNR: {}", cnrNumber);
-//
-//        try {
-//            // Find the case by CNR number
-//            NJDGTransformRecord njdgRecord = caseService.f(cnrNumber);
-//
-//            if (njdgRecord == null) {
-//                return new ResponseEntity<>(
-//                        buildErrorResponse("NOT_FOUND", "No case found with CNR: " + cnrNumber),
-//                        HttpStatus.NOT_FOUND
-//                );
-//            }
-//
-//            // Build success response
-//            CaseResponse response = CaseResponse.builder()
-//                    .cases(Collections.singletonList(njdgRecord))
-//                    .responseInfo(CaseResponse.ResponseInfo.builder()
-//                            .status("SUCCESS")
-//                            .message("Case retrieved successfully")
-//                            .build())
-//                    .build();
-//
-//            return new ResponseEntity<>(response, HttpStatus.OK);
-//
-//        } catch (IllegalArgumentException e) {
-//            log.error("Invalid CNR number: {}", e.getMessage());
-//            return new ResponseEntity<>(
-//                    buildErrorResponse("INVALID_REQUEST", e.getMessage()),
-//                    HttpStatus.BAD_REQUEST
-//            );
-//        } catch (Exception e) {
-//            log.error("Error fetching case with CNR {}: {}", cnrNumber, e.getMessage(), e);
-//            return new ResponseEntity<>(
-//                    buildErrorResponse("FETCH_ERROR", "Failed to fetch case: " + e.getMessage()),
-//                    HttpStatus.INTERNAL_SERVER_ERROR
-//            );
-//        }
-//    }
+
     
     /**
      * Builds an error response with the given status and message
@@ -137,11 +96,23 @@ public class NJDGController {
     @PostMapping("_processorder")
     public ResponseEntity<List<InterimOrder>> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
         try {
-            orderService.processAndUpsertOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+            orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
             List<InterimOrder> orders = orderRepository.getInterimOrderByCino(orderRequest.getOrder().getCnrNumber());
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
             log.error("Error processing order: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+    }
+
+    @PostMapping("_processhearing")
+    public ResponseEntity<List<HearingDetails>> processAndUpdateHearing(@Valid @RequestBody HearingRequest request) {
+        try {
+            hearingService.processAndUpdateHearings(request.getHearing());
+            List<HearingDetails> hearings = hearingRepository.getHearingDetailsByCino(request.getHearing().getCnrNumbers().get(0));
+            return ResponseEntity.ok(hearings);
+        } catch (Exception e) {
+            log.error("Error processing hearing: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }

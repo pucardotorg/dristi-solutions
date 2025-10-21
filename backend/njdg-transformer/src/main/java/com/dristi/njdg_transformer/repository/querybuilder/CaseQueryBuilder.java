@@ -83,7 +83,7 @@ public class CaseQueryBuilder {
         return "SELECT case_type_code FROM case_type WHERE case_type_court = ?";
     }
     public String getDisposalTypeQuery() {
-        return "SELECT type_code FROM disp_type WHERE type_name = ?";
+        return "SELECT type_code FROM disp_type WHERE court_disp_code = ?";
     }
 
     public String getDistrictQuery() {
@@ -92,5 +92,9 @@ public class CaseQueryBuilder {
 
     public String getPoliceStationQuery() {
         return "SELECT police_st_code as policeStationCode, st_name as stName, nat_code as natCode, police_code as policeCode FROM police_t WHERE police_code = ?";
+    }
+
+    public String getJudgeMasterQuery(){
+        return "SELECT judge_code as judge_code, judge_name as judge_name, jocode as jocode, judge_username as judge_username FROM judge_t WHERE judge_username = ?";
     }
 }

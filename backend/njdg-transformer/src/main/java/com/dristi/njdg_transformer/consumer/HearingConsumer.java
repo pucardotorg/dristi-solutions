@@ -1,12 +1,9 @@
 package com.dristi.njdg_transformer.consumer;
 
-import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.service.HearingService;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.egov.common.contract.request.RequestInfo;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -24,11 +21,11 @@ public class HearingConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}")
+    @KafkaListener(topics = "#{'${kafka.topics.hearing}'.split(',')}")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
             log.info("Received message: {}", payload);
-            processAndUpdateCase(payload);
+            processAndUpdateHearing(payload);
             log.info("Message processed successfully.");
         } catch (Exception e){
             log.error("Error in processing message:: {}", e.getMessage());
@@ -36,7 +33,7 @@ public class HearingConsumer {
 
     }
 
-    private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
-
+    private void processAndUpdateHearing(ConsumerRecord<String, Object> payload) {
+        //todo: implement for scheduled hearings
     }
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.postgresql.util.PGobject;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
+@Component
 public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformRecord> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

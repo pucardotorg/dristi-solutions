@@ -2,10 +2,12 @@ package com.dristi.njdg_transformer.enrichment;
 
 import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.PartyDetails;
 import com.dristi.njdg_transformer.model.PoliceStationDetails;
 import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.cases.Party;
+import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.repository.AdvocateRepository;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
@@ -120,8 +122,110 @@ public class CaseEnrichment {
         return litigants.stream().filter(party -> partyType.equalsIgnoreCase(party.getPartyType())).findFirst().orElse(null);
     }
 
-    public void enrichExtraParties(CourtCase courtCase, NJDGTransformRecord record) {
+    public List<PartyDetails> enrichExtraPartyDetails(CourtCase courtCase, String partyType) {
+        List<PartyDetails> extraParties = new ArrayList<>();
 
+        JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        if (additionalDetails == null) {
+            log.warn("No additional details found in court case");
+            return extraParties;
+        }
+
+        List<Party> litigants = courtCase.getLitigants();
+        if (litigants == null || litigants.isEmpty()) {
+            log.warn("No litigants found in court case");
+            return extraParties;
+        }
+
+        // Identify the primary party so we can skip it
+        Party primaryParty = findPrimaryParty(litigants, partyType);
+        String primaryIndividualId = primaryParty != null ? primaryParty.getIndividualId() : null;
+
+        String detailsKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantDetails"
+                : "respondentDetails";
+        String verificationKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantVerification"
+                : "respondentVerification";
+        String ageKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                ? "complainantAge"
+                : "respondentAge";
+
+        JsonNode partyDetails = additionalDetails.path(detailsKey);
+        JsonNode formDataArray = partyDetails.path("formdata");
+
+        if (!formDataArray.isArray() || formDataArray.isEmpty()) {
+            log.warn("No formdata found for {}", partyType);
+            return extraParties;
+        }
+
+        Integer partyId = 1;
+        for (JsonNode formDataNode : formDataArray) {
+            JsonNode dataNode = formDataNode.path("data");
+
+            String formIndividualId = dataNode
+                    .path(verificationKey)
+                    .path("individualDetails")
+                    .path("individualId")
+                    .asText(null);
+
+            // ✅ Skip the primary party
+            if (primaryIndividualId != null && primaryIndividualId.equals(formIndividualId)) {
+                continue;
+            }
+
+            // Extract name and age
+            String firstName = dataNode.path("firstName").asText("").trim();
+            String lastName = dataNode.path("lastName").asText("").trim();
+            String fullName = (firstName + " " + lastName).trim();
+            String ageStr = dataNode.path(ageKey).asText(null);
+
+            Integer age = null;
+            try {
+                if (ageStr != null && !ageStr.isEmpty()) {
+                    age = Integer.parseInt(ageStr);
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid {} age format: {}", partyType.toLowerCase(), ageStr);
+            }
+
+            // Extract address details (array for respondents, object for complainants)
+            String address;
+            JsonNode addressNode = dataNode.path("addressDetails");
+            if (addressNode.isArray() && !addressNode.isEmpty()) {
+                // respondents → first element in array
+                JsonNode firstAddr = addressNode.get(0).path("addressDetails");
+                address = extractAddress(firstAddr);
+            } else {
+                // complainants → single address object
+                address = extractAddress(addressNode);
+            }
+
+            // Build PartyDetails entry
+            PartyDetails details = PartyDetails.builder()
+                    .id(partyId)
+                    .cino(courtCase.getCnrNumber())
+                    .partyNo(partyId)
+                    .partyType(partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
+                            ? PartyType.PET
+                            : PartyType.RES)
+                    .partyName(fullName.isEmpty() ? null : fullName)
+                    .partyAddress(address)
+                    .partyAge(age)
+                    .build();
+
+            extraParties.add(details);
+            partyId++;
+            log.debug("Added extra {} with individualId: {}", partyType.toLowerCase(), formIndividualId);
+        }
+
+        if (extraParties.isEmpty()) {
+            log.info("No extra {} found for case {}", partyType, courtCase.getCnrNumber());
+        } else {
+            log.info("Added {} extra {}(s) for case {}", extraParties.size(), partyType, courtCase.getCnrNumber());
+        }
+
+        return extraParties;
     }
 
     public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record, String party) {

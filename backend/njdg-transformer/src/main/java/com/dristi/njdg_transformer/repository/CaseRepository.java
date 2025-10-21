@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.repository;
 
+import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
 import com.dristi.njdg_transformer.model.PoliceStationDetails;
 import com.dristi.njdg_transformer.repository.querybuilder.CaseQueryBuilder;
@@ -7,7 +8,6 @@ import com.dristi.njdg_transformer.repository.rowmapper.NJDGTransformRecordRowMa
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
@@ -41,6 +41,11 @@ public class CaseRepository {
     public PoliceStationDetails getPoliceStationDetails(String policeStationCode) {
         String query = queryBuilder.getPoliceStationQuery();
         return jdbcTemplate.queryForObject(query, new Object[]{policeStationCode}, new int[]{Types.VARCHAR}, PoliceStationDetails.class);
+    }
+
+    public JudgeDetails getJudge(String judgeId) {
+        String query = queryBuilder.getJudgeMasterQuery();
+        return jdbcTemplate.queryForObject(query, new Object[]{judgeId}, new int[]{Types.VARCHAR}, JudgeDetails.class);
     }
 
     public NJDGTransformRecord findByCino(String cino) {

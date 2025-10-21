@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.DATE_FORMATTER;
 import static com.dristi.njdg_transformer.config.ServiceConstants.SIGNED_ORDER;
 
 @Service
@@ -29,7 +28,7 @@ public class OrderService {
     private final FileStoreUtil fileStoreUtil;
     private final Producer producer;
 
-    public void processAndUpsertOrder(Order order, RequestInfo requestInfo) {
+    public void processAndUpdateOrder(Order order, RequestInfo requestInfo) {
         String cino = order.getCnrNumber();
         List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
 

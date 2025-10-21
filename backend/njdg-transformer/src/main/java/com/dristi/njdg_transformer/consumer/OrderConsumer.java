@@ -1,12 +1,9 @@
 package com.dristi.njdg_transformer.consumer;
 
-import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.service.OrderService;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.egov.common.contract.request.RequestInfo;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -28,7 +25,7 @@ public class OrderConsumer {
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
             log.info("Received message: {}", payload);
-            processAndUpdateCase(payload);
+            processAndUpdateOrder(payload);
             log.info("Message processed successfully.");
         } catch (Exception e){
             log.error("Error in processing message:: {}", e.getMessage());
@@ -36,7 +33,7 @@ public class OrderConsumer {
 
     }
 
-    private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
-
+    private void processAndUpdateOrder(ConsumerRecord<String, Object> payload) {
+        //todo: configure for published order
     }
 }

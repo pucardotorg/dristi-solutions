@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.model;
 
+import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +20,7 @@ public class PartyDetails {
     private String cino;
 
     @JsonProperty("party_type")
-    private String partyType;
+    private PartyType partyType;
 
     @JsonProperty("party_no")
     private Integer partyNo;
