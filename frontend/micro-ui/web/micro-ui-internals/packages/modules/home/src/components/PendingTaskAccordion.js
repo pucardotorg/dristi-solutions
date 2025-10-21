@@ -345,7 +345,6 @@ function PendingTaskAccordion({
                   key={`${item?.filingNumber}-${item?.referenceId}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
-                    debugger;
                     if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                       setShowOfflineStampEnvelopeModal(true);
                       return;

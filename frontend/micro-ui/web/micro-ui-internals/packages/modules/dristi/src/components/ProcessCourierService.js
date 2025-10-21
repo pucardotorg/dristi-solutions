@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 
 const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
+  return <h1 className="main-heading">{props.label}</h1>;
 };
 
 const CloseBtn = (props) => {
@@ -17,9 +17,6 @@ const CloseBtn = (props) => {
 };
 
 function ProcessCourierService({ t, config, onSelect, formData, errors, setError, clearErrors }) {
-  const tenantId = window.localStorage.getItem("tenant-id");
-  const urlParams = new URLSearchParams(window.location.search);
-  const caseId = urlParams.get("caseId");
   // Initialize state based on formData or default values
   const [processCourierData, setProcessCourierData] = useState(formData?.[config?.key] || {});
   const [selectedAddresses, setSelectedAddresses] = useState(processCourierData?.addressDetails || []);
@@ -27,33 +24,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [active, setActive] = useState(false);
   const [checked, setChecked] = useState(false);
 
-  // Fetch case data
-  // const { data: caseData, isCaseLoading } = useSearchCaseService(
-  //   {
-  //     criteria: [
-  //       {
-  //         caseId: caseId,
-  //         defaultFields: false,
-  //       },
-  //     ],
-  //     tenantId,
-  //   },
-  //   {},
-  //   `dristi-${caseId}`,
-  //   caseId,
-  //   Boolean(caseId)
-  // );
-
-  // const caseDetails = useMemo(
-  //   () => ({
-  //     ...caseData?.criteria?.[0]?.responseList?.[0],
-  //   }),
-  //   [caseData]
-  // );
-
-  // Format address for display
-
-  // Handle changes to courier services and selected addresses
   const handleDataChange = (data) => {
     const updatedData = {
       ...processCourierData,
@@ -64,7 +34,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     onSelect(config?.key, updatedData);
   };
 
-  // Handle address selection
   const handleAddressSelection = (address, addressId, isSelected) => {
     const updatedAddresses = isSelected
       ? [...selectedAddresses, { addressDetails: address, id: addressId }]
@@ -72,12 +41,10 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     setSelectedAddresses(updatedAddresses);
   };
 
-  // Handle courier service selection
   const handleCourierServiceChange = (value, type) => {
     if (type === "notice") {
       handleDataChange({ noticeCourierService: value });
     } else if (type === "summons") {
-      // When summons is selected, update the state
       handleDataChange({ summonsCourierService: value });
     }
   };
@@ -88,7 +55,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   }, [formData, config?.key, processCourierData]);
 
-  // Sync local state with formData changes
   useEffect(() => {
     if (processCourierData) {
       if (processCourierData.addressDetails) {
@@ -97,11 +63,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   }, [processCourierData]);
 
-  // if (isCaseLoading) {
-  //   return <Loader />;
-  // }
-
-  // Get courier options from config
   const courierOptions = config?.populators?.inputs?.find((input) => input.type === "courierOptions")?.options || [
     { code: "Registered Post", name: "Registered Post (INR 40) • 10-15 days delivery" },
     { code: "E-Post", name: "E-Post (INR 50) • 3-5 days delivery" },
@@ -123,10 +84,11 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         checked={checked}
         setChecked={setChecked}
         setShowConfirmationModal={setShowConfirmationModal}
+        handleDataChange={handleDataChange}
       />
       {showConfirmationModal && (
         <Modal
-          headerBarMain={<Heading label={t("Consent for Summon")} />}
+          headerBarMain={<Heading label={t("CONSENT_FOR_SUMMON")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {
@@ -134,9 +96,9 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
               }}
             />
           }
-          actionCancelLabel={t("Cancel")}
+          actionCancelLabel={t("CS_SUMMON_CANCEL")}
           actionCancelOnSubmit={() => setShowConfirmationModal(false)}
-          actionSaveLabel={t("Confirm")}
+          actionSaveLabel={t("CS_SUMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
             setActive(true);
             setShowConfirmationModal(false);
@@ -145,7 +107,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         >
           <div className="confirmation-modal-content">
             <h3 className="consent-title" style={{ color: "#0B0C0C", marginBottom: "16px" }}>
-              {t("Please Confirm")} <span style={{ color: "red" }}>*</span>
+              {t("CS_SUMMON_PLEASE_CONFIRM")} <span style={{ color: "red" }}>*</span>
             </h3>
             <div className="consent-checkbox-container" style={{ display: "flex", alignItems: "flex-start", marginBottom: "16px" }}>
               <input
@@ -157,9 +119,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
                 onChange={() => setChecked(!checked)}
               />
               <label htmlFor="consent-checkbox" style={{ color: "#0B0C0C", fontSize: "16px" }}>
-                {t(
-                  "I understand that I am taking the steps for the first summons to be sent to the Accused 1 in advance. For refund, I will apply through website XX."
-                )}
+                {t("CS_SUMMON_PLEASE_CONFIRM_TEXT")}
               </label>
             </div>
           </div>

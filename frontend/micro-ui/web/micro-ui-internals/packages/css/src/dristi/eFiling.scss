@@ -2158,4 +2158,36 @@
       }
     }
   }
+  .header-wrap {
+    width: 100%;
+    height: 52px;
+    padding: 20px 24px;
+    border-bottom: 1px #e8e8e8 solid;
+    .header-content.popup-header-fix {
+      .main-heading {
+        font-family: Roboto;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 28.13px;
+        text-align: center;
+        margin: 0px;
+      }
+    }
+    .header-end {
+      div {
+        padding-right: 0px !important;
+      }
+    }
+  }
+
+  .address-card-input {
+    margin: 20px 0px;
+    column-gap: 20px;
+    .heading {
+      font-size: 16px;
+      font-weight: 400;
+      color: #0b0c0c;
+      margin-bottom: 4px;
+    }
+  }
 }
