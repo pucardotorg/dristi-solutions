@@ -13,12 +13,16 @@ import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.Part;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
@@ -124,7 +128,7 @@ public class CaseEnrichment {
 
     public List<PartyDetails> enrichExtraPartyDetails(CourtCase courtCase, String partyType) {
         List<PartyDetails> extraParties = new ArrayList<>();
-
+        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? PartyType.PET : PartyType.RES);
         JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
         if (additionalDetails == null) {
             log.warn("No additional details found in court case");
@@ -159,6 +163,12 @@ public class CaseEnrichment {
             return extraParties;
         }
 
+        // 🔹 Collect existing individualIds for duplicate check
+        Set<String> existingIndividualIds = existingParties.stream()
+                .map(PartyDetails::getPartyId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
         Integer partyId = 1;
         for (JsonNode formDataNode : formDataArray) {
             JsonNode dataNode = formDataNode.path("data");
@@ -174,6 +184,11 @@ public class CaseEnrichment {
                 continue;
             }
 
+            // ✅ Skip if already exists in existingParties
+            if (formIndividualId != null && existingIndividualIds.contains(formIndividualId)) {
+                log.debug("Skipping {} with existing individualId: {}", partyType.toLowerCase(), formIndividualId);
+                continue;
+            }
             // Extract name and age
             String firstName = dataNode.path("firstName").asText("").trim();
             String lastName = dataNode.path("lastName").asText("").trim();
@@ -212,9 +227,11 @@ public class CaseEnrichment {
                     .partyName(fullName.isEmpty() ? null : fullName)
                     .partyAddress(address)
                     .partyAge(age)
+                    .partyId(formIndividualId)
                     .build();
 
             extraParties.add(details);
+            existingIndividualIds.add(formIndividualId);
             partyId++;
             log.debug("Added extra {} with individualId: {}", partyType.toLowerCase(), formIndividualId);
         }

@@ -30,7 +30,16 @@ public class HearingService {
         String cino = hearing.getCnrNumbers().get(0);
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
 
-        //Determine the next max values for id
+        // ✅ Check if this hearing already exists
+        boolean alreadyExists = hearingDetails.stream()
+                .anyMatch(h -> h.getHearingId() != null && h.getHearingId().equals(hearing.getHearingId()));
+
+        if (alreadyExists) {
+            log.info("Hearing with ID {} already exists for CINO {}. Skipping insert.", hearing.getHearingId(), cino);
+            return null; // or return the existing record if you prefer
+        }
+
+        // Determine the next max values for id
         int maxId = hearingDetails.stream()
                 .mapToInt(HearingDetails::getId)
                 .max()
@@ -38,7 +47,7 @@ public class HearingService {
 
         int nextId = maxId + 1;
 
-        //Determine the next max values for sr_no
+        // Determine the next max values for sr_no
         int maxSrNo = hearingDetails.stream()
                 .mapToInt(HearingDetails::getSrNo)
                 .max()
@@ -47,22 +56,26 @@ public class HearingService {
         int nextSrNo = maxSrNo + 1;
 
         JudgeDetails judgeDetails = caseRepository.getJudge(hearing.getPresidedBy().getJudgeID().get(0));
+
         HearingDetails newHearingDetail = HearingDetails.builder()
                 .id(nextId)
                 .cino(cino)
                 .srNo(nextSrNo)
                 .desgName(properties.getJudgeDesignation())
                 .hearingDate(formatDate(hearing.getStartTime()))
-                .nextDate(null)//todo: configure from next order
+                .nextDate(null) // todo: configure from next date for previous hearing
                 .purposeOfListing(String.valueOf(hearingRepository.getHearingPurposeCode(hearing)))
                 .judgeCode(judgeDetails.getJudgeCode().toString())
                 .joCode(judgeDetails.getJocode())
-                .desgCode("1")//todo: get it from desg_type table
+                .desgCode("1") // todo: get it from desg_type table
+                .hearingId(hearing.getHearingId())
                 .build();
 
         producer.push("save-hearing-details", newHearingDetail);
+        log.info("Added new hearing detail with hearingId {} for CINO {}", hearing.getHearingId(), cino);
         return newHearingDetail;
     }
+
 
     private LocalDate formatDate(Long timestamp) {
         if (timestamp == null) {

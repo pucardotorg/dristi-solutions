@@ -6,3 +6,5 @@ ALTER TABLE disp_type ADD COLUMN court_disp_code VARCHAR(255) DEFAULT '';
 ALTER TABLE desg_type ADD COLUMN court_desg_code VARCHAR(255) DEFAULT '';
 ALTER TABLE police_t ADD COLUMN police_code TEXT DEFAULT '';
 ALTER TABLE purpose_code ADD COLUMN court_purpose_code VARCHAR(255) DEFAULT '';
+ALTER TABLE case_hearings ADD COLUMN hearing_id VARCHAR(255) DEFAULT '';
+ALTER TABLE extra_parties ADD COLUMN party_id VARCHAR(255) DEFAULT '';

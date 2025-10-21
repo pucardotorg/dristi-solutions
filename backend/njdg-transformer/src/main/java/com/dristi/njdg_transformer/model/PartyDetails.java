@@ -33,4 +33,7 @@ public class PartyDetails {
 
     @JsonProperty("party_age")
     private Integer partyAge;
+
+    @JsonProperty("party_id")
+    private String partyId;
 }
