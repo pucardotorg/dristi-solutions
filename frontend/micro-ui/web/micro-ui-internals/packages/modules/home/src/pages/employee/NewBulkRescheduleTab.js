@@ -208,6 +208,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     sessionStorage.removeItem("bulkNewHearingData");
     sessionStorage.removeItem("bulkNotificationNumber");
     sessionStorage.removeItem("bulkNotificationFileStoreId");
+    sessionStorage.removeItem("homeActiveTab");
     return;
   };
 
@@ -600,6 +601,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
+                    sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
                     handleEsign(name, pageModule, notificationFileStoreId, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
