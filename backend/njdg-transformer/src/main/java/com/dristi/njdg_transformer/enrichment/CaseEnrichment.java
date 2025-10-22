@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
@@ -80,7 +81,6 @@ public class CaseEnrichment {
             log.warn("No formdata found for {}", partyType);
             return;
         }
-
         for (JsonNode formDataNode : formDataArray) {
             JsonNode dataNode = formDataNode.path("data");
             String formIndividualId = dataNode
@@ -88,15 +88,37 @@ public class CaseEnrichment {
                     .path("individualDetails")
                     .path("individualId")
                     .asText(null);
-
             if (individualId.equals(formIndividualId)) {
-                String firstName = dataNode.path("firstName").asText("").trim();
-                String lastName = dataNode.path("lastName").asText("").trim();
-                String fullName = (firstName + " " + lastName).trim();
-                String ageStr = dataNode.path(ageKey).asText(null);
-                JsonNode addressNode = dataNode.path("addressDetails");
-                String address = extractAddress(addressNode);
+                String fullName;
+                String ageStr;
+                String address = null;
 
+                if (partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)) {
+                    // --- Complainant fields ---
+                    String firstName = dataNode.path("firstName").asText("").trim();
+                    String lastName = dataNode.path("lastName").asText("").trim();
+                    fullName = (firstName + " " + lastName).trim();
+                    ageStr = dataNode.path(ageKey).asText(null);
+                    JsonNode addressNode = dataNode.path("addressDetails");
+                    address = extractAddress(addressNode);
+
+                } else {
+                    // --- Respondent fields ---
+                    String firstName = dataNode.path("respondentFirstName").asText("").trim();
+                    String middleName = dataNode.path("respondentMiddleName").asText("").trim();
+                    String lastName = dataNode.path("respondentLastName").asText("").trim();
+                    fullName = Stream.of(firstName, middleName, lastName)
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.joining(" "));
+                    ageStr = dataNode.path("respondentAge").asText(null);
+
+                    // Respondent has addressDetails as an array
+                    JsonNode addressArray = dataNode.path("addressDetails");
+                    if (addressArray.isArray() && !addressArray.isEmpty()) {
+                        JsonNode innerAddress = addressArray.get(0).path("addressDetails");
+                        address = extractAddress(innerAddress);
+                    }
+                }
                 try {
                     int age = (ageStr != null && !ageStr.isEmpty()) ? Integer.parseInt(ageStr) : 0;
 
@@ -104,20 +126,18 @@ public class CaseEnrichment {
                         record.setPetName(fullName.isEmpty() ? null : fullName);
                         if (age > 0) record.setPetAge(age);
                         record.setPetAddress(address);
-                    } else if (partyType.equalsIgnoreCase(RESPONDENT_PRIMARY)) {
+                    } else {
                         record.setResName(fullName.isEmpty() ? null : fullName);
                         if (age > 0) record.setResAge(age);
                         record.setResAddress(address);
                     }
-
-                    log.debug("Matched {} with individualId: {}", partyType.toLowerCase(), individualId);
+                    log.info("Matched {} with individualId: {}", partyType.toLowerCase(), individualId);
                 } catch (NumberFormatException e) {
                     log.warn("Invalid {} age format: {}", partyType.toLowerCase(), ageStr);
                 }
                 return;
             }
         }
-
         log.warn("No matching formdata entry found for {} individualId: {}", partyType, individualId);
     }
 

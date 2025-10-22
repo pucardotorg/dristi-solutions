@@ -27,8 +27,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLAINANT_PRIMARY;
-import static com.dristi.njdg_transformer.config.ServiceConstants.RESPONDENT_PRIMARY;
+import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 /**
  * Service class for handling case-related operations
@@ -66,14 +65,21 @@ public class CaseService {
     }
 
     private void processAndUpdateActs(CourtCase courtCase) {
-        List<StatuteSection> statuteSections = courtCase.getStatutesAndSections();
-
-        if(statuteSections == null || statuteSections.isEmpty()){
-            log.info("No Statutes present for case with cino:: {}", courtCase.getCnrNumber());
+        //todo: configuring for single act, need to configure for multiple
+        List<Act> acts = caseRepository.getActs(courtCase.getCnrNumber());
+        if(!acts.isEmpty()) {
             return;
         }
-        for(StatuteSection statuteSection : statuteSections) {
-            //todo: update act details for the case
+        Act actMaster = caseRepository.getActMaster(ACT_NAME);
+        if(actMaster != null){
+            Act newAct = Act.builder()
+                    .id(acts.size()+1)
+                    .cino(courtCase.getCnrNumber())
+                    .actCode(actMaster.getActCode())
+                    .actName(actMaster.getActName())
+                    .actSection(actMaster.getActSection())
+                    .build();
+            producer.push("save-act-details", newAct);
         }
     }
 
@@ -118,7 +124,7 @@ public class CaseService {
                 .dateOfDecision(formatDate(courtCase.getJudgementDate()))
                 .dispReason(getDisposalReason(courtCase.getOutcome()))
                 .dispNature('1')//todo: configure on contested(1) and uncontested(2)
-                .desgname(properties.getJudgeDesignation())//todo: configure to get from desg_type table
+                .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
                 .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
                 .stateCode(properties.getStateCode())
@@ -131,11 +137,12 @@ public class CaseService {
 
     private Integer getPurposeCode(CourtCase courtCase) {
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(courtCase.getCnrNumber());
+        Integer purposeCode = null;
         if(hearingDetails != null && !hearingDetails.isEmpty()) {
             int n = hearingDetails.size();
-            return Integer.valueOf(hearingDetails.get(n-1).getPurposeOfListing());
+            purposeCode =  Integer.valueOf(hearingDetails.get(n-1).getPurposeOfListing());
         }
-        return null;
+        return purposeCode;
     }
 
     private String getJoCodeForJudge(String judgeId) {
@@ -251,26 +258,32 @@ public class CaseService {
 
     public NJDGTransformRecord getNjdgTransformRecord(String cino) {
         NJDGTransformRecord record = caseRepository.findByCino(cino);
-        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
-        if(interimOrders != null && !interimOrders.isEmpty()){
-            record.setInterimOrders(interimOrders);
-        }
-        List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);
-        if(complainantParty != null && !complainantParty.isEmpty()){
-            record.setPetExtraParty(complainantParty);
-        }
-        List<PartyDetails> respondentParty = caseRepository.getPartyDetails(cino, PartyType.RES);
-        if(respondentParty != null && !respondentParty.isEmpty()){
-            record.setResExtraParty(respondentParty);
-        }
-        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
-        if(hearingDetails != null && !hearingDetails.isEmpty()){
-            record.setHistoryOfCaseHearing(hearingDetails);
-        }
-        if(record == null) {
+
+        if (record == null) {
             log.error("No record found for cino:: {}", cino);
             return null;
         }
+
+        // Fetch and set interim orders
+        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
+        record.setInterimOrders(interimOrders != null ? interimOrders : new ArrayList<>());
+
+        // Fetch and set complainant parties
+        List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);
+        record.setPetExtraParty(complainantParty != null ? complainantParty : new ArrayList<>());
+
+        // Fetch and set respondent parties
+        List<PartyDetails> respondentParty = caseRepository.getPartyDetails(cino, PartyType.RES);
+        record.setResExtraParty(respondentParty != null ? respondentParty : new ArrayList<>());
+
+        // Fetch and set hearing history
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
+        record.setHistoryOfCaseHearing(hearingDetails != null ? hearingDetails : new ArrayList<>());
+
+        // Fetch and set acts
+        List<Act> actDetails = caseRepository.getActs(cino);
+        record.setActs(actDetails != null ? actDetails : new ArrayList<>());
+
         return record;
     }
 }

@@ -12,17 +12,17 @@ public class OrderQueryBuilder {
             "SELECT " +
                     "id AS id, " +
                     "cino AS cino, " +
-                    "sr_no AS srNo, " +
-                    "order_date AS orderDate, " +
-                    "order_no AS orderNo, " +
-                    "order_details AS orderDetails " +
-                    "FROM interim_order";
+                    "sr_no AS sr_no, " +
+                    "order_date AS order_date, " +
+                    "order_no AS order_no, " +
+                    "order_details AS order_details " +
+                    "FROM interim_orders ";
 
     public String getInterimOrderQuery(){
-        return ORDER_QUERY + " WHERE cino = ?  ORDER BY order_no DESC";
+        return ORDER_QUERY + " WHERE cino = ?  ORDER BY order_no ASC";
     }
 
     public String getInsertInterimOrderQuery() {
-        return "INSERT INTO interim_order (id, cino, sr_no, order_date, order_no, order_details) VALUES (?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO interim_orders (id, cino, sr_no, order_date, order_no, order_details) VALUES (?, ?, ?, ?, ?, ?)";
     }
 }

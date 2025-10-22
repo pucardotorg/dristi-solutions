@@ -45,7 +45,7 @@ public class OrderRepository {
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.DATE);
         preparedStmtArgsList.add(Types.INTEGER);
-        preparedStmtArgsList.add(Types.BLOB);
+        preparedStmtArgsList.add(Types.BINARY);
         jdbcTemplate.update(insertQuery, preparedStmtList.toArray(), preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
     }
 }

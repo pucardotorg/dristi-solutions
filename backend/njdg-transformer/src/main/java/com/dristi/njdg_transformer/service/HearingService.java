@@ -3,6 +3,7 @@ package com.dristi.njdg_transformer.service;
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.HearingDetails;
 import com.dristi.njdg_transformer.model.JudgeDetails;
+import com.dristi.njdg_transformer.model.DesignationMaster;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
+
+import static com.dristi.njdg_transformer.config.ServiceConstants.JUDGE_DESIGNATION;
 
 @Service
 @Slf4j
@@ -39,42 +43,51 @@ public class HearingService {
             return null; // or return the existing record if you prefer
         }
 
-        // Determine the next max values for id
-        int maxId = hearingDetails.stream()
+        // Determine the next max values for id and sr_no
+        int nextId = hearingDetails.stream()
                 .mapToInt(HearingDetails::getId)
                 .max()
-                .orElse(0);
+                .orElse(0) + 1;
 
-        int nextId = maxId + 1;
-
-        // Determine the next max values for sr_no
-        int maxSrNo = hearingDetails.stream()
+        int nextSrNo = hearingDetails.stream()
                 .mapToInt(HearingDetails::getSrNo)
                 .max()
-                .orElse(0);
-
-        int nextSrNo = maxSrNo + 1;
+                .orElse(0) + 1;
 
         JudgeDetails judgeDetails = caseRepository.getJudge(hearing.getPresidedBy().getJudgeID().get(0));
+        DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
 
+        // Create new hearing detail
         HearingDetails newHearingDetail = HearingDetails.builder()
                 .id(nextId)
                 .cino(cino)
                 .srNo(nextSrNo)
-                .desgName(properties.getJudgeDesignation())
+                .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
-                .nextDate(null) // todo: configure from next date for previous hearing
+                .nextDate(null) // will be updated for previous hearing
                 .purposeOfListing(String.valueOf(hearingRepository.getHearingPurposeCode(hearing)))
                 .judgeCode(judgeDetails.getJudgeCode().toString())
                 .joCode(judgeDetails.getJocode())
-                .desgCode("1") // todo: get it from desg_type table
+                .desgCode(designationMaster.getDesgCode().toString())
                 .hearingId(hearing.getHearingId())
                 .build();
 
+        // Update previous hearing's nextDate
+        hearingDetails.stream()
+                .max(Comparator.comparing(HearingDetails::getHearingDate)) // get the latest hearing before this one
+                .ifPresent(prevHearing -> {
+                    prevHearing.setNextDate(formatDate(hearing.getStartTime())); // set nextDate as new hearing date
+                    producer.push("save-hearing-details", prevHearing); // push updated previous hearing
+                    log.info("Updated previous hearing with ID {} for CINO {} with nextDate {}",
+                            prevHearing.getHearingId(), cino, prevHearing.getNextDate());
+                });
+
+        // Push new hearing
         producer.push("save-hearing-details", newHearingDetail);
         log.info("Added new hearing detail with hearingId {} for CINO {}", hearing.getHearingId(), cino);
         return newHearingDetail;
     }
+
 
 
     private LocalDate formatDate(Long timestamp) {

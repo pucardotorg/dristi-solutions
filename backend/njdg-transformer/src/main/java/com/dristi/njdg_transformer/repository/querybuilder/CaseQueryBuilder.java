@@ -16,47 +16,47 @@ public class CaseQueryBuilder {
     private final String UPDATE_QUERY = "";
 
     private final String BASE_CASE_QUERY = "SELECT \n" +
-            "    cino AS \"cino\",\n" +
-            "    date_of_filing AS \"dateOfFiling\",\n" +
-            "    dt_regis AS \"dtRegis\",\n" +
-            "    case_type AS \"caseType\",\n" +
-            "    fil_no AS \"filNo\",\n" +
-            "    fil_year AS \"filYear\",\n" +
-            "    reg_no AS \"regNo\",\n" +
-            "    reg_year AS \"regYear\",\n" +
-            "    date_first_list AS \"dateFirstList\",\n" +
-            "    date_next_list AS \"dateNextList\",\n" +
-            "    pend_disp AS \"pendDisp\",\n" +
-            "    date_of_decision AS \"dateOfDecision\",\n" +
-            "    disp_reason AS \"dispReason\",\n" +
-            "    disp_nature AS \"dispNature\",\n" +
-            "    desgname AS \"desgname\",\n" +
-            "    court_no AS \"courtNo\",\n" +
-            "    est_code AS \"estCode\",\n" +
-            "    state_code AS \"stateCode\",\n" +
-            "    dist_code AS \"distCode\",\n" +
-            "    purpose_code AS \"purposeCode\",\n" +
-            "    pet_name AS \"petName\",\n" +
-            "    pet_adv AS \"petAdv\",\n" +
-            "    pet_adv_cd AS \"petAdvCd\",\n" +
-            "    res_name AS \"resName\",\n" +
-            "    res_adv AS \"resAdv\",\n" +
-            "    res_adv_cd AS \"resAdvCd\",\n" +
-            "    pet_adv_bar_reg AS \"petAdvBarReg\",\n" +
-            "    res_adv_bar_reg AS \"resAdvBarReg\",\n" +
-            "    police_st_code AS \"policeStCode\",\n" +
-            "    police_ncode AS \"policeNcode\",\n" +
-            "    fir_no AS \"firNo\",\n" +
-            "    police_station AS \"policeStation\",\n" +
-            "    fir_year AS \"firYear\",\n" +
-            "    date_last_list AS \"dateLastList\",\n" +
-            "    main_matter_cino AS \"mainMatterCino\",\n" +
-            "    pet_age AS \"petAge\",\n" +
-            "    res_age AS \"resAge\",\n" +
-            "    pet_address AS \"petAddress\",\n" +
-            "    res_address AS \"resAddress\",\n" +
-            "    jocode AS \"jocode\",\n" +
-            "    cicri_type AS \"cicriType\"\n";
+            "    cino AS cino,\n" +
+            "    date_of_filing AS date_of_filing,\n" +
+            "    dt_regis AS dt_regis,\n" +
+            "    case_type AS case_type,\n" +
+            "    fil_no AS fil_no,\n" +
+            "    fil_year AS fil_year,\n" +
+            "    reg_no AS reg_no,\n" +
+            "    reg_year AS reg_year,\n" +
+            "    date_first_list AS date_first_list,\n" +
+            "    date_next_list AS date_next_list,\n" +
+            "    pend_disp AS pend_disp,\n" +
+            "    date_of_decision AS date_of_decision,\n" +
+            "    disp_reason AS disp_reason,\n" +
+            "    disp_nature AS disp_nature,\n" +
+            "    desgname AS desgname,\n" +
+            "    court_no AS court_no,\n" +
+            "    est_code AS est_code,\n" +
+            "    state_code AS state_code,\n" +
+            "    dist_code AS dist_code,\n" +
+            "    purpose_code AS purpose_code,\n" +
+            "    pet_name AS pet_name,\n" +
+            "    pet_adv AS pet_adv,\n" +
+            "    pet_adv_cd AS pet_adv_cd,\n" +
+            "    res_name AS res_name,\n" +
+            "    res_adv AS res_adv,\n" +
+            "    res_adv_cd AS res_adv_cd,\n" +
+            "    pet_adv_bar_reg AS pet_adv_bar_reg,\n" +
+            "    res_adv_bar_reg AS res_adv_bar_reg,\n" +
+            "    police_st_code AS police_st_code,\n" +
+            "    police_ncode AS police_ncode,\n" +
+            "    fir_no AS fir_no,\n" +
+            "    police_station AS police_station,\n" +
+            "    fir_year AS fir_year,\n" +
+            "    date_last_list AS date_last_list,\n" +
+            "    main_matter_cino AS main_matter_cino,\n" +
+            "    pet_age AS pet_age,\n" +
+            "    res_age AS res_age,\n" +
+            "    pet_address AS pet_address,\n" +
+            "    res_address AS res_address,\n" +
+            "    jocode AS jocode,\n" +
+            "    cicri_type AS cicri_type\n";
 
     private final String FROM_QUERY = " FROM cases";
     public String insertQuery() {
@@ -69,7 +69,7 @@ public class CaseQueryBuilder {
     public String getCaseQuery(String cnrNumber, List<Object> preparedStList, List<Integer> preparedStArgsList) {
         String mainQuery = BASE_CASE_QUERY + FROM_QUERY;
         if(cnrNumber != null && !cnrNumber.isEmpty()){
-            mainQuery = addWhereClause(BASE_CASE_QUERY);
+            mainQuery = addWhereClause(mainQuery);
             preparedStList.add(cnrNumber);
             preparedStArgsList.add(Types.VARCHAR);
         }
@@ -88,7 +88,7 @@ public class CaseQueryBuilder {
     }
 
     public String getDistrictQuery() {
-        return "SELECT district_code FROM district_t WHERE name = ?";
+        return "SELECT district_code FROM district_t WHERE name ILIKE ?";
     }
 
     public String getPoliceStationQuery() {
@@ -198,7 +198,35 @@ public class CaseQueryBuilder {
                     res_address,
                     jocode,
                     cicri_type
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
+    }
+
+    public String getActQuery() {
+        return "SELECT * FROM acts WHERE cino = ? ";
+    }
+
+    public String getActMasterQuery() {
+        return "SELECT * FROM act_t WHERE act_name ILIKE (?)";
+    }
+
+    public String getInsertActQuery() {
+        return """
+                INSERT INTO acts (
+                    id,
+                    cino,
+                    act_code,
+                    act_name,
+                    act_section
+                ) VALUES (?,?,?,?,?)
+                """;
+    }
+
+    public String getJudgeDesignationQuery() {
+        return "SELECT desg_name FROM desg_type WHERE court_desg_code = ?";
+    }
+
+    public String getDesignationMasterQuery() {
+        return "SELECT * FROM desg_type WHERE court_desg_code = ?";
     }
 }
