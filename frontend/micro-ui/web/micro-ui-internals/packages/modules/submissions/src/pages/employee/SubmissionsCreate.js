@@ -38,7 +38,6 @@ import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-modu
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -140,7 +139,7 @@ const SubmissionsCreate = ({ path }) => {
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
-  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
 
   const hasSubmissionRole = useMemo(
     () =>
