@@ -15,7 +15,7 @@ const header = require("postcss-header");
 
 const clean = require("gulp-clean");
 const postcss = require("gulp-postcss");
-const sass = require('gulp-sass');
+const sass = require("gulp-sass")(require("sass"));
 
 const postcssPresetEnv = require("postcss-preset-env");
 const cleanCSS = require("gulp-clean-css");
@@ -40,7 +40,10 @@ function styles() {
     require("cssnano"),
     header({ header: headerString }),
   ];
-  return src("src/index.scss").pipe(postcss(plugins)).pipe(sass()).pipe(dest(output));
+  return src("src/index.scss")
+    .pipe(sass().on("error", sass.logError)) // ✅ Compile SCSS first
+    .pipe(postcss(plugins)) // ✅ Then run PostCSS
+    .pipe(dest(output));
 }
 
 function minify() {
