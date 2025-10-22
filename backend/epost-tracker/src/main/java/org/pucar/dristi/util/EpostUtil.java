@@ -60,6 +60,18 @@ public class EpostUtil {
                 .toInstant()
                 .toEpochMilli();
 
+        Task task = request.getTask();
+        String docSubType = null;
+
+        if (NOTICE.equals(task.getTaskType())) {
+            docSubType = task.getTaskDetails().getNoticeDetails().getDocSubType();
+        } else if (SUMMON.equals(task.getTaskType())) {
+            docSubType = task.getTaskDetails().getSummonDetails().getDocSubType();
+        }
+
+        String respondentName = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
+        String respondentAddress = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
+
 
         EPostTracker ePostTracker = EPostTracker.builder()
                 .processNumber(processNumber)
@@ -67,7 +79,7 @@ public class EpostUtil {
                 .taskNumber(request.getTask().getTaskNumber())
                 .totalAmount(getTotalAmount(request))
                 .fileStoreId(getFileStore(request))
-                .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
+                .address(respondentAddress)
                 .addressObj(request.getTask().getTaskDetails().getRespondentDetails().getAddress())
                 .phone(request.getTask().getTaskDetails().getRespondentDetails().getPhone())
                 .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
@@ -76,7 +88,7 @@ public class EpostUtil {
                 .rowVersion(0)
                 .receivedDate(istMillis)
                 .taskType(request.getTask().getTaskType())
-                .respondentName(request.getTask().getTaskDetails().getRespondentDetails().getName())
+                .respondentName(respondentName)
                 .auditDetails(createAuditDetails(request.getRequestInfo()))
                 .build();
 
