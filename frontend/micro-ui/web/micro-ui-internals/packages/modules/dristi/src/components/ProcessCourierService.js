@@ -21,7 +21,8 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [processCourierData, setProcessCourierData] = useState(formData?.[config?.key] || {});
   const [selectedAddresses, setSelectedAddresses] = useState(processCourierData?.addressDetails || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [active, setActive] = useState(false);
+  const [summonsActive, setSummonsActive] = useState(false);
+  const [noticeActive, setNoticeActive] = useState(false);
   const [checked, setChecked] = useState(false);
 
   const handleDataChange = (data) => {
@@ -72,16 +73,16 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     <React.Fragment>
       <CourierService
         t={t}
-        config={config}
         errors={errors}
         processCourierData={processCourierData}
         courierOptions={courierOptions}
         handleCourierServiceChange={handleCourierServiceChange}
         selectedAddresses={selectedAddresses}
         handleAddressSelection={handleAddressSelection}
-        active={active}
-        setActive={setActive}
-        checked={checked}
+        summonsActive={summonsActive}
+        setSummonsActive={setSummonsActive}
+        noticeActive={noticeActive}
+        setNoticeActive={setNoticeActive}
         setChecked={setChecked}
         setShowConfirmationModal={setShowConfirmationModal}
         handleDataChange={handleDataChange}
@@ -100,7 +101,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
           actionCancelOnSubmit={() => setShowConfirmationModal(false)}
           actionSaveLabel={t("CS_SUMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
-            setActive(true);
+            setSummonsActive(true);
             setShowConfirmationModal(false);
           }}
           isDisabled={!checked}

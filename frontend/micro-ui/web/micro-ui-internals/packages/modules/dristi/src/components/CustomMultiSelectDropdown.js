@@ -18,7 +18,8 @@ const ArrowDown = ({ className, onClick, styles, disable }) => (
 
 export const CustomMultiSelectDropdown = ({
   options = [],
-  optionsKey = "labelKey",
+  optionsKey = "label",
+  displayKey = "code",
   selected = [],
   onSelect,
   defaultLabel = "",
@@ -95,7 +96,7 @@ export const CustomMultiSelectDropdown = ({
           {!active &&
             (localSelected?.length > 0 ? (
               <p style={{ margin: 0, fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {localSelected?.map((s) => t(s?.code))?.join(", ")}
+                {localSelected?.map((s) => t(s[displayKey]))?.join(", ")}
               </p>
             ) : (
               <p style={{ margin: 0, fontSize: 16, color: "#77787B" }}>{defaultLabel}</p>

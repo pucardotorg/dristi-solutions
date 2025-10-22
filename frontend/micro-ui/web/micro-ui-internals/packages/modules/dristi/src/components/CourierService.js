@@ -30,15 +30,15 @@ const CloseBtn = (props) => {
 
 function CourierService({
   t,
-  config,
   processCourierData,
   courierOptions,
   handleCourierServiceChange,
   selectedAddresses,
   handleAddressSelection,
-  active,
-  setActive,
-  checked,
+  summonsActive,
+  setSummonsActive,
+  noticeActive,
+  setNoticeActive,
   setChecked,
   setShowConfirmationModal,
   handleDataChange,
@@ -105,6 +105,8 @@ function CourierService({
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="name"
                 disable={selectedAddresses?.length === 0}
+                active={noticeActive}
+                setActive={setNoticeActive}
               />
             </div>
           </div>
@@ -129,8 +131,9 @@ function CourierService({
           <div
             className="dropdown-container"
             onClick={() => {
-              if (!active && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+              if (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
                 setShowConfirmationModal(true);
+                setChecked(true);
               }
             }}
           >
@@ -145,10 +148,10 @@ function CourierService({
               optionsKey="name"
               disable={
                 selectedAddresses?.length === 0 ||
-                (!active && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
+                (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
               }
-              active={active}
-              setActive={setActive}
+              active={summonsActive}
+              setActive={setSummonsActive}
             />
           </div>
         </div>

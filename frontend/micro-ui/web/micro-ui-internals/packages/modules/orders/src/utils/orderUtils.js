@@ -215,26 +215,26 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  if (currentOrderType === "NOTICE") {
-    if (formData?.noticeOrder?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
-      hasError = true;
-    }
-  }
+  // if (currentOrderType === "NOTICE") {
+  //   if (formData?.noticeOrder?.selectedChannels?.length === 0) {
+  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
+  //     hasError = true;
+  //   }
+  // }
 
-  if (currentOrderType === "SUMMONS") {
-    if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
-      hasError = true;
-    } else if (
-      formData?.SummonsOrder?.selectedChannels?.some(
-        (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
-      )
-    ) {
-      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
-      hasError = true;
-    }
-  }
+  // if (currentOrderType === "SUMMONS") {
+  //   if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
+  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
+  //     hasError = true;
+  //   } else if (
+  //     formData?.SummonsOrder?.selectedChannels?.some(
+  //       (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+  //     )
+  //   ) {
+  //     setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+  //     hasError = true;
+  //   }
+  // }
 
   if (currentOrderType === "WARRANT") {
     if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
