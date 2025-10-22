@@ -51,11 +51,11 @@ jobs:
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
-      - name: Build and analyze for njdg-transformer
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/njdg-transformer/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_njdg_transformer -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+      # - name: Build and analyze for njdg-transformer
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: mvn -B -f backend/njdg-transformer/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_njdg_transformer -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
 
       # Login to Docker Registry
