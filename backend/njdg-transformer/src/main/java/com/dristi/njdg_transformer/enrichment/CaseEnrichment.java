@@ -148,7 +148,9 @@ public class CaseEnrichment {
 
     public List<PartyDetails> enrichExtraPartyDetails(CourtCase courtCase, String partyType) {
         List<PartyDetails> extraParties = new ArrayList<>();
-        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? PartyType.PET : PartyType.RES);
+        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(),
+                partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? PartyType.PET : PartyType.RES);
+
         JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
         if (additionalDetails == null) {
             log.warn("No additional details found in court case");
@@ -171,9 +173,6 @@ public class CaseEnrichment {
         String verificationKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
                 ? "complainantVerification"
                 : "respondentVerification";
-        String ageKey = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
-                ? "complainantAge"
-                : "respondentAge";
 
         JsonNode partyDetails = additionalDetails.path(detailsKey);
         JsonNode formDataArray = partyDetails.path("formdata");
@@ -209,11 +208,40 @@ public class CaseEnrichment {
                 log.debug("Skipping {} with existing individualId: {}", partyType.toLowerCase(), formIndividualId);
                 continue;
             }
-            // Extract name and age
-            String firstName = dataNode.path("firstName").asText("").trim();
-            String lastName = dataNode.path("lastName").asText("").trim();
-            String fullName = (firstName + " " + lastName).trim();
-            String ageStr = dataNode.path(ageKey).asText(null);
+
+            // ✅ Extract name, age, and address differently for complainant/respondent
+            String fullName = "";
+            String ageStr = "";
+            String address = null;
+
+            if (partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)) {
+                // --- Complainant Extra Fields ---
+                String firstName = dataNode.path("firstName").asText("").trim();
+                String lastName = dataNode.path("lastName").asText("").trim();
+                fullName = (firstName + " " + lastName).trim();
+                ageStr = dataNode.path("complainantAge").asText(null);
+
+                JsonNode addressNode = dataNode.path("addressDetails");
+                address = extractAddress(addressNode);
+
+            } else if(partyType.equalsIgnoreCase(RESPONDENT_PRIMARY)) {
+                // --- Respondent Extra Fields ---
+                String firstName = dataNode.path("respondentFirstName").asText("").trim();
+                String middleName = dataNode.path("respondentMiddleName").asText("").trim();
+                String lastName = dataNode.path("respondentLastName").asText("").trim();
+
+                fullName = Stream.of(firstName, middleName, lastName)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(" "));
+
+                ageStr = dataNode.path("respondentAge").asText(null);
+
+                JsonNode addressArray = dataNode.path("addressDetails");
+                if (addressArray.isArray() && !addressArray.isEmpty()) {
+                    JsonNode innerAddress = addressArray.get(0).path("addressDetails");
+                    address = extractAddress(innerAddress);
+                }
+            }
 
             Integer age = null;
             try {
@@ -223,19 +251,6 @@ public class CaseEnrichment {
             } catch (NumberFormatException e) {
                 log.warn("Invalid {} age format: {}", partyType.toLowerCase(), ageStr);
             }
-
-            // Extract address details (array for respondents, object for complainants)
-            String address;
-            JsonNode addressNode = dataNode.path("addressDetails");
-            if (addressNode.isArray() && !addressNode.isEmpty()) {
-                // respondents → first element in array
-                JsonNode firstAddr = addressNode.get(0).path("addressDetails");
-                address = extractAddress(firstAddr);
-            } else {
-                // complainants → single address object
-                address = extractAddress(addressNode);
-            }
-
             // Build PartyDetails entry
             PartyDetails details = PartyDetails.builder()
                     .id(partyId)
@@ -261,7 +276,6 @@ public class CaseEnrichment {
         } else {
             log.info("Added {} extra {}(s) for case {}", extraParties.size(), partyType, courtCase.getCnrNumber());
         }
-
         return extraParties;
     }
 

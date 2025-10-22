@@ -22,7 +22,7 @@ public class AdvocateService {
     private final ObjectMapper objectMapper;
     private final Producer producer;
 
-    public void processAndUpdateAdvocates(AdvocateRequest advocateRequest) {
+    public AdvocateDetails processAndUpdateAdvocates(AdvocateRequest advocateRequest) {
         Advocate advocate = advocateRequest.getAdvocate();
 
         // Extract advocate name from additionalDetails
@@ -46,14 +46,14 @@ public class AdvocateService {
             // First advocate in the system
             advocateDetails.setAdvocateCode(1);
             producer.push("save-advocate-details", advocateDetails);
-            return;
+            return advocateDetails;
         }
 
         // Check if bar registration number already exists (duplicate)
         boolean duplicateBarRegNo = existingAdvocates.stream()
                 .anyMatch(a -> a.getBarRegNo().equalsIgnoreCase(advocate.getBarRegistrationNumber()));
         if (duplicateBarRegNo) {
-            return;
+            return null;
         }
 
         // Assign next advocate code
@@ -65,6 +65,7 @@ public class AdvocateService {
 
         // Save new advocate
         producer.push("save-advocate-details", advocateDetails);
+        return advocateDetails;
     }
 
 

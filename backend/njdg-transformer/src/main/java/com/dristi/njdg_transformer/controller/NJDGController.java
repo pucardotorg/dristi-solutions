@@ -1,13 +1,16 @@
 package com.dristi.njdg_transformer.controller;
 
+import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.HearingDetails;
 import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.repository.HearingRepository;
+import com.dristi.njdg_transformer.service.AdvocateService;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
@@ -20,7 +23,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.dristi.njdg_transformer.repository.OrderRepository;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/njdg/v1")
@@ -30,9 +35,8 @@ public class NJDGController {
 
     private final CaseService caseService;
     private final OrderService orderService;
-    private final OrderRepository orderRepository;
     private final HearingService hearingService;
-    private final HearingRepository hearingRepository;
+    private final AdvocateService advocateService;
 
     /**
      * Process and upsert a court case into NJDG format
@@ -122,6 +126,22 @@ public class NJDGController {
         } catch (Exception e) {
             log.error("No record found for cino:: {}", cino);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new NJDGTransformRecord());
+        }
+    }
+
+    @PostMapping("_processadvocate")
+    public ResponseEntity<?> processAndUpdateAdvocates(@Valid @RequestBody AdvocateRequest advocateRequest) {
+        try {
+            AdvocateDetails advocateDetails = advocateService.processAndUpdateAdvocates(advocateRequest);
+            if(advocateDetails == null){
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Advocate is already present");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+            return ResponseEntity.ok(advocateDetails);
+        } catch (Exception e) {
+            log.error("Error processing advocate: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AdvocateDetails());
         }
     }
 }
