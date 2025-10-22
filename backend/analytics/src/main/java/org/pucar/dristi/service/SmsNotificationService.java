@@ -54,12 +54,11 @@ public class SmsNotificationService {
     }
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
-        if (messageCode.equalsIgnoreCase(PENDING_TASK_CREATED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationPendingTaskCreatedTemplateId());
-        }
-        if (messageCode.equalsIgnoreCase(CASE_STATUS_CHANGED_MESSAGE)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationCaseStatusChangeTemplateId());
-        }
+        String templateId = switch (messageCode) {
+            case CASE_STATUS_CHANGED_MESSAGE -> config.getSmsNotificationCaseStatusChangeTemplateId();
+            default -> null;
+        };
+        pushNotification(templateData,message,mobileNumber,templateId);
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {

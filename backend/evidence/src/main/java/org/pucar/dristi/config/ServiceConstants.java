@@ -236,4 +236,5 @@ public class ServiceConstants {
 			+ "}\n";
 
 	public static final String Trial = "Trial";
+	public static final String DOCUMENT_SUBMITTED = "DOCUMENT_SUBMITTED";
 }

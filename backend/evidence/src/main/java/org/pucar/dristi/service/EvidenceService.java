@@ -673,33 +673,14 @@ public class EvidenceService {
 
             Artifact artifact = evidenceRequest.getArtifact();
 
-            String smsTopic = getSmsTopic(isEvidence, artifact, isCreateCall);
+            String sourceType = evidenceRequest.getArtifact().getSourceType();
+            String smsTopic = getSmsTopic(sourceType);
             log.info("Message Code : {}", smsTopic);
             Set<String> individualIds = extractIndividualIds(caseDetails,null);
             Set<String> powerOfAttorneyIds = extractPowerOfAttorneyIds(caseDetails,individualIds);
             individualIds.addAll(powerOfAttorneyIds);
 
-            // Individual ids of filing advocate and related litigant
-            Set<String> filingIndividualIds = new HashSet<>();
-            Set<String> oppositeIndividualIds = new HashSet<>(individualIds);
 
-            if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
-                String receiverId = evidenceRequest.getRequestInfo().getUserInfo().getUuid();
-                String partyType = getPartyTypeByUUID(caseDetails,receiverId);
-                String receiverParty = null;
-                if (partyType != null) {
-                    receiverParty = getReceiverParty(partyType);
-                }
-                filingIndividualIds = extractIndividualIds(caseDetails,receiverParty);
-                if (receiverParty != null && receiverParty.equalsIgnoreCase(COMPLAINANT)) {
-                    // Add the power of attorney ids to the filing advocate ids
-                    filingIndividualIds.addAll(powerOfAttorneyIds);
-                } else if (receiverParty != null && receiverParty.equalsIgnoreCase(RESPONDENT)) {
-                    // Add the power of attorney ids to the opposite party ids
-                    oppositeIndividualIds.addAll(powerOfAttorneyIds);
-                }
-                oppositeIndividualIds.removeAll(filingIndividualIds);
-            }
 
             List<String> smsTopics = new ArrayList<>();
             if (smsTopic != null) {
@@ -709,16 +690,6 @@ public class EvidenceService {
             for (String topic : smsTopics) {
 
                 Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
-                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_FILING) || Objects.equals(topic, EVIDENCE_SUBMISSION)) {
-                    if (!filingIndividualIds.isEmpty()) {
-                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), filingIndividualIds);
-                    }
-                }
-                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
-                    if (!oppositeIndividualIds.isEmpty()) {
-                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), oppositeIndividualIds);
-                    }
-                }
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                         .courtCaseNumber(caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null)
@@ -739,18 +710,11 @@ public class EvidenceService {
         }
     }
 
-    private String getSmsTopic(Boolean isEvidence, Artifact artifact,Boolean isCreateCall) {
-        String status = artifact.getStatus();
-        String filingType = artifact.getFilingType();
-        String smsTopic = null;
-        if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
-            smsTopic = "DOCUMENT_MARKED_EXHIBIT";
+    private String getSmsTopic(String sourceType) {
+        if(COMPLAINANT.equals(sourceType)) {
+            return DOCUMENT_SUBMITTED;
         }
-        if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && isCreateCall))
-                || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && isCreateCall))) {
-            smsTopic = EVIDENCE_SUBMISSION_CODE;
-        }
-        return smsTopic;
+        return null;
     }
 
     private static String getReceiverParty(String partyType) {

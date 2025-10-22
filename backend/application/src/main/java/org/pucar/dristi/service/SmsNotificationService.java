@@ -55,32 +55,8 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
         Map<String, String> messageCodeToTemplateIdMap = new HashMap<>() {{
-            put(RESCHEDULE_REQUEST_SUBMITTED, config.getSmsNotificationRescheduleRequestSubmittedTemplateId());
-            put(RESCHEDULE_REQUEST_REJECTED_REQUESTING_PARTY, config.getSmsNotificationRescheduleRequestRejectedTemplateId());
-            put(RESCHEDULE_REQUEST_ACCEPTED_REQUESTING_PARTY, config.getSmsNotificationRescheduleRequestAcceptedTemplateId());
-            put(RESCHEDULE_REQUEST_ACCEPTED_OPPONENT_PARTY, config.getSmsNotificationRescheduleRequestAcceptedOpponentTemplateId());
-            put(RESCHEDULE_REQUEST_REJECTED_OPPONENT_PARTY, config.getSmsNotificationRescheduleRequestRejectedOpponentTemplateId());
-            put(CHECKOUT_REQUEST_REJECTED, config.getSmsNotificationCheckoutRequestRejectedTemplateId());
-            put(CHECKOUT_REQUEST_ACCEPTED, config.getSmsNotificationCheckoutRequestAcceptedTemplateId());
-            put(EXTENSION_SUBMISSION_DEADLINE_SUBMITTED, config.getSmsNotificationExtensionApplicationSubmittedTemplateId());
-            put(EXTENSION_SUBMISSION_DEADLINE_ACCEPTED, config.getSmsNotificationExtensionApplicationAcceptedTemplateId());
-            put(EXTENSION_SUBMISSION_DEADLINE_REJECTED, config.getSmsNotificationExtensionApplicationRejectedTemplateId());
-            put(VOLUNTARY_SUBMISSION_SUBMITTED, config.getSmsNotificationVoluntarySubmissionSubmittedTemplateId());
-            put(VOLUNTARY_SUBMISSION_REJECTED, config.getSmsNotificationVoluntarySubmissionRejectedTemplateId());
-            put(VOLUNTARY_SUBMISSION_ACCEPTED, config.getSmsNotificationVoluntarySubmissionAcceptedTemplateId());
-            put(VARIABLE_SUBMISSION_SUBMITTED, config.getSmsNotificationVariableSubmissionSubmittedTemplateId());
-            put(VARIABLE_SUBMISSION_REJECTED, config.getSmsNotificationVariableSubmissionRejectedTemplateId());
-            put(VARIABLE_SUBMISSION_ACCEPTED, config.getSmsNotificationVariableSubmissionAcceptedTemplateId());
-            put(EVIDENCE_SUBMITTED, config.getSmsNotificationEvidenceSubmittedTemplateId());
-            put(RESPONSE_REQUIRED, config.getSmsNotificationResponseRequiredTemplateId());
-            put(REQUEST_FOR_BAIL_SUBMITTED,config.getSmsNotificationBailApplicationFiledTemplateId());
-            put(REQUEST_FOR_BAIL_REJECTED,config.getSmsNotificationBailApplicationRejectedTemplateId());
-            put(REQUEST_FOR_BAIL_ACCEPTED,config.getSmsNotificationBailApplicationAcceptedTemplateId());
-            put(REQUEST_FOR_BAIL_GRANTED,config.getSmsNotificationBailApplicationGrantedTemplateId());
             put(PAYMENT_COMPLETED_SUCCESSFULLY,config.getRescheduleRequestSubmissionPayment());
-            put(REQUEST_FOR_WITH_DRAW_SUBMITTED,config.getSmsNotificationWithDraw());
-            put(DOCUMENT_SUBMITTED, config.getSmsNotificationDocumentSubmittedTemplateId());
-            put(SUBMISSION_MADE, config.getSmsNotificationSubmissionMadeTemplateId());
+            put(APPLICATION_SUBMITTED, config.getSmsNotificationApplicationSubmittedTemplateId());
         }};
         String templateId = messageCodeToTemplateIdMap.get(messageCode);
         if (templateId != null) {
@@ -121,6 +97,7 @@ public class SmsNotificationService {
         smsDetails.put("applicationType", smsTemplateData.getApplicationType());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("partyType", smsTemplateData.getPartyType());
 
         return smsDetails;
     }
@@ -161,7 +138,8 @@ public class SmsNotificationService {
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{applicationType}}", Optional.ofNullable(userDetailsForSMS.get("applicationType")).orElse(""))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
-                .replace("{{reScheduledHearingDate}}", Optional.ofNullable(userDetailsForSMS.get("reScheduledHearingDate")).orElse(""));
+                .replace("{{reScheduledHearingDate}}", Optional.ofNullable(userDetailsForSMS.get("reScheduledHearingDate")).orElse(""))
+                .replace("{{partyType}}", Optional.ofNullable(userDetailsForSMS.get("partyType")).orElse(""));
         return message;
     }
 

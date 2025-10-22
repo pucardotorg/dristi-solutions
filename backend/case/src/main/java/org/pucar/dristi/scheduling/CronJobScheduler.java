@@ -81,7 +81,7 @@ public class CronJobScheduler {
     }
 
     @Async
-    @Scheduled(cron = "0 0 18 * * *", zone = "Asia/Kolkata")
+    @Scheduled(cron = "${cron.case.reassigned.expression}", zone = "Asia/Kolkata")
     public void sendNotificationToCaseReassigned() {
         if (config.getIsSMSEnabled()) {
             log.info("Starting Cron Job For Sending Notification To Case Reassigned");
