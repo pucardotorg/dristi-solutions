@@ -3,7 +3,6 @@ import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
-import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type }) => {
   const { t } = useTranslation();
@@ -11,7 +10,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
 
-  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {

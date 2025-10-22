@@ -35,6 +35,7 @@ import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
+import { useSurveyManager } from "./dristi/useSurveyManager.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -151,6 +152,7 @@ const dristi = {
   useGetAllAdvocates,
   useSearchADiaryService,
   useEtreasuryCreateDemand,
+  useSurveyManager
 };
 
 const Hooks = {
