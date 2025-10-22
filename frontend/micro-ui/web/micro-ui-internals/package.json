@@ -13,7 +13,7 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true run-s build start:dev",
@@ -47,7 +47,8 @@
     "**/react": "18.2.0",
     "**/react-dom": "18.2.0",
     "**/styled-components": "5.3.11",
-    "**/minimatch": "3.1.2"
+    "**/minimatch": "3.1.2",
+    "node-sass": "npm:sass@^1.77.5"
   },
   "devDependencies": {
     "husky": "7.0.4",
