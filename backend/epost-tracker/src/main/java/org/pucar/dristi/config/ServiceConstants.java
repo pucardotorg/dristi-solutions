@@ -73,7 +73,7 @@ public class ServiceConstants {
 
     public static final String NOTICE = "NOTICE";
 
-    public static final String SUMMON = "SUMMON";
+    public static final String SUMMON = "SUMMONS";
 
     public static final String WITNESS = "WITNESS";
 
