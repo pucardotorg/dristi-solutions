@@ -133,10 +133,10 @@ const ViewPaymentDetails = ({ location, match }) => {
     {},
     {
       tenantId,
-      consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS`,
+      consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
       service: businessService,
     },
-    `${consumerCodeWithoutSuffix}_POST_PROCESS`,
+    `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
     Boolean(consumerCodeWithoutSuffix && businessService)
   );
 
@@ -217,12 +217,14 @@ const ViewPaymentDetails = ({ location, match }) => {
     "dristi" + channelId,
     Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData && channelId)
   );
-  const courtFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee"), [
-    breakupResponse?.Calculation,
-  ]);
-  const processFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type !== "Court Fee"), [
-    breakupResponse?.Calculation,
-  ]);
+  // const courtFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee"), [
+  //   breakupResponse?.Calculation,
+  // ]);
+  // const processFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type !== "Court Fee"), [
+  //   breakupResponse?.Calculation,
+  // ]);
+
+  const feeBreakUpResponse = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown, [breakupResponse?.Calculation]);
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || currentBillDetails?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
@@ -236,7 +238,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         ? genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown || []
         : paymentType === "Join Case Advocate Fee"
         ? tasksData?.taskDetails?.paymentBreakdown
-        : calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
+        : calculationResponse?.Calculation?.[0]?.breakDown || feeBreakUpResponse || [];
     const updatedCalculation = breakdown?.map((item) => ({
       key: item?.type || item?.code,
       value: item?.amount,
@@ -253,9 +255,8 @@ const ViewPaymentDetails = ({ location, match }) => {
     return updatedCalculation;
   }, [
     calculationResponse?.Calculation,
-    courtFeeBreakup,
     paymentType,
-    processFeeBreakup,
+    feeBreakUpResponse,
     tasksData?.taskDetails?.paymentBreakdown,
     totalAmount,
     genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown,

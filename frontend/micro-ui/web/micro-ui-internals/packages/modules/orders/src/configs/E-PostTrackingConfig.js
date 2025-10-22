@@ -122,8 +122,8 @@ export const TabSearchConfig = [
               additionalCustomization: true,
             },
             {
-              label:"TASK_TYPE",
-              jsonPath:"taskType",
+              label: "TASK_TYPE",
+              jsonPath: "taskType",
               additionalCustomization: true,
             },
             {
