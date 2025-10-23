@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { InfoToolTipIcon } from "../../../dristi/src/icons/svgIndex";
+import AddAddressModal from "./AddAddressModal";
 
 const AddIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -14,6 +15,8 @@ const AddIcon = () => (
 
 const CourierSelectionPage = ({ t, onNext }) => {
   // Mock data structure for notices - this would come from props or API in a real implementation
+  const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
+  const [currentNoticeId, setCurrentNoticeId] = useState(null);
   const [notices, setNotices] = useState([
     {
       id: 1,
@@ -93,14 +96,41 @@ const CourierSelectionPage = ({ t, onNext }) => {
     setNotices(updatedNotices);
   };
 
-  // Handler to add a new address
+  // Handler to open the add address modal
   const handleAddAddress = (noticeId) => {
+    setCurrentNoticeId(noticeId);
+    setShowAddAddressModalLocal(true);
+  };
+
+  // Handler to process data from the address modal
+  const handleDataChange = (data) => {
+    if (!currentNoticeId || !data.addresses || data.addresses.length === 0) return;
+
+    // Get the new address that was added
+    const newAddressData = data.addresses[data.addresses.length - 1];
+
+    if (!newAddressData || !newAddressData.addresses) return;
+
+    // Format the address from the modal data
+    const addressObj = newAddressData.addresses;
+    const addressText = [addressObj.locality, addressObj.city, addressObj.district, addressObj.state, addressObj.pincode].filter(Boolean).join(", ");
+
+    // Update the notices with the new address
     const updatedNotices = notices.map((notice) => {
-      if (notice.id === noticeId) {
-        const newAddressId = Math.max(...notice.addresses.map((a) => a.id)) + 1;
+      if (notice.id === currentNoticeId) {
+        // Generate a new ID for the address
+        const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1;
+
         return {
           ...notice,
-          addresses: [...notice.addresses, { id: newAddressId, text: "", selected: true, isEditing: true }],
+          addresses: [
+            ...notice.addresses,
+            {
+              id: newAddressId,
+              text: addressText,
+              selected: true,
+            },
+          ],
         };
       }
       return notice;
@@ -171,6 +201,15 @@ const CourierSelectionPage = ({ t, onNext }) => {
           {t("CS_COMMONS_NEXT")}
         </button>
       </div>
+
+      {showAddAddressModal && (
+        <AddAddressModal
+          t={t}
+          processCourierData={notices.find((notice) => notice.id === currentNoticeId) || {}}
+          setShowAddAddressModalLocal={setShowAddAddressModalLocal}
+          handleDataChange={handleDataChange}
+        />
+      )}
     </React.Fragment>
   );
 };
