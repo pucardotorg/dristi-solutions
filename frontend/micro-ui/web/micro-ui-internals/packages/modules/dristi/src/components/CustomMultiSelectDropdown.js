@@ -16,7 +16,7 @@ const ArrowDown = ({ className, onClick, styles, disable }) => (
   </svg>
 );
 
-export const CustomMultiSelectDropdown = ({
+export const CustomMultiSelectDropdown = React.memo(({
   options = [],
   optionsKey = "label",
   displayKey = "code",
@@ -52,7 +52,7 @@ export const CustomMultiSelectDropdown = ({
   // Reset search when closed so next open starts fresh
   useEffect(() => {
     if (!active) setSearchQuery("");
-  }, [active]);
+  }, [active, setActive]);
 
   const filtered = useMemo(() => {
     const q = (searchQuery || "").toLowerCase();
@@ -166,4 +166,13 @@ export const CustomMultiSelectDropdown = ({
       ) : null}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  // Only re-render if these specific props change
+  return (
+    prevProps.active === nextProps.active &&
+    prevProps.disable === nextProps.disable &&
+    JSON.stringify(prevProps.selected) === JSON.stringify(nextProps.selected) &&
+    JSON.stringify(prevProps.options) === JSON.stringify(nextProps.options)
+  );
+});

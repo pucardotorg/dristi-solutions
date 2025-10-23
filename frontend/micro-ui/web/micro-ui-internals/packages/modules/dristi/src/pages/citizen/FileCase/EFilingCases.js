@@ -667,8 +667,62 @@ function EFilingCases({ path }) {
     }
     if (selected === "processCourierService") {
       if (data?.some((item) => item?.data?.multipleAccusedProcessCourier && Object?.keys(item?.data?.multipleAccusedProcessCourier)?.length > 0)) {
-        setFormdata(data);
-        setProcessCourierPageData(data);
+        const mergedData = completedAccuseds?.map((accused, i) => {
+          const existingItem = data?.find((d) => d?.data?.multipleAccusedProcessCourier?.uniqueId === accused?.uniqueId);
+
+          const accusedDetails = accused?.data || {};
+
+          if (existingItem) {
+            const existingAddresses = existingItem?.data?.multipleAccusedProcessCourier?.addressDetails || [];
+            const newAddresses = accusedDetails?.addressDetails || [];
+
+            // Merge addresses — preserve `checked` if same `id`
+            const mergedAddresses = newAddresses.map((newAddr) => {
+              const match = existingAddresses.find((oldAddr) => oldAddr.id === newAddr.id);
+              return {
+                ...newAddr,
+                checked: match?.checked !== undefined ? match.checked : true,
+              };
+            });
+
+            return {
+              ...existingItem,
+              data: {
+                ...existingItem.data,
+                multipleAccusedProcessCourier: {
+                  ...existingItem.data.multipleAccusedProcessCourier,
+                  index: i,
+                  firstName: accusedDetails.respondentFirstName || "",
+                  middleName: accusedDetails.respondentMiddleName || "",
+                  lastName: accusedDetails.respondentLastName || "",
+                  addressDetails: mergedAddresses,
+                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
+                },
+              },
+            };
+          } else {
+            // Add new accused not present in previous data
+            return {
+              isenabled: true,
+              data: {
+                multipleAccusedProcessCourier: {
+                  index: i,
+                  firstName: accusedDetails.respondentFirstName || "",
+                  middleName: accusedDetails.respondentMiddleName || "",
+                  lastName: accusedDetails.respondentLastName || "",
+                  noticeCourierService: [],
+                  summonsCourierService: [],
+                  addressDetails: accusedDetails.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
+                  uniqueId: accused?.uniqueId || "",
+                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
+                },
+              },
+              displayindex: 0,
+            };
+          }
+        });
+        setFormdata(mergedData);
+        setProcessCourierPageData(mergedData);
       } else {
         const newProcessCourierData = [];
         for (let i = 0; i < completedAccuseds?.length; i++) {
@@ -682,7 +736,7 @@ function EFilingCases({ path }) {
                 lastName: completedAccuseds?.[i]?.data?.respondentLastName || "",
                 noticeCourierService: [],
                 summonsCourierService: [],
-                addressDetails: completedAccuseds?.[i]?.data?.addressDetails,
+                addressDetails: completedAccuseds?.[i]?.data?.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                 uniqueId: completedAccuseds?.[i]?.uniqueId || "",
                 isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
               },
@@ -703,7 +757,7 @@ function EFilingCases({ path }) {
     if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
       setShowReviewCorrectionModal(true);
     }
-  }, [selected, caseDetails, isLoading, completedComplainants]);
+  }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants]);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -845,16 +899,13 @@ function EFilingCases({ path }) {
       );
     },
     [
-      caseDetails?.status,
-      caseDetails?.additionalDetails,
-      caseDetails?.caseDetails,
+      caseDetails,
       errorCaseDetails,
       formdata,
       isCaseReAssigned,
       selected,
       scrutinyObj,
-      userType,
-      completedComplainants,
+      prevIsDcaSkipped,
       isDelayCondonation,
       advPageData,
       processCourierPageData,
@@ -2383,6 +2434,7 @@ function EFilingCases({ path }) {
     //   setOpenConfigurationModal(key);
     //   return;
     // }
+    setIsLoader(true);
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
     setOptionalFieldModalAlreadyViewed(false);
@@ -2452,6 +2504,9 @@ function EFilingCases({ path }) {
           toast.error(t("SOMETHING_WENT_WRONG"));
         }
         setIsDisabled(false);
+      })
+      .finally(() => {
+        setIsLoader(false);
       });
     setPrevSelected(selected);
     if (!isFilingParty) {
@@ -2988,58 +3043,60 @@ function EFilingCases({ path }) {
             />
           )}
           {sectionWiseErrors?.[selected] && <ScrutinyInfo t={t} config={{ populators: { scrutinyMessage: sectionWiseErrors?.[selected] } }} />}
-          {modifiedFormConfig.map((config, index) => {
-            return formdata[index].isenabled ? (
-              <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
-                {pageConfig?.addFormText && (
-                  <div className="form-item-name">
-                    <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
-                      <span
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                          setConfirmDeleteModal(true);
-                          setDeleteFormIndex(index);
-                        }}
-                      >
-                        <CustomDeleteIcon />
-                      </span>
-                    )}
-                  </div>
-                )}
-                <FormComposerV2
-                  label={showActionsLabels && actionName}
-                  config={config}
-                  onSubmit={() => onSubmit("SAVE_DRAFT")}
-                  onSecondayActionClick={onSaveDraft}
-                  defaultValues={getDefaultValues(index)}
-                  onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-                    onFormValueChange(
-                      setValue,
-                      formData,
-                      formState,
-                      reset,
-                      setError,
-                      clearErrors,
-                      trigger,
-                      getValues,
-                      index,
-                      formdata[index].displayindex
-                    );
-                  }}
-                  isDisabled={isSubmitDisabled}
-                  cardStyle={{ minWidth: "100%" }}
-                  cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
-                  secondaryLabel={t("CS_SAVE_DRAFT")}
-                  showSecondaryLabel={isDraftInProgress}
-                  actionClassName="e-filing-action-bar"
-                  className={`${pageConfig.className} ${getFormClassName()}`}
-                  noBreakLine
-                  submitIcon={<RightArrow />}
-                />
-              </div>
-            ) : null;
-          })}
+          {!isLoading &&
+            !isLoader &&
+            modifiedFormConfig.map((config, index) => {
+              return formdata[index].isenabled ? (
+                <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
+                  {pageConfig?.addFormText && (
+                    <div className="form-item-name">
+                      <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
+                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
+                        <span
+                          style={{ cursor: "pointer" }}
+                          onClick={() => {
+                            setConfirmDeleteModal(true);
+                            setDeleteFormIndex(index);
+                          }}
+                        >
+                          <CustomDeleteIcon />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <FormComposerV2
+                    label={showActionsLabels && actionName}
+                    config={config}
+                    onSubmit={() => onSubmit("SAVE_DRAFT")}
+                    onSecondayActionClick={onSaveDraft}
+                    defaultValues={getDefaultValues(index)}
+                    onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                      onFormValueChange(
+                        setValue,
+                        formData,
+                        formState,
+                        reset,
+                        setError,
+                        clearErrors,
+                        trigger,
+                        getValues,
+                        index,
+                        formdata[index].displayindex
+                      );
+                    }}
+                    isDisabled={isSubmitDisabled}
+                    cardStyle={{ minWidth: "100%" }}
+                    cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
+                    secondaryLabel={t("CS_SAVE_DRAFT")}
+                    showSecondaryLabel={isDraftInProgress}
+                    actionClassName="e-filing-action-bar"
+                    className={`${pageConfig.className} ${getFormClassName()}`}
+                    noBreakLine
+                    submitIcon={<RightArrow />}
+                  />
+                </div>
+              ) : null;
+            })}
           {confirmDeleteModal && (
             <Modal
               headerBarMain={<Heading label={t("Are you sure?")} />}

@@ -5,6 +5,7 @@ import ReactTooltip from "react-tooltip";
 import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
 import Modal from "./Modal";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import SelectCustomNote from "./SelectCustomNote";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -33,15 +34,14 @@ function CourierService({
   processCourierData,
   courierOptions,
   handleCourierServiceChange,
-  selectedAddresses,
   handleAddressSelection,
   summonsActive,
   setSummonsActive,
   noticeActive,
   setNoticeActive,
-  setChecked,
   setShowConfirmationModal,
   handleDataChange,
+  orderType,
 }) {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
@@ -75,15 +75,33 @@ function CourierService({
 
   return (
     <div className="accused-process-courier">
-      <span className="header">{`${processCourierData?.index + 1}. ${t("CS_PROCESS_ACCUSED")} ${processCourierData?.index + 1}`}</span>
-
+      {!orderType && (
+        <span className="header">{`${processCourierData?.index + 1}. ${t("CS_PROCESS_ACCUSED")} ${processCourierData?.index + 1}`}</span>
+      )}
+      {orderType && (
+        <SelectCustomNote
+          t={t}
+          config={{
+            populators: {
+              inputs: [
+                {
+                  infoHeader: "CS_COMMON_NOTE",
+                  infoText: "CS_TAKE_COURIER_NOTE",
+                  infoTooltipMessage: "CS_TAKE_COURIER_NOTE",
+                  type: "InfoComponent",
+                },
+              ],
+            },
+          }}
+        />
+      )}
       <div className="process-courier-container">
         <div className="header-row">
-          <div className="process-section">{t("CS_PROCESS")}</div>
-          <div className="courier-section">{t("CS_COURIER_SERVICES")}</div>
+          <div className="process-section">{orderType ? t("CS_TAKE_STEPS") : t("CS_PROCESS")}</div>
+          <div className="courier-section">{orderType ? t("CS_COURIER_SERVICE") : t("CS_COURIER_SERVICES")}</div>
         </div>
 
-        {processCourierData?.isDelayCondonation && (
+        {(orderType === "NOTICE" || processCourierData?.isDelayCondonation) && (
           <div className="row">
             <div className="label-container">
               <div className="label">{t("CS_NOTICE_COURIER")}</div>
@@ -104,7 +122,7 @@ function CourierService({
                 selected={processCourierData?.noticeCourierService}
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="name"
-                disable={selectedAddresses?.length === 0}
+                disable={processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
                 active={noticeActive}
                 setActive={setNoticeActive}
               />
@@ -112,49 +130,50 @@ function CourierService({
           </div>
         )}
 
-        <div className="row">
-          <div className="label-container">
-            <div className="label">{t("CS_SUMMONS_COURIER")}</div>
-            {processCourierData?.isDelayCondonation ? (
-              <div className="optional">{t("CS_IS_OPTIONAL")}</div>
-            ) : (
-              <div className="info-icon">
-                <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
-                  <InfoIcon />
-                </span>
-                <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
-                  {t("CS_SUMMONS_COURIER_TOOLTIP")}
-                </ReactTooltip>
-              </div>
-            )}
-          </div>
-          <div
-            className="dropdown-container"
-            onClick={() => {
-              if (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
-                setShowConfirmationModal(true);
-                setChecked(true);
-              }
-            }}
-          >
-            <CustomMultiSelectDropdown
-              t={t}
-              defaultLabel={t("SELECT_COURIER_SERVICES")}
-              options={courierOptions}
-              selected={processCourierData?.summonsCourierService}
-              onSelect={(value) => {
-                handleCourierServiceChange(value, "summons");
+        {(orderType === "SUMMONS" || !orderType) && (
+          <div className="row">
+            <div className="label-container">
+              <div className="label">{t("CS_SUMMONS_COURIER")}</div>
+              {!orderType && processCourierData?.isDelayCondonation ? (
+                <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+              ) : (
+                <div className="info-icon">
+                  <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
+                    <InfoIcon />
+                  </span>
+                  <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
+                    {t("CS_SUMMONS_COURIER_TOOLTIP")}
+                  </ReactTooltip>
+                </div>
+              )}
+            </div>
+            <div
+              className="dropdown-container"
+              onClick={() => {
+                if (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                  setShowConfirmationModal(true);
+                }
               }}
-              optionsKey="name"
-              disable={
-                selectedAddresses?.length === 0 ||
-                (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
-              }
-              active={summonsActive}
-              setActive={setSummonsActive}
-            />
+            >
+              <CustomMultiSelectDropdown
+                t={t}
+                defaultLabel={t("SELECT_COURIER_SERVICES")}
+                options={courierOptions}
+                selected={processCourierData?.summonsCourierService}
+                onSelect={(value) => {
+                  handleCourierServiceChange(value, "summons");
+                }}
+                optionsKey="name"
+                disable={
+                  processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
+                  (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
+                }
+                active={summonsActive}
+                setActive={setSummonsActive}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="address-section">
           <div className="address-header">
@@ -169,14 +188,8 @@ function CourierService({
                   type="checkbox"
                   className="custom-checkbox"
                   id={`address-${address.id || idx}`}
-                  checked={selectedAddresses?.some((selectedAddr) =>
-                    selectedAddr.id && address.id
-                      ? selectedAddr.id === address.id
-                      : typeof selectedAddr?.addressDetails === "object" && typeof address?.addressDetails === "object"
-                      ? JSON?.stringify(selectedAddr?.addressDetails) === JSON?.stringify(address?.addressDetails)
-                      : selectedAddr?.addressDetails === address?.addressDetails
-                  )}
-                  onChange={(e) => handleAddressSelection(address?.addressDetails, address?.id, e.target.checked)}
+                  checked={address?.checked}
+                  onChange={(e) => handleAddressSelection(address?.id, e.target.checked)}
                 />
                 <label htmlFor={`address-${address.id || idx}`}>{formatAddress(address)}</label>
               </div>
@@ -213,6 +226,7 @@ function CourierService({
               ...(processCourierData?.addressDetails || []),
               {
                 addressDetails: newAddress,
+                checked: true,
               },
             ];
 

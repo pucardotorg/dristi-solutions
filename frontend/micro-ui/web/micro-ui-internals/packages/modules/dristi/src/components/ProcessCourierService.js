@@ -19,7 +19,6 @@ const CloseBtn = (props) => {
 function ProcessCourierService({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   // Initialize state based on formData or default values
   const [processCourierData, setProcessCourierData] = useState(formData?.[config?.key] || {});
-  const [selectedAddresses, setSelectedAddresses] = useState(processCourierData?.addressDetails || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [summonsActive, setSummonsActive] = useState(false);
   const [noticeActive, setNoticeActive] = useState(false);
@@ -35,11 +34,15 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     onSelect(config?.key, updatedData);
   };
 
-  const handleAddressSelection = (address, addressId, isSelected) => {
-    const updatedAddresses = isSelected
-      ? [...selectedAddresses, { addressDetails: address, id: addressId }]
-      : selectedAddresses.filter((addr) => addr.id !== addressId);
-    setSelectedAddresses(updatedAddresses);
+  const handleAddressSelection = (addressId, isSelected) => {
+    const updatedAddresses = processCourierData.addressDetails.map((addr) => {
+      if (addr?.id === addressId) {
+        return { ...addr, checked: isSelected };
+      }
+      return addr;
+    });
+
+    handleDataChange({ addressDetails: updatedAddresses });
   };
 
   const handleCourierServiceChange = (value, type) => {
@@ -56,14 +59,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   }, [formData, config?.key, processCourierData]);
 
-  useEffect(() => {
-    if (processCourierData) {
-      if (processCourierData.addressDetails) {
-        setSelectedAddresses(processCourierData.addressDetails);
-      }
-    }
-  }, [processCourierData]);
-
   const courierOptions = config?.populators?.inputs?.find((input) => input.type === "courierOptions")?.options || [
     { code: "Registered Post", name: "Registered Post (INR 40) • 10-15 days delivery" },
     { code: "E-Post", name: "E-Post (INR 50) • 3-5 days delivery" },
@@ -77,7 +72,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         processCourierData={processCourierData}
         courierOptions={courierOptions}
         handleCourierServiceChange={handleCourierServiceChange}
-        selectedAddresses={selectedAddresses}
         handleAddressSelection={handleAddressSelection}
         summonsActive={summonsActive}
         setSummonsActive={setSummonsActive}
@@ -103,6 +97,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
           actionSaveOnSubmit={() => {
             setSummonsActive(true);
             setShowConfirmationModal(false);
+            setChecked(false);
           }}
           isDisabled={!checked}
         >

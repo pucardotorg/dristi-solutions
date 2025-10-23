@@ -63,6 +63,8 @@ const TasksComponent = ({
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
   const [courierData, setCourierData] = useState({});
+  const [courierOrderType, setCourierOrderType] = useState("SUMMONS");
+  const [active, setActive] = useState(false);
   const [selectedAddresses, setSelectedAddresses] = useState([]);
   const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
@@ -111,22 +113,22 @@ const TasksComponent = ({
     return isLoading ? [] : pendingTaskDetails?.data || [];
   }, [totalPendingTask, isLoading, pendingTaskDetails?.data]);
 
-  const listOfFilingNumber = useMemo(
-    () =>
-      [...new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "filingNumber")?.value))]?.map((data) => ({
-        filingNumber: data || "",
-      })),
-    [pendingTaskActionDetails]
-  );
+  // const listOfFilingNumber = useMemo(
+  //   () =>
+  //     [...new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "filingNumber")?.value))]?.map((data) => ({
+  //       filingNumber: data || "",
+  //     })),
+  //   [pendingTaskActionDetails]
+  // );
 
-  const listOfActionName = useMemo(
-    () => new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "name")?.value)),
-    [pendingTaskActionDetails]
-  );
+  // const listOfActionName = useMemo(
+  //   () => new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "name")?.value)),
+  //   [pendingTaskActionDetails]
+  // );
 
-  const filteredOptions = useMemo(() => {
-    return options?.filter((item) => listOfActionName.has(item?.code)) || [];
-  }, [listOfActionName, options]);
+  // const filteredOptions = useMemo(() => {
+  //   return options?.filter((item) => listOfActionName.has(item?.code)) || [];
+  // }, [listOfActionName, options]);
 
   useEffect(() => {
     refetch();
@@ -135,34 +137,8 @@ const TasksComponent = ({
   // Initialize courier data when modal opens
   useEffect(() => {
     if (showCourierServiceModal) {
-      // Initialize with default data or fetch from API
-      setCourierData({
-        addressDetails: courierData?.addressDetails || [
-          {
-            id: 1,
-            addressDetails: {
-              city: "Kollam",
-              state: "Kollam",
-              pincode: "691008",
-              district: "dsaas",
-              locality: "Kadapakkada",
-            },
-          },
-          {
-            id: 2,
-            addressDetails: {
-              city: "Kollam",
-              state: "Kollam",
-              pincode: "691008",
-              district: "dsaas",
-              locality: "Kadapakkada",
-            },
-          },
-        ],
-        noticeCourierService: null,
-        summonsCourierService: null,
-      });
-      setSelectedAddresses([
+      setActive(false);
+      const defaultAddresses = [
         {
           id: 1,
           addressDetails: {
@@ -183,9 +159,17 @@ const TasksComponent = ({
             locality: "Kadapakkada",
           },
         },
-      ]);
+      ];
+
+      setCourierData({
+        addressDetails: defaultAddresses,
+        noticeCourierService: null,
+        summonsCourierService: null,
+      });
+
+      setSelectedAddresses(defaultAddresses);
     }
-  }, [showCourierServiceModal, courierData]);
+  }, [showCourierServiceModal]);
 
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
@@ -363,7 +347,7 @@ const TasksComponent = ({
         history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       } catch (error) {}
     },
-    [history, tenantId]
+    [t, history, tenantId]
   );
 
   const pendingTasks = useMemo(() => {
@@ -723,12 +707,10 @@ const TasksComponent = ({
   // Courier service options
   const courierOptions = useMemo(
     () => [
-      { code: "registered_post", name: t("CS_REGISTERED_POST") },
-      { code: "speed_post", name: t("CS_SPEED_POST") },
-      { code: "courier", name: t("CS_COURIER") },
-      { code: "hand_delivery", name: t("CS_HAND_DELIVERY") },
+      { code: "Registered Post", name: "Registered Post (INR 40) • 10-15 days delivery" },
+      { code: "E-Post", name: "E-Post (INR 50) • 3-5 days delivery" },
     ],
-    [t]
+    []
   );
 
   // Handle courier service selection
@@ -756,28 +738,24 @@ const TasksComponent = ({
       handleClose: () => {
         setShowCourierServiceModal(false);
       },
-      heading: {
-        label: t("CS_TAKE_STEPS_NOTICE"),
-      },
       isStepperModal: true,
-      actionSaveLabel: t("CS_NEXT"),
-      actionCancelLabel: t("CS_GO_BACK"),
+      actionSaveLabel: t("CS_COURIER_NEXT"),
+      actionCancelLabel: t("CS_COURIER_GO_BACK"),
       steps: [
         {
           type: "modal",
           className: "process-courier-service",
-          heading: { label: t("CS_COURIER_SERVICE") },
-          actionSaveLabel: t("CS_NEXT"),
+          heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderType)} for` },
           modalBody: (
             <CourierService
               t={t}
               processCourierData={{
                 ...courierData,
                 index: 0,
-                isDelayCondonation: true,
                 addressDetails: courierData?.addressDetails || [
                   {
                     id: 1,
+                    checked: true,
                     addressDetails: {
                       city: "Kollam",
                       state: "Kollam",
@@ -788,6 +766,7 @@ const TasksComponent = ({
                   },
                   {
                     id: 2,
+                    checked: false,
                     addressDetails: {
                       city: "Kollam",
                       state: "Kollam",
@@ -800,8 +779,12 @@ const TasksComponent = ({
               }}
               courierOptions={courierOptions}
               handleCourierServiceChange={handleCourierServiceChange}
-              selectedAddresses={selectedAddresses}
               handleAddressSelection={handleAddressSelection}
+              summonsActive={active}
+              setSummonsActive={setActive}
+              noticeActive={active}
+              setNoticeActive={setActive}
+              orderType={courierOrderType}
             />
           ),
           actionSaveOnSubmit: () => {
@@ -832,7 +815,7 @@ const TasksComponent = ({
         },
       ],
     };
-  }, [t, courierData, courierOptions, selectedAddresses, handleCourierServiceChange, handleAddressSelection]);
+  }, [t, courierData, courierOptions, selectedAddresses, handleCourierServiceChange, handleAddressSelection, courierOrderType, active]);
 
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
