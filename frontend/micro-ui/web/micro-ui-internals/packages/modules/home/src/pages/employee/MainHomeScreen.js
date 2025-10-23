@@ -515,6 +515,9 @@ const MainHomeScreen = () => {
     }
     setActiveTab(label || title);
     setActiveTabTitle(title);
+    sessionStorage.removeItem("diaryDateFilter");
+    sessionStorage.removeItem("adiaryStepper");
+    sessionStorage.removeItem("adiarypdf");
   };
 
   const onInternalTabChange = (n) => {
