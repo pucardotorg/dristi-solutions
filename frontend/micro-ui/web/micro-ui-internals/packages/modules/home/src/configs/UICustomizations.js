@@ -699,6 +699,7 @@ export const UICustomizations = {
       const fetchEntries = additionalDetails?.fetchEntries;
       const setDiaryEntries = additionalDetails?.setDiaryEntries;
       const courtId = localStorage.getItem("courtId");
+      if (date) sessionStorage.setItem("diaryDateFilter", date);
 
       return {
         ...requestCriteria,
