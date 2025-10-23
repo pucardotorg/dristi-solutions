@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
+import org.pucar.dristi.web.models.AssignedTo;
 import org.pucar.dristi.web.models.WorkflowObject;
 import org.springframework.validation.annotation.Validated;
 
@@ -77,10 +78,7 @@ public class Task {
     private String status = null;
 
     @JsonProperty("assignedTo")
-    private Object assignedTo = null;
-
-    @JsonProperty("isActive")
-    private Boolean isActive = null;
+    private List<AssignedTo> assignedTo = null;
 
     @JsonProperty("caseTitle")
     private String caseTitle = null;
@@ -90,6 +88,9 @@ public class Task {
 
     @JsonProperty("caseId")
     private String caseId = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = null;
 
     @JsonProperty("documents")
     @Valid

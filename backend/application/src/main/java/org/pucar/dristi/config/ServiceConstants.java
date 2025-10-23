@@ -44,7 +44,7 @@ public class ServiceConstants {
     public static final String INVALID_DATE_FORMAT_CODE = "INVALID_DATE_FORMAT";
     public static final String INVALID_DATE_FORMAT_MESSAGE = "Failed to parse date format in user";
     public static final String CITIZEN_UPPER = "CITIZEN";
-    public static final String JUDGE_ROLE = "JUDGE_ROLE";
+    public static final String DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE = "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE";
     public static final String CITIZEN_LOWER = "Citizen";
     public static final String USER = "user";
 
@@ -131,6 +131,8 @@ public class ServiceConstants {
     public static final String REQUEST_FOR_BAIL_GRANTED = "REQUEST_FOR_BAIL_GRANTED";
     public static final String SUBMIT_BAIL_DOCUMENTS = "SUBMIT_BAIL_DOCUMENTS";
     public static final String REQUEST_FOR_WITH_DRAW_SUBMITTED = "REQUEST_FOR_WITH_DRAW_SUBMITTED";
+    public static final String APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS = "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS";
+    public static final String FLOW_JAC = "flow_jac";
 
     public static final String APPROVE = "APPROVE";
     public static final String REJECT = "REJECT";

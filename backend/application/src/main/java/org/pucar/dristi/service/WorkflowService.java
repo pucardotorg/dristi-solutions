@@ -113,7 +113,7 @@ public class WorkflowService {
             log.info("Selecting business service for start action");
             if (DELAY_CONDONATION.equalsIgnoreCase(application.getApplicationType())) {
                 log.info("Delay condonation application");
-                if (isJudge(requestInfo)){
+                if (isDelayCondonationCreator(requestInfo)){
                     log.info("Delay condonation application by Judge");
                     return config.getDelayCondonationBusinessServiceName();
                 }
@@ -147,8 +147,8 @@ public class WorkflowService {
         }
     }
 
-    private boolean isJudge(RequestInfo requestInfo) {
-        return requestInfo.getUserInfo().getRoles().stream().anyMatch(role -> JUDGE_ROLE.equalsIgnoreCase(role.getCode()));
+    private boolean isDelayCondonationCreator(RequestInfo requestInfo) {
+        return requestInfo.getUserInfo().getRoles().stream().anyMatch(role -> DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE.equalsIgnoreCase(role.getCode()));
     }
 
     private boolean isCitizen(RequestInfo requestInfo) {

@@ -2,6 +2,8 @@ export const paymentType = {
   TASK_SUMMON: "task-summons",
   TASK_NOTICE: "task-notice",
   TASK_WARRANT: "task-warrant",
+  TASK_PROCLAMATION: "task-proclamation",
+  TASK_ATTACHMENT: "task-attachment",
   TASK_SUMMON_ADVANCE_CARRYFORWARD: "TASK_SUMMON_ADVANCE_CARRYFORWARD",
   TASK_NOTICE_ADVANCE_CARRYFORWARD: "TASK_NOTICE_ADVANCE_CARRYFORWARD",
   ORDER_MANAGELIFECYCLE: "order-default",

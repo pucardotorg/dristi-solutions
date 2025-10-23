@@ -30,9 +30,11 @@ const Button = (props) => {
       onChange={props?.onChange}
     >
       {props?.icon && props.icon}
-      <h2 className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
-        {props.label}
-      </h2>
+      {props?.label && (
+        <h2 className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
+          {props.label}
+        </h2>
+      )}
       {props.children}
     </button>
   );

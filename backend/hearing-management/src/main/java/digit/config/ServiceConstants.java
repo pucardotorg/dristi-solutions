@@ -23,8 +23,8 @@ public class ServiceConstants {
     public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
 
-    public static final String DOB_FORMAT_Y_M_D = "yyyy-MM-dd";
-    public static final String DOB_FORMAT_D_M_Y = "dd/MM/yyyy";
+    public static final String DATE_FORMAT_Y_M_D = "yyyy-MM-dd";
+    public static final String DATE_FORMAT_D_M_Y = "dd-MM-yyyy";
     public static final String ILLEGAL_ARGUMENT_EXCEPTION_CODE = "IllegalArgumentException";
     public static final String OBJECTMAPPER_UNABLE_TO_CONVERT = "ObjectMapper not able to convertValue in userCall";
     public static final String DOB_FORMAT_D_M_Y_H_M_S = "dd-MM-yyyy HH:mm:ss";

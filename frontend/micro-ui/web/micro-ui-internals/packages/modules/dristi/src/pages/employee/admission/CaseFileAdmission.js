@@ -1,5 +1,5 @@
 import { BackButton, FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { Urls } from "../../../hooks";
@@ -8,6 +8,8 @@ import { CustomArrowDownIcon, FileDownloadIcon, RightArrow, WarningInfoRedIcon }
 import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
+import Breadcrumb from "../../../components/BreadCrumb";
+
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
@@ -88,6 +90,8 @@ function CaseFileAdmission({ t, path }) {
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
   const [formdata, setFormdata] = useState({ isenabled: true, data: {}, displayindex: 0 });
   const location = useLocation();
+  const homeFilterData = location?.state?.homeFilteredData;
+
   const todayDate = new Date().getTime();
   const searchParams = new URLSearchParams(location.search);
   const caseId = searchParams.get("caseId");
@@ -97,18 +101,34 @@ function CaseFileAdmission({ t, path }) {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(true);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER"); // check
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const courtId = localStorage.getItem("courtId");
+
+  // const employeeCrumbs = useMemo(
+  //   () => [
+  //     {
+  //       path: `/${window?.contextPath}/employee/home/home-screen`,
+  //       content: t("ES_COMMON_HOME"),
+  //       show: true,
+  //       isLast: false,
+  //       homeActiveTab: location?.state?.homeActiveTab || null,
+  //     },
+  //   ],
+  //   [location?.state?.homeActiveTab, t]
+  // );
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -119,6 +139,7 @@ function CaseFileAdmission({ t, path }) {
     Boolean(caseId)
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
@@ -138,7 +159,7 @@ function CaseFileAdmission({ t, path }) {
     moduleCode,
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      cacheTime: 0,
+      cacheTime: 10,
     },
   });
 
@@ -156,11 +177,12 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const { data: applicationData, isLoading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -168,12 +190,13 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(
@@ -203,6 +226,47 @@ function CaseFileAdmission({ t, path }) {
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
     [hearingDetails?.HearingList]
+  );
+
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  useEffect(() => {
+    const unlisten = history.listen((location, action) => {
+      if (action === "POP" && location?.pathname?.includes("home-screen")) {
+        history.replace(location.pathname, {
+          ...location.state,
+          homeActiveTab: homeActiveTab,
+        });
+      }
+    });
+
+    return () => {
+      unlisten();
+    };
+  }, [history]);
+
+  const employeeCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+        homeFilteredData: homeFilterData,
+      },
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("HOME_REGISTER_CASES"),
+        show: homeActiveTab === "REGISTRATION",
+        homeActiveTab: homeActiveTab,
+        isLast: false,
+      },
+      {
+        content: t("VIEW"),
+        show: homeActiveTab === "REGISTRATION",
+        isLast: true,
+      },
+    ],
+    [userInfoType, t, homeFilterData, homeActiveTab]
   );
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
 
@@ -289,7 +353,7 @@ function CaseFileAdmission({ t, path }) {
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber: updatedCaseDetails?.cnrNumber,
               filingNumber: caseDetails?.filingNumber,
               caseId: caseDetails?.id,
@@ -301,7 +365,7 @@ function CaseFileAdmission({ t, path }) {
             },
           });
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",
@@ -313,33 +377,9 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const updateCaseDetails = async (action, data = {}) => {
-    let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-    let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
-    if (action === "ADMIT") {
-      respondentDetails = {
-        ...caseDetails?.additionalDetails?.respondentDetails,
-        formdata: caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-      witnessDetails = {
-        ...caseDetails?.additionalDetails?.witnessDetails,
-        formdata: caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-    }
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+      additionalDetails: { ...caseDetails.additionalDetails, judge: data },
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
@@ -582,6 +622,7 @@ function CaseFileAdmission({ t, path }) {
         criteria: {
           tenantID: tenantId,
           filingNumber: caseDetails?.filingNumber,
+          ...(caseCourtId && { courtId: caseCourtId }),
         },
       });
       const hearingData =
@@ -596,12 +637,13 @@ function CaseFileAdmission({ t, path }) {
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
+          actionCategory: "Schedule Hearing",
           name: "Schedule Hearing",
           entityType: "case-default",
           referenceId: `MANUAL_${caseDetails?.filingNumber}`,
           status: "SCHEDULE_HEARING",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: updatedCaseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
           caseId: caseDetails?.id,
@@ -745,7 +787,7 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
           cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)
@@ -929,7 +971,7 @@ function CaseFileAdmission({ t, path }) {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -937,12 +979,13 @@ function CaseFileAdmission({ t, path }) {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "SCHEDULE_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1029,7 +1072,7 @@ function CaseFileAdmission({ t, path }) {
             referenceId: `MANUAL_${res.order.orderNumber}`,
             status: "DRAFT_IN_PROGRESS",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1056,7 +1099,7 @@ function CaseFileAdmission({ t, path }) {
           },
         });
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {});
@@ -1076,7 +1119,13 @@ function CaseFileAdmission({ t, path }) {
   };
 
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
-    return <Redirect to="/" />;
+    return caseId ? (
+      <Redirect
+        to={`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`}
+      />
+    ) : (
+      <Redirect to="/" />
+    );
   }
 
   if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader) {
@@ -1087,140 +1136,144 @@ function CaseFileAdmission({ t, path }) {
     scroller.scrollIntoView({ block: "center", behavior: "smooth" });
   };
   return (
-    <div className={"case-and-admission"}>
-      <div className="view-case-file">
-        <div className="file-case">
-          <div className="file-case-side-stepper">
-            <div className="file-case-select-form-section">
-              {sidebar?.map((key, index) => (
-                <div className="accordion-wrapper">
-                  <div key={index} className="accordion-title" onClick={() => scrollToHeading(`${index + 1}. ${t(labels[key])}`)}>
-                    <div>{`${index + 1}. ${t(labels[key])}`}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="file-case-form-section">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <BackButton style={{ marginBottom: 0 }}></BackButton>
-              <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
-                </span>
-                <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
-              </button>
-            </div>
-            <div className="employee-card-wrapper">
-              <div className="header-content">
-                <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
-                  <Header>{caseDetails?.caseTitle}</Header>
-                  {delayCondonationData?.delayCondonationType?.code === "NO" && (
-                    <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
-                      <p style={delayCondonationTextStyle}>
-                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
-                        (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                        isDelayApplicationPending ||
-                        isDelayApplicationCompleted
-                          ? t("DELAY_CONDONATION_FILED")
-                          : t("DELAY_CONDONATION_NOT_FILED")}
-                      </p>
+    <React.Fragment>
+      <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
+
+      <div className={"case-and-admission"}>
+        <div className="view-case-file">
+          <div className="file-case">
+            <div className="file-case-side-stepper">
+              <div className="file-case-select-form-section">
+                {sidebar?.map((key, index) => (
+                  <div className="accordion-wrapper">
+                    <div key={index} className="accordion-title" onClick={() => scrollToHeading(`${index + 1}. ${t(labels[key])}`)}>
+                      <div>{`${index + 1}. ${t(labels[key])}`}</div>
                     </div>
-                  )}
-                </div>
-              </div>
-              <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
-              {caseDetails?.additionalDetails?.scrutinyComment && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    backgroundColor: "#fdf7ec",
-                    padding: "10px",
-                    fontSize: "14px",
-                    fontFamily: "Arial, sans-serif",
-                    margin: "16px 0px",
-                  }}
-                >
-                  <div style={{ marginRight: "8px" }}>
-                    <WarningInfoRedIcon />
                   </div>
-                  <p style={{ margin: 0, fontWeight: "bold" }}>
-                    {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
-                  </p>
-                </div>
-              )}
-              <FormComposerV2
-                // by disabling label, we hide the action bar for court room manager.
-                label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
-                config={formConfig}
-                onSubmit={onSubmit}
-                // defaultValues={}
-                onSecondayActionClick={onSaveDraft}
-                defaultValues={{}}
-                onFormValueChange={onFormValueChange}
-                cardStyle={{ minWidth: "100%" }}
-                isDisabled={isButtonDisabled}
-                cardClassName={`e-filing-card-form-style review-case-file`}
-                secondaryLabel={
-                  [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
-                    ? t("HEARING_IS_SCHEDULED")
-                    : t(tertiaryAction.label || "")
-                }
-                showSecondaryLabel={Boolean(tertiaryAction?.action)}
-                actionClassName={"case-file-admission-action-bar"}
-                showSkip={secondaryAction?.label}
-                onSkip={onSendBack}
-                skiplabel={t(secondaryAction?.label || "")}
-                noBreakLine
-                skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
-              />
-              {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
-              {showScheduleHearingModal && (
-                <ScheduleHearing
-                  setUpdateCounter={setUpdateCounter}
-                  showToast={() => {}}
-                  tenantId={tenantId}
-                  caseData={caseRelatedData}
-                  setShowModal={setShowScheduleHearingModal}
-                  caseAdmittedSubmit={caseAdmittedSubmit}
-                  isCaseAdmitted={false}
-                  createAdmissionOrder={createAdmissionOrder}
-                  delayCondonationData={delayCondonationData}
-                  hearingDetails={hearingDetails}
-                  isDelayApplicationPending={isDelayApplicationPending}
-                  isDelayApplicationCompleted={isDelayApplicationPending}
-                />
-              )}
-              {showModal && (
-                <AdmissionActionModal
-                  t={t}
-                  setShowModal={setShowModal}
-                  setSubmitModalInfo={setSubmitModalInfo}
-                  submitModalInfo={submitModalInfo}
-                  modalInfo={modalInfo}
-                  setModalInfo={setModalInfo}
-                  handleSendCaseBack={handleSendCaseBack}
-                  handleScheduleNextHearing={handleScheduleNextHearing}
-                  caseDetails={caseDetails}
-                  caseAdmittedSubmit={caseAdmittedSubmit}
-                  createAdmissionOrder={createAdmissionOrder}
-                  isAdmissionHearingAvailable={Boolean(currentHearingId)}
-                  delayCondonationData={delayCondonationData}
-                  hearingDetails={hearingDetails}
-                  isDelayApplicationPending={isDelayApplicationPending}
-                  isDelayApplicationCompleted={isDelayApplicationPending}
-                  tenantId={tenantId}
-                ></AdmissionActionModal>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
-          <div className={"file-case-checklist"}>
-            <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
+            <div className="file-case-form-section">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <BackButton style={{ marginBottom: 0 }}></BackButton>
+                <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
+                  </span>
+                  <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
+                </button>
+              </div>
+              <div className="employee-card-wrapper">
+                <div className="header-content">
+                  <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
+                    <Header>{caseDetails?.caseTitle}</Header>
+                    {delayCondonationData?.delayCondonationType?.code === "NO" && (
+                      <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
+                        <p style={delayCondonationTextStyle}>
+                          {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
+                          (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                          isDelayApplicationPending ||
+                          isDelayApplicationCompleted
+                            ? t("DELAY_CONDONATION_FILED")
+                            : t("DELAY_CONDONATION_NOT_FILED")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
+                {caseDetails?.additionalDetails?.scrutinyComment && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#fdf7ec",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "16px 0px",
+                    }}
+                  >
+                    <div style={{ marginRight: "8px" }}>
+                      <WarningInfoRedIcon />
+                    </div>
+                    <p style={{ margin: 0, fontWeight: "bold" }}>
+                      {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
+                    </p>
+                  </div>
+                )}
+                <FormComposerV2
+                  // by disabling label, we hide the action bar for court room manager.
+                  label={isCaseApprover ? t(primaryAction?.label || "") : false}
+                  config={formConfig}
+                  onSubmit={onSubmit}
+                  // defaultValues={}
+                  onSecondayActionClick={onSaveDraft}
+                  defaultValues={{}}
+                  onFormValueChange={onFormValueChange}
+                  cardStyle={{ minWidth: "100%" }}
+                  isDisabled={isButtonDisabled}
+                  cardClassName={`e-filing-card-form-style review-case-file`}
+                  secondaryLabel={
+                    [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
+                      ? t("HEARING_IS_SCHEDULED")
+                      : t(tertiaryAction.label || "")
+                  }
+                  showSecondaryLabel={Boolean(tertiaryAction?.action)}
+                  actionClassName={"case-file-admission-action-bar"}
+                  showSkip={secondaryAction?.label}
+                  onSkip={onSendBack}
+                  skiplabel={t(secondaryAction?.label || "")}
+                  noBreakLine
+                  skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
+                />
+                {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
+                {showScheduleHearingModal && (
+                  <ScheduleHearing
+                    setUpdateCounter={setUpdateCounter}
+                    showToast={() => {}}
+                    tenantId={tenantId}
+                    caseData={caseRelatedData}
+                    setShowModal={setShowScheduleHearingModal}
+                    caseAdmittedSubmit={caseAdmittedSubmit}
+                    isCaseAdmitted={false}
+                    createAdmissionOrder={createAdmissionOrder}
+                    delayCondonationData={delayCondonationData}
+                    hearingDetails={hearingDetails}
+                    isDelayApplicationPending={isDelayApplicationPending}
+                    isDelayApplicationCompleted={isDelayApplicationPending}
+                  />
+                )}
+                {showModal && (
+                  <AdmissionActionModal
+                    t={t}
+                    setShowModal={setShowModal}
+                    setSubmitModalInfo={setSubmitModalInfo}
+                    submitModalInfo={submitModalInfo}
+                    modalInfo={modalInfo}
+                    setModalInfo={setModalInfo}
+                    handleSendCaseBack={handleSendCaseBack}
+                    handleScheduleNextHearing={handleScheduleNextHearing}
+                    caseDetails={caseDetails}
+                    caseAdmittedSubmit={caseAdmittedSubmit}
+                    createAdmissionOrder={createAdmissionOrder}
+                    isAdmissionHearingAvailable={Boolean(currentHearingId)}
+                    delayCondonationData={delayCondonationData}
+                    hearingDetails={hearingDetails}
+                    isDelayApplicationPending={isDelayApplicationPending}
+                    isDelayApplicationCompleted={isDelayApplicationPending}
+                    tenantId={tenantId}
+                  ></AdmissionActionModal>
+                )}
+              </div>
+            </div>
+            <div className={"file-case-checklist"}>
+              <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 }
 

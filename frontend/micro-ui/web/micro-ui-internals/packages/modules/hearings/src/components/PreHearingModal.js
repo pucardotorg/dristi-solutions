@@ -3,20 +3,25 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
 import { preHearingConfig } from "../configs/PreHearingConfig";
-import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
+// import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
   // const roles = Digit.UserService.getUser()?.info?.roles;
-  // const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   // const [totalCount, setTotalCount] = useState(count);
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
   const [stepper, setStepper] = useState(0);
+  const courtId = localStorage.getItem("courtId");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
+  const history = useHistory();
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -37,14 +42,31 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     setPurposeModalOpen(true);
   };
 
-  const updatedConfig = useMemo(() => {
+  const updatedPreHearingConfig = useMemo(() => {
     const configCopy = structuredClone(preHearingConfig);
+
+    // Filter out Actions column for employees
+    if (isEmployee) {
+      configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
+        (column) => column.label !== "Actions"
+      );
+    }
+
+    return configCopy;
+  }, [isEmployee]);
+
+  const updatedConfig = useMemo(() => {
+    const configCopy = structuredClone(updatedPreHearingConfig);
     configCopy.apiDetails.requestParam = {
       ...configCopy.apiDetails.requestParam,
       fromDate: hearingData.fromDate,
       toDate: hearingData.toDate,
       slot: hearingData.slot,
       tenantId: tenantId,
+    };
+    configCopy.apiDetails.requestBody = {
+      ...configCopy.apiDetails.requestBody,
+      courtId: courtId,
     };
     configCopy.additionalDetails = {
       attendeeIndividualId: userType === "citizen" && individualId,
@@ -60,7 +82,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       }),
     ];
     return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId]);
+  }, [updatedPreHearingConfig, hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, courtId, userType, individualId]);
 
   // const getTotalCount = useCallback(
   //   async function () {
@@ -150,16 +172,16 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
           <Button
             className="border-none dristi-font-bold"
             onButtonClick={() => {
-              setStepper(1);
+              history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_BULK_RESCHEDULE" });
             }}
             label={t("BULK_RESCHEDULE")}
             variation={"secondary"}
           />
         )}
       </div>
-      {purposeModalOpen && (
+      {/* {purposeModalOpen && (
         <ReschedulingPurpose rescheduleAll={rescheduleAll} courtData={courtData} closeFunc={closeFunc} caseDetails={purposeModalData} />
-      )}
+      )} */}
       <BulkReschedule
         stepper={stepper}
         setStepper={setStepper}

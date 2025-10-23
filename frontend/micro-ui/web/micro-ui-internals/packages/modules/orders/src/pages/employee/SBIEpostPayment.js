@@ -162,7 +162,7 @@ const SBIEpostPayment = () => {
         setPaymentLoader(false);
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 

@@ -1,28 +1,37 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
 import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.SummonUtil;
-import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -43,14 +52,18 @@ public class TaskService {
     private final TopicBasedOnStatus topicBasedOnStatus;
     private final SummonUtil summonUtil;
     private final FileStoreUtil fileStoreUtil;
-
+    private final EtreasuryUtil etreasuryUtil;
+    private final PendingTaskUtil pendingTaskUtil;
+    private final ESignUtil eSignUtil;
+    private final CipherUtil cipherUtil;
+    private final XmlRequestGenerator xmlRequestGenerator;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -64,6 +77,11 @@ public class TaskService {
         this.topicBasedOnStatus = topicBasedOnStatus;
         this.summonUtil = summonUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.etreasuryUtil = etreasuryUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
+        this.eSignUtil = eSignUtil;
+        this.cipherUtil = cipherUtil;
+        this.xmlRequestGenerator = xmlRequestGenerator;
     }
 
     @Autowired
@@ -78,10 +96,16 @@ public class TaskService {
 
             enrichmentUtil.enrichTaskRegistration(body);
 
+            if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
+                updateAssignedToList(body);
+                createDemandForPayment(body);
+            }
             workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
-             || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
+                    || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
+                    || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")
+                    || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
                 updateCase(body);
             }
             producer.push(config.getTaskCreateTopic(), body);
@@ -103,6 +127,69 @@ public class TaskService {
             log.error("Error occurred while creating task :: {}", e.toString());
             throw new CustomException(CREATE_TASK_ERR, e.getMessage());
         }
+    }
+
+    public void createDemandForPayment(TaskRequest body) {
+        try {
+            Map<String, Object> taskDetails = (Map<String, Object>) body.getTask().getTaskDetails();
+            Map<String, Object> genericTaskDetails = (Map<String, Object>) taskDetails.get("genericTaskDetails");
+
+            if (genericTaskDetails == null) {
+                throw new IllegalArgumentException("genericTaskDetails not found in taskDetails");
+            }
+            String consumerCode = getConsumerCode(body);
+            genericTaskDetails.put("consumerCode", consumerCode);
+            Object feeBreakDown = genericTaskDetails.get("feeBreakDown");
+            Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
+            etreasuryUtil.createDemand(body, consumerCode, calculation);
+        } catch (Exception e) {
+            log.error("Error occurred while creating demand for payment :: {}", e.toString());
+            throw new CustomException("ERROR_CREATING_DEMAND_FOR_PAYMENT", e.getMessage());
+        }
+    }
+
+    private String getConsumerCode(TaskRequest body) {
+        return body.getTask().getTaskNumber() + "_GENERIC";
+    }
+
+    public void updateAssignedToList(TaskRequest body) {
+        try {
+            List<AssignedTo> assignedToList = body.getTask().getAssignedTo();
+            List<AssignedTo> newAssignedToList = new ArrayList<>(assignedToList); // Create a new list to avoid ConcurrentModificationException
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(body);
+
+            for(AssignedTo assignedTo : newAssignedToList) {
+                String uuid = assignedTo.getUuid().toString();
+                List<AdvocateMapping> representatives = courtCases.get(0).getRepresentatives();
+                if(representatives != null) {
+                    for (AdvocateMapping advocateMapping : representatives) {
+                        List<Party> parties = advocateMapping.getRepresenting();
+                        List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
+                                .map(Party::getIndividualId)
+                                .toList();
+                        if (!individualIds.isEmpty()) {
+                            assignedToList.add(AssignedTo.builder().uuid(UUID.fromString(objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class).get("uuid").textValue())).build());
+                        }
+                    }
+                }
+            }
+            if(!assignedToList.isEmpty()){
+                body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
+                body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while updating assignedTo list :: {}", e.toString());
+            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
+        }
+    }
+
+    private Map<String, Object> getAdditionalDetails(Task task) {
+        Map<String, Object> additionalDetails = (Map<String, Object>) task.getWorkflow().getAdditionalDetails();
+        if (additionalDetails == null) {
+            additionalDetails = new HashMap<>();
+        }
+        additionalDetails.put("dueDate", task.getDuedate());
+        return additionalDetails;
     }
 
     public List<Task> searchTask(TaskSearchRequest request) {
@@ -132,7 +219,7 @@ public class TaskService {
 
             boolean isValidTask = true;
 
-            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE)) {
+            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE) && !("poaJoinCase".equalsIgnoreCase(body.getTask().getTaskDescription()))) {
                 isValidTask = validator.isValidJoinCasePendingTask(body);
                 if (!isValidTask) {
                     body.getTask().getWorkflow().setAction(REJECT);
@@ -145,9 +232,10 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
+                closeEnvelopePendingTaskOfRpad(body);
             }
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
@@ -180,6 +268,13 @@ public class TaskService {
             }
 
             log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
+
+            filterDocuments(new ArrayList<>() {{
+                                add(body.getTask());
+                            }},
+                    Task::getDocuments,
+                    Task::setDocuments);
+
             return body.getTask();
 
         } catch (CustomException e) {
@@ -190,6 +285,22 @@ public class TaskService {
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
     }
 
     private void updateAcknowledgementId(TaskRequest body, String acknowledgementId) {
@@ -211,7 +322,7 @@ public class TaskService {
         }
     }
 
-    private void workflowUpdate(TaskRequest taskRequest) {
+    private void workflowUpdate(TaskRequest taskRequest) throws JsonProcessingException {
         Task task = taskRequest.getTask();
         RequestInfo requestInfo = taskRequest.getRequestInfo();
 
@@ -219,7 +330,6 @@ public class TaskService {
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
         WorkflowObject workflow = task.getWorkflow();
-
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
@@ -227,12 +337,17 @@ public class TaskService {
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
             case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+            case PROCLAMATION-> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
+            case ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
             case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+            case GENERIC -> updateWorkflow(requestInfo, tenantId, taskNumber, workflow);
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -240,6 +355,28 @@ public class TaskService {
         task.setStatus(status);
     }
 
+    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) {
+
+        ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails());
+        workflow.setAdditionalDetails(additionalDetails);
+
+        return workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+    }
+
+    private ObjectNode updateAdditionalDetails(Object existingDetails) {
+        ObjectNode detailsNode;
+        if (existingDetails == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(existingDetails, ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add("TASK_CREATOR");
+        excludeRolesArray.add("SYSTEM_ADMIN");
+
+        return detailsNode;
+    }
 
     public Task uploadDocument(TaskRequest body) {
         try {
@@ -262,9 +399,93 @@ public class TaskService {
         }
     }
 
+    public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
+        Task task = taskRequest.getTask();
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT) || task.getTaskType().equalsIgnoreCase(PROCLAMATION)
+                || task.getTaskType().equalsIgnoreCase(ATTACHMENT) || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+            closeEnvelopePendingTask(taskRequest);
+        }
+    }
+
+    private void closeEnvelopePendingTask(TaskRequest taskRequest) {
+        Task task = taskRequest.getTask();
+        String referenceId = MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION;
+        pendingTaskUtil.closeManualPendingTask(referenceId, taskRequest.getRequestInfo(), task.getFilingNumber(),
+                task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
+    }
+
+    private boolean isRPADdeliveryChannel(Task task) {
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        // Check if deliveryChannels exists
+        ObjectNode deliveryChannels = null;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        }
+
+        if (deliveryChannels == null) {
+            return false;
+        }
+
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+            String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
+        }
+        return false;
+    }
+
     public List<TaskCase> searchCaseTask(TaskCaseSearchRequest request) {
+        RequestInfo requestInfo = request.getRequestInfo();
+        List<Role> userRoles = requestInfo.getUserInfo().getRoles();
+
+        List<String> orderType = getOrderType(request, userRoles);
+
+        if (orderType.isEmpty()) {
+            log.info("No order type found for user roles");
+            if (request.getPagination() != null) {
+                request.getPagination().setTotalCount(0D);
+            }
+            return Collections.emptyList();
+        }
         return taskRepository.getTaskWithCaseDetails(request);
 
+    }
+
+    private static void addOrderTypeIfRolePresent(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode))) {
+            if (!orderType.contains(type)) orderType.add(type);
+        }
+    }
+
+    private static void removeOrderTypeIfRoleMissing(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
+        if (orderType.contains(type)) {
+            boolean hasRole = userRoles.stream().anyMatch(role -> role.getCode().equalsIgnoreCase(roleCode));
+            if (!hasRole) orderType.remove(type);
+        }
+    }
+
+    private static List<String> getOrderType(TaskCaseSearchRequest request, List<Role> userRoles) {
+        List<String> orderType = request.getCriteria().getOrderType();
+
+        if (orderType == null) {
+            orderType = new ArrayList<>();
+        }
+
+        if (orderType.isEmpty()) {
+            // Add orderType if the user has the corresponding role
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+        } else {
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+        }
+        return orderType;
     }
 
     private void callNotificationService(TaskRequest taskRequest, String messageCode) {
@@ -396,16 +617,17 @@ public class TaskService {
         if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
             return SUMMONS_NOT_DELIVERED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
+        boolean b = WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType);
+        if (b && PENDING_PAYMENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && WARRANT_SENT.equalsIgnoreCase(status)) {
+        if (b && WARRANT_SENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUE_SUCCESS;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && EXECUTED.equalsIgnoreCase(status)) {
+        if (b && EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_DELIVERED;
         }
-        if (WARRANT.equalsIgnoreCase(taskType) && NOT_EXECUTED.equalsIgnoreCase(status)) {
+        if (b && NOT_EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_NOT_DELIVERED;
         }
         return null;
@@ -581,5 +803,235 @@ public class TaskService {
         return additionalDetails;
     }
 
+    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request){
+        log.info("Method=createTasksToSignRequest, result= IN_PROGRESS, tasksCriteria:{}", request.getCriteria().size());
 
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, TasksCriteria> tasksCriteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+            CoordinateCriteria criteria = new CoordinateCriteria();
+            criteria.setFileStoreId(criterion.getFileStoreId());
+            criteria.setPlaceholder(criterion.getPlaceholder());
+            criteria.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(criteria);
+            tasksCriteriaMap.put(criterion.getFileStoreId(), criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
+            throw new CustomException(COORDINATES_ERROR, "CoordinateResponse does not contain coordinates for some criteria");
+        }
+
+        List<TaskToSign> tasksToSigns = new ArrayList<>();
+        for (Coordinate coordinate : coordinateForSign) {
+            TaskToSign taskToSign = new TaskToSign();
+            Resource resource;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, e.getMessage());
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
+
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                TasksCriteria mapped = tasksCriteriaMap.get(coordinate.getFileStoreId());
+                if (mapped == null) {
+                    throw new CustomException(COORDINATES_ERROR, "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
+                }
+                String taskNumber = mapped.getTaskNumber();
+                taskToSign.setTaskNumber(taskNumber);
+                taskToSign.setRequest(xmlRequest);
+
+                tasksToSigns.add(taskToSign);
+            } catch (Exception e) {
+                log.error("Error while creating tasks to sign: ", e);
+                throw new CustomException(TASK_SIGN_ERROR, "Something went wrong while signing: " + e.getMessage());
+            }
+        }
+        log.info("Method=createTasksToSignRequest, result= SUCCESS, taskCriteria:{}", request.getCriteria().size());
+        return tasksToSigns;
+    }
+
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put(CERTIFICATE, certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "150,100");
+        requestData.put(PDF, pdf);
+
+        requestData.put(DATA, base64Doc);
+
+        String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+
+        return xmlRequest;
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
+        return attribute;
+    }
+
+    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request){
+
+        log.info("Method=updateTaskWithSignedDoc, result= IN_PROGRESS, signedTasks:{}", request.getSignedTasks().size());
+        List<Task> updatedTasks = new ArrayList<>();
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        for (SignedTask signedTask : request.getSignedTasks()) {
+            String taskNumber = signedTask.getTaskNumber();
+            String signedTaskData = signedTask.getSignedTaskData();
+            Boolean isSigned = signedTask.getSigned();
+            String tenantId = signedTask.getTenantId();
+
+            if (isSigned) {
+                try {
+                    // Fetch the task
+                    TaskCriteria criteria = TaskCriteria.builder()
+                            .taskNumber(taskNumber)
+                            .tenantId(tenantId)
+                            .build();
+                    Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+                    List<Task> taskList = taskRepository.getTasks(criteria, pagination);
+
+                    if (taskList.isEmpty()) {
+                        throw new CustomException(EMPTY_TASKS_ERROR, "No tasks found for the given criteria");
+                    }
+                    Task task = taskList.get(0);
+
+                    // Ignore if already signed
+                    boolean isTaskSigned = false;
+
+                    if (task.getDocuments() != null) {
+                        for (Document document : task.getDocuments()) {
+                            if (SIGNED_TASK_DOCUMENT.equalsIgnoreCase(document.getDocumentType())) {
+                                isTaskSigned = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(isTaskSigned){
+                        log.warn("Skipping task {} which has already been signed", task.getTaskNumber());
+                        continue;
+                    }
+
+
+                    // Update document with signed PDF
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedTaskData, TASK_PDF_NAME);
+                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+
+                    Document document = Document.builder()
+                            .documentType(SIGNED_TASK_DOCUMENT)
+                            .fileStore(fileStoreId)
+                            .isActive(true)
+                            .additionalDetails(Map.of(NAME, TASK_PDF_NAME))
+                            .build();
+                    task.setDocuments(new ArrayList<>(List.of(document)));
+
+                    TaskRequest updateTaskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+
+                    Task updatedTask = uploadDocument(updateTaskRequest);
+                    updatedTasks.add(updatedTask);
+
+                    log.info("Method=updateTaskWithSignedDoc, result= SUCCESS,signedTasks:{}", request.getSignedTasks().size());
+
+                } catch (Exception e) {
+                    log.error("Error while bulk signing task {}", taskNumber, e);
+                    throw new CustomException(TASKS_BULK_SIGN_EXCEPTION, "Error while bulk signing task: " + e.getMessage());
+                }
+            }
+        }
+        return updatedTasks;
+    }
+
+    public void updateStatusChangeDate(Task task, String newDate) {
+        if (task.getTaskDetails() == null) {
+            return;
+        }
+
+        // Convert Object → Map
+        Map<String, Object> taskDetails = objectMapper.convertValue(
+                task.getTaskDetails(),
+                new TypeReference<Map<String, Object>>() {}
+        );
+
+        // Navigate to deliveryChannels
+        Map<String, Object> deliveryChannels = (Map<String, Object>) taskDetails.get("deliveryChannels");
+        if (deliveryChannels != null) {
+            deliveryChannels.put("statusChangeDate", newDate);
+        }
+
+        // Set updated taskDetails back
+        task.setTaskDetails(taskDetails);
+    }
+
+    public List<BulkSend> bulkSend(BulkSendRequest bulkSendRequest) {
+        for (BulkSend bulkSendTask : bulkSendRequest.getBulkSendTasks()) {
+            try {
+                TaskSearchRequest taskSearchRequest = new TaskSearchRequest();
+                taskSearchRequest.setCriteria(TaskCriteria.builder().taskNumber(bulkSendTask.getTaskNumber()).tenantId(bulkSendTask.getTenantId()).build());
+                taskSearchRequest.setRequestInfo(new RequestInfo());
+
+                Task task = searchTask(taskSearchRequest).get(0);
+                updateStatusChangeDate(task, formatEpochToDate(System.currentTimeMillis()));
+                WorkflowObject workflowObject = new WorkflowObject();
+                workflowObject.setAction("SEND");
+                workflowObject.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
+                task.setWorkflow(workflowObject);
+                updateTask(TaskRequest.builder().task(task).requestInfo(bulkSendRequest.getRequestInfo()).build());
+
+            }catch (Exception e) {
+                bulkSendTask.setErrorMessage(e.getMessage());
+                bulkSendTask.setSuccess(false);
+            }
+        }
+
+        return bulkSendRequest.getBulkSendTasks();
+    }
+
+    public static String formatEpochToDate(long epochMillis) {
+        Date date = new Date(epochMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        return sdf.format(date);
+    }
 }

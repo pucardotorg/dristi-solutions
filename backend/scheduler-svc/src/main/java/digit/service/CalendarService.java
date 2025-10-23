@@ -12,6 +12,7 @@ import digit.util.MdmsUtil;
 import digit.validator.JudgeCalendarValidator;
 import digit.web.models.*;
 import digit.web.models.enums.PeriodType;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.tracer.model.CustomException;
@@ -345,5 +346,15 @@ public class CalendarService {
         log.info("operation = getFromAndToDateFromPeriodType, result = SUCCESS, fromDate = {} , toDate = {}", fromDate, toDate);
         return pair;
 
+    }
+
+    public List<JudgeCalendarRule> getJudgeRule(@Valid JudgeCalenderSearchRequest request) {
+        try {
+            log.info("operation = getJudgeRule, result = IN_PROGRESS, JudgeCalenderSearchRequest = {}", request);
+            return calendarRepository.findJudgeRule(request);
+        } catch (Exception e) {
+            log.error("error occurred while retrieving judge rules");
+            throw new CustomException("DK_SH_APP_ERR", "error occurred while fetching judge rules");
+        }
     }
 }
