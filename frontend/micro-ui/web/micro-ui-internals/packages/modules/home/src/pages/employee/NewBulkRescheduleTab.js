@@ -91,7 +91,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
-  const [allHearings, setAllHearings] = useState(bulkAllHearingsData);
+  const [allHearings, setAllHearings] = useState(bulkAllHearingsData || []);
   const [loading, setIsLoader] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
