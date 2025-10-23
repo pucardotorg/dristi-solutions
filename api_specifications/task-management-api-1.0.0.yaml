@@ -1,0 +1,423 @@
+openapi: 3.0.0
+info:
+  title: Task Management
+  description: |
+    API specifications for Task Management in Dristi system.
+    This API allows creation, updating, and searching of tasks with support for
+    task assignment, status tracking, and workflow management.
+  version: "1.0.0"
+  contact:
+    name: Dristi Solutions Team
+    email: support@dristisolutions.org
+
+servers:
+  - url: ""
+    description: Task Management API Server
+
+tags:
+  - name: Task
+    description: APIs to create, update and search for tasks.
+
+paths:
+  /task-management/v1/_create:
+    post:
+      tags:
+        - Task
+      summary: Create a new task management record
+      description: |
+        API to create a new task management record in the system. A task management record can contain
+        one or more tasks related to a case or order, along with workflow and assignment information.
+      requestBody:
+        description: Details for the new task management record + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+        required: true
+      responses:
+        '201':
+          description: Task management record created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Task creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskRequest
+
+  /task-management/v1/_update:
+    post:
+      tags:
+        - Task
+      summary: Update an existing task management record
+      description: |
+        API to update an existing task management record. Can be used to update task details, status, workflow state,
+        or any other task management related information for one or more tasks within the record.
+      requestBody:
+        description: Details for updating the task management record + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+        required: true
+      responses:
+        '200':
+          description: Task management record updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Task update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskRequest
+
+  /task-management/v1/_search:
+    post:
+      tags:
+        - Task
+      summary: Search task management records
+      description: |
+        API to search for task management records based on various criteria including case/order references,
+        workflow status, task types, and other task management specific filters.
+      requestBody:
+        description: Search criteria for task management records + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with list of task management records matching search criteria
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementSearchResponse'
+        '400':
+          description: Task search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskSearchRequest
+
+
+components:
+  schemas:
+    TaskManagementRequest:
+      type: object
+      required:
+        - RequestInfo
+        - taskManagement
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+      x-codegen-request-body-name: taskManagementRequest
+
+
+    TaskSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+
+    TaskSearchCriteria:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Filter by task management record ID
+        courtId:
+          type: string
+          format: uuid
+          description: Filter by court ID
+        orderNumber:
+          type: string
+          description: Filter by order number
+        workflowStatus:
+          type: string
+          description: Filter by workflow status
+        businessService:
+          type: string
+          description: Filter by business service code
+        workflowCode:
+          type: string
+          description: Filter by workflow code
+        history:
+          type: boolean
+          default: false
+          description: Include workflow history in the response
+        taskStatus:
+          type: array
+          items:
+            type: string
+          description: Filter by task status (applies to any task in the record)
+        taskType:
+          type: array
+          items:
+            type: string
+          description: Filter by task types (applies to any task in the record)
+        assigneeId:
+          type: string
+          format: uuid
+          description: Filter by assignee user ID (applies to any task in the record)
+        createdFrom:
+          type: integer
+          format: int64
+          description: Filter records created after this timestamp (epoch milliseconds)
+        createdTo:
+          type: integer
+          format: int64
+          description: Filter records created before this timestamp (epoch milliseconds)
+        isActive:
+          type: boolean
+          description: Filter active/inactive records
+
+    TaskManagementResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskManagementSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagementRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskManagement'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+        totalCount:
+          type: integer
+          description: Total number of records matching the search criteria
+
+    TaskManagement:
+      type: object
+      required:
+        - id
+        - caseFilingNumber
+        - courtId
+        - orderNumber
+        - tasks
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the task management record
+        caseFilingNumber:
+          type: string
+          description: Reference to the case filing number
+          example: "CASE-2023-001"
+        courtId:
+          type: string
+          format: uuid
+          description: ID of the court associated with the tasks
+        orderNumber:
+          type: string
+          description: Reference to the order number
+          example: "ORDER-2023-001"
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          description: List of tasks associated with this record
+        additionalDetails:
+          type: object
+          additionalProperties: true
+          description: Additional details related to the task management record
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+
+    Task:
+      description: A task is created as part of an Order. It will always be linked to an order
+      required: [tenantId, orderId, taskType, createdDate, status]
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: auto generated primary for internal reference
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        orderId:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: the associated order
+        taskNumber:
+          type: string
+        filingNumber:
+          type: string
+          description: the associated case
+        cnrNumber:
+          type: string
+          description: The CNR number of the associated case. helps in faster search
+        createdDate:
+          type: integer
+          format: int64
+          description: the date on which the task was created. Can be treated as the start date also
+        dateCloseBy:
+          type: integer
+          format: int64
+          description: the date by which the task needs to be closed
+        dateClosed:
+          type: integer
+          format: int64
+          nullable: true
+          description: the date on which the task was actually closed
+        taskDescription:
+          type: string
+          description: details of the specific task to be done
+        taskType:
+          type: string
+          description: there will be various types of tasks, that will define their own schema for information required. This type will help identify what schema to pick from MDMS
+          example: document.submission, summons, bail.cash, bail.surety, warrant, notice
+        taskDetails:
+          type: object
+          description: fields specific to task type like summons, bail, warrant, based on schema defined in MDMS. It will also have details for things like delivery channel like ePost, NSTEP, iCoPs, etc
+        amount:
+          $ref: '#/components/schemas/Amount'
+        status:
+          type: string
+          description: workflow status
+        assignedTo:
+          $ref: '#/components/schemas/AssignedTo'
+        isActive:
+          type: boolean
+          description: to handle soft delete
+        documents:
+          type: array
+          description: documents related to the task, for example the summon PDF when issuing summon and also the evidence that summon was delivered
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          description: This field is meant to hold any extra information that we want to store.
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+        referenceId:
+          type: string
+          description: referenceId for generic task
+        state:
+          type: string
+          description: state where pending need to create
+        duedate:
+          type: integer
+          format: int64
+          description: due date of pending task
+
+    AssignedTo:
+      type: object
+      description: details of person this task is assigned to. For example in case of document upload, this could be litigant or lawyer. In case of summon task, this will be person to whom summon is issued
+      properties:
+        individualId:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: ID of the person if the person is in the system, in which case the name field can be left blank
+        name:
+          type: string
+          description: name of the person if not in the system
+
+    # Alias for backward compatibility
+    TaskAssignee:
+      $ref: '#/components/schemas/AssignedTo'
+
+    TaskComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the comment
+        taskId:
+          type: string
+          format: uuid
+          description: ID of the task this comment belongs to
+        comment:
+          type: string
+          description: The comment text
+        createdBy:
+          type: string
+          format: uuid
+          description: ID of the user who created the comment
+        createdDate:
+          type: integer
+          format: int64
+          description: Timestamp when the comment was created
+        isInternal:
+          type: boolean
+          description: Whether the comment is internal (not visible to external users)
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+    SortCriteria:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Field to sort by
+        order:
+          type: string
+          enum: [ASC, DESC]
+          default: ASC
+          description: Sort order (ascending or descending)
+
+    Amount:
+      type: object
+      required: [amount, type, status]
+      description: amount in form of fees or penalty
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+        amount:
+          type: string
+          description: This field holds information about amount to be paid
+        type:
+          type: string
+          example: fees, fine, refund
+        paymentRefNumber:
+          type: string
+          description: reference number for the payment made like GRN number from Treasury
+        additionalDetails:
+          type: object
+          description: any extra information like bank reference number for the payment
+
+    ErrorResponse:
+      $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
