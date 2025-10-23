@@ -2,6 +2,8 @@ package com.dristi.njdg_transformer.repository;
 
 import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.AdvocateSerialNumber;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,6 +12,7 @@ import java.sql.Types;
 import java.util.List;
 
 @Repository
+@Slf4j
 public class AdvocateRepository {
     
     private final JdbcTemplate jdbcTemplate;
@@ -20,9 +23,22 @@ public class AdvocateRepository {
 
 
     public AdvocateDetails getAdvocateDetails(String advocateId) {
-        String sql = "SELECT advocate_name as advocateName, advocate_code as advocateCode, bar_reg_no as barRegNo, advocate_id as advocateId FROM advocate_master WHERE advocate_id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{advocateId}, new int[]{Types.VARCHAR}, new BeanPropertyRowMapper<>(AdvocateDetails.class));
+        String sql = "SELECT advocate_name AS advocateName, advocate_code AS advocateCode, " +
+                "bar_reg_no AS barRegNo, advocate_id AS advocateId " +
+                "FROM advocate_master WHERE advocate_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    new Object[]{advocateId},
+                    new int[]{Types.VARCHAR},
+                    new BeanPropertyRowMapper<>(AdvocateDetails.class)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No advocate found for ID: {}", advocateId);
+            return null; // or an Optional.empty() if you prefer Optional
+        }
     }
+
 
     public List<AdvocateDetails> getAllAdvocates() {
         String sql = "SELECT advocate_name as advocateName, advocate_code as advocateCode, bar_reg_no as barRegNo, advocate_id as advocateId FROM advocate_master ORDER BY advocate_code ASC";

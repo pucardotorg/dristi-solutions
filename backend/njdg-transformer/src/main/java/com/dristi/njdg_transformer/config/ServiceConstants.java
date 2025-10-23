@@ -3,6 +3,7 @@ package com.dristi.njdg_transformer.config;
 import org.springframework.stereotype.Component;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Component
 public class ServiceConstants {
@@ -25,4 +26,5 @@ public class ServiceConstants {
     public static final String REGISTERED = "REGISTERED";
     public static final String ACT_NAME = "Negotiable Instruments Act%";
     public static final String JUDGE_DESIGNATION = "JUDICIAL_MAGISTRATE";
+    public static final List<String> caseStatus = List.of("CASE_ADMITTED", "CASE_DISMISSED");
 }

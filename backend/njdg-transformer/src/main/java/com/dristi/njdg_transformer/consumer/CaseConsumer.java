@@ -10,6 +10,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import static com.dristi.njdg_transformer.config.ServiceConstants.caseStatus;
+
 @Component
 @Slf4j
 public class CaseConsumer {
@@ -37,7 +39,10 @@ public class CaseConsumer {
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
         try {
             CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
-            caseService.processAndUpdateCase(caseRequest.getCourtCase());
+            String status = caseRequest.getCourtCase().getStatus();
+            if(caseStatus.contains(status)){
+                caseService.processAndUpdateCase(caseRequest.getCourtCase());
+            }
         } catch (Exception e) {
             log.error("Error in updating PendingTask for join case.", e);
         }

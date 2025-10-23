@@ -38,8 +38,19 @@ public class CaseRepository {
 
     public Integer getDistrictCode(String districtName) {
         String query = queryBuilder.getDistrictQuery();
-        return jdbcTemplate.queryForObject(query, new Object[]{districtName}, new int[]{Types.VARCHAR}, Integer.class);
+        try {
+            return jdbcTemplate.queryForObject(
+                    query,
+                    new Object[]{districtName},
+                    new int[]{Types.VARCHAR},
+                    Integer.class
+            );
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No district found for name: {}", districtName);
+            return null;
+        }
     }
+
 
     public PoliceStationDetails getPoliceStationDetails(String policeStationCode) {
         String query = queryBuilder.getPoliceStationQuery();
@@ -48,8 +59,19 @@ public class CaseRepository {
 
     public JudgeDetails getJudge(String judgeId) {
         String query = queryBuilder.getJudgeMasterQuery();
-        return jdbcTemplate.queryForObject(query, new Object[]{judgeId}, new int[]{Types.VARCHAR}, new BeanPropertyRowMapper<>(JudgeDetails.class));
+        try {
+            return jdbcTemplate.queryForObject(
+                    query,
+                    new Object[]{judgeId},
+                    new int[]{Types.VARCHAR},
+                    new BeanPropertyRowMapper<>(JudgeDetails.class)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No judge found for ID: {}", judgeId);
+            return null;
+        }
     }
+
 
     public NJDGTransformRecord findByCino(String cino) {
         List<Object> preparedStmtList = new ArrayList<>();
