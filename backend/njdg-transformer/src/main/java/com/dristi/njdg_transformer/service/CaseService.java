@@ -4,9 +4,7 @@ import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
-import com.dristi.njdg_transformer.model.cases.StatuteSection;
 import com.dristi.njdg_transformer.model.enums.PartyType;
-import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
@@ -118,7 +116,7 @@ public class CaseService {
                 .caseType(getCaseTypeValue(courtCase.getCaseType()))
                 .filNo(extractFilingNumber(courtCase.getFilingNumber()))
                 .filYear(extractYear(courtCase.getFilingDate()))
-                .regNo(extractCaseNumber(courtCase.getCourtCaseNumber()))
+                .regNo(extractCaseNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
                 .regYear(extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(formatDate(courtCase.getJudgementDate()))
@@ -132,7 +130,28 @@ public class CaseService {
                 .purposeCode(getPurposeCode(courtCase))
                 .jocode(getJoCodeForJudge(courtCase.getJudgeId()))
                 .cicriType(properties.getCicriType())
+                .dateFirstList(setDateFirstList(courtCase.getCnrNumber()))
+                .dateNextList(setNextListDate(courtCase.getCnrNumber()))
+                .dateLastList(setNextListDate(courtCase.getCnrNumber()))
                 .build();
+    }
+
+    private LocalDate setDateFirstList(String cnrNumber) {
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cnrNumber);
+        LocalDate dateFirstList  = null;
+        if(hearingDetails != null && !hearingDetails.isEmpty()) {
+            dateFirstList = hearingDetails.get(0).getHearingDate();
+        }
+        return dateFirstList;
+    }
+
+    private LocalDate setNextListDate(String cnrNumber) {
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cnrNumber);
+        LocalDate dateLastList = null;
+        if(hearingDetails != null && !hearingDetails.isEmpty()) {
+            dateLastList = hearingDetails.get(hearingDetails.size()-1).getHearingDate();
+        }
+        return dateLastList;
     }
 
     private Integer getPurposeCode(CourtCase courtCase) {
