@@ -282,6 +282,10 @@ function BulkSignADiaryView() {
     };
   });
 
+  useEffect(() => {
+    checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
+  }, [checkSignStatus]);
+
   const onCancel = () => {
     sessionStorage.setItem("adiaryStepper", parseInt(stepper) - 1);
     if (parseInt(stepper) === 1) {
