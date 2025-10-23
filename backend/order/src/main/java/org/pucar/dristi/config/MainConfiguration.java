@@ -12,9 +12,11 @@ import jakarta.annotation.PostConstruct;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.tracer.config.TracerConfiguration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 
 @Import({TracerConfiguration.class})
+@EnableScheduling
 public class MainConfiguration {
 
     @Value("${app.timezone}")
