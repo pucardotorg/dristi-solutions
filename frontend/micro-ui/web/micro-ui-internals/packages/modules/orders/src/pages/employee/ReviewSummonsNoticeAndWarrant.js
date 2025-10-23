@@ -24,7 +24,7 @@ import { ordersService, taskService, processManagementService } from "../../hook
 import axios from "axios";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
-import { convertToDateInputFormat, formatDate } from "../../utils/index";
+import { convertToDateInputFormat, formatDate, getPartyNameForInfos } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
@@ -242,6 +242,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     tasksData?.list[0]?.orderId,
     Boolean(tasksData && courtId)
   );
+
+  const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
   const compositeItem = useMemo(
     () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === tasksData?.list[0]?.additionalDetails?.itemId),
@@ -559,7 +561,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -570,7 +572,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -591,7 +593,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -602,13 +604,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -621,7 +623,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];

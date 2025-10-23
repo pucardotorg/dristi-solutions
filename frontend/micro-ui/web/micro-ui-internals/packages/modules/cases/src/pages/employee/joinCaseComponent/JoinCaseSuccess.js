@@ -7,7 +7,6 @@ import NameListWithModal from "../../../components/NameListWithModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
-import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const JoinCaseSuccess = ({
   success,
@@ -27,7 +26,7 @@ const JoinCaseSuccess = ({
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {

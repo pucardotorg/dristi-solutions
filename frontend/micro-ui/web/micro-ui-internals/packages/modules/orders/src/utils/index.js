@@ -306,3 +306,34 @@ export const downloadFile = (responseBlob, fileName) => {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 };
+
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType) => {
+  const formDataKeyMap = {
+    NOTICE: "noticeOrder",
+    SUMMONS: "SummonsOrder",
+    WARRANT: "warrantFor",
+    PROCLAMATION: "proclamationFor",
+    ATTACHMENT: "attachmentFor", // same formdata key as WARRANT
+    // Add more types here easily in future
+  };
+
+  const formdata =
+    orderDetails?.orderCategory === "COMPOSITE"
+      ? compositeItem?.orderSchema?.additionalDetails?.formdata
+      : orderDetails?.additionalDetails?.formdata;
+
+  const key = formDataKeyMap[orderType];
+  const partyData = formdata?.[key]?.party?.data;
+
+  const name =
+    [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
+    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    formdata?.warrantFor ||
+    formdata?.proclamationFor ||
+    formdata?.attachmentFor ||
+    "";
+
+  return name;
+};
