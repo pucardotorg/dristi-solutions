@@ -66,8 +66,8 @@ public class HearingService {
                 .hearingDate(formatDate(hearing.getStartTime()))
                 .nextDate(null) // will be updated for previous hearing
                 .purposeOfListing(String.valueOf(hearingRepository.getHearingPurposeCode(hearing)))
-                .judgeCode(judgeDetails.getJudgeCode().toString())
-                .joCode(judgeDetails.getJocode())
+                .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode().toString() : "")
+                .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
                 .desgCode(designationMaster.getDesgCode().toString())
                 .hearingId(hearing.getHearingId())
                 .build();
