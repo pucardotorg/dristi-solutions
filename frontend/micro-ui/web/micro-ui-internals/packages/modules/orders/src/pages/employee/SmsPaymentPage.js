@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import CourierSelectionPage from "../../pageComponents/CourierSelectionPage";
 import PaymentPage from "../../pageComponents/PaymentPage";
+import PaymentStatusMessage from "./PaymentStatusMessage";
 // Import useTranslation when needed for localization
 import { useTranslation } from "react-i18next";
 
@@ -22,8 +23,13 @@ const SmsPaymentPage = () => {
       <div className="sms-payment-header">
         <h1>{`${t("TAKE_STEPS_FOR_CASE")} ${caseName || "XYZ"}`}</h1>
       </div>
-
-      {step === 1 ? <CourierSelectionPage t={t} onNext={handleNext} /> : <PaymentPage t={t} onPrevious={handlePrevious} paymentStatus={"PENDING"} />}
+      {step === 1 ? (
+        <CourierSelectionPage t={t} onNext={handleNext} />
+      ) : step === 2 ? (
+        <PaymentPage t={t} onPrevious={handlePrevious} paymentStatus={"pending"} />
+      ) : (
+        <PaymentStatusMessage t={t} statusType={"IsRpad"} />
+      )}
     </div>
   );
 };
