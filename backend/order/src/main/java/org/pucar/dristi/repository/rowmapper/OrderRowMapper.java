@@ -57,11 +57,14 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .orderNumber(rs.getString("ordernumber"))
                             .linkedOrderNumber(rs.getString("linkedordernumber"))
                             .hearingNumber(rs.getString("hearingnumber"))
+                            .scheduledHearingNumber(rs.getString("scheduledhearingnumber"))
                             .cnrNumber(rs.getString("cnrnumber"))
                             .orderCategory(rs.getString("ordercategory"))
                             .isActive(rs.getBoolean("isactive"))
                             .orderType(rs.getString("ordertype"))
                             .courtId(rs.getString("courtId"))
+                            .itemText(rs.getString("itemtext"))
+                            .purposeOfNextHearing(rs.getString("purposeofnexthearing"))
                             .createdDate(rs.getLong("createddate"))
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
@@ -72,6 +75,14 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .auditDetails(auditdetails)
                             .build();
                 }
+                long nextHearingDate = rs.getLong("nexthearingdate");
+
+                if (rs.wasNull()) {
+                    order.setNextHearingDate(null);
+                } else {
+                    order.setNextHearingDate(nextHearingDate);
+                }
+
                 PGobject pgObject1 = (PGobject) rs.getObject("applicationnumber");
                 if(pgObject1!=null)
                     order.setApplicationNumber(objectMapper.readValue(pgObject1.getValue(),List.class));
@@ -83,6 +94,10 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                 PGobject pgObject3 = (PGobject) rs.getObject("orderDetails");
                 if(pgObject3!=null)
                     order.setOrderDetails(objectMapper.readTree(pgObject3.getValue()));
+
+                PGobject pgObject4 = (PGobject) rs.getObject("attendance");
+                if(pgObject4!=null)
+                    order.setAttendance(objectMapper.readTree(pgObject4.getValue()));
 
                 orderMap.put(uuid, order);
             }

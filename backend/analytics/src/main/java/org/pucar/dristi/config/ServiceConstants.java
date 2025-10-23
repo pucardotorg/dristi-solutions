@@ -13,7 +13,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\"}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -87,6 +87,9 @@ public class ServiceConstants {
     public static final String CASE_COURTCASENUMBER_PATH = "$.courtCaseNumber";
     public static final String CASE_COURTID_PATH = "$.courtId";
     public static final String CASEID_PATH = "$.id";
+    public static final String CASE_FILING_DATE_PATH = "$.filingDate";
+
+    public static final String IS_LPR_CASE_PATH = "$.isLPRCase";
 
     public static final String CASE_STAGE_PATH = "$.stage";
     public static final String CASE_ID_PATH = "$.caseId";
@@ -259,5 +262,9 @@ public class ServiceConstants {
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
     public static final String msgId = "1730882648558|en_IN";
+
+    public static final String EXCLUDED_ASSIGNED_UUIDS = "excludedAssignedUuids";
+
+    public static final String POA_JOIN_CASE_TOPIC = "poa-join-case";
 
 }

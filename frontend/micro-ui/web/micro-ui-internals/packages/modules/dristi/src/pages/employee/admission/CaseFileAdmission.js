@@ -104,8 +104,7 @@ function CaseFileAdmission({ t, path }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER"); // check
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
@@ -229,11 +228,12 @@ function CaseFileAdmission({ t, path }) {
     [hearingDetails?.HearingList]
   );
 
-  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   useEffect(() => {
     const unlisten = history.listen((location, action) => {
-      if (action === "POP" && location?.pathname?.includes("home-screen") && !location.state?.homeActiveTab) {
+      if (action === "POP" && location?.pathname?.includes("home-screen")) {
         history.replace(location.pathname, {
+          ...location.state,
           homeActiveTab: homeActiveTab,
         });
       }
@@ -252,7 +252,18 @@ function CaseFileAdmission({ t, path }) {
         show: true,
         isLast: false,
         homeFilteredData: homeFilterData,
+      },
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("HOME_REGISTER_CASES"),
+        show: homeActiveTab === "REGISTRATION",
         homeActiveTab: homeActiveTab,
+        isLast: false,
+      },
+      {
+        content: t("VIEW"),
+        show: homeActiveTab === "REGISTRATION",
+        isLast: true,
       },
     ],
     [userInfoType, t, homeFilterData, homeActiveTab]
@@ -342,7 +353,7 @@ function CaseFileAdmission({ t, path }) {
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber: updatedCaseDetails?.cnrNumber,
               filingNumber: caseDetails?.filingNumber,
               caseId: caseDetails?.id,
@@ -354,7 +365,7 @@ function CaseFileAdmission({ t, path }) {
             },
           });
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",
@@ -366,33 +377,9 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const updateCaseDetails = async (action, data = {}) => {
-    let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-    let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
-    if (action === "ADMIT") {
-      respondentDetails = {
-        ...caseDetails?.additionalDetails?.respondentDetails,
-        formdata: caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-      witnessDetails = {
-        ...caseDetails?.additionalDetails?.witnessDetails,
-        formdata: caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-    }
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+      additionalDetails: { ...caseDetails.additionalDetails, judge: data },
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
@@ -656,7 +643,7 @@ function CaseFileAdmission({ t, path }) {
           referenceId: `MANUAL_${caseDetails?.filingNumber}`,
           status: "SCHEDULE_HEARING",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: updatedCaseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
           caseId: caseDetails?.id,
@@ -800,7 +787,7 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
           cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)
@@ -984,7 +971,7 @@ function CaseFileAdmission({ t, path }) {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -998,7 +985,7 @@ function CaseFileAdmission({ t, path }) {
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "SCHEDULE_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1085,7 +1072,7 @@ function CaseFileAdmission({ t, path }) {
             referenceId: `MANUAL_${res.order.orderNumber}`,
             status: "DRAFT_IN_PROGRESS",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1112,7 +1099,7 @@ function CaseFileAdmission({ t, path }) {
           },
         });
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {});
@@ -1217,7 +1204,7 @@ function CaseFileAdmission({ t, path }) {
                 )}
                 <FormComposerV2
                   // by disabling label, we hide the action bar for court room manager.
-                  label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
+                  label={isCaseApprover ? t(primaryAction?.label || "") : false}
                   config={formConfig}
                   onSubmit={onSubmit}
                   // defaultValues={}

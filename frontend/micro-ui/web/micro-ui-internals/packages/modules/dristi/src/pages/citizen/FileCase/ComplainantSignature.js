@@ -178,6 +178,7 @@ const complainantWorkflowState = {
 
 const stateSla = {
   PENDING_PAYMENT: 2,
+  RE_PENDING_PAYMENT: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -207,6 +208,7 @@ const ComplainantSignature = ({ path }) => {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -570,6 +572,11 @@ const ComplainantSignature = ({ path }) => {
     return getUniqueAcronym(placeholder);
   };
 
+  const handleCaseUnlockingWhenMockESign = async () => {
+    await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+    setEsignSuccess(true);
+  };
+
   const handleEsignAction = async () => {
     setLoader(true);
     try {
@@ -584,11 +591,21 @@ const ComplainantSignature = ({ path }) => {
         toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
         setLoader(false);
         return;
+      }
+
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {});
+
+      setLoader(false);
+
+      if (mockESignEnabled) {
+        try {
+          await handleCaseUnlockingWhenMockESign();
+        } catch (error) {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
       } else {
-        await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {}).then(() => {
-          setLoader(false);
-          handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
-        });
+        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
       }
     } catch (error) {
       console.error("Error:", error);
@@ -718,7 +735,7 @@ const ComplainantSignature = ({ path }) => {
     if (isSelectedUploadDoc) {
       updateCase(state);
     } else {
-      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+      if (isLastPersonSigned && (state === "PENDING_PAYMENT" || state === "RE_PENDING_PAYMENT")) {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -778,7 +795,7 @@ const ComplainantSignature = ({ path }) => {
               await Promise.all(promises);
             }
           }
-          if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+          if (res?.cases?.[0]?.status === "PENDING_PAYMENT" || res?.cases?.[0]?.status === "RE_PENDING_PAYMENT") {
             // Extract UUIDs of litigants and representatives if available
             const uuids = [
               ...(Array.isArray(caseDetails?.litigants)
@@ -815,7 +832,25 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            let calculation = null;
+            if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
+              calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            } else {
+              const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+              try {
+                calculation = await DRISTIService.getTreasuryPaymentBreakup(
+                  {
+                    tenantId: tenantId,
+                  },
+                  { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
+                  "dristi",
+                  Boolean(caseDetails?.filingNumber && suffix)
+                );
+                calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+              } catch (error) {
+                console.error("Error fetching treasury payment breakup:", error);
+              }
+            }
             setCalculationResponse(calculation);
             setLoader(false);
             if (isSelectedUploadDoc) {

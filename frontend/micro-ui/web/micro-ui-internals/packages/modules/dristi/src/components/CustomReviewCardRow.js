@@ -4,6 +4,8 @@ import React, { useCallback, useMemo } from "react";
 import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
+import DOMPurify from "dompurify";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -84,6 +86,7 @@ const CustomReviewCardRow = ({
   isCaseReAssigned,
   disableScrutiny,
   isWarning,
+  caseState,
 }) => {
   const {
     type = null,
@@ -97,6 +100,8 @@ const CustomReviewCardRow = ({
     isLocalizationRequired = false,
     notAvailable = null,
     enableScrutinyField = false,
+    defaultValue = null,
+    hideOnStatus = null,
   } = config;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
@@ -143,7 +148,7 @@ const CustomReviewCardRow = ({
   );
   const renderCard = useMemo(() => {
     let bgclassname = "";
-    let showFlagIcon = isScrutiny && (!disableScrutiny || enableScrutinyField) ? true : false;
+    let showFlagIcon = isScrutiny && caseState === CaseWorkflowState.UNDER_SCRUTINY && (!disableScrutiny || enableScrutinyField) ? true : false;
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
       showFlagIcon = prevDataError ? true : false;
     }
@@ -158,6 +163,11 @@ const CustomReviewCardRow = ({
       }
     }
     bgclassname = dataError && isCaseReAssigned ? "preverrorside" : bgclassname;
+
+    if (hideOnStatus && hideOnStatus?.includes(caseState)) {
+      return null;
+    }
+
     switch (type) {
       case "date":
         const dateValue = extractValue(data, value);
@@ -463,15 +473,19 @@ const CustomReviewCardRow = ({
                 {t(label)}
               </div>
               <div className="value" style={{ overflowY: "auto", maxHeight: "310px" }}>
-                {Array.isArray(textValue)
-                  ? textValue.length > 0
-                    ? textValue.map((text, index) => <div key={index}>{t(text) || t("")}</div>)
-                    : t("")
-                  : textValue && typeof textValue === "object"
-                  ? textValue?.text || ""
+                {textValue
+                  ? (Array.isArray(textValue)
+                      ? textValue.length > 0
+                        ? textValue.map((text, index) => <div key={index}>{t(text) || t("")}</div>)
+                        : t("")
+                      : textValue && typeof textValue === "object"
+                      ? textValue?.text || ""
+                      : isLocalizationRequired
+                      ? t(textValue)
+                      : textValue || (dependentOnValue && t(textDependentValue)) || t(notAvailable)) || t("")
                   : isLocalizationRequired
-                  ? t(textValue)
-                  : textValue || (dependentOnValue && t(textDependentValue)) || t(notAvailable) || t("")}
+                  ? t(defaultValue)
+                  : defaultValue || t("")}
               </div>
               {showFlagIcon && (
                 <div
@@ -532,12 +546,13 @@ const CustomReviewCardRow = ({
                 className="value"
                 style={{ overflowY: "auto", maxHeight: "310px" }}
                 dangerouslySetInnerHTML={{
-                  __html:
+                  __html: DOMPurify.sanitize(
                     formattedValue && typeof formattedValue === "string"
                       ? formattedValue
                       : isLocalizationRequired
                       ? t(formattedValue)
-                      : formattedValue || (dependentValue && t(textDependentValue)) || t(notAvailable) || t(""),
+                      : formattedValue || (dependentValue && t(textDependentValue)) || t(notAvailable) || t("")
+                  ),
                 }}
               ></div>
               {showFlagIcon && (

@@ -149,6 +149,7 @@ const TopBar = ({
       <div
         className="hambuger-back-wrapper"
         onClick={() => {
+          sessionStorage.removeItem("homeActiveTab");
           if (isEpostUser) {
             history.push(pathname);
           } else {

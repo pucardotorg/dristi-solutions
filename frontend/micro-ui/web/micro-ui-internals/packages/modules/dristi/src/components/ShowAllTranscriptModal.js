@@ -59,7 +59,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
               />
             </div>
 
-            {hearing?.attendees && hearing?.attendees?.length > 0 && (
+            {/* {hearing?.attendees && hearing?.attendees?.length > 0 && (
               <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
                 <span>Attendees: </span>
                 <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
@@ -70,7 +70,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
                     ?.join(", ")}
                 </span>
               </div>
-            )}
+            )} */}
           </div>
         ))}
       </div>

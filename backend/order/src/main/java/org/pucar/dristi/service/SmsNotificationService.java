@@ -116,7 +116,7 @@ public class SmsNotificationService {
                 .templateId(templateId)
                 .contentType("TEXT")
                 .category("NOTIFICATION")
-                .locale(NOTIFICATION_ENG_LOCALE_CODE)
+                .locale(ENG_LOCALE_CODE)
                 .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
                 .message(message).build();
         log.info("push message {}", smsRequest);
@@ -150,11 +150,11 @@ public class SmsNotificationService {
     public String getMessage(RequestInfo requestInfo, SmsTemplateData templateData, String msgCode) {
         String rootTenantId = templateData.getTenantId();
         Map<String, Map<String, String>> localizedMessageMap = getLocalisedMessages(requestInfo, rootTenantId,
-                NOTIFICATION_ENG_LOCALE_CODE, NOTIFICATION_MODULE_CODE);
+                ENG_LOCALE_CODE, NOTIFICATION_MODULE_CODE);
         if (localizedMessageMap.isEmpty()) {
             return null;
         }
-        return localizedMessageMap.get(NOTIFICATION_ENG_LOCALE_CODE + "|" + rootTenantId).get(msgCode);
+        return localizedMessageMap.get(ENG_LOCALE_CODE + "|" + rootTenantId).get(msgCode);
     }
 
     /**
@@ -218,8 +218,8 @@ public class SmsNotificationService {
         Object result = null;
         try {
             result = repository.fetchResult(uri, requestInfoWrapper);
-            codes = JsonPath.read(result, NOTIFICATION_LOCALIZATION_CODES_JSONPATH);
-            messages = JsonPath.read(result, NOTIFICATION_LOCALIZATION_MSGS_JSONPATH);
+            codes = JsonPath.read(result, LOCALIZATION_CODES_JSONPATH);
+            messages = JsonPath.read(result, LOCALIZATION_MSGS_JSONPATH);
         } catch (Exception e) {
             log.error("Exception while fetching from localization: " + e);
         }
