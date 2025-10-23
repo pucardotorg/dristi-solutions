@@ -81,6 +81,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
     : null;
 
+  const bulkAllHearingsData = sessionStorage.getItem("bulkAllHearingsData") ? JSON.parse(sessionStorage.getItem("bulkAllHearingsData")) : null;
+
   const [signFormData, setSignFormData] = useState({});
   const [newHearingData, setNewHearingData] = useState(bulkNewHearingData);
   const [notificationNumber, setNotificationNumber] = useState(bulkNotificationNumber);
@@ -89,7 +91,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
-  const [allHearings, setAllHearings] = useState([]);
+  const [allHearings, setAllHearings] = useState(bulkAllHearingsData);
   const [loading, setIsLoader] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
@@ -206,6 +208,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     sessionStorage.removeItem("bulkNotificationFormData");
     sessionStorage.removeItem("bulkOldHearingData");
     sessionStorage.removeItem("bulkNewHearingData");
+    sessionStorage.removeItem("bulkAllHearingsData");
     sessionStorage.removeItem("bulkNotificationNumber");
     sessionStorage.removeItem("bulkNotificationFileStoreId");
     sessionStorage.removeItem("homeActiveTab");
@@ -497,6 +500,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setIsLoader={setIsLoader}
         handleBulkHearingSearch={handleBulkHearingSearch}
         hasBulkRescheduleAccess={hasBulkRescheduleAccess}
+        bulkAllHearingsData={bulkAllHearingsData}
       />
       {stepper === 1 && (
         <Modal
@@ -598,6 +602,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
                     sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
                     sessionStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
+                    sessionStorage.setItem("bulkAllHearingsData", JSON.stringify(allHearings));
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
