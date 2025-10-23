@@ -184,6 +184,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                     SMSTemplateData smsTemplateData = SMSTemplateData.builder()
                             .partyType(partyType)
                             .orderType(orderType)
+                            .tenantId(courtCase.getTenantId())
                             .days(days)
                             .courtCaseNumber(courtCase.getCourtCaseNumber())
                             .cmpNumber(courtCase.getCmpNumber())
