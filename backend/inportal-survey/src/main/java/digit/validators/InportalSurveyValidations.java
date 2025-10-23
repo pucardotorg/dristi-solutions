@@ -74,7 +74,7 @@ public class InportalSurveyValidations {
 
             surveyTracker.setAttempts(attempts + 1);
 
-            // Eligible only if enough time passed AND under max attempts
+            // Eligible only if enough time passed AND crossed max attempts
             return (attempts + 1) > maxAttempts && currentTime > expiryDate;
         } else {
             Long waitPeriod = config.getNoOfDaysForExpiryAfterFeedBack();
