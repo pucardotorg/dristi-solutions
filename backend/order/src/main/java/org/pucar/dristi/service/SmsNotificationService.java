@@ -113,9 +113,6 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber, Order order) {
 
-//        if(messageCode.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAdmissionHearingScheduledTemplateId());
-//        }
         if(messageCode.equalsIgnoreCase(ORDER_ISSUED)){
             if(shouldSendNotificationForOrderIssued(order)){
                 Instant instant = dateUtil.getInstantFrom(config.getSmsOrderIssuedTime());
@@ -129,41 +126,11 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(NOTICE_ISSUED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeIssuedTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(WARRANT_ISSUED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationWarrantIssuedTemplateId());
-        }
         if(messageCode.equalsIgnoreCase(HEARING_RESCHEDULED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingReScheduledTemplateId());
         }
         if(messageCode.equalsIgnoreCase(SUMMONS_ISSUED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsIssuedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(ORDER_PUBLISHED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationOrderPublishedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(EVIDENCE_REQUESTED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceRequestedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(NEXT_HEARING_SCHEDULED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNextHearingScheduledTemplateId());
-        }
-//        if(messageCode.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS_SCHEDULED)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationExaminationUnderS351BNSSScheduledTemplateId());
-//        }
-//        if(messageCode.equalsIgnoreCase(EVIDENCE_ACCUSED_PUBLISHED)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceAccusedPublishedTemplateId());
-//        }
-//        if(messageCode.equalsIgnoreCase(EVIDENCE_COMPLAINANT_PUBLISHED)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceComplainantPublishedTemplateId());
-//        }
-//        if(messageCode.equalsIgnoreCase(APPEARANCE_PUBLISHED)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAppearancePublishedTemplateId());
-//        }
-        if(messageCode.equalsIgnoreCase(CASE_DECISION_AVAILABLE)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationCaseDecisionAvailableTemplateId());
-        }
-        if (messageCode.equalsIgnoreCase(ADDITIONAL_INFORMATION_MESSAGE)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationAdditionalDetails());
         }
     }
 

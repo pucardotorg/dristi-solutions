@@ -12,6 +12,7 @@ import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HearingUtil;
 import org.pucar.dristi.util.WorkflowUtil;
@@ -33,6 +34,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class OrderRegistrationService {
 
     private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
     private OrderRegistrationValidator validator;
 
     private OrderRegistrationEnrichment enrichmentUtil;
@@ -54,7 +56,7 @@ public class OrderRegistrationService {
     private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil, HearingUtil hearingUtil) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -67,6 +69,7 @@ public class OrderRegistrationService {
         this.individualService = individualService;
         this.fileStoreUtil = fileStoreUtil;
         this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -342,11 +345,11 @@ public class OrderRegistrationService {
             String hearingNumber = orderRequest.getOrder().getHearingNumber();
             HearingCriteria criteria = HearingCriteria.builder()
                     .hearingId(hearingNumber)
-                    .status(SCHEDULED)
+                    .status(OPT_OUT)
                     .build();
             Pagination pagination = Pagination.builder()
                     .sortBy("startTime")
-                    .order(OrderPagination.ASC)
+                    .order(OrderPagination.DESC)
                     .build();
             HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                     .criteria(criteria)
@@ -355,7 +358,8 @@ public class OrderRegistrationService {
             Hearing hearing = hearingUtil.getHearings(hearingSearchRequest)
                     .getHearingList()
                     .get(0);
-            String oldHearingDate = String.valueOf(hearing.getStartTime());
+            long oldHearingStartTime = hearing.getStartTime();
+            String oldHearingDate = dateUtil.getFormattedDateFromEpoch(oldHearingStartTime, YYYY_MM_DD);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @Slf4j
@@ -38,5 +39,14 @@ public class DateUtil {
 
         return date.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
 
+    }
+
+    public String getFormattedDateFromEpoch(Long epoch, String pattern) {
+        // Convert epoch seconds to LocalDate
+        LocalDate date = Instant.ofEpochSecond(epoch)
+                .atZone(ZoneId.of(config.getZoneId()))
+                .toLocalDate();
+
+        return date.format(DateTimeFormatter.ofPattern(pattern));
     }
 }
