@@ -121,7 +121,7 @@ public class CronJobScheduler {
 
             try {
                 List<Hearing> hearings = getHearingsHeldToday(requestInfo);
-                List<CourtCase> cases = getCasesFromHearings(hearings);
+                List<CourtCase> cases = getCasesFromHearings(requestInfo, hearings);
                 Map<String, List<CourtCase>> advocateCaseMap = getAdvocateCaseMap(cases);
                 List<Individual> advocates = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
                 Map<String, List<CourtCase>> litigantCaseMap = getLitigantCaseMap(cases);
@@ -161,7 +161,7 @@ public class CronJobScheduler {
             List<Future<Boolean>> futures = new ArrayList<>();
             try{
                 List<Hearing> hearings = getHearingsScheduledTomorrow(requestInfo);
-                List<CourtCase> cases = getCasesFromHearings(hearings);
+                List<CourtCase> cases = getCasesFromHearings(requestInfo, hearings);
                 Map<String, List<CourtCase>> advocateCaseMap = getAdvocateCaseMap(cases);
                 List<Individual> advocates = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
                 Map<String, List<CourtCase>> litigantCaseMap = getLitigantCaseMap(cases);
@@ -259,7 +259,7 @@ public class CronJobScheduler {
         return fetchHearings(requestInfo, hearingCriteria, null);
     }
 
-    private List<CourtCase> getCasesFromHearings(List<Hearing> hearings) {
+    private List<CourtCase> getCasesFromHearings(RequestInfo requestInfo, List<Hearing> hearings) {
         Set<String> filingNumbers = hearings.stream()
                 .map(hearing -> hearing.getFilingNumber().get(0))
                 .collect(Collectors.toSet());
@@ -271,6 +271,7 @@ public class CronJobScheduler {
             criteria.add(caseCriteria);
         });
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
                 .criteria(criteria)
                 .build();
 
