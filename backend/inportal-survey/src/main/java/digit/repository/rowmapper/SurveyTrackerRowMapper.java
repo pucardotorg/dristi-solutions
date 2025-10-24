@@ -33,7 +33,7 @@ public class SurveyTrackerRowMapper implements ResultSetExtractor<List<SurveyTra
                         .userType(rs.getString("user_type"))
                         .tenantId(rs.getString("tenant_id"))
                         .remindMeLater(remindMeLater)
-                        .expiryDate(rs.getLong("expiry_date") == 0 ? null : rs.getLong("expiry_date"))
+                        .lastTriggeredDate(rs.getLong("last_triggered_date") == 0 ? null : rs.getLong("last_triggered_date"))
                         .attempts(rs.getInt("attempts"))
                         .auditDetails(AuditDetails.builder()
                                 .createdBy(rs.getString("created_by"))

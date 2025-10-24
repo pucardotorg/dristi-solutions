@@ -9,7 +9,7 @@ import java.util.List;
 @Slf4j
 public class SurveyTrackerQueryBuilder {
 
-    private static final String BASE_QUERY = "SELECT user_uuid, user_type, tenant_id, remind_me_later, expiry_date, attempts, created_by, last_modified_by, created_time, last_modified_time ";
+    private static final String BASE_QUERY = "SELECT user_uuid, user_type, tenant_id, remind_me_later, last_triggered_date, attempts, created_by, last_modified_by, created_time, last_modified_time ";
 
     public static final String FROM_INPORTAL_SURVEY_TRACKER_TABLE = "FROM inportal_survey_tracker";
 

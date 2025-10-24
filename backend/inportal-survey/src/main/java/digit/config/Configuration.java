@@ -27,13 +27,17 @@ public class Configuration {
     @Value("${create.feed.back.topic}")
     private String createFeedBackTopic;
 
-    @Value("${max.no.of.attempts}")
-    private Integer maxNoOfAttempts;
+    // MDMS Configuration
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
 
-    @Value("${no.of.days.for.remind.me.later}")
-    private Long noOfDaysForRemindMeLater;
+    @Value("${egov.mdms.search.endpoint}")
+    private String mdmsEndPoint;
 
-    @Value("${no.of.days.for.expiry.after.feed.back}")
-    private Long noOfDaysForExpiryAfterFeedBack;
+    @Value("${egov.mdms.survey.module.name}")
+    private String mdmsSurveyModuleName;
+
+    @Value("${egov.mdms.survey.master.name}")
+    private String mdmsSurveyMasterName;
 
 }

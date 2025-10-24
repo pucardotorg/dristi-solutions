@@ -27,9 +27,6 @@ public class InPortalSurveyEnrichmentTest {
     @Mock
     private InPortalSurveyUtil inPortalSurveyUtil;
 
-    @Mock
-    private Configuration configuration;
-
     @InjectMocks
     private InPortalSurveyEnrichment enrichment;
 
@@ -235,9 +232,6 @@ public class InPortalSurveyEnrichmentTest {
     @Test
     public void testEnrichSurveyTrackerForRemindMeLater_Success() {
         // Arrange
-        Long noOfDays = 7 * 24 * 60 * 60 * 1000L; // 7 days in milliseconds
-        Long expiryTime = currentTime + noOfDays;
-
         AuditDetails existingAuditDetails = AuditDetails.builder()
                 .createdBy("original-user")
                 .createdTime(1000000L)
@@ -256,8 +250,7 @@ public class InPortalSurveyEnrichmentTest {
                 .requestInfo(requestInfo)
                 .build();
 
-        when(configuration.getNoOfDaysForRemindMeLater()).thenReturn(noOfDays);
-        when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDays)).thenReturn(expiryTime);
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
         // Act
         SurveyTracker result = enrichment.enrichSurveyTrackerForRemindMeLater(request, existingTracker);
@@ -265,21 +258,16 @@ public class InPortalSurveyEnrichmentTest {
         // Assert
         assertNotNull(result);
         assertTrue(result.getRemindMeLater());
-        assertEquals(expiryTime, result.getExpiryDate());
+        assertEquals(currentTime, result.getLastTriggeredDate());
         assertEquals(0, result.getAttempts());
         assertEquals("test-user-uuid", result.getAuditDetails().getLastModifiedBy());
 
-        verify(configuration, times(1)).getNoOfDaysForRemindMeLater();
-        verify(inPortalSurveyUtil, times(1)).getExpiryTimeInMilliSec(noOfDays);
-        verify(inPortalSurveyUtil, times(1)).getCurrentTimeInMilliSec();
+        verify(inPortalSurveyUtil, times(2)).getCurrentTimeInMilliSec();
     }
 
     @Test
     public void testEnrichSurveyTrackerForRemindMeLater_NullAuditDetails() {
         // Arrange
-        Long noOfDays = 7 * 24 * 60 * 60 * 1000L;
-        Long expiryTime = currentTime + noOfDays;
-
         SurveyTracker existingTracker = SurveyTracker.builder()
                 .userUuid("test-user-uuid")
                 .attempts(5)
@@ -290,8 +278,7 @@ public class InPortalSurveyEnrichmentTest {
                 .requestInfo(requestInfo)
                 .build();
 
-        when(configuration.getNoOfDaysForRemindMeLater()).thenReturn(noOfDays);
-        when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDays)).thenReturn(expiryTime);
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
         // Act
         SurveyTracker result = enrichment.enrichSurveyTrackerForRemindMeLater(request, existingTracker);
@@ -299,7 +286,7 @@ public class InPortalSurveyEnrichmentTest {
         // Assert
         assertTrue(result.getRemindMeLater());
         assertEquals(0, result.getAttempts());
-        assertEquals(expiryTime, result.getExpiryDate());
+        assertEquals(currentTime, result.getLastTriggeredDate());
     }
 
     // ==================== enrichSurveyTrackerForFeedBack Tests ====================
@@ -308,8 +295,6 @@ public class InPortalSurveyEnrichmentTest {
     public void testEnrichSurveyTrackerForFeedBack_Success() {
         // Arrange
         UUID feedbackUuid = UUID.randomUUID();
-        Long noOfDaysForExpiry = 30 * 24 * 60 * 60 * 1000L; // 30 days
-        Long expiryTime = currentTime + noOfDaysForExpiry;
 
         FeedBack feedBack = FeedBack.builder()
                 .rating(Rating.VERY_CONVENIENT)
@@ -333,8 +318,7 @@ public class InPortalSurveyEnrichmentTest {
                 .build();
 
         when(inPortalSurveyUtil.generateUUID()).thenReturn(feedbackUuid);
-        when(configuration.getNoOfDaysForExpiryAfterFeedBack()).thenReturn(noOfDaysForExpiry);
-        when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDaysForExpiry)).thenReturn(expiryTime);
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
         // Act
         SurveyTracker result = enrichment.enrichSurveyTrackerForFeedBack(request, existingTracker);
@@ -342,7 +326,7 @@ public class InPortalSurveyEnrichmentTest {
         // Assert
         assertNotNull(result);
         assertFalse(result.getRemindMeLater());
-        assertEquals(expiryTime, result.getExpiryDate());
+        assertEquals(currentTime, result.getLastTriggeredDate());
 
         // Check feedback enrichment
         assertEquals(feedbackUuid.toString(), request.getFeedBack().getUuid());
@@ -354,15 +338,13 @@ public class InPortalSurveyEnrichmentTest {
         assertEquals("test-user-uuid", result.getAuditDetails().getLastModifiedBy());
 
         verify(inPortalSurveyUtil, times(1)).generateUUID();
-        verify(configuration, times(1)).getNoOfDaysForExpiryAfterFeedBack();
+        verify(inPortalSurveyUtil, times(1)).getCurrentTimeInMilliSec();
     }
 
     @Test
     public void testEnrichSurveyTrackerForFeedBack_WithExistingFeedbackAuditDetails() {
         // Arrange
         UUID feedbackUuid = UUID.randomUUID();
-        Long noOfDaysForExpiry = 30 * 24 * 60 * 60 * 1000L;
-        Long expiryTime = currentTime + noOfDaysForExpiry;
 
         AuditDetails existingFeedbackAudit = AuditDetails.builder()
                 .createdBy("old-user")
@@ -386,8 +368,7 @@ public class InPortalSurveyEnrichmentTest {
                 .build();
 
         when(inPortalSurveyUtil.generateUUID()).thenReturn(feedbackUuid);
-        when(configuration.getNoOfDaysForExpiryAfterFeedBack()).thenReturn(noOfDaysForExpiry);
-        when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDaysForExpiry)).thenReturn(expiryTime);
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
         // Act
         enrichment.enrichSurveyTrackerForFeedBack(request, existingTracker);
@@ -400,8 +381,6 @@ public class InPortalSurveyEnrichmentTest {
     public void testEnrichSurveyTrackerForFeedBack_NullTrackerAuditDetails() {
         // Arrange
         UUID feedbackUuid = UUID.randomUUID();
-        Long noOfDaysForExpiry = 30 * 24 * 60 * 60 * 1000L;
-        Long expiryTime = currentTime + noOfDaysForExpiry;
 
         FeedBack feedBack = FeedBack.builder()
                 .rating(Rating.NEEDS_IMPROVEMENT)
@@ -418,8 +397,7 @@ public class InPortalSurveyEnrichmentTest {
                 .build();
 
         when(inPortalSurveyUtil.generateUUID()).thenReturn(feedbackUuid);
-        when(configuration.getNoOfDaysForExpiryAfterFeedBack()).thenReturn(noOfDaysForExpiry);
-        when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDaysForExpiry)).thenReturn(expiryTime);
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
         // Act
         SurveyTracker result = enrichment.enrichSurveyTrackerForFeedBack(request, existingTracker);
@@ -436,8 +414,6 @@ public class InPortalSurveyEnrichmentTest {
 
         for (Rating rating : ratings) {
             UUID feedbackUuid = UUID.randomUUID();
-            Long noOfDaysForExpiry = 30 * 24 * 60 * 60 * 1000L;
-            Long expiryTime = currentTime + noOfDaysForExpiry;
 
             FeedBack feedBack = FeedBack.builder()
                     .rating(rating)
@@ -455,8 +431,7 @@ public class InPortalSurveyEnrichmentTest {
                     .build();
 
             when(inPortalSurveyUtil.generateUUID()).thenReturn(feedbackUuid);
-            when(configuration.getNoOfDaysForExpiryAfterFeedBack()).thenReturn(noOfDaysForExpiry);
-            when(inPortalSurveyUtil.getExpiryTimeInMilliSec(noOfDaysForExpiry)).thenReturn(expiryTime);
+            when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
 
             SurveyTracker result = enrichment.enrichSurveyTrackerForFeedBack(request, existingTracker);
 
