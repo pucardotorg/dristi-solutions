@@ -1,5 +1,5 @@
-import { Button, TextInput, CardLabelError, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useState } from "react";
+import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useState } from "react";
 import { CustomAddIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
@@ -32,7 +32,6 @@ const CloseBtn = (props) => {
 function CourierService({
   t,
   processCourierData,
-  courierOptions,
   handleCourierServiceChange,
   handleAddressSelection,
   summonsActive,
@@ -46,6 +45,7 @@ function CourierService({
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
+  const tenantId = Digit.ULBService.getCurrentTenantId();
 
   // Pattern validation function
   const patternValidation = (key) => {
@@ -72,6 +72,104 @@ function CourierService({
 
     return "";
   };
+
+  const paymentCriteriaList = useMemo(() => {
+    if (!processCourierData?.addressDetails?.length) return [];
+
+    const channels = ["RPAD", "EPOST"];
+    const taskTypes = ["NOTICE", "SUMMONS"];
+
+    return processCourierData?.addressDetails?.flatMap((addr) =>
+      taskTypes?.flatMap((taskType) =>
+        channels?.map((channelId) => ({
+          channelId,
+          receiverPincode: addr?.addressDetails?.pincode,
+          tenantId,
+          id: `${taskType}_${channelId}_${addr?.id}`,
+          taskType,
+        }))
+      )
+    );
+  }, [processCourierData, tenantId]);
+
+  const { data: breakupResponse, isLoading: isBreakUpLoading } = window?.Digit?.Hooks?.dristi?.useSummonsPaymentBreakUp(
+    {
+      Criteria: paymentCriteriaList,
+    },
+    {},
+    `PAYMENT-${processCourierData?.uniqueId}-${paymentCriteriaList?.length > 0}`,
+    Boolean(paymentCriteriaList?.length > 0)
+  );
+
+  const courierOptions = useMemo(() => {
+    if (!breakupResponse?.Calculation?.length) return [];
+
+    const checkedAddressIds = processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.map((addr) => addr?.id) || [];
+
+    const grouped = breakupResponse?.Calculation?.reduce((acc, item) => {
+      const [taskType, channelId, addressId] = item.applicationId?.split("_");
+      const key = `${taskType}_${channelId}`;
+
+      const isAddressChecked = checkedAddressIds?.includes(addressId);
+
+      if (!acc[key]) {
+        acc[key] = {
+          channelId: channelId,
+          taskType,
+          totalAmount: 0,
+          code: channelId === "RPAD" ? "REGISTERED_POST" : "E_POST",
+          deliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
+        };
+      }
+
+      if (isAddressChecked) {
+        acc[key].totalAmount += item?.totalAmount || 0;
+      }
+
+      return acc;
+    }, {});
+
+    const options = Object?.values(grouped)?.map((item) => ({
+      ...item,
+      name: `${t(item?.code)} (INR ${item?.totalAmount}) • ${t(item?.deliveryTime)}`,
+    }));
+
+    if (Array.isArray(processCourierData?.noticeCourierService) && processCourierData?.noticeCourierService?.length > 0) {
+      const noticeOptions = options.filter((opt) => opt.taskType === "NOTICE");
+      const needsUpdate = processCourierData.noticeCourierService.some((selected) => {
+        const updatedOption = noticeOptions.find((opt) => opt.channelId === selected.channelId);
+        return updatedOption && updatedOption.totalAmount !== selected.totalAmount;
+      });
+      if (needsUpdate) {
+        const updatedSelections = processCourierData.noticeCourierService.map((selected) => {
+          const updatedOption = noticeOptions.find((opt) => opt.channelId === selected.channelId);
+          return updatedOption || selected;
+        });
+        handleCourierServiceChange(updatedSelections, "notice");
+      }
+    }
+
+    if (Array.isArray(processCourierData?.summonsCourierService) && processCourierData?.summonsCourierService?.length > 0) {
+      const summonsOptions = options.filter((opt) => opt.taskType === "SUMMONS");
+      const needsUpdate = processCourierData.summonsCourierService.some((selected) => {
+        const updatedOption = summonsOptions.find((opt) => opt.channelId === selected.channelId);
+        return updatedOption && updatedOption.totalAmount !== selected.totalAmount;
+      });
+      if (needsUpdate) {
+        const updatedSelections = processCourierData.summonsCourierService.map((selected) => {
+          const updatedOption = summonsOptions.find((opt) => opt.channelId === selected.channelId);
+          return updatedOption || selected;
+        });
+        handleCourierServiceChange(updatedSelections, "summons");
+      }
+    }
+
+    return options;
+  }, [breakupResponse, processCourierData, t, handleCourierServiceChange]);
+
+  if (isBreakUpLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="accused-process-courier">
@@ -118,7 +216,7 @@ function CourierService({
               <CustomMultiSelectDropdown
                 t={t}
                 defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions}
+                options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
                 selected={processCourierData?.noticeCourierService}
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="name"
@@ -158,7 +256,7 @@ function CourierService({
               <CustomMultiSelectDropdown
                 t={t}
                 defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions}
+                options={courierOptions?.filter((option) => option?.taskType === "SUMMONS")}
                 selected={processCourierData?.summonsCourierService}
                 onSelect={(value) => {
                   handleCourierServiceChange(value, "summons");

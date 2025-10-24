@@ -59,18 +59,12 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   }, [formData, config?.key, processCourierData]);
 
-  const courierOptions = config?.populators?.inputs?.find((input) => input.type === "courierOptions")?.options || [
-    { code: "Registered Post", name: "Registered Post (INR 40) • 10-15 days delivery" },
-    { code: "E-Post", name: "E-Post (INR 50) • 3-5 days delivery" },
-  ];
-
   return (
     <React.Fragment>
       <CourierService
         t={t}
         errors={errors}
         processCourierData={processCourierData}
-        courierOptions={courierOptions}
         handleCourierServiceChange={handleCourierServiceChange}
         handleAddressSelection={handleAddressSelection}
         summonsActive={summonsActive}
