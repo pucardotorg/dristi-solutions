@@ -1,5 +1,7 @@
 package org.pucar.dristi.scheduling;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -25,7 +27,6 @@ import org.pucar.dristi.web.models.HearingSearchRequest;
 import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.SmsTemplateData;
-import org.pucar.dristi.web.models.advocate.Advocate;
 import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.orders.OrderCriteria;
 import org.pucar.dristi.web.models.orders.OrderListResponse;
@@ -77,11 +78,12 @@ public class CronJobScheduler {
     private final IndividualService individualService;
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
+    private final ObjectMapper objectMapper;
     private String hearingLink;
 
 
     @Autowired
-    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, UserUtil userUtil, OrderUtil orderUtil, AdvocateUtil advocateUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil) {
+    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, UserUtil userUtil, OrderUtil orderUtil, AdvocateUtil advocateUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil, ObjectMapper objectMapper) {
         this.hearingRepository = hearingRepository;
         this.requestInfoGenerator = requestInfoGenerator;
         this.smsNotificationService = smsNotificationService;
@@ -95,6 +97,7 @@ public class CronJobScheduler {
         this.individualService = individualService;
         this.mdmsUtil = mdmsUtil;
         this.jsonUtil = jsonUtil;
+        this.objectMapper = objectMapper;
     }
 
     @PostConstruct
@@ -120,23 +123,22 @@ public class CronJobScheduler {
                 List<Hearing> hearings = getHearingsHeldToday(requestInfo);
                 List<CourtCase> cases = getCasesFromHearings(hearings);
                 Map<String, List<CourtCase>> advocateCaseMap = getAdvocateCaseMap(cases);
-                List<Individual> advocateIndividuals = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
+                List<Individual> advocates = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
+                Map<String, List<CourtCase>> litigantCaseMap = getLitigantCaseMap(cases);
+                List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-               advocateIndividuals.forEach(individual -> {
-                   List<CourtCase> advocateCases = advocateCaseMap.get(individual.getIndividualId());
-                   Future<Boolean> future = executorService.submit(() -> sendSMSToAdvocatesForHearingsHeldToday(individual, advocateCases, requestInfo));
+               advocates.forEach(advocate -> {
+                   List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
+                   Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(advocate, advocateCases, requestInfo));
                    futures.add(future);
                });
 
                // Send sms to litigants
-                cases.forEach(courtCase -> {
-                    courtCase.getLitigants().forEach(litigant -> {
-                        String individualId = litigant.getIndividualId();
-                        Individual individual = individualService.getIndividuals(requestInfo, Collections.singletonList(individualId)).get(0);
-                        Future<Boolean> future = executorService.submit(() -> sendSMSToLitigantsForHearingsHeldToday(individual, courtCase, requestInfo));
-                        futures.add(future);
-                    });
+                litigants.forEach(litigant -> {
+                    List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(litigant, litigantCases, requestInfo));
+                    futures.add(future);
                 });
 
                 // Wait for all tasks to complete
@@ -161,23 +163,22 @@ public class CronJobScheduler {
                 List<Hearing> hearings = getHearingsScheduledTomorrow(requestInfo);
                 List<CourtCase> cases = getCasesFromHearings(hearings);
                 Map<String, List<CourtCase>> advocateCaseMap = getAdvocateCaseMap(cases);
-                List<Individual> advocateIndividuals = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
+                List<Individual> advocates = individualService.getIndividuals(requestInfo, new ArrayList<>(advocateCaseMap.keySet()));
+                Map<String, List<CourtCase>> litigantCaseMap = getLitigantCaseMap(cases);
+                List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-                advocateIndividuals.forEach(individual -> {
-                    List<CourtCase> advocateCases = advocateCaseMap.get(individual.getIndividualId());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSToAdvocatesForHearingsScheduledTomorrow(individual, advocateCases, requestInfo));
+                advocates.forEach(individual -> {
+                    List<CourtCase> advocateCases = advocateCaseMap.get(individual.getUserUuid());
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(individual, advocateCases, requestInfo));
                     futures.add(future);
                 });
 
                 // Send sms to litigants
-                cases.forEach(courtCase -> {
-                    courtCase.getLitigants().forEach(litigant -> {
-                        String individualId = litigant.getIndividualId();
-                        Individual individual = individualService.getIndividuals(requestInfo, Collections.singletonList(individualId)).get(0);
-                        Future<Boolean> future = executorService.submit(() -> sendSMSToLitigantsForHearingsScheduledTomorrow(individual, courtCase, requestInfo));
-                        futures.add(future);
-                    });
+                litigants.forEach(litigant -> {
+                    List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(litigant, litigantCases, requestInfo));
+                    futures.add(future);
                 });
 
                 handleFutureResults(futures);
@@ -188,11 +189,11 @@ public class CronJobScheduler {
         }
     }
 
-    private Boolean sendSMSToAdvocatesForHearingsHeldToday(Individual individual, List<CourtCase> advocateCases, RequestInfo requestInfo) {
+    private Boolean sendSMSForHearingsHeldToday(Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
         log.info("Sending updates on hearings held today");
         try{
-            int caseCount = advocateCases.size();
-            CourtCase firstCase = advocateCases.get(0);
+            int caseCount = cases.size();
+            CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
             String filingNumber = firstCase.getFilingNumber();
@@ -222,30 +223,11 @@ public class CronJobScheduler {
         }
     }
 
-    private Boolean sendSMSToLitigantsForHearingsHeldToday(Individual individual, CourtCase courtCase, RequestInfo requestInfo) {
+    private Boolean sendSMSForHearingsScheduledTomorrow(Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
         log.info("Sending updates on hearings scheduled tomorrow");
         try{
-            String mobileNumber = individual.getMobileNumber();
-            String cmpNumber = courtCase.getCmpNumber();
-            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .tenantId(individual.getTenantId())
-                    .cmpNumber(cmpNumber)
-                    .build();
-
-            smsNotificationService.sendNotification(requestInfo, smsTemplateData, HEARINGS_HELD_TODAY_SINGLE, mobileNumber);
-            return true;
-
-        } catch (Exception e) {
-            log.error("Error occurred during notification processing", e);
-            return false;
-        }
-    }
-
-    private Boolean sendSMSToAdvocatesForHearingsScheduledTomorrow(Individual individual, List<CourtCase> advocateCases, RequestInfo requestInfo) {
-        log.info("Sending updates on hearings scheduled tomorrow");
-        try{
-            int caseCount = advocateCases.size();
-            CourtCase firstCase = advocateCases.get(0);
+            int caseCount = cases.size();
+            CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
 
@@ -258,26 +240,6 @@ public class CronJobScheduler {
 
             String notificationCode = caseCount == 1 ? HEARINGS_SCHEDULED_TOMORROW_SINGLE : HEARINGS_SCHEDULED_TOMORROW_MULTIPLE;
             smsNotificationService.sendNotification(requestInfo, smsTemplateData, notificationCode, mobileNumber);
-            return true;
-
-        } catch (Exception e) {
-            log.error("Error occurred during notification processing", e);
-            return false;
-        }
-    }
-
-    private Boolean sendSMSToLitigantsForHearingsScheduledTomorrow(Individual individual, CourtCase courtCase, RequestInfo requestInfo) {
-        log.info("Sending updates on hearings scheduled tomorrow");
-        try{
-            String mobileNumber = individual.getMobileNumber();
-            String cmpNumber = courtCase.getCmpNumber();
-            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .tenantId(individual.getTenantId())
-                    .cmpNumber(cmpNumber)
-                    .link(hearingLink)
-                    .build();
-
-            smsNotificationService.sendNotification(requestInfo, smsTemplateData, HEARINGS_SCHEDULED_TOMORROW_SINGLE, mobileNumber);
             return true;
 
         } catch (Exception e) {
@@ -320,21 +282,37 @@ public class CronJobScheduler {
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
         cases.forEach(courtCase -> {
             courtCase.getRepresentatives().forEach(advocate -> {
-                String advocateId = advocate.getAdvocateId();
-                Advocate adv = advocateUtil.getAdvocates
-                        (null, Collections.singletonList(advocateId))
-                        .get(0);
-                String individualId = adv.getIndividualId();
-                if(advocateCaseMap.containsKey(individualId)){
-                    advocateCaseMap.get(individualId).add(courtCase);
+                JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
+                String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+
+                if(advocateCaseMap.containsKey(uuid)) {
+                    advocateCaseMap.get(uuid).add(courtCase);
                 }
-                else {
-                    advocateCaseMap.put(individualId, Collections.singletonList(courtCase));
+                else{
+                    advocateCaseMap.put(uuid, List.of(courtCase));
                 }
             });
         });
 
         return advocateCaseMap;
+    }
+
+    private Map<String, List<CourtCase>> getLitigantCaseMap(List<CourtCase> cases){
+        Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
+        cases.forEach(courtCase -> {
+            courtCase.getLitigants().forEach(litigant -> {
+                JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
+                String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
+                if(litigantCaseMap.containsKey(uuid)) {
+                    litigantCaseMap.get(uuid).add(courtCase);
+                }
+                else{
+                    litigantCaseMap.put(uuid, List.of(courtCase));
+                }
+            });
+        });
+
+        return litigantCaseMap;
     }
 
     /**

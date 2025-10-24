@@ -126,6 +126,7 @@ public class SmsNotificationService {
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
                 .replace("{{efilingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
+                .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))

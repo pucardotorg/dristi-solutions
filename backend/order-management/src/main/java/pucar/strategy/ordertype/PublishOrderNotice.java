@@ -263,7 +263,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
                     String partyType = getPartyType(order);
                     String orderType = order.getOrderType();
-                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(SUMMONS));
+                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(NOTICE));
                     SMSTemplateData smsTemplateData = SMSTemplateData.builder()
                             .partyType(partyType)
                             .orderType(orderType)

@@ -54,13 +54,13 @@ public class CronJobScheduler {
         this.caseUtil = caseUtil;
     }
 
-    @Scheduled(cron = "0 0 18 * * *")
+    @Scheduled(cron = "${config.payment.pending.update}")
     public void sendNotificationForProcessPaymentPending() {
         List<PendingTask> pendingTasks = getPendingTasks();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
         pendingTasks.stream()
                 .filter(this::isPendingTaskForPaymentPending)
-                .filter(pendingTask -> shouldTriggerSms(pendingTask.getCreatedTime()))
+                .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
                 .forEach(pendingTask -> {
                     List<String> userUuids = pendingTask.getAssignedTo().stream().
                             map(User::getUuid)
@@ -84,7 +84,7 @@ public class CronJobScheduler {
         return pendingTask.getName().contains("Make Payment") || pendingTask.getName().contains("Pay online");
     }
 
-    public boolean shouldTriggerSms(long createdTime) {
+    public boolean isThirdDaySinceCreatedTime(long createdTime) {
 
         Instant currentTime = Instant.now();
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
@@ -105,13 +105,13 @@ public class CronJobScheduler {
         return currentTime.toEpochMilli() >= windowStartMillis && currentTime.toEpochMilli() <= windowEndMillis;
     }
 
-    @Scheduled(cron = "0 0 18 * * *")
+    @Scheduled(cron = "${config.mandatory.submission.pending.update}")
     public void sendNotificationForMandatorySubmissionPending() {
         List<PendingTask> pendingTasks = getPendingTasks();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
         pendingTasks.stream()
                 .filter(task -> MAKE_MANDATORY_SUBMISSION.equalsIgnoreCase(task.getName()))
-                .filter(pendingTask -> shouldTriggerSms(pendingTask.getCreatedTime()))
+                .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
                 .forEach(pendingTask -> {
                     CaseCriteria criteria = CaseCriteria.builder()
                             .filingNumber(pendingTask.getFilingNumber())
