@@ -5,6 +5,7 @@ import PaymentStatusMessage from "./PaymentStatusMessage";
 // Import useTranslation when needed for localization
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { Loader } from "@egovernments/digit-ui-react-components";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ const SmsPaymentPage = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [step, setStep] = useState(null);
+  const [loader, setLoader] = useState(false);
   const caseName = "XYZ"; // This would typically come from props or context
 
   // Mock notice data to be passed to CourierSelectionPage
@@ -138,6 +140,25 @@ const SmsPaymentPage = () => {
 
   return (
     <div className="sms-payment-container">
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="sms-payment-header">
         <h1>{`${t("TAKE_STEPS_FOR_CASE")} ${caseName || "XYZ"}`}</h1>
       </div>
