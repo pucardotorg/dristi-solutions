@@ -95,6 +95,36 @@
       <artifactId>services-common</artifactId>
       <version>2.0.0-SNAPSHOT</version>
     </dependency>
+
+
+     <!-- dependencies for openssl -->
+      <!-- Bouncy Castle: provides general-purpose crypto (OpenSSL equivalent in Java) -->
+<dependency>
+<groupId>org.bouncycastle</groupId>
+<artifactId>bcprov-jdk15on</artifactId>
+<version>1.76</version>
+</dependency>
+ 
+<!-- Bouncy Castle PKIX/CMS/PKCS#11 support if needed -->
+<dependency>
+<groupId>org.bouncycastle</groupId>
+<artifactId>bcpkix-jdk15on</artifactId>
+<version>1.76</version>
+</dependency>
+ 
+<!-- Apache Santuario: XML Security (for signing/encryption) -->
+<dependency>
+<groupId>org.apache.santuario</groupId>
+<artifactId>xmlsec</artifactId>
+<version>3.1.2</version>
+</dependency>
+ 
+<!-- Optional: PKCS#11 wrapper for Java to interact with hardware tokens -->
+<dependency>
+<groupId>org.ejbca.external</groupId>
+<artifactId>pkcs11wrapper</artifactId>
+<version>1.5.0</version>
+</dependency>
   </dependencies>
   <repositories>
     <repository>
