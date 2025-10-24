@@ -116,7 +116,7 @@ public class CronJobScheduler {
     public void sendNotificationOnHearingsHeldToday() {
         if(config.getIsSMSEnabled()){
             log.info("Starting Cron Job For Sending Hearing Update Notifications");
-            RequestInfo requestInfo = requestInfoGenerator.generateSystemRequestInfo();
+            RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
             List<Future<Boolean>> futures = new ArrayList<>();
 
             try {
@@ -153,11 +153,11 @@ public class CronJobScheduler {
     }
 
     @Async
-    @Scheduled(cron = "${config.hearings.scheduled.tomorrow.update}")
+    @Scheduled(cron = "${config.hearings.scheduled.tomorrow.update}", zone = "Asia/Kolkata")
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
             log.info("Sending notifications for hearings scheduled tomorrow");
-            RequestInfo requestInfo = requestInfoGenerator.generateSystemRequestInfo();
+            RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
             List<Future<Boolean>> futures = new ArrayList<>();
             try{
                 List<Hearing> hearings = getHearingsScheduledTomorrow(requestInfo);
