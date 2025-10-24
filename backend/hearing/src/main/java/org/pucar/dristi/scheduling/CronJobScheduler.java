@@ -267,6 +267,7 @@ public class CronJobScheduler {
         filingNumbers.forEach(filingNumber -> {
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(filingNumber)
+                    .defaultFields(false)
                     .build();
             criteria.add(caseCriteria);
         });
