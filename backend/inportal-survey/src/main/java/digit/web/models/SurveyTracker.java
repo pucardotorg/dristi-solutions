@@ -39,9 +39,9 @@ public class SurveyTracker {
     @Valid
     private Boolean remindMeLater = null;
 
-    @JsonProperty("expiryDate")
+    @JsonProperty("lastTriggeredDate")
     @Valid
-    private Long expiryDate = null;
+    private Long lastTriggeredDate = null;
 
     @JsonProperty("attempts")
     @Valid

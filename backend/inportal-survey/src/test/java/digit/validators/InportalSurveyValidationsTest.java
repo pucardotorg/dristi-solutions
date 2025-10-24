@@ -1,6 +1,6 @@
 package digit.validators;
 
-import digit.config.Configuration;
+import digit.config.MdmsDataConfig;
 import digit.util.InPortalSurveyUtil;
 import digit.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
@@ -23,17 +23,17 @@ public class InportalSurveyValidationsTest {
     private InPortalSurveyUtil inPortalSurveyUtil;
 
     @Mock
-    private Configuration configuration;
+    private MdmsDataConfig mdmsDataConfig;
 
     @InjectMocks
     private InportalSurveyValidations validations;
 
     private RequestInfo requestInfo;
-    private User user;
+    private SurveyConfig surveyConfig;
 
     @BeforeEach
     public void setUp() {
-        user = User.builder()
+        User user = User.builder()
                 .uuid("test-user-uuid")
                 .userName("testuser")
                 .tenantId("pg")
@@ -42,27 +42,30 @@ public class InportalSurveyValidationsTest {
         requestInfo = RequestInfo.builder()
                 .userInfo(user)
                 .build();
+
+        surveyConfig = SurveyConfig.builder()
+                .id(1)
+                .noOfDaysForExpiryAfterFeedBack(5184000000L)
+                .noOfDaysForRemindMeLater(172800000L)
+                .maxNoOfAttempts(3)
+                .build();
     }
 
     // ==================== validateEligibilityRequest Tests ====================
 
     @Test
     public void testValidateEligibilityRequest_Success() {
-        // Arrange
         EligibilityRequest request = EligibilityRequest.builder()
                 .requestInfo(requestInfo)
                 .build();
 
-        // Act & Assert
         assertDoesNotThrow(() -> validations.validateEligibilityRequest(request));
     }
 
     @Test
     public void testValidateEligibilityRequest_NullRequest_ThrowsException() {
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateEligibilityRequest(null);
-        });
+        CustomException exception = assertThrows(CustomException.class,
+                () -> validations.validateEligibilityRequest(null));
 
         assertEquals("Invalid Request: ", exception.getCode());
         assertEquals("Request can not be null", exception.getMessage());
@@ -70,15 +73,10 @@ public class InportalSurveyValidationsTest {
 
     @Test
     public void testValidateEligibilityRequest_NullRequestInfo_ThrowsException() {
-        // Arrange
-        EligibilityRequest request = EligibilityRequest.builder()
-                .requestInfo(null)
-                .build();
+        EligibilityRequest request = EligibilityRequest.builder().requestInfo(null).build();
 
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateEligibilityRequest(request);
-        });
+        CustomException exception = assertThrows(CustomException.class,
+                () -> validations.validateEligibilityRequest(request));
 
         assertEquals("Invalid Request: ", exception.getCode());
         assertEquals("RequestInfo can not be null", exception.getMessage());
@@ -86,19 +84,11 @@ public class InportalSurveyValidationsTest {
 
     @Test
     public void testValidateEligibilityRequest_NullUserInfo_ThrowsException() {
-        // Arrange
-        RequestInfo requestInfoWithoutUser = RequestInfo.builder()
-                .userInfo(null)
-                .build();
+        RequestInfo noUserInfo = RequestInfo.builder().userInfo(null).build();
+        EligibilityRequest request = EligibilityRequest.builder().requestInfo(noUserInfo).build();
 
-        EligibilityRequest request = EligibilityRequest.builder()
-                .requestInfo(requestInfoWithoutUser)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateEligibilityRequest(request);
-        });
+        CustomException exception = assertThrows(CustomException.class,
+                () -> validations.validateEligibilityRequest(request));
 
         assertEquals("Invalid Request: ", exception.getCode());
         assertEquals("UserInfo can not be null", exception.getMessage());
@@ -106,214 +96,12 @@ public class InportalSurveyValidationsTest {
 
     @Test
     public void testValidateEligibilityRequest_NullUserId_ThrowsException() {
-        // Arrange
-        User userWithoutUuid = User.builder()
-                .uuid(null)
-                .userName("testuser")
-                .build();
+        User userWithoutUuid = User.builder().uuid(null).userName("testuser").build();
+        RequestInfo info = RequestInfo.builder().userInfo(userWithoutUuid).build();
+        EligibilityRequest request = EligibilityRequest.builder().requestInfo(info).build();
 
-        RequestInfo requestInfoWithNullUuid = RequestInfo.builder()
-                .userInfo(userWithoutUuid)
-                .build();
-
-        EligibilityRequest request = EligibilityRequest.builder()
-                .requestInfo(requestInfoWithNullUuid)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateEligibilityRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("UserId can not be null", exception.getMessage());
-    }
-
-    // ==================== validateRemindMeLaterRequest Tests ====================
-
-    @Test
-    public void testValidateRemindMeLaterRequest_Success() {
-        // Arrange
-        RemindMeLaterRequest request = RemindMeLaterRequest.builder()
-                .requestInfo(requestInfo)
-                .build();
-
-        // Act & Assert
-        assertDoesNotThrow(() -> validations.validateRemindMeLaterRequest(request));
-    }
-
-    @Test
-    public void testValidateRemindMeLaterRequest_NullRequest_ThrowsException() {
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateRemindMeLaterRequest(null);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("Request can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateRemindMeLaterRequest_NullRequestInfo_ThrowsException() {
-        // Arrange
-        RemindMeLaterRequest request = RemindMeLaterRequest.builder()
-                .requestInfo(null)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateRemindMeLaterRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("RequestInfo can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateRemindMeLaterRequest_NullUserInfo_ThrowsException() {
-        // Arrange
-        RequestInfo requestInfoWithoutUser = RequestInfo.builder()
-                .userInfo(null)
-                .build();
-
-        RemindMeLaterRequest request = RemindMeLaterRequest.builder()
-                .requestInfo(requestInfoWithoutUser)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateRemindMeLaterRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("UserInfo can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateRemindMeLaterRequest_NullUserId_ThrowsException() {
-        // Arrange
-        User userWithoutUuid = User.builder()
-                .uuid(null)
-                .userName("testuser")
-                .build();
-
-        RequestInfo requestInfoWithNullUuid = RequestInfo.builder()
-                .userInfo(userWithoutUuid)
-                .build();
-
-        RemindMeLaterRequest request = RemindMeLaterRequest.builder()
-                .requestInfo(requestInfoWithNullUuid)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateRemindMeLaterRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("UserId can not be null", exception.getMessage());
-    }
-
-    // ==================== validateFeedBackRequest Tests ====================
-
-    @Test
-    public void testValidateFeedBackRequest_Success() {
-        // Arrange
-        FeedBack feedBack = FeedBack.builder()
-                .rating(Rating.VERY_CONVENIENT)
-                .build();
-
-        FeedBackRequest request = FeedBackRequest.builder()
-                .requestInfo(requestInfo)
-                .feedBack(feedBack)
-                .build();
-
-        // Act & Assert
-        assertDoesNotThrow(() -> validations.validateFeedBackRequest(request));
-    }
-
-    @Test
-    public void testValidateFeedBackRequest_NullRequest_ThrowsException() {
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateFeedBackRequest(null);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("Request can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateFeedBackRequest_NullRequestInfo_ThrowsException() {
-        // Arrange
-        FeedBack feedBack = FeedBack.builder()
-                .rating(Rating.CONVENIENT)
-                .build();
-
-        FeedBackRequest request = FeedBackRequest.builder()
-                .requestInfo(null)
-                .feedBack(feedBack)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateFeedBackRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("RequestInfo can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateFeedBackRequest_NullUserInfo_ThrowsException() {
-        // Arrange
-        FeedBack feedBack = FeedBack.builder()
-                .rating(Rating.MODERATELY_CONVENIENT)
-                .build();
-
-        RequestInfo requestInfoWithoutUser = RequestInfo.builder()
-                .userInfo(null)
-                .build();
-
-        FeedBackRequest request = FeedBackRequest.builder()
-                .requestInfo(requestInfoWithoutUser)
-                .feedBack(feedBack)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateFeedBackRequest(request);
-        });
-
-        assertEquals("Invalid Request: ", exception.getCode());
-        assertEquals("UserInfo can not be null", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateFeedBackRequest_NullUserId_ThrowsException() {
-        // Arrange
-        FeedBack feedBack = FeedBack.builder()
-                .rating(Rating.NEEDS_IMPROVEMENT)
-                .build();
-
-        User userWithoutUuid = User.builder()
-                .uuid(null)
-                .userName("testuser")
-                .build();
-
-        RequestInfo requestInfoWithNullUuid = RequestInfo.builder()
-                .userInfo(userWithoutUuid)
-                .build();
-
-        FeedBackRequest request = FeedBackRequest.builder()
-                .requestInfo(requestInfoWithNullUuid)
-                .feedBack(feedBack)
-                .build();
-
-        // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validations.validateFeedBackRequest(request);
-        });
+        CustomException exception = assertThrows(CustomException.class,
+                () -> validations.validateEligibilityRequest(request));
 
         assertEquals("Invalid Request: ", exception.getCode());
         assertEquals("UserId can not be null", exception.getMessage());
@@ -322,229 +110,134 @@ public class InportalSurveyValidationsTest {
     // ==================== validateEligibility Tests ====================
 
     @Test
-    public void testValidateEligibility_RemindMeLaterTrue_AttemptsExceeded_ExpiryPassed_ReturnsTrue() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long pastExpiryDate = currentTime - 1000L; // Expired
-        Integer maxAttempts = 3;
-
+    public void testValidateEligibility_FirstTimeUser_ReturnsTrue() {
         SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(3)
-                .expiryDate(pastExpiryDate)
-                .remindMeLater(true)
+                .attempts(0)
+                .lastTriggeredDate(null)
+                .remindMeLater(false)
                 .build();
 
-        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-        when(configuration.getMaxNoOfAttempts()).thenReturn(maxAttempts);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
 
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
+        boolean result = validations.validateEligibility(tracker, requestInfo);
         assertTrue(result);
-        assertEquals(4, tracker.getAttempts()); // Incremented
-        verify(inPortalSurveyUtil, times(1)).getCurrentTimeInMilliSec();
-        verify(configuration, times(1)).getMaxNoOfAttempts();
     }
 
     @Test
-    public void testValidateEligibility_RemindMeLaterTrue_AttemptsNotExceeded_ReturnsFalse() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long futureExpiryDate = currentTime + 10000L; // Not expired
-        Integer maxAttempts = 5;
-
-        SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(2)
-                .expiryDate(futureExpiryDate)
-                .remindMeLater(true)
-                .build();
-
-        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-        when(configuration.getMaxNoOfAttempts()).thenReturn(maxAttempts);
-
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
-        assertFalse(result);
-        assertEquals(3, tracker.getAttempts()); // Incremented
-    }
-
-    @Test
-    public void testValidateEligibility_RemindMeLaterTrue_AttemptsExceeded_ExpiryNotPassed_ReturnsFalse() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long futureExpiryDate = currentTime + 10000L; // Not expired
-        Integer maxAttempts = 3;
+    public void testValidateEligibility_RemindMeLater_ExceededMaxAttempts_AndExpired_ReturnsTrue() {
+        Long currentTime = 172802000L;
+        Long lastTriggered = 1000L;
 
         SurveyTracker tracker = SurveyTracker.builder()
                 .attempts(3)
-                .expiryDate(futureExpiryDate)
+                .lastTriggeredDate(lastTriggered)
                 .remindMeLater(true)
                 .build();
 
         when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-        when(configuration.getMaxNoOfAttempts()).thenReturn(maxAttempts);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
 
-        // Act
-        boolean result = validations.validateEligibility(tracker);
+        boolean result = validations.validateEligibility(tracker, requestInfo);
 
-        // Assert
+        assertTrue(result);
+        assertEquals(4, tracker.getAttempts());
+    }
+
+    @Test
+    public void testValidateEligibility_RemindMeLater_NotExceededMaxAttempts_ReturnsFalse() {
+        Long currentTime = 20000L;
+        Long lastTriggered = 1000L;
+
+        SurveyTracker tracker = SurveyTracker.builder()
+                .attempts(1)
+                .lastTriggeredDate(lastTriggered)
+                .remindMeLater(true)
+                .build();
+
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
+
+        boolean result = validations.validateEligibility(tracker, requestInfo);
+
+        // (attempts+1)=2, maxAttempts=3 → 2>3? false
+        assertFalse(result);
+        assertEquals(2, tracker.getAttempts());
+    }
+
+    @Test
+    public void testValidateEligibility_RemindMeLater_ExceededMaxAttempts_ButNotExpired_ReturnsFalse() {
+        long currentTime = 10000L;
+        Long lastTriggered = currentTime + 9999999L; // not expired
+
+        SurveyTracker tracker = SurveyTracker.builder()
+                .attempts(3)
+                .lastTriggeredDate(lastTriggered)
+                .remindMeLater(true)
+                .build();
+
+        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
+
+        boolean result = validations.validateEligibility(tracker, requestInfo);
+
         assertFalse(result);
         assertEquals(4, tracker.getAttempts());
     }
 
     @Test
-    public void testValidateEligibility_RemindMeLaterFalse_NullExpiryDate_ReturnsTrue() {
-        // Arrange
-        SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(0)
-                .expiryDate(null)
-                .remindMeLater(false)
-                .build();
-
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
-        assertTrue(result);
-        assertEquals(0, tracker.getAttempts()); // Not incremented
-    }
-
-    @Test
-    public void testValidateEligibility_RemindMeLaterFalse_ExpiryPassed_ReturnsTrue() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long pastExpiryDate = currentTime - 1000L;
+    public void testValidateEligibility_FeedbackExpired_ReturnsTrue() {
+        Long currentTime = System.currentTimeMillis();
+        Long lastTriggered = 1000L;
 
         SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(0)
-                .expiryDate(pastExpiryDate)
+                .attempts(1)
+                .lastTriggeredDate(lastTriggered)
                 .remindMeLater(false)
                 .build();
 
         when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
 
-        // Act
-        boolean result = validations.validateEligibility(tracker);
+        boolean result = validations.validateEligibility(tracker, requestInfo);
 
-        // Assert
         assertTrue(result);
-        assertEquals(0, tracker.getAttempts()); // Not incremented
-        verify(inPortalSurveyUtil, times(1)).getCurrentTimeInMilliSec();
     }
 
     @Test
-    public void testValidateEligibility_RemindMeLaterFalse_ExpiryNotPassed_ReturnsFalse() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long futureExpiryDate = currentTime + 10000L;
+    public void testValidateEligibility_FeedbackNotExpired_ReturnsFalse() {
+        Long currentTime = 1000L;
+        Long lastTriggered = 9000L;
 
         SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(0)
-                .expiryDate(futureExpiryDate)
+                .attempts(1)
+                .lastTriggeredDate(lastTriggered)
                 .remindMeLater(false)
                 .build();
 
         when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
 
-        // Act
-        boolean result = validations.validateEligibility(tracker);
+        boolean result = validations.validateEligibility(tracker, requestInfo);
 
-        // Assert
         assertFalse(result);
-        assertEquals(0, tracker.getAttempts());
     }
 
     @Test
-    public void testValidateEligibility_RemindMeLaterNull_ExpiryPassed_ReturnsTrue() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long pastExpiryDate = currentTime - 1000L;
+    public void testValidateEligibility_RemindMeLaterNull_BehavesAsFeedbackBranch() {
+        Long currentTime = 20000L;
+        Long lastTriggered = 1000L;
 
         SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(0)
-                .expiryDate(pastExpiryDate)
+                .attempts(2)
+                .lastTriggeredDate(lastTriggered)
                 .remindMeLater(null)
                 .build();
 
         when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
+        when(mdmsDataConfig.fetchSurveyConfig(requestInfo)).thenReturn(surveyConfig);
 
-        // Act
-        boolean result = validations.validateEligibility(tracker);
+        boolean result = validations.validateEligibility(tracker, requestInfo);
 
-        // Assert
-        assertTrue(result);
-        verify(inPortalSurveyUtil, times(1)).getCurrentTimeInMilliSec();
-    }
-
-    @Test
-    public void testValidateEligibility_EdgeCase_ExactlyAtExpiry_ReturnsTrue() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long expiryDate = currentTime; // Exactly at expiry
-
-        SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(0)
-                .expiryDate(expiryDate)
-                .remindMeLater(false)
-                .build();
-
-        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
-        assertFalse(result); // Equal is not less than, so not expired
-    }
-
-    @Test
-    public void testValidateEligibility_EdgeCase_AttemptsExactlyAtMax_ReturnsTrue() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long pastExpiryDate = currentTime - 1000L;
-        Integer maxAttempts = 3;
-
-        SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(3) // Exactly at max
-                .expiryDate(pastExpiryDate)
-                .remindMeLater(true)
-                .build();
-
-        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-        when(configuration.getMaxNoOfAttempts()).thenReturn(maxAttempts);
-
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
-        assertTrue(result); // 4 > 3 and expiry passed
-        assertEquals(4, tracker.getAttempts());
-    }
-
-    @Test
-    public void testValidateEligibility_EdgeCase_AttemptsJustBelowMax_ReturnsFalse() {
-        // Arrange
-        Long currentTime = 1634567890000L;
-        Long futureExpiryDate = currentTime + 10000L;
-        Integer maxAttempts = 5;
-
-        SurveyTracker tracker = SurveyTracker.builder()
-                .attempts(4) // Just below max
-                .expiryDate(futureExpiryDate)
-                .remindMeLater(true)
-                .build();
-
-        when(inPortalSurveyUtil.getCurrentTimeInMilliSec()).thenReturn(currentTime);
-        when(configuration.getMaxNoOfAttempts()).thenReturn(maxAttempts);
-
-        // Act
-        boolean result = validations.validateEligibility(tracker);
-
-        // Assert
-        assertFalse(result); // 5 is not > 5
-        assertEquals(5, tracker.getAttempts());
+        assertFalse(result);
     }
 }

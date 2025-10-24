@@ -29,7 +29,7 @@ public class SurveyTrackerQueryBuilderTest {
 
         // Assert
         assertNotNull(query);
-        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, expiry_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
+        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, last_triggered_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
         assertTrue(query.contains("FROM inportal_survey_tracker"));
         assertTrue(query.contains("WHERE user_uuid = ?"));
         
@@ -52,7 +52,7 @@ public class SurveyTrackerQueryBuilderTest {
 
         // Assert
         assertNotNull(query);
-        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, expiry_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
+        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, last_triggered_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
         assertTrue(query.contains("FROM inportal_survey_tracker"));
         assertFalse(query.contains("WHERE"));
         
@@ -72,7 +72,7 @@ public class SurveyTrackerQueryBuilderTest {
 
         // Assert
         assertNotNull(query);
-        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, expiry_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
+        assertTrue(query.contains("SELECT user_uuid, user_type, tenant_id, remind_me_later, last_triggered_date, attempts, created_by, last_modified_by, created_time, last_modified_time"));
         assertTrue(query.contains("FROM inportal_survey_tracker"));
         assertFalse(query.contains("WHERE"));
         
@@ -121,7 +121,7 @@ public class SurveyTrackerQueryBuilderTest {
         assertTrue(query.contains("user_type"));
         assertTrue(query.contains("tenant_id"));
         assertTrue(query.contains("remind_me_later"));
-        assertTrue(query.contains("expiry_date"));
+        assertTrue(query.contains("last_triggered_date"));
         assertTrue(query.contains("attempts"));
         assertTrue(query.contains("created_by"));
         assertTrue(query.contains("last_modified_by"));
@@ -203,7 +203,7 @@ public class SurveyTrackerQueryBuilderTest {
             "user_type",
             "tenant_id",
             "remind_me_later",
-            "expiry_date",
+            "last_triggered_date",
             "attempts",
             "created_by",
             "last_modified_by",
