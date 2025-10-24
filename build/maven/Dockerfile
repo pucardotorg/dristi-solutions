@@ -16,6 +16,13 @@ RUN mvn -B -f /app/pom.xml package
 # Create runtime image
 FROM openjdk:24-ea-15-oraclelinux8
 
+RUN microdnf install -y \
+    openssl \
+    xmlsec1-openssl \
+    openssl-pkcs11 \
+    apr-util-openssl \
+    && microdnf clean all
+
 WORKDIR /opt/egov
 
 COPY --from=build /app/target/*.jar /app/start.sh /opt/egov/
