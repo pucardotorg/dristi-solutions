@@ -9,6 +9,10 @@
     rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="https://unpkg.com/dristi-ui-css@0.0.5-dristi-kerala.9/dist/index.css" />
 
+  <!-- Process polyfill for Webpack 5 / Node 18 compatibility -->
+  <script>
+    window.process = window.process || { env: {} };
+  </script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#00bcd1" />

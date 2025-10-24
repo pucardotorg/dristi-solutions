@@ -1,3 +1,6 @@
+import process from "process";
+window.process = process;
+
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
