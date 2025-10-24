@@ -120,7 +120,7 @@ public class CaseService {
                 .regYear(extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(formatDate(courtCase.getJudgementDate()))
-                .dispReason(getDisposalReason(courtCase.getOutcome()))
+                .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
                 .dispNature(null)//todo: configure on contested(1) and uncontested(2)
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
                 .courtNo(properties.getCourtNumber())
