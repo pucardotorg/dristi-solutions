@@ -11,7 +11,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.REGISTERED;
+import static com.dristi.njdg_transformer.config.ServiceConstants.ACTIVE;
 
 @Component
 @Slf4j
@@ -39,7 +39,7 @@ public class AdvocateConsumer {
     private void processAndUpdateAdvocates(ConsumerRecord<String, Object> payload) {
         try {
             AdvocateRequest advocateRequest = objectMapper.convertValue(payload, AdvocateRequest.class);
-            if(REGISTERED.equalsIgnoreCase(advocateRequest.getAdvocate().getStatus())){
+            if(ACTIVE.equalsIgnoreCase(advocateRequest.getAdvocate().getStatus())){
                 advocateService.processAndUpdateAdvocates(advocateRequest);
             }
         } catch (IllegalArgumentException e) {

@@ -23,7 +23,7 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
     public static final String SIGNED_ORDER = "SIGNED";
     public static final String PUBLISHED_ORDER = "PUBLISHED";
-    public static final String REGISTERED = "REGISTERED";
+    public static final String ACTIVE = "ACTIVE";
     public static final String ACT_NAME = "Negotiable Instruments Act%";
     public static final String JUDGE_DESIGNATION = "JUDICIAL_MAGISTRATE";
     public static final List<String> caseStatus = List.of("CASE_ADMITTED", "CASE_DISMISSED");

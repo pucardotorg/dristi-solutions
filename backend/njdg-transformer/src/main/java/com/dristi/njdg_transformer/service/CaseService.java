@@ -75,7 +75,7 @@ public class CaseService {
                     .cino(courtCase.getCnrNumber())
                     .actCode(actMaster.getActCode())
                     .actName(actMaster.getActName())
-                    .actSection(actMaster.getActSection())
+                    .actSection(courtCase.getStatutesAndSections().get(0).getSubsections().get(0))
                     .build();
             producer.push("save-act-details", newAct);
         }

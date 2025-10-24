@@ -459,7 +459,7 @@ public class CaseEnrichment {
             record.setPoliceNcode(policeStationDetails.getNatCode());
             record.setPoliceStation(policeStationDetails.getStName());
         } catch (Exception e) {
-            log.error("Error while enriching police station details: ", e);
+            log.error("Error while enriching police station details: ", e.getMessage());
         }
     }
 }

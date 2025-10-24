@@ -4,6 +4,7 @@ import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.HearingDetails;
 import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.advocate.Advocate;
 import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
@@ -26,6 +27,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.dristi.njdg_transformer.config.ServiceConstants.ACTIVE;
 
 @RestController
 @RequestMapping("/njdg/v1")
@@ -132,8 +135,14 @@ public class NJDGController {
     @PostMapping("_processadvocate")
     public ResponseEntity<?> processAndUpdateAdvocates(@Valid @RequestBody AdvocateRequest advocateRequest) {
         try {
+            Advocate advocate = advocateRequest.getAdvocate();
+            if (advocate == null || !ACTIVE.equalsIgnoreCase(advocate.getStatus())) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Advocate is not active and will not be processed");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
             AdvocateDetails advocateDetails = advocateService.processAndUpdateAdvocates(advocateRequest);
-            if(advocateDetails == null){
+            if (advocateDetails == null) {
                 Map<String, String> response = new HashMap<>();
                 response.put("message", "Advocate is already present");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
