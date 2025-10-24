@@ -15,7 +15,9 @@ const header = require("postcss-header");
 
 const clean = require("gulp-clean");
 const postcss = require("gulp-postcss");
-const sass = require("gulp-sass")(require("sass"));
+const replace = require("gulp-replace");
+const dartSass = require("sass");
+const sass = require("gulp-sass")(dartSass);
 
 const postcssPresetEnv = require("postcss-preset-env");
 const cleanCSS = require("gulp-clean-css");
@@ -40,10 +42,19 @@ function styles() {
     require("cssnano"),
     header({ header: headerString }),
   ];
-  return src("src/index.scss")
-    .pipe(sass().on("error", sass.logError)) // ✅ Compile SCSS first
-    .pipe(postcss(plugins)) // ✅ Then run PostCSS
-    .pipe(dest(output));
+
+  return (
+    src("src/index.scss")
+      // Step 1: Replace theme() with placeholder before Sass processes it
+      .pipe(replace(/theme\(([^)]+)\)/g, "__THEME__$1__END__"))
+      // Step 2: Compile SCSS
+      .pipe(sass({ quietDeps: true }).on("error", sass.logError))
+      // Step 3: Restore theme() calls for PostCSS/Tailwind to process
+      .pipe(replace(/__THEME__([^_]+)__END__/g, "theme($1)"))
+      // Step 4: Run PostCSS with Tailwind
+      .pipe(postcss(plugins))
+      .pipe(dest(output))
+  );
 }
 
 function minify() {
