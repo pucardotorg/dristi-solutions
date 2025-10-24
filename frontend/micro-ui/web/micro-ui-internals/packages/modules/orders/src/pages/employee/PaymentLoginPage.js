@@ -2,14 +2,15 @@ import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { ordersService } from "../../hooks/services";
 
 const PaymentLoginPage = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { bailbondId } = Digit.Hooks.useQueryParams();
+  const { orderNumber } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
-  const [error, setError] = useState(true);
+  const [error, setError] = useState(false);
   const config = {
     name: "mobileNumber",
     key: "mobileNumber",
@@ -30,7 +31,28 @@ const PaymentLoginPage = () => {
 
   const handleSubmit = async () => {
     // TODO: api call and set error if any
+    // ref : bailbonfloginPage.js OR witnessDepositionLoginPage.js
 
+    try {
+      // TODO : make searchOpenApiSmsPayment in ordersService with proper api call
+      // const res = await ordersService.searchOpenApiSmsPayment({
+      //   tenantId,
+      //   orderNumber: orderNumber,
+      //   mobileNumber: mobileNumber,
+      // });
+      // if (!res || Object.keys(res).length === 0) {
+      //   setError(true);
+      //   return;
+      // }
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/sms-payment?orderNumber=${orderNumber}`, {
+        mobileNumber: mobileNumber,
+        tenantId: tenantId,
+        isAuthorised: true,
+      });
+    } catch (error) {
+      setError(true);
+      return;
+    }
   };
 
   const isDisabled = useMemo(() => {
@@ -92,7 +114,7 @@ const PaymentLoginPage = () => {
                         </defs>
                       </svg>
                     </div>
-                    {t("ERR_HRMS_INVALID_MOB_NO")}
+                    {t("ERROR_SMS_PAYMENT_LOGIN_NUMBER")}
                   </div>
                 )}
 

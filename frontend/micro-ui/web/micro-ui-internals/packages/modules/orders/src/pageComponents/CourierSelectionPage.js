@@ -148,7 +148,7 @@ const CourierSelectionPage = ({ t, onNext }) => {
             <h3>{t("CS_COMMON_NOTE")}</h3>
           </div>
           <div className="info-content">
-            <p>{t("CS_COURIER_SELECTION_INFO")}</p>
+            <p>{t("CS_TAKE_COURIER_NOTE")}</p>
           </div>
         </div>
 
