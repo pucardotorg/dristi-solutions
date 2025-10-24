@@ -13,52 +13,22 @@ const AddIcon = () => (
   </svg>
 );
 
-const CourierSelectionPage = ({ t, onNext }) => {
+const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData }) => {
   // Mock data structure for notices - this would come from props or API in a real implementation
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
   const [currentNoticeId, setCurrentNoticeId] = useState(null);
-  const [notices, setNotices] = useState([
-    {
-      id: 1,
-      title: "Pending Payment",
-      subtitle: "Notice for {Account 1}",
-      courierOptions: [
-        { id: "registeredPost1", name: "Registered Post", code: "INR 40", deliveryTime: "10-15 days delivery", selected: true },
-        { id: "epost1", name: "E-Post", code: "INR 50", deliveryTime: "3-5 days delivery", selected: false },
-      ],
-      addresses: [
-        { id: 1, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: true },
-        { id: 2, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: true },
-        { id: 3, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: true },
-      ],
-    },
-    {
-      id: 2,
-      title: "Pending Payment",
-      subtitle: "Notice for {Account 2}",
-      courierOptions: [
-        { id: "registeredPost2", name: "Registered Post", code: "INR 40", deliveryTime: "10-15 days delivery", selected: false },
-        { id: "epost2", name: "E-Post", code: "INR 50", deliveryTime: "3-5 days delivery", selected: false },
-      ],
-      addresses: [
-        { id: 4, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: false },
-        { id: 5, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: false },
-        { id: 6, text: "1008 L Tower, Amrapali City, Noida, Uttar Pradesh, 201301", selected: false },
-      ],
-    },
-  ]);
 
   const isFormValid = useMemo(() => {
-    return notices?.every((notice) => {
+    return noticeData?.every((notice) => {
       const hasCourier = notice.courierOptions?.some((courier) => courier?.selected);
       const hasAddress = notice.addresses?.some((address) => address?.selected);
       return hasCourier && hasAddress;
     });
-  }, [notices]);
+  }, [noticeData]);
 
   // Handler to toggle courier selection
   const handleCourierChange = (noticeId, courierId) => {
-    const updatedNotices = notices.map((notice) => {
+    const updatedNotices = noticeData?.map((notice) => {
       if (notice.id === noticeId) {
         return {
           ...notice,
@@ -73,12 +43,12 @@ const CourierSelectionPage = ({ t, onNext }) => {
       return notice;
     });
 
-    setNotices(updatedNotices);
+    setNoticeData(updatedNotices);
   };
 
   // Handler to toggle address selection
   const handleAddressChange = (noticeId, addressId) => {
-    const updatedNotices = notices.map((notice) => {
+    const updatedNotices = noticeData?.map((notice) => {
       if (notice.id === noticeId) {
         return {
           ...notice,
@@ -93,10 +63,9 @@ const CourierSelectionPage = ({ t, onNext }) => {
       return notice;
     });
 
-    setNotices(updatedNotices);
+    setNoticeData(updatedNotices);
   };
 
-  // Handler to open the add address modal
   const handleAddAddress = (noticeId) => {
     setCurrentNoticeId(noticeId);
     setShowAddAddressModalLocal(true);
@@ -108,18 +77,17 @@ const CourierSelectionPage = ({ t, onNext }) => {
 
     // Get the new address that was added
     const newAddressData = data.addresses[data.addresses.length - 1];
-
     if (!newAddressData || !newAddressData.addresses) return;
-
     // Format the address from the modal data
     const addressObj = newAddressData.addresses;
     const addressText = [addressObj.locality, addressObj.city, addressObj.district, addressObj.state, addressObj.pincode].filter(Boolean).join(", ");
 
     // Update the notices with the new address
-    const updatedNotices = notices.map((notice) => {
+    // TODO : Update Address API need to be called here to persist the new address
+    const updatedNotices = noticeData?.map((notice) => {
       if (notice.id === currentNoticeId) {
         // Generate a new ID for the address
-        const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1;
+        const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1; // this might be removed when API is integrated
 
         return {
           ...notice,
@@ -136,7 +104,7 @@ const CourierSelectionPage = ({ t, onNext }) => {
       return notice;
     });
 
-    setNotices(updatedNotices);
+    setNoticeData(updatedNotices);
   };
 
   return (
@@ -152,17 +120,17 @@ const CourierSelectionPage = ({ t, onNext }) => {
           </div>
         </div>
 
-        {notices.map((notice) => (
+        {noticeData?.map((notice) => (
           <div key={notice.id} className="notice-section">
             <div className="notice-header">
-              {notice.title && <div className="notice-text">{notice.title}</div>}
-              {notice.subtitle && <div className="notice-subtitle">{notice.subtitle}</div>}
+              {notice?.title && <div className="notice-text">{notice.title}</div>}
+              {notice?.subtitle && <div className="notice-subtitle">{notice.subtitle}</div>}
             </div>
 
             <div className="courier-selection-section">
               <h3>{t("SELECT_COURIER_SERVICES")}</h3>
               <div className="courier-options">
-                {notice.courierOptions.map((courier) => (
+                {notice?.courierOptions?.map((courier) => (
                   <label key={courier.id} className="courier-option">
                     <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.id)} />
                     <div className="courier-details">
@@ -181,7 +149,7 @@ const CourierSelectionPage = ({ t, onNext }) => {
               <p className="address-note">{t("CS_SELECT_ADDRESS_FOR_DELIVERY_NOTE")}</p>
 
               <div className="address-options">
-                {notice.addresses.map((address) => (
+                {notice?.addresses?.map((address) => (
                   <label key={address.id} className="address-option">
                     <input type="checkbox" checked={address.selected} onChange={() => handleAddressChange(notice.id, address.id)} />
                     <div className="address-text">{address.text}</div>
@@ -205,7 +173,7 @@ const CourierSelectionPage = ({ t, onNext }) => {
       {showAddAddressModal && (
         <AddAddressModal
           t={t}
-          processCourierData={notices.find((notice) => notice.id === currentNoticeId) || {}}
+          processCourierData={noticeData?.find((notice) => notice.id === currentNoticeId) || {}}
           setShowAddAddressModalLocal={setShowAddAddressModalLocal}
           handleDataChange={handleDataChange}
         />

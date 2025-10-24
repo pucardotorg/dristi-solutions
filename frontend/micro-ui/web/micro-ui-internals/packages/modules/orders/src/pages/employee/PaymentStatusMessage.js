@@ -169,7 +169,7 @@ const PaymentStatusMessage = ({
         </div>
 
         <div className="payment-status-action">
-          <Button label={"Close"} onButtonClick={onClose} />
+          <Button label={t("CS_CLOSE")} onButtonClick={onClose} />
         </div>
       </div>
     </div>

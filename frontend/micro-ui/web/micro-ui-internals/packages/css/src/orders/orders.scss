@@ -1815,7 +1815,6 @@
         font-family: Roboto, sans-serif;
         font-size: 12px;
         font-weight: 500;
-        text-transform: uppercase;
         padding: 4px 8px;
         border-radius: 12px;
         margin-left: 10px;
@@ -1826,14 +1825,9 @@
           background-color: #fff6e8;
         }
 
-        &.processing {
+        &.paymentdone {
           color: #007e7e;
           background-color: #e0f2f1;
-        }
-
-        &.completed {
-          color: #00703c;
-          background-color: #e8f5e9;
         }
 
         &.failed {
@@ -1896,6 +1890,13 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .download-reciept-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
     }
   }
 }
@@ -2072,7 +2073,7 @@
         box-shadow: none !important;
         height: 40px;
 
-        h2{
+        h2 {
           font-family: Roboto;
           font-size: 16px;
           font-weight: 700;
