@@ -99,32 +99,33 @@
 
      <!-- dependencies for openssl -->
       <!-- Bouncy Castle: provides general-purpose crypto (OpenSSL equivalent in Java) -->
-<dependency>
-<groupId>org.bouncycastle</groupId>
-<artifactId>bcprov-jdk15on</artifactId>
-<version>1.76</version>
-</dependency>
+      <dependency>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk18on</artifactId>
+          <version>1.82</version>
+      </dependency>
  
 <!-- Bouncy Castle PKIX/CMS/PKCS#11 support if needed -->
-<dependency>
-<groupId>org.bouncycastle</groupId>
-<artifactId>bcpkix-jdk15on</artifactId>
-<version>1.76</version>
-</dependency>
+      <dependency>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcpkix-jdk18on</artifactId>
+          <version>1.82</version>
+      </dependency>
  
 <!-- Apache Santuario: XML Security (for signing/encryption) -->
-<dependency>
-<groupId>org.apache.santuario</groupId>
-<artifactId>xmlsec</artifactId>
-<version>3.1.2</version>
-</dependency>
+      <dependency>
+          <groupId>org.apache.santuario</groupId>
+          <artifactId>xmlsec</artifactId>
+          <version>4.0.4</version>
+      </dependency>
  
 <!-- Optional: PKCS#11 wrapper for Java to interact with hardware tokens -->
-<dependency>
-<groupId>org.ejbca.external</groupId>
-<artifactId>pkcs11wrapper</artifactId>
-<version>1.5.0</version>
-</dependency>
+      <dependency>
+          <groupId>org.xipki.iaik</groupId>
+          <artifactId>pkcs11wrapper-parent</artifactId>
+          <version>1.4.4</version>
+          <type>pom</type>
+      </dependency>
   </dependencies>
   <repositories>
     <repository>
