@@ -330,8 +330,7 @@ public class OrderRegistrationService {
 
             String receiver = getReceiverParty(messageCode);
 
-            boolean shouldMatchPartyType = !HEARING_SCHEDULED.equalsIgnoreCase(messageCode);
-            Set<String> individualIds = extractIndividualIds(caseDetails, receiver, shouldMatchPartyType);
+            Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
 
             if (receiver == null || receiver.equalsIgnoreCase(COMPLAINANT)) {
                 extractPowerOfAttorneyIds(caseDetails, individualIds);
@@ -434,18 +433,16 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver, boolean shouldMatchPartyType) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
-        String partyTypeToMatch = (shouldMatchPartyType && receiver != null && !receiver.isEmpty())
-                ? receiver.toLowerCase()
-                : null;
+        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
         Set<String> uuids = new HashSet<>();
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String partyType = node.get("partyType").asText().toLowerCase();
-                if ((partyTypeToMatch != null && partyType.contains(partyTypeToMatch)) || !shouldMatchPartyType) {
+                if (partyType.contains(partyTypeToMatch)) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
                     if (!uuid.isEmpty()) {
                         uuids.add(uuid);
@@ -459,7 +456,7 @@ public class OrderRegistrationService {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if ((partyTypeToMatch != null && partyType.contains(partyTypeToMatch)) || !shouldMatchPartyType) {
+                    if (partyType.contains(partyTypeToMatch)) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
                         if (!uuid.isEmpty()) {
                             uuids.add(uuid);

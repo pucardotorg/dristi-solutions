@@ -1582,8 +1582,21 @@ public class CaseService {
                                     .hearingDate(hearingDate)
                                     .build();
                             RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-                            callNotificationServiceForAdvocates(courtCase, requestInfo, VAKALATNAMA_FILED, smsTemplateData);
-                            callNotificationServiceForLitigants(courtCase, requestInfo, VAKALATNAMA_FILED, smsTemplateData);
+                            List<String> uuids = new ArrayList<>();
+                            courtCase.getRepresentatives().forEach(advocate -> {
+                                JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
+                                String uuid = advocateNode.path("additionalDetails").path("uuid").asText();
+                                uuids.add(uuid);
+                            });
+                            courtCase.getLitigants().forEach(litigant -> {
+                                JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
+                                String uuid = litigantNode.path("additionalDetails").path("uuid").asText();
+                                uuids.add(uuid);
+                            });
+                            List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
+                            individuals.forEach(individual -> {
+                                notificationService.sendNotification(requestInfo, smsTemplateData, VAKALATNAMA_FILED, individual.getMobileNumber());
+                            });
                         }
                     });
                 }
@@ -1605,26 +1618,6 @@ public class CaseService {
             return VAKALATNAMA.equalsIgnoreCase(String.valueOf(docName));
         }
         return false;
-    }
-
-    public void callNotificationServiceForAdvocates(CourtCase courtCase, RequestInfo requestInfo, String messageCode, SmsTemplateData smsTemplateData) {
-        List<String> uuids = courtCase.getRepresentatives().stream()
-                .map(advocateMapping -> advocateMapping.getAuditDetails().getCreatedBy())
-                .toList();
-        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
-        individuals.forEach(individual -> {
-            notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, individual.getMobileNumber());
-        });
-    }
-
-    public void callNotificationServiceForLitigants(CourtCase courtCase, RequestInfo requestInfo, String messageCode, SmsTemplateData smsTemplateData) {
-        List<String> uuids = courtCase.getLitigants().stream()
-                .map(Party::getIndividualId)
-                .toList();
-        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
-        individuals.forEach(individual -> {
-            notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, individual.getMobileNumber());
-        });
     }
 
     private Long getNextHearingDate(String filingNumber) {
