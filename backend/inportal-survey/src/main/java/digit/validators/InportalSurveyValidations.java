@@ -1,10 +1,11 @@
 package digit.validators;
 
-import digit.config.Configuration;
+import digit.config.MdmsDataConfig;
 import digit.util.InPortalSurveyUtil;
 import digit.web.models.EligibilityRequest;
 import digit.web.models.FeedBackRequest;
 import digit.web.models.RemindMeLaterRequest;
+import digit.web.models.SurveyConfig;
 import digit.web.models.SurveyTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -21,12 +22,12 @@ public class InportalSurveyValidations {
 
     private final InPortalSurveyUtil inPortalSurveyUtil;
 
-    private final Configuration configuration;
+    private final MdmsDataConfig mdmsDataConfig;
 
     @Autowired
-    public InportalSurveyValidations(InPortalSurveyUtil inPortalSurveyUtil, Configuration configuration) {
+    public InportalSurveyValidations(InPortalSurveyUtil inPortalSurveyUtil, MdmsDataConfig mdmsDataConfig) {
         this.inPortalSurveyUtil = inPortalSurveyUtil;
-        this.configuration = configuration;
+        this.mdmsDataConfig = mdmsDataConfig;
     }
 
     public void validateEligibilityRequest(EligibilityRequest eligibilityRequest) {
@@ -55,26 +56,33 @@ public class InportalSurveyValidations {
 
     }
 
-    public boolean validateEligibility(SurveyTracker surveyTracker) {
-
+    public boolean validateEligibility(SurveyTracker surveyTracker, RequestInfo requestInfo) {
         Integer attempts = surveyTracker.getAttempts();
-
-        Long expiryDate = surveyTracker.getExpiryDate();
-
+        Long lastTriggeredDate = surveyTracker.getLastTriggeredDate();
         Boolean remindMeLater = surveyTracker.getRemindMeLater();
+        Long currentTime = inPortalSurveyUtil.getCurrentTimeInMilliSec();
 
-        Long currentTimeInMilliSec = inPortalSurveyUtil.getCurrentTimeInMilliSec();
+        SurveyConfig config = mdmsDataConfig.fetchSurveyConfig(requestInfo);
+        Integer maxAttempts = config.getMaxNoOfAttempts();
 
-        Integer maxNoOfAttempts = configuration.getMaxNoOfAttempts();
+        // Case 1: Never performed any action (remindMeLater or feedback) → eligible
+        if (lastTriggeredDate == null) return true;
 
-        if (remindMeLater != null && remindMeLater) {
-            attempts = attempts +1;
-            surveyTracker.setAttempts(attempts);
-            return attempts > maxNoOfAttempts && expiryDate < currentTimeInMilliSec;
+        if (Boolean.TRUE.equals(remindMeLater)) {
+            Long waitPeriod = config.getNoOfDaysForRemindMeLater();
+            Long expiryDate = lastTriggeredDate + waitPeriod;
+
+            surveyTracker.setAttempts(attempts + 1);
+
+            // Eligible only if enough time passed AND crossed max attempts
+            return (attempts + 1) > maxAttempts && currentTime > expiryDate;
         } else {
-            return expiryDate == null || expiryDate < currentTimeInMilliSec;
-        }
+            Long waitPeriod = config.getNoOfDaysForExpiryAfterFeedBack();
+            Long expiryDate = lastTriggeredDate + waitPeriod;
 
+            // Eligible only if enough time passed since last feedback
+            return currentTime > expiryDate;
+        }
     }
 
     public void validateRemindMeLaterRequest(RemindMeLaterRequest request) {

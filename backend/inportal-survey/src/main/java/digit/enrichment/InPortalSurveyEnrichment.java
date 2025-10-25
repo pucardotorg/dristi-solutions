@@ -23,12 +23,9 @@ public class InPortalSurveyEnrichment {
 
     private final InPortalSurveyUtil inPortalSurveyUtil;
 
-    private final Configuration configuration;
-
     @Autowired
-    public InPortalSurveyEnrichment(InPortalSurveyUtil inPortalSurveyUtil, Configuration configuration) {
+    public InPortalSurveyEnrichment(InPortalSurveyUtil inPortalSurveyUtil) {
         this.inPortalSurveyUtil = inPortalSurveyUtil;
-        this.configuration = configuration;
     }
 
     public SurveyTracker enrichCreateSurveyTracker(EligibilityRequest eligibilityRequest) {
@@ -66,10 +63,10 @@ public class InPortalSurveyEnrichment {
 
     public SurveyTracker enrichSurveyTrackerForRemindMeLater(RemindMeLaterRequest request, SurveyTracker surveyTracker) {
 
-        Long expiryTime = inPortalSurveyUtil.getExpiryTimeInMilliSec(configuration.getNoOfDaysForRemindMeLater());
+        Long currentTime = inPortalSurveyUtil.getCurrentTimeInMilliSec();
 
         surveyTracker.setRemindMeLater(true);
-        surveyTracker.setExpiryDate(expiryTime);
+        surveyTracker.setLastTriggeredDate(currentTime);
         surveyTracker.setAttempts(0);
         
         AuditDetails auditDetails = surveyTracker.getAuditDetails();
@@ -111,8 +108,8 @@ public class InPortalSurveyEnrichment {
         // update remind me later
         surveyTracker.setRemindMeLater(false);
 
-        // update expiry date
-        surveyTracker.setExpiryDate(inPortalSurveyUtil.getExpiryTimeInMilliSec(configuration.getNoOfDaysForExpiryAfterFeedBack()));
+        // update last triggered date to current time
+        surveyTracker.setLastTriggeredDate(currentTime);
 
         return surveyTracker;
     }
