@@ -16,6 +16,7 @@ import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +26,9 @@ import org.springframework.util.CollectionUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +53,9 @@ public class CronJobScheduler {
     private final WorkflowService workflowService;
     private final ObjectMapper objectMapper;
 
+    @Value("${egov.sms.errors.pending.duration}")
+    private int smsErrorsPendingDuration;
+
     @Autowired
     public CronJobScheduler(CaseRepository caseRepository, RequestInfoGenerator requestInfoGenerator,
                             NotificationService notificationService, Configuration config, WorkflowService workflowService, ObjectMapper objectMapper) {
@@ -60,27 +66,6 @@ public class CronJobScheduler {
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.workflowService = workflowService;
         this.objectMapper = objectMapper;
-    }
-
-    @Async
-    @Scheduled(cron = "${config.case.esign.pending}", zone = "Asia/Kolkata")
-    public void sendNotificationToESignPending() {
-        if (config.getIsSMSEnabled()) {
-            log.info("Starting Cron Job For Sending Notification To Litigant ESign Pending");
-            processNotifications("DRAFT_IN_PROGRESS", ServiceConstants.ESIGN_PENDING);
-
-            log.info("Starting Cron Job For Sending Notification To Advocate ESign Pending");
-            processNotifications("DRAFT_IN_PROGRESS", ServiceConstants.ADVOCATE_ESIGN_PENDING);
-        }
-    }
-
-    @Async
-    @Scheduled(cron = "${config.application.payment.pending}", zone = "Asia/Kolkata")
-    public void sendNotificationToPaymentPending() {
-        if (config.getIsSMSEnabled()) {
-            log.info("Starting Cron Job For Sending Notification To Payment Pending");
-            processNotifications("PENDING_PAYMENT", ServiceConstants.PAYMENT_PENDING);
-        }
     }
 
     @Async
@@ -165,7 +150,7 @@ public class CronJobScheduler {
             if(ERRORS_PENDING.equalsIgnoreCase(notificationType)){
                 ProcessInstance processInstance = workflowService.getCurrentWorkflow(requestInfo, config.getTenantId(), courtCase.getFilingNumber());
                 Long createdTime = processInstance.getAuditDetails().getCreatedTime();
-                if(shouldTriggerSms(createdTime)){
+                if(shouldTriggerSmsForErrorsPending(createdTime)){
                     courtCase.getRepresentatives().forEach(representative -> {
                         JsonNode advocateNode = objectMapper.convertValue(representative, JsonNode.class);
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
@@ -188,12 +173,12 @@ public class CronJobScheduler {
         }
     }
 
-    public boolean shouldTriggerSms(long createdTime) {
+    public boolean shouldTriggerSmsForErrorsPending(long createdTime) {
 
-        Instant currentTime = Instant.now();
+        Instant currentTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant();
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
         long threeDaysInMillis = Duration.ofDays(3).toMillis();
-        long twentyDaysInMillis = Duration.ofDays(20).toMillis();
+        long twentyDaysInMillis = Duration.ofDays(smsErrorsPendingDuration).toMillis();
 
         // Get the time difference in milliseconds from createdTime
         long timeSinceCreation = Duration.between(createdInstant, currentTime).toMillis();
