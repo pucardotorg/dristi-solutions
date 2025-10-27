@@ -343,20 +343,16 @@ public class CronJobScheduler {
     }
 
     private Long getNextHearingDate(String filingNumber){
-        OrderCriteria orderCriteria = OrderCriteria.builder()
+        HearingCriteria criteria = HearingCriteria.builder()
                 .filingNumber(filingNumber)
                 .status(SCHEDULED)
                 .build();
-        Pagination pagination = Pagination.builder()
-                .sortBy("nextHearingDate")
-                .order(Order.DESC)
+        HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                .criteria(criteria)
                 .build();
-        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
-                .criteria(orderCriteria)
-                .pagination(pagination)
-                .build();
-        OrderListResponse orderListResponse = orderUtil.getOrders(orderSearchRequest);
-        return orderListResponse.getList().get(0).getNextHearingDate();
+        List<Hearing> hearings = hearingRepository.getHearings(hearingSearchRequest);
+
+        return hearings.get(0).getStartTime();
     }
 
     private List<Hearing> getHearingsScheduledTomorrow(RequestInfo requestInfo){

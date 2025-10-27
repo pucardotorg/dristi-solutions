@@ -78,7 +78,6 @@ public class HearingRowMapper implements ResultSetExtractor<List<Hearing>> {
                             .presidedBy(getObjectFromJson(rs.getString("presidedby"), new TypeReference<PresidedBy>() {}))
                             .attendees(getObjectFromJson(rs.getString("attendees"), new TypeReference<List<Attendee>>() {}))
                             .transcript(getListFromJson(rs.getString("transcript")))
-                            .status(rs.getString("status"))
                             .build();
                 }
                 PGobject pgObject = (PGobject) rs.getObject("additionalDetails");
