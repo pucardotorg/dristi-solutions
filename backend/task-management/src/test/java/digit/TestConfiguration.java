@@ -1,4 +1,4 @@
-package pucar;
+package digit;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

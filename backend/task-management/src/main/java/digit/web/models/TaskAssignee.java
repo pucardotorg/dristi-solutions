@@ -1,17 +1,16 @@
 package digit.web.models;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.egov.common.contract.request.RequestInfo;
-import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import org.springframework.validation.annotation.Validated;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Data;
 import lombok.Builder;
 
 /**
- * TaskManagementRequest
+ * TaskAssignee
  */
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-10-27T11:32:01.103620686+05:30[Asia/Kolkata]")
@@ -19,17 +18,10 @@ import lombok.Builder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TaskManagementRequest {
+public class TaskAssignee {
 
-    @JsonProperty("RequestInfo")
-    @NotNull
+    @JsonProperty("assignedTo")
     @Valid
-    private RequestInfo requestInfo = null;
-
-    @JsonProperty("taskManagement")
-    @NotNull
-    @Valid
-    private TaskManagement taskManagement = null;
-
+    private AssignedTo assignedTo;
 
 }

@@ -1,10 +1,10 @@
 package digit.repository.querybuilder;
 
+import digit.web.models.Pagination;
+import digit.web.models.TaskSearchCriteria;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
-import digit.web.models.Pagination;
-import digit.web.models.TaskSearchCriteria;
 
 import java.sql.Types;
 import java.util.List;

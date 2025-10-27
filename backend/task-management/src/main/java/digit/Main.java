@@ -4,13 +4,12 @@ package digit;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-@Import({TracerConfiguration.class})
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
-@ComponentScan(basePackages = {"pucar", "pucar.web.controllers", "pucar.config"})
+@Import({ TracerConfiguration.class })
+@SpringBootApplication
+@ComponentScan(basePackages = { "digit", "digit.web.controllers" , "digit.config"})
 public class Main {
 
 

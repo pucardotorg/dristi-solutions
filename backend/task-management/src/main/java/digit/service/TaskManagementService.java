@@ -1,15 +1,16 @@
 package digit.service;
 
+import digit.config.Configuration;
+import digit.kafka.Producer;
+import digit.repository.TaskManagementRepository;
+import digit.util.WorkflowUtil;
 import digit.web.models.TaskManagement;
 import digit.web.models.TaskManagementRequest;
 import digit.web.models.TaskSearchRequest;
-import digit.web.models.WorkflowObject;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import digit.config.Configuration;
-import digit.repository.TaskManagementRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,19 +20,20 @@ import java.util.UUID;
 @Slf4j
 public class TaskManagementService {
 
-    @Autowired
-    private TaskManagementRepository taskManagementRepository;
+    private final TaskManagementRepository taskManagementRepository;
+
+    private final WorkflowUtil workflowUtil;
+
+    private final Configuration config;
+
+    private final Producer producer;
 
     @Autowired
-    private WorkflowUtil workflowUtil;
-
-    @Autowired
-    private Configuration config;
-
-    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowUtil workflowUtil, Configuration config){
+    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowUtil workflowUtil, Configuration config, Producer producer) {
         this.taskManagementRepository = taskManagementRepository;
-       this.workflowUtil = workflowUtil;
-       this.config = config;
+        this.workflowUtil = workflowUtil;
+        this.config = config;
+        this.producer = producer;
     }
 
     public TaskManagement createTaskManagement(TaskManagementRequest request) {
@@ -39,8 +41,7 @@ public class TaskManagementService {
         request.getTaskManagement().setAuditDetails(auditDetails);
         request.getTaskManagement().setId(UUID.randomUUID());
 
-        workflowUpdate(request);
-
+        producer.push("","");
         return request.getTaskManagement();
     }
 
@@ -48,23 +49,10 @@ public class TaskManagementService {
         request.getTaskManagement().getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
         request.getTaskManagement().getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
 
-        workflowUpdate(request);
-
-        if("COMPLETED".equalsIgnoreCase(request.getTaskManagement().getStatus())){
+        if ("COMPLETED".equalsIgnoreCase(request.getTaskManagement().getStatus())) {
             //create tasks
         }
         return request.getTaskManagement();
-    }
-
-    private void workflowUpdate(TaskManagementRequest request) {
-        TaskManagement taskManagement = request.getTaskManagement();
-        String tenantId = taskManagement.getTenantId();
-        String id = String.valueOf(taskManagement.getId());
-        WorkflowObject workflow = taskManagement.getWorkflow();
-
-        String status = workflowUtil.updateWorkflowStatus(request.getRequestInfo(), tenantId, id, config.getTaskBusinessServiceName(),
-                workflow, config.getTaskBusinessName());
-        taskManagement.setStatus(status);
     }
 
     public List<TaskManagement> getTaskManagement(TaskSearchRequest request) {

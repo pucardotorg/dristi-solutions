@@ -1,35 +1,53 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.egov.common.contract.models.AuditDetails;
 
 import java.util.List;
 import java.util.UUID;
 
+import org.egov.common.contract.models.AuditDetails;
+import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.Builder;
+
+/**
+ * TaskManagement
+ */
+@Validated
+@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-10-27T11:32:01.103620686+05:30[Asia/Kolkata]")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class TaskManagement {
 
     @JsonProperty("id")
-    private UUID id;
+    @NotNull
+    @Valid
+    private UUID id = null;
 
     @JsonProperty("caseFilingNumber")
-    private String caseFilingNumber;
+    @NotNull
+    private String caseFilingNumber = null;
 
     @JsonProperty("courtId")
-    private String courtId;
+    @NotNull
+    @Valid
+    private String courtId = null;
+
+    @JsonProperty("orderNumber")
+    private String orderNumber = null;
 
     @JsonProperty("taskType")
-    private String taskType; //Notice, Summons
+    @Valid
+    private String taskType = null;
 
     @JsonProperty("tenantId")
     private String tenantId;
-
-    @JsonProperty("orderNumber")
-    private String orderNumber;
 
     @JsonProperty("status")
     private String status;
@@ -38,11 +56,13 @@ public class TaskManagement {
     private List<PartyDetails> partyDetails;
 
     @JsonProperty("additionalDetails")
-    private Object additionalDetails;
+    private Object additionalDetails = null;
 
     @JsonProperty("auditDetails")
-    private AuditDetails auditDetails;
+    @Valid
+    private AuditDetails auditDetails = null;
 
     @JsonProperty("workflow")
+    @Valid
     private WorkflowObject workflow;
 }

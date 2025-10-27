@@ -33,6 +33,15 @@ public class Configuration {
     @Value("${dristi.order.search.endpoint}")
     private String orderSearchEndPoint;
 
+    // User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.context.path}")
+    private String userContextPath;
+
+    @Value("${egov.user.create.path}")
+    private String userCreateEndpoint;
 
     // Task Config
     @Value("${dristi.task.host}")
@@ -54,6 +63,17 @@ public class Configuration {
     @Value("${dristi.case.search.endpoint}")
     private String caseSearchEndPoint;
 
+    @Value("${egov.user.update.path}")
+    private String userUpdateEndpoint;
+
+
+    //Idgen Config
+    @Value("${egov.idgen.host}")
+    private String idGenHost;
+
+    @Value("${egov.idgen.path}")
+    private String idGenPath;
+
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
@@ -70,6 +90,27 @@ public class Configuration {
 
     @Value("${egov.workflow.processinstance.search.path}")
     private String wfProcessInstanceSearchPath;
+
+
+    //MDMS
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${egov.mdms.search.endpoint}")
+    private String mdmsEndPoint;
+
+
+    //URLShortening
+    @Value("${egov.url.shortner.host}")
+    private String urlShortnerHost;
+
+    @Value("${egov.url.shortner.endpoint}")
+    private String urlShortnerEndpoint;
+
+
+    //SMSNotification
+    @Value("${egov.sms.notification.topic}")
+    private String smsNotificationTopic;
 
     // Workflow/Business Service name
     @Value("${egov.workflow.task.business.service.name}")

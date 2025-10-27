@@ -2,7 +2,11 @@ package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.UUID;
+
 import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -10,30 +14,38 @@ import lombok.Data;
 import lombok.Builder;
 
 /**
- * Pagination details
+ * amount in form of fees or penalty
  */
-@Schema(description = "Pagination details")
+@Schema(description = "amount in form of fees or penalty")
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-10-27T11:32:01.103620686+05:30[Asia/Kolkata]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Pagination {
-    @JsonProperty("limit")
-    @DecimalMax("100")
-    private Double limit = 10d;
+public class Amount {
+    @JsonProperty("id")
 
-    @JsonProperty("offSet")
-    private Double offSet = 0d;
+    @Valid
+    private UUID id = null;
 
-    @JsonProperty("totalCount")
-    private Double totalCount = null;
+    @JsonProperty("amount")
+    @NotNull
 
-    @JsonProperty("sortBy")
-    private String sortBy = null;
+    private String amount = null;
 
-    @JsonProperty("order")
-    private Order order = null;
+    @JsonProperty("type")
+    @NotNull
+
+    private String type = null;
+
+    @JsonProperty("paymentRefNumber")
+
+    private String paymentRefNumber = null;
+
+    @JsonProperty("additionalDetails")
+
+    private Object additionalDetails = null;
+
 
 }
