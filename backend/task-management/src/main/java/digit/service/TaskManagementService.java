@@ -1,19 +1,21 @@
 package digit.service;
 
 import digit.config.Configuration;
+import digit.enrichment.TaskManagementEnrichment;
 import digit.kafka.Producer;
 import digit.repository.TaskManagementRepository;
-import digit.util.WorkflowUtil;
+import digit.validator.TaskManagementValidator;
 import digit.web.models.TaskManagement;
 import digit.web.models.TaskManagementRequest;
 import digit.web.models.TaskSearchRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.AuditDetails;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
+
+import static digit.config.ServiceConstants.CREATE_TASK_MANAGEMENT_EXCEPTION;
 
 
 @Service
@@ -22,27 +24,43 @@ public class TaskManagementService {
 
     private final TaskManagementRepository taskManagementRepository;
 
-    private final WorkflowUtil workflowUtil;
+    private final WorkflowService workflowService;
 
-    private final Configuration config;
+    private final TaskManagementValidator validator;
+
+    private final TaskManagementEnrichment enrichment;
 
     private final Producer producer;
 
+    private final Configuration configuration;
+
     @Autowired
-    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowUtil workflowUtil, Configuration config, Producer producer) {
+    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowService workflowService, TaskManagementValidator validator, TaskManagementEnrichment enrichment, Producer producer, Configuration configuration) {
         this.taskManagementRepository = taskManagementRepository;
-        this.workflowUtil = workflowUtil;
-        this.config = config;
+        this.workflowService = workflowService;
+        this.validator = validator;
+        this.enrichment = enrichment;
         this.producer = producer;
+        this.configuration = configuration;
     }
 
     public TaskManagement createTaskManagement(TaskManagementRequest request) {
-        AuditDetails auditDetails = AuditDetails.builder().createdBy(request.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(request.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
-        request.getTaskManagement().setAuditDetails(auditDetails);
-        request.getTaskManagement().setId(UUID.randomUUID());
 
-        producer.push("","");
-        return request.getTaskManagement();
+        try {
+
+            validator.validateCreateRequest(request);
+
+            enrichment.enrichCreateRequest(request);
+
+            workflowService.updateWorkflowStatus(request);
+
+            producer.push(configuration.getSaveTaskManagementTopic(), request);
+
+            return request.getTaskManagement();
+        } catch (CustomException e) {
+            log.error("Error while creating task management", e);
+            throw new CustomException(CREATE_TASK_MANAGEMENT_EXCEPTION, e.getMessage());
+        }
     }
 
     public TaskManagement updateTaskManagement(TaskManagementRequest request) {
@@ -51,6 +69,7 @@ public class TaskManagementService {
 
         if ("COMPLETED".equalsIgnoreCase(request.getTaskManagement().getStatus())) {
             //create tasks
+            log.info("Task completed {}", request.getTaskManagement().getTaskManagementNumber());
         }
         return request.getTaskManagement();
     }

@@ -23,6 +23,9 @@ public class PartyDetails {
     @JsonProperty("respondentDetails")
     private Object respondentDetails;
 
+    @JsonProperty("witnessDetails")
+    private Object witnessDetails;
+
     @JsonProperty("addresses")
     private List<Address> addresses;
 

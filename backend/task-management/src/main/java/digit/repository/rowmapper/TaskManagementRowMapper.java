@@ -51,8 +51,8 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
                             .build();
 
                     task = TaskManagement.builder()
-                            .id(UUID.fromString(id))
-                            .caseFilingNumber(rs.getString("case_filing_number"))
+                            .id(id)
+                            .filingNumber(rs.getString("case_filing_number"))
                             .courtId(rs.getString("court_id"))
                             .orderNumber(rs.getString("order_number"))
                             .status(rs.getString("status"))
