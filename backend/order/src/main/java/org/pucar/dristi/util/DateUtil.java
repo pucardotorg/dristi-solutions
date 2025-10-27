@@ -43,7 +43,7 @@ public class DateUtil {
 
     public String getFormattedDateFromEpoch(Long epoch, String pattern) {
         // Convert epoch seconds to LocalDate
-        LocalDate date = Instant.ofEpochSecond(epoch)
+        LocalDate date = Instant.ofEpochMilli(epoch)
                 .atZone(ZoneId.of(config.getZoneId()))
                 .toLocalDate();
 

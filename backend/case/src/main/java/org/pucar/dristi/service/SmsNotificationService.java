@@ -80,8 +80,7 @@ public class SmsNotificationService {
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(CASE_FILED)){
-            Instant instant = dateUtil.getInstantFrom(config.getSmsCaseFiledTime());
-            schedulePushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId(), instant);
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
