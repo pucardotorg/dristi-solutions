@@ -127,8 +127,8 @@ public class NjdgConsumer {
         try {
             log.info("Received message on topic: {}", topic);
             // Convert payload to List of PartyDetails
-            List<PartyDetails> partyDetailsList = objectMapper.convertValue(payload.value(),
-                objectMapper.getTypeFactory().constructCollectionType(List.class, PartyDetails.class));
+            List<PartyDetails> partyDetailsList = objectMapper.readValue((String) payload.value(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, PartyDetails.class));;
             for (PartyDetails party : partyDetailsList) {
                 try {
                     // Update each party in the database

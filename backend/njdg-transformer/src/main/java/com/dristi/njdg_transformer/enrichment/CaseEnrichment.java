@@ -188,7 +188,7 @@ public class CaseEnrichment {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Integer partyId = 1;
+        Integer id = 1;
         for (JsonNode formDataNode : formDataArray) {
             JsonNode dataNode = formDataNode.path("data");
 
@@ -198,7 +198,16 @@ public class CaseEnrichment {
                     .path("individualId")
                     .asText(null);
 
-            // ✅ Skip the primary party
+            if (formIndividualId == null) {
+                // Safely extract party_id
+                String partyId = formDataNode.path("uniqueId").textValue();
+
+                // If party_id exists, set it as uniqueId for this case
+                if (partyId != null && !partyId.isEmpty()) {
+                    formIndividualId = partyId;
+                }
+            }
+
             if (primaryIndividualId != null && primaryIndividualId.equals(formIndividualId)) {
                 continue;
             }
@@ -253,9 +262,9 @@ public class CaseEnrichment {
             }
             // Build PartyDetails entry
             PartyDetails details = PartyDetails.builder()
-                    .id(partyId)
+                    .id(id)
                     .cino(courtCase.getCnrNumber())
-                    .partyNo(partyId)
+                    .partyNo(id)
                     .partyType(partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY)
                             ? PartyType.PET
                             : PartyType.RES)
@@ -267,7 +276,7 @@ public class CaseEnrichment {
 
             extraParties.add(details);
             existingIndividualIds.add(formIndividualId);
-            partyId++;
+            id++;
             log.debug("Added extra {} with individualId: {}", partyType.toLowerCase(), formIndividualId);
         }
 

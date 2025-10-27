@@ -16,6 +16,7 @@ public class PartyRowMapper implements RowMapper<PartyDetails> {
         partyDetails.setPartyNo(rs.getInt("party_no"));
         partyDetails.setPartyAddress(rs.getString("party_address"));
         partyDetails.setPartyAge(rs.getInt("party_age"));
+        partyDetails.setPartyId(rs.getString("party_id"));
         return partyDetails;
     }
 }

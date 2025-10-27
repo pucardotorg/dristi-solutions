@@ -100,11 +100,11 @@ public class CaseQueryBuilder {
     }
 
     public String getPartyQuery() {
-        return "SELECT party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age FROM extra_parties WHERE cino = ? AND party_type = ?";
+        return "SELECT party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age, party_id as party_id FROM extra_parties WHERE cino = ? AND party_type = ?";
     }
 
     public String getUpdatePartyQuery() {
-        return "INSERT INTO extra_parties (id, cino, party_type, party_no, party_name, party_address, party_age) VALUES(?, ?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO extra_parties (id, cino, party_type, party_no, party_name, party_address, party_age, party_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
     }
 
     public String getUpdateQuery() {
