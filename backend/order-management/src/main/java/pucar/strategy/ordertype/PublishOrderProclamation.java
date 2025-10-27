@@ -9,10 +9,13 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.config.StateSlaMap;
+import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.SMSTemplateData;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
@@ -34,15 +37,19 @@ public class PublishOrderProclamation implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final AdvocateUtil advocateUtil;
+    private final UserUtil userUtil;
+    private final SmsNotificationService smsNotificationService;
 
     @Autowired
-    public PublishOrderProclamation(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil) {
+    public PublishOrderProclamation(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil, UserUtil userUtil, SmsNotificationService smsNotificationService) {
         this.taskUtil = taskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.advocateUtil = advocateUtil;
+        this.userUtil = userUtil;
+        this.smsNotificationService = smsNotificationService;
     }
 
     @Override
@@ -163,6 +170,23 @@ public class PublishOrderProclamation implements OrderUpdateStrategy {
 
                     pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
                     ).pendingTask(pendingTask).build());
+
+                    String partyType = getPartyType(order);
+                    String orderType = order.getOrderType();
+                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(PROCLAMATION));
+                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                            .partyType(partyType)
+                            .orderType(orderType)
+                            .tenantId(courtCase.getTenantId())
+                            .days(days)
+                            .courtCaseNumber(courtCase.getCourtCaseNumber())
+                            .cmpNumber(courtCase.getCmpNumber())
+                            .build();
+                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
+                    if(pendingTask.getName().contains(RPAD)){
+                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
+
+                    }
                 }
 
 
@@ -173,6 +197,39 @@ public class PublishOrderProclamation implements OrderUpdateStrategy {
         }
 
         return null;
+    }
+
+    private String getPartyType(Order order) {
+        Object additionalDetails = order.getAdditionalDetails();
+        JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+
+        JsonNode partyTypeNode = additionalDetailsNode
+                .path("formdata")
+                .path("noticeOrder")
+                .path("party")
+                .path("partyType");
+
+        return partyTypeNode.textValue();
+    }
+
+    private void callNotificationService(OrderRequest orderRequest, String messageCode, SMSTemplateData smsTemplateData, List<User> users) {
+        try {
+            List<String> uuids = users.stream()
+                    .map(User::getUuid)
+                    .toList();
+
+            List<User> userList = userUtil.getUserListFromUserUuid(uuids);
+            List<String> phoneNumbers = userList.stream()
+                    .map(User::getMobileNumber)
+                    .toList();
+
+            for (String number : phoneNumbers) {
+                smsNotificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
     }
 
     @Override
