@@ -111,8 +111,6 @@ public class CronJobScheduler {
         hearingLink = jsonUtil.getNestedValue(data, List.of("link"), String.class);
     }
 
-    @Async
-    @Scheduled(cron = "${config.hearings.held.today.update}", zone = "Asia/Kolkata")
     public void sendNotificationOnHearingsHeldToday() {
         if(config.getIsSMSEnabled()){
             log.info("Starting Cron Job For Sending Hearing Update Notifications");
@@ -152,8 +150,6 @@ public class CronJobScheduler {
         }
     }
 
-    @Async
-    @Scheduled(cron = "${config.hearings.scheduled.tomorrow.update}", zone = "Asia/Kolkata")
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
             log.info("Sending notifications for hearings scheduled tomorrow");

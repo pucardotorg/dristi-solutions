@@ -54,7 +54,6 @@ public class CronJobScheduler {
         this.caseUtil = caseUtil;
     }
 
-    @Scheduled(cron = "${config.payment.pending.update}")
     public void sendNotificationForProcessPaymentPending() {
         List<PendingTask> pendingTasks = getPendingTasks();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
@@ -105,7 +104,6 @@ public class CronJobScheduler {
         return currentTime.toEpochMilli() >= windowStartMillis && currentTime.toEpochMilli() <= windowEndMillis;
     }
 
-    @Scheduled(cron = "${config.mandatory.submission.pending.update}")
     public void sendNotificationForMandatorySubmissionPending() {
         List<PendingTask> pendingTasks = getPendingTasks();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
