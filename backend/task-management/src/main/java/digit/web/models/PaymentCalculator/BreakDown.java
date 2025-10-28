@@ -1,4 +1,4 @@
-package digit.web.models.Payment_Calculator;
+package digit.web.models.PaymentCalculator;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

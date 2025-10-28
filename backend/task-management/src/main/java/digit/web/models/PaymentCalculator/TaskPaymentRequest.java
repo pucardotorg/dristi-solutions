@@ -1,4 +1,4 @@
-package digit.web.models.Payment_Calculator;
+package digit.web.models.PaymentCalculator;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
