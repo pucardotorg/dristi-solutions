@@ -291,12 +291,9 @@ public class CronJobScheduler {
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
                 String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
 
-                if(advocateCaseMap.containsKey(uuid)) {
-                    advocateCaseMap.get(uuid).add(courtCase);
-                }
-                else{
-                    advocateCaseMap.put(uuid, List.of(courtCase));
-                }
+                advocateCaseMap
+                        .computeIfAbsent(uuid, k -> new ArrayList<>())
+                        .add(courtCase);
             });
         });
 
@@ -309,12 +306,10 @@ public class CronJobScheduler {
             courtCase.getLitigants().forEach(litigant -> {
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
                 String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
-                if(litigantCaseMap.containsKey(uuid)) {
-                    litigantCaseMap.get(uuid).add(courtCase);
-                }
-                else{
-                    litigantCaseMap.put(uuid, List.of(courtCase));
-                }
+
+                litigantCaseMap
+                        .computeIfAbsent(uuid, k -> new ArrayList<>())
+                        .add(courtCase);
             });
         });
 
