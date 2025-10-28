@@ -1626,19 +1626,16 @@ public class CaseService {
                 .status(SCHEDULED)
                 .build();
 
-        // If multiple hearings are scheuled the earliest one is considered
-        Pagination pagination = Pagination.builder()
-                .sortBy("startTime")
-                .order(Order.ASC)
-                .build();
-
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                 .criteria(criteria)
-                .pagination(pagination)
+                .pagination(null)
                 .build();
 
         List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
-        return hearings.get(0).getStartTime();
+        if(!hearings.isEmpty()){
+            return hearings.get(0).getStartTime();
+        }
+        return null;
     }
 
     private List<Calculation> getPaymentCalculations(JoinCaseV2Request joinCaseRequest, JoinCaseDataV2 joinCaseData, CourtCase courtCase) {
