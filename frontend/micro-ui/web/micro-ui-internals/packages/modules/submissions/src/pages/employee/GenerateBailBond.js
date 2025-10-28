@@ -98,6 +98,7 @@ const GenerateBailBond = () => {
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
   const [caseApiError, setCaseApiError] = useState(undefined);
+  const [lockPrefilledFields, setLockPrefilledFields] = useState(false);
   // Flag to prevent multiple breadcrumb updates
   const isBreadCrumbsParamsDataSet = useRef(false);
 
@@ -252,7 +253,24 @@ const GenerateBailBond = () => {
         },
       ];
     }
-    return [];
+    const allComplainants = (caseDetails?.litigants || []).filter((l) => l?.partyType?.includes("complainant"));
+    const options = allComplainants
+      .map((l) => {
+        const name = l?.additionalDetails?.fullName || l?.name || l?.litigantName || l?.individualName || "";
+        const uuid = l?.additionalDetails?.uuid || l?.individualId || l?.uuid || l?.id || "";
+        return name && uuid
+          ? {
+              code: name,
+              name,
+              uuid,
+            }
+          : null;
+      })
+      .filter(Boolean);
+    try {
+      console.log("[Bail Prefill] complainantsList options", { count: options.length, sample: options[0] || null });
+    } catch (e) {}
+    return options;
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const modifiedFormConfig = useMemo(() => {
@@ -273,45 +291,42 @@ const GenerateBailBond = () => {
         }
         return show && config;
       })
-      .map((config) => {
-        return {
-          ...config,
-          body: config?.body.map((body) => {
-            if (body?.populators?.validation) {
-              const customValidations =
-                Digit?.Customizations?.[body.populators.validation.pattern.masterName]?.[body.populators.validation.pattern.moduleName];
-
-              if (typeof customValidations === "function") {
-                const patternType = body.populators.validation.pattern.patternType;
-                const message = body.populators.validation.pattern.message;
-
-                body.populators.validation = {
-                  ...body.populators.validation,
-                  pattern: {
-                    value: customValidations(patternType),
-                    message,
-                  },
-                };
-              }
+      .map((config) => ({
+        ...config,
+        body: config?.body.map((body) => {
+          if (body?.populators?.validation) {
+            const customValidations =
+              Digit?.Customizations?.[body.populators?.validation?.pattern?.masterName]?.[body.populators?.validation?.pattern?.moduleName];
+            if (typeof customValidations === "function") {
+              const patternType = body.populators.validation.pattern.patternType;
+              const message = body.populators.validation.pattern.message;
+              body.populators.validation = {
+                ...body.populators.validation,
+                pattern: { value: customValidations(patternType), message },
+              };
             }
-            if (body?.key === "selectComplainant") {
-              body.populators.options = complainantsList;
-              if (complainantsList?.length === 1) {
-                const updatedBody = {
-                  ...body,
-                  disable: true,
-                };
-                return updatedBody;
-              }
-            }
-            return {
-              ...body,
-            };
-          }),
-        };
-      });
+          }
+          if (body?.key === "selectComplainant") {
+            body.populators.options = complainantsList;
+            const disableSelect = lockPrefilledFields && !!formdata?.selectComplainant?.uuid;
+            if (complainantsList?.length === 1 || disableSelect) return { ...body, disable: true };
+          }
+          if (body?.key === "litigantFatherName" && lockPrefilledFields && !!formdata?.litigantFatherName) {
+            return { ...body, disable: true };
+          }
+          if (body?.key === "bailType" && lockPrefilledFields && !!formdata?.bailType?.code) {
+            return { ...body, disable: true };
+          }
+          if (body?.key === "sureties") {
+            return { ...body, lockPrefilledFields };
+          }
+          return {
+            ...body,
+          };
+        }),
+      }));
     return updatedConfig;
-  }, [complainantsList, formdata]);
+  }, [complainantsList, formdata, lockPrefilledFields]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
@@ -319,39 +334,39 @@ const GenerateBailBond = () => {
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {
       clearErrors("bailAmount");
     }
+
+    // Enforce name pattern for litigantFatherName explicitly to ensure it remains validated after clear
+    // try {
+    //   const namePattern = window?.Digit?.Utils?.getPattern ? window?.Digit?.Utils?.getPattern("Name") : null;
+    //   const value = formData?.litigantFatherName;
+    //   const hasErrorKey = Object.keys(formState?.errors || {}).includes("litigantFatherName");
+    //   if (typeof value === "string") {
+    //     const isEmpty = /^\s*$/.test(value);
+    //     const isValid = namePattern ? new RegExp(namePattern).test(value) : true;
+    //     if (!isEmpty && !isValid && !hasErrorKey) {
+    //       setError("litigantFatherName", { message: t("CORE_COMMON_APPLICANT_NAME_INVALID") });
+    //     } else if ((isEmpty || isValid) && hasErrorKey) {
+    //       clearErrors("litigantFatherName");
+    //     }
+    //   }
+    // } catch (e) {}
     if (formData?.bailType?.code === "SURETY") {
-      if (formData?.sureties?.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
-        formData?.sureties?.forEach((docs, index) => {
-          if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
-            clearErrors(`name_${index}`);
-          }
-
-          if (docs?.fatherName && Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
-            clearErrors(`fatherName_${index}`);
-          }
-
-          if (docs?.mobileNumber && Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) {
-            clearErrors(`mobileNumber_${index}`);
-          }
-
-          if (docs?.identityProof && Object.keys(formState?.errors).includes(`identityProof_${index}`)) {
-            clearErrors(`identityProof_${index}`);
-          }
-
-          if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
-            clearErrors(`proofOfSolvency_${index}`);
-          }
+      const sureties = Array.isArray(formData?.sureties) ? formData.sureties : [];
+      if (sureties.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
+        sureties.forEach((s, index) => {
+          if (s?.name && Object.keys(formState?.errors).includes(`name_${index}`)) clearErrors(`name_${index}`);
+          if (s?.fatherName && Object.keys(formState?.errors).includes(`fatherName_${index}`)) clearErrors(`fatherName_${index}`);
+          if (s?.mobileNumber && Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) clearErrors(`mobileNumber_${index}`);
+          const idDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
+          const solDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
+          if (idDocs?.length && Object.keys(formState?.errors).includes(`identityProof_${index}`)) clearErrors(`identityProof_${index}`);
+          if (solDocs?.length && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) clearErrors(`proofOfSolvency_${index}`);
         });
-      } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
+      } else if (sureties.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
         clearErrors("sureties");
       }
     }
-
-    if (Object.keys(formState?.errors).length) {
-      setIsSubmitDisabled(true);
-    } else {
-      setIsSubmitDisabled(false);
-    }
+    setIsSubmitDisabled(Object.keys(formState?.errors || {}).length > 0);
 
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
@@ -819,6 +834,30 @@ const GenerateBailBond = () => {
     setShowErrorToast(null);
   };
 
+  const clearAutoPopulated = () => {
+    try {
+      const shouldPreserveComplainant = Array.isArray(complainantsList) && complainantsList.length === 1;
+      const preservedComplainant = shouldPreserveComplainant ? formdata?.selectComplainant || {} : {};
+      setFormDataValue.current && setFormDataValue.current("bailAmount", "");
+      setFormDataValue.current && setFormDataValue.current("bailType", {});
+      setFormDataValue.current && setFormDataValue.current("litigantFatherName", "");
+      setFormDataValue.current && setFormDataValue.current("sureties", [{}, {}]);
+      setFormDataValue.current && setFormDataValue.current("selectComplainant", preservedComplainant);
+      setLockPrefilledFields(false);
+
+      const errorKeys = Object.keys(setFormState.current?.errors || {});
+      [
+        "bailAmount",
+        "bailType",
+        "litigantFatherName",
+        "sureties",
+        ...errorKeys.filter((k) => /^name_\d+$|^fatherName_\d+$|^mobileNumber_\d+$|^identityProof_\d+$|^proofOfSolvency_\d+$/.test(k)),
+      ].forEach((k) => {
+        clearFormDataErrors.current && clearFormDataErrors.current(k);
+      });
+    } catch (e) {}
+  };
+
   const documents = useMemo(() => {
     let docList = [];
     if (bailBondDetails?.sureties?.length > 0) {
@@ -856,12 +895,288 @@ const GenerateBailBond = () => {
   }, [bailBondDetails, t]);
 
   useEffect(() => {
+    const prefillFromCompleted = async () => {
+      try {
+        if (bailBondId || !filingNumber || !tenantId) {
+          console.log("[Bail Prefill] Skipping prefill: missing identifiers or editing existing", { bailBondId, filingNumber, tenantId });
+          return;
+        }
+        if (bailBondDetails || (defaultFormValueData && Object.keys(defaultFormValueData).length > 0)) {
+          console.log("[Bail Prefill] Skipping prefill: existing details/defaults present", {
+            hasBailBondDetails: !!bailBondDetails,
+            hasDefault: !!defaultFormValueData && Object.keys(defaultFormValueData).length > 0,
+          });
+          return;
+        }
+
+        const searchPayload = {
+          criteria: {
+            ...(courtId && { courtId }),
+            ...(caseDetails?.id && { caseId: caseDetails.id }),
+            filingNumber,
+            status: ["COMPLETED"],
+          },
+          tenantId,
+          pagination: {
+            limit: 1,
+            offSet: 0,
+            sortBy: "bailCreatedTime",
+            order: "desc",
+          },
+        };
+
+        console.log("[Bail Prefill] Searching latest COMPLETED bail with payload", searchPayload);
+        const res = await submissionService.searchBailBond(searchPayload, {});
+        console.log("[Bail Prefill] Search result", { count: res?.bails?.length || 0 });
+        let latestMatched = res?.bails?.[0];
+        if (latestMatched) {
+          console.log("[Bail Prefill] Found latest completed bail", { bailId: latestMatched?.bailId, createdTime: latestMatched?.bailCreatedTime });
+          setDefaultFormValueData(latestMatched);
+          const mapped = convertToFormData(t, latestMatched);
+          setFormdata(mapped);
+          if (typeof resetFormData?.current === "function") {
+            console.log("[Bail Prefill] Resetting form with mapped values");
+            try {
+              resetFormData.current(mapped);
+              if (typeof clearFormDataErrors?.current === "function") clearFormDataErrors.current();
+            } catch (e) {
+              console.error("[Bail Prefill] Error while resetting form:", e);
+            }
+          }
+        } else {
+          console.log(
+            "[Bail Prefill] No completed bail found to prefill from bail-bond API. Falling back to Applications search (REQUEST_FOR_BAIL, COMPLETED) as per user request"
+          );
+          try {
+            const appSearchPayload = {
+              criteria: {
+                filingNumber: filingNumber,
+                tenantId: tenantId,
+                ...(courtId && { courtId }),
+                status: "COMPLETED",
+                applicationType: "REQUEST_FOR_BAIL",
+              },
+              tenantId: tenantId,
+            };
+            console.log("[Bail Prefill][Apps] Searching applications with payload", appSearchPayload);
+            const appRes = await submissionService.searchApplication(appSearchPayload, {});
+            const list = Array.isArray(appRes?.applicationList) ? appRes.applicationList : [];
+            const matched = list
+              .filter((a) => a?.applicationType === "REQUEST_FOR_BAIL" && a?.status === "COMPLETED")
+              .sort((a, b) => (b?.createdDate || 0) - (a?.createdDate || 0));
+            const latestApp = matched?.[0];
+            if (latestApp) {
+              const formdataFromApp = latestApp?.additionalDetails?.formdata || {};
+              const appDetails = latestApp?.applicationDetails || {};
+              const complainant = formdataFromApp?.selectComplainant;
+
+              const addSuretyFromDetails = appDetails?.addSurety;
+              const addSuretyFromForm = formdataFromApp?.addSurety?.code;
+              const addSurety = addSuretyFromDetails != null ? addSuretyFromDetails : addSuretyFromForm;
+              const derivedBailType = addSurety
+                ? {
+                    code: addSurety === "YES" ? "SURETY" : "PERSONAL",
+                    name: t((addSurety === "YES" ? "SURETY" : "PERSONAL").toUpperCase()),
+                    showSurety: addSurety === "YES",
+                  }
+                : undefined;
+
+              const suretiesFromDetails = Array.isArray(appDetails?.sureties) ? appDetails.sureties : undefined;
+              const suretiesFromForm = Array.isArray(formdataFromApp?.sureties) ? formdataFromApp.sureties : undefined;
+              const sourceSureties = suretiesFromDetails || suretiesFromForm;
+              const appLevelDocs = Array.isArray(appDetails?.applicationDocuments) ? appDetails.applicationDocuments : [];
+              const appLevelIdProofDocs = appLevelDocs
+                .filter((d) => d?.documentType === "IDENTITY_PROOF")
+                .map((d) => ({
+                  fileStore: d?.fileStore,
+                  documentType: "IDENTITY_PROOF",
+                  documentName: d?.documentTitle || "identityProof.pdf",
+                  tenantId,
+                }));
+              const appLevelSolvencyDocs = appLevelDocs
+                .filter((d) => d?.documentType === "PROOF_OF_SOLVENCY")
+                .map((d) => ({
+                  fileStore: d?.fileStore,
+                  documentType: "PROOF_OF_SOLVENCY",
+                  documentName: d?.documentTitle || "proofOfSolvency.pdf",
+                  tenantId,
+                }));
+
+              const mappedSureties = Array.isArray(sourceSureties)
+                ? sourceSureties.map((s, sIdx) => {
+                    const perSuretyDocs = Array.isArray(s?.documents) ? s.documents : [];
+                    const perIdDocs = perSuretyDocs
+                      .filter((d) => d?.documentType === "IDENTITY_PROOF")
+                      .map((d) => ({
+                        fileStore: d?.fileStore,
+                        documentType: "IDENTITY_PROOF",
+                        documentName: d?.documentName || d?.documentTitle || "identityProof.pdf",
+                        isActive: true,
+                        tenantId,
+                      }));
+                    const perSolDocs = perSuretyDocs
+                      .filter((d) => d?.documentType === "PROOF_OF_SOLVENCY")
+                      .map((d) => ({
+                        fileStore: d?.fileStore,
+                        documentType: "PROOF_OF_SOLVENCY",
+                        documentName: d?.documentName || d?.documentTitle || "proofOfSolvency.pdf",
+                        isActive: true,
+                        tenantId,
+                      }));
+                    const useAppLevelForThisSurety = sourceSureties.length === 1 && perSuretyDocs.length === 0;
+
+                    return {
+                      name: s?.name || "",
+                      fatherName: s?.fatherName || "",
+                      mobileNumber: s?.mobileNumber || "",
+                      address: s?.address || {},
+                      email: s?.email || "",
+                      identityProof: { document: perIdDocs.length ? perIdDocs : useAppLevelForThisSurety ? appLevelIdProofDocs : [] },
+                      proofOfSolvency: { document: perSolDocs.length ? perSolDocs : useAppLevelForThisSurety ? appLevelSolvencyDocs : [] },
+                      otherDocuments: { document: [] },
+                      documents: [
+                        ...perIdDocs,
+                        ...perSolDocs,
+                        ...(useAppLevelForThisSurety ? [...appLevelIdProofDocs, ...appLevelSolvencyDocs] : []),
+                      ],
+                    };
+                  })
+                : undefined;
+
+              const litigantFatherNameFromDetails = appDetails?.litigantFatherName;
+              const litigantFatherNameFromForm = formdataFromApp?.litigantFatherName;
+
+              const mappedCandidate = {
+                ...(complainant && { selectComplainant: { code: complainant?.name, name: complainant?.name, uuid: complainant?.uuid } }),
+                ...((litigantFatherNameFromDetails || litigantFatherNameFromForm) && {
+                  litigantFatherName: litigantFatherNameFromDetails || litigantFatherNameFromForm,
+                }),
+                ...(derivedBailType && { bailType: derivedBailType }),
+                ...(mappedSureties && { sureties: mappedSureties }),
+              };
+              const current = formdata || {};
+              const mapped = {
+                ...(current?.selectComplainant
+                  ? {}
+                  : mappedCandidate?.selectComplainant
+                  ? { selectComplainant: mappedCandidate.selectComplainant }
+                  : {}),
+                ...(current?.litigantFatherName
+                  ? {}
+                  : mappedCandidate?.litigantFatherName
+                  ? { litigantFatherName: mappedCandidate.litigantFatherName }
+                  : {}),
+                ...(current?.bailType?.code ? {} : mappedCandidate?.bailType ? { bailType: mappedCandidate.bailType } : {}),
+                ...(Array.isArray(current?.sureties) && current?.sureties?.length
+                  ? {}
+                  : mappedCandidate?.sureties
+                  ? { sureties: mappedCandidate.sureties }
+                  : {}),
+              };
+              console.log("[Bail Prefill][Apps] Prefilling from application (patching empty fields only)", {
+                applicationNumber: latestApp?.applicationNumber,
+                willSetSelectComplainant: !current?.selectComplainant && !!mappedCandidate?.selectComplainant,
+                willSetLitigantFatherName: !current?.litigantFatherName && !!mappedCandidate?.litigantFatherName,
+                willSetBailType: !current?.bailType?.code && !!mappedCandidate?.bailType,
+                willSetSureties: !(Array.isArray(current?.sureties) && current?.sureties?.length) && !!mappedCandidate?.sureties,
+              });
+              if (Object.keys(mapped).length > 0) {
+                const compatForConvert = {};
+                if (mappedCandidate?.selectComplainant) {
+                  compatForConvert.litigantName = mappedCandidate.selectComplainant.name;
+                  compatForConvert.litigantId = mappedCandidate.selectComplainant.uuid;
+                }
+                if (mappedCandidate?.litigantFatherName) {
+                  compatForConvert.litigantFatherName = mappedCandidate.litigantFatherName;
+                }
+                if (derivedBailType?.code) {
+                  compatForConvert.bailType = derivedBailType.code;
+                }
+                if (Array.isArray(mappedCandidate?.sureties) && mappedCandidate.sureties.length) {
+                  compatForConvert.sureties = mappedCandidate.sureties.map((s) => ({
+                    name: s?.name || "",
+                    fatherName: s?.fatherName || "",
+                    mobileNumber: s?.mobileNumber || "",
+                    address: s?.address || {},
+                    email: s?.email || "",
+                    documents: Array.isArray(s?.documents)
+                      ? s.documents.map((d) => ({ ...d, isActive: d?.isActive != null ? d.isActive : true }))
+                      : [],
+                  }));
+                }
+
+                setDefaultFormValueData((prev) => ({ ...(prev || {}), ...compatForConvert }));
+                setFormdata((prev) => ({ ...(prev || {}), ...mapped }));
+                setLockPrefilledFields(true);
+                if (typeof resetFormData?.current === "function") {
+                  try {
+                    const base = {
+                      ...(current || {}),
+                      ...(current?.litigantName ? { litigantName: current.litigantName } : {}),
+                      ...(!current?.litigantName && caseDetails?.litigantName ? { litigantName: caseDetails.litigantName } : {}),
+                      ...mapped,
+                    };
+                    resetFormData.current(base);
+                    if (typeof clearFormDataErrors?.current === "function") clearFormDataErrors.current();
+                  } catch (e) {
+                    console.error("[Bail Prefill][Apps] Error while resetting form:", e);
+                  }
+                }
+              }
+              return;
+            }
+          } catch (appErr) {
+            console.error("[Bail Prefill][Apps] Failed searching applications:", appErr);
+          }
+          console.log("[Bail Prefill] Applications fallback also found nothing. Leaving form empty.");
+          try {
+            const diagPayload = {
+              criteria: {
+                ...(courtId && { courtId }),
+                ...(caseDetails?.id && { caseId: caseDetails.id }),
+                filingNumber,
+              },
+              tenantId,
+              pagination: { limit: 3, offSet: 0, sortBy: "bailCreatedTime", order: "desc" },
+            };
+            console.log("[Bail Prefill][Diag] Searching latest ANY-STATUS bail with payload", diagPayload);
+            const diagRes = await submissionService.searchBailBond(diagPayload, {});
+            const diagStatuses = Array.isArray(diagRes?.bails)
+              ? diagRes.bails.map((b) => ({ bailId: b?.bailId, status: b?.status || b?.bailStatus, created: b?.bailCreatedTime }))
+              : [];
+            console.log("[Bail Prefill][Diag] Latest bails statuses", diagStatuses);
+          } catch (diagErr) {
+            console.error("[Bail Prefill][Diag] Failed diagnostic search:", diagErr);
+          }
+        }
+      } catch (err) {
+        console.error("[Bail Prefill] Failed to prefill from latest completed bail application:", err);
+      }
+    };
+
+    prefillFromCompleted();
+  }, [bailBondId, filingNumber, tenantId, courtId, bailBondDetails, defaultFormValueData, t]);
+
+  useEffect(() => {
+    if (!bailBondId && defaultFormValueData && Object.keys(defaultFormValueData || {}).length > 0 && typeof resetFormData?.current === "function") {
+      try {
+        const mapped = convertToFormData(t, defaultFormValueData);
+        console.log("[Bail Prefill] Late reset after refs ready", { hasMapped: !!mapped });
+        resetFormData.current(mapped);
+        if (typeof clearFormDataErrors?.current === "function") clearFormDataErrors.current();
+      } catch (e) {
+        console.error("[Bail Prefill] Error during late reset:", e);
+      }
+    }
+  }, [resetFormData?.current, clearFormDataErrors?.current, defaultFormValueData, bailBondId, t]);
+
+  useEffect(() => {
     if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
       history.replace(
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
       );
     }
-  }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber]);
+  }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber, history, userType]);
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
@@ -905,6 +1220,25 @@ const GenerateBailBond = () => {
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />
+          <button
+            type="button"
+            onClick={clearAutoPopulated}
+            className="tertiary-clear-btn"
+            style={{
+              position: "fixed",
+              bottom: 12,
+              left: 32,
+              background: "transparent",
+              border: "1px solid #007E7E",
+              color: "#007E7E",
+              padding: "8px 16px",
+              fontWeight: 600,
+              cursor: "pointer",
+              zIndex: 1000,
+            }}
+          >
+            {t("CLEAR_INFORMATION")}
+          </button>
         </div>
 
         {showBailBondReview && (
