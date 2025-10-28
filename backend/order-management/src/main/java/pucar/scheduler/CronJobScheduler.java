@@ -1,6 +1,7 @@
 package pucar.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import pucar.service.SmsNotificationService;
 import pucar.util.CaseUtil;
 import pucar.util.DateUtil;
 import pucar.util.PendingTaskUtil;
+import pucar.util.RequestInfoGenerator;
 import pucar.util.UserUtil;
 import pucar.web.models.SMSTemplateData;
 import pucar.web.models.courtCase.CaseCriteria;
@@ -50,14 +52,16 @@ public class CronJobScheduler {
     private final SmsNotificationService smsNotificationService;
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
+    private final RequestInfoGenerator requestInfoGenerator;
 
-    public CronJobScheduler(PendingTaskUtil pendingTaskUtil, Configuration config, UserUtil userUtil, SmsNotificationService smsNotificationService, DateUtil dateUtil, CaseUtil caseUtil) {
+    public CronJobScheduler(PendingTaskUtil pendingTaskUtil, Configuration config, UserUtil userUtil, SmsNotificationService smsNotificationService, DateUtil dateUtil, CaseUtil caseUtil, RequestInfoGenerator requestInfoGenerator) {
         this.pendingTaskUtil = pendingTaskUtil;
         this.config = config;
         this.userUtil = userUtil;
         this.smsNotificationService = smsNotificationService;
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
+        this.requestInfoGenerator = requestInfoGenerator;
     }
 
     public void sendNotificationForProcessPaymentPending() {
@@ -117,7 +121,9 @@ public class CronJobScheduler {
                     CaseCriteria criteria = CaseCriteria.builder()
                             .filingNumber(pendingTask.getFilingNumber())
                             .build();
+                    RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
                     CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                            .requestInfo(requestInfo)
                             .criteria(List.of(criteria))
                             .build();
                     CaseListResponse caseListResponse = caseUtil.searchCaseDetails(caseSearchRequest);

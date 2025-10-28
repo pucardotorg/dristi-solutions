@@ -185,4 +185,7 @@ public class ServiceConstants {
 
     public static final String RPAD = "RPAD";
 
+    public static final String msgId = "1730882648558|en_IN";
+    public static final String SYSTEM = "SYSTEM";
+
 }
