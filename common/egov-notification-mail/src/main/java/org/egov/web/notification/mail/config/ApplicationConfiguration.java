@@ -99,6 +99,7 @@ public class ApplicationConfiguration {
             mailProperties.setProperty("mail.smtps.starttls.enable", emailProperties.getMailStartTlsEnable());
             mailProperties.setProperty("mail.smtps.ssl.enable", emailProperties.getMailSslEnable());
             mailProperties.setProperty("mail.smtps.debug", emailProperties.getMailSmtpsDebug());
+            mailProperties.setProperty("mail.smtps.ssl.protocols", emailProperties.getMailSmtpSslProtocol());
         }
 
 
