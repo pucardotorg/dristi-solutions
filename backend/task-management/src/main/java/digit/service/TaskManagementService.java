@@ -26,6 +26,8 @@ public class TaskManagementService {
 
     private final WorkflowService workflowService;
 
+    private final DemandService demandService;
+
     private final TaskManagementValidator validator;
 
     private final TaskManagementEnrichment enrichment;
@@ -35,9 +37,10 @@ public class TaskManagementService {
     private final Configuration configuration;
 
     @Autowired
-    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowService workflowService, TaskManagementValidator validator, TaskManagementEnrichment enrichment, Producer producer, Configuration configuration) {
+    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowService workflowService, DemandService demandService, TaskManagementValidator validator, TaskManagementEnrichment enrichment, Producer producer, Configuration configuration) {
         this.taskManagementRepository = taskManagementRepository;
         this.workflowService = workflowService;
+        this.demandService = demandService;
         this.validator = validator;
         this.enrichment = enrichment;
         this.producer = producer;
@@ -52,6 +55,8 @@ public class TaskManagementService {
 
             enrichment.enrichCreateRequest(request);
 
+            demandService.createDemand(request);
+
             workflowService.updateWorkflowStatus(request);
 
             producer.push(configuration.getSaveTaskManagementTopic(), request);
@@ -64,13 +69,17 @@ public class TaskManagementService {
     }
 
     public TaskManagement updateTaskManagement(TaskManagementRequest request) {
-        request.getTaskManagement().getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-        request.getTaskManagement().getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
 
-        if ("COMPLETED".equalsIgnoreCase(request.getTaskManagement().getStatus())) {
-            //create tasks
-            log.info("Task completed {}", request.getTaskManagement().getTaskManagementNumber());
-        }
+        validator.validateUpdateRequest(request);
+
+        enrichment.enrichUpdateRequest(request);
+
+        workflowService.updateWorkflowStatus(request);
+
+        demandService.updateDemand(request);
+
+        producer.push(configuration.getSaveTaskManagementTopic(), request);
+
         return request.getTaskManagement();
     }
 

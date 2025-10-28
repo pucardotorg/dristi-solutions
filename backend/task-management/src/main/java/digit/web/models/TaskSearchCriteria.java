@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -26,11 +27,19 @@ public class TaskSearchCriteria {
 
     @JsonProperty("id")
     @Valid
-    private UUID id = null;
+    private String id = null;
 
     @JsonProperty("courtId")
     @Valid
-    private UUID courtId = null;
+    private String courtId = null;
+
+    @JsonProperty("tenantId")
+    @Valid
+    @NotNull
+    private String tenantId;
+
+    @JsonProperty("taskManagementNumber")
+    private String taskManagementNumber;
 
     @JsonProperty("orderNumber")
     private String orderNumber = null;
@@ -38,45 +47,46 @@ public class TaskSearchCriteria {
     @JsonProperty("filingNumber")
     private String filingNumber;
 
-    @JsonProperty("workflowStatus")
-    private String workflowStatus = null;
-
-    @JsonProperty("businessService")
-    private String businessService = null;
-
-    @JsonProperty("workflowCode")
-    private String workflowCode = null;
-
-    @JsonProperty("history")
-    private Boolean history = false;
-
-    @JsonProperty("taskStatus")
-    private List<String> taskStatus = null;
+    //TODO : check with mani about these
+//    @JsonProperty("workflowStatus")
+//    private String workflowStatus = null;
+//
+//    @JsonProperty("businessService")
+//    private String businessService = null;
+//
+//    @JsonProperty("workflowCode")
+//    private String workflowCode = null;
+//
+//    @JsonProperty("history")
+//    private Boolean history = false;
+//
+//    @JsonProperty("taskStatus")
+//    private List<String> taskStatus = null;
 
     @JsonProperty("taskType")
     private List<String> taskType = null;
 
-    @JsonProperty("assigneeId")
-    @Valid
-    private UUID assigneeId = null;
+//    @JsonProperty("assigneeId")
+//    @Valid
+//    private UUID assigneeId = null;
+//
+//    @JsonProperty("createdFrom")
+//    private Long createdFrom = null;
+//
+//    @JsonProperty("createdTo")
+//    private Long createdTo = null;
+//
+//    @JsonProperty("isActive")
+//    private Boolean isActive = null;
 
-    @JsonProperty("createdFrom")
-    private Long createdFrom = null;
 
-    @JsonProperty("createdTo")
-    private Long createdTo = null;
-
-    @JsonProperty("isActive")
-    private Boolean isActive = null;
-
-
-    public TaskSearchCriteria addTaskStatusItem(String taskStatusItem) {
-        if (this.taskStatus == null) {
-            this.taskStatus = new ArrayList<>();
-        }
-        this.taskStatus.add(taskStatusItem);
-        return this;
-    }
+//    public TaskSearchCriteria addTaskStatusItem(String taskStatusItem) {
+//        if (this.taskStatus == null) {
+//            this.taskStatus = new ArrayList<>();
+//        }
+//        this.taskStatus.add(taskStatusItem);
+//        return this;
+//    }
 
     public TaskSearchCriteria addTaskTypeItem(String taskTypeItem) {
         if (this.taskType == null) {

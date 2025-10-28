@@ -1,41 +1,47 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class Address {
 
-    @JsonProperty("doorNo")
-    private String doorNo;
-
-    @JsonProperty("street")
-    private String street;
-
-    @JsonProperty("landmark")
-    private String landmark;
+    @JsonProperty("state")
+    private String state;
 
     @JsonProperty("city")
     private String city;
 
+    @JsonProperty("district")
+    private String district;
+
     @JsonProperty("pincode")
-    private String pincode;
+    private String pinCode;
 
     @JsonProperty("locality")
     private String locality;
 
-    @JsonProperty("district")
-    private String district;
 
-    @JsonProperty("state")
-    private String state;
+    @JsonProperty("coordinate")
+    private Coordinate coordinate;
 
-    @JsonProperty("country")
-    private String country;
+    @JsonProperty("geoLocationDetails")
+    private GeoLocationDetails geoLocationDetails;
+
+    @Override
+    public String toString() {
+        return String.join(", ",
+                state != null ? state : "",
+                city != null ? city : "",
+                district != null ? district : "",
+                pinCode != null ? pinCode : "",
+                locality != null ? locality : ""
+        );
+    }
+
+
 }

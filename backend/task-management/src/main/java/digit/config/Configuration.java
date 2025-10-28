@@ -125,4 +125,22 @@ public class Configuration {
 
     @Value("${egov.id.gen.task.management.format}")
     private String taskManagementIdFormat;
+
+    // Billing Config
+    @Value("${egov.billing.service.host}")
+    private String billingServiceHost;
+
+    @Value("${egov.billing.service.demand.search.endpoint}")
+    private String searchDemandEndpoint;
+
+    @Value("${egov.billing.service.demand.update.endpoint}")
+    private String updateDemandEndpoint;
+
+    // Payment Calculator Service
+    @Value("${payment.calculator.host}")
+    private String paymentCalculatorHost;
+
+    @Value("${payment.calculator.calculate.endpoint}")
+    private String paymentCalculatorCalculateEndpoint;
+
 }

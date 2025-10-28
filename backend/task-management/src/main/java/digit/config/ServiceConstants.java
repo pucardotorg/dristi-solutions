@@ -25,5 +25,6 @@ public class ServiceConstants {
 
     public static final String CREATE_TASK_MANAGEMENT_EXCEPTION = "CREATE_TASK_MANAGEMENT_EXCEPTION";
     public static final String WORKFLOW_SERVICE_EXCEPTION = "WORKFLOW_SERVICE_EXCEPTION";
+    public static final String PAYMENT_CALCULATOR_ERROR = "PAYMENT_CALCULATOR_ERROR";
 
 }
