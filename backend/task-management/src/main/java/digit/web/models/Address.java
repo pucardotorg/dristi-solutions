@@ -27,7 +27,7 @@ public class Address {
 
 
     @JsonProperty("coordinate")
-    private Coordinate coordinate;
+    private Coordinates coordinates;
 
     @JsonProperty("geoLocationDetails")
     private GeoLocationDetails geoLocationDetails;

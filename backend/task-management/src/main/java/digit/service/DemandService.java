@@ -12,6 +12,7 @@ import digit.web.models.PaymentCalculator.Calculation;
 import digit.web.models.PaymentCalculator.CalculationResponse;
 import digit.web.models.PaymentCalculator.TaskPaymentCriteria;
 import digit.web.models.PaymentCalculator.TaskPaymentRequest;
+import digit.web.models.payment.BillResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;

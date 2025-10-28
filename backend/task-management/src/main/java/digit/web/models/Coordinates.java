@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Coordinate {
+public class Coordinates {
 
     @JsonProperty("latitude")
     private  String latitude;
