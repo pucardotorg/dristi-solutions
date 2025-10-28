@@ -1,6 +1,5 @@
 package org.pucar.dristi.util;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +8,11 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.CaseExistsRequest;
 import org.pucar.dristi.web.models.CaseExistsResponse;
 import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.cases.CourtCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
@@ -70,18 +67,4 @@ public class CaseUtil {
         }
     }
 
-    public List<CourtCase> searchCases(CaseSearchRequest caseSearchRequest) {
-        StringBuilder uri = new StringBuilder();
-        uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
-
-        try {
-            Object response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
-            JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
-            JsonNode caseList = jsonNode.get("criteria").get(0).get("responseList");
-            return objectMapper.readValue(caseList.traverse(), new TypeReference<>() {});
-        } catch (Exception e) {
-            log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
-            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
-        }
-    }
 }

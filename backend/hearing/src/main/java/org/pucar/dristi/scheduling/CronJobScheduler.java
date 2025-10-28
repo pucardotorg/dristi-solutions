@@ -260,23 +260,27 @@ public class CronJobScheduler {
     }
 
     private List<CourtCase> getCasesFromHearings(RequestInfo requestInfo, List<Hearing> hearings) {
+        List<CourtCase> cases = new ArrayList<>();
         Set<String> filingNumbers = hearings.stream()
                 .map(hearing -> hearing.getFilingNumber().get(0))
                 .collect(Collectors.toSet());
-        List<CaseCriteria> criteria = new ArrayList<>();
         filingNumbers.forEach(filingNumber -> {
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(filingNumber)
                     .defaultFields(false)
                     .build();
-            criteria.add(caseCriteria);
-        });
-        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(criteria)
-                .build();
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(List.of(caseCriteria))
+                    .build();
 
-        return caseUtil.searchCases(caseSearchRequest);
+            JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
+            CourtCase courtCase = objectMapper.convertValue(courtCaseNode, CourtCase.class);
+            cases.add(courtCase);
+        });
+
+
+        return cases;
     }
 
 
