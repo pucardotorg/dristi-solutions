@@ -5,6 +5,7 @@ import digit.enrichment.TaskManagementEnrichment;
 import digit.kafka.Producer;
 import digit.repository.TaskManagementRepository;
 import digit.validator.TaskManagementValidator;
+import digit.web.models.BillResponse;
 import digit.web.models.TaskManagement;
 import digit.web.models.TaskManagementRequest;
 import digit.web.models.TaskSearchRequest;
@@ -55,7 +56,8 @@ public class TaskManagementService {
 
             enrichment.enrichCreateRequest(request);
 
-            demandService.createDemand(request);
+            BillResponse response = demandService.createDemand(request);
+            log.info("bill created successfully : {}", response);
 
             workflowService.updateWorkflowStatus(request);
 

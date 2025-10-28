@@ -44,4 +44,13 @@ public class DeliveryChannel {
     @JsonProperty("channelAcknowledgementId")
     private String channelAcknowledgementId;
 
+    @JsonProperty("channelId")
+    private String channelId;
+
+    @JsonProperty("taskType")
+    private String taskType;
+
+    @JsonProperty("channelDeliveryTime")
+    private String channelDeliveryTime;
+
 }

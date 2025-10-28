@@ -143,4 +143,15 @@ public class Configuration {
     @Value("${payment.calculator.calculate.endpoint}")
     private String paymentCalculatorCalculateEndpoint;
 
+    @Value("${task.management.suffix}")
+    private String taskManagementSuffix;
+
+    // ETreasury Config
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.demand.create.endpoint}")
+    private String etreasuryDemandCreateEndPoint;
+
+
 }
