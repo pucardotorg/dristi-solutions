@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from "react";
-import { CardLabelError, TextInput, CustomDropdown, Header, InfoBannerIcon } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useRef, useState } from "react";
+import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
-import CustomEmailTextInput from "../pages/citizen/registration/CustomEmailTextInput";
 import AddressBailBond from "./AddressBailBond";
 
 const CloseBtn = () => {
@@ -18,6 +17,8 @@ const CloseBtn = () => {
 
 const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}, {}]);
+  // Capture the initial snapshot of prefilled values once for locking logic
+  const initialPrefillRef = useRef(formData?.[config?.key] ? JSON.parse(JSON.stringify(formData?.[config?.key])) : []);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
 
@@ -116,6 +117,32 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
             >
               {inputs?.map((input, inputIndex) => {
                 const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
+                const isLockEnabled = Boolean(config?.lockPrefilledFields);
+
+                const prefilledInstance = initialPrefillRef.current?.[formIndex] || {};
+
+                const isTextPrefilled = (name) => Boolean(prefilledInstance?.[name]);
+
+                const isUploadPrefilled = (key) => {
+                  const docs = prefilledInstance?.[key]?.document || prefilledInstance?.[key]?.uploadedDocs || [];
+                  return Array.isArray(docs) && docs.length > 0;
+                };
+
+                const getAddressConfigWithDisable = () => {
+                  if (!isLockEnabled) return input;
+                  const addressPrefill = prefilledInstance?.[input?.key] || {};
+                  const updatedPopInputs = (input?.populators?.inputs || []).map((addrInput) => ({
+                    ...addrInput,
+                    isDisabled: Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name])),
+                  }));
+                  return {
+                    ...input,
+                    populators: {
+                      ...(input?.populators || {}),
+                      inputs: updatedPopInputs,
+                    },
+                  };
+                };
                 return (
                   <React.Fragment key={inputIndex}>
                     {input?.type === "text" && (
@@ -153,7 +180,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                                 handleChange(e, input, formIndex);
                               }
                             }}
-                            disable={input?.isDisabled}
+                            disable={Boolean(input?.isDisabled || (isLockEnabled && isTextPrefilled(input?.name)))}
                             isRequired={input?.validation?.isRequired}
                             pattern={input?.validation?.pattern}
                             errMsg={input?.validation?.errMsg}
@@ -180,7 +207,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                     {input?.component === "SelectMultiUpload" && (
                       <div style={{ marginBottom: "20px" }}>
                         <SelectCustomDragDrop
-                          config={input}
+                          config={{ ...input, disable: Boolean(input?.disable || (isLockEnabled && isUploadPrefilled(input?.key))) }}
                           t={t}
                           onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
                           formData={formInstances[formIndex]}
@@ -193,7 +220,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                     {input?.component === "AddressBailBond" && (
                       <div>
                         <AddressBailBond
-                          config={input}
+                          config={getAddressConfigWithDisable()}
                           t={t}
                           onSelect={(key, data) => {
                             setValue(data, key, input, formIndex);
@@ -239,7 +266,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
       </div>
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER")}`}
+          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
         </button>
       )}
     </React.Fragment>

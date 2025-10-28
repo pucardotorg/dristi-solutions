@@ -92,7 +92,7 @@ public class InPortalSurveyServiceTest {
         verify(repository, times(1)).getSurveyTracker(requestInfo);
         verify(enrichment, times(1)).enrichCreateSurveyTracker(request);
         verify(producer, times(1)).push(eq("create-survey-tracker"), any(SurveyTrackerRequest.class));
-        verify(validations, never()).validateEligibility(any(SurveyTracker.class));
+        verify(validations, never()).validateEligibility(any(SurveyTracker.class), any(RequestInfo.class));
     }
 
     @Test
@@ -113,7 +113,7 @@ public class InPortalSurveyServiceTest {
                 .thenReturn(Collections.singletonList(existingTracker));
         when(enrichment.enrichSurveyTrackerForEligibilityCheck(any(EligibilityRequest.class), any(SurveyTracker.class)))
                 .thenReturn(existingTracker);
-        when(validations.validateEligibility(any(SurveyTracker.class)))
+        when(validations.validateEligibility(any(SurveyTracker.class), any(RequestInfo.class)))
                 .thenReturn(true);
         when(config.getUpdateSurveyTrackerTopic()).thenReturn("update-survey-tracker");
         doNothing().when(validations).validateEligibilityRequest(any(EligibilityRequest.class));
@@ -127,7 +127,7 @@ public class InPortalSurveyServiceTest {
         verify(validations, times(1)).validateEligibilityRequest(request);
         verify(repository, times(1)).getSurveyTracker(requestInfo);
         verify(enrichment, times(1)).enrichSurveyTrackerForEligibilityCheck(request, existingTracker);
-        verify(validations, times(1)).validateEligibility(existingTracker);
+        verify(validations, times(1)).validateEligibility(existingTracker, requestInfo);
         verify(producer, times(1)).push(eq("update-survey-tracker"), any(SurveyTrackerRequest.class));
     }
 
@@ -149,7 +149,7 @@ public class InPortalSurveyServiceTest {
                 .thenReturn(Collections.singletonList(existingTracker));
         when(enrichment.enrichSurveyTrackerForEligibilityCheck(any(EligibilityRequest.class), any(SurveyTracker.class)))
                 .thenReturn(existingTracker);
-        when(validations.validateEligibility(any(SurveyTracker.class)))
+        when(validations.validateEligibility(any(SurveyTracker.class), any(RequestInfo.class)))
                 .thenReturn(false);
         when(config.getUpdateSurveyTrackerTopic()).thenReturn("update-survey-tracker");
         doNothing().when(validations).validateEligibilityRequest(any(EligibilityRequest.class));
@@ -160,7 +160,7 @@ public class InPortalSurveyServiceTest {
         // Assert
         assertNotNull(result);
         assertFalse(result.getIsEligible());
-        verify(validations, times(1)).validateEligibility(existingTracker);
+        verify(validations, times(1)).validateEligibility(existingTracker, requestInfo);
         verify(producer, times(1)).push(eq("update-survey-tracker"), any(SurveyTrackerRequest.class));
     }
 
@@ -198,9 +198,7 @@ public class InPortalSurveyServiceTest {
                 .when(validations).validateEligibilityRequest(any(EligibilityRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.checkEligibility(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.checkEligibility(request));
 
         assertEquals(ELIGIBILITY_CHECK_EXCEPTION, exception.getCode());
         verify(validations, times(1)).validateEligibilityRequest(request);
@@ -251,9 +249,7 @@ public class InPortalSurveyServiceTest {
         doNothing().when(validations).validateRemindMeLaterRequest(any(RemindMeLaterRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createRemindMeLater(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createRemindMeLater(request));
 
         assertEquals("REMIND_ME_LATER_EXCEPTION", exception.getCode());
         assertTrue(exception.getMessage().contains("No existing survey tracker found"));
@@ -277,9 +273,7 @@ public class InPortalSurveyServiceTest {
         doNothing().when(validations).validateRemindMeLaterRequest(any(RemindMeLaterRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createRemindMeLater(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createRemindMeLater(request));
 
         assertEquals("REMIND_ME_LATER_EXCEPTION", exception.getCode());
         assertTrue(exception.getMessage().contains("Multiple survey trackers found"));
@@ -298,9 +292,7 @@ public class InPortalSurveyServiceTest {
                 .when(validations).validateRemindMeLaterRequest(any(RemindMeLaterRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createRemindMeLater(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createRemindMeLater(request));
 
         assertEquals("REMIND_ME_LATER_EXCEPTION", exception.getCode());
         verify(validations, times(1)).validateRemindMeLaterRequest(request);
@@ -365,9 +357,7 @@ public class InPortalSurveyServiceTest {
         doNothing().when(validations).validateFeedBackRequest(any(FeedBackRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createFeedBack(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createFeedBack(request));
 
         assertEquals("FEED_BACK_EXCEPTION", exception.getCode());
         assertTrue(exception.getMessage().contains("No existing survey tracker found"));
@@ -396,9 +386,7 @@ public class InPortalSurveyServiceTest {
         doNothing().when(validations).validateFeedBackRequest(any(FeedBackRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createFeedBack(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createFeedBack(request));
 
         assertEquals("FEED_BACK_EXCEPTION", exception.getCode());
         assertTrue(exception.getMessage().contains("Multiple survey trackers found"));
@@ -422,9 +410,7 @@ public class InPortalSurveyServiceTest {
                 .when(validations).validateFeedBackRequest(any(FeedBackRequest.class));
 
         // Act & Assert
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            inPortalSurveyService.createFeedBack(request);
-        });
+        CustomException exception = assertThrows(CustomException.class, () -> inPortalSurveyService.createFeedBack(request));
 
         assertEquals("FEED_BACK_EXCEPTION", exception.getCode());
         verify(validations, times(1)).validateFeedBackRequest(request);

@@ -244,6 +244,7 @@ const GenerateOrdersV2 = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const [isBailBondTaskExistsForCurrentRef, setIsBailBondTaskExistsForCurrentRef] = useState(false);
   const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -294,6 +295,81 @@ const GenerateOrdersV2 = () => {
     } finally {
       setIsCaseDetailsLoading(false);
     }
+  };
+
+  const getBailBondReferenceId = (orderObj) => {
+    try {
+      // const uniqueRefPart =
+      //   orderObj?.orderNumber || orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "";
+      // return `MANUAL_BAIL_BOND_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
+      const orderNo = orderObj?.orderNumber || "";
+      const appNo = orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "";
+
+      const orderPart = orderNo ? `_ORD_${orderNo}` : "";
+      const appPart = appNo ? `_APP_${appNo}` : "";
+      return `MANUAL_BAIL_BOND_${filingNumber}${orderPart}${appPart}`;
+    } catch (e) {
+      console.error(e);
+      return `MANUAL_BAIL_BOND_${filingNumber}`;
+    }
+  };
+
+  const createBailBondTaskUnified = async (orderObj) => {
+    try {
+      const referenceId = getBailBondReferenceId(orderObj);
+      const existing = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 1000,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+      const exists = Array.isArray(existing?.data) && existing?.data?.some?.((task) => task?.referenceId === referenceId);
+      if (exists) {
+        setIsBailBondTaskExistsForCurrentRef(true);
+        return;
+      }
+
+      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: t("CS_COMMON_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId,
+          status: "PENDING_SIGN",
+          assignedTo: [],
+          assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+          actionCategory: "Bail Bond",
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+          stateSla: todayDate,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      setIsBailBondTaskExistsForCurrentRef(true);
+    } catch (e) {
+      console.error("Error creating bail bond task:", e);
+    }
+  };
+
+  const createBailBondTaskForOrder = async (orderNumberOrOrderObj) => {
+    const orderObj = typeof orderNumberOrOrderObj === "string" ? { orderNumber: orderNumberOrOrderObj } : orderNumberOrOrderObj || currentOrder;
+    return await createBailBondTaskUnified(orderObj);
   };
 
   const fetchInbox = useCallback(async () => {
@@ -459,6 +535,44 @@ const GenerateOrdersV2 = () => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.OPTOUT);
     return isPresent;
   }, [hearingsData]);
+
+  const isAcceptBailOrderSelected = useMemo(() => {
+    if (!currentOrder) return false;
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      return currentOrder?.orderType === "ACCEPT_BAIL";
+    }
+    return Array.isArray(currentOrder?.compositeItems)
+      ? currentOrder?.compositeItems?.some((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL")
+      : false;
+  }, [currentOrder]);
+
+  const isBailBondFlagSelected = useMemo(() => {
+    if (!currentOrder) return false;
+    const hasRefAppId = (() => {
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        if (currentOrder?.orderType !== "ACCEPT_BAIL") return false;
+        return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
+      }
+      if (Array.isArray(currentOrder?.compositeItems)) {
+        const acceptBailItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL");
+        return Boolean(acceptBailItem?.orderSchema?.additionalDetails?.formdata?.refApplicationId);
+      }
+      return false;
+    })();
+
+    const hasFlag = (() => {
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        if (currentOrder?.orderType !== "ACCEPT_BAIL") return false;
+        return Boolean(currentOrder?.additionalDetails?.formdata?.bailBondRequired);
+      }
+      if (Array.isArray(currentOrder?.compositeItems)) {
+        const acceptBailItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL");
+        return Boolean(acceptBailItem?.orderSchema?.additionalDetails?.formdata?.bailBondRequired);
+      }
+      return false;
+    })();
+    return hasFlag || hasRefAppId;
+  }, [currentOrder]);
 
   const { data: orderTypeData, isLoading: isOrderTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -1019,9 +1133,9 @@ const GenerateOrdersV2 = () => {
           },
           { tenantId }
         );
-        if (bailBondPendingTask?.data?.length > 0) {
-          setIsBailBondTaskExists(true);
-        }
+        const refId = getBailBondReferenceId(currentOrder);
+        const exists = Array.isArray(bailBondPendingTask?.data) && bailBondPendingTask?.data?.some?.((t) => t?.referenceId === refId);
+        setIsBailBondTaskExistsForCurrentRef(Boolean(exists));
       } catch (err) {
         console.error(err);
       }
@@ -1364,6 +1478,27 @@ const GenerateOrdersV2 = () => {
                     },
                   };
                 }
+                const refApplicationId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
+                // if (field.key === "refApplicationId") {
+                //   return {
+                //     ...field,
+                //     populators: {
+                //       ...field.populators,
+                //       hideInForm: !refApplicationId,
+                //     },
+                //   };
+                // }
+                if (field.key === "bailType" && refApplicationId) {
+                  return {
+                    ...field,
+                    disable: false,
+                    populators: {
+                      ...field.populators,
+                      defaultValue: { code: "SURETY", name: "SURETY" },
+                    },
+                  };
+                }
+
                 return field;
               }),
             };
@@ -2508,6 +2643,15 @@ const GenerateOrdersV2 = () => {
             setPrevOrder(response?.order);
             sessionStorage.removeItem("businessOfTheDay");
             setShowSuccessModal(true);
+            try {
+              const publishedOrder = response?.order;
+              const shouldCreateBailBondTask = isAcceptBailOrderSelected && isBailBondFlagSelected;
+              if (shouldCreateBailBondTask && publishedOrder?.orderNumber) {
+                createBailBondTaskForOrder(publishedOrder);
+              }
+            } catch (e) {
+              console.error("Failed to create bail bond task post-publish", e);
+            }
           }
           if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
             setPrevOrder(response?.order);
@@ -2970,10 +3114,12 @@ const GenerateOrdersV2 = () => {
 
       if (bailBondPendingTask?.data?.length > 0) {
         setIsBailBondTaskExists(true);
-        setShowErrorToast({
-          label: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
-          error: true,
-        });
+        // setShowErrorToast({
+        //   label: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
+        //   error: true,
+        // });
+        setBailBondLoading(false);
+        setShowBailBondModal(false);
         return;
       } else {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -3004,12 +3150,10 @@ const GenerateOrdersV2 = () => {
       }
     } catch (e) {
       console.error(e);
+      setShowErrorToast({ label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"), error: true });
+    } finally {
       setBailBondLoading(false);
-
-      setShowErrorToast({
-        label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
-        error: true,
-      });
+      setShowBailBondModal(false);
     }
   };
 
@@ -3963,10 +4107,13 @@ const GenerateOrdersV2 = () => {
           setValueRef={setValueRef}
           addOrderTypeLoader={addOrderTypeLoader}
           setWarrantSubtypeCode={setWarrantSubtypeCode}
+          onBailBondRequiredChecked={() => setShowBailBondModal(true)}
+          bailBondTaskExists={isBailBondTaskExists}
         />
       )}
-      {showBailBondModal && !isBailBondTaskExists && (
+      {showBailBondModal && (
         <Modal
+          style={{ zIndex: 9999 }}
           headerBarEnd={<CloseBtn onClick={() => !bailBondLoading && setShowBailBondModal(false)} />}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={createBailBondTask}

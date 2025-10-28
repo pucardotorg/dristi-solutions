@@ -1,9 +1,12 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { CloseBtn, Heading } from "../utils/orderUtils";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -30,9 +33,51 @@ const AddOrderTypeModal = ({
   orderType,
   addOrderTypeLoader,
   setWarrantSubtypeCode,
+  onBailBondRequiredChecked,
+  bailBondTaskExists = false,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
+  const [bailBondRequired, setBailBondRequired] = useState(false);
+  const existingRefApplicationId = useMemo(() => {
+    try {
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        return currentOrder?.additionalDetails?.formdata?.refApplicationId || currentOrder?.additionalDetails?.refApplicationId;
+      }
+      if (Array.isArray(currentOrder?.compositeItems)) {
+        const ad = currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        return ad?.formdata?.refApplicationId || ad?.refApplicationId;
+      }
+      return undefined;
+    } catch (e) {
+      return undefined;
+    }
+  }, [currentOrder, index]);
+  const hasRefApplicationId = useMemo(() => {
+    return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
+  }, [formdata?.refApplicationId]);
+  const [caseData, setCaseData] = useState(undefined);
+  const containerRef = useRef(null);
+  const checkboxRef = useRef(null);
+  const [checkboxInjected, setCheckboxInjected] = useState(false);
+  const initialRefApplicationIdRef = useRef(undefined);
+  useEffect(() => {
+    try {
+      const dv = getDefaultValue?.(index) || {};
+      if (typeof initialRefApplicationIdRef.current === "undefined" && typeof dv?.refApplicationId !== "undefined") {
+        initialRefApplicationIdRef.current = dv.refApplicationId;
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [getDefaultValue, index]);
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const { filingNumber } = Digit.Hooks.useQueryParams();
+  const courtId = localStorage.getItem("courtId");
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const roles = useMemo(() => userInfo?.roles || [], [userInfo]);
+  const caseDetails = useMemo(() => ({ ...(caseData?.criteria?.[0]?.responseList?.[0] || {}) }), [caseData]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -210,6 +255,172 @@ const AddOrderTypeModal = ({
     }
   };
 
+  useEffect(() => {
+    if (orderType?.code !== "ACCEPT_BAIL") return;
+    if (!containerRef?.current || !checkboxRef?.current) return;
+
+    const tryInject = () => {
+      const actionBar = containerRef.current?.querySelector?.(".order-type-action");
+      const checkboxEl = checkboxRef.current;
+      if (actionBar && checkboxEl && !checkboxInjected) {
+        const parent = actionBar.parentElement;
+        if (parent && checkboxEl.parentElement !== parent) {
+          parent.insertBefore(checkboxEl, actionBar);
+        }
+        setCheckboxInjected(true);
+        return true;
+      }
+      return false;
+    };
+    if (tryInject()) return;
+    const observer = new MutationObserver(() => {
+      if (tryInject()) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(containerRef.current, { childList: true, subtree: true });
+    const t = setTimeout(tryInject, 100);
+
+    return () => {
+      clearTimeout(t);
+      observer.disconnect();
+    };
+  }, [orderType?.code, checkboxInjected]);
+  useEffect(() => {
+    return () => {
+      setCheckboxInjected(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchCaseDetails = async () => {
+      if (!filingNumber) return;
+      try {
+        const res = await DRISTIService.searchCaseService(
+          {
+            criteria: [
+              {
+                filingNumber,
+                ...(courtId && { courtId }),
+              },
+            ],
+            tenantId,
+          },
+          {}
+        );
+        setCaseData(res);
+      } catch (err) {
+        // noop
+      }
+    };
+    fetchCaseDetails();
+  }, [filingNumber, courtId, tenantId]);
+
+  useEffect(() => {
+    if (orderType?.code === "ACCEPT_BAIL") {
+      if (hasRefApplicationId || bailBondTaskExists) {
+        setBailBondRequired(true);
+      } else {
+        setBailBondRequired(false);
+      }
+    } else {
+      setBailBondRequired(false);
+    }
+  }, [orderType?.code, hasRefApplicationId, bailBondTaskExists]);
+
+  useEffect(() => {
+    const checkBailBondTask = async () => {
+      if (!filingNumber) return;
+      try {
+        const uniqueRefPart =
+          currentOrder?.orderNumber ||
+          currentOrder?.additionalDetails?.formdata?.refApplicationId ||
+          currentOrder?.additionalDetails?.refApplicationId ||
+          "";
+        const expectedRefId = `MANUAL_BAIL_BOND_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
+        const pendingTask = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                assignedRole: [...roles],
+                filingNumber: filingNumber,
+                courtId: courtId,
+                entityType: "bail bond",
+              },
+              limit: 1000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+        const exists = Array.isArray(pendingTask?.data) && pendingTask?.data?.some?.((task) => task?.referenceId === expectedRefId);
+        setIsBailBondTaskExists(Boolean(exists));
+      } catch (e) {
+        // noop
+      }
+    };
+    checkBailBondTask();
+  }, [filingNumber, courtId, roles, tenantId]);
+
+  const createBailBondTask = async () => {
+    try {
+      const uniqueRefPart =
+        currentOrder?.orderNumber ||
+        currentOrder?.additionalDetails?.formdata?.refApplicationId ||
+        currentOrder?.additionalDetails?.refApplicationId ||
+        "";
+      const referenceId = `MANUAL_BAIL_BOND_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
+      const bailBondPendingTask = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 1000,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+
+      const isExist = Array.isArray(bailBondPendingTask?.data) && bailBondPendingTask?.data?.some?.((task) => task?.referenceId === referenceId);
+
+      if (!isExist) {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: t("CS_COMMON_BAIL_BOND"),
+            entityType: "bail bond",
+            referenceId,
+            status: "PENDING_SIGN",
+            assignedTo: [],
+            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+            actionCategory: "Bail Bond",
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: false,
+            stateSla: Date.now(),
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+      }
+      setIsBailBondTaskExists(true);
+    } catch (e) {
+      // noop
+    }
+  };
+
   return (
     <React.Fragment>
       <Modal
@@ -218,26 +429,55 @@ const AddOrderTypeModal = ({
         hideModalActionbar={true}
         className="add-order-type-modal"
       >
-        <div className="generate-orders">
-          <div className="view-order order-type-form-modal">
-            <FormComposerV2
-              className={"generate-orders order-type-modal"}
-              defaultValues={getDefaultValue(index)}
-              config={modifiedFormConfig}
-              fieldStyle={{ width: "100%" }}
-              cardClassName={`order-type-form-composer new-order`}
-              actionClassName={"order-type-action"}
-              onFormValueChange={onFormValueChange}
-              label={t(saveLabel)}
-              secondaryLabel={t(cancelLabel)}
-              showSecondaryLabel={true}
-              onSubmit={() => {
-                handleSubmit(formdata, index);
-              }}
-              onSecondayActionClick={handleCancel}
-              isDisabled={isSubmitDisabled || addOrderTypeLoader}
-            />
+        <div ref={containerRef}>
+          <div className="generate-orders">
+            <div className="view-order order-type-form-modal">
+              <FormComposerV2
+                className={"generate-orders order-type-modal"}
+                defaultValues={getDefaultValue(index)}
+                config={modifiedFormConfig}
+                fieldStyle={{ width: "100%" }}
+                cardClassName={`order-type-form-composer new-order`}
+                actionClassName={"order-type-action"}
+                onFormValueChange={onFormValueChange}
+                label={t(saveLabel)}
+                secondaryLabel={t(cancelLabel)}
+                showSecondaryLabel={true}
+                onSubmit={async () => {
+                  const outgoing = {
+                    ...formdata,
+                    bailBondRequired,
+                    ...(formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current
+                      ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
+                      : {}),
+                  };
+                  handleSubmit(outgoing, index);
+                }}
+                onSecondayActionClick={handleCancel}
+                isDisabled={isSubmitDisabled || addOrderTypeLoader}
+              />
+            </div>
           </div>
+          {orderType?.code === "ACCEPT_BAIL" && (
+            <div className="checkbox-item" ref={checkboxRef} style={{ marginLeft: "20px", marginBottom: "20px", marginTop: "-20px" }}>
+              <input
+                id="bail-bond-required"
+                type="checkbox"
+                className="custom-checkbox"
+                checked={bailBondRequired || (hasRefApplicationId && bailBondRequired)}
+                onChange={(e) => {
+                  const checked = e?.target?.checked;
+                  setBailBondRequired(checked);
+                  if (checked && !hasRefApplicationId) {
+                    onBailBondRequiredChecked && onBailBondRequiredChecked();
+                  }
+                }}
+                style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                disabled={hasRefApplicationId || bailBondTaskExists}
+              />
+              <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
+            </div>
+          )}
         </div>
       </Modal>
     </React.Fragment>

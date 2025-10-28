@@ -148,8 +148,9 @@ const EvidenceModal = ({
       }
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
-        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-        !isBail
+        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
+        // &&
+        // !isBail
       );
     } else {
       if (modalType === "Documents") {
@@ -215,8 +216,9 @@ const EvidenceModal = ({
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions" &&
-      !isBail
+      modalType === "Submissions"
+      // &&
+      // !isBail
     ) {
       return t("REJECT");
     }
@@ -1069,7 +1071,8 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          // const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {

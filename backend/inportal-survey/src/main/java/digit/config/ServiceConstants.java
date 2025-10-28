@@ -30,4 +30,7 @@ public class ServiceConstants {
     public static final String ADVOCATE = "ADVOCATE";
     public static final String LITIGANT = "LITIGANT";
 
+    // MDMS
+    public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception while fetching from MDMS: ";
+
 }
