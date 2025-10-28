@@ -2,240 +2,240 @@
 
 .typography {
   &.text-heading-xl {
-    font-family: theme(digitv2.fontFamily.rc);
-    font-style: theme(digitv2.fontStyle.normal);
-    font-weight: theme(digitv2.fontWeight.bold);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnJj);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LmJvbGQ_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.heading-xl.desktop);
+    @media (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXhsLmRlc2t0b3A_);
     }
 
-    @media (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.heading-xl.tablet);
+    @media (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXhsLnRhYmxldA__);
     }
 
-    @media (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.heading-xl.mobile);
+    @media (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXhsLm1vYmlsZQ__);
     }
   }
 
   &.text-heading-l {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.normal);
-    font-weight: theme(digitv2.fontWeight.bold);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LmJvbGQ_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.heading-l.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLWwuZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.heading-l.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLWwudGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.heading-l.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLWwubW9iaWxl);
     }
   }
   &.text-heading-m {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.normal);
-    font-weight: theme(digitv2.fontWeight.bold);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LmJvbGQ_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.heading-m.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLW0uZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.heading-m.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLW0udGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.heading-m.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLW0uZGVza3RvcA__);
     }
   }
   &.text-heading-s {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.normal);
-    font-weight: theme(digitv2.fontWeight.bold);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LmJvbGQ_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.heading-s.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXMuZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.heading-s.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXMudGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.heading-s.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXMubW9iaWxl);
     }
   }
   &.text-heading-xs {
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.heading-xs.mobile);
-      font-family: theme(digitv2.fontFamily.sans);
-      font-style: theme(digitv2.fontStyle.normal);
-      font-weight: theme(digitv2.fontWeight.bold);
-      color: theme(digitv2.lightTheme.text-color-primary);
-      line-height: theme(digitv2.lineHeight.normal);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5oZWFkaW5nLXhzLm1vYmlsZQ__);
+      font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+      font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+      font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LmJvbGQ_);
+      color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
     }
   }
   &.text-caption-l {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.medium);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0Lm1lZGl1bQ__);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.caption-l.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLWwuZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.caption-l.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLWwudGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.caption-l.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLWwubW9iaWxl);
     }
   }
 
   &.text-caption-m {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.medium);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0Lm1lZGl1bQ__);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.caption-m.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLW0uZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.caption-m.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLW0udGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.caption-m.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLW0ubW9iaWxl);
     }
   }
 
   &.text-caption-s {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.medium);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0Lm1lZGl1bQ__);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.caption-s.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLXMuZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.caption-s.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLXMudGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.caption-s.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5jYXB0aW9uLXMuZGVza3RvcA__);
     }
   }
   &.text-body-l {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.regular);
-    color: theme(digitv2.lightTheme.text-color-primary);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LnJlZ3VsYXI_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.body-l.desktop);
-      line-height: theme(digitv2.lineHeight.line-height-body-l.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LWwuZGVza3RvcA__);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktbC5kZXNrdG9w);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.body-l.tablet);
-      line-height: theme(digitv2.lineHeight.line-height-body-l.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LWwudGFibGV0);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktbC50YWJsZXQ_);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.body-l.mobile);
-      line-height: theme(digitv2.lineHeight.line-height-body-l.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LWwubW9iaWxl);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktbC5tb2JpbGU_);
     }
   }
   &.text-body-s {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.regular);
-    color: theme(digitv2.lightTheme.text-color-primary);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LnJlZ3VsYXI_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.body-s.desktop);
-      line-height: theme(digitv2.lineHeight.line-height-body-s.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXMuZGVza3RvcA__);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktcy5kZXNrdG9w);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.body-s.tablet);
-      line-height: theme(digitv2.lineHeight.line-height-body-s.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXMudGFibGV0);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktcy50YWJsZXQ_);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.body-s.mobile);
-      line-height: theme(digitv2.lineHeight.line-height-body-s.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXMubW9iaWxl);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHktcy5tb2JpbGU_);
     }
   }
   &.text-body-xs {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.regular);
-    color: theme(digitv2.lightTheme.text-color-primary);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LnJlZ3VsYXI_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.body-xs.desktop);
-      line-height: theme(digitv2.lineHeight.line-height-body-xs.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXhzLmRlc2t0b3A_);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHkteHMuZGVza3RvcA__);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.body-xs.tablet);
-      line-height: theme(digitv2.lineHeight.line-height-body-xs.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXhzLnRhYmxldA__);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHkteHMudGFibGV0);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.body-xs.mobile);
-      line-height: theme(digitv2.lineHeight.line-height-body-xs.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5ib2R5LXhzLm1vYmlsZQ__);
+      line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0LmxpbmUtaGVpZ2h0LWJvZHkteHMubW9iaWxl);
     }
   }
   &.text-label {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.italic);
-    font-weight: theme(digitv2.fontWeight.regular);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUuaXRhbGlj);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LnJlZ3VsYXI_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.label.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5sYWJlbC5kZXNrdG9w);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.label.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5sYWJlbC50YWJsZXQ_);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.label.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5sYWJlbC5tb2JpbGU_);
     }
   }
   &.text-link {
-    font-family: theme(digitv2.fontFamily.sans);
-    font-style: theme(digitv2.fontStyle.normal);
-    font-weight: theme(digitv2.fontWeight.regular);
-    color: theme(digitv2.lightTheme.text-color-primary);
-    line-height: theme(digitv2.lineHeight.normal);
-    text-decoration: theme(digitv2.textDecorationLine.underline);
+    font-family: var(--twtheme-ZGlnaXR2Mi5mb250RmFtaWx5LnNhbnM_);
+    font-style: var(--twtheme-ZGlnaXR2Mi5mb250U3R5bGUubm9ybWFs);
+    font-weight: var(--twtheme-ZGlnaXR2Mi5mb250V2VpZ2h0LnJlZ3VsYXI_);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnRleHQtY29sb3ItcHJpbWFyeQ__);
+    line-height: var(--twtheme-ZGlnaXR2Mi5saW5lSGVpZ2h0Lm5vcm1hbA__);
+    text-decoration: var(--twtheme-ZGlnaXR2Mi50ZXh0RGVjb3JhdGlvbkxpbmUudW5kZXJsaW5l);
 
-    @media screen and (min-width: theme(digitv2.screens.desktop)) {
-      font-size: theme(digitv2.fontSize.link.desktop);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLmRlc2t0b3A_)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5saW5rLmRlc2t0b3A_);
     }
-    @media screen and (min-width: theme(digitv2.screens.tablet)) {
-      font-size: theme(digitv2.fontSize.link.tablet);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5saW5rLnRhYmxldA__);
     }
 
-    @media screen and (min-width: theme(digitv2.screens.mobile)) {
-      font-size: theme(digitv2.fontSize.link.mobile);
+    @media screen and (min-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
+      font-size: var(--twtheme-ZGlnaXR2Mi5mb250U2l6ZS5saW5rLm1vYmlsZQ__);
     }
   }
 }

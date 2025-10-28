@@ -20,7 +20,7 @@
 .signature-img{
   top: 8px;
   right: 8px;
-  fill: theme(colors.text.secondary);
+  fill: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
   @apply absolute;
 }
 
@@ -107,7 +107,7 @@
 
 .showMore {
   @apply text-right cursor-pointer;
-  color: theme(colors.primary.main);
+  color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
 }
 
 @media (max-width: 420px) { 
@@ -164,7 +164,7 @@
                 .signature-img{
                   top: 8px;
                   right: 8px;
-                  fill: theme(colors.text.secondary);
+                  fill: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
                   @apply absolute;
                 }
               }

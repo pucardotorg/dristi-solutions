@@ -1,4 +1,4 @@
-$primaryColor :theme(colors.primary.main);
+$primaryColor :var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
 
 .link-label {
   color: $primaryColor;
@@ -14,12 +14,12 @@ $primaryColor :theme(colors.primary.main);
   gap: 0.5rem;
   height: 3rem;
   padding: 0.75rem 0.5rem 0.75rem 0.75rem !important;
-  background-color: theme(digitv2.alert.success);
+  background-color: var(--twtheme-ZGlnaXR2Mi5hbGVydC5zdWNjZXNz);
   transition: bottom 0.5s ease;
   grid-gap: 0.5rem;
 
   &.error {
-    background-color: theme(digitv2.alert.error) !important;
+    background-color: var(--twtheme-ZGlnaXR2Mi5hbGVydC5lcnJvcg__) !important;
   }
 
   &.warning {
@@ -33,7 +33,7 @@ $primaryColor :theme(colors.primary.main);
   h2 {
     @apply text-left overflow-hidden whitespace-no-wrap flex-grow flex items-center h-6;
     letter-spacing: 0rem;
-    color: theme(digitv2.lightTheme.paper);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnBhcGVy);
     margin: 0rem;
     text-overflow: ellipsis;
     font-family: Roboto;

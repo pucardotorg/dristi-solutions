@@ -82,7 +82,7 @@
   font-weight: normal;
   font-size: 16px;
   line-height: 19px;
-  color: theme(colors.text.primary);
+  color: var(--twtheme-Y29sb3JzLnRleHQucHJpbWFyeQ__);
   margin-top: 20px;
 }
 
@@ -94,7 +94,7 @@
   font-weight: normal;
   font-size: 16px;
   line-height: 19px;
-  color: theme(colors.text.primary);
+  color: var(--twtheme-Y29sb3JzLnRleHQucHJpbWFyeQ__);
 }
 
 .profile-label-margin {
@@ -105,14 +105,14 @@
   font-weight: normal;
   font-size: 16px;
   line-height: 24px;
-  color: theme(colors.text.secondary);
+  color: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
   margin-top: 15px;
 }
 
 .employeeChangePassword .employeeCard .card-text {
   margin-bottom: 15px;
   font-size: 16px;
-  color: theme(colors.text.secondary);
+  color: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
 }
 
 @media screen and (max-width: 768px) {

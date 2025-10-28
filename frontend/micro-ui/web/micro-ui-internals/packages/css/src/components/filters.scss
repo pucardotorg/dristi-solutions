@@ -20,8 +20,8 @@
       display: none;
 
       &:checked ~ label {
-        border-color: theme(colors.primary.main);
-        color: theme(colors.primary.main);
+        border-color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
+        color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       }
     }
 
@@ -73,7 +73,7 @@
   .clearText {
     display: block;
     text-align: right;
-    color: theme(colors.primary.main);
+    color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
     margin-top: 20px;
     margin-left: 10px;
   }

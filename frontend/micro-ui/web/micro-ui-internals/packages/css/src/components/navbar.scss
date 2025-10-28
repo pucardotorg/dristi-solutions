@@ -27,7 +27,7 @@
   }
 
   .user-img-txt {
-    background: theme(colors.primary.main);
+    background: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
     padding: 10px 15px;
     border-radius: 50%;
     color: white;
@@ -45,7 +45,7 @@
   flex-direction: column;
   align-items: center;
   padding-top: 30px;
-  background-color: theme(colors.white);
+  background-color: var(--twtheme-Y29sb3JzLndoaXRl);
 
   img {
     width: 89px;
@@ -62,12 +62,12 @@
         letter-spacing: 0.6px;
         font-weight: 700;
         font-size: 18px;
-        color: theme(colors.text.primary);
+        color: var(--twtheme-Y29sb3JzLnRleHQucHJpbWFyeQ__);
       }
     }
   }
   .profile-divider {
-    border-top: 1px solid theme(colors.border);
+    border-top: 1px solid var(--twtheme-Y29sb3JzLmJvcmRlcg__);
     margin-left: 20px;
     margin-right: 20px;
     width: 90%;
@@ -121,12 +121,12 @@
     padding-right: 16px;
     padding-left: 16px;
     &.active {
-      border-left: 5px solid theme(colors.primary.main);
+      border-left: 5px solid var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       .menu-label {
-        color: theme(colors.primary.main);
+        color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       }
       .icon {
-        fill: theme(colors.primary.main);
+        fill: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       }
     }
 
@@ -231,13 +231,13 @@
       padding-right: 16px;
       padding-left: 16px;
       &.active {
-        border-left: 5px solid theme(colors.primary.main);
+        border-left: 5px solid var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
         padding-left: 11px;
         .menu-label {
-          color: theme(colors.primary.main);
+          color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
         }
         .icon {
-          fill: theme(colors.primary.main);
+          fill: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
         }
       }
 

@@ -31,17 +31,17 @@
   }
 }
 .fieldInspectionWrapper {
-  border: 1px solid theme(colors.border);
+  border: 1px solid var(--twtheme-Y29sb3JzLmJvcmRlcg__);
   padding: 16px;
   margin-top: 8px;
-  background: theme(colors.grey.light);
+  background: var(--twtheme-Y29sb3JzLmdyZXkubGlnaHQ_);
 }
 
 .fieldInsepctionInsideWrapper {
-  border: 1px solid theme(colors.border);
+  border: 1px solid var(--twtheme-Y29sb3JzLmJvcmRlcg__);
   padding: 16px;
   margin-top: 8px;
-  background: theme(colors.white);
+  background: var(--twtheme-Y29sb3JzLndoaXRl);
   max-width: 70%;
   min-width: 280px;
 }

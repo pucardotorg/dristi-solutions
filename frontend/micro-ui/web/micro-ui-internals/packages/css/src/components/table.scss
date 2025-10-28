@@ -35,7 +35,7 @@
   color: rgb(80, 90, 95);
 
   svg {
-    fill: theme(colors.text.secondary);
+    fill: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
     @apply ml-md;
   }
 }
@@ -62,7 +62,7 @@
   }
 
   tr:nth-child(odd) {
-    background-color: theme(colors.grey.mid);
+    background-color: var(--twtheme-Y29sb3JzLmdyZXkubWlk);
   }
   tr:nth-child(even) {
     background-color: #fff;
@@ -89,7 +89,7 @@
     td:first-child {
       position: sticky;
       background: #fff;
-      color: theme(colors.primary.main);
+      color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       left: 0;
       border-right: 1px solid #b1b4b6;
     }
@@ -110,7 +110,7 @@
     td:last-child {
       position: sticky;
       background: #fff;
-      color: theme(colors.primary.main);
+      color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       left: 0;
       right:0;
     }

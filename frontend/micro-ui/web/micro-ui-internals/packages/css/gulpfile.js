@@ -12,6 +12,7 @@ const headerString = `
   `;
 const { series, src, dest, watch, task } = require("gulp");
 const header = require("postcss-header");
+const path = require("path");
 
 const clean = require("gulp-clean");
 const postcss = require("gulp-postcss");
@@ -35,7 +36,12 @@ function cleanStyles() {
 
 function styles() {
   const plugins = [
-    require("postcss-import"),
+    require("postcss-import")({
+      filter: (path) => {
+        // Only process Tailwind and CSS imports, skip SCSS files
+        return !path.endsWith(".scss");
+      },
+    }),
     require("tailwindcss"),
     postcssPresetEnv({ stage: 2, autoprefixer: { cascade: false }, features: { "custom-properties": true } }),
     require("autoprefixer"),
@@ -43,22 +49,85 @@ function styles() {
     header({ header: headerString }),
   ];
 
+  const fs = require("fs");
+
+  const sassOptions = {
+    quietDeps: true,
+    importer: [
+      function (url, prev) {
+        // Skip Tailwind imports - PostCSS will handle them
+        if (url.startsWith("tailwindcss/")) {
+          return { contents: `/* Tailwind: ${url} */` };
+        }
+
+        // For local SCSS files, preprocess theme() calls
+        if (url.startsWith("./") || url.startsWith("../")) {
+          const basedir = path.dirname(prev === "stdin" ? "src/index.scss" : prev);
+          let filepath = path.resolve(basedir, url);
+
+          // Add .scss extension if missing
+          if (!filepath.endsWith(".scss") && !filepath.endsWith(".css")) {
+            filepath += ".scss";
+          }
+
+          if (fs.existsSync(filepath)) {
+            let contents = fs.readFileSync(filepath, "utf8");
+            // Replace theme() with placeholders
+            contents = contents.replace(/theme\(([^)]+)\)/g, (match, p1) => {
+              const encoded = Buffer.from(p1).toString("base64").replace(/=/g, "_");
+              return `var(--twtheme-${encoded})`;
+            });
+            return { contents };
+          }
+        }
+
+        return null; // Use default resolution
+      },
+    ],
+  };
+
   return (
     src("src/index.scss")
-      // Step 1: Replace theme() with placeholder before Sass processes it
-      .pipe(replace(/theme\(([^)]+)\)/g, "__THEME__$1__END__"))
-      // Step 2: Compile SCSS
-      .pipe(sass({ quietDeps: true }).on("error", sass.logError))
-      // Step 3: Restore theme() calls for PostCSS/Tailwind to process
-      .pipe(replace(/__THEME__([^_]+)__END__/g, "theme($1)"))
-      // Step 4: Run PostCSS with Tailwind
+      .pipe(
+        replace(/theme\(([^)]+)\)/g, (match, p1) => {
+          const encoded = Buffer.from(p1).toString("base64").replace(/=/g, "_");
+          return `var(--twtheme-${encoded})`;
+        })
+      )
+      .pipe(sass(sassOptions).on("error", sass.logError))
+      .pipe(
+        replace(/var\(--twtheme-([A-Za-z0-9_]+)\)/g, (match, encoded) => {
+          const decoded = Buffer.from(encoded.replace(/_/g, "="), "base64").toString();
+          return `theme(${decoded})`;
+        })
+      )
+      .pipe(
+        replace(/\/\*\s*Tailwind:\s*tailwindcss\/([^\s]+)\s*\*\//g, (match, p1) => {
+          return `@import "tailwindcss/${p1}";`;
+        })
+      )
       .pipe(postcss(plugins))
+      // Remove any leftover SCSS @import statements
+      .pipe(replace(/@import\s+url\(["'][^"']*\.scss["']\);?/g, ""))
       .pipe(dest(output))
   );
 }
 
 function minify() {
-  return src(`${output}/index.css`).pipe(cleanCSS()).pipe(rename(`index.min.css`)).pipe(dest(output));
+  return (
+    src(`${output}/index.css`)
+      // Remove any leftover SCSS @import statements before minification
+      .pipe(replace(/@import\s+url\(["'][^"']*\.scss["']\);?/g, ""))
+      .pipe(
+        cleanCSS({
+          level: 2,
+          rebaseTo: output,
+          returnPromise: false,
+        })
+      )
+      .pipe(rename(`index.min.css`))
+      .pipe(dest(output))
+  );
 }
 
 function stylesLive() {

@@ -81,7 +81,7 @@
 }
 
 .document_list_searchbar {
-  border: 1px solid theme(colors.text.secondary) !important;
+  border: 1px solid var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5) !important;
   border-radius: 0px !important;
   margin: 20px 0;
 }
@@ -117,7 +117,7 @@
   font-weight: normal;
   font-size: 12px;
   line-height: 24px;
-  color: theme(colors.text.secondary);
+  color: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
   padding-right: 5px;
   padding-left: 15px;
   min-width: 80px;
@@ -133,7 +133,7 @@
   font-weight: normal;
   font-size: 12px;
   line-height: 14px;
-  color: theme(colors.text.secondary);
+  color: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
 }
 
 .notice_and_circular_caption {
@@ -167,7 +167,7 @@
         font-weight: normal;
         font-size: 16px;
         line-height: 19px;
-        color: theme(colors.primary.main);
+        color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       }
     }
   }
@@ -190,7 +190,7 @@
           font-weight: normal;
           font-size: 16px;
           line-height: 19px;
-          color: theme(colors.primary.main);
+          color: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
         }
       }
     }

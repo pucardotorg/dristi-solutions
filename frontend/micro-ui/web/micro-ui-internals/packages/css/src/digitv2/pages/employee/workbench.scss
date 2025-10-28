@@ -2,7 +2,7 @@
 
 .bread-crumb.workbench-bredcrumb {
   a {
-    color: theme(digitv2.lightTheme.primary);
+    color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
   }
 }
 
@@ -19,7 +19,7 @@
       @extend .typography.text-heading-m;
       padding-left: 1rem;
 
-      @media (max-width: theme(digitv2.screens.mobile)) {
+      @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
         padding-left: 0;
       }
     }
@@ -37,7 +37,7 @@
             display: flex;
             padding: 1em 0 0 1em;
 
-            @media (max-width: theme(digitv2.screens.mobile)) {
+            @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
               flex-direction: column;
             }
 
@@ -81,14 +81,14 @@
 
               /* tablet view*/
 
-              @media (max-width: theme(digitv2.screens.tablet)) {
+              @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
                 max-width: 11rem;
                 margin-right: 1.5rem;
               }
 
               /* mobile view*/
 
-              @media (max-width: theme(digitv2.screens.mobile)) {
+              @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                 /*max-width: 10.2rem;*/
                 @apply w-full;
               }
@@ -97,7 +97,7 @@
             .all-input-field-wrapper {
               @apply w-3/5;
 
-              @media (max-width: theme(digitv2.screens.mobile)) {
+              @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                 @apply w-full;
               }
 
@@ -112,14 +112,14 @@
                 margin-bottom: 1rem;
                 /* tablet view*/
 
-                @media (max-width: theme(digitv2.screens.tablet)) {
+                @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLnRhYmxldA__)) {
                   max-width: 27.5rem;
                   min-width: 12.5rem;
                 }
 
                 /* mobile view*/
 
-                @media (max-width: theme(digitv2.screens.mobile)) {
+                @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                   max-width: 20.5rem;
                   min-width: 9.5rem;
                   @apply w-full;
@@ -141,7 +141,7 @@
                   }
 
                   .digit__control--is-focused {
-                    border-color: theme(digitv2.lightTheme.primary) !important;
+                    border-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_) !important;
                     box-shadow: none;
                     box-sizing: unset;
                     @apply outline-none;
@@ -155,28 +155,28 @@
                   }
 
                   .digit__control:focus {
-                    border-color: theme(digitv2.lightTheme.primary);
+                    border-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
 
                     .digit__value-container:focus {
-                      border-color: theme(digitv2.lightTheme.primary);
+                      border-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
                     }
                   }
                 }
 
                 &.form-select:focus {
                   @apply outline-none;
-                  border-color: theme(digitv2.lightTheme.primary);
+                  border-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
                 }
               }
 
               .form-control:read-only {
-                background-color: theme(digitv2.lightTheme.background);
-                color: theme(digitv2.lightTheme[ "text-color-secondary" ]);
+                background-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLmJhY2tncm91bmQ_);
+                color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lWyAidGV4dC1jb2xvci1zZWNvbmRhcnkiIF0_);
               }
 
               .form-control:focus {
                 @apply outline-none;
-                border-color: theme(digitv2.lightTheme.primary);
+                border-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
               }
 
               textarea.form-control {
@@ -230,7 +230,7 @@
                   }
 
                   input[type="checkbox"]#digit_root_active {
-                    accent-color: theme(digitv2.lightTheme.primary);
+                    accent-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnk_);
                   }
 
                   input:checked,
@@ -351,12 +351,12 @@
                     cursor: pointer;
                     background-color: inherit !important;
 
-                    @media (max-width: theme(digitv2.screens.mobile)) {
+                    @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                       padding: 0px;
                     }
 
                     h2 {
-                      @media (max-width: theme(digitv2.screens.mobile)) {
+                      @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                         display: none;
                       }
                     }
@@ -380,7 +380,7 @@
                 height: 1.7em;
                 margin-top: 0.5rem;
 
-                @media (max-width: theme(digitv2.screens.mobile)) {
+                @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
                   height: auto;
                   width: 100%;
                 }
@@ -525,7 +525,7 @@
     display: flex;
     padding-top: 2.1rem;
 
-    @media (max-width: theme(digitv2.screens.mobile)) {
+    @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
       flex-direction: column;
     }
 
@@ -533,7 +533,7 @@
       @apply w-1/4;
       margin-right: 1rem;
 
-      @media (max-width: theme(digitv2.screens.mobile)) {
+      @media (max-width: var(--twtheme-ZGlnaXR2Mi5zY3JlZW5zLm1vYmlsZQ__)) {
         @apply w-full;
       }
     }
@@ -544,7 +544,7 @@
     padding-right: 0.8rem;
 
     &-row-mdms:hover {
-      background-color: theme(digitv2.lightTheme.primary-bg);
+      background-color: var(--twtheme-ZGlnaXR2Mi5saWdodFRoZW1lLnByaW1hcnktYmc_);
       /* Change this to the desired hover color */
       cursor: pointer;
     }

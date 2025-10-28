@@ -39,7 +39,7 @@
     }
 
     .user-img-txt {
-      background: theme(colors.primary.main);
+      background: var(--twtheme-Y29sb3JzLnByaW1hcnkubWFpbg__);
       padding: 10px 15px;
       border-radius: 50%;
       color: white;
@@ -131,10 +131,10 @@
   flex-direction: row;
   padding: 10px;
   column-gap: 10px;
-  color: theme(colors.text.secondary);
+  color: var(--twtheme-Y29sb3JzLnRleHQuc2Vjb25kYXJ5);
 
   &:hover {
-    background: theme(colors.grey.mid);
+    background: var(--twtheme-Y29sb3JzLmdyZXkubWlk);
   }
 }
 

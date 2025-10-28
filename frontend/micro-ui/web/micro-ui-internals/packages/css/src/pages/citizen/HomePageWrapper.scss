@@ -60,7 +60,7 @@
 @media (min-width: 780px) {
   .SideBarStatic {
     width: 219px;
-    background: theme(colors.white);
+    background: var(--twtheme-Y29sb3JzLndoaXRl);
   }
 }
 
@@ -73,7 +73,7 @@
   @media (min-width: 780px) {
     display: flex;
     width: calc(100% - 219px);
-    height: calc(100%-30px);
+    height: calc(100% - 30px);
   }
 }
 
@@ -97,7 +97,7 @@
     border: none;
     top: 76px;
     svg {
-      fill: theme(colors.white);
+      fill: var(--twtheme-Y29sb3JzLndoaXRl);
     }
     @apply absolute text-white text-heading-s ml-md;
   }
