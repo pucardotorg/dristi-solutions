@@ -114,10 +114,9 @@ public class CronJobScheduler {
     }
 
     public void sendNotificationForMandatorySubmissionPending() {
-        List<PendingTask> pendingTasks = getPendingTasks();
+        List<PendingTask> pendingTasks = getPendingTasksForMandatorySubmission();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
         pendingTasks.stream()
-                .filter(task -> MAKE_MANDATORY_SUBMISSION.equalsIgnoreCase(task.getName()))
                 .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
                 .forEach(pendingTask -> {
                     CaseCriteria criteria = CaseCriteria.builder()
@@ -161,6 +160,28 @@ public class CronJobScheduler {
                         )
                         .moduleSearchCriteria(moduleSearchCriteria)
                         .build()
+                ).
+                build();
+        return pendingTaskUtil.getPendingTask(searchRequest);
+    }
+
+    List<PendingTask> getPendingTasksForMandatorySubmission() {
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("name", MAKE_MANDATORY_SUBMISSION);
+        moduleSearchCriteria.put("isCompleted", false);
+
+        InboxRequest searchRequest = InboxRequest.builder()
+                .inbox(
+                        InboxSearchCriteria.builder()
+                                .tenantId(config.getStateLevelTenantId())
+                                .processSearchCriteria(
+                                        ProcessInstanceSearchCriteria.builder()
+                                                .moduleName("Pending Tasks Service")
+                                                .businessService(List.of("hearing-default"))
+                                                .build()
+                                )
+                                .moduleSearchCriteria(moduleSearchCriteria)
+                                .build()
                 ).
                 build();
         return pendingTaskUtil.getPendingTask(searchRequest);
