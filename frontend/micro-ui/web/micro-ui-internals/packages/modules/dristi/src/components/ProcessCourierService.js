@@ -35,14 +35,17 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   };
 
   const handleAddressSelection = (addressId, isSelected) => {
-    const updatedAddresses = processCourierData.addressDetails.map((addr) => {
+    const updatedAddresses = processCourierData?.addressDetails?.map((addr) => {
       if (addr?.id === addressId) {
         return { ...addr, checked: isSelected };
       }
       return addr;
     });
-
-    handleDataChange({ addressDetails: updatedAddresses });
+    if (updatedAddresses?.every((addr) => !addr?.checked)) {
+      handleDataChange({ addressDetails: updatedAddresses, noticeCourierService: [], summonsCourierService: [] });
+    } else {
+      handleDataChange({ addressDetails: updatedAddresses });
+    }
   };
 
   const handleCourierServiceChange = (value, type) => {

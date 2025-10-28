@@ -105,3 +105,24 @@
     }
   }
 }
+
+.tasks-component-table-view {
+  .process-courier-service {
+    width: 60%;
+    margin: auto;
+    height: fit-content;
+    h2 {
+      font-size: 16px;
+      line-height: 0px;
+    }
+    .heading-m {
+      margin: 0px;
+      padding-top: 0px;
+    }
+    .popup-module-action-bar {
+      .selector-button-border {
+        border: none !important;
+      }
+    }
+  }
+}

@@ -14,13 +14,17 @@ import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/D
 import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
+import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
   ESIGN: "E-SIGN",
   ABANDON: "ABANDON",
+};
+const formDataKeyMap = {
+  NOTICE: "noticeOrder",
+  SUMMONS: "SummonsOrder",
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
@@ -60,12 +64,11 @@ const TasksComponent = ({
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [showCourierServiceModal, setShowCourierServiceModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
+  const [courierServicePendingTask, setCourierServicePendingTask] = useState({});
+  const [courierOrderDetails, setCourierOrderDetails] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
-  const [courierData, setCourierData] = useState({});
-  const [courierOrderType, setCourierOrderType] = useState("SUMMONS");
   const [active, setActive] = useState(false);
-  const [selectedAddresses, setSelectedAddresses] = useState([]);
   const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
@@ -134,43 +137,6 @@ const TasksComponent = ({
     refetch();
   }, [refetch, filingNumber, needRefresh]);
 
-  // Initialize courier data when modal opens
-  useEffect(() => {
-    if (showCourierServiceModal) {
-      setActive(false);
-      const defaultAddresses = [
-        {
-          id: 1,
-          addressDetails: {
-            city: "Kollam",
-            state: "Kollam",
-            pincode: "691008",
-            district: "dsaas",
-            locality: "Kadapakkada",
-          },
-        },
-        {
-          id: 2,
-          addressDetails: {
-            city: "Kollam",
-            state: "Kollam",
-            pincode: "691008",
-            district: "dsaas",
-            locality: "Kadapakkada",
-          },
-        },
-      ];
-
-      setCourierData({
-        addressDetails: defaultAddresses,
-        noticeCourierService: null,
-        summonsCourierService: null,
-      });
-
-      setSelectedAddresses(defaultAddresses);
-    }
-  }, [showCourierServiceModal]);
-
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
       setSearchCaseLoading(true);
@@ -218,6 +184,49 @@ const TasksComponent = ({
     },
     [getOrderDetail, history, userType]
   );
+
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0) {
+        try {
+          const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
+          if (orderNumber) {
+            const order = await getOrderDetail(orderNumber);
+
+            let orderDetails = order;
+            if (order?.orderCategory === "COMPOSITE") {
+              const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.itemId);
+              orderDetails = {
+                ...order,
+                additionalDetails: orderItem?.orderSchema?.additionalDetails,
+                orderType: orderItem?.orderType,
+                orderDetails: orderItem?.orderSchema?.orderDetails,
+              };
+            }
+            const formDataKey = formDataKeyMap[orderDetails?.orderType];
+            const updatedParties = orderDetails.additionalDetails.formdata[formDataKey].party?.map((party) => {
+              return {
+                ...party,
+                data: {
+                  ...party.data,
+                  addressDetails: party?.data?.addressDetails?.map((addr) => ({
+                    ...addr,
+                    checked: true,
+                  })),
+                },
+              };
+            });
+            orderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+            setCourierOrderDetails(orderDetails);
+          }
+        } catch (error) {
+          console.error("Error fetching order details:", error);
+        }
+      }
+    };
+
+    fetchOrderDetails();
+  }, [courierServicePendingTask, getOrderDetail]);
 
   const handleReviewSubmission = useCallback(
     async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
@@ -704,33 +713,101 @@ const TasksComponent = ({
     };
   }, [t, data, refetch, setPendingTaskActionModals]);
 
-  // Courier service options
-  const courierOptions = useMemo(
-    () => [
-      { code: "Registered Post", name: "Registered Post (INR 40) • 10-15 days delivery" },
-      { code: "E-Post", name: "E-Post (INR 50) • 3-5 days delivery" },
-    ],
-    []
-  );
+  const handleCourierServiceChange = useCallback((value, type, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
 
-  // Handle courier service selection
-  const handleCourierServiceChange = useCallback((value, type) => {
-    setCourierData((prev) => ({
-      ...prev,
-      [type === "notice" ? "noticeCourierService" : "summonsCourierService"]: value,
-    }));
-  }, []);
-
-  // Handle address selection
-  const handleAddressSelection = useCallback((addressDetails, id, isSelected) => {
-    setSelectedAddresses((prev) => {
-      if (isSelected) {
-        return [...prev, { addressDetails, id }];
-      } else {
-        return prev.filter((addr) => (addr.id && id ? addr.id !== id : JSON.stringify(addr.addressDetails) !== JSON.stringify(addressDetails)));
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
+        const updatedParty = { ...updatedParties[index] };
+        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParties[index] = updatedParty;
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
+
+      return updatedOrderDetails;
     });
   }, []);
+
+  const handleAddressSelection = useCallback((addressId, isSelected, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails?.additionalDetails?.formdata[formDataKey]?.party];
+
+        const updatedParty = { ...updatedParties[index] };
+
+        const currentAddressDetails = updatedParty?.data?.addressDetails || [];
+
+        const updatedAddressDetails = currentAddressDetails?.map((addr) => {
+          if (addr?.id === addressId) {
+            return { ...addr, checked: isSelected };
+          }
+          return addr;
+        });
+
+        updatedParty.data.addressDetails = updatedAddressDetails;
+
+        if (updatedAddressDetails?.every((addr) => !addr?.checked)) {
+          updatedParty.noticeCourierService = [];
+          updatedParty.summonsCourierService = [];
+        }
+
+        updatedParties[index] = updatedParty;
+
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
+  }, []);
+
+  const courierServiceSteps = useMemo(() => {
+    const courierServiceSteps =
+      courierOrderDetails?.additionalDetails?.formdata?.[formDataKeyMap[courierOrderDetails?.orderType]]?.party?.map((item, i) => {
+        const courierData = {
+          index: i,
+          firstName: item?.data?.firstName || "",
+          middleName: item?.data?.middleName || "",
+          lastName: item?.data?.lastName || "",
+          noticeCourierService: item?.noticeCourierService || [],
+          summonsCourierService: item?.summonsCourierService || [],
+          addressDetails: item?.data?.addressDetails || [],
+          uniqueId: item?.uniqueId || item?.data?.uniqueId || "",
+        };
+        const fullName = getFullName(" ", courierData?.firstName, courierData?.middleName, courierData?.lastName);
+        const orderType = courierOrderDetails?.orderType;
+
+        return {
+          type: "modal",
+          className: "process-courier-service",
+          heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderDetails?.orderType)} for ${fullName}` },
+          modalBody: (
+            <CourierService
+              t={t}
+              processCourierData={courierData}
+              handleCourierServiceChange={(value, type) => handleCourierServiceChange(value, type, i)}
+              handleAddressSelection={(addressId, isSelected) => handleAddressSelection(addressId, isSelected, i)}
+              summonsActive={active}
+              setSummonsActive={setActive}
+              noticeActive={active}
+              setNoticeActive={setActive}
+              orderType={orderType}
+              setCourierOrderDetails={setCourierOrderDetails}
+            />
+          ),
+          actionSaveOnSubmit: () => {
+            // Process courier data
+            return { continue: true };
+          },
+          isDisabled: orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0,
+        };
+      }) || [];
+    return courierServiceSteps;
+  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, t, active]);
 
   // Courier service modal configuration
   const courierServiceConfig = useMemo(() => {
@@ -742,58 +819,7 @@ const TasksComponent = ({
       actionSaveLabel: t("CS_COURIER_NEXT"),
       actionCancelLabel: t("CS_COURIER_GO_BACK"),
       steps: [
-        {
-          type: "modal",
-          className: "process-courier-service",
-          heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderType)} for` },
-          modalBody: (
-            <CourierService
-              t={t}
-              processCourierData={{
-                ...courierData,
-                index: 0,
-                addressDetails: courierData?.addressDetails || [
-                  {
-                    id: 1,
-                    checked: true,
-                    addressDetails: {
-                      city: "Kollam",
-                      state: "Kollam",
-                      pincode: "691008",
-                      district: "dsaas",
-                      locality: "Kadapakkada",
-                    },
-                  },
-                  {
-                    id: 2,
-                    checked: false,
-                    addressDetails: {
-                      city: "Kollam",
-                      state: "Kollam",
-                      pincode: "691008",
-                      district: "dsaas",
-                      locality: "Kadapakkada",
-                    },
-                  },
-                ],
-              }}
-              courierOptions={courierOptions}
-              handleCourierServiceChange={handleCourierServiceChange}
-              handleAddressSelection={handleAddressSelection}
-              summonsActive={active}
-              setSummonsActive={setActive}
-              noticeActive={active}
-              setNoticeActive={setActive}
-              orderType={courierOrderType}
-            />
-          ),
-          actionSaveOnSubmit: () => {
-            // Process courier data
-            console.log("Courier data submitted:", courierData, selectedAddresses);
-            return { continue: true };
-          },
-          isDisabled: selectedAddresses.length === 0 || (!courierData?.noticeCourierService && !courierData?.summonsCourierService),
-        },
+        ...courierServiceSteps,
         {
           type: "success",
           hideSubmit: true,
@@ -815,7 +841,7 @@ const TasksComponent = ({
         },
       ],
     };
-  }, [t, courierData, courierOptions, selectedAddresses, handleCourierServiceChange, handleAddressSelection, courierOrderType, active]);
+  }, [courierServiceSteps, t]);
 
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
@@ -840,6 +866,7 @@ const TasksComponent = ({
           setPendingTaskActionModals={setPendingTaskActionModals}
           isApplicationCompositeOrder={isApplicationCompositeOrder}
           setShowCourierServiceModal={setShowCourierServiceModal}
+          setCourierServicePendingTask={setCourierServicePendingTask}
         />
       </div>
     );
@@ -915,6 +942,7 @@ const TasksComponent = ({
                         setResponsePendingTask={setResponsePendingTask}
                         setPendingTaskActionModals={setPendingTaskActionModals}
                         setShowCourierServiceModal={setShowCourierServiceModal}
+                        setCourierServicePendingTask={setCourierServicePendingTask}
                       />
                     </div>
                   ) : (
@@ -932,6 +960,7 @@ const TasksComponent = ({
                           setResponsePendingTask={setResponsePendingTask}
                           setPendingTaskActionModals={setPendingTaskActionModals}
                           setShowCourierServiceModal={setShowCourierServiceModal}
+                          setCourierServicePendingTask={setCourierServicePendingTask}
                         />
                       </div>
                       <div className="task-section">
@@ -945,6 +974,7 @@ const TasksComponent = ({
                           setResponsePendingTask={setResponsePendingTask}
                           setPendingTaskActionModals={setPendingTaskActionModals}
                           setShowCourierServiceModal={setShowCourierServiceModal}
+                          setCourierServicePendingTask={setCourierServicePendingTask}
                         />
                       </div>
                     </React.Fragment>
@@ -971,7 +1001,7 @@ const TasksComponent = ({
       </React.Fragment>
 
       {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
-      {showCourierServiceModal && <DocumentModal config={courierServiceConfig} />}
+      {showCourierServiceModal && courierServiceSteps?.length > 0 && <DocumentModal config={courierServiceConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
@@ -997,6 +1027,7 @@ const TasksComponent = ({
                       setResponsePendingTask={setResponsePendingTask}
                       setPendingTaskActionModals={setPendingTaskActionModals}
                       setShowCourierServiceModal={setShowCourierServiceModal}
+                      setCourierServicePendingTask={setCourierServicePendingTask}
                       tableView={true}
                     />
                   </Card>
@@ -1005,7 +1036,7 @@ const TasksComponent = ({
             </React.Fragment>
           )}
           {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
-          {showCourierServiceModal && <DocumentModal config={courierServiceConfig} />}
+          {showCourierServiceModal && courierServiceSteps?.length > 0 && <DocumentModal config={courierServiceConfig} />}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
         </React.Fragment>

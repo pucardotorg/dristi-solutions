@@ -107,7 +107,7 @@ function CourierService({
     const checkedAddressIds = processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.map((addr) => addr?.id) || [];
 
     const grouped = breakupResponse?.Calculation?.reduce((acc, item) => {
-      const [taskType, channelId, addressId] = item.applicationId?.split("_");
+      const [taskType, channelId, addressId] = item?.applicationId?.split("_");
       const key = `${taskType}_${channelId}`;
 
       const isAddressChecked = checkedAddressIds?.includes(addressId);
@@ -116,14 +116,14 @@ function CourierService({
         acc[key] = {
           channelId: channelId,
           taskType,
-          totalAmount: 0,
-          code: channelId === "RPAD" ? "REGISTERED_POST" : "E_POST",
-          deliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
+          fees: 0,
+          channelCode: channelId === "RPAD" ? "REGISTERED_POST" : "E_POST",
+          channelDeliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
         };
       }
 
       if (isAddressChecked) {
-        acc[key].totalAmount += item?.totalAmount || 0;
+        acc[key].fees += item?.totalAmount || 0;
       }
 
       return acc;
@@ -131,18 +131,18 @@ function CourierService({
 
     const options = Object?.values(grouped)?.map((item) => ({
       ...item,
-      name: `${t(item?.code)} (INR ${item?.totalAmount}) • ${t(item?.deliveryTime)}`,
+      channelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
     }));
 
     if (Array.isArray(processCourierData?.noticeCourierService) && processCourierData?.noticeCourierService?.length > 0) {
-      const noticeOptions = options.filter((opt) => opt.taskType === "NOTICE");
-      const needsUpdate = processCourierData.noticeCourierService.some((selected) => {
-        const updatedOption = noticeOptions.find((opt) => opt.channelId === selected.channelId);
-        return updatedOption && updatedOption.totalAmount !== selected.totalAmount;
+      const noticeOptions = options?.filter((opt) => opt?.taskType === "NOTICE");
+      const needsUpdate = processCourierData?.noticeCourierService?.some((selected) => {
+        const updatedOption = noticeOptions?.find((opt) => opt?.channelId === selected?.channelId);
+        return updatedOption && updatedOption?.fees !== selected?.fees;
       });
       if (needsUpdate) {
-        const updatedSelections = processCourierData.noticeCourierService.map((selected) => {
-          const updatedOption = noticeOptions.find((opt) => opt.channelId === selected.channelId);
+        const updatedSelections = processCourierData?.noticeCourierService?.map((selected) => {
+          const updatedOption = noticeOptions?.find((opt) => opt?.channelId === selected?.channelId);
           return updatedOption || selected;
         });
         handleCourierServiceChange(updatedSelections, "notice");
@@ -150,14 +150,14 @@ function CourierService({
     }
 
     if (Array.isArray(processCourierData?.summonsCourierService) && processCourierData?.summonsCourierService?.length > 0) {
-      const summonsOptions = options.filter((opt) => opt.taskType === "SUMMONS");
-      const needsUpdate = processCourierData.summonsCourierService.some((selected) => {
-        const updatedOption = summonsOptions.find((opt) => opt.channelId === selected.channelId);
-        return updatedOption && updatedOption.totalAmount !== selected.totalAmount;
+      const summonsOptions = options?.filter((opt) => opt?.taskType === "SUMMONS");
+      const needsUpdate = processCourierData?.summonsCourierService?.some((selected) => {
+        const updatedOption = summonsOptions?.find((opt) => opt?.channelId === selected?.channelId);
+        return updatedOption && updatedOption?.fees !== selected?.fees;
       });
       if (needsUpdate) {
-        const updatedSelections = processCourierData.summonsCourierService.map((selected) => {
-          const updatedOption = summonsOptions.find((opt) => opt.channelId === selected.channelId);
+        const updatedSelections = processCourierData?.summonsCourierService.map((selected) => {
+          const updatedOption = summonsOptions?.find((opt) => opt?.channelId === selected?.channelId);
           return updatedOption || selected;
         });
         handleCourierServiceChange(updatedSelections, "summons");
@@ -219,7 +219,8 @@ function CourierService({
                 options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
                 selected={processCourierData?.noticeCourierService}
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
-                optionsKey="name"
+                optionsKey="channelName"
+                displayKey="channelCode"
                 disable={processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
                 active={noticeActive}
                 setActive={setNoticeActive}
@@ -261,7 +262,8 @@ function CourierService({
                 onSelect={(value) => {
                   handleCourierServiceChange(value, "summons");
                 }}
-                optionsKey="name"
+                optionsKey="channelName"
+                displayKey="channelCode"
                 disable={
                   processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
                   (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)

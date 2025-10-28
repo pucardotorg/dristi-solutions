@@ -33,6 +33,7 @@ function PendingTaskAccordion({
   tableView = false,
   isApplicationCompositeOrder = false,
   setShowCourierServiceModal,
+  setCourierServicePendingTask,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -211,8 +212,11 @@ function PendingTaskAccordion({
                           );
                         } else {
                           setResponsePendingTask(item);
-                          setShowCourierServiceModal(true);
+                          setShowSubmitResponseModal(true);
                         }
+                      } else if (item?.entityType === "task-management-payment" && item?.status === "PENDING_PAYMENT") {
+                        setCourierServicePendingTask(item);
+                        setShowCourierServiceModal(true);
                       } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                     }}
                   >
@@ -239,7 +243,18 @@ function PendingTaskAccordion({
         </div>
       );
     },
-    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowCourierServiceModal, t, sortedPendingTasks]
+    [
+      history,
+      isJudge,
+      redirectPendingTaskUrl,
+      setPendingTaskActionModals,
+      setResponsePendingTask,
+      setShowCourierServiceModal,
+      t,
+      sortedPendingTasks,
+      setShowSubmitResponseModal,
+      setCourierServicePendingTask,
+    ]
   );
 
   const orderPageTaskView = useCallback(() => {
@@ -398,8 +413,11 @@ function PendingTaskAccordion({
                         );
                       } else {
                         setResponsePendingTask(item);
-                        setShowCourierServiceModal(true);
+                        setShowSubmitResponseModal(true);
                       }
+                    } else if (item?.entityType === "task-management-payment" && item?.status === "PENDING_PAYMENT") {
+                      setCourierServicePendingTask(item);
+                      setShowCourierServiceModal(true);
                     } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                   }}
                 >
