@@ -4548,6 +4548,15 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId", hideInForm: true },
+      },
+      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4576,7 +4585,7 @@ export const configsIssueBailAcceptance = [
         populators: {
           styles: { maxWidth: "100%" },
           name: "bailType",
-          optionsKey: "type",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
@@ -4584,7 +4593,8 @@ export const configsIssueBailAcceptance = [
             masterName: "BailType",
             moduleName: "Order",
             localePrefix: "BAIL_TYPE",
-            select: "(data) => {return data['Order'].BailType?.map((item) => {return {...item, code: item.type};});}",
+            select:
+              "(data) => {return data['Order'].BailType?.map((item) => {if (item.type === 'BAIL_BOND') { return { ...item, code: item.type, name: 'PERSONAL' }; } return { ...item, code: item.type, name: item.type };});}",
           },
         },
       },
