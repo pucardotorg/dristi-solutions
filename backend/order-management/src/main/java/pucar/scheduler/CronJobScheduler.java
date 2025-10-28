@@ -3,7 +3,6 @@ package pucar.scheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.User;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.service.SmsNotificationService;
@@ -24,8 +23,12 @@ import pucar.web.models.pendingtask.ProcessInstanceSearchCriteria;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.MAKE_MANDATORY_SUBMISSION;
 import static pucar.config.ServiceConstants.MANDATORY_SUBMISSION_PENDING;
@@ -59,16 +62,17 @@ public class CronJobScheduler {
 
     public void sendNotificationForProcessPaymentPending() {
         log.info("Starting Cron Job for sending process payment pending notifications");
-        List<PendingTask> pendingTasks = getPendingTasks();
+        List<PendingTask> pendingTasks = getPendingTasksForPaymentPending();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
         pendingTasks.stream()
-                .filter(this::isPendingTaskForPaymentPending)
-                .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
+                .filter(pendingTask -> pendingTask.getCreatedTime() != null &&
+                        pendingTask.getCreatedTime() > LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant().toEpochMilli())
                 .forEach(pendingTask -> {
-                    List<String> userUuids = pendingTask.getAssignedTo().stream().
+                    Set<String> userUuids = pendingTask.getAssignedTo().stream().
                             map(User::getUuid)
-                            .toList();
-                    List<User> users = userUtil.getUserListFromUserUuid(userUuids);
+                            .collect(Collectors.toSet());
+                    List<User> users = userUtil.getUserListFromUserUuid(new ArrayList<>(userUuids));
                     users.forEach(user -> {
                         smsNotificationService.sendNotification(null, smsTemplateData, PROCESS_FEE_PAYMENT_PENDING, user.getMobileNumber());
                     });
@@ -80,16 +84,6 @@ public class CronJobScheduler {
                     }
                 });
 
-    }
-
-    public boolean isPendingTaskForPaymentPending(PendingTask pendingTask) {
-        // Set in pendingTaskUtil.getPendingTaskNameForSummonAndNotice() for Notice and Summons and
-        // from Service Constants for others
-        return pendingTask.getName().contains("Make Payment") ||
-                pendingTask.getName().contains("Pay online") ||
-                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_WARRANT) ||
-                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_ATTACHMENT) ||
-                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_PROCLAMATION);
     }
 
     public boolean isThirdDaySinceCreatedTime(long createdTime) {
@@ -117,6 +111,7 @@ public class CronJobScheduler {
         List<PendingTask> pendingTasks = getPendingTasksForMandatorySubmission();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
         pendingTasks.stream()
+                .filter(pendingTask -> pendingTask.getCreatedTime() != null)
                 .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
                 .forEach(pendingTask -> {
                     CaseCriteria criteria = CaseCriteria.builder()
@@ -144,9 +139,14 @@ public class CronJobScheduler {
 
     }
 
-    List<PendingTask> getPendingTasks() {
+    List<PendingTask> getPendingTasksForPaymentPending() {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        // Set in pendingTaskUtil.getPendingTaskNameForSummonAndNotice() for Notice and Summons and
+        // from Service Constants for others
+        List<String> pendingTaskNames = List.of("Make Payment", "Pay online", PAYMENT_PENDING_FOR_WARRANT, PAYMENT_PENDING_FOR_PROCLAMATION, PAYMENT_PENDING_FOR_ATTACHMENT);
         moduleSearchCriteria.put("isCompleted", false);
+        moduleSearchCriteria.put("name", pendingTaskNames);
+
 
         InboxRequest searchRequest = InboxRequest.builder()
                 .inbox(
@@ -157,8 +157,10 @@ public class CronJobScheduler {
                                     .moduleName("Pending Tasks Service")
                                     .businessService(List.of("hearing-default"))
                                     .build()
-                        )
-                        .moduleSearchCriteria(moduleSearchCriteria)
+                            )
+                            .moduleSearchCriteria(moduleSearchCriteria)
+                            .limit(300)
+                            .offset(0)
                         .build()
                 ).
                 build();
@@ -175,10 +177,10 @@ public class CronJobScheduler {
                         InboxSearchCriteria.builder()
                                 .tenantId(config.getStateLevelTenantId())
                                 .processSearchCriteria(
-                                        ProcessInstanceSearchCriteria.builder()
-                                                .moduleName("Pending Tasks Service")
-                                                .businessService(List.of("hearing-default"))
-                                                .build()
+                                    ProcessInstanceSearchCriteria.builder()
+                                            .moduleName("Pending Tasks Service")
+                                            .businessService(List.of("hearing-default"))
+                                            .build()
                                 )
                                 .moduleSearchCriteria(moduleSearchCriteria)
                                 .limit(300)
