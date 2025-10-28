@@ -181,6 +181,8 @@ public class CronJobScheduler {
                                                 .build()
                                 )
                                 .moduleSearchCriteria(moduleSearchCriteria)
+                                .limit(300)
+                                .offset(0)
                                 .build()
                 ).
                 build();
