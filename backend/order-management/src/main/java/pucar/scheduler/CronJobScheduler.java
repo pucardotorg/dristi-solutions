@@ -118,29 +118,33 @@ public class CronJobScheduler {
                 .filter(pendingTask -> pendingTask.getCreatedTime() != null)
                 .filter(pendingTask -> isThirdDaySinceCreatedTime(pendingTask.getCreatedTime()))
                 .forEach(pendingTask -> {
-                    CaseCriteria criteria = CaseCriteria.builder()
-                            .filingNumber(pendingTask.getFilingNumber())
-                            .build();
-                    RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
-                    CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                            .requestInfo(requestInfo)
-                            .criteria(List.of(criteria))
-                            .build();
-                    CaseListResponse caseListResponse = caseUtil.searchCaseDetails(caseSearchRequest);
-                    CourtCase courtCase = caseListResponse.getCriteria().get(0).getResponseList().get(0);
-                    String courtCaseNumber = courtCase.getCourtCaseNumber();
-                    String cmpNumber = courtCase.getCmpNumber();
-                    smsTemplateData.setCmpNumber(cmpNumber);
-                    smsTemplateData.setCourtCaseNumber(courtCaseNumber);
-                    LocalDate date = dateUtil.getLocalDateFromEpoch(pendingTask.getStateSla());
-                    smsTemplateData.setSubmissionDueDate(String.valueOf(date));
-                    List<String> userUuids = pendingTask.getAssignedTo().stream().
-                            map(User::getUuid)
-                            .toList();
-                    List<User> users = userUtil.getUserListFromUserUuid(userUuids);
-                    users.forEach(user -> {
-                        smsNotificationService.sendNotification(null, smsTemplateData, MANDATORY_SUBMISSION_PENDING, user.getMobileNumber());
-                    });
+                    try {
+                        CaseCriteria criteria = CaseCriteria.builder()
+                                .filingNumber(pendingTask.getFilingNumber())
+                                .build();
+                        RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+                        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                                .requestInfo(requestInfo)
+                                .criteria(List.of(criteria))
+                                .build();
+                        CaseListResponse caseListResponse = caseUtil.searchCaseDetails(caseSearchRequest);
+                        CourtCase courtCase = caseListResponse.getCriteria().get(0).getResponseList().get(0);
+                        String courtCaseNumber = courtCase.getCourtCaseNumber();
+                        String cmpNumber = courtCase.getCmpNumber();
+                        smsTemplateData.setCmpNumber(cmpNumber);
+                        smsTemplateData.setCourtCaseNumber(courtCaseNumber);
+                        LocalDate date = dateUtil.getLocalDateFromEpoch(pendingTask.getStateSla());
+                        smsTemplateData.setSubmissionDueDate(String.valueOf(date));
+                        List<String> userUuids = pendingTask.getAssignedTo().stream().
+                                map(User::getUuid)
+                                .toList();
+                        List<User> users = userUtil.getUserListFromUserUuid(userUuids);
+                        users.forEach(user -> {
+                            smsNotificationService.sendNotification(null, smsTemplateData, MANDATORY_SUBMISSION_PENDING, user.getMobileNumber());
+                        });
+                    } catch (Exception e) {
+                        log.error("Failed to send notification for mandatory submission", e);
+                    }
                 });
 
     }
