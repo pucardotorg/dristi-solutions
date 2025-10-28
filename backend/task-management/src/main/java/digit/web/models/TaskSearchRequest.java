@@ -22,17 +22,15 @@ import lombok.Builder;
 public class TaskSearchRequest {
     @JsonProperty("RequestInfo")
     @NotNull
-
     @Valid
     private RequestInfo requestInfo = null;
 
     @JsonProperty("criteria")
-
     @Valid
+    @NotNull
     private TaskSearchCriteria criteria = null;
 
     @JsonProperty("pagination")
-
     @Valid
     private Pagination pagination = null;
 
