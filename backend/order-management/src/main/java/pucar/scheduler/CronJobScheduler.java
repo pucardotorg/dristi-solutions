@@ -29,6 +29,9 @@ import java.util.List;
 
 import static pucar.config.ServiceConstants.MAKE_MANDATORY_SUBMISSION;
 import static pucar.config.ServiceConstants.MANDATORY_SUBMISSION_PENDING;
+import static pucar.config.ServiceConstants.PAYMENT_PENDING_FOR_ATTACHMENT;
+import static pucar.config.ServiceConstants.PAYMENT_PENDING_FOR_PROCLAMATION;
+import static pucar.config.ServiceConstants.PAYMENT_PENDING_FOR_WARRANT;
 import static pucar.config.ServiceConstants.PROCESS_FEE_PAYMENT_PENDING;
 import static pucar.config.ServiceConstants.RPAD;
 import static pucar.config.ServiceConstants.RPAD_SUBMISSION_PENDING;
@@ -55,6 +58,7 @@ public class CronJobScheduler {
     }
 
     public void sendNotificationForProcessPaymentPending() {
+        log.info("Starting Cron Job for sending process payment pending notifications");
         List<PendingTask> pendingTasks = getPendingTasks();
         SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
         pendingTasks.stream()
@@ -79,8 +83,13 @@ public class CronJobScheduler {
     }
 
     public boolean isPendingTaskForPaymentPending(PendingTask pendingTask) {
-        // Set in pendingTaskUtil.getPendingTaskNameForSummonAndNotice()
-        return pendingTask.getName().contains("Make Payment") || pendingTask.getName().contains("Pay online");
+        // Set in pendingTaskUtil.getPendingTaskNameForSummonAndNotice() for Notice and Summons and
+        // from Service Constants for others
+        return pendingTask.getName().contains("Make Payment") ||
+                pendingTask.getName().contains("Pay online") ||
+                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_WARRANT) ||
+                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_ATTACHMENT) ||
+                pendingTask.getName().equalsIgnoreCase(PAYMENT_PENDING_FOR_PROCLAMATION);
     }
 
     public boolean isThirdDaySinceCreatedTime(long createdTime) {
@@ -141,15 +150,19 @@ public class CronJobScheduler {
         moduleSearchCriteria.put("isCompleted", false);
 
         InboxRequest searchRequest = InboxRequest.builder()
-                .inbox(InboxSearchCriteria.builder()
-                        .tenantId(config.getStateLevelTenantId())
-                        .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
-                                .moduleName("Pending Tasks Service")
-                                .businessService(List.of("hearing-default")).build())
-                        .moduleSearchCriteria(
-                                moduleSearchCriteria
+                .inbox(
+                        InboxSearchCriteria.builder()
+                            .tenantId(config.getStateLevelTenantId())
+                            .processSearchCriteria(
+                                ProcessInstanceSearchCriteria.builder()
+                                    .moduleName("Pending Tasks Service")
+                                    .businessService(List.of("hearing-default"))
+                                    .build()
                         )
-                        .offset(0).build()).build();
+                        .moduleSearchCriteria(moduleSearchCriteria)
+                        .build()
+                ).
+                build();
         return pendingTaskUtil.getPendingTask(searchRequest);
     }
 

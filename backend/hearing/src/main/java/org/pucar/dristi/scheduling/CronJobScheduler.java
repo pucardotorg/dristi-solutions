@@ -194,6 +194,10 @@ public class CronJobScheduler {
             String cmpNumber = firstCase.getCmpNumber();
             String filingNumber = firstCase.getFilingNumber();
             Hearing hearing = getNextScheduledHearing(filingNumber, requestInfo);
+            if(hearing == null){
+                log.info("Hearing is not scheduled for this case, skipping SMS");
+                return false;
+            }
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
@@ -333,13 +337,12 @@ public class CronJobScheduler {
                 .status(SCHEDULED)
                 .build();
 
-        Pagination pagination = Pagination.builder()
-                .sortBy("startTime")
-                .order(Order.ASC)
-                .build();
-
-        return fetchHearings(requestInfo, hearingCriteria, pagination)
-                .get(0);
+        List<Hearing> scheduledHearings = fetchHearings(requestInfo, hearingCriteria, null);
+        if(scheduledHearings.isEmpty()){
+            log.info("No scheduled hearings found for filing number {}", filingNumber);
+            return null;
+        }
+        return scheduledHearings.get(0);
     }
 
     private Long getNextHearingDate(String filingNumber){
