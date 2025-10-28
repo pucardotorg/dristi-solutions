@@ -1,8 +1,10 @@
 CREATE TABLE dristi_task_management (
     id varchar(64) NOT NULL PRIMARY KEY,
-    case_filing_number VARCHAR(64),
+    task_management_number VARCHAR(64),
+    filing_number VARCHAR(64),
     court_id VARCHAR(64),
     order_number VARCHAR(64),
+    task_type VARCHAR(64),
     status VARCHAR(64),
     party_details JSONB,
     additional_details JSONB,

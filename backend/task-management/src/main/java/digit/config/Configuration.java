@@ -118,4 +118,11 @@ public class Configuration {
 
     @Value("${egov.workflow.task.business.name}")
     private String taskBusinessName;
+
+    // Task Management Number Config
+    @Value("${egov.id.gen.task.management.name}")
+    private String taskManagementIdName;
+
+    @Value("${egov.id.gen.task.management.format}")
+    private String taskManagementIdFormat;
 }

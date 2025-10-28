@@ -26,16 +26,14 @@ import lombok.Builder;
 public class TaskManagement {
 
     @JsonProperty("id")
-    @NotNull
     @Valid
-    private UUID id = null;
+    private String id = null;
 
-    @JsonProperty("caseFilingNumber")
+    @JsonProperty("filingNumber")
     @NotNull
-    private String caseFilingNumber = null;
+    private String filingNumber = null;
 
     @JsonProperty("courtId")
-    @NotNull
     @Valid
     private String courtId = null;
 
@@ -44,9 +42,15 @@ public class TaskManagement {
 
     @JsonProperty("taskType")
     @Valid
+    @NotNull
     private String taskType = null;
 
+    @JsonProperty("taskManagementNumber")
+    private String taskManagementNumber = null;
+
     @JsonProperty("tenantId")
+    @NotNull
+    @Valid
     private String tenantId;
 
     @JsonProperty("status")
@@ -65,4 +69,5 @@ public class TaskManagement {
     @JsonProperty("workflow")
     @Valid
     private WorkflowObject workflow;
+
 }
