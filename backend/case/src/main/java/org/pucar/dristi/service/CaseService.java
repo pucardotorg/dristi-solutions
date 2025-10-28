@@ -1554,6 +1554,44 @@ public class CaseService {
                 } else {
                     joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
                 }
+
+                List <RepresentingJoinCase> representingList = Optional.ofNullable(joinCaseRequest)
+                        .map(JoinCaseV2Request::getJoinCaseData)
+                        .map(JoinCaseDataV2::getRepresentative)
+                        .map(JoinCaseRepresentative::getRepresenting)
+                        .orElse(Collections.emptyList());
+
+                for(RepresentingJoinCase representing: representingList){
+                    List<Document> documents = representing.getDocuments();
+                    if(documents != null){
+                        documents.forEach(document -> {
+                            if(isDocumentVakalatnama(document)){
+                                String hearingDate = String.valueOf(getNextHearingDate(courtCase.getFilingNumber()));
+                                SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                                        .cmpNumber(courtCase.getCmpNumber())
+                                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                                        .hearingDate(hearingDate)
+                                        .build();
+                                RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+                                List<String> uuids = new ArrayList<>();
+                                courtCase.getRepresentatives().forEach(advocate -> {
+                                    JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
+                                    String uuid = advocateNode.path("additionalDetails").path("uuid").asText();
+                                    uuids.add(uuid);
+                                });
+                                courtCase.getLitigants().forEach(litigant -> {
+                                    JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
+                                    String uuid = litigantNode.path("additionalDetails").path("uuid").asText();
+                                    uuids.add(uuid);
+                                });
+                                List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
+                                individuals.forEach(individual -> {
+                                    notificationService.sendNotification(requestInfo, smsTemplateData, VAKALATNAMA_FILED, individual.getMobileNumber());
+                                });
+                            }
+                        });
+                    }
+                }
             }
 
             //for poa join case
@@ -1562,44 +1600,6 @@ public class CaseService {
                 Individual poaIndividual = validator.validatePOAIndividual(joinCaseRequest);
                 TaskResponse taskResponse = createTaskForJudgePOA(joinCaseRequest, poaIndividual);
                 joinCaseV2Response.setPaymentTaskNumber(taskResponse.getTask().getTaskNumber());
-            }
-
-            List <RepresentingJoinCase> representingList = Optional.ofNullable(joinCaseRequest)
-                    .map(JoinCaseV2Request::getJoinCaseData)
-                    .map(JoinCaseDataV2::getRepresentative)
-                    .map(JoinCaseRepresentative::getRepresenting)
-                    .orElse(Collections.emptyList());
-
-            for(RepresentingJoinCase representing: representingList){
-                List<Document> documents = representing.getDocuments();
-                if(documents != null){
-                    documents.forEach(document -> {
-                        if(isDocumentVakalatnama(document)){
-                            String hearingDate = String.valueOf(getNextHearingDate(courtCase.getFilingNumber()));
-                            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                                    .cmpNumber(courtCase.getCmpNumber())
-                                    .courtCaseNumber(courtCase.getCourtCaseNumber())
-                                    .hearingDate(hearingDate)
-                                    .build();
-                            RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-                            List<String> uuids = new ArrayList<>();
-                            courtCase.getRepresentatives().forEach(advocate -> {
-                                JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
-                                String uuid = advocateNode.path("additionalDetails").path("uuid").asText();
-                                uuids.add(uuid);
-                            });
-                            courtCase.getLitigants().forEach(litigant -> {
-                                JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
-                                String uuid = litigantNode.path("additionalDetails").path("uuid").asText();
-                                uuids.add(uuid);
-                            });
-                            List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
-                            individuals.forEach(individual -> {
-                                notificationService.sendNotification(requestInfo, smsTemplateData, VAKALATNAMA_FILED, individual.getMobileNumber());
-                            });
-                        }
-                    });
-                }
             }
 
         } catch (CustomException e) {
