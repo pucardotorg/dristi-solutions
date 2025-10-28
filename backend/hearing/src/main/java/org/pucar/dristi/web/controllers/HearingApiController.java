@@ -164,7 +164,7 @@ public class HearingApiController {
         return ResponseEntity.ok(noOfDaysToHearingOfEachCase);
     }
 
-    @RequestMapping(value = "/v1/_runCronJob")
+    @PostMapping(value = "/v1/_runCronJob")
     public ResponseEntity<?> runCronJob() {
         cronJobScheduler.sendNotificationOnHearingsHeldToday();
         cronJobScheduler.sendNotificationForHearingsScheduledTomorrow();
