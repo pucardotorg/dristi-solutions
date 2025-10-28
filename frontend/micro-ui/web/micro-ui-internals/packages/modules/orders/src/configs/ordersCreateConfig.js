@@ -4589,6 +4589,7 @@ export const configsIssueBailAcceptance = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
+          defaultValue: { code: "SURETY", name: "SURETY" },
           mdmsConfig: {
             masterName: "BailType",
             moduleName: "Order",
@@ -4706,7 +4707,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", hideInForm: true }, //, hideInForm: true
       },
       {
         isMandatory: true,
@@ -4763,6 +4764,7 @@ export const configsIssueBailReject = [
               },
             },
           ],
+          hideInForm: true,
         },
       },
     ],

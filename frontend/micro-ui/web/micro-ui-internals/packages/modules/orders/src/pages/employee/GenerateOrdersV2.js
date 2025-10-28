@@ -1479,15 +1479,15 @@ const GenerateOrdersV2 = () => {
                   };
                 }
                 const refApplicationId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
-                if (field.key === "refApplicationId") {
-                  return {
-                    ...field,
-                    populators: {
-                      ...field.populators,
-                      hideInForm: !refApplicationId,
-                    },
-                  };
-                }
+                // if (field.key === "refApplicationId") {
+                //   return {
+                //     ...field,
+                //     populators: {
+                //       ...field.populators,
+                //       hideInForm: !refApplicationId,
+                //     },
+                //   };
+                // }
                 if (field.key === "bailType" && refApplicationId) {
                   return {
                     ...field,

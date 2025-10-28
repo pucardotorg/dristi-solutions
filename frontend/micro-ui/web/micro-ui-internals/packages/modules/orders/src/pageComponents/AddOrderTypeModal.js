@@ -40,6 +40,20 @@ const AddOrderTypeModal = ({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondRequired, setBailBondRequired] = useState(false);
+  const existingRefApplicationId = useMemo(() => {
+    try {
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        return currentOrder?.additionalDetails?.formdata?.refApplicationId || currentOrder?.additionalDetails?.refApplicationId;
+      }
+      if (Array.isArray(currentOrder?.compositeItems)) {
+        const ad = currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        return ad?.formdata?.refApplicationId || ad?.refApplicationId;
+      }
+      return undefined;
+    } catch (e) {
+      return undefined;
+    }
+  }, [currentOrder, index]);
   const hasRefApplicationId = useMemo(() => {
     return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
   }, [formdata?.refApplicationId]);
@@ -47,6 +61,17 @@ const AddOrderTypeModal = ({
   const containerRef = useRef(null);
   const checkboxRef = useRef(null);
   const [checkboxInjected, setCheckboxInjected] = useState(false);
+  const initialRefApplicationIdRef = useRef(undefined);
+  useEffect(() => {
+    try {
+      const dv = getDefaultValue?.(index) || {};
+      if (typeof initialRefApplicationIdRef.current === "undefined" && typeof dv?.refApplicationId !== "undefined") {
+        initialRefApplicationIdRef.current = dv.refApplicationId;
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [getDefaultValue, index]);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { filingNumber } = Digit.Hooks.useQueryParams();
   const courtId = localStorage.getItem("courtId");
@@ -419,7 +444,13 @@ const AddOrderTypeModal = ({
                 secondaryLabel={t(cancelLabel)}
                 showSecondaryLabel={true}
                 onSubmit={async () => {
-                  const outgoing = { ...formdata, bailBondRequired };
+                  const outgoing = {
+                    ...formdata,
+                    bailBondRequired,
+                    ...(formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current
+                      ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
+                      : {}),
+                  };
                   handleSubmit(outgoing, index);
                 }}
                 onSecondayActionClick={handleCancel}

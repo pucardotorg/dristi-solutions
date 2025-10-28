@@ -133,7 +133,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                   const addressPrefill = prefilledInstance?.[input?.key] || {};
                   const updatedPopInputs = (input?.populators?.inputs || []).map((addrInput) => ({
                     ...addrInput,
-                    isDisabled: Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name]))
+                    isDisabled: Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name])),
                   }));
                   return {
                     ...input,
@@ -266,7 +266,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
       </div>
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER")}`}
+          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
         </button>
       )}
     </React.Fragment>
