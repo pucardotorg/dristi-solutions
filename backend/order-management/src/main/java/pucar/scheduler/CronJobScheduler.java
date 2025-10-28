@@ -150,27 +150,37 @@ public class CronJobScheduler {
         // Set in pendingTaskUtil.getPendingTaskNameForSummonAndNotice() for Notice and Summons and
         // from Service Constants for others
         List<String> pendingTaskNames = List.of("Make Payment", "Pay online", PAYMENT_PENDING_FOR_WARRANT, PAYMENT_PENDING_FOR_PROCLAMATION, PAYMENT_PENDING_FOR_ATTACHMENT);
-        moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("name", pendingTaskNames);
+        List<PendingTask> pendingTasks = new ArrayList<>();
+
+        pendingTaskNames.forEach(name -> {
+            moduleSearchCriteria.put("isCompleted", false);
+            moduleSearchCriteria.put("name", name);
 
 
-        InboxRequest searchRequest = InboxRequest.builder()
-                .inbox(
-                        InboxSearchCriteria.builder()
-                            .tenantId(config.getStateLevelTenantId())
-                            .processSearchCriteria(
-                                ProcessInstanceSearchCriteria.builder()
-                                    .moduleName("Pending Tasks Service")
-                                    .businessService(List.of("hearing-default"))
+            InboxRequest searchRequest = InboxRequest.builder()
+                    .inbox(
+                            InboxSearchCriteria.builder()
+                                    .tenantId(config.getStateLevelTenantId())
+                                    .processSearchCriteria(
+                                            ProcessInstanceSearchCriteria.builder()
+                                                    .moduleName("Pending Tasks Service")
+                                                    .businessService(List.of("hearing-default"))
+                                                    .build()
+                                    )
+                                    .moduleSearchCriteria(moduleSearchCriteria)
+                                    .limit(300)
+                                    .offset(0)
                                     .build()
-                            )
-                            .moduleSearchCriteria(moduleSearchCriteria)
-                            .limit(300)
-                            .offset(0)
-                        .build()
-                ).
-                build();
-        return pendingTaskUtil.getPendingTask(searchRequest);
+                    ).
+                    build();
+            List<PendingTask> pendingTaskList = pendingTaskUtil.getPendingTask(searchRequest);
+            if (pendingTaskList != null) {
+                pendingTasks.addAll(pendingTaskList);
+            }
+
+        });
+
+        return pendingTasks;
     }
 
     List<PendingTask> getPendingTasksForMandatorySubmission() {
