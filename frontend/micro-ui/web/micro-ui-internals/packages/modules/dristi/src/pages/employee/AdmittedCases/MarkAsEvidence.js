@@ -290,6 +290,32 @@ const MarkAsEvidence = ({
       return null;
     }
   };
+
+  useEffect(() => {
+    const generatePdf = async () => {
+      if (
+        accessToken &&
+        userInfo &&
+        courtId &&
+        evidenceTag &&
+        evidenceNumber &&
+        Object.keys(caseDetails)?.length > 0 &&
+        witnessTag?.code &&
+        tenantId &&
+        !sealFileStoreId &&
+        !isLoading
+      ) {
+        try {
+          await getMarkAsEvidencePdf();
+        } catch (error) {
+          console.error("Error pre-generating PDF:", error);
+        }
+      }
+    };
+
+    generatePdf();
+  }, [accessToken, userInfo, courtId, evidenceTag, evidenceNumber, caseDetails, witnessTag, tenantId, sealFileStoreId, isLoading]);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -771,18 +797,15 @@ const MarkAsEvidence = ({
   const onESignClick = async () => {
     try {
       setLoader(true);
-      let file = sealFileStoreId;
       if (!sealFileStoreId) {
-        file = await getMarkAsEvidencePdf();
-        if (!file) {
-          throw new Error("Failed to generate PDF file store ID");
-        }
+        showToast("info", t("GENERATING_EVIDENCE_PDF"), 3000);
+        setLoader(false);
+        return;
       }
 
       if (mockESignEnabled) {
         setIsSigned(true);
         setLoader(false);
-        setSealFileStoreId(file);
         return;
       }
 
@@ -802,7 +825,7 @@ const MarkAsEvidence = ({
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
       sessionStorage.removeItem("fileStoreId");
-      handleEsign(name, pageModule, file, "Judge/Magistrate");
+      handleEsign(name, pageModule, sealFileStoreId, "Judge/Magistrate");
     } catch (error) {
       showToast("error", t("ERROR_ESIGN_EVIDENCE"), 5000);
       setLoader(false);
