@@ -7,6 +7,7 @@ import digit.repository.TaskManagementRepository;
 import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.CourtCase;
+import digit.web.models.cases.Party;
 import digit.web.models.order.*;
 import digit.web.models.order.Order;
 import digit.web.models.payment.*;
@@ -116,9 +117,10 @@ public class PaymentUpdateService {
         Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
 
         CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails);
+        ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
         TaskDetails baseTaskDetails = buildTaskDetails(order, courtCase);
 
-        List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails);
+        List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
 
         Task taskTemplate = buildBaseTask(taskManagement, order, courtCase, additionalDetails);
 
@@ -220,7 +222,7 @@ public class PaymentUpdateService {
         }
     }
 
-    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails) {
+    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
         List<TaskDetails> result = new ArrayList<>();
         for (Address address : party.getAddresses()) {
             if (party.getRespondentDetails() != null) party.getRespondentDetails().setAddress(address);
@@ -233,6 +235,7 @@ public class PaymentUpdateService {
                         .noticeDetails(baseTaskDetails.getNoticeDetails())
                         .respondentDetails(party.getRespondentDetails() != null ? party.getRespondentDetails() : null)
                         .witnessDetails(party.getWitnessDetails() != null ? party.getWitnessDetails() : null)
+                        .complainantDetails(complainantDetails)
                         .deliveryChannel(DeliveryChannel.builder()
                                 .channelName(channel.getChannelId())
                                 .channelCode(channel.getChannelCode())
@@ -270,5 +273,83 @@ public class PaymentUpdateService {
     private String normalizePartyType(String type) {
         if (type == null) return null;
         return type.equalsIgnoreCase("Witness") ? "WITNESS" : "ACCUSED";
+    }
+
+    private ComplainantDetails getComplainantDetails(CourtCase courtCase) {
+
+        ComplainantDetails complainantDetails = new ComplainantDetails();
+        Optional<Party> primaryComplainant = courtCase.getLitigants().stream().filter(item -> "COMPLAINANT_PRIMARY".equalsIgnoreCase(item.getPartyType())).findFirst(); // TODO: check
+        if (primaryComplainant.isPresent()) {
+            String individualId;
+            individualId = primaryComplainant.get().getIndividualId();
+            Map<String, Object> complainantDetailsFromCourtCase = getComplainantDetailsFromCourtCase(courtCase, individualId);
+
+            Map<String, Object> complainantAddressFromIndividualDetail = getComplainantAddressFromComplainantDetails(complainantDetailsFromCourtCase);
+            String complainantName = getComplainantName(complainantDetailsFromCourtCase);
+            complainantDetails.setAddress(complainantAddressFromIndividualDetail);
+            complainantDetails.setName(complainantName);
+        }
+        return complainantDetails;
+    }
+
+    public Map<String, Object> getComplainantDetailsFromCourtCase(CourtCase courtCase, String complainantIndividualId) {
+        if (courtCase == null) return Collections.emptyMap();
+        Object additional = courtCase.getAdditionalDetails();
+        Map<?, ?> complainantDetailsObj = jsonUtil.getNestedValue(additional, List.of("complainantDetails"), Map.class);
+        List<?> formdataList = jsonUtil.getNestedValue(complainantDetailsObj, List.of("formdata"), List.class);
+        if (formdataList == null || formdataList.isEmpty()) return Collections.emptyMap();
+        Map complainantDetails = formdataList.stream()
+                .filter(d -> {
+                    Map<?, ?> data = jsonUtil.getNestedValue(d, List.of("data"), Map.class);
+                    Map<?, ?> individualDetails = jsonUtil.getNestedValue(data, List.of("complainantVerification", "individualDetails"), Map.class);
+                    return individualDetails != null && complainantIndividualId.equals(individualDetails.get("individualId"));
+                })
+                .findFirst()
+                .map(d -> jsonUtil.getNestedValue(d, List.of("data"), Map.class))
+                .orElse(Collections.emptyMap());
+
+        return complainantDetails;
+    }
+
+    public Map<String, Object> getComplainantAddressFromComplainantDetails(Map<String, Object> complainantDetails) {
+        if (complainantDetails == null) return Collections.emptyMap();
+
+        String district = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "district"), String.class);
+        String city = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "city"), String.class);
+        String pincode = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode"), String.class);
+        String latitude = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode", "latitude"), String.class);
+        String longitude = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode", "longitude"), String.class);
+        String locality = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "locality"), String.class);
+        String state = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "state"), String.class);
+
+        Map<String, Object> coordinate = new HashMap<>();
+        coordinate.put("longitude", longitude);
+        coordinate.put("latitude", latitude);
+
+        Map<String, Object> complainantAddress = new HashMap<>();
+        complainantAddress.put("pincode", pincode);
+        complainantAddress.put("district", district);
+        complainantAddress.put("city", city);
+        complainantAddress.put("state", state);
+        complainantAddress.put("coordinate", coordinate);
+        complainantAddress.put("locality", locality);
+        return complainantAddress;
+    }
+
+    public String getComplainantName(Map<String, Object> complainantDetails) {
+        if (complainantDetails == null) return "";
+        String firstName = jsonUtil.getNestedValue(complainantDetails, List.of("firstName"), String.class);
+        String lastName = jsonUtil.getNestedValue(complainantDetails, List.of("lastName"), String.class);
+        String partyName = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
+        Map<?, ?> complainantTypeObj = jsonUtil.getNestedValue(complainantDetails, List.of("complainantType"), Map.class);
+        String complainantTypeCode = complainantTypeObj != null ? (String) complainantTypeObj.get("code") : null;
+        if ("INDIVIDUAL".equalsIgnoreCase(complainantTypeCode)) {
+            return partyName;
+        }
+        String companyName = jsonUtil.getNestedValue(complainantDetails, List.of("complainantCompanyName"), String.class);
+        if (companyName != null && !companyName.isEmpty()) {
+            return String.format("%s (Represented By %s)", companyName, partyName);
+        }
+        return "";
     }
 }
