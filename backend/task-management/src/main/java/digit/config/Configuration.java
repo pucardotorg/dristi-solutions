@@ -153,5 +153,6 @@ public class Configuration {
     @Value("${egov.etreasury.demand.create.endpoint}")
     private String etreasuryDemandCreateEndPoint;
 
-
+    @Value("${judge.name}")
+    private String judgeName;
 }

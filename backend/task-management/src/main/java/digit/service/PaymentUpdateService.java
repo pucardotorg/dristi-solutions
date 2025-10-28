@@ -180,7 +180,8 @@ public class PaymentUpdateService {
                 .courtName((String) courtDetails.get("name"))
                 .courtAddress((String) courtDetails.get("address"))
                 .courtId((String) courtDetails.get("code"))
-                .judgeName("Configure in properties.")
+                .hearingNumber(order.getHearingNumber())
+                .judgeName(configuration.getJudgeName())
                 .build();
     }
 
@@ -194,7 +195,8 @@ public class PaymentUpdateService {
                 return TaskDetails.builder()
                         .summonDetails(SummonsDetails.builder()
                                 .docSubType(docSubType)
-                                .issueDate(order.getAuditDetails().getLastModifiedTime())
+                                .issueDate(order.getCreatedDate())
+                                .caseFilingDate(courtCase.getFilingDate())
                                 .build())
                         .build();
             }
@@ -205,7 +207,7 @@ public class PaymentUpdateService {
                 return TaskDetails.builder()
                         .noticeDetails(NoticeDetails.builder()
                                 .caseFilingDate(courtCase.getFilingDate())
-                                .issueDate(order.getAuditDetails().getLastModifiedTime())
+                                .issueDate(order.getCreatedDate())
                                 .noticeType(noticeType)
                                 .docSubType(docSubType)
                                 .partyType(partyType)
@@ -229,6 +231,8 @@ public class PaymentUpdateService {
                         .caseDetails(caseDetails)
                         .summonDetails(baseTaskDetails.getSummonDetails())
                         .noticeDetails(baseTaskDetails.getNoticeDetails())
+                        .respondentDetails(party.getRespondentDetails() != null ? party.getRespondentDetails() : null)
+                        .witnessDetails(party.getWitnessDetails() != null ? party.getWitnessDetails() : null)
                         .deliveryChannel(DeliveryChannel.builder()
                                 .channelName(channel.getChannelId())
                                 .channelCode(channel.getChannelCode())
@@ -246,12 +250,21 @@ public class PaymentUpdateService {
                 .orderId(order.getId())
                 .filingNumber(task.getFilingNumber())
                 .cnrNumber(courtCase.getCnrNumber())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
                 .taskType(task.getTaskType())
+                .createdDate(dateUtil.getCurrentTimeInMilis())
                 .amount(Amount.builder().type("FINE").amount("0").build())
                 .status("INPROGRESS")
                 .additionalDetails(additionalDetails)
-                .workflow(Workflow.builder().action("CREATE_WITH_OUT_PAYMENT").build())
+                .workflow(getCreateWithOutPayment())
                 .build();
+    }
+
+    private static WorkflowObject getCreateWithOutPayment() {
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+        return workflowObject;
     }
 
     private String normalizePartyType(String type) {

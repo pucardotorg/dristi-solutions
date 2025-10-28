@@ -37,4 +37,7 @@ public class CaseDetails {
 
     @JsonProperty("courtAddress")
     private String courtAddress;
+
+    @JsonProperty("hearingNumber")
+    private String hearingNumber;
 }
