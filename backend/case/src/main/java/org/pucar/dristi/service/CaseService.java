@@ -1547,14 +1547,6 @@ public class CaseService {
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
                 List<Calculation> calculationList = getPaymentCalculations(joinCaseRequest, joinCaseData, courtCase);
-
-                if (calculationList != null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount() > 0) {
-                    String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
-                    return JoinCaseV2Response.builder().paymentTaskNumber(taskNumber).build();
-                } else {
-                    joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
-                }
-
                 List <RepresentingJoinCase> representingList = Optional.ofNullable(joinCaseRequest)
                         .map(JoinCaseV2Request::getJoinCaseData)
                         .map(JoinCaseDataV2::getRepresentative)
@@ -1591,6 +1583,12 @@ public class CaseService {
                             }
                         });
                     }
+                }
+                if (calculationList != null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount() > 0) {
+                    String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
+                    return JoinCaseV2Response.builder().paymentTaskNumber(taskNumber).build();
+                } else {
+                    joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
                 }
             }
 
