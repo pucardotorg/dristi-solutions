@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,5 +22,11 @@ public class DateUtil {
         ZonedDateTime zonedDateTime = currentDate.with(localTime);
 
         return Date.from(zonedDateTime.toInstant()).toInstant();
+    }
+
+    public LocalDate getLocalDateFromEpoch(long startTime) {
+        return Instant.ofEpochMilli(startTime)
+                .atZone(ZoneId.of("Asia/Kolkata"))
+                .toLocalDate();
     }
 }

@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -86,6 +87,7 @@ public class CaseService {
 
     private final FileStoreUtil fileStoreUtil;
     private final OrderUtil orderUtil;
+    private final DateUtil dateUtil;
 
 
     @Autowired
@@ -101,7 +103,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -125,6 +127,7 @@ public class CaseService {
         this.caseUtil = caseUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.orderUtil = orderUtil;
+        this.dateUtil = dateUtil;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -1553,35 +1556,20 @@ public class CaseService {
                         .map(JoinCaseRepresentative::getRepresenting)
                         .orElse(Collections.emptyList());
 
-                for(RepresentingJoinCase representing: representingList){
+                for (RepresentingJoinCase representing : representingList) {
                     List<Document> documents = representing.getDocuments();
-                    if(documents != null){
-                        documents.forEach(document -> {
-                            if(isDocumentVakalatnama(document)){
-                                String hearingDate = String.valueOf(getNextHearingDate(courtCase.getFilingNumber()));
-                                SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                                        .cmpNumber(courtCase.getCmpNumber())
-                                        .courtCaseNumber(courtCase.getCourtCaseNumber())
-                                        .hearingDate(hearingDate)
-                                        .build();
-                                RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-                                List<String> uuids = new ArrayList<>();
-                                courtCase.getRepresentatives().forEach(advocate -> {
-                                    JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
-                                    String uuid = advocateNode.path("additionalDetails").path("uuid").asText();
-                                    uuids.add(uuid);
-                                });
-                                courtCase.getLitigants().forEach(litigant -> {
-                                    JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
-                                    String uuid = litigantNode.path("additionalDetails").path("uuid").asText();
-                                    uuids.add(uuid);
-                                });
-                                List<Individual> individuals = individualService.getIndividuals(requestInfo, uuids);
-                                individuals.forEach(individual -> {
-                                    notificationService.sendNotification(requestInfo, smsTemplateData, VAKALATNAMA_FILED, individual.getMobileNumber());
-                                });
-                            }
-                        });
+
+                    if (documents == null || documents.isEmpty()) {
+                        log.debug("No documents found for representing: {}", representing.getUniqueId());
+                        continue;
+                    }
+
+                    for (Document document : documents) {
+                        try {
+                            processVakalatnamaDocument(document, courtCase, joinCaseRequest);
+                        } catch (Exception e) {
+                            log.error("Failed to process document: {}", document.getId(), e);
+                        }
                     }
                 }
                 if (calculationList != null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount() > 0) {
@@ -1610,6 +1598,134 @@ public class CaseService {
         return joinCaseV2Response;
     }
 
+    private void processVakalatnamaDocument(Document document, CourtCase courtCase, JoinCaseV2Request joinCaseRequest) {
+        if (!isDocumentVakalatnama(document)) {
+            log.debug("Document {} is not Vakalatnama, skipping", document.getId());
+            return;
+        }
+
+        log.info("Processing Vakalatnama document: {} for case: {}", document.getId(), courtCase.getFilingNumber());
+
+        // Get hearing date
+        String hearingDate = getHearingDateString(courtCase.getFilingNumber());
+
+        // Build SMS template
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .cmpNumber(courtCase.getCmpNumber())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .hearingDate(hearingDate)
+                .build();
+
+        log.debug("SMS Template Data: {}", smsTemplateData);
+
+        // Collect UUIDs
+        List<String> uuids = collectUserUuids(courtCase);
+        log.info("Collected {} user UUIDs", uuids.size());
+
+        if (uuids.isEmpty()) {
+            log.warn("No UUIDs found for case: {}", courtCase.getFilingNumber());
+            return;
+        }
+
+        // Get individuals and send notifications
+        sendVakalatnamaNotifications(joinCaseRequest.getRequestInfo(), uuids, smsTemplateData);
+    }
+
+    private String getHearingDateString(String filingNumber) {
+        try {
+            return String.valueOf(getNextHearingDate(filingNumber));
+        } catch (Exception e) {
+            log.error("Failed to get next hearing date for filing: {}", filingNumber, e);
+            return "N/A";
+        }
+    }
+
+    private List<String> collectUserUuids(CourtCase courtCase) {
+        List<String> uuids = new ArrayList<>();
+
+        // Collect advocate UUIDs
+        if (courtCase.getRepresentatives() != null) {
+            courtCase.getRepresentatives().forEach(advocate -> {
+                try {
+                    String uuid = extractUuidFromAdditionalDetails(advocate);
+                    if (uuid != null && !uuid.isEmpty()) {
+                        uuids.add(uuid);
+                        log.debug("Added advocate UUID: {}", uuid);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to extract UUID from advocate: {}", advocate, e);
+                }
+            });
+        }
+
+        // Collect litigant UUIDs
+        if (courtCase.getLitigants() != null) {
+            courtCase.getLitigants().forEach(litigant -> {
+                try {
+                    String uuid = extractUuidFromAdditionalDetails(litigant);
+                    if (uuid != null && !uuid.isEmpty()) {
+                        uuids.add(uuid);
+                        log.debug("Added litigant UUID: {}", uuid);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to extract UUID from litigant: {}", litigant, e);
+                }
+            });
+        }
+
+        return uuids;
+    }
+
+    private String extractUuidFromAdditionalDetails(Object entity) {
+        JsonNode node = objectMapper.convertValue(entity, JsonNode.class);
+        JsonNode uuidNode = node.path("additionalDetails").path("uuid");
+
+        if (uuidNode.isMissingNode() || uuidNode.isNull()) {
+            log.warn("UUID not found in additionalDetails for entity: {}", entity.getClass().getSimpleName());
+            return null;
+        }
+
+        return uuidNode.asText();
+    }
+
+    private void sendVakalatnamaNotifications(RequestInfo requestInfo, List<String> uuids, SmsTemplateData smsTemplateData) {
+        List<Individual> individuals;
+
+        try {
+            individuals = individualService.getIndividuals(requestInfo, uuids);
+        } catch (Exception e) {
+            log.error("Failed to fetch individuals for UUIDs: {}", uuids, e);
+            return;
+        }
+
+        if (individuals == null || individuals.isEmpty()) {
+            log.warn("No individuals found for UUIDs: {}", uuids);
+            return;
+        }
+
+        log.info("Sending notifications to {} individuals", individuals.size());
+
+        individuals.forEach(individual -> {
+            try {
+                if (individual.getMobileNumber() == null || individual.getMobileNumber().isEmpty()) {
+                    log.warn("Mobile number missing for individual UUID: {}", individual.getIndividualId());
+                    return;
+                }
+
+                notificationService.sendNotification(
+                        requestInfo,
+                        smsTemplateData,
+                        VAKALATNAMA_FILED,
+                        individual.getMobileNumber()
+                );
+
+                log.info("Notification sent to: {}", individual.getMobileNumber());
+            } catch (Exception e) {
+                log.error("Failed to send notification to individual: {}", individual.getIndividualId(), e);
+            }
+        });
+    }
+
     private boolean isDocumentVakalatnama(Document document) {
         if (document.getAdditionalDetails() instanceof Map<?, ?> additionalDetailsMap) {
             Object docName = additionalDetailsMap.get("documentName");
@@ -1618,7 +1734,7 @@ public class CaseService {
         return false;
     }
 
-    private Long getNextHearingDate(String filingNumber) {
+    private LocalDate getNextHearingDate(String filingNumber) {
         HearingCriteria criteria = HearingCriteria.builder()
                 .filingNumber(filingNumber)
                 .status(SCHEDULED)
@@ -1631,7 +1747,8 @@ public class CaseService {
 
         List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         if(!hearings.isEmpty()){
-            return hearings.get(0).getStartTime();
+            Long startTime = hearings.get(0).getStartTime();
+            return dateUtil.getLocalDateFromEpoch(startTime);
         }
         return null;
     }
