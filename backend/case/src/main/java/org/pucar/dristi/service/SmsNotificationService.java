@@ -67,52 +67,15 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData smsTemplateData, String messageCode, String message, String mobileNumber) {
 
-        if(messageCode.equalsIgnoreCase(ESIGN_PENDING)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationEsignPendingTemplateId());
-        }
-        else if (messageCode.equalsIgnoreCase(NEW_WITNESS_ADDED)) {
-            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationWitnessAddedTemplateId());
-        }
-        else if (messageCode.equalsIgnoreCase(NEW_WITNESS_ADDED_SMS_FOR_OTHERS)) {
-            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationWitnessAddedForOthersTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(CASE_SUBMITTED)) {
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(CASE_FILED)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(JUDGE_ASSIGNED)) {
-            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationCaseJudgeAssignedTemplateId());
 
+        if(messageCode.equalsIgnoreCase(CASE_FILED)){
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(FSO_SEND_BACK)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
         }
-        else if(messageCode.equalsIgnoreCase(CASE_REGISTERED)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseJudgeRegisterTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(JUDGE_SEND_BACK)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseJudgeSendBackTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(ADVOCATE_CASE_JOIN)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAdvocateJoinCaseTemplateId());
-        }
         else if(messageCode.equalsIgnoreCase(CASE_ADMITTED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseAdmittedTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(CASE_DISMISSED)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseDismissedTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(NEW_USER_JOIN)){
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationNewUserJoinTemplateId());
-        } else if(messageCode.equalsIgnoreCase(ACCEPT_PROFILE_REQUEST)) {
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAcceptProfileRequestTemplateId());
-        } else if(messageCode.equalsIgnoreCase(REJECT_PROFILE_REQUEST)) {
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationRejectProfileRequestTemplateId());
         }
         else if(VAKALATNAMA_FILED.equalsIgnoreCase(messageCode)) {
             Instant instant = dateUtil.getInstantFrom(config.getSmsVakalatnamaFiledTime());

@@ -152,7 +152,10 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-				sendSmsForCaseStatusChange(filingNumber,requestInfo, statusType.getSubstage());
+				String subStage = statusType.getSubstage();
+				if(shouldSendSMSForStatusChange(subStage)){
+					sendSmsForCaseStatusChange(filingNumber,requestInfo, subStage);
+				}
 				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
@@ -171,6 +174,11 @@ public class CaseOverallStatusUtil {
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
+	}
+
+	private boolean shouldSendSMSForStatusChange(String subStage) {
+		List<String> consideredSubStages = List.of(APPEARANCE, ARGUMENTS, EVIDENCE, LONG_PENDING_REGISTER, REFER_TO_ADR);
+		return consideredSubStages.contains(subStage);
 	}
 
 	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String cmpNumber, String courtCaseNumber, RequestInfo requestInfo,String subStage) {

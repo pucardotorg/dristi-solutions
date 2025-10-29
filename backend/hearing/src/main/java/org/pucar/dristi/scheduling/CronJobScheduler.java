@@ -208,8 +208,8 @@ public class CronJobScheduler {
             String notificationCode;
             if(caseCount == 1){
                 notificationCode = HEARINGS_HELD_TODAY_SINGLE;
-                Long nextHearingDate = getNextHearingDate(filingNumber);
-                smsTemplateData.setHearingDate(String.valueOf(nextHearingDate));
+                String nextHearingDate = getNextHearingDate(requestInfo, filingNumber);
+                smsTemplateData.setHearingDate(nextHearingDate);
             }
             else{
                 notificationCode = HEARINGS_HELD_TODAY_MULTIPLE;
@@ -344,17 +344,19 @@ public class CronJobScheduler {
         return scheduledHearings.get(0);
     }
 
-    private Long getNextHearingDate(String filingNumber){
+    private String getNextHearingDate(RequestInfo requestInfo, String filingNumber) {
         HearingCriteria criteria = HearingCriteria.builder()
                 .filingNumber(filingNumber)
                 .status(SCHEDULED)
                 .build();
-        HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
-                .criteria(criteria)
-                .build();
-        List<Hearing> hearings = hearingRepository.getHearings(hearingSearchRequest);
 
-        return hearings.get(0).getStartTime();
+        List<Hearing> hearings = fetchHearings(requestInfo, criteria, null);
+        if(!hearings.isEmpty()){
+            Long startTime = hearings.get(0).getStartTime();
+            LocalDate nextHearingDate = dateUtil.getLocalDateFromEpoch(startTime);
+            return String.valueOf(nextHearingDate);
+        }
+        return null;
     }
 
     private List<Hearing> getHearingsScheduledTomorrow(RequestInfo requestInfo){

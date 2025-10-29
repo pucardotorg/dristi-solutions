@@ -627,34 +627,6 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
-        if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
-            return NOTICE_DELIVERED;
-        }
-        if (NOTICE.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
-            return NOTICE_NOT_DELIVERED;
-        }
-        if (SUMMON.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
-            return SUMMONS_DELIVERED;
-        }
-        if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
-            return SUMMONS_NOT_DELIVERED;
-        }
-        boolean b = WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType);
-        if (b && PENDING_PAYMENT.equalsIgnoreCase(status)) {
-            return WARRANT_ISSUED;
-        }
-        if (b && WARRANT_SENT.equalsIgnoreCase(status)) {
-            return WARRANT_ISSUE_SUCCESS;
-        }
-        if (b && EXECUTED.equalsIgnoreCase(status)) {
-            return WARRANT_DELIVERED;
-        }
-        if (b && NOT_EXECUTED.equalsIgnoreCase(status)) {
-            return WARRANT_NOT_DELIVERED;
-        }
-        if(GENERIC.equalsIgnoreCase(taskType) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
-            return PROCESS_FEE_PAYMENT;
-        }
         return null;
     }
 

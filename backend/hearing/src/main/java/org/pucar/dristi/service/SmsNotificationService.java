@@ -57,8 +57,6 @@ public class SmsNotificationService {
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
         String templateId = switch (messageCode){
-            case HEARING_ADJOURNED -> config.getSmsNotificationHearingAdjournedTemplateId();
-            case VARIABLE_HEARING_SCHEDULED -> config.getSmsNotificationVariableHearingScheduled();
             case HEARINGS_HELD_TODAY_SINGLE -> config.getSmsNotificationHearingsHeldTodaySingleTemplateId();
             case HEARINGS_HELD_TODAY_MULTIPLE -> config.getSmsNotificationHearingsHeldTodayMultipleTemplateId();
             case HEARINGS_SCHEDULED_TOMORROW_SINGLE -> config.getSmsNotificationHearingsScheduledTomorrowSingleTemplateId();
