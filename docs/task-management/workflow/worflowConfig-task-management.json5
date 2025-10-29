@@ -28,6 +28,55 @@
         },
         {
           "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE_UPFRONT_PAYMENT",
+              "nextState": "SKIP_PENDING_TASK",
+              "roles": [
+                "PENDING_TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "SKIP_PENDING_TASK",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "UPDATE_UPFRONT_PAYMENT",
+              "nextState": "SKIP_PENDING_TASK",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "PENDING_TASK_CREATOR"
+              ]
+            },
+            {
+              "action": "COMPLETE_UPFRONT_PAYMENT",
+              "nextState": "COMPLETED",
+              "roles": [
+                "PENDING_TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
           "state": "PENDING_PAYMENT",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
