@@ -5,19 +5,24 @@ import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import digit.util.DemandUtil;
 import digit.util.ETreasuryUtil;
-import digit.util.MdmsUtil;
 import digit.web.models.*;
 import digit.web.models.PaymentCalculator.BreakDown;
 import digit.web.models.PaymentCalculator.Calculation;
 import digit.web.models.PaymentCalculator.CalculationResponse;
 import digit.web.models.PaymentCalculator.TaskPaymentCriteria;
 import digit.web.models.PaymentCalculator.TaskPaymentRequest;
+import digit.web.models.demand.Demand;
+import digit.web.models.demand.DemandCriteria;
+import digit.web.models.demand.DemandRequest;
+import digit.web.models.demand.DemandResponse;
 import digit.web.models.payment.BillResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -47,7 +52,7 @@ public class DemandService {
     }
 
 
-    public BillResponse createDemand(TaskManagementRequest request) {
+    public void createDemand(TaskManagementRequest request) {
 
         log.info("Creating demand for task management : {} ", request.getTaskManagement().getTaskManagementNumber());
 
@@ -65,15 +70,63 @@ public class DemandService {
 
         log.info("Demand created for task management : {} ", request.getTaskManagement().getTaskManagementNumber());
 
-        return null;
     }
 
     public void updateDemand(TaskManagementRequest request) {
 
         log.info("Updating demand for task management : {} ", request.getTaskManagement().getTaskManagementNumber());
 
+        // fetch the demands and cancel them
+        cancelTaskManagementDemands(request);
+
+        // create the demands
+
+        createDemand(request);
+
         log.info("Demand updated for task management : {} ", request.getTaskManagement().getTaskManagementNumber());
 
+    }
+
+    private void cancelTaskManagementDemands(TaskManagementRequest request) {
+
+        RequestInfo requestInfo = request.getRequestInfo();
+
+        String tenantId = request.getTaskManagement().getTenantId();
+
+        String consumerCode = request.getTaskManagement().getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix();
+
+        Set<String> consumerCodes = new HashSet<>();
+        consumerCodes.add(consumerCode);
+
+        log.info("Fetching demands for consumer codes: {}", consumerCodes);
+
+        DemandCriteria criteria = new DemandCriteria();
+        criteria.setConsumerCode(consumerCodes);
+        criteria.setTenantId(tenantId);
+
+        RequestInfoWrapper wrapper = new RequestInfoWrapper();
+        wrapper.setRequestInfo(requestInfo);
+
+        if (consumerCodes.isEmpty()) {
+            log.info("No consumer codes found for tasks");
+            return;
+        }
+
+        DemandResponse demandResponse = demandUtil.searchDemand(criteria, wrapper);
+        if (CollectionUtils.isEmpty(demandResponse.getDemands())) {
+            log.info("No demands found for consumer codes: {}", consumerCodes);
+            return;
+        }
+
+        demandResponse.getDemands().forEach(d -> d.setStatus(Demand.StatusEnum.CANCELLED));
+        log.info("Marking {} demands as CANCELLED", demandResponse.getDemands().size());
+
+        DemandRequest demandRequest = new DemandRequest();
+        demandRequest.setRequestInfo(requestInfo);
+        demandRequest.setDemands(demandResponse.getDemands());
+
+        DemandResponse updatedDemandResponse = demandUtil.updateDemand(demandRequest);
+        log.info("Updated demand status to CANCELLED for consumer codes: {}, updated demands: {}", consumerCodes, updatedDemandResponse.getDemands());
     }
 
     /**

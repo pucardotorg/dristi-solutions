@@ -31,10 +31,11 @@ public class ServiceConstants {
     public static final String PAYMENT_CALCULATOR_ERROR = "PAYMENT_CALCULATOR_ERROR";
     public static final String ERROR_WHILE_CREATING_DEMAND_FOR_TASK_MANAGEMENT = "ERROR_WHILE_CREATING_DEMAND_FOR_TASK_MANAGEMENT";
 
-    //payment constants
-    public static final String PAYMENT_MODULE_NAME = "payment";
-    public static final String PAYMENT_TYPE_MASTER_NAME = "paymentType";
-    public static final String FILTER_PAYMENT_TYPE = "$.[?(@.suffix == '%s' && @.businessService[?(@.businessCode == '%s')])]";
-    public static final String FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL = "$[?(@.deliveryChannel == '%s' && @.businessService[?(@.businessCode == '%s')])]";
+    public static final String SUMMONS = "SUMMONS";
+    public static final String NOTICE = "NOTICE";
+
+    // workflow actions
+    public static final String UPDATE = "UPDATE";
+    public static final String CREATE = "CREATE";
 
 }

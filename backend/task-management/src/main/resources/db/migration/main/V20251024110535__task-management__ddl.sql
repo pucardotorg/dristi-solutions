@@ -4,6 +4,7 @@ CREATE TABLE dristi_task_management (
     filing_number VARCHAR(64),
     court_id VARCHAR(64),
     order_number VARCHAR(64),
+    order_item_id VARCHAR(64),
     task_type VARCHAR(64),
     status VARCHAR(64),
     party_details JSONB,

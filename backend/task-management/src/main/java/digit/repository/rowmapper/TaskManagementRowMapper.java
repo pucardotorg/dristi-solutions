@@ -49,6 +49,7 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
                             .filingNumber(rs.getString("filing_number"))
                             .courtId(rs.getString("court_id"))
                             .orderNumber(rs.getString("order_number"))
+                            .orderItemId(rs.getString("order_item_id"))
                             .status(rs.getString("status"))
                             .tenantId(rs.getString("tenant_id"))
                             .partyDetails(getObjectListFromJson(rs.getString("party_details"), new TypeReference<>() {

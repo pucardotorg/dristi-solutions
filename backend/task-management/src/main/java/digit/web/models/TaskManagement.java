@@ -40,6 +40,9 @@ public class TaskManagement {
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
+    @JsonProperty("orderItemId")
+    private String orderItemId = null;
+
     @JsonProperty("taskType")
     @Valid
     @NotNull

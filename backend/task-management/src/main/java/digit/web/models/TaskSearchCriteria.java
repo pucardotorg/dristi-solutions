@@ -44,56 +44,16 @@ public class TaskSearchCriteria {
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
+    @JsonProperty("orderItemId")
+    private String orderItemId = null;
+
     @JsonProperty("filingNumber")
     private String filingNumber;
 
-    //TODO : check with mani about these
-//    @JsonProperty("workflowStatus")
-//    private String workflowStatus = null;
-//
-//    @JsonProperty("businessService")
-//    private String businessService = null;
-//
-//    @JsonProperty("workflowCode")
-//    private String workflowCode = null;
-//
-//    @JsonProperty("history")
-//    private Boolean history = false;
-//
-//    @JsonProperty("taskStatus")
-//    private List<String> taskStatus = null;
+    @JsonProperty("status")
+    private String status = null;
 
     @JsonProperty("taskType")
-    private List<String> taskType = null;
-
-//    @JsonProperty("assigneeId")
-//    @Valid
-//    private UUID assigneeId = null;
-//
-//    @JsonProperty("createdFrom")
-//    private Long createdFrom = null;
-//
-//    @JsonProperty("createdTo")
-//    private Long createdTo = null;
-//
-//    @JsonProperty("isActive")
-//    private Boolean isActive = null;
-
-
-//    public TaskSearchCriteria addTaskStatusItem(String taskStatusItem) {
-//        if (this.taskStatus == null) {
-//            this.taskStatus = new ArrayList<>();
-//        }
-//        this.taskStatus.add(taskStatusItem);
-//        return this;
-//    }
-
-    public TaskSearchCriteria addTaskTypeItem(String taskTypeItem) {
-        if (this.taskType == null) {
-            this.taskType = new ArrayList<>();
-        }
-        this.taskType.add(taskTypeItem);
-        return this;
-    }
+    private String taskType = null;
 
 }

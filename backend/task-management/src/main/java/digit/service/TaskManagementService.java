@@ -8,7 +8,7 @@ import digit.validator.TaskManagementValidator;
 import digit.web.models.TaskManagement;
 import digit.web.models.TaskManagementRequest;
 import digit.web.models.TaskSearchRequest;
-import digit.web.models.payment.BillResponse;
+import digit.web.models.demand.DemandResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static digit.config.ServiceConstants.CREATE_TASK_MANAGEMENT_EXCEPTION;
+import static digit.config.ServiceConstants.*;
 
 
 @Service
@@ -56,8 +56,10 @@ public class TaskManagementService {
 
             enrichment.enrichCreateRequest(request);
 
-            BillResponse response = demandService.createDemand(request);
-            log.info("bill created successfully : {}", response);
+            if (CREATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
+                demandService.createDemand(request);
+                log.info("demand created successfully");
+            }
 
             workflowService.updateWorkflowStatus(request);
 
@@ -76,11 +78,13 @@ public class TaskManagementService {
 
         enrichment.enrichUpdateRequest(request);
 
+        if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
+            demandService.updateDemand(request);
+        }
+
         workflowService.updateWorkflowStatus(request);
 
-        demandService.updateDemand(request);
-
-        producer.push(configuration.getSaveTaskManagementTopic(), request);
+        producer.push(configuration.getUpdateTaskManagementTopic(), request);
 
         return request.getTaskManagement();
     }

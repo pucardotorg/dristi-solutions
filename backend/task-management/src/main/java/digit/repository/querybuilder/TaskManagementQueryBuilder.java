@@ -19,6 +19,7 @@ public class TaskManagementQueryBuilder {
             "task.court_id as court_id, " +
             "task.status as status, " +
             "task.order_number as order_number, " +
+            "task.order_item_id as order_item_id, " +
             "task.task_type as task_type, " +
             "task.task_management_number as task_management_number, " +
             "task.party_details as party_details, " +
@@ -73,7 +74,8 @@ public class TaskManagementQueryBuilder {
             firstCriteria = addTaskCriteria(criteria.getTaskManagementNumber(), query, firstCriteria, "task.task_management_number = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getCourtId(), query, firstCriteria, "task.court_id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getOrderNumber(), query, firstCriteria, "task.order_number = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskListCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(criteria.getOrderItemId(), query, firstCriteria, "task.order_item_id = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getFilingNumber(), query, firstCriteria, "task.filing_number = ?", preparedStmtList, preparedStmtArgList);
             addTaskCriteria(criteria.getId(), query, firstCriteria, "task.id = ?", preparedStmtList, preparedStmtArgList);
 
@@ -90,24 +92,6 @@ public class TaskManagementQueryBuilder {
             query.append(str);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
-            firstCriteria = false;
-        }
-        return firstCriteria;
-    }
-
-    private boolean addTaskListCriteria(List<String> criteriaList, StringBuilder query, boolean firstCriteria, String columnName, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (criteriaList != null && !criteriaList.isEmpty()) {
-            addClauseIfRequired(query, firstCriteria);
-            query.append(columnName).append(" IN (");
-            for (int i = 0; i < criteriaList.size(); i++) {
-                query.append("?");
-                if (i < criteriaList.size() - 1) {
-                    query.append(",");
-                }
-                preparedStmtList.add(criteriaList.get(i));
-                preparedStmtArgList.add(Types.VARCHAR);
-            }
-            query.append(")");
             firstCriteria = false;
         }
         return firstCriteria;
