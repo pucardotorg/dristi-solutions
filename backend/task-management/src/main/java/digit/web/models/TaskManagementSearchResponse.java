@@ -23,8 +23,8 @@ import lombok.Builder;
 @NoArgsConstructor
 @Builder
 public class TaskManagementSearchResponse {
-    @JsonProperty("ResponseInfo")
 
+    @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo responseInfo = null;
 
@@ -33,12 +33,10 @@ public class TaskManagementSearchResponse {
     private List<TaskManagement> taskManagementRecords = null;
 
     @JsonProperty("pagination")
-
     @Valid
     private Pagination pagination = null;
 
     @JsonProperty("totalCount")
-
     private Integer totalCount = null;
 
 
