@@ -29,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -311,6 +312,7 @@ public class CronJobScheduler {
 
         CaseCriteria criteria = CaseCriteria.builder()
                 .filingNumber(filingNumber)
+                .defaultFields(false)
                 .build();
 
         RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
@@ -350,14 +352,40 @@ public class CronJobScheduler {
     }
 
     private List<User> getUsersFromPendingTask(PendingTask pendingTask) {
-        if (pendingTask.getAssignedTo() == null || pendingTask.getAssignedTo().isEmpty()) {
+        List<?> assignedToObj = pendingTask.getAssignedTo();
+
+        if (assignedToObj == null) {
             log.warn("No users assigned to task: {}", pendingTask.getId());
             return new ArrayList<>();
         }
 
-        Set<String> userUuids = pendingTask.getAssignedTo().stream()
-                .map(User::getUuid)
+        Set<String> userUuids = new HashSet<>();
+
+        if (assignedToObj.isEmpty()) {
+            log.warn("Empty assignedTo list for task: {}", pendingTask.getId());
+            return new ArrayList<>();
+        }
+
+        userUuids = assignedToObj.stream()
+                .map(assignedUser -> {
+                    if (assignedUser instanceof User) {
+                        return ((User) assignedUser).getUuid();
+                    } else if (assignedUser instanceof LinkedHashMap) {
+                        @SuppressWarnings("unchecked")
+                        LinkedHashMap<String, Object> userMap = (LinkedHashMap<String, Object>) assignedUser;
+                        return (String) userMap.get("uuid");
+                    } else {
+                        log.warn("Unexpected assignedTo element type: {}", assignedUser.getClass().getName());
+                        return null;
+                    }
+                })
+                .filter(uuid -> uuid != null)
                 .collect(Collectors.toSet());
+
+        if (userUuids.isEmpty()) {
+            log.warn("No valid user UUIDs extracted for task: {}", pendingTask.getId());
+            return new ArrayList<>();
+        }
 
         log.debug("Fetching {} users for task {}", userUuids.size(), pendingTask.getId());
         return userUtil.getUserListFromUserUuid(new ArrayList<>(userUuids));
