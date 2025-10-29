@@ -532,7 +532,7 @@ export const DRISTIService = {
       useCache: false,
       userService: true,
       params,
-      data
+      data,
     }),
   postInportalRemindMeLater: (params) =>
     Request({
@@ -541,5 +541,31 @@ export const DRISTIService = {
       userService: true,
       params,
       method: "POST",
+    }),
+  createTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.taskManagement.taskManagementCreate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    });
+  },
+  updateTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.taskManagement.taskManagementUpdate,
+      useCache: false,
+      userService: true,
+      data: data,
+      params,
+    });
+  },
+  searchTaskManagementService: (data, params) =>
+    Request({
+      url: Urls.taskManagement.taskManagementSearch,
+      useCache: false,
+      userService: true,
+      data,
+      params,
     }),
 };

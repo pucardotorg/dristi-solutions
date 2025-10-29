@@ -75,6 +75,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
+import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -393,6 +394,24 @@ function EFilingCases({ path }) {
     const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
     return updatedCaseData;
   }, [caseData]);
+
+  const { data: taskManagementData, isLoading: isTaskManagementLoading } = useSearchTaskMangementService(
+    {
+      criteria: {
+        filingNumber: caseDetails?.filingNumber,
+        tenantId: tenantId,
+        // taskType: ["NOTICE", "SUMMONS"],
+        taskType: "NOTICE",
+      },
+    },
+    {},
+    `taskManagement-${caseDetails?.filingNumber}`,
+    Boolean(caseDetails?.filingNumber && selected === "reviewCaseFile")
+  );
+
+  const taskManagementList = useMemo(() => {
+    return taskManagementData?.taskManagementRecords;
+  }, [taskManagementData]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants
@@ -2013,6 +2032,30 @@ function EFilingCases({ path }) {
     }
   };
 
+  const createOrUpdateTask = async ({ type, existingTask, accusedDetails, respondentFormData, caseDetails, tenantId }) => {
+    if (!accusedDetails?.length) return;
+
+    const partyDetails = accusedDetails.map((accused) => ({
+      addresses: accused?.addressDetails,
+      deliveryChannels: accused?.[`${type.toLowerCase()}CourierService`],
+      respondentDetails: respondentFormData?.find((acc) => acc?.uniqueId === accused?.uniqueId)?.data,
+    }));
+
+    const taskManagementPayload = existingTask
+      ? { ...existingTask, partyDetails, workflow: { action: "UPDATE" } }
+      : {
+          filingNumber: caseDetails?.filingNumber,
+          tenantId,
+          taskType: type,
+          partyDetails,
+          workflow: { action: "CREATE" },
+        };
+
+    const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+    await serviceMethod({ taskManagement: taskManagementPayload });
+  };
+
   const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
@@ -2297,6 +2340,43 @@ function EFilingCases({ path }) {
             };
           } else {
             throw new Error("FILE_STORE_ID_MISSING");
+          }
+
+          try {
+            const processCourierDetails =
+              caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
+
+            const respondentFormData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+
+            const getAccusedDetails = (type) =>
+              processCourierDetails?.filter((accused) => accused?.[`${type.toLowerCase()}CourierService`]?.length > 0);
+
+            const noticeAccusedDetails = getAccusedDetails("NOTICE");
+            const summonsAccusedDetails = getAccusedDetails("SUMMONS");
+
+            const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
+            const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
+
+            await createOrUpdateTask({
+              type: "NOTICE",
+              existingTask: noticeTask,
+              accusedDetails: noticeAccusedDetails,
+              respondentFormData,
+              caseDetails,
+              tenantId,
+            });
+
+            await createOrUpdateTask({
+              type: "SUMMONS",
+              existingTask: summonsTask,
+              accusedDetails: summonsAccusedDetails,
+              respondentFormData,
+              caseDetails,
+              tenantId,
+            });
+          } catch (error) {
+            console.error(error);
+            throw new Error("TASK_MANAGEMENT_ERROR");
           }
         }
         const newCaseDetails = {
@@ -2731,7 +2811,7 @@ function EFilingCases({ path }) {
   }, [isFilingParty, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading) {
+  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 

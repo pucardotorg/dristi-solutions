@@ -117,6 +117,11 @@ export const Urls = {
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
+  taskManagement: {
+    taskManagementCreate: "/task-management/v1/_create",
+    taskManagementUpdate: "/task-management/v1/_update",
+    taskManagementSearch: "/task-management/v1/_search",
+  },
 };
 
 const dristi = {
@@ -152,7 +157,7 @@ const dristi = {
   useGetAllAdvocates,
   useSearchADiaryService,
   useEtreasuryCreateDemand,
-  useSurveyManager
+  useSurveyManager,
 };
 
 const Hooks = {
