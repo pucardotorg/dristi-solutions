@@ -54,6 +54,6 @@ public class TaskSearchCriteria {
     private String status = null;
 
     @JsonProperty("taskType")
-    private String taskType = null;
+    private List<String> taskType = null;
 
 }

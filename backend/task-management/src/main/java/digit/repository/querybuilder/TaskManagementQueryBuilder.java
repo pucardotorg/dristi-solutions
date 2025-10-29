@@ -75,7 +75,7 @@ public class TaskManagementQueryBuilder {
             firstCriteria = addTaskCriteria(criteria.getCourtId(), query, firstCriteria, "task.court_id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getOrderNumber(), query, firstCriteria, "task.order_number = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getOrderItemId(), query, firstCriteria, "task.order_item_id = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskListCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getFilingNumber(), query, firstCriteria, "task.filing_number = ?", preparedStmtList, preparedStmtArgList);
             addTaskCriteria(criteria.getId(), query, firstCriteria, "task.id = ?", preparedStmtList, preparedStmtArgList);
 
@@ -84,6 +84,24 @@ public class TaskManagementQueryBuilder {
             log.error("Error while building task search query :: {}", e.toString());
             throw new CustomException("TASK_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the task search query: " + e.getMessage());
         }
+    }
+
+    private boolean addTaskListCriteria(List<String> criteriaList, StringBuilder query, boolean firstCriteria, String columnName, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteriaList != null && !criteriaList.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(columnName).append(" IN (");
+            for (int i = 0; i < criteriaList.size(); i++) {
+                query.append("?");
+                if (i < criteriaList.size() - 1) {
+                    query.append(",");
+                }
+                preparedStmtList.add(criteriaList.get(i));
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            query.append(")");
+            firstCriteria = false;
+        }
+        return firstCriteria;
     }
 
     private boolean addTaskCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
