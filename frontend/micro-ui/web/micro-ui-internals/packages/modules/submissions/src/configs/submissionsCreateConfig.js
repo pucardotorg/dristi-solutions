@@ -50,9 +50,9 @@ export const applicationTypeConfig = [
           mdmsConfig: {
             masterName: "ApplicationType",
             moduleName: "Application",
-            localePrefix: "APPLICATION_TYPE",
+            // localePrefix: "APPLICATION_TYPE",
             select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: item.type };});}", //name: 'APPLICATION_TYPE_'+item.type
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -2057,7 +2057,7 @@ export const requestForBail = [
     body: [
       {
         inline: true,
-        label: "CHOOSE_COMPLAINANT",
+        label: "PETITIONER_NAME",
         isMandatory: true,
         type: "dropdown",
         key: "selectComplainant",
@@ -2080,7 +2080,7 @@ export const requestForBail = [
         populators: {},
       },
       {
-        label: "FATHER_NAME",
+        label: "PETITIONER_FATHER_NAME",
         isMandatory: true,
         key: "litigantFatherName",
         type: "text",
@@ -2134,7 +2134,7 @@ export const requestForBail = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "prayer",
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
@@ -2163,145 +2163,6 @@ export const requestForBail = [
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
-      // {
-      //   inline: true,
-      //   type: "component",
-      //   component: "SelectCustomFormatterTextArea",
-      //   key: "additionalInformation",
-      //   schemaKeyPath: "applicationDetails.additionalInformation",
-      //   transformer: "customTextArea",
-      //   isMandatory: false,
-      //   populators: {
-      //     inputs: [
-      //       {
-      //         name: "text",
-      //         textAreaSubHeader: "ADDITIONAL_INFO",
-      //         isOptional: true,
-      //         subHeaderClassName: "dristi-font-big-bold",
-      //         placeholder: "TYPE_HERE_PLACEHOLDER",
-      //         type: "TextAreaComponent",
-      //         textAreaStyle: {
-      //           fontSize: "16px",
-      //           fontWeight: 400,
-      //           marginBottom: 0,
-      //         },
-      //       },
-      //     ],
-      //     validation: {
-      //       customValidationFn: {
-      //         moduleName: "dristiSubmissions",
-      //         masterName: "alphaNumericValidation",
-      //       },
-      //     },
-      //     customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-      //   },
-      // },
-      // {
-      //   type: "component",
-      //   component: "CustomInfo",
-      //   key: "suretyDocuments",
-      //   inline: false,
-      //   isMandatory: false,
-      //   populators: {
-      //     inputs: [
-      //       {
-      //         infoHeader: "INFO",
-      //         infoText: "SURETY_DOCUMENTS_INFO_TEXT",
-      //         infoTooltipMessage: "CS_NOTETOOLTIP_RESPONDENT_PERSONAL_DETAILS",
-      //         type: "InfoComponent",
-      //         linkText: "CLICK_HERE",
-      //         modalHeading: "LIST_OF_SURETY_DOCUMENT",
-      //         modalData: [],
-      //       },
-      //     ],
-      //   },
-      // },
-      // {
-      //   type: "component",
-      //   key: "supportingDocuments",
-      //   component: "SupportingDocsComponent",
-      //   schemaKeyPath: "applicationDetails.applicationDocuments",
-      //   transformer: "applicationDocuments",
-      //   name: "SUPPORTING_DOCS",
-      //   disable: false,
-      //   isMandatory: true,
-      //   populators: {
-      //     inputs: [
-      //       {
-      //         isMandatory: true,
-      //         key: "documentType",
-      //         type: "dropdown",
-      //         label: "DOCUMENT_TYPE",
-      //         populators: {
-      //           name: "documentType",
-      //           optionsKey: "code",
-      //           error: "CORE_REQUIRED_FIELD_ERROR",
-      //           styles: { maxWidth: "100%" },
-      //           required: true,
-      //           isMandatory: true,
-      //           // need to chnage
-      //           mdmsConfig: {
-      //             moduleName: "Submission",
-      //             masterName: "SubmissionDocumentType",
-      //             select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
-      //           },
-      //           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-      //         },
-      //       },
-      //       {
-      //         label: "DOCUMENT_TITLE",
-      //         isOptional: true,
-      //         isMandatory: false,
-      //         key: "documentTitle",
-      //         type: "text",
-      //         name: "documentTitle",
-      //         validation: {
-      //           isRequired: false,
-      //           pattern: /^[0-9A-Z/]{0,20}$/,
-      //           errMsg: "",
-      //         },
-      //       },
-      //       {
-      //         type: "component",
-      //         key: "submissionDocuments",
-      //         component: "SelectMultiUpload",
-      //         disable: false,
-      //         populators: {
-      //           inputs: [
-      //             {
-      //               name: "uploadedDocs",
-      //               isMandatory: true,
-      //               textAreaHeader: "CS_DOCUMENT",
-      //               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-      //               uploadGuidelines: "UPLOAD_DOC_50",
-      //               maxFileSize: 50,
-      //               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-      //               textAreaStyle: {
-      //                 fontSize: "16px",
-      //                 fontWeight: 400,
-      //                 marginBottom: "8px",
-      //               },
-      //             },
-      //           ],
-      //         },
-      //       },
-      //     ],
-      //   },
-      // },
-      // {
-      //   isMandatory: false,
-      //   key: "addSurety",
-      //   // type: "text",
-      //   label: "ADD_SURETY",
-      //   populators: {
-      //     name: "addSurety",
-      //     optionsKey: "code",
-      //     styles: { maxWidth: "100%" },
-      //     required: false,
-      //     isMandatory: false,
-      //     showSurety: true,
-      //   },
-      // },
       {
         label: "DO_YOU_WANT_TO_ADD_SURETY",
         key: "addSurety",
@@ -2416,6 +2277,43 @@ export const requestForBail = [
               populators: {
                 inputs: [
                   {
+                    name: "locality",
+                    type: "text",
+                    label: "ADDRESS",
+                    validation: {
+                      errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "address",
+                      // },
+                      maxlength: 256,
+                      minlength: 2,
+                      isRequired: true,
+                    },
+                    isMandatory: true,
+                    isFormatRequired: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "city",
+                    type: "text",
+                    label: "CITY/TOWN",
+                    validation: {
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
+                      isRequired: true,
+                      patternType: "Name",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
                     name: "pincode",
                     type: "text",
                     label: "PINCODE",
@@ -2428,24 +2326,6 @@ export const requestForBail = [
                       minlength: 6,
                       isRequired: true,
                       patternType: "Pincode",
-                    },
-                    isMandatory: true,
-                    inputFieldClassName: "user-details-form-style",
-                  },
-                  {
-                    name: "state",
-                    type: "text",
-                    label: "STATE",
-                    validation: {
-                      title: "",
-                      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                      // pattern: {
-                      //   masterName: "commonUiConfig",
-                      //   moduleName: "patternValidation",
-                      //   patternType: "name",
-                      // },
-                      isRequired: true,
-                      patternType: "Name",
                     },
                     isMandatory: true,
                     inputFieldClassName: "user-details-form-style",
@@ -2469,12 +2349,12 @@ export const requestForBail = [
                     inputFieldClassName: "user-details-form-style",
                   },
                   {
-                    name: "city",
+                    name: "state",
                     type: "text",
-                    label: "CITY/TOWN",
+                    label: "STATE",
                     validation: {
                       title: "",
-                      errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
                       // pattern: {
                       //   masterName: "commonUiConfig",
                       //   moduleName: "patternValidation",
@@ -2484,25 +2364,6 @@ export const requestForBail = [
                       patternType: "Name",
                     },
                     isMandatory: true,
-                    inputFieldClassName: "user-details-form-style",
-                  },
-                  {
-                    name: "locality",
-                    type: "text",
-                    label: "ADDRESS",
-                    validation: {
-                      errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                      // pattern: {
-                      //   masterName: "commonUiConfig",
-                      //   moduleName: "patternValidation",
-                      //   patternType: "address",
-                      // },
-                      maxlength: 256,
-                      minlength: 2,
-                      isRequired: true,
-                    },
-                    isMandatory: true,
-                    isFormatRequired: true,
                     inputFieldClassName: "user-details-form-style",
                   },
                 ],
