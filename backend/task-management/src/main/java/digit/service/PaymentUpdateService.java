@@ -8,6 +8,7 @@ import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.CourtCase;
 import digit.web.models.cases.Party;
+import digit.web.models.cases.PartyAddresses;
 import digit.web.models.order.*;
 import digit.web.models.order.Order;
 import digit.web.models.payment.*;
@@ -225,17 +226,17 @@ public class PaymentUpdateService {
 
     private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
         List<TaskDetails> result = new ArrayList<>();
-        for (Address address : party.getAddresses()) {
-            if (party.getRespondentDetails() != null) party.getRespondentDetails().setAddress(address);
-            if (party.getWitnessDetails() != null) party.getWitnessDetails().setAddress(address);
+        for (PartyAddresses address : party.getAddresses()) {
+//            if (party.getRespondentDetails() != null) party.getRespondentDetails().setAddress(address);
+//            if (party.getWitnessDetails() != null) party.getWitnessDetails().setAddress(address);
 
             for (DeliveryChannel channel : party.getDeliveryChannels()) {
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
                         .summonDetails(baseTaskDetails.getSummonDetails())
                         .noticeDetails(baseTaskDetails.getNoticeDetails())
-                        .respondentDetails(party.getRespondentDetails() != null ? party.getRespondentDetails() : null)
-                        .witnessDetails(party.getWitnessDetails() != null ? party.getWitnessDetails() : null)
+//                        .respondentDetails(party.getRespondentDetails() != null ? party.getRespondentDetails() : null)
+//                        .witnessDetails(party.getWitnessDetails() != null ? party.getWitnessDetails() : null)
                         .complainantDetails(complainantDetails)
                         .deliveryChannel(DeliveryChannel.builder()
                                 .channelName(channel.getChannelId())

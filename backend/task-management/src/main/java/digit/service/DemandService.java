@@ -202,7 +202,7 @@ public class DemandService {
                             partyDetail.getAddresses().forEach(address -> {
                                 TaskPaymentCriteria criteria = TaskPaymentCriteria.builder()
                                         .channelId(deliveryChannel.getChannelId())
-                                        .receiverPincode(address.getPinCode())
+                                        .receiverPincode(address.getAddressDetails().getPincode())
                                         .tenantId(taskManagement.getTenantId())
                                         .taskType(taskManagement.getTaskType())
                                         .id(taskManagement.getTaskManagementNumber())
