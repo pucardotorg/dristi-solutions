@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.models.individual.*;
+import org.egov.common.models.individual.Address;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
@@ -87,7 +88,7 @@ public class Individual {
     @JsonProperty("address")
     @Valid
     @Size(max = 3)
-    private List<Address> address = null;
+    private List<org.egov.common.models.individual.Address> address = null;
 
     @JsonProperty("fatherName")
     @Size(max = 100)

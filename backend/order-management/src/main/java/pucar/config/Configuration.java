@@ -72,6 +72,19 @@ public class Configuration {
 
 
     // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.create.endpoint}")
+    private String taskManagementServiceCreateEndpoint;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
+
+    // Task Config
     @Value("${dristi.task.host}")
     private String taskServiceHost;
 

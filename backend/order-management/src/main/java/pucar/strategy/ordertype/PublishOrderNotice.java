@@ -7,19 +7,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
-import pucar.web.models.Order;
-import pucar.web.models.OrderRequest;
-import pucar.web.models.WorkflowObject;
+import pucar.web.models.*;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
+import pucar.web.models.taskManagement.TaskManagement;
+import pucar.web.models.taskManagement.TaskSearchCriteria;
+import pucar.web.models.taskManagement.TaskSearchRequest;
 
 import java.util.*;
 
@@ -35,15 +38,19 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
     private final TaskUtil taskUtil;
+    private final OrderUtil orderUtil;
+    private final TaskManagementUtil taskManagementUtil;
 
     @Autowired
-    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil) {
+    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, OrderUtil orderUtil, TaskManagementUtil taskManagementUtil) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
         this.taskUtil = taskUtil;
+        this.orderUtil = orderUtil;
+        this.taskManagementUtil = taskManagementUtil;
     }
 
     @Override
@@ -223,34 +230,74 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
-                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+//                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+//                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+
+                // Check if this is first Notice for the case
+                log.info("Check if this is first Notice for the caseFilingNumber: {}", order.getFilingNumber());
+
+                OrderCriteria criteria = OrderCriteria.builder()
+                        .filingNumber(order.getFilingNumber())
+                        .orderType(order.getOrderType())
+                        .tenantId(order.getTenantId())
+                        .build();
+
+                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                        .criteria(criteria)
+                        .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                        .build();
+
+                OrderListResponse response = orderUtil.getOrders(searchRequest);
+                if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+                    log.info("Found notice order associated with filing Number: {}", order.getFilingNumber());
+                    //update the task management by searching using filingNumber
+
+                    TaskSearchCriteria taskSearchCriteria = TaskSearchCriteria.builder()
+                            .filingNumber(order.getFilingNumber())
+                            .build();
+
+                    TaskSearchRequest taskSearchRequest = TaskSearchRequest.builder()
+                            .criteria(taskSearchCriteria)
+                            .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                            .build();
+
+                    List<TaskManagement> taskManagements = taskManagementUtil.searchTaskManagement(taskSearchRequest);
+                    if(taskManagements!=null &&!taskManagements.isEmpty()){
+                        TaskManagement taskManagement = taskManagements.get(0);
+                        taskManagement.setOrderNumber(order.getOrderNumber());
+
+                        WorkflowObject workflowObject = new WorkflowObject();
+                        workflowObject.setAction("UPDATE");
+                        taskManagement.setWorkflow(workflowObject);
+                    }
+
+                }
 
                 // create pending task
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
-                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
-                    String status = PAYMENT_PENDING + channel;
-
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(name)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status(status)
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseId(courtCase.getId().toString())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
-
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-                }
+//                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+//                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
+//                    String status = PAYMENT_PENDING + channel;
+//
+//                    PendingTask pendingTask = PendingTask.builder()
+//                            .name(name)
+//                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+//                            .entityType("order-default")
+//                            .status(status)
+//                            .assignedTo(uniqueAssignee)
+//                            .cnrNumber(courtCase.getCnrNumber())
+//                            .filingNumber(courtCase.getFilingNumber())
+//                            .caseId(courtCase.getId().toString())
+//                            .caseTitle(courtCase.getCaseTitle())
+//                            .isCompleted(false)
+//                            .stateSla(sla)
+//                            .additionalDetails(additionalDetails)
+//                            .screenType("home")
+//                            .build();
+//
+//                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+//                    ).pendingTask(pendingTask).build());
+//                }
 
 
             }

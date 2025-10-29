@@ -1,0 +1,56 @@
+serviceMaps:
+  serviceName: task-management-service
+  mappings:
+    - version: 1.0
+      description: Persists task management details in tables
+      fromTopic: save-task-management
+      isTransaction: true
+      isAuditEnabled: true
+      module: TASK-MANAGEMENT
+      objectIdJsonPath: $.id
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.caseFilingNumber
+      queryMaps:
+        - query: INSERT INTO task_management(id, case_filing_number, status, court_id, order_number, party_details, additional_details, createdby, lastmodifiedby, createdtime, lastmodifiedtime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          jsonMaps:
+            - jsonPath: $.id
+            - jsonPath: $.caseFilingNumber
+            - jsonPath: $.status
+            - jsonPath: $.courtId
+            - jsonPath: $.orderNumber
+            - jsonPath: $.partyDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.auditDetails.createdBy
+            - jsonPath: $.auditDetails.lastModifiedBy
+            - jsonPath: $.auditDetails.createdTime
+            - jsonPath: $.auditDetails.lastModifiedTime
+
+    - version: 1.0
+      description: Update task management details in tables
+      fromTopic: update-task-management
+      isTransaction: true
+      isAuditEnabled: true
+      module: TASK-MANAGEMENT
+      objectIdJsonPath: $.id
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.caseFilingNumber
+      queryMaps:
+        - query: UPDATE task_management SET case_filing_number=?, status=?, court_id=?, order_number=?, party_details=?, additional_details=?, lastmodifiedby=?, lastmodifiedtime=? WHERE id=?;
+          jsonMaps:
+            - jsonPath: $.caseFilingNumber
+            - jsonPath: $.status
+            - jsonPath: $.courtId
+            - jsonPath: $.orderNumber
+            - jsonPath: $.partyDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.auditDetails.lastModifiedBy
+            - jsonPath: $.auditDetails.lastModifiedTime
+            - jsonPath: $.id
