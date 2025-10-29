@@ -1613,6 +1613,7 @@ public class CaseService {
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                 .cmpNumber(courtCase.getCmpNumber())
                 .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .tenantId(courtCase.getTenantId())
                 .hearingDate(hearingDate)
                 .build();
 
