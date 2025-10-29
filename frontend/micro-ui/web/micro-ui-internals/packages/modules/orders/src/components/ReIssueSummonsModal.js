@@ -92,7 +92,7 @@ function ReIssueSummonsModal() {
             hearingDate: formatDate(new Date(hearingDetails?.startTime)),
           },
         },
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
       },
     };
     const res = await ordersService.createOrder(reqbody, { tenantId });
@@ -121,7 +121,7 @@ function ReIssueSummonsModal() {
         referenceId: `MANUAL_${res?.order?.orderNumber}`,
         status: "DRAFT_IN_PROGRESS",
         assignedTo: [],
-        assignedRole: ["JUDGE_ROLE"],
+        assignedRole: ["PENDING_TASK_ORDER"],
         cnrNumber,
         filingNumber,
         caseId: caseId,
@@ -132,7 +132,7 @@ function ReIssueSummonsModal() {
         tenantId,
       },
     });
-    history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+    history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
   };
   const handleRescheduleHearing = async () => {
     try {

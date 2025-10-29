@@ -11,17 +11,17 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.HrmsUtil;
-import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -330,16 +330,65 @@ public class CaseRegistrationEnrichment {
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
         try {
-            String tenantId = caseRequest.getCases().getCourtId();
+            String year = getYearForEnrichingCourtCaseNumber(caseRequest);
+            String tenantId = caseRequest.getCases().getCourtId() + year;
             String idName = config.getCourtCaseConfig();
             String idFormat = config.getCourtCaseSTFormat();
             List<String> courtCaseRegistrationCaseNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
-            caseRequest.getCases().setCourtCaseNumber(courtCaseRegistrationCaseNumberIdList.get(0));
+            String courtCaseNumber = courtCaseRegistrationCaseNumberIdList.get(0);
+            courtCaseNumber = courtCaseNumber + "/" + year;
+            caseRequest.getCases().setCourtCaseNumber(courtCaseNumber);
         } catch (Exception e) {
             log.error("Error enriching case number and court case number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching case number and court case number: " + e.getMessage());
         }
     }
+
+    private String getYearForEnrichingCourtCaseNumber(CaseRequest caseRequest) {
+        CourtCase courtCase = caseRequest.getCases();
+
+        // Case for admitting the court case
+        if (isAdmittingCase(courtCase)) {
+            return getCurrentYearAsString();
+        }
+
+        // Case for LPR (Legal Person Registration) cases with a court case number
+        else if (!courtCase.getIsLPRCase() && courtCase.getLprNumber() != null) {
+            return extractYearFromCourtCaseNumber(courtCase.getCourtCaseNumber());
+        } else {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Invalid case for enriching court case number");
+        }
+    }
+
+    private boolean isAdmittingCase(CourtCase courtCase) {
+        if (courtCase == null || courtCase.getWorkflow() == null || courtCase.getWorkflow().getAction() == null) {
+            return false;
+        }
+        return ADMIT_CASE_WORKFLOW_ACTION.equals(courtCase.getWorkflow().getAction());
+    }
+
+    private String getCurrentYearAsString() {
+        LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        return String.valueOf(currentDate.getYear());
+    }
+
+    private String extractYearFromCourtCaseNumber(String courtCaseNumber) {
+        if (courtCaseNumber == null) {
+            return null;
+        }
+
+        // Match the pattern "ST/xxx/yyyy" in the court case number
+        Pattern pattern = Pattern.compile(REGEX_TO_EXTRACT_YEAR);
+        Matcher matcher = pattern.matcher(courtCaseNumber);
+
+        if (matcher.find()) {
+            return matcher.group(1);  // Extracts the year
+        } else {
+            log.error("Invalid court case number format");
+            return null;
+        }
+    }
+
 
     public void enrichCNRNumber(CaseRequest caseRequest) {
         try {
@@ -397,27 +446,23 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequests);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequests);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchRequest searchRequest) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             for (CaseCriteria element : searchRequest.getCriteria()) {
                 String courtId = getCourtId(searchRequest.getRequestInfo());
                 element.setCourtId(courtId);
             }
 
-        }
-        else {
+        } else {
             for (CaseCriteria element : searchRequest.getCriteria()) {
                 element.setCourtId(null);
             }
@@ -466,23 +511,20 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(),requestInfo);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             String courtId = getCourtId(requestInfo);
             criteria.setCourtId(courtId);
-        }else {
+        } else {
             criteria.setCourtId(null);
         }
 
@@ -521,23 +563,20 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseListRequest.getCriteria(),requestInfo);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
     private void enrichEmployeeUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria, RequestInfo requestInfo) {
 
-        boolean isJudge = roles.stream()
-                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+        boolean isCourtAssigned = roles.stream()
+                .anyMatch(role -> COURT_ASSIGNED_ROLE.equals(role.getCode()));
 
-        boolean isBenchClerk = roles.stream()
-                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
-
-        // TO DO- Need to enhance this after HRMS integration
-        if (isJudge || isBenchClerk) {
+        if (isCourtAssigned) {
             String courtId = getCourtId(requestInfo);
             caseSummaryListCriteria.setCourtId(courtId);
-        }else {
+        } else {
             caseSummaryListCriteria.setCourtId(null);
         }
 
@@ -567,7 +606,7 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
         try {
             log.info("Enriching payment receipt for case with id: {}", id);
             JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
@@ -575,6 +614,7 @@ public class CaseRegistrationEnrichment {
                     .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
                     .documentType(PAYMENT_RECEIPT)
                     .isActive(true)
+                    .additionalDetails(getAdditionalDetails(consumerCode))
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
@@ -582,6 +622,28 @@ public class CaseRegistrationEnrichment {
         } catch (Exception e) {
             log.error("Error enriching payment receipt: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
+        }
+    }
+
+    private Object getAdditionalDetails(String consumerCode) {
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("consumerCode", consumerCode);
+        return additionalDetails;
+    }
+
+    public void enrichLPRNumber(CaseRequest caseRequest) {
+        try {
+            String year = getCurrentYearAsString();
+            String tenantId = caseRequest.getCases().getCourtId() + year;
+            String idName = config.getLprConfig();
+            String idFormat = config.getLprFormat();
+            List<String> lprNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
+            String lprNumber = lprNumberIdList.get(0);
+            lprNumber = lprNumber + "/" + year;
+            caseRequest.getCases().setLprNumber(lprNumber);
+        } catch (Exception e) {
+            log.error("Error enriching lpr number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching lpr number: " + e.getMessage());
         }
     }
 }

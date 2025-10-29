@@ -16,10 +16,16 @@ import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.cases.CaseRequest;
+import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
+import org.pucar.dristi.web.models.orders.*;
+import org.pucar.dristi.web.models.orders.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -52,6 +58,7 @@ public class HearingService {
     private final InboxUtil inboxUtil;
     private final JsonUtil jsonUtil;
     private final EsUtil esUtil;
+    private final OrderUtil orderUtil;
 
     @Autowired
     public HearingService(
@@ -60,7 +67,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil, OrderUtil orderUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -78,6 +85,7 @@ public class HearingService {
         this.inboxUtil = inboxUtil;
         this.jsonUtil = jsonUtil;
         this.esUtil = esUtil;
+        this.orderUtil = orderUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -487,14 +495,16 @@ public class HearingService {
         validator.validateBulkRescheduleRequest(requestInfo, bulkReschedule);
         updateJudgeCalendar(request);
 
-        List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
+        List<OpenHearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
 
         if (hearingsToReschedule.isEmpty()) {
             log.info("No hearings found for bulk reschedule");
             return new ArrayList<>();
         }
 
-        List<String> hearingIds = hearingsToReschedule.stream().filter((hearing) -> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
+        List<String> hearingIds = new ArrayList<>();
+
+        hearingsToReschedule.stream().map(OpenHearing::getHearingNumber).forEach(hearingIds::add);
 
         if (hearingIds.isEmpty()) {
             log.info("all hearings are completed");
@@ -506,15 +516,14 @@ public class HearingService {
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
-        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        Map<String, OpenHearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(OpenHearing::getHearingNumber, obj -> obj));
         for (ScheduleHearing scheduleHearing : scheduleHearings) {
             if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
-                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
-                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
-                scheduleHearing.setCaseId(hearing.getCaseReferenceNumber());
-                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
-                scheduleHearing.setFilingNumber(hearing.getFilingNumber());
-                // todo: check for case title
+                OpenHearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getFromDate());
+                scheduleHearing.setCaseId(hearing.getCaseNumber());
+                scheduleHearing.setFilingNumber(Collections.singletonList(hearing.getFilingNumber()));
+                scheduleHearing.setCaseStage(hearing.getSubStage());
             }
         }
 
@@ -555,7 +564,7 @@ public class HearingService {
     }
 
 
-    private List<Hearing> getHearingsForBulkReschedule(Set<Integer> slotIds, BulkReschedule bulkReschedule, RequestInfo requestInfo) {
+    private List<OpenHearing> getHearingsForBulkReschedule(Set<Integer> slotIds, BulkReschedule bulkReschedule, RequestInfo requestInfo) {
 
         HearingCriteria criteria = HearingCriteria.builder()
                 .tenantId(bulkReschedule.getTenantId()).fromDate(bulkReschedule.getStartTime())
@@ -563,13 +572,7 @@ public class HearingService {
                 .courtId(bulkReschedule.getCourtId())
                 .build();
 
-        HearingSearchRequest searchRequest = HearingSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(criteria)
-                .pagination(null)
-                .build();
-
-        List<Hearing> hearingsToReschedule = new ArrayList<>();
+        List<OpenHearing> hearingsToReschedule = new ArrayList<>();
 
         if (!slotIds.isEmpty()) {
             // check mdms data for slot filtering if any slot id is there
@@ -602,7 +605,9 @@ public class HearingService {
 
                     }
 
-                    List<Hearing> hearings = searchHearing(searchRequest);
+                    InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(bulkReschedule);
+
+                    List<OpenHearing> hearings = inboxUtil.getOpenHearings(inboxRequest);
                     log.info("hearings in slot Id {}: Hearing {}", hearingSlot.getId(), hearings.size());
                     hearingsToReschedule.addAll(hearings);
 
@@ -611,7 +616,10 @@ public class HearingService {
                 }
             }
         } else {
-            hearingsToReschedule = searchHearing(searchRequest);
+
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(bulkReschedule);
+
+            hearingsToReschedule = inboxUtil.getOpenHearings(inboxRequest);
 
         }
 
@@ -758,4 +766,134 @@ public class HearingService {
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }
+
+    public void updateCaseReferenceHearingAfterLpr(CaseRequest caseRequest) {
+        try {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=IN_PROGRESS");
+            RequestInfo requestInfo = caseRequest.getRequestInfo();
+            CourtCase courtCase = caseRequest.getCases();
+            String filingNumber = courtCase.getFilingNumber();
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().filingNumber(filingNumber).build())
+                    .build();
+            List<Hearing> hearingList = searchHearing(request);
+            for (Hearing hearing : hearingList) {
+                hearing.setCourtCaseNumber(courtCase.getCourtCaseNumber());
+                hearing.setCmpNumber(courtCase.getCmpNumber());
+                if ((courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getLprNumber());
+                } else if (courtCase.getCourtCaseNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCourtCaseNumber());
+                } else if (courtCase.getCmpNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCmpNumber());
+                } else {
+                    hearing.setCaseReferenceNumber(filingNumber);
+                }
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+                updateHearing(hearingRequest);
+            }
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=SUCCESS");
+        } catch (Exception e) {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=FAILURE, filingNumber={}", caseRequest.getCases().getFilingNumber());
+            throw new CustomException("Error updating case reference number: {}", e.getMessage());
+        }
+    }
+
+    public List<Integer> getAvgNoOfDaysToHearingForEachCase() {
+        try {
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=IN_PROGRESS");
+
+            List<Hearing> hearings = hearingRepository.getHearingsWithMultipleHearings();
+
+            Map<String, List<Hearing>> hearingsGroupedByFilingNumber = hearings.stream()
+                    .filter(h -> h.getFilingNumber() != null && !h.getFilingNumber().isEmpty())
+                    .collect(Collectors.groupingBy(h -> h.getFilingNumber().get(0)));
+
+            List<Integer> averages = computeAverageDaysBetweenHearings(hearingsGroupedByFilingNumber);
+
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=SUCCESS");
+            return averages;
+
+        } catch (Exception e) {
+            log.error("operation=getAvgNoOfDaysToHearingForEachCase, status=FAILURE, message={}", e.getMessage());
+            throw new CustomException("Error occurred while getting avg no of days to hearing for each case: ", e.getMessage());
+        }
+    }
+
+    private static List<Integer> computeAverageDaysBetweenHearings(Map<String, List<Hearing>> groupedHearings) {
+        List<Integer> averageDaysList = new ArrayList<>();
+
+        for (List<Hearing> hearings : groupedHearings.values()) {
+            // Sort hearings chronologically by startTime
+            List<Hearing> sortedHearings = hearings.stream()
+                    .filter(h -> h.getStartTime() != null)
+                    .sorted(Comparator.comparingLong(Hearing::getStartTime))
+                    .toList();
+
+            List<Long> differences = new ArrayList<>();
+
+            for (int i = 0; i < sortedHearings.size() - 1; i++) {
+                long start = sortedHearings.get(i).getStartTime();
+                long nextStart = sortedHearings.get(i + 1).getStartTime();
+                differences.add(Duration.ofMillis(nextStart - start).toDays());
+            }
+
+            if (!differences.isEmpty()) {
+                double average = differences.stream().mapToLong(Long::longValue).average().orElse(0);
+                averageDaysList.add((int) average);
+            }
+        }
+
+        return averageDaysList;
+    }
+
+    public void createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+        OrderCriteria criteria = OrderCriteria.builder()
+                .filingNumber(filingNumber)
+                .hearingNumber(hearingNumber)
+                .tenantId(tenantId)
+                .build();
+
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .build();
+
+                OrderResponse orderResponse;
+
+        OrderListResponse response = orderUtil.getOrders(searchRequest);
+        if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+        } else {
+            org.pucar.dristi.web.models.orders.Order order = Order.builder()
+                    .hearingNumber(hearingNumber)
+                    .filingNumber(filingNumber)
+                    .cnrNumber(cnrNumber)
+                    .tenantId(tenantId)
+                    .orderCategory("INTERMEDIATE")
+                    .orderTitle("Schedule of Next Hearing Date")
+                    .orderType("")
+                    .isActive(true)
+                    .status("")
+                    .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
+                    .build();
+
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction("SAVE_DRAFT");
+            workflow.setDocuments(List.of(new org.egov.common.contract.models.Document()));
+            order.setWorkflow(workflow);
+
+            OrderRequest orderRequest = OrderRequest.builder()
+                    .requestInfo(requestInfo).order(order).build();
+            orderResponse = orderUtil.createOrder(orderRequest);
+            log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
+        }
+
+    }
+
+
 }

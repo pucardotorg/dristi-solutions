@@ -1,0 +1,421 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_SCRUTINY_CASES",
+    "data": {
+      "code": "VIEW_SCRUTINY_CASES",
+      "name": "VIEW_SCRUTINY_CASES",
+      "description": "VIEW_SCRUTINY_CASES"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+    "data": {
+      "code": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+      "name": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE",
+      "description": "DELAY_CONDONATION_SUBMISSION_CREATOR_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to bench clerk, FSO, nyay mitra, judge
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "DECRYPT_DATA_ROLE",
+    "data": {
+      "code": "DECRYPT_DATA_ROLE",
+      "name": "DECRYPT_DATA_ROLE",
+      "description": "DECRYPT_DATA_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to judge , bench clerk
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "COURT_ASSIGNED_ROLE",
+    "data": {
+      "code": "COURT_ASSIGNED_ROLE",
+      "name": "COURT_ASSIGNED_ROLE",
+      "description": "COURT_ASSIGNED_ROLE"
+    },
+    "isActive": true
+  },
+  {
+    // TODO: need to add this to judge, COURT_ROOM_MANAGER , typist, clerk
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EVIDENCE_SIGNER",
+    "data": {
+      "code": "EVIDENCE_SIGNER",
+      "name": "EVIDENCE_SIGNER",
+      "description": "EVIDENCE_SIGNER"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_SUMMONS",
+    "data": {
+      "code": "SIGN_PROCESS_SUMMONS",
+      "name": "SIGN_PROCESS_SUMMONS",
+      "description": "SIGN_PROCESS_SUMMONS"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_WARRANT",
+    "data": {
+      "code": "SIGN_PROCESS_WARRANT",
+      "name": "SIGN_PROCESS_WARRANT",
+      "description": "SIGN_PROCESS_WARRANT"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_NOTICE",
+    "data": {
+      "code": "SIGN_PROCESS_NOTICE",
+      "name": "SIGN_PROCESS_NOTICE",
+      "description": "SIGN_PROCESS_NOTICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_PROCLAMATION",
+    "data": {
+      "code": "SIGN_PROCESS_PROCLAMATION",
+      "name": "SIGN_PROCESS_PROCLAMATION",
+      "description": "SIGN_PROCESS_PROCLAMATION"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_PROCESS_ATTACHMENT",
+    "data": {
+      "code": "SIGN_PROCESS_ATTACHMENT",
+      "name": "SIGN_PROCESS_ATTACHMENT",
+      "description": "SIGN_PROCESS_ATTACHMENT"
+    },
+    "isActive": true
+  },
+  {
+    "id": "37e9f6a6-7852-4e69-970e-45c01b2d240d",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "BAIL_BOND_ESIGN",
+    "data": {
+      "code": "BAIL_BOND_ESIGN",
+      "name": "BAIL_BOND_ESIGN",
+      "description": "BAIL_BOND_ESIGN"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758705490958,
+      "lastModifiedTime": 1758705490958
+    }
+  },
+  {
+    "id": "76a9d9b3-bba0-49ef-a8fa-b87a1205681c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_ATTACHMENT",
+    "data": {
+      "code": "VIEW_PROCESS_ATTACHMENT",
+      "name": "VIEW_PROCESS_ATTACHMENT",
+      "description": "VIEW_PROCESS_ATTACHMENT"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758699075311,
+      "lastModifiedTime": 1758699075311
+    }
+  },
+  {
+    "id": "05ea567a-fa54-452f-b9ef-b40066eaef13",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_PROCLAMATION",
+    "data": {
+      "code": "VIEW_PROCESS_PROCLAMATION",
+      "name": "VIEW_PROCESS_PROCLAMATION",
+      "description": "VIEW_PROCESS_PROCLAMATION"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758699068649,
+      "lastModifiedTime": 1758699068649
+    }
+  },
+  {
+    "id": "29253c4b-041b-407b-8138-d071ff48b426",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_NOTICE",
+    "data": {
+      "code": "VIEW_PROCESS_NOTICE",
+      "name": "VIEW_PROCESS_NOTICE",
+      "description": "VIEW_PROCESS_NOTICE"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758699061692,
+      "lastModifiedTime": 1758699061692
+    }
+  },
+  {
+    "id": "51f15c21-a3ff-4944-92bf-be5e6641fef0",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_WARRANT",
+    "data": {
+      "code": "VIEW_PROCESS_WARRANT",
+      "name": "VIEW_PROCESS_WARRANT",
+      "description": "VIEW_PROCESS_WARRANT"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758699054613,
+      "lastModifiedTime": 1758699054613
+    }
+  },
+  {
+    "id": "a75ba942-0191-4553-a664-0142b797c668",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_SUMMONS",
+    "data": {
+      "code": "VIEW_PROCESS_SUMMONS",
+      "name": "VIEW_PROCESS_SUMMONS",
+      "description": "VIEW_PROCESS_SUMMONS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758699048905,
+      "lastModifiedTime": 1758699048905
+    }
+  },
+  {
+    "id": "158f2682-6600-4b0b-b1e4-442ac31bf75c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_A_DIARY",
+    "data": {
+      "code": "VIEW_A_DIARY",
+      "name": "VIEW_A_DIARY",
+      "description": "VIEW_A_DIARY"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758646666335,
+      "lastModifiedTime": 1758646666335
+    }
+  },
+  {
+    "id": "fd40c77d-1afb-46ea-bd2c-56373d86a02a",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_DASHBOARDS",
+    "data": {
+      "code": "VIEW_DASHBOARDS",
+      "name": "VIEW_DASHBOARDS",
+      "description": "VIEW_DASHBOARDS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758646647910,
+      "lastModifiedTime": 1758646647910
+    }
+  },
+  {
+    "id": "1b9bdd0a-d07a-436e-9956-cf509bb6a980",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_SHOW_NOTICE_STATUS",
+    "data": {
+      "code": "PENDING_TASK_SHOW_NOTICE_STATUS",
+      "name": "PENDING_TASK_SHOW_NOTICE_STATUS",
+      "description": "PENDING_TASK_SHOW_NOTICE_STATUS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758638171820,
+      "lastModifiedTime": 1758638171820
+    }
+  },
+  {
+    "id": "813c4842-abfb-49fd-b09d-2b8282aaade9",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "CAN_SIGN",
+    "data": {
+      "code": "CAN_SIGN",
+      "name": "CAN_SIGN",
+      "description": "CAN_SIGN"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758637291895,
+      "lastModifiedTime": 1758637291895
+    }
+  },
+  {
+    "id": "795f4d47-cc10-41d1-8b30-2ac8f65105d9",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_SHOW_SUMMON_WARRANT",
+    "data": {
+      "code": "PENDING_TASK_SHOW_SUMMON_WARRANT",
+      "name": "PENDING_TASK_SHOW_SUMMON_WARRANT",
+      "description": "PENDING_TASK_SHOW_SUMMON_WARRANT"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636946959,
+      "lastModifiedTime": 1758636946959
+    }
+  },
+  {
+    "id": "a693785b-67d9-4738-8e7e-6b2eb1532047",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_CONFIRM_BOND_SUBMISSION",
+    "data": {
+      "code": "PENDING_TASK_CONFIRM_BOND_SUBMISSION",
+      "name": "PENDING_TASK_CONFIRM_BOND_SUBMISSION",
+      "description": "PENDING_TASK_CONFIRM_BOND_SUBMISSION"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636929027,
+      "lastModifiedTime": 1758636929027
+    }
+  },
+  {
+    "id": "5cdf2cb1-41b5-498e-a2b5-d21467f068c4",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_REISSUE_SUMMON",
+    "data": {
+      "code": "PENDING_TASK_REISSUE_SUMMON",
+      "name": "PENDING_TASK_REISSUE_SUMMON",
+      "description": "PENDING_TASK_REISSUE_SUMMON"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636920358,
+      "lastModifiedTime": 1758636920358
+    }
+  },
+  {
+    "id": "c6ae2cae-125a-456c-952a-cf2da1a03555",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_REISSUE_NOTICE",
+    "data": {
+      "code": "PENDING_TASK_REISSUE_NOTICE",
+      "name": "PENDING_TASK_REISSUE_NOTICE",
+      "description": "PENDING_TASK_REISSUE_NOTICE"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636899055,
+      "lastModifiedTime": 1758636899055
+    }
+  },
+  {
+    "id": "61a401b7-2673-4c85-81bc-5130eaee2d82",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PENDING_TASK_ORDER",
+    "data": {
+      "code": "PENDING_TASK_ORDER",
+      "name": "PENDING_TASK_ORDER",
+      "description": "PENDING_TASK_ORDER"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636888930,
+      "lastModifiedTime": 1758636888930
+    }
+  },
+  {
+    "id": "c39aa575-e1ce-4840-a0f9-380136da4dff",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_RE_SCHEDULE_APPLICATION",
+    "data": {
+      "code": "VIEW_RE_SCHEDULE_APPLICATION",
+      "name": "VIEW_RE_SCHEDULE_APPLICATION",
+      "description": "VIEW_RE_SCHEDULE_APPLICATION"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1758636818325,
+      "lastModifiedTime": 1758636818325
+    }
+  },
+  {
+    "id": "fce64a4d-358c-41fa-97d8-3884ad88c126",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_BULK_RESCHEDULE_HEARINGS",
+    "data": {
+      "code": "VIEW_BULK_RESCHEDULE_HEARINGS",
+      "name": "VIEW_BULK_RESCHEDULE_HEARINGS",
+      "description": "VIEW_BULK_RESCHEDULE_HEARINGS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1758872525566,
+      "lastModifiedTime": 1758872525566
+    }
+  }
+]

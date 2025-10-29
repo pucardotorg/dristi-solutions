@@ -11,6 +11,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.List;
 import java.util.TimeZone;
 
 @Component
@@ -113,4 +115,74 @@ public class Configuration {
 
     @Value("${judge.name}")
     private String judgeName;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
+    @Value("${egov.inbox.getfield.search.endpoint}")
+    private String indexGetFieldEndPoint;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.get.endpoint}")
+    private String fileStoreGetEndPoint;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    @Value("${module.names.enabled}")
+    private List<String> moduleNamesEnabled;
+
+    // Bail and Surety service configs
+    @Value("${bail.service.host}")
+    private String bailServiceHost;
+
+    @Value("${bail.service.search.endpoint}")
+    private String bailServiceSearchEndpoint;
+
+    @Value("${bail.service.update.endpoint}")
+    private String bailServiceUpdateEndpoint;
+
+    // eSign Config
+    @Value("${esign.service.host}")
+    private String eSignHost;
+
+    @Value("${esign.service.endpoint}")
+    private String eSignEndpoint;
+
+    //Tenant Id
+    @Value("${egov-state-level-tenant-id}")
+    private String egovStateTenantId;
+
+    // evidence service configs
+    @Value("${evidence.service.host}")
+    private String evidenceServiceHost;
+
+    @Value("${evidence.service.search.endpoint}")
+    private String evidenceServiceSearchEndpoint;
+
+    @Value("${evidence.service.update.endpoint}")
+    private String evidenceServiceUpdateEndpoint;
+
+    // Case Status Configuration
+    @Value("${case.status.disposed.outcomes}")
+    private List<String> disposedOutcomes;
+
+    @Value("${case.status.allowed.statuses}")
+    private List<String> allowedCaseStatuses;
+
 }

@@ -66,7 +66,7 @@ public class PendingTaskUtil {
                 "      \"must\": [\n" +
                 "        {\n" +
                 "          \"match\": {\n" +
-                "            \"Data.filingNumber.keyword\":" + "\"" + filingNumber + "\"" +
+                "            \"Data.filingNumber.keyword\": \"" + filingNumber + "\"\n" +
                 "          }\n" +
                 "        },\n" +
                 "        {\n" +
@@ -76,7 +76,8 @@ public class PendingTaskUtil {
                 "        }\n" +
                 "      ]\n" +
                 "    }\n" +
-                "  }\n" +
+                "  },\n" +
+                "  \"size\":2000\n" +
                 "}";
     }
 
