@@ -226,9 +226,18 @@ public class PaymentUpdateService {
 
     private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
         List<TaskDetails> result = new ArrayList<>();
+
         if (party == null || party.getAddresses() == null || party.getAddresses().isEmpty()) {
             return result;
         }
+
+        // Get delivery channels or initialize empty list
+        List<DeliveryChannel> deliveryChannels = party.getDeliveryChannels() != null
+                ? new ArrayList<>(party.getDeliveryChannels())
+                : new ArrayList<>();
+        // Ensure SMS and EMAIL channels are present
+        ensureDefaultChannels(deliveryChannels);
+
         for (PartyAddress address : party.getAddresses()) {
             RespondentDetails respondentDetails = null;
             WitnessDetails witnessDetails = null;
@@ -238,7 +247,7 @@ public class PaymentUpdateService {
             if (party.getWitnessDetails() != null) {
                 witnessDetails = getWitnessDetails(party.getWitnessDetails(), address);
             }
-            for (DeliveryChannel channel : party.getDeliveryChannels()) {
+            for (DeliveryChannel channel : deliveryChannels) {
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
                         .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
@@ -256,6 +265,31 @@ public class PaymentUpdateService {
         }
         return result;
     }
+
+    /**
+     * Ensures that SMS and EMAIL delivery channels are always included.
+     */
+    private void ensureDefaultChannels(List<DeliveryChannel> channels) {
+        boolean hasSMS = channels.stream()
+                .anyMatch(c -> "SMS".equalsIgnoreCase(c.getChannelCode()) || "SMS".equalsIgnoreCase(c.getChannelName()));
+        boolean hasEmail = channels.stream()
+                .anyMatch(c -> "EMAIL".equalsIgnoreCase(c.getChannelCode()) || "EMAIL".equalsIgnoreCase(c.getChannelName()));
+        if (!hasSMS) {
+            channels.add(DeliveryChannel.builder()
+                    .channelName("SMS")
+                    .channelCode("SMS")
+                    .fees("0") // Default fee if applicable
+                    .build());
+        }
+        if (!hasEmail) {
+            channels.add(DeliveryChannel.builder()
+                    .channelName("EMAIL")
+                    .channelCode("EMAIL")
+                    .fees("0")
+                    .build());
+        }
+    }
+
 
     private WitnessDetails getWitnessDetails(digit.web.models.cases.WitnessDetails witnessDetails, PartyAddress partyAddresses) {
         if (witnessDetails == null) {
