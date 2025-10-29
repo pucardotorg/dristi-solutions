@@ -215,12 +215,13 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 
         JsonNode partyTypeNode = additionalDetailsNode
                 .path("formdata")
-                .path("noticeOrder")
+                .path("SummonsOrder")
                 .path("party")
+                .path("data")
                 .path("partyType");
 
         String partyType = partyTypeNode.textValue();
-        return partyType.substring(0, 1).toUpperCase() + partyType.substring(1).toLowerCase();
+        return partyType == null ? null : partyType.substring(0, 1).toUpperCase() + partyType.substring(1).toLowerCase();
     }
 
     private void callNotificationService(OrderRequest orderRequest, String messageCode, SMSTemplateData smsTemplateData, List<User> users) {
