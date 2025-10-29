@@ -115,7 +115,8 @@ public class SmsNotificationService {
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationRejectProfileRequestTemplateId());
         }
         else if(VAKALATNAMA_FILED.equalsIgnoreCase(messageCode)) {
-            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationVakalatnamaFiledTemplateId());
+            Instant instant = dateUtil.getInstantFrom(config.getSmsVakalatnamaFiledTime());
+            schedulePushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationVakalatnamaFiledTemplateId(), instant);
         }
     }
 

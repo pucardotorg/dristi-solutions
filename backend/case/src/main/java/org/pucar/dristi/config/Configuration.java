@@ -441,6 +441,9 @@ public class Configuration {
 	@Value("${egov.sms.case.filed.time}")
 	private String smsCaseFiledTime;
 
+	@Value("${egov.sms.vakalatnama.filed.time}")
+	private String smsVakalatnamaFiledTime;
+
 	// Order
 	@Value("${egov.order.host}")
 	private String orderHost;
