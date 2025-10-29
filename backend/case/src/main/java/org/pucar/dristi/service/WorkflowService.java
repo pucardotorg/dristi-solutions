@@ -101,12 +101,12 @@ public class WorkflowService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
         }
     }
-    public ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
+    public org.pucar.dristi.web.models.ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
         try {
             RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
             StringBuilder url = getSearchURLForProcessInstanceWithParams(tenantId, businessId);
             Object res = repository.fetchResult(url, requestInfoWrapper);
-            ProcessInstanceResponse response = mapper.convertValue(res, ProcessInstanceResponse.class);
+            org.pucar.dristi.web.models.ProcessInstanceResponse response = mapper.convertValue(res, org.pucar.dristi.web.models.ProcessInstanceResponse.class);
             if (response != null && !CollectionUtils.isEmpty(response.getProcessInstances()) && response.getProcessInstances().get(0) != null)
                 return response.getProcessInstances().get(0);
             return null;
@@ -173,4 +173,3 @@ public class WorkflowService {
         return Workflow.builder().action(processInstance.getState().getState()).comments(processInstance.getComment()).build();
     }
 }
- 

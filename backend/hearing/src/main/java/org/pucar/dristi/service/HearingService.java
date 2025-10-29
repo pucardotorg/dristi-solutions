@@ -427,12 +427,6 @@ public class HearingService {
     private String getMessageCode(String updatedStatus, Boolean hearingAdjourned, String hearingType) {
 
         log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
-        if (!hearingType.isEmpty() && updatedStatus.equalsIgnoreCase(SCHEDULED)) {
-            return getMessageCodeForHearingType(hearingType);
-        }
-        if (hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)) {
-            return HEARING_ADJOURNED;
-        }
         return null;
     }
 

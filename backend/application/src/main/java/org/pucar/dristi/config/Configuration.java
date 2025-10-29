@@ -258,4 +258,7 @@ public class Configuration {
     @Value("${egov.sms.notification.request.withdraw.template.id}")
     private String smsNotificationWithDraw;
 
+    @Value("${egov.sms.notification.application.submitted.template.id}")
+    private String smsNotificationApplicationSubmittedTemplateId;
+
 }

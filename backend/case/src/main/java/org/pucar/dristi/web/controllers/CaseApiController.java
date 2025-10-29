@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
+import org.pucar.dristi.scheduling.CronJobScheduler;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.CaseServiceV2;
@@ -43,15 +44,17 @@ public class CaseApiController {
     private final ResponseInfoFactory responseInfoFactory;
 
     private final CasePdfService casePdfService;
+    private final CronJobScheduler cronJobScheduler;
 
 
     @Autowired
-    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CronJobScheduler cronJobScheduler) {
         this.caseService = caseService;
         this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
+        this.cronJobScheduler = cronJobScheduler;
     }
 
     @PostMapping(value = "/v1/_create")
@@ -303,5 +306,12 @@ public class CaseApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_runCronJob")
+    public ResponseEntity<?> runCronJob() {
+        cronJobScheduler.sendNotificationToCaseReassigned();
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
