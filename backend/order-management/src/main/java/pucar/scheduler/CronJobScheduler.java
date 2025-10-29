@@ -74,7 +74,9 @@ public class CronJobScheduler {
             List<PendingTask> pendingTasks = getPendingTasksForPaymentPending();
             log.info("Found {} pending tasks for payment", pendingTasks.size());
 
-            SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
+            SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                    .tenantId(config.getStateLevelTenantId())
+                    .build();
             LocalDate today = LocalDate.now(ZONE_ID);
             log.debug("Current date in {}: {}", ZONE_ID, today);
 
@@ -198,7 +200,9 @@ public class CronJobScheduler {
             List<PendingTask> pendingTasks = getPendingTasksForMandatorySubmission();
             log.info("Found {} pending tasks for mandatory submission", pendingTasks.size());
 
-            SMSTemplateData smsTemplateData = SMSTemplateData.builder().build();
+            SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                    .tenantId(config.getStateLevelTenantId())
+                    .build();
             LocalDate today = LocalDate.now(ZONE_ID);
             log.debug("Current date in {}: {}", ZONE_ID, today);
 
@@ -282,7 +286,7 @@ public class CronJobScheduler {
             smsTemplateData.setSubmissionDueDate(String.valueOf(submissionDate));
             log.debug("Submission due date: {}", submissionDate);
 
-            List<User> users = getUsersFromPendingTask(pendingTask);
+            Set<User> users = new HashSet<>(getUsersFromPendingTask(pendingTask));
             log.debug("Found {} users for filing {}", users.size(), pendingTask.getFilingNumber());
 
             int sentCount = 0;

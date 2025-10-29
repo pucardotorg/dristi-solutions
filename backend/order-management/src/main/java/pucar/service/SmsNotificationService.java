@@ -104,6 +104,7 @@ public class SmsNotificationService {
         smsDetails.put("orderType", smsTemplateData.getOrderType());
         smsDetails.put("partyType", smsTemplateData.getPartyType());
         smsDetails.put("days", smsTemplateData.getDays());
+        smsDetails.put("submissionDueDate", smsTemplateData.getSubmissionDueDate());
 
         return smsDetails;
     }
@@ -140,7 +141,8 @@ public class SmsNotificationService {
                 .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{orderType}}", Optional.ofNullable(userDetailsForSMS.get("orderType")).orElse(""))
                 .replace("{{partyType}}", Optional.ofNullable(userDetailsForSMS.get("partyType")).orElse(""))
-                .replace("{{days}}", Optional.ofNullable(userDetailsForSMS.get("days")).orElse(""));
+                .replace("{{days}}", Optional.ofNullable(userDetailsForSMS.get("days")).orElse(""))
+                .replace("{{submissionDueDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDueDate")).orElse(""));
 
         return message;
     }
