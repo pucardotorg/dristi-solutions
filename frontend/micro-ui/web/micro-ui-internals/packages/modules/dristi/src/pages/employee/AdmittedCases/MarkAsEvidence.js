@@ -291,31 +291,6 @@ const MarkAsEvidence = ({
     }
   };
 
-  useEffect(() => {
-    const generatePdf = async () => {
-      if (
-        accessToken &&
-        userInfo &&
-        courtId &&
-        evidenceTag &&
-        evidenceNumber &&
-        Object.keys(caseDetails)?.length > 0 &&
-        witnessTag?.code &&
-        tenantId &&
-        !sealFileStoreId &&
-        !isLoading
-      ) {
-        try {
-          await getMarkAsEvidencePdf();
-        } catch (error) {
-          console.error("Error pre-generating PDF:", error);
-        }
-      }
-    };
-
-    generatePdf();
-  }, [accessToken, userInfo, courtId, evidenceTag, evidenceNumber, caseDetails, witnessTag, tenantId, sealFileStoreId, isLoading]);
-
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -650,9 +625,7 @@ const MarkAsEvidence = ({
       setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
-        if (businessOfDay === null || businessOfDay === "" || !businessOfDay) {
-          setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
-        }
+        setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
         await handleMarkEvidence(
           evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
         ).then((res) => {
@@ -797,10 +770,12 @@ const MarkAsEvidence = ({
   const onESignClick = async () => {
     try {
       setLoader(true);
+      let file = sealFileStoreId;
       if (!sealFileStoreId) {
-        showToast("info", t("GENERATING_EVIDENCE_PDF"), 3000);
-        setLoader(false);
-        return;
+        file = await getMarkAsEvidencePdf();
+        if (!file) {
+          throw new Error("Failed to generate PDF file store ID");
+        }
       }
 
       if (mockESignEnabled) {
@@ -825,7 +800,7 @@ const MarkAsEvidence = ({
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
       sessionStorage.removeItem("fileStoreId");
-      handleEsign(name, pageModule, sealFileStoreId, "Judge/Magistrate");
+      handleEsign(name, pageModule, file, "Judge/Magistrate");
     } catch (error) {
       showToast("error", t("ERROR_ESIGN_EVIDENCE"), 5000);
       setLoader(false);
@@ -833,12 +808,6 @@ const MarkAsEvidence = ({
       setLoader(false);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      clearEvidenceSessionData();
-    };
-  });
 
   if (isLoading) return <Loader />;
 
