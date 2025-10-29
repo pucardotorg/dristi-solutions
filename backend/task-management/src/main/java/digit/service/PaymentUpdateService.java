@@ -6,14 +6,14 @@ import digit.config.Configuration;
 import digit.repository.TaskManagementRepository;
 import digit.util.*;
 import digit.web.models.*;
-import digit.web.models.cases.CourtCase;
-import digit.web.models.cases.Party;
-import digit.web.models.cases.PartyAddresses;
+import digit.web.models.cases.*;
 import digit.web.models.order.*;
 import digit.web.models.order.Order;
 import digit.web.models.payment.*;
 import digit.web.models.payment.Bill;
 import digit.web.models.taskdetails.*;
+import digit.web.models.taskdetails.RespondentDetails;
+import digit.web.models.taskdetails.WitnessDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -107,7 +107,7 @@ public class PaymentUpdateService {
         for (PartyDetails party : taskManagement.getPartyDetails()) {
             if (party.getRespondentDetails() != null) {
                 createTasksForParty(requestInfo, taskManagement, party, "Respondent");
-            } else if(party.getWitnessDetails() != null) {
+            } else if (party.getWitnessDetails() != null) {
                 createTasksForParty(requestInfo, taskManagement, party, "Witness");
             }
         }
@@ -226,27 +226,124 @@ public class PaymentUpdateService {
 
     private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
         List<TaskDetails> result = new ArrayList<>();
-        for (PartyAddresses address : party.getAddresses()) {
-//            if (party.getRespondentDetails() != null) party.getRespondentDetails().setAddress(address);
-//            if (party.getWitnessDetails() != null) party.getWitnessDetails().setAddress(address);
-
+        if (party == null || party.getAddresses() == null || party.getAddresses().isEmpty()) {
+            return result;
+        }
+        for (PartyAddress address : party.getAddresses()) {
+            RespondentDetails respondentDetails = null;
+            WitnessDetails witnessDetails = null;
+            if (party.getRespondentDetails() != null) {
+                respondentDetails = getRespondentDetails(party.getRespondentDetails(), address);
+            }
+            if (party.getWitnessDetails() != null) {
+                witnessDetails = getWitnessDetails(party.getWitnessDetails(), address);
+            }
             for (DeliveryChannel channel : party.getDeliveryChannels()) {
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
-                        .summonDetails(baseTaskDetails.getSummonDetails())
-                        .noticeDetails(baseTaskDetails.getNoticeDetails())
-//                        .respondentDetails(party.getRespondentDetails() != null ? party.getRespondentDetails() : null)
-//                        .witnessDetails(party.getWitnessDetails() != null ? party.getWitnessDetails() : null)
+                        .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
+                        .noticeDetails(baseTaskDetails != null ? baseTaskDetails.getNoticeDetails() : null)
+                        .respondentDetails(respondentDetails)
+                        .witnessDetails(witnessDetails)
                         .complainantDetails(complainantDetails)
                         .deliveryChannel(DeliveryChannel.builder()
-                                .channelName(channel.getChannelId())
-                                .channelCode(channel.getChannelCode())
-                                .fees(channel.getFees())
+                                .channelName(channel != null ? channel.getChannelId() : null)
+                                .channelCode(channel != null ? channel.getChannelCode() : null)
+                                .fees(channel != null ? channel.getFees() : null)
                                 .build())
                         .build());
             }
         }
         return result;
+    }
+
+    private WitnessDetails getWitnessDetails(digit.web.models.cases.WitnessDetails witnessDetails, PartyAddress partyAddresses) {
+        if (witnessDetails == null) {
+            return null;
+        }
+
+        String firstName = witnessDetails.getFirstName() != null ? witnessDetails.getFirstName() : "";
+        String middleName = witnessDetails.getMiddleName() != null ? witnessDetails.getMiddleName() : "";
+        String lastName = witnessDetails.getLastName() != null ? witnessDetails.getLastName() : "";
+        String name = String.join(" ", firstName, middleName, lastName).trim();
+
+        Integer age = null;
+        try {
+            age = witnessDetails.getWitnessAge() != null ? Integer.valueOf(witnessDetails.getWitnessAge()) : null;
+        } catch (NumberFormatException e) {
+            age = null;
+        }
+
+        String phone = null;
+        if (witnessDetails.getPhoneNumbers() != null &&
+                witnessDetails.getPhoneNumbers().getMobileNumber() != null &&
+                !witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+            phone = witnessDetails.getPhoneNumbers().getMobileNumber().get(0);
+        }
+
+        String email = null;
+        if (witnessDetails.getEmails() != null &&
+                witnessDetails.getEmails().getEmailId() != null &&
+                !witnessDetails.getEmails().getEmailId().isEmpty()) {
+            email = witnessDetails.getEmails().getEmailId().get(0);
+        }
+
+        Address address = mapToAddress(partyAddresses.getAddressDetails());
+
+        return WitnessDetails.builder()
+                .name(name)
+                .age(age)
+                .phone(phone)
+                .email(email)
+                .address(address)
+                .build();
+    }
+
+    private RespondentDetails getRespondentDetails(digit.web.models.cases.RespondentDetails respondentDetails, PartyAddress addressDetails) {
+        if (respondentDetails == null) {
+            return null;
+        }
+
+        String firstName = respondentDetails.getFirstName() != null ? respondentDetails.getFirstName() : "";
+        String middleName = respondentDetails.getMiddleName() != null ? respondentDetails.getMiddleName() : "";
+        String lastName = respondentDetails.getLastName() != null ? respondentDetails.getLastName() : "";
+        String name = String.join(" ", firstName, middleName, lastName).trim();
+
+        Address address = mapToAddress(addressDetails.getAddressDetails());
+
+        String phone = null;
+        if (respondentDetails.getPhoneNumbers() != null && !respondentDetails.getPhoneNumbers().isEmpty()) {
+            phone = respondentDetails.getPhoneNumbers().get(0);
+        }
+
+        String email = null;
+        if (respondentDetails.getEmail() != null && !respondentDetails.getEmail().isEmpty()) {
+            email = respondentDetails.getEmail().get(0);
+        }
+
+        Integer age = respondentDetails.getRespondentAge();
+
+        return RespondentDetails.builder()
+                .email(email)
+                .name(name)
+                .address(address)
+                .phone(phone)
+                .age(age)
+                .build();
+    }
+
+    private Address mapToAddress(AddressDetails addressDetails) {
+        if (addressDetails == null) {
+            return null;
+        }
+
+        return Address.builder()
+                .city(addressDetails.getCity())
+                .state(addressDetails.getState())
+                .district(addressDetails.getDistrict())
+                .pinCode(addressDetails.getPincode())
+                .locality(addressDetails.getLocality())
+                .build();
     }
 
     private Task buildBaseTask(TaskManagement task, Order order, CourtCase courtCase, Map<String, Object> additionalDetails) {

@@ -53,6 +53,9 @@ public class RespondentDetails {
     @JsonProperty("respondentLastName")
     private String respondentLastName;
 
+    @JsonProperty("respondentAge")
+    private Integer respondentAge;
+
     @JsonProperty("companyDetailsUpload")
     private Object companyDetailsUpload;
 

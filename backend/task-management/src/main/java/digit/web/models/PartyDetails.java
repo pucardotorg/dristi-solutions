@@ -1,7 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import digit.web.models.cases.PartyAddresses;
+import digit.web.models.cases.PartyAddress;
 import digit.web.models.cases.RespondentDetails;
 import digit.web.models.cases.WitnessDetails;
 import lombok.AllArgsConstructor;
@@ -30,7 +30,7 @@ public class PartyDetails {
     private WitnessDetails witnessDetails;
 
     @JsonProperty("addresses")
-    private List<PartyAddresses> addresses;
+    private List<PartyAddress> addresses;
 
     @JsonProperty("deliveryChannels")
     private List<DeliveryChannel> deliveryChannels;

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PartyAddresses {
+public class PartyAddress {
     @JsonProperty("addressDetails")
     private AddressDetails addressDetails;
 

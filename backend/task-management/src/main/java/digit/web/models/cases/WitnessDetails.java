@@ -32,7 +32,7 @@ public class WitnessDetails {
     private PhoneNumbers phoneNumbers;
 
     @JsonProperty("addressDetails")
-    List<PartyAddresses> addressDetails = new ArrayList<>();
+    List<PartyAddress> addressDetails = new ArrayList<>();
 
     @JsonProperty("witnessDesignation")
     private String witnessDesignation;
