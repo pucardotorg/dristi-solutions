@@ -216,7 +216,7 @@ public class CronJobScheduler {
                     continue;
                 }
 
-                boolean isThirdDay = isThirdDaySinceCreatedTime(task.getCreatedTime());
+                boolean isThirdDay = isMultipleOfThreeDaysSinceCreation(task.getCreatedTime());
                 log.debug("Task {} - Days since creation check: {}", task.getId(), isThirdDay);
 
                 if (!isThirdDay) {
@@ -256,7 +256,7 @@ public class CronJobScheduler {
         return tasks;
     }
 
-    private boolean isThirdDaySinceCreatedTime(long createdTime) {
+    private boolean isMultipleOfThreeDaysSinceCreation(long createdTime) {
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
         LocalDate createdDate = createdInstant.atZone(ZONE_ID).toLocalDate();
         LocalDate today = LocalDate.now(ZONE_ID);
