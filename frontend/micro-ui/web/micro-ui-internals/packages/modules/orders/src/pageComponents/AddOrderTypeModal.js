@@ -239,6 +239,20 @@ const AddOrderTypeModal = ({
       }
     }
 
+    if (currentOrderType === "ACCEPT_BAIL") {
+      if (formData?.chequeAmount < 0 && !Object.keys(formState?.errors).includes("chequeAmount")) {
+        setFormErrors?.current?.[index]?.("chequeAmount", { message: t("Amount should be greater that 0") });
+      } else if (formData?.chequeAmount > 0 && Object.keys(formState?.errors).includes("chequeAmount")) {
+        clearFormErrors?.current?.[index]?.("chequeAmount");
+      }
+
+      if (formData?.noOfSureties < 0 && !Object.keys(formState?.errors).includes("noOfSureties")) {
+        setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
+      } else if (formData?.noOfSureties > 0 && Object.keys(formState?.errors).includes("noOfSureties")) {
+        clearFormErrors?.current?.[index]?.("noOfSureties");
+      }
+    }
+
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
       setWarrantSubtypeCode(formData?.warrantSubType?.templateType);
