@@ -104,13 +104,15 @@ public class PaymentUpdateService {
 
     private void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
         for (PartyDetails party : taskManagement.getPartyDetails()) {
-            if (party.getRespondentDetails() != null || party.getWitnessDetails() != null) {
-                createTasksForParty(requestInfo, taskManagement, party);
+            if (party.getRespondentDetails() != null) {
+                createTasksForParty(requestInfo, taskManagement, party, "Respondent");
+            } else if(party.getWitnessDetails() != null) {
+                createTasksForParty(requestInfo, taskManagement, party, "Witness");
             }
         }
     }
 
-    private void createTasksForParty(RequestInfo requestInfo, TaskManagement taskManagement, PartyDetails partyDetails) {
+    private void createTasksForParty(RequestInfo requestInfo, TaskManagement taskManagement, PartyDetails partyDetails, String partyType) {
         CourtCase courtCase = fetchCase(requestInfo, taskManagement.getFilingNumber());
         Order order = fetchOrder(requestInfo, taskManagement.getOrderNumber());
         Map<String, Object> additionalDetails = extractAdditionalDetails(order);
@@ -118,7 +120,7 @@ public class PaymentUpdateService {
 
         CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails);
         ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
-        TaskDetails baseTaskDetails = buildTaskDetails(order, courtCase);
+        TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType);
 
         List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
 
@@ -187,13 +189,13 @@ public class PaymentUpdateService {
                 .build();
     }
 
-    private TaskDetails buildTaskDetails(Order order, CourtCase courtCase) {
+    private TaskDetails buildSummonAndNoticeDetails(Order order, CourtCase courtCase, String partyType) {
         String orderType = order.getOrderType();
         Object additionalDetails = order.getAdditionalDetails();
 
         switch (orderType) {
             case "SUMMONS" -> {
-                String docSubType = normalizePartyType(jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "SummonsOrder", "party", "data", "partyType"), String.class));
+                String docSubType = normalizePartyType(partyType);
                 return TaskDetails.builder()
                         .summonDetails(SummonsDetails.builder()
                                 .docSubType(docSubType)
@@ -203,9 +205,8 @@ public class PaymentUpdateService {
                         .build();
             }
             case "NOTICE" -> {
-                String docSubType = normalizePartyType(jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeOrder", "party", "data", "partyType"), String.class));
+                String docSubType = normalizePartyType(partyType);
                 String noticeType = jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeType", "type"), String.class);
-                String partyType = jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeOrder", "party", "data", "partyIndex"), String.class);
                 return TaskDetails.builder()
                         .noticeDetails(NoticeDetails.builder()
                                 .caseFilingDate(courtCase.getFilingDate())
