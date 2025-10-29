@@ -23,6 +23,44 @@
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
+            },
+            {
+              "action": "CREATE_UPFRONT_PAYMENT",
+              "nextState": "TASK_CREATION",
+              "roles": [
+                "PENDING_TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "TASK_CREATION",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "UPDATE_UPFRONT_PAYMENT",
+              "nextState": "TASK_CREATION",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "PENDING_TASK_CREATOR"
+              ]
+            },
+            {
+              "action": "COMPLETE_TASK_CREATION",
+              "nextState": "TASK_CREATED",
+              "roles": [
+                "PENDING_TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
             }
           ]
         },
@@ -75,6 +113,15 @@
         {
           "sla": null,
           "state": "REJECTED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "TASK_CREATED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
