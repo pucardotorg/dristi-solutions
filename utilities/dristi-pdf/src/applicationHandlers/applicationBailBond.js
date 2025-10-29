@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -80,7 +81,7 @@ const applicationBailBond = async (
         : {};
 
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -128,10 +129,12 @@ const applicationBailBond = async (
               messagesMap?.[item?.documentType] || item?.documentType,
           }))
         : [{ documentType: "" }];
-    const additionalComments =
-      application?.applicationDetails?.additionalInformation || "";
-    const reasonForApplication =
-      application?.applicationDetails?.reasonForApplicationOfBail || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalInformation || ""
+    );
+    const reasonForApplication = htmlToFormattedText(
+      application?.applicationDetails?.reasonForApplicationOfBail || ""
+    );
     const prayer = application?.applicationDetails?.prayer;
     // Handle QR code if enabled
     let base64Url = "";
@@ -193,7 +196,9 @@ const applicationBailBond = async (
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const statuteAndAct = caseConfigDetails.statuteAndAct;
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {

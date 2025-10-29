@@ -85,13 +85,7 @@
           },
           "additionalProperties": false
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "createdTime": 1748932305212,
-          "lastModifiedTime": 1748932305212
-        }
+        "isActive": true
       },
 
 
@@ -127,13 +121,7 @@
             }
           ]
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
-          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-          "createdTime": 1724750461933,
-          "lastModifiedTime": 1748932548278
-        }
+        "isActive": true
       }
     ]
   },
@@ -153,13 +141,7 @@
           "isactive": true,
           "totalAmount": "20"
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-          "createdTime": 1748940149444,
-          "lastModifiedTime": 1748940149444
-        }
+        "isActive": true
       }
     ]
   }

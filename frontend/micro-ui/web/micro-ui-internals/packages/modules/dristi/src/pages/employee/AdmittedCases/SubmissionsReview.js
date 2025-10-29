@@ -7,6 +7,7 @@ import EvidenceModal from "./EvidenceModal";
 import { useGetPendingTask } from "../../../../../home/src/hooks/useGetPendingTask";
 import { useHistory } from "react-router-dom";
 import { DRISTIService } from "../../../services";
+import { formatDateDDMMYYYY } from "../../../../../home/src/utils";
 
 const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal }) => {
   const { t } = useTranslation();
@@ -98,6 +99,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
       },
     },
     {},
@@ -115,6 +117,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           filingNumber: filingNumber,
           isCompleted: false,
           assignedTo: userInfo?.uuid,
+          ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -134,6 +137,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           filingNumber: filingNumber,
           isCompleted: false,
           assignedTo: userInfo?.uuid,
+          ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -276,12 +280,8 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
                     marginLeft: "2px",
                   }}
                 >
-                  {app?.stateSla
-                    ? new Date(app?.stateSla).toLocaleDateString("en-in", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
+                  {app?.createdDate
+                    ? formatDateDDMMYYYY(app?.createdDate)
                     : "N/A"}
                 </span>
               </div>
