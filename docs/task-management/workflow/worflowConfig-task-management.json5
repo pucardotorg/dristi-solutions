@@ -23,21 +23,10 @@
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": null,
-          "applicationStatus": null,
-          "docUploadRequired": false,
-          "isStartState": true,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
+            },
             {
               "action": "CREATE_UPFRONT_PAYMENT",
-              "nextState": "SKIP_PENDING_TASK",
+              "nextState": "TASK_CREATION",
               "roles": [
                 "PENDING_TASK_CREATOR",
                 "SYSTEM",
@@ -48,7 +37,7 @@
         },
         {
           "sla": null,
-          "state": "SKIP_PENDING_TASK",
+          "state": "TASK_CREATION",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -57,7 +46,7 @@
           "actions": [
             {
               "action": "UPDATE_UPFRONT_PAYMENT",
-              "nextState": "SKIP_PENDING_TASK",
+              "nextState": "TASK_CREATION",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN",
@@ -65,8 +54,8 @@
               ]
             },
             {
-              "action": "COMPLETE_UPFRONT_PAYMENT",
-              "nextState": "COMPLETED",
+              "action": "COMPLETE_TASK_CREATION",
+              "nextState": "TASK_CREATED",
               "roles": [
                 "PENDING_TASK_CREATOR",
                 "SYSTEM",
@@ -124,6 +113,15 @@
         {
           "sla": null,
           "state": "REJECTED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "TASK_CREATED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
