@@ -195,7 +195,7 @@ const TasksComponent = ({
 
             let orderDetails = order;
             if (order?.orderCategory === "COMPOSITE") {
-              const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.itemId);
+              const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.orderItemId);
               orderDetails = {
                 ...order,
                 additionalDetails: orderItem?.orderSchema?.additionalDetails,

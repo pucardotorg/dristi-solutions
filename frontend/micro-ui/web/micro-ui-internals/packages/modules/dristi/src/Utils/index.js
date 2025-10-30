@@ -368,3 +368,8 @@ export const isEmptyValue = (value) => {
     return false;
   }
 };
+
+export const TaskManagementWorkflowAction = {
+  CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
+  UPDATE_UPFRONT_PAYMENT_SIGN: "UPDATE_UPFRONT_PAYMENT",
+};

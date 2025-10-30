@@ -36,6 +36,7 @@ import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
 import { useSurveyManager } from "./dristi/useSurveyManager.js";
+import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -158,6 +159,7 @@ const dristi = {
   useSearchADiaryService,
   useEtreasuryCreateDemand,
   useSurveyManager,
+  useSearchTaskMangementService,
 };
 
 const Hooks = {

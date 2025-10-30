@@ -28,7 +28,6 @@ import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
-import { formatDate } from "./CaseType";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axios from "axios";
@@ -62,11 +61,10 @@ import {
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
-import cloneDeep from "lodash/cloneDeep";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import { getFilingType, getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
+import { getFilingType, getSuffixByBusinessCode, getTaxPeriodByBusinessService, TaskManagementWorkflowAction } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
@@ -395,17 +393,16 @@ function EFilingCases({ path }) {
     return updatedCaseData;
   }, [caseData]);
 
-  const { data: taskManagementData, isLoading: isTaskManagementLoading } = useSearchTaskMangementService(
+  const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useSearchTaskMangementService(
     {
       criteria: {
         filingNumber: caseDetails?.filingNumber,
         tenantId: tenantId,
-        // taskType: ["NOTICE", "SUMMONS"],
-        taskType: "NOTICE",
+        taskType: ["NOTICE", "SUMMONS"],
       },
     },
     {},
-    `taskManagement-${caseDetails?.filingNumber}`,
+    `taskManagement-${caseDetails?.filingNumber}-${selected}`,
     Boolean(caseDetails?.filingNumber && selected === "reviewCaseFile")
   );
 
@@ -1609,7 +1606,7 @@ function EFilingCases({ path }) {
                   }
                 }
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
-                  if (formComponent.component == "SelectUploadFiles") {
+                  if (formComponent.component === "SelectUploadFiles") {
                     if (formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name in scrutiny?.[selected]?.form?.[index]) {
                       key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                     }
@@ -2036,19 +2033,20 @@ function EFilingCases({ path }) {
     if (!accusedDetails?.length) return;
 
     const partyDetails = accusedDetails.map((accused) => ({
+      status: "NOT_COMPLETED",
       addresses: accused?.addressDetails,
       deliveryChannels: accused?.[`${type.toLowerCase()}CourierService`],
       respondentDetails: respondentFormData?.find((acc) => acc?.uniqueId === accused?.uniqueId)?.data,
     }));
 
     const taskManagementPayload = existingTask
-      ? { ...existingTask, partyDetails, workflow: { action: "UPDATE" } }
+      ? { ...existingTask, partyDetails, workflow: { action: TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT_SIGN } }
       : {
           filingNumber: caseDetails?.filingNumber,
           tenantId,
           taskType: type,
           partyDetails,
-          workflow: { action: "CREATE" },
+          workflow: { action: TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT },
         };
 
     const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
@@ -2374,6 +2372,9 @@ function EFilingCases({ path }) {
               caseDetails,
               tenantId,
             });
+
+            // Refresh task management data again after creating/updating tasks
+            await refetchTaskManagement();
           } catch (error) {
             console.error(error);
             throw new Error("TASK_MANAGEMENT_ERROR");
@@ -2623,19 +2624,8 @@ function EFilingCases({ path }) {
     }
   );
 
-  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "BillingService",
-    [{ name: "TaxPeriod" }],
-    {
-      select: (data) => {
-        return data?.BillingService?.TaxPeriod || [];
-      },
-    }
-  );
   const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
     const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-    const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
     const calculationResponse = await DRISTIService.getPaymentBreakup(
       {
         EFillingCalculationCriteria: [

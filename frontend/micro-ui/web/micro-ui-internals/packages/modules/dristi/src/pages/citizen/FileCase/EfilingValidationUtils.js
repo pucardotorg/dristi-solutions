@@ -3455,3 +3455,16 @@ export const transformCaseDataForUpdate = (caseDetails, key) => {
   }
   return updatedCaseData;
 };
+
+export const mergeBreakdowns = (...breakdownArrays) => {
+  const map = {};
+  breakdownArrays?.flat()?.forEach((item) => {
+    const codeKey = item?.code;
+    if (!map[codeKey]) {
+      map[codeKey] = { ...item };
+    } else {
+      map[codeKey].amount += item?.amount;
+    }
+  });
+  return Object?.values(map);
+};
