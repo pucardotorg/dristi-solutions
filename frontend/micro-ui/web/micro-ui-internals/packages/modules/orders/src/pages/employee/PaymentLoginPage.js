@@ -2,13 +2,13 @@ import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { ordersService } from "../../hooks/services";
+import { openApiService } from "../../hooks/services";
 
 const PaymentLoginPage = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { orderNumber } = Digit.Hooks.useQueryParams();
+  // const tenantId = Digit.ULBService.getCurrentTenantId();
+  const { orderNumber, referenceId, orderItemId, tenantId } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
   const config = {
@@ -35,18 +35,29 @@ const PaymentLoginPage = () => {
 
     try {
       // TODO : make searchOpenApiSmsPayment in ordersService with proper api call
-      // const res = await ordersService.searchOpenApiSmsPayment({
-      //   tenantId,
-      //   orderNumber: orderNumber,
-      //   mobileNumber: mobileNumber,
-      // });
-      // if (!res || Object.keys(res).length === 0) {
-      //   setError(true);
-      //   return;
-      // }
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/sms-payment?orderNumber=${orderNumber}`, {
+      const res = await openApiService.searchOpenApiOrders({
+        tenantId,
+        referenceId: referenceId,
+        orderNumber: orderNumber,
         mobileNumber: mobileNumber,
-        tenantId: tenantId,
+      });
+      if (!res || Object.keys(res).length === 0) {
+        setError(true);
+        return;
+      }
+
+      const baseUrl = `/${window?.contextPath}/citizen/dristi/home/sms-payment`;
+      const queryParams = new URLSearchParams({
+        tenantId,
+        referenceId,
+        orderNumber,
+      });
+
+      if (orderItemId) queryParams.append("orderItemId", orderItemId);
+
+      history.replace(`${baseUrl}?${queryParams.toString()}`, {
+        mobileNumber,
+        tenantId,
         isAuthorised: true,
       });
     } catch (error) {

@@ -6,12 +6,14 @@ import PaymentStatusMessage from "./PaymentStatusMessage";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { Loader } from "@egovernments/digit-ui-react-components";
+import useOpenApiOrderSearch from "../../hooks/SmsPayment/useOpenApiOrderSearch";
+import useOpenApiTaskManagementSearch from "../../hooks/SmsPayment/useOpenApiTaskManagementSearch";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { orderNumber } = Digit.Hooks.useQueryParams();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const { orderNumber, referenceId, orderItemId, tenantId } = Digit.Hooks.useQueryParams();
+  // const tenantId = Digit.ULBService.getCurrentTenantId();
   const isAuthorised = location?.state?.isAuthorised;
   const mobileNumber = location?.state?.mobileNumber;
   const history = useHistory();
@@ -54,6 +56,23 @@ const SmsPaymentPage = () => {
   ]);
 
   // TODO: fetch order details using orderNumber and case Details
+  const { data: orderData, isLoading: isOrderDataLoading } = useOpenApiOrderSearch(
+    { orderNumber, tenantId, referenceId, orderItemId },
+    { tenantId },
+    `${orderNumber}_${referenceId}_${orderItemId}`,
+    Boolean(orderNumber && referenceId)
+  );
+
+  const { data: taskManagementData, isLoading: isTaskManagementLoading } = useOpenApiTaskManagementSearch(
+    { orderNumber, tenantId, referenceId, orderItemId },
+    { tenantId },
+    `${orderNumber}_${referenceId}_${orderItemId}`,
+    Boolean(orderNumber && referenceId)
+  );
+
+  const taskManagementList = useMemo(() => {
+    return taskManagementData?.taskManagementRecords;
+  }, [taskManagementData]);
 
   const handleProceedToPaymentPage = () => {
     // TODO: task api will be integrated here before proceeding to payment page
@@ -130,13 +149,26 @@ const SmsPaymentPage = () => {
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/payment-login?orderNumber=${orderNumber}`);
+      const baseUrl = `/${window?.contextPath}/citizen/dristi/home/payment-login`;
+      const queryParams = new URLSearchParams({
+        tenantId,
+        referenceId,
+        orderNumber,
+      });
+
+      if (orderItemId) queryParams.append("orderItemId", orderItemId);
+
+      history.replace(`${baseUrl}?${queryParams.toString()}`);
     }
 
-    if (!orderNumber) {
+    if (!orderNumber && !referenceId) {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
     }
-  }, [history, isAuthorised, isUserLoggedIn, orderNumber, tenantId]);
+  }, [history, isAuthorised, isUserLoggedIn, orderItemId, orderNumber, referenceId, tenantId]);
+
+  if (isOrderDataLoading || isTaskManagementLoading || step === null) {
+    return <Loader />;
+  }
 
   return (
     <div className="sms-payment-container">

@@ -42,4 +42,10 @@ export const Urls = {
     updateSignedProcess: "/task/v1/_updateSignedTasks",
     bulkSend: "/task/v1/bulk-send",
   },
+  openApi: {
+    searchOrders:"/openapi/v1/getOrderDetails",
+    taskManagementCreate: "/openapi/task-management/v1/_create",
+    taskManagementUpdate: "/openapi/task-management/v1/_update",
+    taskManagementSearch: "/openapi/task-management/v1/_search",
+  }
 };

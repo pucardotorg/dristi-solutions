@@ -243,3 +243,40 @@ export const processManagementService = {
       params,
     }),
 };
+
+export const openApiService = {
+  searchOpenApiOrders: (data, params) =>
+    Request({
+      url: Urls.openApi.searchOrders,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  createTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.openApi.taskManagementCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  updateTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.openApi.taskManagementUpdate,
+      useCache: false,
+      userService: false,
+      data: data,
+      params,
+    });
+  },
+  searchTaskManagementService: (data, params) =>
+    Request({
+      url: Urls.openApi.taskManagementSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+};
