@@ -2,13 +2,13 @@
 export const surveyConfig = {
   contexts: {
     JOIN_CASE_PAYMENT: {
-      question: "How convenient was it to join the case on the ON Court Platform?",
+      question: "How convenient was it for the advocate of the accused to join the case on the ON Court Platform?",
     },
     TASK_PAYMENT: {
       question: "How convenient was it to make payments for notices, summons or warrants?",
     },
     APPLICATION_PAYMENT: {
-      question: "How convenient was it to submit applications through the ON Court Platform?",
+      question: "How convenient was it to submit application through the ON Court Platform?",
     },
     FILING_PAYMENT: {
       question: "How convenient was the e-Filing process on the ON Court Platform?",
