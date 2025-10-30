@@ -177,6 +177,9 @@ public class CaseOverallStatusUtil {
 	}
 
 	private boolean shouldSendSMSForStatusChange(String subStage) {
+		if(subStage == null){
+			return false;
+		}
 		List<String> consideredSubStages = List.of(APPEARANCE, ARGUMENTS, EVIDENCE, LONG_PENDING_REGISTER, REFER_TO_ADR);
 		return consideredSubStages.contains(subStage);
 	}
