@@ -1,7 +1,5 @@
 package pucar.strategy.ordertype;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -10,28 +8,21 @@ import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import pucar.config.Configuration;
-import pucar.config.StateSlaMap;
 import pucar.kafka.Producer;
-import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.SMSTemplateData;
-import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.task.TaskRequest;
-import pucar.web.models.task.TaskResponse;
 import pucar.web.models.taskManagement.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -50,9 +41,10 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
     private final TaskManagementUtil taskManagementUtil;
     private final Producer producer;
     private final Configuration configuration;
+    private final UrlShortenerUtil urlShortenerUtil;
 
     @Autowired
-    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, Producer producer, Configuration configuration) {
+    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, Producer producer, Configuration configuration, UrlShortenerUtil urlShortenerUtil) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -64,6 +56,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         this.taskManagementUtil = taskManagementUtil;
         this.producer = producer;
         this.configuration = configuration;
+        this.urlShortenerUtil = urlShortenerUtil;
     }
 
     @Override
@@ -254,7 +247,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         try {
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(MANUAL + order.getOrderNumber() + getItemId(order))
-                    .name("Take Steps - Notice: " + courtCase.getCaseTitle())
+                    .name("Take Steps - Notice")
                     .entityType("order-default")
                     .status(order.getStatus())
                     .assignedTo(uniqueAssignee)
@@ -392,5 +385,23 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
     @Override
     public CaseDiaryEntry execute(OrderRequest request) {
         return null;
+    }
+
+    public String createShortUrl(Order order, String referenceId){
+
+        String tenantId = order.getTenantId();
+        String orderNumber = order.getOrderNumber();
+        String orderItemId = null;
+
+        JsonNode additionalDetailsNode = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+
+        JsonNode orderItemNode = additionalDetailsNode.path("itemId");
+
+        if(orderItemNode != null){
+            orderItemId = orderItemNode.textValue();
+        }
+
+        return urlShortenerUtil.createShortenedUrl(tenantId, referenceId, orderNumber, orderItemId);
+
     }
 }

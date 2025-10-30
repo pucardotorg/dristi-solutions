@@ -55,26 +55,6 @@ public class TaskManagementUtil {
         this.producer = producer;
     }
 
-    public TaskManagementResponse callCreateTaskManagement(TaskManagementRequest taskRequest) {
-        try {
-            StringBuilder uri = new StringBuilder();
-            uri.append(config.getTaskManagementServiceHost()).append(config.getTaskManagementServiceCreateEndpoint());
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<TaskManagementRequest> requestEntity = new HttpEntity<>(taskRequest, headers);
-
-            ResponseEntity<TaskManagementResponse> responseEntity = restTemplate.postForEntity(uri.toString(),
-                    requestEntity, TaskManagementResponse.class);
-            log.info("Response of create task :: {}", requestEntity.getBody());
-
-            return responseEntity.getBody();
-        } catch (Exception e) {
-            log.error("Error getting response from Task Service", e);
-            throw new CustomException("TASK_CREATE_ERROR", "Error getting response from task Service");
-        }
-    }
-
     public List<TaskManagement> searchTaskManagement(TaskSearchRequest request) {
 
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -125,7 +105,7 @@ public class TaskManagementUtil {
             if (uniqueIds1 != null) return uniqueIds1;
             TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                     .filingNumber(order.getFilingNumber())
-                    .workflowStatus(TASK_CREATION)
+                    .status(TASK_CREATION)
                     .taskType(List.of(orderType)) // Use the actual order type (NOTICE or SUMMONS)
                     .build();
 

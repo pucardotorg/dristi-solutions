@@ -1,18 +1,17 @@
-package pucar.web.models.taskManagement;
+package org.pucar.dristi.web.models.taskManagement;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.WorkflowObject;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import org.egov.common.contract.models.AuditDetails;
-import org.springframework.validation.annotation.Validated;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.Builder;
-import pucar.web.models.WorkflowObject;
 
 /**
  * TaskManagement

@@ -1,16 +1,15 @@
-package pucar.web.models.taskManagement;
+package org.pucar.dristi.web.models.taskManagement;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import jakarta.validation.constraints.NotNull;
-import org.springframework.validation.annotation.Validated;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.Builder;
 
 /**
  * TaskSearchCriteria

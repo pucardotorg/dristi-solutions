@@ -1,7 +1,5 @@
 package pucar.strategy.ordertype;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +7,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import pucar.config.StateSlaMap;
 import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
@@ -21,8 +18,6 @@ import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.task.TaskRequest;
-import pucar.web.models.task.TaskResponse;
 
 import java.util.*;
 
@@ -42,9 +37,10 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     private final SmsNotificationService smsNotificationService;
     private final UserUtil userUtil;
     private final TaskManagementUtil taskManagementUtil;
+    private final UrlShortenerUtil urlShortenerUtil;
 
     @Autowired
-    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil) {
+    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -55,6 +51,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         this.smsNotificationService = smsNotificationService;
         this.userUtil = userUtil;
         this.taskManagementUtil = taskManagementUtil;
+        this.urlShortenerUtil = urlShortenerUtil;
     }
 
     @Override
@@ -163,7 +160,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         try {
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(MANUAL + order.getOrderNumber() + getItemId(order))
-                    .name("Take Steps - Summons: " + courtCase.getCaseTitle())
+                    .name("Take Steps - Summons")
                     .entityType("order-default")
                     .status(order.getStatus())
                     .assignedTo(uniqueAssignee)
@@ -300,5 +297,23 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     @Override
     public CaseDiaryEntry execute(OrderRequest request) {
         return null;
+    }
+
+    public String createShortUrl(Order order, String referenceId){
+
+        String tenantId = order.getTenantId();
+        String orderNumber = order.getOrderNumber();
+        String orderItemId = null;
+
+        JsonNode additionalDetailsNode = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+
+        JsonNode orderItemNode = additionalDetailsNode.path("itemId");
+
+        if(orderItemNode != null){
+            orderItemId = orderItemNode.textValue();
+        }
+
+        return urlShortenerUtil.createShortenedUrl(tenantId, referenceId, orderNumber, orderItemId);
+
     }
 }

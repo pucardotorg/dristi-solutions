@@ -247,4 +247,19 @@ public class Configuration {
 
     @Value("${task.upfront.create.topic}")
     private String taskUpFrontCreateTopic;
+
+    // URLShortening
+    @Value("${egov.url.shortner.host}")
+    private String urlShortnerHost;
+
+    @Value("${egov.url.shortner.endpoint}")
+    private String urlShortnerEndpoint;
+
+    // long url
+    @Value("${domain.url}")
+    private String domainUrl;
+
+    @Value("${egov.base.url}")
+    private String baseUrl;
+
 }
