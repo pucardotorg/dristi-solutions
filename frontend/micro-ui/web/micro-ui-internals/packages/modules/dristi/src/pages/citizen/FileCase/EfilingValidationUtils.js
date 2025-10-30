@@ -1,7 +1,7 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue, TaskManagementWorkflowAction } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -3467,4 +3467,45 @@ export const mergeBreakdowns = (...breakdownArrays) => {
     }
   });
   return Object?.values(map);
+};
+
+export const createOrUpdateTask = async ({
+  type,
+  existingTask,
+  accusedDetails,
+  respondentFormData,
+  filingNumber,
+  tenantId,
+  isUpfrontPayment,
+  status,
+}) => {
+  if (!accusedDetails?.length) return;
+
+  const partyDetails = accusedDetails?.map((accused) => ({
+    ...(status && { status }),
+    addresses: accused?.addressDetails,
+    deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
+    respondentDetails: {
+      ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      uniqueId: accused?.uniqueId,
+    },
+  }));
+
+  const taskManagementPayload = existingTask
+    ? {
+        ...existingTask,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+      }
+    : {
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+      };
+
+  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+  await serviceMethod({ taskManagement: taskManagementPayload });
 };

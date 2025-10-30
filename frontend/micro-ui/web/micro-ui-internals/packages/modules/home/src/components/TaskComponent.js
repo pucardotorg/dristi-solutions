@@ -16,6 +16,7 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
+import { createOrUpdateTask } from "../utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -70,6 +71,7 @@ const TasksComponent = ({
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
   const [active, setActive] = useState(false);
   const courtId = localStorage.getItem("courtId");
+  const [isLoader, setIsLoader] = useState(false);
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -133,6 +135,27 @@ const TasksComponent = ({
   //   return options?.filter((item) => listOfActionName.has(item?.code)) || [];
   // }, [listOfActionName, options]);
 
+  const {
+    data: taskManagementData,
+    isLoading: isTaskManagementLoading,
+    refetch: refetchTaskManagement,
+  } = Digit.Hooks.dristi.useSearchTaskMangementService(
+    {
+      criteria: {
+        filingNumber: courierServicePendingTask?.filingNumber,
+        orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        tenantId: tenantId,
+      },
+    },
+    {},
+    `taskManagement-${courierServicePendingTask?.filingNumber}`,
+    Boolean(courierServicePendingTask?.filingNumber)
+  );
+
+  const taskManagementList = useMemo(() => {
+    return taskManagementData?.taskManagementRecords;
+  }, [taskManagementData]);
+
   useEffect(() => {
     refetch();
   }, [refetch, filingNumber, needRefresh]);
@@ -187,38 +210,123 @@ const TasksComponent = ({
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0) {
+      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
-          if (orderNumber) {
-            const order = await getOrderDetail(orderNumber);
+          const uniqueIdsList = courierServicePendingTask?.additionalDetails?.uniqueIds;
 
-            let orderDetails = order;
-            if (order?.orderCategory === "COMPOSITE") {
-              const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.orderItemId);
-              orderDetails = {
-                ...order,
-                additionalDetails: orderItem?.orderSchema?.additionalDetails,
-                orderType: orderItem?.orderType,
-                orderDetails: orderItem?.orderSchema?.orderDetails,
-              };
-            }
-            const formDataKey = formDataKeyMap[orderDetails?.orderType];
-            const updatedParties = orderDetails.additionalDetails.formdata[formDataKey].party?.map((party) => {
+          if (!orderNumber) return;
+
+          const order = await getOrderDetail(orderNumber);
+          let orderDetails = order;
+
+          if (order?.orderCategory === "COMPOSITE") {
+            const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.orderItemId);
+            orderDetails = {
+              ...order,
+              additionalDetails: orderItem?.orderSchema?.additionalDetails,
+              orderType: orderItem?.orderType,
+              orderDetails: orderItem?.orderSchema?.orderDetails,
+              orderItemId: orderItem?.id,
+            };
+          }
+
+          const formDataKey = formDataKeyMap[orderDetails?.orderType];
+          const orderType = orderDetails?.orderType;
+
+          let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
+
+          if (Array?.isArray(uniqueIdsList) && uniqueIdsList?.length > 0) {
+            parties = parties?.filter((party) =>
+              uniqueIdsList?.some((uid) => uid?.partyType === party?.data?.partyType && uid?.uniqueId === (party?.data?.uniqueId || party?.uniqueId))
+            );
+          }
+          const updatedParties =
+            parties?.map((party) => {
+              const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
+
+              if (!taskManagement) {
+                return {
+                  ...party,
+                  data: {
+                    ...party.data,
+                    addressDetails: (party?.data?.addressDetails || [])?.map((addr) => ({
+                      ...addr,
+                      checked: true,
+                    })),
+                  },
+                };
+              }
+
+              const partyDetails = taskManagement?.partyDetails?.find((lit) => {
+                if (party?.data?.partyType === "Respondent") {
+                  return party?.uniqueId === lit?.respondentDetails?.uniqueId;
+                } else {
+                  return party?.data?.uniqueId === lit?.witnessDetails?.uniqueId;
+                }
+              });
+
+              if (!partyDetails) {
+                return {
+                  ...party,
+                  data: {
+                    ...party.data,
+                    addressDetails: (party?.data?.addressDetails || []).map((addr) => ({
+                      ...addr,
+                      checked: true,
+                    })),
+                  },
+                };
+              }
+
+              const addressDetailsFromItem = party?.data?.addressDetails || [];
+              const addressDetailsFromParty = partyDetails?.addresses || [];
+
+              const mergedAddressDetails = (() => {
+                const result = [];
+
+                addressDetailsFromItem?.forEach((addr) => {
+                  const match = addressDetailsFromParty?.find((p) => p?.id === addr?.id);
+                  result?.push({
+                    ...addr,
+                    checked: !!match,
+                  });
+                });
+
+                addressDetailsFromParty?.forEach((partyAddr) => {
+                  const existsInItem = addressDetailsFromItem?.some((addr) => addr?.id === partyAddr?.id);
+                  if (!existsInItem) {
+                    result?.push({
+                      ...partyAddr,
+                      checked: true,
+                    });
+                  }
+                });
+
+                return result;
+              })();
+
+              let noticeCourierService = [];
+              let summonsCourierService = [];
+
+              if (orderType === "SUMMONS") {
+                summonsCourierService = partyDetails?.deliveryChannels;
+              } else {
+                noticeCourierService = partyDetails?.deliveryChannels;
+              }
+
               return {
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: party?.data?.addressDetails?.map((addr) => ({
-                    ...addr,
-                    checked: true,
-                  })),
+                  addressDetails: mergedAddressDetails,
                 },
+                summonsCourierService,
+                noticeCourierService,
               };
-            });
-            orderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
-            setCourierOrderDetails(orderDetails);
-          }
+            }) || [];
+          orderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+          setCourierOrderDetails(orderDetails);
         } catch (error) {
           console.error("Error fetching order details:", error);
         }
@@ -226,7 +334,33 @@ const TasksComponent = ({
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList]);
+
+  const handleProcessCourierOnSubmit = async (courierData) => {
+    const orderType = courierOrderDetails?.orderType;
+    const formDataKey = formDataKeyMap[orderType];
+    const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
+
+    const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
+    setIsLoader(true);
+    try {
+      await createOrUpdateTask({
+        type: orderType,
+        existingTask: existingTask,
+        courierData: courierData,
+        formData: formData,
+        filingNumber: courierOrderDetails?.filingNumber,
+        tenantId,
+      });
+      await refetchTaskManagement();
+      return { continue: true };
+    } catch (error) {
+      console.error("Error creating or updating task:", error);
+      return { continue: false };
+    } finally {
+      setIsLoader(false);
+    }
+  };
 
   const handleReviewSubmission = useCallback(
     async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
@@ -777,6 +911,10 @@ const TasksComponent = ({
           summonsCourierService: item?.summonsCourierService || [],
           addressDetails: item?.data?.addressDetails || [],
           uniqueId: item?.uniqueId || item?.data?.uniqueId || "",
+          partyType: item?.data?.partyType,
+          orderItemId: courierOrderDetails?.orderItemId,
+          orderNumber: courierOrderDetails?.orderNumber,
+          courtId: courierOrderDetails?.courtId,
         };
         const fullName = getFullName(" ", courierData?.firstName, courierData?.middleName, courierData?.lastName);
         const orderType = courierOrderDetails?.orderType;
@@ -784,10 +922,12 @@ const TasksComponent = ({
         return {
           type: "modal",
           className: "process-courier-service",
+          async: true,
           heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderDetails?.orderType)} for ${fullName}` },
           modalBody: (
             <CourierService
               t={t}
+              isLoading={isTaskManagementLoading || isLoader}
               processCourierData={courierData}
               handleCourierServiceChange={(value, type) => handleCourierServiceChange(value, type, i)}
               handleAddressSelection={(addressId, isSelected) => handleAddressSelection(addressId, isSelected, i)}
@@ -799,15 +939,14 @@ const TasksComponent = ({
               setCourierOrderDetails={setCourierOrderDetails}
             />
           ),
-          actionSaveOnSubmit: () => {
-            // Process courier data
-            return { continue: true };
+          actionSaveOnSubmit: async () => {
+            return await handleProcessCourierOnSubmit(courierData);
           },
           isDisabled: orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0,
         };
       }) || [];
     return courierServiceSteps;
-  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, t, active]);
+  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, t, active, isTaskManagementLoading, isLoader]);
 
   // Courier service modal configuration
   const courierServiceConfig = useMemo(() => {

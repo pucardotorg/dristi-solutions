@@ -31,6 +31,7 @@ const CloseBtn = (props) => {
 
 function CourierService({
   t,
+  isLoading = false,
   processCourierData,
   handleCourierServiceChange,
   handleAddressSelection,
@@ -167,8 +168,12 @@ function CourierService({
     return options;
   }, [breakupResponse, processCourierData, t, handleCourierServiceChange]);
 
-  if (isBreakUpLoading) {
-    return <Loader />;
+  if (isBreakUpLoading || isLoading) {
+    return (
+      <div style={{ height: "550px", alignContent: "center" }}>
+        <Loader />
+      </div>
+    );
   }
 
   return (

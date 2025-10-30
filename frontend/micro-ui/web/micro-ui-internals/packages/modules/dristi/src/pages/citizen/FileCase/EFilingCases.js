@@ -41,6 +41,7 @@ import {
   chequeDateValidation,
   chequeDetailFileValidation,
   complainantValidation,
+  createOrUpdateTask,
   debtLiabilityValidation,
   delayApplicationValidation,
   demandNoticeFileValidation,
@@ -2029,31 +2030,6 @@ function EFilingCases({ path }) {
     }
   };
 
-  const createOrUpdateTask = async ({ type, existingTask, accusedDetails, respondentFormData, caseDetails, tenantId }) => {
-    if (!accusedDetails?.length) return;
-
-    const partyDetails = accusedDetails.map((accused) => ({
-      status: "NOT_COMPLETED",
-      addresses: accused?.addressDetails,
-      deliveryChannels: accused?.[`${type.toLowerCase()}CourierService`],
-      respondentDetails: respondentFormData?.find((acc) => acc?.uniqueId === accused?.uniqueId)?.data,
-    }));
-
-    const taskManagementPayload = existingTask
-      ? { ...existingTask, partyDetails, workflow: { action: TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT_SIGN } }
-      : {
-          filingNumber: caseDetails?.filingNumber,
-          tenantId,
-          taskType: type,
-          partyDetails,
-          workflow: { action: TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT },
-        };
-
-    const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
-
-    await serviceMethod({ taskManagement: taskManagementPayload });
-  };
-
   const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
@@ -2360,8 +2336,10 @@ function EFilingCases({ path }) {
               existingTask: noticeTask,
               accusedDetails: noticeAccusedDetails,
               respondentFormData,
-              caseDetails,
+              filingNumber: caseDetails?.filingNumber,
               tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
             });
 
             await createOrUpdateTask({
@@ -2369,8 +2347,10 @@ function EFilingCases({ path }) {
               existingTask: summonsTask,
               accusedDetails: summonsAccusedDetails,
               respondentFormData,
-              caseDetails,
+              filingNumber: caseDetails?.filingNumber,
               tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
             });
 
             // Refresh task management data again after creating/updating tasks
