@@ -18,6 +18,7 @@ import RegisterUsersHomeTab from "./RegisterUsersHomeTab";
 import OfflinePaymentsHomeTab from "./OfflinePaymentsHomeTab";
 import { scrutinyPendingTaskConfig } from "../../configs/ScrutinyPendingTaskConfig";
 import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/src/pages/employee/ReviewSummonsNoticeAndWarrant";
+import HomeScheduleHearing from "./HomeScheduleHearing";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -603,6 +604,10 @@ const MainHomeScreen = () => {
               showToast={showToast}
               hearingCount={hearingCount}
             />
+          </div>
+        ) : activeTab === "CS_HOME_SCHEDULE_HEARING" ? (
+          <div className="home-bulk-sign">
+            <HomeScheduleHearing />
           </div>
         ) : activeTab === "CS_HOME_BULK_RESCHEDULE" ? (
           <div className="home-bulk-reschedule">

@@ -1943,6 +1943,137 @@ export const UICustomizations = {
       }
     },
   },
+  HomeScheduleHearingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              courtId: localStorage.getItem("courtId"),
+            },
+
+            searchScheduleHearing: {
+              isOnlyCountRequired: false,
+              actionCategory: "Schedule Hearing",
+              ...(requestCriteria?.state?.searchForm?.caseSearchText && {
+                searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+              }),
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const processFields = (fields) => {
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else {
+                  acc[key] = curr.value;
+                }
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
+                advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
+              };
+            };
+            return {
+              TotalCount: data?.scheduleHearingData?.count,
+              data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
+      switch (key) {
+        case "PENDING_CASE_NAME": {
+          return (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        }
+        case "ADVOCATES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.complainant?.length > 0 &&
+                  `${row?.advocateDetails?.complainant?.[0]}(C)${
+                    row?.advocateDetails?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.complainant?.length > 2
+                      ? ` + ${row?.advocateDetails?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.accused?.length > 0 &&
+                  `${row?.advocateDetails?.accused?.[0]}(A)${
+                    row?.advocateDetails?.accused?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.accused?.length > 2
+                      ? ` + ${row?.advocateDetails?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+            </div>
+          );
+        case "STAGE":
+          return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+        case "APPLICATION_TYPE":
+          return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
   HomePendingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);

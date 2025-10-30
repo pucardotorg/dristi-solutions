@@ -48,11 +48,11 @@ public class SmsNotificationUtil {
             String owner = additionalData.get("onBehalOfName").asText();
             String party = getPartyTypeByName(caseDetails.get("litigants"), owner);
             JsonNode formData = additionalData.path("formdata");
+            String partyType = additionalData.get("partyType").asText();
 
             boolean isVoluntarySubmission = null == applicationRequest.getApplication().getReferenceId();
 
-            String messageCode = updatedState != null ? getMessageCode(applicationType, updatedState, isVoluntarySubmission) : null;
-            assert messageCode != null;
+            String messageCode = APPLICATION_SUBMITTED;
             log.info("Message code: {}", messageCode);
             String[] smsTopics = messageCode.split(",");
 
@@ -74,6 +74,7 @@ public class SmsNotificationUtil {
                         .applicationType(applicationType)
                         .originalHearingDate(formData.has("initialHearingDate") ? formData.get("initialHearingDate").textValue() : "")
                         .reScheduledHearingDate(formData.has("changedHearingDate") ? formData.get("changedHearingDate").textValue() : "")
+                        .partyType(partyType)
                         .tenantId(applicationRequest.getApplication().getTenantId()).build();
 
                 for (String number : phoneNumbers) {
@@ -109,75 +110,6 @@ public class SmsNotificationUtil {
             caseSearchRequest.setFlow(FLOW_JAC);
         }
         return caseSearchRequest;
-    }
-
-    private String getMessageCode(String applicationType, String updatedStatus, boolean isVoluntarySubmission) {
-
-        log.info("operation: getMessageCode, Application Type: {}, Updated Status: {}, Is Voluntary Submission: {}", applicationType, updatedStatus, isVoluntarySubmission);
-        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(PENDINGAPPROVAL)) {
-            return REQUEST_FOR_BAIL_SUBMITTED;
-        }
-        if (applicationType.equalsIgnoreCase(WITHDRAWAL) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)) {
-            return REQUEST_FOR_WITH_DRAW_SUBMITTED;
-        }
-        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(REJECTED)) {
-            return REQUEST_FOR_BAIL_REJECTED;
-        }
-        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(COMPLETED)) {
-            return REQUEST_FOR_BAIL_APPROVED_MESSAGE_CODE;
-        }
-        if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){
-            return RESCHEDULE_REQUEST_SUBMITTED;
-        }
-        if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(REJECTED)){
-            return RESCHEDULE_REQUEST_REJECTED;
-        }
-        if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(COMPLETED)){
-            return RESCHEDULE_REQUEST_ACCEPTED;
-        }
-        if(applicationType.equalsIgnoreCase(EXTENSION_SUBMISSION_DEADLINE) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){
-            return EXTENSION_SUBMISSION_DEADLINE_SUBMITTED;
-        }
-        if(applicationType.equalsIgnoreCase(EXTENSION_SUBMISSION_DEADLINE) && updatedStatus.equalsIgnoreCase(REJECTED)){
-            return EXTENSION_SUBMISSION_DEADLINE_REJECTED;
-        }
-        if(applicationType.equalsIgnoreCase(EXTENSION_SUBMISSION_DEADLINE) && updatedStatus.equalsIgnoreCase(COMPLETED)){
-            return EXTENSION_SUBMISSION_DEADLINE_ACCEPTED;
-        }
-        if(applicationType.equalsIgnoreCase(CHECKOUT_REQUEST) && updatedStatus.equalsIgnoreCase(REJECTED)){
-            return CHECKOUT_REQUEST_REJECTED;
-        }
-        if(applicationType.equalsIgnoreCase(CHECKOUT_REQUEST) && updatedStatus.equalsIgnoreCase(COMPLETED)){
-            return CHECKOUT_REQUEST_ACCEPTED;
-        }
-        if(!isVoluntarySubmission && applicationType.equalsIgnoreCase(PRODUCTION_DOCUMENTS) && updatedStatus.equalsIgnoreCase(COMPLETED)){
-            return EVIDENCE_SUBMITTED;
-        }
-        if(!isVoluntarySubmission && applicationType.equalsIgnoreCase(PRODUCTION_DOCUMENTS) && updatedStatus.equalsIgnoreCase(PENDINGRESPONSE)){
-            return RESPONSE_REQUIRED;
-        }
-        if(isVoluntarySubmission && !DEFINED_VOLUNTARY_SUBMISSIONS.contains(applicationType) && (updatedStatus.equalsIgnoreCase(PENDINGREVIEW) || updatedStatus.equalsIgnoreCase(PENDINGAPPROVAL))){
-            if(applicationType.equalsIgnoreCase(OTHERS)) {
-                return VOLUNTARY_SUBMISSION_SUBMITTED;
-            } else {
-                return VARIABLE_SUBMISSION_SUBMITTED;
-            }
-        }
-        if(isVoluntarySubmission && !DEFINED_VOLUNTARY_SUBMISSIONS.contains(applicationType) && updatedStatus.equalsIgnoreCase(REJECTED)){
-            if(applicationType.equalsIgnoreCase(OTHERS)) {
-                return VOLUNTARY_SUBMISSION_REJECTED;
-            } else {
-                return VARIABLE_SUBMISSION_REJECTED;
-            }
-        }
-        if(isVoluntarySubmission && !DEFINED_VOLUNTARY_SUBMISSIONS.contains(applicationType) && updatedStatus.equalsIgnoreCase(COMPLETED)){
-            if(applicationType.equalsIgnoreCase(OTHERS)) {
-                return VOLUNTARY_SUBMISSION_ACCEPTED;
-            } else {
-                return VARIABLE_SUBMISSION_ACCEPTED;
-            }
-        }
-        return null;
     }
 
     private static String getReceiverParty(String messageCode, String party) {

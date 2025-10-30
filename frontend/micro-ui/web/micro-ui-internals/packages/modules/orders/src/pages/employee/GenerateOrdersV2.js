@@ -1777,6 +1777,15 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
+      if (currentOrderType === "ACCEPT_BAIL") {
+        const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
+        updatedFormdata.bailType = {
+          type: defaultAcceptBailType,
+          code: defaultAcceptBailType,
+          name: defaultAcceptBailType,
+        };
+        setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
+      }
 
       if (currentOrderType === "SET_BAIL_TERMS") {
         updatedFormdata.partyId = newApplicationDetails?.createdBy;
@@ -3091,7 +3100,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const createBailBondTask = async () => {
-    setBailBondLoading(true);
+    // setBailBondLoading(true);
     try {
       const bailBondPendingTask = await HomeService.getPendingTaskService(
         {
