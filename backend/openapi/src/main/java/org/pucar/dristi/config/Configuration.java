@@ -1,19 +1,12 @@
 package org.pucar.dristi.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import org.egov.tracer.config.TracerConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 import java.util.List;
-import java.util.TimeZone;
 
 @Component
 @Data
@@ -107,6 +100,9 @@ public class Configuration {
     @Value("${case.service.searchbycasenumber.endpoint}")
     private String caseServiceSearchByCaseNumberEndpoint;
 
+    @Value("${case.service.search.endpoint}")
+    private String caseServiceSearchEndpoint;
+
     @Value("${hearing.service.host}")
     private String hearingServiceHost;
 
@@ -184,5 +180,42 @@ public class Configuration {
 
     @Value("${case.status.allowed.statuses}")
     private List<String> allowedCaseStatuses;
+
+    // Billing Service
+    @Value("${billing.host}")
+    private String BillingHost;
+
+    @Value("${billing.search.endpoint}")
+    private String billingSearchEndpoint;
+
+    // ETreasury Service
+    @Value("${etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${etreasury.get.breakdown.endpoint}")
+    private String etreasuryGetBreakdownEndpoint;
+
+    @Value("${etreasury.process.challan.endpoint}")
+    private String etreasuryProcessChallanEndpoint;
+
+    // Task Management Service
+    @Value("${task.management.host}")
+    private String taskManagementHost;
+
+    @Value("${task.management.create.endpoint}")
+    private String taskManagementCreateEndpoint;
+
+    @Value("${task.management.update.endpoint}")
+    private String taskManagementUpdateEndpoint;
+
+    @Value("${task.management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    // Payment Calculator Service
+    @Value("${payment.calculator.host}")
+    private String paymentCalculatorHost;
+
+    @Value("${payment.calculator.calculate.endpoint}")
+    private String paymentCalculatorCalculateEndpoint;
 
 }
