@@ -190,17 +190,17 @@ public class WorkflowServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         String tenantId = "tenant1";
         String businessId = "business1";
-        ProcessInstanceResponse processInstanceResponse = new ProcessInstanceResponse();
-        ProcessInstance processInstance = new ProcessInstance();
+        org.pucar.dristi.web.models.ProcessInstanceResponse processInstanceResponse = new org.pucar.dristi.web.models.ProcessInstanceResponse();
+        org.pucar.dristi.web.models.ProcessInstance processInstance = new org.pucar.dristi.web.models.ProcessInstance();
         processInstanceResponse.setProcessInstances(Collections.singletonList(processInstance));
         when(config.getWfHost()).thenReturn("http://localhost:8080");
         when(config.getWfProcessInstanceSearchPath()).thenReturn("/workflow/transition");
 
         when(repository.fetchResult(any(), any())).thenReturn(processInstanceResponse);
-        when(mapper.convertValue(processInstanceResponse, ProcessInstanceResponse.class)).thenReturn(processInstanceResponse);
+        when(mapper.convertValue(processInstanceResponse, org.pucar.dristi.web.models.ProcessInstanceResponse.class)).thenReturn(processInstanceResponse);
 
         // Act
-        ProcessInstance result = workflowService.getCurrentWorkflow(requestInfo, tenantId, businessId);
+        org.pucar.dristi.web.models.ProcessInstance result = workflowService.getCurrentWorkflow(requestInfo, tenantId, businessId);
 
         // Assert
         assertNotNull(result);

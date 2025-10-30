@@ -220,4 +220,27 @@ public class Configuration {
 
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
+
+    // User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
+    @Value("${egov.sms.notification.process.fee.payment.template.id}")
+    private String smsNotificationProcessFeePaymentTemplateId;
+
+    @Value("${egov.sms.notification.rpad.submission.template.id}")
+    private String smsNotificationRpadSubmissionTemplateId;
+
+    @Value("${egov.sms.notification.process.fee.payment.pending.template.id}")
+    private String smsNotificationProcessFeePaymentPendingTemplateId;
+
+    @Value("${egov.sms.notification.rpad.submission.pending.template.id}")
+    private String smsNotificationRpadSubmissionPendingTemplateId;
+
+    // Tenant Id
+    @Value("${egov.statelevel.tenantId}")
+    private  String stateLevelTenantId;
 }

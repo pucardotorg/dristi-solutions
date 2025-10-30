@@ -290,6 +290,7 @@ const MarkAsEvidence = ({
       return null;
     }
   };
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -624,9 +625,7 @@ const MarkAsEvidence = ({
       setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
-        if (businessOfDay === null || businessOfDay === "" || !businessOfDay) {
-          setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
-        }
+        setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
         await handleMarkEvidence(
           evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
         ).then((res) => {
@@ -782,7 +781,6 @@ const MarkAsEvidence = ({
       if (mockESignEnabled) {
         setIsSigned(true);
         setLoader(false);
-        setSealFileStoreId(file);
         return;
       }
 
@@ -810,12 +808,6 @@ const MarkAsEvidence = ({
       setLoader(false);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      clearEvidenceSessionData();
-    };
-  });
 
   if (isLoading) return <Loader />;
 

@@ -50,9 +50,9 @@ export const applicationTypeConfig = [
           mdmsConfig: {
             masterName: "ApplicationType",
             moduleName: "Application",
-            localePrefix: "APPLICATION_TYPE",
+            // localePrefix: "APPLICATION_TYPE",
             select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: item.type };});}", //name: 'APPLICATION_TYPE_'+item.type
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -2057,7 +2057,7 @@ export const requestForBail = [
     body: [
       {
         inline: true,
-        label: "CHOOSE_COMPLAINANT",
+        label: "PETITIONER_NAME",
         isMandatory: true,
         type: "dropdown",
         key: "selectComplainant",
@@ -2078,6 +2078,26 @@ export const requestForBail = [
         withoutLabel: true,
         component: "SelectEmptyComponent",
         populators: {},
+      },
+      {
+        label: "PETITIONER_FATHER_NAME",
+        isMandatory: true,
+        key: "litigantFatherName",
+        type: "text",
+        populators: {
+          name: "litigantFatherName",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            pattern: {
+              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName",
+            },
+            minLength: 1,
+            patternType: "Name",
+          },
+        },
       },
       {
         inline: true,
@@ -2114,7 +2134,7 @@ export const requestForBail = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "prayer",
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
@@ -2144,121 +2164,286 @@ export const requestForBail = [
         },
       },
       {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        key: "additionalInformation",
-        schemaKeyPath: "applicationDetails.additionalInformation",
-        transformer: "customTextArea",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "ADDITIONAL_INFO",
-              isOptional: true,
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
-        type: "component",
-        component: "CustomInfo",
-        key: "suretyDocuments",
-        inline: false,
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              infoHeader: "INFO",
-              infoText: "SURETY_DOCUMENTS_INFO_TEXT",
-              infoTooltipMessage: "CS_NOTETOOLTIP_RESPONDENT_PERSONAL_DETAILS",
-              type: "InfoComponent",
-              linkText: "CLICK_HERE",
-              modalHeading: "LIST_OF_SURETY_DOCUMENT",
-              modalData: [],
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        key: "supportingDocuments",
-        component: "SupportingDocsComponent",
-        schemaKeyPath: "applicationDetails.applicationDocuments",
-        transformer: "applicationDocuments",
-        name: "SUPPORTING_DOCS",
-        disable: false,
+        label: "DO_YOU_WANT_TO_ADD_SURETY",
+        key: "addSurety",
+        type: "radio",
         isMandatory: true,
         populators: {
+          name: "addSurety",
+          optionsKey: "name",
+          options: [
+            { code: "YES", name: "Yes", showSurety: true },
+            { code: "NO", name: "No", showSurety: false },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        key: "sureties",
+        component: "SuretyComponent",
+        // schemaKeyPath: "applicationDetails.applicationDocuments",
+        // transformer: "applicationDocuments",
+        name: "BAIL_SURETY",
+        disable: false,
+        show: (form) => {
+          const addSurety = form?.addSurety;
+          if (!addSurety) return false;
+          if (typeof addSurety === "object") {
+            if (typeof addSurety.showSurety === "boolean") return addSurety.showSurety;
+            return addSurety?.code === "YES";
+          }
+          return addSurety === "YES" || addSurety === true;
+        },
+        isMandatory: false,
+        populators: {
+          hideInForm: false,
           inputs: [
             {
+              label: "FULL_NAME",
               isMandatory: true,
-              key: "documentType",
-              type: "dropdown",
-              label: "DOCUMENT_TYPE",
-              populators: {
-                name: "documentType",
-                optionsKey: "code",
-                error: "CORE_REQUIRED_FIELD_ERROR",
-                styles: { maxWidth: "100%" },
-                required: true,
-                isMandatory: true,
-                // need to chnage
-                mdmsConfig: {
-                  moduleName: "Submission",
-                  masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
-                },
-                customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+              key: "name",
+              type: "text",
+              name: "name",
+              placeholder: "Ex: Raj Kumar Singh",
+              validation: {
+                isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_NAME_INVALID",
+                minLength: 1,
               },
             },
             {
-              label: "DOCUMENT_TITLE",
-              isOptional: true,
-              isMandatory: false,
-              key: "documentTitle",
+              label: "FATHER_NAME",
+              isMandatory: true,
+              key: "fatherName",
               type: "text",
-              name: "documentTitle",
+              name: "fatherName",
+              placeholder: "Ex: Raj Kumar Singh",
+              validation: {
+                isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_NAME_INVALID",
+                minLength: 1,
+              },
+            },
+            {
+              name: "mobileNumber",
+              key: "mobileNumber",
+              type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "PARTY_PHONE_NUMBER",
+              placeholder: "Ex: 1234567890",
+              validation: {
+                pattern: "^[6-9][0-9]{0,9}$",
+                isNumber: true,
+                isRequired: true,
+                maxLength: 10,
+                minLength: 10,
+              },
+              isMandatory: true,
+              componentInFront: "+91",
+            },
+            {
+              type: "infoBox",
+              name: "infoBox",
+              showTooltip: true,
+              infoHeader: "CS_PLEASE_COMMON_NOTE",
+              infoText: "BAIL_BOND_NOTE",
+            },
+            {
+              name: "email",
+              key: "email",
+              type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "E-Mail Address",
+              isMandatory: false,
+              isOptional: true,
               validation: {
                 isRequired: false,
-                pattern: /^[0-9A-Z/]{0,20}$/,
-                errMsg: "",
+                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/,
+                errMsg: "PLEASE_ENTER_VALID_EMAIL",
               },
+            },
+            {
+              key: "address",
+              type: "component",
+              label: "ADDRESS",
+              component: "AddressBailBond",
+              isMandatory: true,
+              populators: {
+                inputs: [
+                  {
+                    name: "locality",
+                    type: "text",
+                    label: "ADDRESS",
+                    validation: {
+                      errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "address",
+                      // },
+                      maxlength: 256,
+                      minlength: 2,
+                      isRequired: true,
+                    },
+                    isMandatory: true,
+                    isFormatRequired: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "city",
+                    type: "text",
+                    label: "CITY/TOWN",
+                    validation: {
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
+                      isRequired: true,
+                      patternType: "Name",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "pincode",
+                    type: "text",
+                    label: "PINCODE",
+                    validation: {
+                      max: "999999",
+                      title: "",
+                      errMsg: "ADDRESS_PINCODE_INVALID",
+                      pattern: "[0-9]+",
+                      maxlength: 6,
+                      minlength: 6,
+                      isRequired: true,
+                      patternType: "Pincode",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "district",
+                    type: "text",
+                    label: "DISTRICT",
+                    validation: {
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
+                      isRequired: true,
+                      patternType: "Name",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "state",
+                    type: "text",
+                    label: "STATE",
+                    validation: {
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
+                      isRequired: true,
+                      patternType: "Name",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                ],
+                validation: {},
+              },
+              withoutLabel: true,
             },
             {
               type: "component",
-              key: "submissionDocuments",
+              key: "identityProof",
               component: "SelectMultiUpload",
               disable: false,
               populators: {
                 inputs: [
                   {
-                    name: "uploadedDocs",
+                    name: "document",
                     isMandatory: true,
-                    textAreaHeader: "CS_DOCUMENT",
+                    documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
                     maxFileSize: 50,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              type: "component",
+              key: "proofOfSolvency",
+              component: "SelectMultiUpload",
+              disable: false,
+              populators: {
+                inputs: [
+                  {
+                    name: "document",
+                    isMandatory: true,
+                    documentHeader: `PROOF_OF_SOLVENCY`,
+                    fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+                    uploadGuidelines: "UPLOAD_DOC_50",
+                    maxFileSize: 50,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
+                    textAreaStyle: {
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              type: "component",
+              key: "otherDocuments",
+              component: "SelectMultiUpload",
+              disable: false,
+              populators: {
+                inputs: [
+                  {
+                    name: "document",
+                    isMandatory: false,
+                    isOptional: "CS_IS_OPTIONAL",
+                    documentHeader: "OTHER_DOCUMENTS_HEADING",
+                    fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+                    uploadGuidelines: "UPLOAD_DOC_50",
+                    maxFileSize: 50,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
+                    textAreaStyle: {
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                    documentOptionalStyle: {
                       marginBottom: "8px",
                     },
                   },
@@ -2269,6 +2454,9 @@ export const requestForBail = [
         },
       },
     ],
+    dependentKey: {
+      addSurety: ["showSurety"],
+    },
   },
 ];
 
