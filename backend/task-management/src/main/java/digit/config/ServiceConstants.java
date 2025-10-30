@@ -33,9 +33,20 @@ public class ServiceConstants {
 
     public static final String SUMMONS = "SUMMONS";
     public static final String NOTICE = "NOTICE";
+    public static final String SMS = "SMS";
+    public static final String EMAIL = "EMAIL";
 
     // workflow actions
     public static final String UPDATE = "UPDATE";
     public static final String CREATE = "CREATE";
+    public static final String UPDATE_UPFRONT_PAYMENT = "UPDATE_UPFRONT_PAYMENT";
+    public static final String COMPLETE_TASK_CREATION = "COMPLETE_TASK_CREATION";
+    public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
+    public static final String COMPLETED = "COMPLETED";
+    public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 
+    public static final String WITNESS ="WITNESS";
+    public static final String ACCUSED = "ACCUSED";
+    public static final String INDIVIDUAL = "INDIVIDUAL";
+    public static final String COMPLAINANT_PRIMARY = "complainant.primary";
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import digit.web.models.cases.PartyAddress;
 import digit.web.models.cases.RespondentDetails;
 import digit.web.models.cases.WitnessDetails;
+import digit.web.models.taskdetails.UpFrontStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,5 +35,8 @@ public class PartyDetails {
 
     @JsonProperty("deliveryChannels")
     private List<DeliveryChannel> deliveryChannels;
+
+    @JsonProperty("status")
+    private UpFrontStatus status;
 
 }
