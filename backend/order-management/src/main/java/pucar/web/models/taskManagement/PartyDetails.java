@@ -21,6 +21,9 @@ import java.util.List;
 @Builder
 public class PartyDetails {
 
+    @JsonProperty("witnessDetails")
+    private Object witnessDetails;
+
     @JsonProperty("respondentDetails")
     private Object respondentDetails;
 
@@ -29,5 +32,8 @@ public class PartyDetails {
 
     @JsonProperty("deliveryChannels")
     private List<DeliveryChannel> deliveryChannels;
+
+    @JsonProperty("status")
+    private UpFrontStatus status;
 
 }

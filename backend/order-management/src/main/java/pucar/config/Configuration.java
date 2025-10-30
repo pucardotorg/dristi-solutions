@@ -243,4 +243,8 @@ public class Configuration {
     // Tenant Id
     @Value("${egov.statelevel.tenantId}")
     private  String stateLevelTenantId;
+
+
+    @Value("${task.upfront.create.topic}")
+    private String taskUpFrontCreateTopic;
 }

@@ -10,7 +10,10 @@ import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import pucar.config.Configuration;
 import pucar.config.StateSlaMap;
+import pucar.kafka.Producer;
 import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
@@ -25,6 +28,7 @@ import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
+import pucar.web.models.taskManagement.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,9 +47,12 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
     private final TaskUtil taskUtil;
     private final SmsNotificationService smsNotificationService;
     private final UserUtil userUtil;
+    private final TaskManagementUtil taskManagementUtil;
+    private final Producer producer;
+    private final Configuration configuration;
 
     @Autowired
-    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, SmsNotificationService smsNotificationService, UserUtil userUtil) {
+    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, Producer producer, Configuration configuration) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -54,6 +61,9 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         this.taskUtil = taskUtil;
         this.smsNotificationService = smsNotificationService;
         this.userUtil = userUtil;
+        this.taskManagementUtil = taskManagementUtil;
+        this.producer = producer;
+        this.configuration = configuration;
     }
 
     @Override
@@ -80,6 +90,18 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
+        log.info("Processing Upfront payments to create tasks.");
+        List<String> uniqueIdPendingTask = taskManagementUtil.processUpfrontPayments(order, requestInfo);
+        if(uniqueIdPendingTask == null || uniqueIdPendingTask.isEmpty()) {
+            log.info("No parties left to create pending task for them.");
+            return orderRequest;
+        }
+
+        //for these uniqueIds fetch respondent details and create map of party type to uniqueId from order payload inside notice parties
+        Map<String, List<String>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeToUniqueIdMapping(order, uniqueIdPendingTask);
+        log.info("Created party type mapping for {} unique IDs requiring pending tasks", partyTypeToUniqueIdMap.size());
+
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -219,73 +241,110 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
-
-
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-
+        additionalDetails.put("orderItemId", getItemId(order));
+        List<Map<String, Object>> partyTypeToUniqueIdList = new ArrayList<>();
+        //add parttype to uniqueids in additionaldetails
+        for (Map.Entry<String, List<String>> entry : partyTypeToUniqueIdMap.entrySet()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("partyType", entry.getKey());
+            map.put("uniqueId", entry.getValue());
+            partyTypeToUniqueIdList.add(map);
+        }
+        additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            log.info("taskDetailsArray size:{}", taskDetailsArray.size());
-            for (JsonNode taskDetail : taskDetailsArray) {
+            PendingTask pendingTask = PendingTask.builder()
+                    .referenceId(MANUAL + order.getOrderNumber() + getItemId(order))
+                    .name("Take Steps - Notice: " + courtCase.getCaseTitle())
+                    .entityType("order-default")
+                    .status(order.getStatus())
+                    .assignedTo(uniqueAssignee)
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
+                    .isCompleted(false)
+                    .screenType("home")
+                    .additionalDetails(additionalDetails)
+                    .stateSla(sla)
+                    .build();
 
-                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
-                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
-                });
-                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
-
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
-                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
-
-                // create pending task
-
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
-                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
-                    String status = PAYMENT_PENDING + channel;
-
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(name)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status(status)
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseId(courtCase.getId().toString())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
-
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-
-                    String partyType = getPartyType(order);
-                    String orderType = order.getOrderType();
-                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(NOTICE));
-                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
-                            .partyType(partyType)
-                            .orderType(orderType)
-                            .tenantId(courtCase.getTenantId())
-                            .days(days)
-                            .courtCaseNumber(courtCase.getCourtCaseNumber())
-                            .cmpNumber(courtCase.getCmpNumber())
-                            .build();
-                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
-                    if(pendingTask.getName().contains(RPAD)){
-                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
-
-                    }
-                }
-
-
-            }
-
-        } catch (JsonProcessingException e) {
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return null;
+        //TODO: REMOVE EXISTING LOGIC
+//        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+//
+//        try {
+//            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+//            log.info("taskDetailsArray size:{}", taskDetailsArray.size());
+//            for (JsonNode taskDetail : taskDetailsArray) {
+//
+//                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
+//                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
+//                });
+//                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+//
+//                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+//                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+//
+//                // create pending task
+//
+//                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+//                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
+//                    String status = PAYMENT_PENDING + channel;
+//
+//                    PendingTask pendingTask = PendingTask.builder()
+//                            .name(name)
+//                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+//                            .entityType("order-default")
+//                            .status(status)
+//                            .assignedTo(uniqueAssignee)
+//                            .cnrNumber(courtCase.getCnrNumber())
+//                            .filingNumber(courtCase.getFilingNumber())
+//                            .caseId(courtCase.getId().toString())
+//                            .caseTitle(courtCase.getCaseTitle())
+//                            .isCompleted(false)
+//                            .stateSla(sla)
+//                            .additionalDetails(additionalDetails)
+//                            .screenType("home")
+//                            .build();
+//
+//                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+//                    ).pendingTask(pendingTask).build());
+//
+//                    String partyType = getPartyType(order);
+//                    String orderType = order.getOrderType();
+//                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(NOTICE));
+//                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+//                            .partyType(partyType)
+//                            .orderType(orderType)
+//                            .tenantId(courtCase.getTenantId())
+//                            .days(days)
+//                            .courtCaseNumber(courtCase.getCourtCaseNumber())
+//                            .cmpNumber(courtCase.getCmpNumber())
+//                            .build();
+//                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
+//                    if(pendingTask.getName().contains(RPAD)){
+//                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
+//
+//                    }
+//                }
+//
+//
+//            }
+//
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+    }
+
+    private String getItemId(Order order) {
+        if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+            return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+        }
+        return "";
     }
 
 
