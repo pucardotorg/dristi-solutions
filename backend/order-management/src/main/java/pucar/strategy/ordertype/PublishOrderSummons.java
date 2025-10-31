@@ -22,6 +22,7 @@ import pucar.web.models.pendingtask.PendingTaskRequest;
 import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
+import static pucar.config.ServiceConstants.MANUAL;
 
 @Component
 @Slf4j
@@ -158,8 +159,11 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         }
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
+
+            String referenceId = MANUAL + order.getOrderNumber() + getItemId(order);
+
             PendingTask pendingTask = PendingTask.builder()
-                    .referenceId(MANUAL + order.getOrderNumber() + getItemId(order))
+                    .referenceId(referenceId)
                     .name("Take Steps - Summons")
                     .entityType("order-default")
                     .status(order.getStatus())
@@ -175,6 +179,21 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                     .build();
 
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+
+            try {
+
+                SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                        .tenantId(courtCase.getTenantId())
+                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .shortenedUrl(createShortUrl(order, referenceId))
+                        .build();
+
+                callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
+            } catch (Exception e) {
+                log.error("Error occurred while sending notification to user: {}", e.toString());
+            }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

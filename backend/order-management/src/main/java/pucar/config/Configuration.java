@@ -240,6 +240,9 @@ public class Configuration {
     @Value("${egov.sms.notification.rpad.submission.pending.template.id}")
     private String smsNotificationRpadSubmissionPendingTemplateId;
 
+    @Value("${egov.sms.notification.payment.link.template.id}")
+    private String smsNotificationPaymentLinkTemplateId;
+
     // Tenant Id
     @Value("${egov.statelevel.tenantId}")
     private  String stateLevelTenantId;

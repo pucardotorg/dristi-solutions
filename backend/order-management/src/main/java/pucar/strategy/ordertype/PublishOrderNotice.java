@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
-import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
@@ -20,7 +19,6 @@ import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.taskManagement.*;
 
 import java.util.*;
 
@@ -245,8 +243,11 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         }
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
+
+            String referenceId = MANUAL + order.getOrderNumber() + getItemId(order);
+
             PendingTask pendingTask = PendingTask.builder()
-                    .referenceId(MANUAL + order.getOrderNumber() + getItemId(order))
+                    .referenceId(referenceId)
                     .name("Take Steps - Notice")
                     .entityType("order-default")
                     .status(order.getStatus())
@@ -262,6 +263,20 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
                     .build();
 
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+
+            try {
+
+                SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                        .tenantId(courtCase.getTenantId())
+                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .shortenedUrl(createShortUrl(order, referenceId))
+                        .build();
+
+                callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
+            } catch (Exception e) {
+                log.error("Error occurred while sending notification to user: {}", e.toString());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

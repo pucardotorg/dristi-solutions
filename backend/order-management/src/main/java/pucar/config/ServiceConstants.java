@@ -171,6 +171,7 @@ public class ServiceConstants {
     public static final String DOT = ". ";
 
     public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+    public static final String PAYMENT_LINK_SMS = "PAYMENT_LINK_SMS";
     public static final String RPAD_SUBMISSION = "RPAD_SUBMISSION";
 
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
