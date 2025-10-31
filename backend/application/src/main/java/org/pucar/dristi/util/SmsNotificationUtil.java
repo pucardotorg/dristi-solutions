@@ -52,8 +52,14 @@ public class SmsNotificationUtil {
 
             boolean isVoluntarySubmission = null == applicationRequest.getApplication().getReferenceId();
 
-            String messageCode = APPLICATION_SUBMITTED;
+
+            String status = applicationRequest.getApplication().getStatus();
+
+            String messageCode = getMessageCode(status);
             log.info("Message code: {}", messageCode);
+            if(messageCode == null){
+                return;
+            }
             String[] smsTopics = messageCode.split(",");
 
             for(String smsTopic: smsTopics) {
@@ -86,6 +92,13 @@ public class SmsNotificationUtil {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private String getMessageCode(String status){
+        if(PENDINGREVIEW.equalsIgnoreCase(status) || COMPLETED.equalsIgnoreCase(status)) {
+            return APPLICATION_SUBMITTED;
+        }
+        return null;
     }
 
     public static String getPartyTypeByName(JsonNode litigants, String name) {
