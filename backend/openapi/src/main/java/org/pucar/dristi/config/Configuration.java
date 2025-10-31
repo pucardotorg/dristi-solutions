@@ -218,4 +218,17 @@ public class Configuration {
     @Value("${payment.calculator.calculate.endpoint}")
     private String paymentCalculatorCalculateEndpoint;
 
+    @Value("${egov.order.host}")
+    private String orderHost;
+
+    @Value("${egov.order.search.path}")
+    private String orderSearchPath;
+
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
 }
