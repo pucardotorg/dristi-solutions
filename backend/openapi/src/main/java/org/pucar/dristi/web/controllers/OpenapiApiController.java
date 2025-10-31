@@ -145,4 +145,10 @@ public class OpenapiApiController {
         ESignResponse response = openApiService.eSignDocument(tenantId, eSignParameter, servletRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/openapi/v1/getOrderDetails", method = RequestMethod.POST)
+    public ResponseEntity<OrderDetailsSearchResponse> getOrderDetails(@Parameter(description = "Details for searching order details", required = true, schema = @Schema(implementation = OpenApiBailSearchRequest.class)) @RequestBody @Valid OrderDetailsSearch orderDetailsSearch) {
+        OrderDetailsSearchResponse response = openApiService.getOrderDetails(orderDetailsSearch);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
