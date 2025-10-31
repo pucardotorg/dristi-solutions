@@ -847,13 +847,12 @@ public class OpenApiService {
 
                         // Set the filtered list back into the order
                         order.setCompositeItems(filtered);
-
                     } catch (Exception e) {
                         throw new RuntimeException("Error filtering composite items", e);
                     }
-
-                    mapperOrderToOrderSearchResponse(response, order);
                 }
+
+                mapperOrderToOrderSearchResponse(response, order);
             }
 
             CourtCase courtCase = caseUtil.getCase(filingNumber);
@@ -889,7 +888,8 @@ public class OpenApiService {
             for (Data data : pendingTask.getData()) {
                 for (Field field : data.getFields()) {
                     if ("additionalDetails".equals(field.getKey()) && field.getValue() != null) {
-                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {});
+                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {
+                        });
 
                         // Get the uniqueIds list from additionalDetails
                         List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
