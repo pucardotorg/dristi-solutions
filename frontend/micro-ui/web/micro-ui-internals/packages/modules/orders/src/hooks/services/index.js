@@ -279,4 +279,12 @@ export const openApiService = {
       data,
       params,
     }),
+  getSummonsPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.openApi.summonsPayment,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

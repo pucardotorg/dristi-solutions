@@ -43,9 +43,10 @@ export const Urls = {
     bulkSend: "/task/v1/bulk-send",
   },
   openApi: {
-    searchOrders:"/openapi/v1/getOrderDetails",
+    searchOrders: "/openapi/v1/getOrderDetails",
     taskManagementCreate: "/openapi/task-management/v1/_create",
     taskManagementUpdate: "/openapi/task-management/v1/_update",
     taskManagementSearch: "/openapi/task-management/v1/_search",
-  }
+    summonsPayment: "/openapi/payment/v1/_calculate",
+  },
 };

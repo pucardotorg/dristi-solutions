@@ -13,7 +13,7 @@ const AddIcon = () => (
   </svg>
 );
 
-const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData }) => {
+const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupResponse }) => {
   // Mock data structure for notices - this would come from props or API in a real implementation
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
   const [currentNoticeId, setCurrentNoticeId] = useState(null);
@@ -26,44 +26,104 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData }) => {
     });
   }, [noticeData]);
 
-  // Handler to toggle courier selection
-  const handleCourierChange = (noticeId, courierId) => {
-    const updatedNotices = noticeData?.map((notice) => {
-      if (notice.id === noticeId) {
+  const recalculateCourierFees = (breakupResponse, noticeData) => {
+    if (!breakupResponse?.Calculation?.length || !Array.isArray(noticeData)) return noticeData;
+
+    const calculationList = breakupResponse?.Calculation;
+
+    return noticeData.map((notice) => {
+      const selectedAddresses = notice?.addresses?.filter((addr) => addr?.selected) || [];
+
+      // Case 1️⃣: No address selected → all channels off
+      if (selectedAddresses.length === 0) {
         return {
           ...notice,
-          courierOptions: notice.courierOptions.map((courier) => {
-            if (courier.id === courierId) {
-              return { ...courier, selected: !courier.selected };
-            }
-            return courier;
-          }),
+          courierOptions: (notice?.courierOptions || []).map((opt) => ({
+            ...opt,
+            fees: 0,
+            selected: false,
+          })),
         };
       }
-      return notice;
-    });
 
-    setNoticeData(updatedNotices);
+      // Case 2️⃣: Some addresses selected → compute total fees per channel
+      const newCourierMap = {};
+
+      calculationList.forEach((calc) => {
+        const [taskType, channelId, addressId] = calc?.applicationId?.split("_") || [];
+
+        // Match only if this calculation belongs to this notice
+        if (taskType !== notice?.orderType) return;
+
+        const isAddressSelected = selectedAddresses?.some((a) => a?.id === addressId);
+        if (!isAddressSelected) return;
+
+        const key = channelId;
+        if (!newCourierMap[key]) {
+          newCourierMap[key] = {
+            channelId,
+            name: channelId === "RPAD" ? "REGISTERED_POST" : "E_POST",
+            deliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
+            fees: 0,
+            addressIds: [],
+            selected: true, // auto-select when any address has it
+          };
+        }
+
+        newCourierMap[key].fees += calc?.totalAmount || 0;
+        newCourierMap[key].addressIds.push(addressId);
+      });
+
+      // Merge with existing courierOptions if already had them (retain selected flags)
+      const mergedCourierOptions = Object.values(newCourierMap).map((opt) => {
+        const existing = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId);
+        return {
+          ...opt,
+          selected: existing ? existing.selected : opt.selected,
+        };
+      });
+
+      return {
+        ...notice,
+        courierOptions: mergedCourierOptions,
+      };
+    });
+  };
+
+  // Handler to toggle courier option selection
+  const handleCourierChange = (noticeId, channelId) => {
+    setNoticeData((prevNotices) =>
+      prevNotices?.map((notice) => {
+        if (notice?.id === noticeId) {
+          const updatedCourierOptions = notice?.courierOptions?.map((courier) =>
+            courier?.channelId === channelId ? { ...courier, selected: !courier?.selected } : courier
+          );
+
+          return { ...notice, courierOptions: updatedCourierOptions };
+        }
+        return notice;
+      })
+    );
   };
 
   // Handler to toggle address selection
   const handleAddressChange = (noticeId, addressId) => {
-    const updatedNotices = noticeData?.map((notice) => {
-      if (notice.id === noticeId) {
-        return {
-          ...notice,
-          addresses: notice.addresses.map((address) => {
-            if (address.id === addressId) {
-              return { ...address, selected: !address.selected };
-            }
-            return address;
-          }),
-        };
-      }
-      return notice;
-    });
+    setNoticeData((prevNotices) => {
+      // Step 1: Toggle address selection
+      const updatedNotices = prevNotices?.map((notice) => {
+        if (notice?.id === noticeId) {
+          const updatedAddresses = notice?.addresses?.map((addr) => (addr?.id === addressId ? { ...addr, selected: !addr?.selected } : addr));
+          return { ...notice, addresses: updatedAddresses };
+        }
+        return notice;
+      });
 
-    setNoticeData(updatedNotices);
+      // Step 2: Recalculate courier fees and selections
+      const recalculatedNotices = recalculateCourierFees(breakupResponse, updatedNotices);
+
+      // Step 3: Return updated notices
+      return recalculatedNotices;
+    });
   };
 
   const handleAddAddress = (noticeId) => {
@@ -132,12 +192,12 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData }) => {
               <div className="courier-options">
                 {notice?.courierOptions?.map((courier) => (
                   <label key={courier.id} className="courier-option">
-                    <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.id)} />
+                    <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.channelId)} />
                     <div className="courier-details">
                       <div className="courier-name">
-                        {courier.name} ({courier.code})
+                        {t(courier?.name)} {courier?.fees ? `(INR ${courier.fees})` : ""}
                       </div>
-                      <div className="delivery-time">{courier.deliveryTime}</div>
+                      <div className="delivery-time">{t(courier?.deliveryTime)}</div>
                     </div>
                   </label>
                 ))}
@@ -152,7 +212,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData }) => {
                 {notice?.addresses?.map((address) => (
                   <label key={address.id} className="address-option">
                     <input type="checkbox" checked={address.selected} onChange={() => handleAddressChange(notice.id, address.id)} />
-                    <div className="address-text">{address.text}</div>
+                    <div className="address-text">{address?.text}</div>
                   </label>
                 ))}
               </div>
