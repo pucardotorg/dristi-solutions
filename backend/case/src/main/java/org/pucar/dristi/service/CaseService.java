@@ -6199,8 +6199,7 @@ public class CaseService {
 
     private Object enrichAdditionalDetailsForAddress(AddAddressRequest addAddressRequest, CourtCase courtCase) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectNode additionalDetails = (ObjectNode) mapper.valueToTree(courtCase.getAdditionalDetails());
+            ObjectNode additionalDetails = objectMapper.valueToTree(courtCase.getAdditionalDetails());
 
             for (PartyAddressRequest party : addAddressRequest.getPartyAddresses()) {
                 String partyType = party.getPartyType();
@@ -6237,13 +6236,13 @@ public class CaseService {
                         if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
                             addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
                         } else {
-                            addressDetailsArray = mapper.createArrayNode();
+                            addressDetailsArray = objectMapper.createArrayNode();
                             dataNode.set("addressDetails", addressDetailsArray);
                         }
 
                         // Add all new addresses
                         for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
-                            ObjectNode newAddress = mapper.createObjectNode();
+                            ObjectNode newAddress = objectMapper.createObjectNode();
                             newAddress.putPOJO("addressDetails", address);
                             newAddress.put("id", UUID.randomUUID().toString());
                             addressDetailsArray.add(newAddress);
@@ -6253,8 +6252,7 @@ public class CaseService {
             }
 
             // Update back into CourtCase
-            courtCase.setAdditionalDetails(mapper.convertValue(additionalDetails, Object.class));
-            return courtCase;
+            return objectMapper.convertValue(additionalDetails, Object.class);
 
         } catch (Exception e) {
             log.error("Failed to enrich additional details for address", e);
