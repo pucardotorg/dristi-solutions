@@ -3083,10 +3083,6 @@ const AdmittedCaseV2 = () => {
                 label: "TAKE_WITNESS_DEPOSITION",
               },
               {
-                value: "GENERATE_ORDER",
-                label: "GENERATE_ORDER",
-              },
-              {
                 value: "SUBMIT_DOCUMENTS",
                 label: "SUBMIT_DOCUMENTS",
               },
@@ -3136,10 +3132,6 @@ const AdmittedCaseV2 = () => {
                 {
                   value: "END_HEARING",
                   label: "END_HEARING",
-                },
-                {
-                  value: "GENERATE_ORDER",
-                  label: "GENERATE_ORDER",
                 },
                 {
                   value: "SUBMIT_DOCUMENTS",
@@ -3641,6 +3633,14 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {isEmployee && (
+                              <Button
+                                variation={"outlined"}
+                                label={"Generate Order"}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
+                              ></Button>
+                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
