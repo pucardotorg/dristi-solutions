@@ -674,7 +674,8 @@ public class EvidenceService {
             Artifact artifact = evidenceRequest.getArtifact();
 
             String sourceType = evidenceRequest.getArtifact().getSourceType();
-            String smsTopic = getSmsTopic(sourceType, isCreateCall);
+            String action = evidenceRequest.getArtifact().getWorkflow().getAction();
+            String smsTopic = getSmsTopic(sourceType, isCreateCall, action);
             log.info("Message Code : {}", smsTopic);
             Set<String> individualIds = extractIndividualIds(caseDetails,null);
             Set<String> powerOfAttorneyIds = extractPowerOfAttorneyIds(caseDetails,individualIds);
@@ -710,8 +711,8 @@ public class EvidenceService {
         }
     }
 
-    private String getSmsTopic(String sourceType, boolean isCreateCall) {
-        if(isCreateCall && COMPLAINANT.equals(sourceType)) {
+    private String getSmsTopic(String sourceType, boolean isCreateCall, String action) {
+        if(!isCreateCall && COMPLAINANT.equals(sourceType) && E_SIGN.equals(action)) {
             return DOCUMENT_SUBMITTED;
         }
         return null;
