@@ -152,17 +152,13 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-				String subStage = statusType.getSubstage();
-				if(shouldSendSMSForStatusChange(subStage)){
-					sendSmsForCaseStatusChange(filingNumber,requestInfo, subStage);
-				}
-				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
 		return null;
 	}
 
-	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo, String subStage) {
+	private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String subStage) {
 		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
 		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 		String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
@@ -176,7 +172,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private boolean shouldSendSMSForStatusChange(String subStage) {
+	private boolean shouldSendSMSForSubStageChange(String subStage) {
 		if(subStage == null){
 			return false;
 		}
@@ -261,6 +257,10 @@ public class CaseOverallStatusUtil {
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
 				caseOverallStatus.setAuditDetails(auditDetails);
+				String subStage = caseOverallStatus.getSubstage();
+				if(shouldSendSMSForSubStageChange(subStage)){
+					sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
+				}
 				org.pucar.dristi.web.models.CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo,caseOverallStatus);
 				log.info("Publishing to kafka topic: {}, caseStageSubstage: {}",config.getCaseOverallStatusTopic(), caseStageSubStage);
 				producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
