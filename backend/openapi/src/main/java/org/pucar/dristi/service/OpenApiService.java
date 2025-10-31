@@ -800,65 +800,71 @@ public class OpenApiService {
 
     public OrderDetailsSearchResponse getOrderDetails(OrderDetailsSearch orderDetailsSearch) {
 
-        String tenantId = orderDetailsSearch.getTenantId();
-        String orderNumber = orderDetailsSearch.getOrderNumber();
-        String orderItemId = orderDetailsSearch.getOrderItemId();
-        String referenceId = orderDetailsSearch.getReferenceId();
-        String mobileNumber = orderDetailsSearch.getMobileNumber();
-        String filingNumber = orderDetailsSearch.getFilingNumber();
+        try {
+            String tenantId = orderDetailsSearch.getTenantId();
+            String orderNumber = orderDetailsSearch.getOrderNumber();
+            String orderItemId = orderDetailsSearch.getOrderItemId();
+            String referenceId = orderDetailsSearch.getReferenceId();
+            String mobileNumber = orderDetailsSearch.getMobileNumber();
+            String filingNumber = orderDetailsSearch.getFilingNumber();
 
-        //validate mobile number from pending task assigned to list
-        validateMobileNumber(referenceId, tenantId, mobileNumber);
+            //validate mobile number from pending task assigned to list
+            validateMobileNumber(referenceId, tenantId, mobileNumber);
 
-        OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
-        OrderCriteria criteria = OrderCriteria.builder()
-                .orderNumber(orderNumber)
-                .tenantId(tenantId)
-                .build();
+            OrderCriteria criteria = OrderCriteria.builder()
+                    .orderNumber(orderNumber)
+                    .tenantId(tenantId)
+                    .build();
 
-        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
-                .criteria(criteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
-                .build();
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .criteria(criteria)
+                    .pagination(Pagination.builder().limit(10.0).offSet(0.0).build())
+                    .build();
 
-        OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
+            OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
 
-        if (!CollectionUtils.isEmpty(orderListResponse.getList())) {
-            org.pucar.dristi.web.models.order.Order order = orderListResponse.getList().get(0);
-            if (orderItemId != null) {
-                if (order == null || order.getCompositeItems() == null) {
-                    return response;
+            if (!CollectionUtils.isEmpty(orderListResponse.getList())) {
+                org.pucar.dristi.web.models.order.Order order = orderListResponse.getList().get(0);
+                if (orderItemId != null) {
+                    if (order == null || order.getCompositeItems() == null) {
+                        return response;
+                    }
+
+                    try {
+                        // Convert the generic Object to a List<Map<String, Object>>
+                        List<Map<String, Object>> compositeList = objectMapper.convertValue(
+                                order.getCompositeItems(),
+                                new TypeReference<>() {
+                                }
+                        );
+
+                        // Filter the list to keep only the matching item
+                        List<Map<String, Object>> filtered = compositeList.stream()
+                                .filter(item -> orderItemId.equals(item.get("id")))
+                                .collect(Collectors.toList());
+
+                        // Set the filtered list back into the order
+                        order.setCompositeItems(filtered);
+
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error filtering composite items", e);
+                    }
+
+                    mapperOrderToOrderSearchResponse(response, order);
                 }
-
-                try {
-                    // Convert the generic Object to a List<Map<String, Object>>
-                    List<Map<String, Object>> compositeList = objectMapper.convertValue(
-                            order.getCompositeItems(),
-                            new TypeReference<>() {
-                            }
-                    );
-
-                    // Filter the list to keep only the matching item
-                    List<Map<String, Object>> filtered = compositeList.stream()
-                            .filter(item -> orderItemId.equals(item.get("id")))
-                            .collect(Collectors.toList());
-
-                    // Set the filtered list back into the order
-                    order.setCompositeItems(filtered);
-
-                } catch (Exception e) {
-                    throw new RuntimeException("Error filtering composite items", e);
-                }
-
-                mapperOrderToOrderSearchResponse(response, order);
             }
+
+            CourtCase courtCase = caseUtil.getCase(filingNumber);
+            enrichPartyDetails(response, courtCase.getAdditionalDetails());
+
+            return response;
+        }catch (Exception e){
+            log.error("Failed to get order details :: {}",e.toString());
+            throw new CustomException("GET_ORDER_DETAILS_ERROR",
+                    "Error Occurred while getting order details: " + e.getMessage());
         }
-
-        CourtCase courtCase = caseUtil.getCase(filingNumber);
-        enrichPartyDetails(response,courtCase.getAdditionalDetails());
-
-        return response;
     }
 
     private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails) {
