@@ -2,6 +2,7 @@ package digit.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
+import digit.kafka.Producer;
 import digit.repository.TaskManagementRepository;
 import digit.util.*;
 import digit.web.models.*;
@@ -30,6 +31,7 @@ public class PaymentUpdateService {
     private final WorkflowService workflowService;
     private final TaskCreationService taskCreationService;
     private final Configuration configuration;
+    private final Producer producer;
 
     /**
      * Main entry to process incoming payment update events.
@@ -89,10 +91,13 @@ public class PaymentUpdateService {
         workflowObject.setAction(MAKE_PAYMENT);
         taskManagement.setWorkflow(workflowObject);
 
-        workflowService.updateWorkflowStatus(TaskManagementRequest.builder()
+        TaskManagementRequest request = TaskManagementRequest.builder()
                 .taskManagement(taskManagement)
                 .requestInfo(requestInfo)
-                .build());
+                .build();
+        workflowService.updateWorkflowStatus(request);
+
+        producer.push(configuration.getUpdateTaskManagementTopic(), request);
     }
 
 //    public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
