@@ -19,6 +19,8 @@ import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.billingservice.Demand;
+import org.pucar.dristi.web.models.billingservice.DemandResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +49,18 @@ public class BillingUtil {
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
         this.mdmsUtil = mdmsUtil;
+    }
+
+    public String buildPayload(Demand demand, RequestInfo requestInfo) {
+
+        String id = demand.getId();
+        String businessService = demand.getBusinessService();
+        String status = demand.getStatus().toString();
+        String tenantId = demand.getTenantId();
+        String consumerCode = demand.getConsumerCode();
+        String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
+        String paymentType = getPaymentType(consumerCodeSplitArray[1], businessService);
+
     }
 
 
@@ -132,6 +146,20 @@ public class BillingUtil {
 
     public String buildString(JSONObject jsonObject) {
         return indexerUtil.buildString(jsonObject);
+    }
+
+    public List<Demand> getDemandByConsumerCode(String consumerCode, String status, String tenantId, RequestInfo requestInfo) {
+        String baseUrl = config.getDemandHost() + config.getDemandEndPoint();
+        String url = String.format(CONSUMER_CODE_FORMAT, baseUrl, tenantId, consumerCode);
+        Object response = null;
+        try {
+            response = requestRepository.fetchResult(new StringBuilder(url), requestInfo);
+            DemandResponse demandResponse = objectMapper.convertValue(response, DemandResponse.class);
+            return demandResponse.getDemands();
+        } catch (ServiceCallException e) {
+            log.error("Error while fetching demand by consumer code: {}", e.toString());
+            throw new CustomException(DEMAND_SERVICE_EXCEPTION, DEMAND_SERVICE_CONSUMER_CODE_EXCEPTION_MESSAGE);
+        }
     }
 
 

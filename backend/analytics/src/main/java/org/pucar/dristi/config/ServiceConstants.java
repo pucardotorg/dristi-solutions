@@ -169,11 +169,13 @@ public class ServiceConstants {
 
     public static final String DEMAND_SERVICE_EXCEPTION = "DEMAND_SERVICE_EXCEPTION : {} ";
     public static final String DEMAND_SERVICE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service";
+    public static final String DEMAND_SERVICE_CONSUMER_CODE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service for consumer code";
 
     public static final String REQUEST_INFO = "RequestInfo";
     public static final String FILING_NUMBER = "filingNumber";
     public static final String CNR_NUMBER_KEY = "cnrNumber";
     public static final String STRING_FORMAT = "%s?tenantId=%s&demandId=%s";
+    public static final String CONSUMER_CODE_FORMAT = "%s?tenantId=%s&consumerCode=%s";
 
     public static final String PAYMENT_TYPE_PATH = "$.[*].paymentType";
 

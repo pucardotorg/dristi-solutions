@@ -13,6 +13,8 @@ import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.Util;
+import org.pucar.dristi.web.models.OfflinePaymentTaskRequest;
+import org.pucar.dristi.web.models.billingservice.Demand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,22 @@ public class BillingService {
         this.config = config;
         this.indexerUtils = indexerUtils;
         this.mdmsUtil = mdmsUtil;
+    }
+
+    public void processOfflinePayment(OfflinePaymentTaskRequest offlinePaymentTaskRequest) {
+
+        String consumerCode = offlinePaymentTaskRequest.getOfflinePaymentTask().getConsumerCode();
+
+        String tenantId = offlinePaymentTaskRequest.getOfflinePaymentTask().getTenantId();
+
+        RequestInfo requestInfo = offlinePaymentTaskRequest.getRequestInfo();
+
+        List<Demand> demands = billingUtil.getDemandByConsumerCode(consumerCode, "ACTIVE",  tenantId , requestInfo);
+
+        Demand demand = demands.get(0);
+
+        billingUtil.buildPayload(demand, )
+
     }
 
     public void process(String topic, String kafkaJson) {
