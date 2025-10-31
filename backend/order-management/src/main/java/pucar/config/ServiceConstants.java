@@ -196,5 +196,6 @@ public class ServiceConstants {
     public static final String REFERENCE_ID = "referenceId";
     public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
 
 }
