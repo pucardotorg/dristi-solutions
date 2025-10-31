@@ -173,6 +173,10 @@ public class PublishOrderProclamation implements OrderUpdateStrategy {
 
                     String partyType = getPartyType(order);
                     String orderType = order.getOrderType();
+                    if (orderType != null && !orderType.isEmpty()) {
+                        orderType = orderType.substring(0, 1).toUpperCase()
+                                + orderType.substring(1).toLowerCase();
+                    }
                     String days = String.valueOf(StateSlaMap.getStateSlaMap().get(PROCLAMATION));
                     SMSTemplateData smsTemplateData = SMSTemplateData.builder()
                             .partyType(partyType)
