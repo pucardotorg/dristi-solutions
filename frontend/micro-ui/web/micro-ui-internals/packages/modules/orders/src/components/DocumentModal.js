@@ -12,16 +12,19 @@ const submitButtonTextStyle = {
 
 const CloseBtn = (props) => {
   return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+    <div
+      onClick={props?.onClick}
+      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer", ...props?.style }}
+    >
       <CloseSvg />
     </div>
   );
 };
-const Heading = ({ heading }) => {
+const Heading = ({ heading, isStatus = true }) => {
   return (
     <div className="evidence-title">
       <h1 className="heading-m">{heading.label}</h1>
-      <h3 className={heading.isStatusRed ? "status-false" : "status"}>{heading?.status}</h3>
+      {isStatus && <h3 className={heading.isStatusRed ? "status-false" : "status"}>{heading?.status}</h3>}
     </div>
   );
 };
@@ -78,7 +81,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
     (config?.isStepperModal
       ? config.steps[step]?.type === "document"
         ? "custom-modal-stepper"
-        : config.steps[step]?.type === "modal"
+        : config.steps[step]?.type === "modal" || config.steps[step]?.type === "payment"
         ? config.steps[step]?.className
         : "custom-modal-stepper-non-doc"
       : config?.type === "document"
@@ -89,7 +92,10 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
     <Modal
       headerBarEnd={
         (config?.isStepperModal && (config?.steps[step]?.handleClose || config?.handleClose)) || (!config?.isStepperModal && config?.handleClose) ? (
-          <CloseBtn onClick={config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose} />
+          <CloseBtn
+            onClick={config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose}
+            style={config?.steps[step]?.closeBtnStyle}
+          />
         ) : undefined
       }
       actionSaveLabel={config?.isStepperModal ? config?.steps[step]?.actionSaveLabel || config?.actionSaveLabel : config?.actionSaveLabel}
@@ -100,7 +106,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
       formId="modal-action"
       headerBarMain={
         config?.isStepperModal && config?.steps[step]?.type !== "success" ? (
-          <Heading heading={config?.steps[step]?.heading || config?.heading} />
+          <Heading heading={config?.steps[step]?.heading || config?.heading} isStatus={config?.steps[step]?.isStatus} />
         ) : !config?.isStepperModal ? (
           <Heading heading={config?.heading} />
         ) : (

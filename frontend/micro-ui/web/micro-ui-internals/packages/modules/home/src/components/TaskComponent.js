@@ -17,6 +17,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 import { createOrUpdateTask } from "../utils";
+import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -72,6 +73,7 @@ const TasksComponent = ({
   const [active, setActive] = useState(false);
   const courtId = localStorage.getItem("courtId");
   const [isLoader, setIsLoader] = useState(false);
+  const [hideCancelButton, setHideCancelButton] = useState(false);
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -953,6 +955,7 @@ const TasksComponent = ({
     return {
       handleClose: () => {
         setShowCourierServiceModal(false);
+        setHideCancelButton(false);
       },
       isStepperModal: true,
       actionSaveLabel: t("CS_COURIER_NEXT"),
@@ -960,27 +963,25 @@ const TasksComponent = ({
       steps: [
         ...courierServiceSteps,
         {
-          type: "success",
+          type: "payment",
           hideSubmit: true,
+          isStatus: false,
+          hideModalActionbar: hideCancelButton,
+          heading: { label: t("CS_TASK_PENDING_PAYMENT") },
+          className: "courier-payment",
+          closeBtnStyle: { paddingRight: "0px" },
           modalBody: (
-            <CustomStepperSuccess
-              successMessage={"CS_COURIER_SERVICE_SUCCESS"}
-              submitButtonAction={() => {
-                setShowCourierServiceModal(false);
-                // Additional actions after successful submission
-              }}
-              submitButtonText={t("CS_VIEW_CASE_FILE")}
-              closeButtonText={t("CS_BACK_HOME")}
-              closeButtonAction={() => {
-                setShowCourierServiceModal(false);
-              }}
-              t={t}
+            <NoticeSummonPaymentModal
+              setHideCancelButton={setHideCancelButton}
+              formDataKey={formDataKeyMap[courierOrderDetails?.orderType]}
+              taskManagementList={taskManagementList}
+              courierOrderDetails={courierOrderDetails}
             />
           ),
         },
       ],
     };
-  }, [courierServiceSteps, t]);
+  }, [courierServiceSteps, t, taskManagementList, courierOrderDetails, formDataKeyMap, hideCancelButton]);
 
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {

@@ -156,7 +156,7 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
   if (!courierData) return;
 
   const uniqueId = courierData?.uniqueId || courierData?.data?.uniqueId;
-  const matchedFormData = formData?.find((item) => item?.uniqueId === uniqueId)?.data;
+  const matchedFormData = formData?.find((item) => (item?.data?.uniqueId || item?.uniqueId) === uniqueId)?.data;
 
   // Build new party object
   const baseParty = {

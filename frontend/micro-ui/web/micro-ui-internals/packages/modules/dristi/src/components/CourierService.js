@@ -170,7 +170,7 @@ function CourierService({
 
   if (isBreakUpLoading || isLoading) {
     return (
-      <div style={{ height: "550px", alignContent: "center" }}>
+      <div style={{ height: "500px", alignContent: "center" }}>
         <Loader />
       </div>
     );
