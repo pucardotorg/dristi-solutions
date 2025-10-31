@@ -123,4 +123,7 @@ public class OrderDetailsSearchResponse {
 
     @JsonProperty("partyDetails")
     private List<PartyDetails> partyDetails = null;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
 }

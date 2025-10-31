@@ -809,7 +809,7 @@ public class OpenApiService {
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
             //validate mobile number from pending task assigned to list
-            validateMobileNumber(referenceId, tenantId, mobileNumber);
+            SearchResponse pendingTask = validateMobileNumber(referenceId, tenantId, mobileNumber);
 
             OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
@@ -857,17 +857,19 @@ public class OpenApiService {
             }
 
             CourtCase courtCase = caseUtil.getCase(filingNumber);
-            enrichPartyDetails(response, courtCase.getAdditionalDetails());
+            response.setCaseTitle(courtCase.getCaseTitle());
+
+            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTask);
 
             return response;
-        }catch (Exception e){
-            log.error("Failed to get order details :: {}",e.toString());
+        } catch (Exception e) {
+            log.error("Failed to get order details :: {}", e.toString());
             throw new CustomException("GET_ORDER_DETAILS_ERROR",
                     "Error Occurred while getting order details: " + e.getMessage());
         }
     }
 
-    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails) {
+    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, SearchResponse pendingTask) {
         if (additionalDetails == null) {
             return;
         }
@@ -884,7 +886,32 @@ public class OpenApiService {
             processWitnesses(rootNode, partyDetailsList, objectMapper);
 
             // Set the party details in the response
-            response.setPartyDetails(partyDetailsList);
+            for (Data data : pendingTask.getData()) {
+                for (Field field : data.getFields()) {
+                    if ("additionalDetails".equals(field.getKey()) && field.getValue() != null) {
+                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {});
+
+                        // Get the uniqueIds list from additionalDetails
+                        List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
+
+                        if (uniqueIdsList == null || uniqueIdsList.isEmpty() || response.getPartyDetails() == null) {
+                            return;
+                        }
+
+                        // Extract uniqueIds to filter by
+                        Set<String> validUniqueIds = uniqueIdsList.stream()
+                                .map(entry -> entry.get("uniqueId"))
+                                .collect(Collectors.toSet());
+
+                        // Filter partyDetails to only include those with matching uniqueIds
+                        List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
+                                .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
+                                .collect(Collectors.toList());
+                        response.setPartyDetails(filteredPartyDetails);
+                        break;
+                    }
+                }
+            }
 
         } catch (Exception e) {
             log.error("Error while enriching party details", e);
@@ -1048,7 +1075,7 @@ public class OpenApiService {
     }
 
 
-    private void validateMobileNumber(String referenceId, String tenantId, String mobileNumber) {
+    private SearchResponse validateMobileNumber(String referenceId, String tenantId, String mobileNumber) {
         SearchRequest searchRequest = new SearchRequest();
         IndexSearchCriteria criteria = new IndexSearchCriteria();
 
@@ -1096,6 +1123,7 @@ public class OpenApiService {
             throw new CustomException("NO_TASK_FOUND",
                     "No pending task found for referenceId: " + referenceId);
         }
+        return searchResponse;
     }
 
 
