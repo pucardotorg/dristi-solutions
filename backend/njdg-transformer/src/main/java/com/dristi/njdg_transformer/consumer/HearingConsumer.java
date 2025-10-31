@@ -36,7 +36,7 @@ public class HearingConsumer {
 
     private void processAndUpdateHearing(ConsumerRecord<String, Object> payload) {
         try {
-            HearingRequest hearingRequest = objectMapper.convertValue(payload.value(), HearingRequest.class);
+            HearingRequest hearingRequest = objectMapper.readValue(payload.value().toString(), HearingRequest.class);
             hearingService.processAndUpdateHearings(hearingRequest.getHearing());
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage());

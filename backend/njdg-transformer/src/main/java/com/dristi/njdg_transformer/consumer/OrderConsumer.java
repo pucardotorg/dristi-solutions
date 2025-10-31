@@ -38,7 +38,7 @@ public class OrderConsumer {
 
     private void processAndUpdateOrder(ConsumerRecord<String, Object> payload) {
         try {
-            OrderRequest orderRequest = objectMapper.convertValue(payload.value(), OrderRequest.class);
+            OrderRequest orderRequest = objectMapper.readValue(payload.value().toString(), OrderRequest.class);
             if(PUBLISHED_ORDER.equals(orderRequest.getOrder().getStatus())){
                 orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
             }

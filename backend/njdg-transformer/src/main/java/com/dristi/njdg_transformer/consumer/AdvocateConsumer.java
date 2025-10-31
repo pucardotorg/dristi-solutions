@@ -38,11 +38,11 @@ public class AdvocateConsumer {
 
     private void processAndUpdateAdvocates(ConsumerRecord<String, Object> payload) {
         try {
-            AdvocateRequest advocateRequest = objectMapper.convertValue(payload, AdvocateRequest.class);
+            AdvocateRequest advocateRequest = objectMapper.readValue(payload.value().toString(), AdvocateRequest.class);
             if(ACTIVE.equalsIgnoreCase(advocateRequest.getAdvocate().getStatus())){
                 advocateService.processAndUpdateAdvocates(advocateRequest);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage());
         }
     }

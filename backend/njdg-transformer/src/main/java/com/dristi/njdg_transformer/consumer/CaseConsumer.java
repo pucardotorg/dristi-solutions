@@ -38,7 +38,7 @@ public class CaseConsumer {
 
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
         try {
-            CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
+            CaseRequest caseRequest = objectMapper.readValue(payload.value().toString(), CaseRequest.class);
             String status = caseRequest.getCourtCase().getStatus();
             if(caseStatus.contains(status)){
                 caseService.processAndUpdateCase(caseRequest.getCourtCase());
