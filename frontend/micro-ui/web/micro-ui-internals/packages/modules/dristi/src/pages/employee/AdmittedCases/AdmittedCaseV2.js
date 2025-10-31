@@ -3641,6 +3641,14 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {hasHearingPriorityView && (
+                              <Button
+                                variation={"outlined"}
+                                label={"Generate Order"}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
+                              ></Button>
+                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
