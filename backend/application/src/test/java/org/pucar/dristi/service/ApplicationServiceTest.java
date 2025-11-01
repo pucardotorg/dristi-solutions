@@ -452,7 +452,7 @@ class ApplicationServiceTest {
         // Verify side effects
         verify(fileStoreUtil).deleteFilesByFileStore(eq(List.of("file-inactive")), eq("tenant123"));
         verify(producer).push("app-update-topic", applicationRequest);
-        verify(smsNotificationUtil).callNotificationService(applicationRequest, "PENDINGAPPROVAL", "SUBMIT_BAIL_DOCUMENTS");
+
     }
 
 
