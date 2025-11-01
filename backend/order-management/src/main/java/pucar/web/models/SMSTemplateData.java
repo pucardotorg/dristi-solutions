@@ -19,4 +19,5 @@ public class SMSTemplateData {
     private String courtCaseNumber;
     private String tenantId;
     private String submissionDueDate;
+    private String shortenedUrl;
 }

@@ -327,4 +327,18 @@ public class Configuration {
 
     @Value("${state.level.tenant.id}")
     private String tenantId;
+
+    // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
+
+    @Value("${task.management.suffix}")
+    private String taskManagementSuffix;
+
 }

@@ -88,6 +88,7 @@ public class HearingUpdateConsumer {
             String hearingStatus = hearingRequest.getHearing().getStatus();
             if (hearingStatus.equalsIgnoreCase(COMPLETED) || hearingStatus.equalsIgnoreCase(ABANDONED)) {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
+                orderUtil.closeActivePaymentPendingTasksOfProcesses(hearingRequest);
             }
             if (hearingStatus.equalsIgnoreCase(COMPLETED)) {
                 String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
