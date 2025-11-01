@@ -103,6 +103,7 @@ public class DemandService {
         DemandCriteria criteria = new DemandCriteria();
         criteria.setConsumerCode(consumerCodes);
         criteria.setTenantId(tenantId);
+        criteria.setStatus(Demand.StatusEnum.ACTIVE.toString());
 
         RequestInfoWrapper wrapper = new RequestInfoWrapper();
         wrapper.setRequestInfo(requestInfo);
