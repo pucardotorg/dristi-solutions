@@ -95,10 +95,7 @@ public class SmsNotificationUtil {
     }
 
     private String getMessageCode(String status){
-        if(PENDINGREVIEW.equalsIgnoreCase(status) || COMPLETED.equalsIgnoreCase(status)) {
-            return APPLICATION_SUBMITTED;
-        }
-        return null;
+        return APPLICATION_SUBMITTED;
     }
 
     public static String getPartyTypeByName(JsonNode litigants, String name) {
