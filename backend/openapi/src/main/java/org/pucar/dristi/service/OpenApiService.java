@@ -886,7 +886,9 @@ public class OpenApiService {
             processRespondents(rootNode, partyDetailsList);
 
             // Process witness details
-            processWitnesses(rootNode, partyDetailsList, objectMapper);
+            processWitnesses(rootNode, partyDetailsList);
+
+            response.setPartyDetails(partyDetailsList);
 
             // ✅ Now handle pending task additionalDetails for filtering uniqueIds
             if (pendingTaskAdditionalDetails != null && !pendingTaskAdditionalDetails.isEmpty()) {
@@ -934,29 +936,51 @@ public class OpenApiService {
 
             JsonNode data = respondent.path("data");
             PartyDetails party = new PartyDetails();
-            party.setPartyType("RESPONDENT");
+            party.setPartyType("Accused");
 
-            // Set name
-            if (data.has("respondentFirstName")) {
-                String firstName = data.path("respondentFirstName").asText();
-                String middleName = data.path("poaMiddleName").asText();
-                String lastName = data.path("poaLastName").asText();
+            // ✅ Extract and build full name
+            String firstName = data.path("respondentFirstName").asText("");
+            String middleName = data.path("respondentMiddleName").asText(""); // optional field
+            String lastName = data.path("respondentLastName").asText("");
 
-                String fullName = String.join(" ",
-                        firstName,
-                        middleName != null ? middleName : "",
-                        lastName != null ? lastName : ""
-                ).replaceAll("\\s+", " ").trim();
+            String fullName = String.join(" ",
+                    firstName,
+                    middleName,
+                    lastName
+            ).replaceAll("\\s+", " ").trim();
 
-                party.setPartyName(fullName);
-            }
+            party.setPartyName(fullName);
 
-            // Set unique ID
+            // ✅ Unique ID
             if (respondent.has("uniqueId")) {
                 party.setUniqueId(respondent.path("uniqueId").asText());
             }
 
-            // Process address details
+            // ✅ Extract phone numbers (if any)
+            if (data.has("phonenumbers")) {
+                JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                    List<String> mobileList = new ArrayList<>();
+                    for (JsonNode phone : phoneNumbers) {
+                        mobileList.add(phone.asText());
+                    }
+                    party.setMobileNumbers(mobileList);
+                }
+            }
+
+            // ✅ Extract email addresses (if any)
+            if (data.has("emails")) {
+                JsonNode emails = data.path("emails").path("emailId");
+                if (emails.isArray() && emails.size() > 0) {
+                    List<String> emailList = new ArrayList<>();
+                    for (JsonNode email : emails) {
+                        emailList.add(email.asText());
+                    }
+                    party.setEmails(emailList);
+                }
+            }
+
+            // ✅ Process address details
             if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
                 List<AddressDetails> addresses = new ArrayList<>();
                 for (JsonNode addressNode : data.path("addressDetails")) {
@@ -964,15 +988,15 @@ public class OpenApiService {
                         JsonNode addrDetails = addressNode.path("addressDetails");
                         AddressDetails address = new AddressDetails();
 
-                        address.setDoorNo(addrDetails.path("doorNo").asText());
-                        address.setStreet(addrDetails.path("street").asText());
-                        address.setLandmark(addrDetails.path("landmark").asText());
-                        address.setLocality(addrDetails.path("locality").asText());
-                        address.setCity(addrDetails.path("city").asText());
-                        address.setDistrict(addrDetails.path("district").asText());
-                        address.setState(addrDetails.path("state").asText());
-                        address.setPincode(addrDetails.path("pincode").asText());
-                        address.setCountry(addrDetails.path("country").asText());
+                        address.setDoorNo(addrDetails.path("doorNo").asText(""));
+                        address.setStreet(addrDetails.path("street").asText(""));
+                        address.setLandmark(addrDetails.path("landmark").asText(""));
+                        address.setLocality(addrDetails.path("locality").asText(""));
+                        address.setCity(addrDetails.path("city").asText(""));
+                        address.setDistrict(addrDetails.path("district").asText(""));
+                        address.setState(addrDetails.path("state").asText(""));
+                        address.setPincode(addrDetails.path("pincode").asText(""));
+                        address.setCountry(addrDetails.path("country").asText(""));
 
                         addresses.add(address);
                     }
@@ -980,11 +1004,13 @@ public class OpenApiService {
                 party.setAddress(addresses);
             }
 
+            // ✅ Add party details
             partyDetailsList.add(party);
         }
     }
 
-    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList, ObjectMapper mapper) {
+
+    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
         JsonNode witnessDetails = rootNode.path("witnessDetails");
         if (witnessDetails.isMissingNode() || !witnessDetails.has("formdata")) {
             return;
@@ -995,7 +1021,7 @@ public class OpenApiService {
 
             JsonNode data = witness.path("data");
             PartyDetails party = new PartyDetails();
-            party.setPartyType("WITNESS");
+            party.setPartyType("Witness");
 
             // Set name
             if (data.has("firstName")) {
