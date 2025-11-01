@@ -72,6 +72,7 @@ public class ApplicationService {
                     || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()) || (COMPLETED.equalsIgnoreCase(body.getApplication().getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(body.getApplication().getApplicationType())))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
+            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType());
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
