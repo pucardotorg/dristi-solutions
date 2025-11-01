@@ -175,7 +175,7 @@ public class ServiceConstants {
     public static final String FILING_NUMBER = "filingNumber";
     public static final String CNR_NUMBER_KEY = "cnrNumber";
     public static final String STRING_FORMAT = "%s?tenantId=%s&demandId=%s";
-    public static final String CONSUMER_CODE_FORMAT = "%s?tenantId=%s&consumerCode=%s";
+    public static final String CONSUMER_CODE_FORMAT = "%s?tenantId=%s&consumerCode=%s&status=%s";
 
     public static final String PAYMENT_TYPE_PATH = "$.[*].paymentType";
 

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
@@ -19,7 +21,9 @@ import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.OfflinePaymentTask;
 import org.pucar.dristi.web.models.billingservice.Demand;
+import org.pucar.dristi.web.models.billingservice.DemandDetail;
 import org.pucar.dristi.web.models.billingservice.DemandResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,7 +55,7 @@ public class BillingUtil {
         this.mdmsUtil = mdmsUtil;
     }
 
-    public String buildPayload(Demand demand, RequestInfo requestInfo) {
+    public String buildPayload(Demand demand, RequestInfo requestInfo, OfflinePaymentTask offlinePaymentTask) {
 
         String id = demand.getId();
         String businessService = demand.getBusinessService();
@@ -60,6 +64,44 @@ public class BillingUtil {
         String consumerCode = demand.getConsumerCode();
         String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
         String paymentType = getPaymentType(consumerCodeSplitArray[1], businessService);
+        String filingNumber = offlinePaymentTask.getFilingNumber();
+        Long paymentCompletedDate = null;
+
+
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+        JsonNode caseObject = caseUtil.searchCaseDetails(caseSearchRequest);
+        JsonNode caseJsonNode = caseObject.isNull() ? null : caseObject.get(0);
+        if (caseJsonNode == null) {
+            log.error("case not found with the filing number {}", filingNumber);
+            throw new CustomException("CASE_NOT_FOUND", "case not found with the filing number " + filingNumber);
+        }
+        String caseTitle = JsonPath.read(caseJsonNode.toString(), CASE_TITLE_PATH);
+        String cmpNumber = JsonPath.read(caseJsonNode.toString(), CASE_CMPNUMBER_PATH);
+        String courtCaseNumber = JsonPath.read(caseJsonNode.toString(), CASE_COURTCASENUMBER_PATH);
+        String courtId = JsonPath.read(caseJsonNode.toString(), CASE_COURTID_PATH);
+        String caseNumber = filingNumber;
+        AuditDetails auditDetails = demand.getAuditDetails();
+        Long paymentCreatedDate = demand.getAuditDetails().getCreatedTime();
+        Gson gson = new Gson();
+        String auditJsonString = gson.toJson(auditDetails);
+
+        if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
+            caseNumber = courtCaseNumber;
+        }else if(cmpNumber!=null && !cmpNumber.isEmpty()){
+            caseNumber = cmpNumber;
+        }
+
+        Double totalAmount = getTotalTaxAmount(demand.getDemandDetails());
+
+        String caseId = JsonPath.read(caseJsonNode.toString(), CASEID_PATH);
+        String caseStage = JsonPath.read(caseJsonNode.toString(), CASE_STAGE_PATH);
+        net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseJsonNode.toString(), CASE_STATUTES_AND_SECTIONS);
+        String caseType = getCaseType(statutesAndSections);
+
+        return String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
+                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, caseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, filingNumber,businessService, courtId, auditJsonString
+        );
 
     }
 
@@ -150,10 +192,12 @@ public class BillingUtil {
 
     public List<Demand> getDemandByConsumerCode(String consumerCode, String status, String tenantId, RequestInfo requestInfo) {
         String baseUrl = config.getDemandHost() + config.getDemandEndPoint();
-        String url = String.format(CONSUMER_CODE_FORMAT, baseUrl, tenantId, consumerCode);
+        String url = String.format(CONSUMER_CODE_FORMAT, baseUrl, tenantId, consumerCode, status);
         Object response = null;
         try {
-            response = requestRepository.fetchResult(new StringBuilder(url), requestInfo);
+            RequestInfoWrapper wrapper = new RequestInfoWrapper();
+            wrapper.setRequestInfo(requestInfo);
+            response = requestRepository.fetchResult(new StringBuilder(url), wrapper);
             DemandResponse demandResponse = objectMapper.convertValue(response, DemandResponse.class);
             return demandResponse.getDemands();
         } catch (ServiceCallException e) {
@@ -221,6 +265,17 @@ public class BillingUtil {
         for (Map<String, Object> demandDetail : demandDetails) {
 
             Double taxAmount = Double.parseDouble(demandDetail.get(TAX_AMOUNT).toString());
+            totalAmount += taxAmount;
+
+        }
+        return totalAmount;
+    }
+
+    private Double getTotalTaxAmount(List<DemandDetail> demandDetails) {
+        Double totalAmount = 0.0;
+        for (DemandDetail demandDetail : demandDetails) {
+
+            Double taxAmount = Double.parseDouble(demandDetail.getTaxAmount().toString());
             totalAmount += taxAmount;
 
         }

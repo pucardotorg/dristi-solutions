@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +19,12 @@ public class OfflinePaymentTaskRequest {
 
     @JsonProperty("RequestInfo")
     @NotNull
+    @Valid
     private RequestInfo requestInfo;
 
     @JsonProperty("offlinePaymentTask")
     @NotNull
+    @Valid
     private OfflinePaymentTask offlinePaymentTask;
 
 }

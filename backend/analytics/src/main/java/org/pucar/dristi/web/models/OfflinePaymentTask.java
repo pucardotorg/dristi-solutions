@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,10 +17,17 @@ import org.springframework.validation.annotation.Validated;
 public class OfflinePaymentTask {
 
     @JsonProperty("consumerCode")
+    @Valid
     @NotNull
     private String consumerCode;
 
+    @JsonProperty("filingNumber")
+    @Valid
+    @NotNull
+    private String filingNumber;
+
     @JsonProperty("tenantId")
+    @Valid
     @NotNull
     private String tenantId;
 

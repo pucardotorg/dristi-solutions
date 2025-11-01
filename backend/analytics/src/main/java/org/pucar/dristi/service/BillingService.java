@@ -57,8 +57,17 @@ public class BillingService {
 
         Demand demand = demands.get(0);
 
-        billingUtil.buildPayload(demand, )
+        String payload = billingUtil.buildPayload(demand, requestInfo, offlinePaymentTaskRequest.getOfflinePaymentTask());
 
+        if (payload != null) {
+            String uri = config.getEsHostUrl() + config.getBulkPath();
+            try {
+                indexerUtils.esPostManual(uri, payload);
+            } catch (Exception e) {
+                log.error("Error indexing document", e);
+                throw new CustomException("INDEXING_ERROR", "Error indexing document");
+            }
+        }
     }
 
     public void process(String topic, String kafkaJson) {

@@ -20,7 +20,7 @@ public class BillingIndexApiController {
         this.billingService = billingService;
     }
 
-    @PostMapping("/offline-payment")
+    @PostMapping("/offline-payment/_create")
     public void processOfflinePayment(@Valid @RequestBody OfflinePaymentTaskRequest offlinePaymentTaskRequest) {
         billingService.processOfflinePayment(offlinePaymentTaskRequest);
     }
