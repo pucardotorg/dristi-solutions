@@ -885,14 +885,6 @@ public class OpenApiService {
             // Convert additionalDetails into a JsonNode for parsing
             JsonNode rootNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
 
-            // Process respondent details
-            processRespondents(rootNode, partyDetailsList);
-
-            // Process witness details
-            processWitnesses(rootNode, partyDetailsList);
-
-            response.setPartyDetails(partyDetailsList);
-
             // ✅ Now handle pending task additionalDetails for filtering uniqueIds
             if (pendingTaskAdditionalDetails != null && !pendingTaskAdditionalDetails.isEmpty()) {
                 // Convert JsonNode to Map for easier manipulation
@@ -911,13 +903,14 @@ public class OpenApiService {
                             .filter(Objects::nonNull)
                             .collect(Collectors.toSet());
 
-                    // Filter the party details based on matching uniqueIds
-                    List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
-                            .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
-                            .collect(Collectors.toList());
 
-                    // Update the response with filtered party details
-                    response.setPartyDetails(filteredPartyDetails);
+                    // Process respondent details
+                    processRespondents(rootNode, partyDetailsList,validUniqueIds);
+
+                    // Process witness details
+                    processWitnesses(rootNode, partyDetailsList,validUniqueIds);
+
+                    response.setPartyDetails(partyDetailsList);
                 }
             }
 
@@ -928,7 +921,7 @@ public class OpenApiService {
     }
 
 
-    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
+    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
         JsonNode respondentDetails = rootNode.path("respondentDetails");
         if (respondentDetails.isMissingNode() || !respondentDetails.has("formdata")) {
             return;
@@ -938,82 +931,86 @@ public class OpenApiService {
             if (!respondent.has("data")) continue;
 
             JsonNode data = respondent.path("data");
-            PartyDetails party = new PartyDetails();
-            party.setPartyType("Accused");
 
-            // ✅ Extract and build full name
-            String firstName = data.path("respondentFirstName").asText("");
-            String middleName = data.path("respondentMiddleName").asText(""); // optional field
-            String lastName = data.path("respondentLastName").asText("");
+            if (respondent.has("uniqueId") && validUniqueIds.contains(respondent.path("uniqueId").asText()) ) {
 
-            String fullName = String.join(" ",
-                    firstName,
-                    middleName,
-                    lastName
-            ).replaceAll("\\s+", " ").trim();
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Accused");
 
-            party.setPartyName(fullName);
+                // ✅ Extract and build full name
+                String firstName = data.path("respondentFirstName").asText("");
+                String middleName = data.path("respondentMiddleName").asText(""); // optional field
+                String lastName = data.path("respondentLastName").asText("");
 
-            // ✅ Unique ID
-            if (respondent.has("uniqueId")) {
-                party.setUniqueId(respondent.path("uniqueId").asText());
-            }
+                String fullName = String.join(" ",
+                        firstName,
+                        middleName,
+                        lastName
+                ).replaceAll("\\s+", " ").trim();
 
-            // ✅ Extract phone numbers (if any)
-            if (data.has("phonenumbers")) {
-                JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
-                if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
-                    List<String> mobileList = new ArrayList<>();
-                    for (JsonNode phone : phoneNumbers) {
-                        mobileList.add(phone.asText());
-                    }
-                    party.setMobileNumbers(mobileList);
+                party.setPartyName(fullName);
+
+                // ✅ Unique ID
+                if (respondent.has("uniqueId")) {
+                    party.setUniqueId(respondent.path("uniqueId").asText());
                 }
-            }
 
-            // ✅ Extract email addresses (if any)
-            if (data.has("emails")) {
-                JsonNode emails = data.path("emails").path("emailId");
-                if (emails.isArray() && emails.size() > 0) {
-                    List<String> emailList = new ArrayList<>();
-                    for (JsonNode email : emails) {
-                        emailList.add(email.asText());
-                    }
-                    party.setEmails(emailList);
-                }
-            }
-
-            // ✅ Process address details
-            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
-                List<AddressDetails> addresses = new ArrayList<>();
-                for (JsonNode addressNode : data.path("addressDetails")) {
-                    if (addressNode.has("addressDetails")) {
-                        JsonNode addrDetails = addressNode.path("addressDetails");
-                        AddressDetails address = new AddressDetails();
-
-                        address.setDoorNo(addrDetails.path("doorNo").asText(""));
-                        address.setStreet(addrDetails.path("street").asText(""));
-                        address.setLandmark(addrDetails.path("landmark").asText(""));
-                        address.setLocality(addrDetails.path("locality").asText(""));
-                        address.setCity(addrDetails.path("city").asText(""));
-                        address.setDistrict(addrDetails.path("district").asText(""));
-                        address.setState(addrDetails.path("state").asText(""));
-                        address.setPincode(addrDetails.path("pincode").asText(""));
-                        address.setCountry(addrDetails.path("country").asText(""));
-
-                        addresses.add(address);
+                // ✅ Extract phone numbers (if any)
+                if (data.has("phonenumbers")) {
+                    JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                    if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                        List<String> mobileList = new ArrayList<>();
+                        for (JsonNode phone : phoneNumbers) {
+                            mobileList.add(phone.asText());
+                        }
+                        party.setMobileNumbers(mobileList);
                     }
                 }
-                party.setAddress(addresses);
-            }
 
-            // ✅ Add party details
-            partyDetailsList.add(party);
+                // ✅ Extract email addresses (if any)
+                if (data.has("emails")) {
+                    JsonNode emails = data.path("emails").path("emailId");
+                    if (emails.isArray() && emails.size() > 0) {
+                        List<String> emailList = new ArrayList<>();
+                        for (JsonNode email : emails) {
+                            emailList.add(email.asText());
+                        }
+                        party.setEmails(emailList);
+                    }
+                }
+
+                // ✅ Process address details
+                if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                    List<AddressDetails> addresses = new ArrayList<>();
+                    for (JsonNode addressNode : data.path("addressDetails")) {
+                        if (addressNode.has("addressDetails")) {
+                            JsonNode addrDetails = addressNode.path("addressDetails");
+                            AddressDetails address = new AddressDetails();
+
+                            address.setDoorNo(addrDetails.path("doorNo").asText(""));
+                            address.setStreet(addrDetails.path("street").asText(""));
+                            address.setLandmark(addrDetails.path("landmark").asText(""));
+                            address.setLocality(addrDetails.path("locality").asText(""));
+                            address.setCity(addrDetails.path("city").asText(""));
+                            address.setDistrict(addrDetails.path("district").asText(""));
+                            address.setState(addrDetails.path("state").asText(""));
+                            address.setPincode(addrDetails.path("pincode").asText(""));
+                            address.setCountry(addrDetails.path("country").asText(""));
+
+                            addresses.add(address);
+                        }
+                    }
+                    party.setAddress(addresses);
+                }
+
+                // ✅ Add party details
+                partyDetailsList.add(party);
+            }
         }
     }
 
 
-    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
+    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
         JsonNode witnessDetails = rootNode.path("witnessDetails");
         if (witnessDetails.isMissingNode() || !witnessDetails.has("formdata")) {
             return;
@@ -1023,53 +1020,78 @@ public class OpenApiService {
             if (!witness.has("data")) continue;
 
             JsonNode data = witness.path("data");
-            PartyDetails party = new PartyDetails();
-            party.setPartyType("Witness");
+            if (witness.has("uniqueId") && validUniqueIds.contains(witness.path("uniqueId").asText())) {
 
-            // Set name
-            if (data.has("firstName")) {
-                String firstName = data.path("firstName").asText();
-                String middleName = data.path("middleName").asText();
-                String lastName = data.path("lastName").asText();
-                String designation = data.path("witnessDesignation").asText();
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Witness");
 
-                String fullName = String.join(" ",
-                        firstName,
-                        middleName != null ? middleName : "",
-                        lastName != null ? lastName : "",
-                        designation != null ? "(" + designation + ")" : ""
-                ).replaceAll("\\s+", " ").trim();
-
-                party.setPartyName(fullName);
-            }
-
-            // Set unique ID
-            if (witness.has("uniqueId")) {
-                party.setUniqueId(witness.path("uniqueId").asText());
-            }
-
-            // Process address details if available
-            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
-                List<AddressDetails> addresses = new ArrayList<>();
-                for (JsonNode addressNode : data.path("addressDetails")) {
-                    AddressDetails address = new AddressDetails();
-
-                    address.setDoorNo(addressNode.path("doorNo").asText());
-                    address.setStreet(addressNode.path("street").asText());
-                    address.setLandmark(addressNode.path("landmark").asText());
-                    address.setLocality(addressNode.path("locality").asText());
-                    address.setCity(addressNode.path("city").asText());
-                    address.setDistrict(addressNode.path("district").asText());
-                    address.setState(addressNode.path("state").asText());
-                    address.setPincode(addressNode.path("pincode").asText());
-                    address.setCountry(addressNode.path("country").asText());
-
-                    addresses.add(address);
+                // Extract phone numbers (if any)
+                if (data.has("phonenumbers")) {
+                    JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                    if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                        List<String> mobileList = new ArrayList<>();
+                        for (JsonNode phone : phoneNumbers) {
+                            mobileList.add(phone.asText());
+                        }
+                        party.setMobileNumbers(mobileList);
+                    }
                 }
-                party.setAddress(addresses);
-            }
 
-            partyDetailsList.add(party);
+                // Extract email addresses (if any)
+                if (data.has("emails")) {
+                    JsonNode emails = data.path("emails").path("emailId");
+                    if (emails.isArray() && emails.size() > 0) {
+                        List<String> emailList = new ArrayList<>();
+                        for (JsonNode email : emails) {
+                            emailList.add(email.asText());
+                        }
+                        party.setEmails(emailList);
+                    }
+                }
+
+                // Set name
+                if (data.has("firstName")) {
+                    String firstName = data.path("firstName").asText();
+                    String middleName = data.path("middleName").asText();
+                    String lastName = data.path("lastName").asText();
+
+                    String fullName = String.join(" ",
+                            firstName,
+                            middleName != null ? middleName : "",
+                            lastName != null ? lastName : ""
+                    ).replaceAll("\\s+", " ").trim();
+
+                    party.setPartyName(fullName);
+                }
+
+                // Set unique ID
+                if (witness.has("uniqueId")) {
+                    party.setUniqueId(witness.path("uniqueId").asText());
+                }
+
+                // Process address details if available
+                if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                    List<AddressDetails> addresses = new ArrayList<>();
+                    for (JsonNode addressNode : data.path("addressDetails")) {
+                        AddressDetails address = new AddressDetails();
+
+                        address.setDoorNo(addressNode.path("doorNo").asText());
+                        address.setStreet(addressNode.path("street").asText());
+                        address.setLandmark(addressNode.path("landmark").asText());
+                        address.setLocality(addressNode.path("locality").asText());
+                        address.setCity(addressNode.path("city").asText());
+                        address.setDistrict(addressNode.path("district").asText());
+                        address.setState(addressNode.path("state").asText());
+                        address.setPincode(addressNode.path("pincode").asText());
+                        address.setCountry(addressNode.path("country").asText());
+
+                        addresses.add(address);
+                    }
+                    party.setAddress(addresses);
+                }
+
+                partyDetailsList.add(party);
+            }
         }
     }
 
