@@ -35,7 +35,7 @@ public class SmsNotificationUtil {
         this.individualService = individualService;
     }
 
-    public void callNotificationService(ApplicationRequest applicationRequest, String updatedState, String applicationType) {
+    public void callNotificationService(ApplicationRequest applicationRequest, String updatedState, String applicationType, boolean isCreateCall) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
@@ -55,7 +55,7 @@ public class SmsNotificationUtil {
 
             String status = applicationRequest.getApplication().getStatus();
 
-            String messageCode = getMessageCode(status);
+            String messageCode = getMessageCode(isCreateCall);
             log.info("Message code: {}", messageCode);
             if(messageCode == null){
                 return;
@@ -94,8 +94,12 @@ public class SmsNotificationUtil {
         }
     }
 
-    private String getMessageCode(String status){
-        return APPLICATION_SUBMITTED;
+    private String getMessageCode(boolean isCreateCall){
+        if(isCreateCall){
+            return APPLICATION_SUBMITTED;
+        }
+
+        return null;
     }
 
     public static String getPartyTypeByName(JsonNode litigants, String name) {
