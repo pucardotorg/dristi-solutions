@@ -896,7 +896,7 @@ public class OpenApiService {
                 // Extract uniqueIds list
                 List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
 
-                if (uniqueIdsList != null && !uniqueIdsList.isEmpty() && response.getPartyDetails() != null) {
+                if (uniqueIdsList != null && !uniqueIdsList.isEmpty()) {
                     // Build a set of uniqueIds for fast lookup
                     Set<String> validUniqueIds = uniqueIdsList.stream()
                             .map(entry -> entry.get("uniqueId"))
