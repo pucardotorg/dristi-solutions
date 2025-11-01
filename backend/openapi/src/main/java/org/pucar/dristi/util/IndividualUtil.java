@@ -37,41 +37,18 @@ public class IndividualUtil {
         this.config = config;
     }
 
-    public List<Individual> getIndividuals(RequestInfo requestInfo, List<String> uuids) throws CustomException {
+    public List<Individual> getIndividuals(RequestInfo requestInfo, List<String> uuids, String tenantId) throws CustomException {
         try {
             IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
             individualSearchRequest.setRequestInfo(requestInfo);
             IndividualSearch individualSearch = new IndividualSearch();
             individualSearch.setUserUuid(uuids);
             individualSearchRequest.setIndividual(individualSearch);
-            StringBuilder uri = buildIndividualSearchUri(requestInfo, uuids);
-            List<Individual> individual = getIndividualByIndividualId(individualSearchRequest, uri);
-            if (individual != null) {
 
-                return individual;
-            } else {
-                log.error("No individuals found");
-                return Collections.emptyList();
-            }
-        } catch (Exception e) {
-            log.error("Error in search individual service: ", e);
-            log.error("Individuals not found");
-            return Collections.emptyList();
-        }
-    }
+            StringBuilder uri = buildIndividualSearchUri(uuids, tenantId);
 
-    private StringBuilder buildIndividualSearchUri(RequestInfo requestInfo, List<String> individualId) {
-        return new StringBuilder(config.getIndividualHost())
-                .append(config.getIndividualSearchEndpoint())
-                .append("?limit=").append(individualId.size())
-                .append("&offset=0")
-                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
-    }
-
-    public List<Individual> getIndividualByIndividualId(IndividualSearchRequest individualRequest, StringBuilder uri) {
-        List<Individual> individuals = new ArrayList<>();
-        try {
-            Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
+            List<Individual> individuals = new ArrayList<>();
+            Object responseMap = serviceRequestRepository.fetchResult(uri, individualSearchRequest);
             if (responseMap != null) {
                 String jsonString = objectMapper.writeValueAsString(responseMap);
                 log.info("Response :: {}", jsonString);
@@ -86,11 +63,20 @@ public class IndividualUtil {
                     }
                 }
             }
-        } catch (Exception e) {
-            log.error("Error occurred in individual utility", e);
-            throw new CustomException("INDIVIDUAL_UTILITY_EXCEPTION", "Error in individual utility service: " + e.getMessage());
-        }
 
-        return individuals;
+            return individuals;
+        } catch (Exception e) {
+            log.error("Error in search individual service: ", e);
+            log.error("Individuals not found");
+            return Collections.emptyList();
+        }
+    }
+
+    private StringBuilder buildIndividualSearchUri(List<String> userUuid, String tenantId) {
+        return new StringBuilder(config.getIndividualHost())
+                .append(config.getIndividualSearchEndpoint())
+                .append("?limit=").append(userUuid.size())
+                .append("&offset=0")
+                .append("&tenantId=").append(tenantId);
     }
 }

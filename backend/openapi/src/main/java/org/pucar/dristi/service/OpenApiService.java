@@ -815,7 +815,7 @@ public class OpenApiService {
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
             //validate mobile number from pending task assigned to list
-            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber);
+            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber,tenantId);
 
             OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
@@ -1108,7 +1108,7 @@ public class OpenApiService {
     }
 
 
-    private JsonNode validateMobileNumber(String referenceId, String mobileNumber) {
+    private JsonNode validateMobileNumber(String referenceId, String mobileNumber, String tenantId) {
         JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
 
         if (pendingTask == null || !pendingTask.has("hits")) {
@@ -1140,7 +1140,7 @@ public class OpenApiService {
                         "No assigned users found for referenceId: " + referenceId);
             }
 
-            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids);
+            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
 
             // Step 4: Match mobile number
             for (Individual ind : individuals) {
