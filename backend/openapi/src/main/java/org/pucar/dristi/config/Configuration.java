@@ -246,4 +246,11 @@ public class Configuration {
     @Value("${egov.indexer.es.password}")
     private String esPassword;
 
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
 }

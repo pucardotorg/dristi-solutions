@@ -74,7 +74,9 @@ public class OpenApiService {
 
     private final PendingTaskUtil pendingTaskUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
+    private final IndividualUtil individualUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, IndividualUtil individualUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -90,6 +92,7 @@ public class OpenApiService {
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
+        this.individualUtil = individualUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -1122,25 +1125,37 @@ public class OpenApiService {
         for (JsonNode hit : hits) {
             JsonNode source = hit.path("_source").path("Data");
 
-            if (source.has("assignedTo")) {
-                JsonNode assignedTo = source.path("assignedTo");
+            // Step 1: Extract assignedTo UUIDs
+            List<String> assignedUuids = new ArrayList<>();
+            JsonNode assignedTo = source.path("assignedTo");
+            if (assignedTo.isArray()) {
+                for (JsonNode node : assignedTo) {
+                    String uuid = node.path("uuid").asText(null);
+                    if (uuid != null) assignedUuids.add(uuid);
+                }
+            }
 
-                if (assignedTo.isArray()) {
-                    for (JsonNode userNode : assignedTo) {
-                        String userMobile = userNode.path("mobileNumber").asText(null);
+            if (assignedUuids.isEmpty()) {
+                throw new CustomException("NO_ASSOCIATED_USERS",
+                        "No assigned users found for referenceId: " + referenceId);
+            }
 
-                        if (mobileNumber.equalsIgnoreCase(userMobile)) {
-                            // Return additionalDetails if mobile matches
-                            return source.path("additionalDetails");
-                        }
-                    }
+            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids);
+
+            // Step 4: Match mobile number
+            for (Individual ind : individuals) {
+                if (ind.getMobileNumber() != null &&
+                        ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
+                    log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
+                    return source.path("additionalDetails");
                 }
             }
         }
 
         throw new CustomException("INVALID_MOBILE",
-                "Provided mobile number does not match any assigned user for this referenceId");
+                "Provided mobile number does not match any assigned or litigant user for this referenceId");
     }
+
 
 
 
