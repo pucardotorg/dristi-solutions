@@ -72,7 +72,9 @@ public class OpenApiService {
 
     private final CaseUtil caseUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil) {
+    private final PendingTaskUtil pendingTaskUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -87,6 +89,7 @@ public class OpenApiService {
         this.userService = userService;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -809,7 +812,7 @@ public class OpenApiService {
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
             //validate mobile number from pending task assigned to list
-            SearchResponse pendingTask = validateMobileNumber(referenceId, tenantId, mobileNumber);
+            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber);
 
             OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
@@ -858,7 +861,7 @@ public class OpenApiService {
             CourtCase courtCase = caseUtil.getCase(filingNumber);
             response.setCaseTitle(courtCase.getCaseTitle());
 
-            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTask);
+            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTaskAdditionalDetails);
 
             return response;
         } catch (Exception e) {
@@ -868,7 +871,7 @@ public class OpenApiService {
         }
     }
 
-    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, SearchResponse pendingTask) {
+    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, JsonNode pendingTaskAdditionalDetails) {
         if (additionalDetails == null) {
             return;
         }
@@ -876,6 +879,7 @@ public class OpenApiService {
         List<PartyDetails> partyDetailsList = new ArrayList<>();
 
         try {
+            // Convert additionalDetails into a JsonNode for parsing
             JsonNode rootNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
 
             // Process respondent details
@@ -884,40 +888,40 @@ public class OpenApiService {
             // Process witness details
             processWitnesses(rootNode, partyDetailsList, objectMapper);
 
-            // Set the party details in the response
-            for (Data data : pendingTask.getData()) {
-                for (Field field : data.getFields()) {
-                    if ("additionalDetails".equals(field.getKey()) && field.getValue() != null) {
-                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {
-                        });
+            // ✅ Now handle pending task additionalDetails for filtering uniqueIds
+            if (pendingTaskAdditionalDetails != null && !pendingTaskAdditionalDetails.isEmpty()) {
+                // Convert JsonNode to Map for easier manipulation
+                Map<String, Object> additionalDetailsMap = objectMapper.convertValue(
+                        pendingTaskAdditionalDetails,
+                        new TypeReference<Map<String, Object>>() {}
+                );
 
-                        // Get the uniqueIds list from additionalDetails
-                        List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
+                // Extract uniqueIds list
+                List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
 
-                        if (uniqueIdsList == null || uniqueIdsList.isEmpty() || response.getPartyDetails() == null) {
-                            return;
-                        }
+                if (uniqueIdsList != null && !uniqueIdsList.isEmpty() && response.getPartyDetails() != null) {
+                    // Build a set of uniqueIds for fast lookup
+                    Set<String> validUniqueIds = uniqueIdsList.stream()
+                            .map(entry -> entry.get("uniqueId"))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
 
-                        // Extract uniqueIds to filter by
-                        Set<String> validUniqueIds = uniqueIdsList.stream()
-                                .map(entry -> entry.get("uniqueId"))
-                                .collect(Collectors.toSet());
+                    // Filter the party details based on matching uniqueIds
+                    List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
+                            .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
+                            .collect(Collectors.toList());
 
-                        // Filter partyDetails to only include those with matching uniqueIds
-                        List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
-                                .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
-                                .collect(Collectors.toList());
-                        response.setPartyDetails(filteredPartyDetails);
-                        break;
-                    }
+                    // Update the response with filtered party details
+                    response.setPartyDetails(filteredPartyDetails);
                 }
             }
 
         } catch (Exception e) {
             log.error("Error while enriching party details", e);
-            // Continue with empty party details in case of error
+            // Fallback: continue with unfiltered party details if something goes wrong
         }
     }
+
 
     private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
         JsonNode respondentDetails = rootNode.path("respondentDetails");
@@ -1075,56 +1079,43 @@ public class OpenApiService {
     }
 
 
-    private SearchResponse validateMobileNumber(String referenceId, String tenantId, String mobileNumber) {
-        SearchRequest searchRequest = new SearchRequest();
-        IndexSearchCriteria criteria = new IndexSearchCriteria();
+    private JsonNode validateMobileNumber(String referenceId, String mobileNumber) {
+        JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
 
-        criteria.setModuleName("Pending Tasks Service");
-        criteria.setLimit(10);
-        criteria.setOffset(0);
-        criteria.setTenantId(tenantId);
+        if (pendingTask == null || !pendingTask.has("hits")) {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
 
-        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("referenceId", referenceId);
-        moduleSearchCriteria.put("isCompleted", false);
+        JsonNode hits = pendingTask.path("hits").path("hits");
+        if (!hits.isArray() || hits.isEmpty()) {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
 
-        criteria.setModuleSearchCriteria(moduleSearchCriteria);
-        searchRequest.setIndexSearchCriteria(criteria);
+        for (JsonNode hit : hits) {
+            JsonNode source = hit.path("_source").path("Data");
 
-        SearchResponse searchResponse = inboxUtil.getPaymentTask(searchRequest);
+            if (source.has("assignedTo")) {
+                JsonNode assignedTo = source.path("assignedTo");
 
-        if (!CollectionUtils.isEmpty(searchResponse.getData())) {
-            for (Data data : searchResponse.getData()) {
-                for (Field field : data.getFields()) {
-                    if ("assignedTo".equals(field.getKey()) && field.getValue() != null) {
-                        try {
-                            // Convert field value (which is a JSON array string) into a List of maps
-                            List<Map<String, Object>> assignedToList =
-                                    new ObjectMapper().convertValue(field.getValue(), new TypeReference<>() {
-                                    });
+                if (assignedTo.isArray()) {
+                    for (JsonNode userNode : assignedTo) {
+                        String userMobile = userNode.path("mobileNumber").asText(null);
 
-                            boolean matchFound = assignedToList.stream()
-                                    .anyMatch(user ->
-                                            mobileNumber.equalsIgnoreCase((String) user.get("mobileNumber")));
-
-                            if (!matchFound) {
-                                throw new CustomException("INVALID_MOBILE",
-                                        "Provided mobile number does not match any assigned user for this referenceId");
-                            }
-
-                        } catch (Exception e) {
-                            throw new CustomException("MOBILE_VALIDATION_ERROR",
-                                    "Error validating mobile number: " + e.getMessage());
+                        if (mobileNumber.equalsIgnoreCase(userMobile)) {
+                            // Return additionalDetails if mobile matches
+                            return source.path("additionalDetails");
                         }
                     }
                 }
             }
-        } else {
-            throw new CustomException("NO_TASK_FOUND",
-                    "No pending task found for referenceId: " + referenceId);
         }
-        return searchResponse;
+
+        throw new CustomException("INVALID_MOBILE",
+                "Provided mobile number does not match any assigned user for this referenceId");
     }
+
 
 
     private RequestInfo createInternalRequestInfo() {
