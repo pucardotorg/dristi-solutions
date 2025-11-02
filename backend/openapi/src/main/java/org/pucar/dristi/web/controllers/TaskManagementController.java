@@ -36,7 +36,9 @@ public class TaskManagementController {
 
         log.info("api=/v1/_create, status=IN_PROGRESS, request={}", request);
 
+        // This api is accessed before login so internal request info is set
         RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+        request.setRequestInfo(requestInfo);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
         TaskManagementResponse response = taskManagementService.createTaskManagement(request);
         response.setResponseInfo(responseInfo);
@@ -51,7 +53,9 @@ public class TaskManagementController {
 
         log.info("api=/v1/_update, status=IN_PROGRESS, request={}", request);
 
+        // This api is accessed before login so internal request info is set
         RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+        request.setRequestInfo(requestInfo);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
         TaskManagementResponse response = taskManagementService.updateTaskManagement(request);
         response.setResponseInfo(responseInfo);
@@ -66,7 +70,9 @@ public class TaskManagementController {
 
         log.info("api=/v1/_search, status=IN_PROGRESS, request={}", request);
 
+        // This api is accessed before login so internal request info is set
         RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+        request.setRequestInfo(requestInfo);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
         TaskManagementSearchResponse response = taskManagementService.searchTaskManagement(request);
         response.setResponseInfo(responseInfo);
