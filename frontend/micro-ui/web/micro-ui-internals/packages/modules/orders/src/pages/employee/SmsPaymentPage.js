@@ -9,9 +9,11 @@ import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import useOpenApiOrderSearch from "../../hooks/SmsPayment/useOpenApiOrderSearch";
 import useOpenApiTaskManagementSearch from "../../hooks/SmsPayment/useOpenApiTaskManagementSearch";
 import useOpenApiSummonsPaymentBreakUp from "../../hooks/SmsPayment/useOpenApiSummonsPaymentBreakup";
-import { getFormattedName } from "../../utils";
+import { getFormattedName, getSuffixByBusinessCode } from "../../utils";
 import { openApiService } from "../../hooks/services";
 import { prepareTaskPayload, formDataKeyMap, formatAddress } from "../../utils/PaymentUtitls";
+import useOpenApiPaymentProcess from "../../hooks/SmsPayment/useOpenApiPaymentProcess";
+import { useOpenApiDownloadFile } from "../../hooks/SmsPayment/useOpenApiDownloadFile";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
@@ -28,9 +30,28 @@ const SmsPaymentPage = () => {
   const [noticeData, setNoticeData] = useState([]);
   const filingNumber = orderNumber?.split("-OR")?.[0] || "";
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [paymentBreakDown, setPaymentBreakDown] = useState({});
+  const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
+  const [isPaymentLocked, setIsPaymentLocked] = useState(false);
+  const { download } = useOpenApiDownloadFile();
+  const scenario = "EfillingCase";
+  const path = "";
+
+  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "paymentType" }],
+    {
+      select: (data) => {
+        return data?.payment?.paymentType || [];
+      },
+    }
+  );
+
+  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-management-payment"), [paymentTypeData]);
 
   const { data: orderData, isLoading: isOrderDataLoading } = useOpenApiOrderSearch(
-    { orderNumber, tenantId, referenceId, orderItemId, filingNumber },
+    { orderNumber, tenantId, referenceId, orderItemId, filingNumber, mobileNumber },
     { tenantId },
     `${orderNumber}_${referenceId}_${orderItemId}`,
     Boolean(orderNumber && referenceId)
@@ -46,6 +67,11 @@ const SmsPaymentPage = () => {
   const taskManagementList = useMemo(() => {
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
+
+  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === orderData?.orderType), [
+    taskManagementList,
+    orderData?.orderType,
+  ]);
 
   const processCourierData = useMemo(() => {
     if (!orderData || !taskManagementList?.length) return null;
@@ -277,8 +303,16 @@ const SmsPaymentPage = () => {
       } else {
         await openApiService.createTaskManagementService({ taskManagement: getPayload });
       }
+      const paymentResponse = await openApiService.getTreasuryPaymentBreakup(
+        { tenantId: tenantId },
+        {
+          consumerCode: existingTask?.taskManagementNumber + `_${suffix}`,
+        },
+        "dristi",
+        true
+      );
+      setPaymentBreakDown(paymentResponse?.TreasuryHeadMapping?.calculation);
       setStep(step + 1);
-      // TODO : fetch bill Api Call
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -291,15 +325,79 @@ const SmsPaymentPage = () => {
     setStep(step - 1);
   };
 
-  // may be no need of paymentDetails props here, bcse only one payment option is there
-  const handlePyament = (paymentDetails) => {
-    // TODO: Payment gateway integration will be done here
-    setStep(step + 1);
+  const totalAmount = useMemo(() => {
+    const totalAmount = paymentBreakDown?.totalAmount || 0;
+    return parseFloat(totalAmount)?.toFixed(2);
+  }, [paymentBreakDown?.totalAmount]);
+
+  const { fetchBill, openPaymentPortal } = useOpenApiPaymentProcess({
+    tenantId,
+    consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
+    service: "task-management-payment",
+    path,
+    caseDetails: {},
+    totalAmount: totalAmount,
+    scenario,
+  });
+
+  const showToast = (type, message, duration = 5000) => {
+    setShowErrorToast({ error: type, label: message });
+    setTimeout(() => {
+      setShowErrorToast(null);
+    }, duration);
   };
 
-  const handleDownloadReciept = () => {
-    // TODO: Download receipt functionality will be implemented here
-    // No need to proceed to next step after downloading receipt already handleNext is there
+  const handlePyament = async () => {
+    try {
+      setLoader(true);
+      const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
+      if (!bill?.Bill?.length) {
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
+        return;
+      }
+      const caseLockStatus = await openApiService.getPaymentLockStatus(
+        {},
+        {
+          uniqueId: taskManagement?.taskManagementNumber,
+          tenantId: tenantId,
+        }
+      );
+      if (caseLockStatus?.Lock?.isLocked) {
+        setIsPaymentLocked(true);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        return;
+      }
+      await openApiService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      const paymentStatus = await openPaymentPortal(bill);
+      await openApiService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId });
+      const success = Boolean(paymentStatus);
+      if (success) {
+        const response = await openApiService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
+        const fileStoreId = response?.Document?.fileStore;
+        if (fileStoreId) {
+          setReceiptFilstoreId(fileStoreId);
+        }
+        setStep(step + 1);
+      }
+    } catch (error) {
+      console.error("Error in proceeding to payment:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const handleDownloadReciept = async () => {
+    try {
+      setLoader(true);
+      await download(receiptFilstoreId);
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+    } catch (err) {
+      console.error("Error in downloading reciept:", err);
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+    } finally {
+      setLoader(false);
+    }
   };
 
   const handleNext = () => {
@@ -319,27 +417,24 @@ const SmsPaymentPage = () => {
       subMessageKey: "",
     };
 
-    // if payment is already done and we are setting step to 4 directly then status will be completed
-    // statusData = {
-    //   status: "success",
-    //   messageKey: "YOU_ARE_ALL_SET",
-    //   subMessageKey : "PAYMENT_COMPLETED_SUCCESSFULLY",
-    // }
-
-    // Check if any Registered Post (RPAD) option is selected
-    // may be this condition need to be checked for first contion as well based on requirement
     const isAnyRpadSelected = noticeData?.some((notice) =>
-      notice?.courierOptions?.some((option) => option?.name === "Registered Post" && option?.selected)
+      notice?.courierOptions?.some((option) => option?.channelCode === "REGISTERED_POST" && option?.selected)
     );
 
-    if (isAnyRpadSelected) {
+    if (taskManagementList?.length > 0 && taskManagement?.status !== "PENDING_PAYMENT") {
+      statusData = {
+        status: "success",
+        messageKey: "YOU_ARE_ALL_SET",
+        subMessageKey: "PAYMENT_COMPLETED_SUCCESSFULLY",
+      };
+      return;
+    } else if (isAnyRpadSelected) {
       statusData = {
         status: "IsRpad",
         messageKey: "NOTICE_DISPATCHED",
         subMessageKey: "NOTICE_WILL_BE_SENT_BY_RPAD",
       };
     } else {
-      // No RPAD selected, different message
       statusData = {
         status: "success",
         messageKey: "PAYMENT_SUCCESSFUL",
@@ -348,25 +443,29 @@ const SmsPaymentPage = () => {
     }
 
     return statusData;
-  }, [noticeData]);
+  }, [noticeData, taskManagement?.status, taskManagementList?.length]);
 
   // TODO : check if all process of payment is completed then set step to 4 else step 1
   useEffect(() => {
-    setStep(1);
-  }, []);
+    if (taskManagementList?.length > 0 && taskManagement?.status !== "PENDING_PAYMENT") {
+      setStep(4);
+    } else {
+      setStep(1);
+    }
+  }, [taskManagement?.status, taskManagementList?.length]);
 
   const closeToast = () => {
     setShowErrorToast(null);
   };
 
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
+  // useEffect(() => {
+  //   if (showErrorToast) {
+  //     const timer = setTimeout(() => {
+  //       setShowErrorToast(null);
+  //     }, 2000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [showErrorToast]);
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
@@ -387,7 +486,7 @@ const SmsPaymentPage = () => {
     }
   }, [history, isAuthorised, isUserLoggedIn, orderItemId, orderNumber, referenceId, tenantId]);
 
-  if (isOrderDataLoading || isTaskManagementLoading || step === null || isBreakUpLoading) {
+  if (isOrderDataLoading || isTaskManagementLoading || step === null || isBreakUpLoading || isPaymentTypeLoading) {
     return <Loader />;
   }
 
@@ -429,15 +528,16 @@ const SmsPaymentPage = () => {
           onPrevious={handlePrevious}
           paymentStatus={"PENDING"}
           paymentCardButtonLabel={"CS_PAY_ONLINE"}
-          paymentDetails={{}}
+          paymentDetails={paymentBreakDown}
           handlePayment={handlePyament}
+          isPaymentLocked={isPaymentLocked}
         />
       ) : step === 3 ? (
         <PaymentPage
           t={t}
           paymentStatus={"PAYMENTDONE"}
           paymentCardButtonLabel={"DOWNLOAD_RECIEPT"}
-          paymentDetails={{}}
+          paymentDetails={paymentBreakDown}
           handleDownloadReciept={handleDownloadReciept}
           onNext={handleNext}
         />

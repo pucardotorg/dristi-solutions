@@ -9,6 +9,7 @@ const PaymentLoginPage = () => {
   const history = useHistory();
   // const tenantId = Digit.ULBService.getCurrentTenantId();
   const { orderNumber, referenceId, orderItemId, tenantId } = Digit.Hooks.useQueryParams();
+  const filingNumber = orderNumber?.split("-OR")?.[0] || "";
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
   const config = {
@@ -40,6 +41,7 @@ const PaymentLoginPage = () => {
         referenceId: referenceId,
         orderNumber: orderNumber,
         mobileNumber: mobileNumber,
+        filingNumber
       });
       if (!res || Object.keys(res).length === 0) {
         setError(true);

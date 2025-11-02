@@ -287,4 +287,68 @@ export const openApiService = {
       data,
       params,
     }),
+  getTreasuryPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.openApi.getTreasuryPaymentBreakup,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callFetchBill: (data, params) =>
+    Request({
+      url: Urls.openApi.fetchBill,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callETreasury: (data, params) =>
+    Request({
+      url: Urls.openApi.eTreasury,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callSearchBill: (data, params) =>
+    Request({
+      url: Urls.openApi.searchBill,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  fetchBillFileStoreId: (data, params) =>
+    Request({
+      url: Urls.openApi.billFileStoreId,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseLock: (data, params) =>
+    Request({
+      url: Urls.openApi.setCaseLock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getCaseLockStatus: (data, params) =>
+    Request({
+      url: Urls.openApi.getCaseLockStatus,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseUnlock: (data, params) =>
+    Request({
+      url: Urls.openApi.setCaseUnlock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

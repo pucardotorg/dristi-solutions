@@ -1931,6 +1931,18 @@
         flex: 1;
       }
     }
+
+    .toast-success {
+      left: 50% !important;
+      transform: translateX(-50%);
+      width: 90%;
+
+      h2 {
+        margin: 0px !important;
+        font-weight: 400;
+        color: white;
+      }
+    }
   }
 }
 

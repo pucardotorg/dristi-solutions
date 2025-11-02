@@ -48,5 +48,14 @@ export const Urls = {
     taskManagementUpdate: "/openapi/task-management/v1/_update",
     taskManagementSearch: "/openapi/task-management/v1/_search",
     summonsPayment: "/openapi/payment/v1/_calculate",
+    getTreasuryPaymentBreakup : "/openapi/payment/v1/_getHeadBreakDown",
+    fetchBill : "/openapi/payment/v1/_fetchbill",
+    eTreasury: "/openapi/payment/v1/_processChallan",
+    searchBill: "", // TODO : change url
+    billFileStoreId: "", // Todo : url
+    setCaseUnlock: "",
+    getCaseLockStatus: "",
+    setCaseLock: "",
+    FileFetchByFileStore: "/openapi/v1/landing_page/file",
   },
 };

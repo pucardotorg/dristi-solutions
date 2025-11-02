@@ -1,25 +1,27 @@
 import React, { useMemo } from "react";
 import { InfoToolTipIcon } from "../../../dristi/src/icons/svgIndex";
 
-const PaymentPage = ({ t, paymentStatus, onPrevious, onNext, paymentCardButtonLabel, paymentDetails, handlePayment, handleDownloadReciept }) => {
+const PaymentPage = ({ t, paymentStatus, onPrevious, onNext, paymentCardButtonLabel, paymentDetails, handlePayment, handleDownloadReciept, isPaymentLocked = false }) => {
   // Mock data for payment sections - this would come from props or API in a real implementation
   // TODO : useMemo for this and make like this structure based on paymentDetails prop
-  const paymentData = useMemo(
-    () => [
+  const paymentData = useMemo(() => {
+    if (!paymentDetails) return [];
+
+    return [
       {
         id: 1,
         title: "Fees",
         status: paymentStatus || "PENDING",
-        totalAmount: "Rs XX.00",
-        fees: [
-          { id: 1, name: "Court Fee", amount: "Rs 13.00" },
-          { id: 2, name: "Court Fee - Delay Notice", amount: "Rs 13.00" },
-          { id: 3, name: "Delivery Partner Fee - Delay Notice (E-Post)", amount: "Rs 13.00" },
-        ],
+        totalAmount: `Rs ${paymentDetails.totalAmount}.00`,
+        fees:
+          paymentDetails?.breakDown?.map((item, index) => ({
+            id: index + 1,
+            name: item.type,
+            amount: `Rs ${item.amount}.00`,
+          })) || [],
       },
-    ],
-    [paymentStatus]
-  );
+    ];
+  }, [paymentStatus, paymentDetails]);
 
   return (
     <div className="sms-payment-details-page" key={paymentStatus}>
@@ -52,7 +54,7 @@ const PaymentPage = ({ t, paymentStatus, onPrevious, onNext, paymentCardButtonLa
             </div>
 
             {section.status === "PENDING" ? (
-              <button className="pay-online-button" onClick={() => handlePayment(paymentDetails)}>
+              <button className="pay-online-button" onClick={handlePayment} disabled={isPaymentLocked}>
                 {t(paymentCardButtonLabel || "Pay Online")}
               </button>
             ) : (
