@@ -103,6 +103,9 @@ public class Configuration {
     @Value("${case.service.search.endpoint}")
     private String caseServiceSearchEndpoint;
 
+    @Value("${case.service.add.address.endpoint}")
+    private String caseServiceAddAddressEndpoint;
+
     @Value("${hearing.service.host}")
     private String hearingServiceHost;
 
@@ -182,41 +185,60 @@ public class Configuration {
     private List<String> allowedCaseStatuses;
 
     // Billing Service
-    @Value("${billing.host}")
+    @Value("${egov.billing.host}")
     private String BillingHost;
 
-    @Value("${billing.search.endpoint}")
+    @Value("${egov.billing.fetchbill.endpoint}")
+    private String billingFetchBillEndpoint;
+
+    @Value("${egov.billing.searchbill.endpoint}")
     private String billingSearchEndpoint;
 
     // ETreasury Service
-    @Value("${etreasury.host}")
+    @Value("${egov.etreasury.host}")
     private String etreasuryHost;
 
-    @Value("${etreasury.get.breakdown.endpoint}")
+    @Value("${egov.etreasury.get.breakdown.endpoint}")
     private String etreasuryGetBreakdownEndpoint;
 
-    @Value("${etreasury.process.challan.endpoint}")
+    @Value("${egov.etreasury.process.challan.endpoint}")
     private String etreasuryProcessChallanEndpoint;
 
+    @Value("${egov.etreasury.get.payment.receipt.endpoint}")
+    private String etreasuryGetPaymentReceiptEndpoint;
+
     // Task Management Service
-    @Value("${task.management.host}")
+    @Value("${egov.task.management.host}")
     private String taskManagementHost;
 
-    @Value("${task.management.create.endpoint}")
+    @Value("${egov.task.management.create.endpoint}")
     private String taskManagementCreateEndpoint;
 
-    @Value("${task.management.update.endpoint}")
+    @Value("${egov.task.management.update.endpoint}")
     private String taskManagementUpdateEndpoint;
 
-    @Value("${task.management.search.endpoint}")
+    @Value("${egov.task.management.search.endpoint}")
     private String taskManagementSearchEndpoint;
 
     // Payment Calculator Service
-    @Value("${payment.calculator.host}")
+    @Value("${egov.payment.calculator.host}")
     private String paymentCalculatorHost;
 
-    @Value("${payment.calculator.calculate.endpoint}")
+    @Value("${egov.payment.calculator.calculate.endpoint}")
     private String paymentCalculatorCalculateEndpoint;
+
+    // Lock Service
+    @Value("${egov.lock.host}")
+    private String lockHost;
+
+    @Value("${egov.lock.get.endpoint}")
+    private String lockGetEndpoint;
+
+    @Value("${egov.lock.release.endpoint}")
+    private String lockReleaseEndpoint;
+
+    @Value("${egov.lock.set.endpoint}")
+    private String lockSetEndpoint;
 
     @Value("${egov.order.host}")
     private String orderHost;
