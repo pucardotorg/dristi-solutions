@@ -31,6 +31,12 @@ public class PartyDetails {
     @JsonProperty("partyName")
     private String partyName = null;
 
+    @JsonProperty("emails")
+    private List<String> emails = null;
+
+    @JsonProperty("mobileNumbers")
+    private List<String> mobileNumbers = null;
+
     @JsonProperty("address")
     private List<AddressDetails> address = null;
 

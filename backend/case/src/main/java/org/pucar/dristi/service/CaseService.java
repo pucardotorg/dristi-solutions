@@ -6146,7 +6146,7 @@ public class CaseService {
         }
     }
 
-    public List<AddressResponse> addAddress(AddAddressRequest addAddressRequest) {
+    public List<PartyAddressRequest> addAddress(AddAddressRequest addAddressRequest) {
 
         try {
             CourtCase courtCase = searchRedisCache(addAddressRequest.getRequestInfo(), String.valueOf(addAddressRequest.getCaseId()));
@@ -6169,7 +6169,7 @@ public class CaseService {
             auditDetails.setLastModifiedTime(System.currentTimeMillis());
             auditDetails.setLastModifiedBy(addAddressRequest.getRequestInfo().getUserInfo().getUuid());
 
-            decryptedCourtCase.setAdditionalDetails(enrichAdditionalDetailsForAddress(addAddressRequest, courtCase));
+            enrichAdditionalDetailsForAddress(addAddressRequest, decryptedCourtCase);
             decryptedCourtCase.setAuditdetails(auditDetails);
 
             CaseRequest caseRequest = new CaseRequest();
@@ -6186,7 +6186,7 @@ public class CaseService {
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
 
-            return null;
+            return addAddressRequest.getPartyAddresses();
 
         } catch (CustomException e) {
             throw e;
@@ -6197,7 +6197,7 @@ public class CaseService {
 
     }
 
-    private Object enrichAdditionalDetailsForAddress(AddAddressRequest addAddressRequest, CourtCase courtCase) {
+    private void enrichAdditionalDetailsForAddress(AddAddressRequest addAddressRequest, CourtCase courtCase) {
         try {
             ObjectNode additionalDetails = objectMapper.valueToTree(courtCase.getAdditionalDetails());
 
@@ -6251,12 +6251,10 @@ public class CaseService {
                 }
             }
 
-            // Update back into CourtCase
-            return objectMapper.convertValue(additionalDetails, Object.class);
+            courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetails, Object.class));
 
         } catch (Exception e) {
             log.error("Failed to enrich additional details for address", e);
-            return courtCase;
         }
     }
 }

@@ -72,7 +72,11 @@ public class OpenApiService {
 
     private final CaseUtil caseUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil) {
+    private final PendingTaskUtil pendingTaskUtil;
+
+    private final IndividualUtil individualUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, IndividualUtil individualUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -87,6 +91,8 @@ public class OpenApiService {
         this.userService = userService;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
+        this.individualUtil = individualUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -809,7 +815,7 @@ public class OpenApiService {
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
             //validate mobile number from pending task assigned to list
-            SearchResponse pendingTask = validateMobileNumber(referenceId, tenantId, mobileNumber);
+            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber,tenantId);
 
             OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
@@ -847,19 +853,18 @@ public class OpenApiService {
 
                         // Set the filtered list back into the order
                         order.setCompositeItems(filtered);
-
                     } catch (Exception e) {
                         throw new RuntimeException("Error filtering composite items", e);
                     }
-
-                    mapperOrderToOrderSearchResponse(response, order);
                 }
+
+                mapperOrderToOrderSearchResponse(response, order);
             }
 
             CourtCase courtCase = caseUtil.getCase(filingNumber);
             response.setCaseTitle(courtCase.getCaseTitle());
 
-            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTask);
+            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTaskAdditionalDetails);
 
             return response;
         } catch (Exception e) {
@@ -869,7 +874,7 @@ public class OpenApiService {
         }
     }
 
-    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, SearchResponse pendingTask) {
+    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, JsonNode pendingTaskAdditionalDetails) {
         if (additionalDetails == null) {
             return;
         }
@@ -877,49 +882,46 @@ public class OpenApiService {
         List<PartyDetails> partyDetailsList = new ArrayList<>();
 
         try {
+            // Convert additionalDetails into a JsonNode for parsing
             JsonNode rootNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
 
-            // Process respondent details
-            processRespondents(rootNode, partyDetailsList);
+            // ✅ Now handle pending task additionalDetails for filtering uniqueIds
+            if (pendingTaskAdditionalDetails != null && !pendingTaskAdditionalDetails.isEmpty()) {
+                // Convert JsonNode to Map for easier manipulation
+                Map<String, Object> additionalDetailsMap = objectMapper.convertValue(
+                        pendingTaskAdditionalDetails,
+                        new TypeReference<Map<String, Object>>() {}
+                );
 
-            // Process witness details
-            processWitnesses(rootNode, partyDetailsList, objectMapper);
+                // Extract uniqueIds list
+                List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
 
-            // Set the party details in the response
-            for (Data data : pendingTask.getData()) {
-                for (Field field : data.getFields()) {
-                    if ("additionalDetails".equals(field.getKey()) && field.getValue() != null) {
-                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {});
+                if (uniqueIdsList != null && !uniqueIdsList.isEmpty()) {
+                    // Build a set of uniqueIds for fast lookup
+                    Set<String> validUniqueIds = uniqueIdsList.stream()
+                            .map(entry -> entry.get("uniqueId"))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
 
-                        // Get the uniqueIds list from additionalDetails
-                        List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
 
-                        if (uniqueIdsList == null || uniqueIdsList.isEmpty() || response.getPartyDetails() == null) {
-                            return;
-                        }
+                    // Process respondent details
+                    processRespondents(rootNode, partyDetailsList,validUniqueIds);
 
-                        // Extract uniqueIds to filter by
-                        Set<String> validUniqueIds = uniqueIdsList.stream()
-                                .map(entry -> entry.get("uniqueId"))
-                                .collect(Collectors.toSet());
+                    // Process witness details
+                    processWitnesses(rootNode, partyDetailsList,validUniqueIds);
 
-                        // Filter partyDetails to only include those with matching uniqueIds
-                        List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
-                                .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
-                                .collect(Collectors.toList());
-                        response.setPartyDetails(filteredPartyDetails);
-                        break;
-                    }
+                    response.setPartyDetails(partyDetailsList);
                 }
             }
 
         } catch (Exception e) {
             log.error("Error while enriching party details", e);
-            // Continue with empty party details in case of error
+            // Fallback: continue with unfiltered party details if something goes wrong
         }
     }
 
-    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
+
+    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
         JsonNode respondentDetails = rootNode.path("respondentDetails");
         if (respondentDetails.isMissingNode() || !respondentDetails.has("formdata")) {
             return;
@@ -929,58 +931,86 @@ public class OpenApiService {
             if (!respondent.has("data")) continue;
 
             JsonNode data = respondent.path("data");
-            PartyDetails party = new PartyDetails();
-            party.setPartyType("RESPONDENT");
 
-            // Set name
-            if (data.has("respondentFirstName")) {
-                String firstName = data.path("respondentFirstName").asText();
-                String middleName = data.path("poaMiddleName").asText();
-                String lastName = data.path("poaLastName").asText();
+            if (respondent.has("uniqueId") && validUniqueIds.contains(respondent.path("uniqueId").asText()) ) {
+
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Accused");
+
+                // ✅ Extract and build full name
+                String firstName = data.path("respondentFirstName").asText("");
+                String middleName = data.path("respondentMiddleName").asText(""); // optional field
+                String lastName = data.path("respondentLastName").asText("");
 
                 String fullName = String.join(" ",
                         firstName,
-                        middleName != null ? middleName : "",
-                        lastName != null ? lastName : ""
+                        middleName,
+                        lastName
                 ).replaceAll("\\s+", " ").trim();
 
                 party.setPartyName(fullName);
-            }
 
-            // Set unique ID
-            if (respondent.has("uniqueId")) {
-                party.setUniqueId(respondent.path("uniqueId").asText());
-            }
+                // ✅ Unique ID
+                if (respondent.has("uniqueId")) {
+                    party.setUniqueId(respondent.path("uniqueId").asText());
+                }
 
-            // Process address details
-            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
-                List<AddressDetails> addresses = new ArrayList<>();
-                for (JsonNode addressNode : data.path("addressDetails")) {
-                    if (addressNode.has("addressDetails")) {
-                        JsonNode addrDetails = addressNode.path("addressDetails");
-                        AddressDetails address = new AddressDetails();
-
-                        address.setDoorNo(addrDetails.path("doorNo").asText());
-                        address.setStreet(addrDetails.path("street").asText());
-                        address.setLandmark(addrDetails.path("landmark").asText());
-                        address.setLocality(addrDetails.path("locality").asText());
-                        address.setCity(addrDetails.path("city").asText());
-                        address.setDistrict(addrDetails.path("district").asText());
-                        address.setState(addrDetails.path("state").asText());
-                        address.setPincode(addrDetails.path("pincode").asText());
-                        address.setCountry(addrDetails.path("country").asText());
-
-                        addresses.add(address);
+                // ✅ Extract phone numbers (if any)
+                if (data.has("phonenumbers")) {
+                    JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                    if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                        List<String> mobileList = new ArrayList<>();
+                        for (JsonNode phone : phoneNumbers) {
+                            mobileList.add(phone.asText());
+                        }
+                        party.setMobileNumbers(mobileList);
                     }
                 }
-                party.setAddress(addresses);
-            }
 
-            partyDetailsList.add(party);
+                // ✅ Extract email addresses (if any)
+                if (data.has("emails")) {
+                    JsonNode emails = data.path("emails").path("emailId");
+                    if (emails.isArray() && emails.size() > 0) {
+                        List<String> emailList = new ArrayList<>();
+                        for (JsonNode email : emails) {
+                            emailList.add(email.asText());
+                        }
+                        party.setEmails(emailList);
+                    }
+                }
+
+                // ✅ Process address details
+                if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                    List<AddressDetails> addresses = new ArrayList<>();
+                    for (JsonNode addressNode : data.path("addressDetails")) {
+                        if (addressNode.has("addressDetails")) {
+                            JsonNode addrDetails = addressNode.path("addressDetails");
+                            AddressDetails address = new AddressDetails();
+
+                            address.setDoorNo(addrDetails.path("doorNo").asText(""));
+                            address.setStreet(addrDetails.path("street").asText(""));
+                            address.setLandmark(addrDetails.path("landmark").asText(""));
+                            address.setLocality(addrDetails.path("locality").asText(""));
+                            address.setCity(addrDetails.path("city").asText(""));
+                            address.setDistrict(addrDetails.path("district").asText(""));
+                            address.setState(addrDetails.path("state").asText(""));
+                            address.setPincode(addrDetails.path("pincode").asText(""));
+                            address.setCountry(addrDetails.path("country").asText(""));
+
+                            addresses.add(address);
+                        }
+                    }
+                    party.setAddress(addresses);
+                }
+
+                // ✅ Add party details
+                partyDetailsList.add(party);
+            }
         }
     }
 
-    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList, ObjectMapper mapper) {
+
+    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
         JsonNode witnessDetails = rootNode.path("witnessDetails");
         if (witnessDetails.isMissingNode() || !witnessDetails.has("formdata")) {
             return;
@@ -990,53 +1020,78 @@ public class OpenApiService {
             if (!witness.has("data")) continue;
 
             JsonNode data = witness.path("data");
-            PartyDetails party = new PartyDetails();
-            party.setPartyType("WITNESS");
+            if (witness.has("uniqueId") && validUniqueIds.contains(witness.path("uniqueId").asText())) {
 
-            // Set name
-            if (data.has("firstName")) {
-                String firstName = data.path("firstName").asText();
-                String middleName = data.path("middleName").asText();
-                String lastName = data.path("lastName").asText();
-                String designation = data.path("witnessDesignation").asText();
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Witness");
 
-                String fullName = String.join(" ",
-                        firstName,
-                        middleName != null ? middleName : "",
-                        lastName != null ? lastName : "",
-                        designation != null ? "(" + designation + ")" : ""
-                ).replaceAll("\\s+", " ").trim();
-
-                party.setPartyName(fullName);
-            }
-
-            // Set unique ID
-            if (witness.has("uniqueId")) {
-                party.setUniqueId(witness.path("uniqueId").asText());
-            }
-
-            // Process address details if available
-            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
-                List<AddressDetails> addresses = new ArrayList<>();
-                for (JsonNode addressNode : data.path("addressDetails")) {
-                    AddressDetails address = new AddressDetails();
-
-                    address.setDoorNo(addressNode.path("doorNo").asText());
-                    address.setStreet(addressNode.path("street").asText());
-                    address.setLandmark(addressNode.path("landmark").asText());
-                    address.setLocality(addressNode.path("locality").asText());
-                    address.setCity(addressNode.path("city").asText());
-                    address.setDistrict(addressNode.path("district").asText());
-                    address.setState(addressNode.path("state").asText());
-                    address.setPincode(addressNode.path("pincode").asText());
-                    address.setCountry(addressNode.path("country").asText());
-
-                    addresses.add(address);
+                // Extract phone numbers (if any)
+                if (data.has("phonenumbers")) {
+                    JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                    if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                        List<String> mobileList = new ArrayList<>();
+                        for (JsonNode phone : phoneNumbers) {
+                            mobileList.add(phone.asText());
+                        }
+                        party.setMobileNumbers(mobileList);
+                    }
                 }
-                party.setAddress(addresses);
-            }
 
-            partyDetailsList.add(party);
+                // Extract email addresses (if any)
+                if (data.has("emails")) {
+                    JsonNode emails = data.path("emails").path("emailId");
+                    if (emails.isArray() && emails.size() > 0) {
+                        List<String> emailList = new ArrayList<>();
+                        for (JsonNode email : emails) {
+                            emailList.add(email.asText());
+                        }
+                        party.setEmails(emailList);
+                    }
+                }
+
+                // Set name
+                if (data.has("firstName")) {
+                    String firstName = data.path("firstName").asText();
+                    String middleName = data.path("middleName").asText();
+                    String lastName = data.path("lastName").asText();
+
+                    String fullName = String.join(" ",
+                            firstName,
+                            middleName != null ? middleName : "",
+                            lastName != null ? lastName : ""
+                    ).replaceAll("\\s+", " ").trim();
+
+                    party.setPartyName(fullName);
+                }
+
+                // Set unique ID
+                if (witness.has("uniqueId")) {
+                    party.setUniqueId(witness.path("uniqueId").asText());
+                }
+
+                // Process address details if available
+                if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                    List<AddressDetails> addresses = new ArrayList<>();
+                    for (JsonNode addressNode : data.path("addressDetails")) {
+                        AddressDetails address = new AddressDetails();
+
+                        address.setDoorNo(addressNode.path("doorNo").asText());
+                        address.setStreet(addressNode.path("street").asText());
+                        address.setLandmark(addressNode.path("landmark").asText());
+                        address.setLocality(addressNode.path("locality").asText());
+                        address.setCity(addressNode.path("city").asText());
+                        address.setDistrict(addressNode.path("district").asText());
+                        address.setState(addressNode.path("state").asText());
+                        address.setPincode(addressNode.path("pincode").asText());
+                        address.setCountry(addressNode.path("country").asText());
+
+                        addresses.add(address);
+                    }
+                    party.setAddress(addresses);
+                }
+
+                partyDetailsList.add(party);
+            }
         }
     }
 
@@ -1075,56 +1130,55 @@ public class OpenApiService {
     }
 
 
-    private SearchResponse validateMobileNumber(String referenceId, String tenantId, String mobileNumber) {
-        SearchRequest searchRequest = new SearchRequest();
-        IndexSearchCriteria criteria = new IndexSearchCriteria();
+    private JsonNode validateMobileNumber(String referenceId, String mobileNumber, String tenantId) {
+        JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
 
-        criteria.setModuleName("Pending Tasks Service");
-        criteria.setLimit(10);
-        criteria.setOffset(0);
-        criteria.setTenantId(tenantId);
-
-        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("referenceId", referenceId);
-        moduleSearchCriteria.put("isCompleted", false);
-
-        criteria.setModuleSearchCriteria(moduleSearchCriteria);
-        searchRequest.setIndexSearchCriteria(criteria);
-
-        SearchResponse searchResponse = inboxUtil.getPaymentTask(searchRequest);
-
-        if (!CollectionUtils.isEmpty(searchResponse.getData())) {
-            for (Data data : searchResponse.getData()) {
-                for (Field field : data.getFields()) {
-                    if ("assignedTo".equals(field.getKey()) && field.getValue() != null) {
-                        try {
-                            // Convert field value (which is a JSON array string) into a List of maps
-                            List<Map<String, Object>> assignedToList =
-                                    new ObjectMapper().convertValue(field.getValue(), new TypeReference<>() {
-                                    });
-
-                            boolean matchFound = assignedToList.stream()
-                                    .anyMatch(user ->
-                                            mobileNumber.equalsIgnoreCase((String) user.get("mobileNumber")));
-
-                            if (!matchFound) {
-                                throw new CustomException("INVALID_MOBILE",
-                                        "Provided mobile number does not match any assigned user for this referenceId");
-                            }
-
-                        } catch (Exception e) {
-                            throw new CustomException("MOBILE_VALIDATION_ERROR",
-                                    "Error validating mobile number: " + e.getMessage());
-                        }
-                    }
-                }
-            }
-        } else {
+        if (pendingTask == null || !pendingTask.has("hits")) {
             throw new CustomException("NO_TASK_FOUND",
                     "No pending task found for referenceId: " + referenceId);
         }
-        return searchResponse;
+
+        JsonNode hits = pendingTask.path("hits").path("hits");
+        if (!hits.isArray() || hits.isEmpty()) {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
+
+        for (JsonNode hit : hits) {
+            JsonNode source = hit.path("_source").path("Data");
+
+            // Step 1: Extract assignedTo UUIDs
+            List<String> assignedUuids = new ArrayList<>();
+            JsonNode assignedTo = source.path("assignedTo");
+            if (assignedTo.isArray()) {
+                for (JsonNode node : assignedTo) {
+                    String uuid = node.path("uuid").asText(null);
+                    if (uuid != null) assignedUuids.add(uuid);
+                }
+            }
+
+            if (assignedUuids.isEmpty()) {
+                throw new CustomException("NO_ASSOCIATED_USERS",
+                        "No assigned users found for referenceId: " + referenceId);
+            }
+
+            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
+
+            // Step 4: Match mobile number
+            for (Individual ind : individuals) {
+                if (ind.getMobileNumber() != null &&
+                        ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
+                    log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
+                    return source.path("additionalDetails");
+                }
+            }
+        }
+
+        throw new CustomException("INVALID_MOBILE",
+                "Provided mobile number does not match any assigned or litigant user for this referenceId");
     }
+
+
 
 
     private RequestInfo createInternalRequestInfo() {

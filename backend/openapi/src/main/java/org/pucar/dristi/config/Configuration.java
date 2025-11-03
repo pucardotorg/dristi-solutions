@@ -231,4 +231,26 @@ public class Configuration {
     @Value("${egov.case.search.path}")
     private String caseSearchPath;
 
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${elastic.pending.task.endpoint}")
+    private String pendingTaskIndexEndpoint;
+
+    @Value("${elastic.pending.task.search}")
+    private String pendingTaskSearchPath;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
 }
