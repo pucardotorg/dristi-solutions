@@ -5,16 +5,14 @@ import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import digit.util.DemandUtil;
 import digit.util.ETreasuryUtil;
+import digit.util.OfflinePaymentUtil;
 import digit.web.models.*;
 import digit.web.models.PaymentCalculator.BreakDown;
 import digit.web.models.PaymentCalculator.Calculation;
 import digit.web.models.PaymentCalculator.CalculationResponse;
 import digit.web.models.PaymentCalculator.TaskPaymentCriteria;
 import digit.web.models.PaymentCalculator.TaskPaymentRequest;
-import digit.web.models.demand.Demand;
-import digit.web.models.demand.DemandCriteria;
-import digit.web.models.demand.DemandRequest;
-import digit.web.models.demand.DemandResponse;
+import digit.web.models.demand.*;
 import digit.web.models.payment.BillResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.RequestInfoWrapper;
@@ -42,13 +40,16 @@ public class DemandService {
 
     private final ETreasuryUtil etreasuryUtil;
 
+    private final OfflinePaymentUtil offlinePaymentUtil;
+
     @Autowired
-    public DemandService(DemandUtil demandUtil, Configuration configuration, ServiceRequestRepository repository, ObjectMapper mapper, ETreasuryUtil etreasuryUtil) {
+    public DemandService(DemandUtil demandUtil, Configuration configuration, ServiceRequestRepository repository, ObjectMapper mapper, ETreasuryUtil etreasuryUtil, OfflinePaymentUtil offlinePaymentUtil) {
         this.demandUtil = demandUtil;
         this.configuration = configuration;
         this.repository = repository;
         this.mapper = mapper;
         this.etreasuryUtil = etreasuryUtil;
+        this.offlinePaymentUtil = offlinePaymentUtil;
     }
 
 
@@ -119,6 +120,8 @@ public class DemandService {
             return;
         }
 
+        closeOfflinePaymentTask(requestInfo, consumerCode, request.getTaskManagement().getFilingNumber(), tenantId);
+
         demandResponse.getDemands().forEach(d -> d.setStatus(Demand.StatusEnum.CANCELLED));
         log.info("Marking {} demands as CANCELLED", demandResponse.getDemands().size());
 
@@ -128,6 +131,33 @@ public class DemandService {
 
         DemandResponse updatedDemandResponse = demandUtil.updateDemand(demandRequest);
         log.info("Updated demand status to CANCELLED for consumer codes: {}, updated demands: {}", consumerCodes, updatedDemandResponse.getDemands());
+    }
+
+    private void closeOfflinePaymentTask(RequestInfo requestInfo, String consumerCode, String filingNumber, String tenantId) {
+        try {
+            log.info("Closing offline payment task for consumer code: {}", consumerCode);
+
+            // Build the offline payment task request
+             OfflinePaymentTask offlinePaymentTask = OfflinePaymentTask.builder()
+                    .consumerCode(consumerCode)
+                    .filingNumber(filingNumber)
+                    .tenantId(tenantId)
+                    .isOfflinePaymentCreation(false)
+                    .build();
+
+            OfflinePaymentTaskRequest offlinePaymentTaskRequest = OfflinePaymentTaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .offlinePaymentTask(offlinePaymentTask)
+                    .build();
+
+            // Call the offline payment API
+            offlinePaymentUtil.callOfflinePaymentAPI(offlinePaymentTaskRequest);
+
+            log.info("Successfully closed offline payment task for consumer code: {}", consumerCode);
+        } catch (Exception e) {
+            log.error("Error while closing offline payment task for consumer code: {}", consumerCode, e);
+            throw new CustomException("ERROR_CLOSING_OFFLINE_PAYMENT", "Error while closing offline payment task: " + e.getMessage());
+        }
     }
 
     /**

@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package digit.web.models.demand;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;

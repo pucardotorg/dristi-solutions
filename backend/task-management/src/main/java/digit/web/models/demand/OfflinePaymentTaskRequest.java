@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package digit.web.models.demand;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -14,24 +15,16 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OfflinePaymentTask {
+public class OfflinePaymentTaskRequest {
 
-    @JsonProperty("consumerCode")
-    @Valid
+    @JsonProperty("RequestInfo")
     @NotNull
-    private String consumerCode;
-
-    @JsonProperty("filingNumber")
     @Valid
+    private RequestInfo requestInfo;
+
+    @JsonProperty("offlinePaymentTask")
     @NotNull
-    private String filingNumber;
-
-    @JsonProperty("isOfflinePaymentCreation")
-    private boolean isOfflinePaymentCreation = true;
-
-    @JsonProperty("tenantId")
     @Valid
-    @NotNull
-    private String tenantId;
+    private OfflinePaymentTask offlinePaymentTask;
 
 }

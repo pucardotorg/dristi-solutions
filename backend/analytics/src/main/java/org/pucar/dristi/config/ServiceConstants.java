@@ -274,5 +274,6 @@ public class ServiceConstants {
     public static final String EVIDENCE = "EVIDENCE";
     public static final String LONG_PENDING_REGISTER = "Long Pending Register";
     public static final String REFER_TO_ADR = "REFER_TO_ADR";
+    public static final String CANCELLED = "CANCELLED";
 
 }

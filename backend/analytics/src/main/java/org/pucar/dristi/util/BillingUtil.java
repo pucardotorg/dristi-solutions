@@ -60,6 +60,9 @@ public class BillingUtil {
         String id = demand.getId();
         String businessService = demand.getBusinessService();
         String status = demand.getStatus().toString();
+        if (!offlinePaymentTask.isOfflinePaymentCreation()) {
+            status = CANCELLED;
+        }
         String tenantId = demand.getTenantId();
         String consumerCode = demand.getConsumerCode();
         String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
