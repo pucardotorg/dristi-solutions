@@ -223,7 +223,7 @@ const SmsPaymentPage = () => {
       name: item?.channelCode,
       fees: item?.fees || 0,
       deliveryTime: item?.channelDeliveryTime,
-      channelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
+      deliveryChannelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
       selected: false,
     }));
 

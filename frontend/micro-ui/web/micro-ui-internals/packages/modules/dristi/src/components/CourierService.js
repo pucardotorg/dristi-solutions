@@ -79,7 +79,7 @@ function CourierService({
     if (!processCourierData?.addressDetails?.length) return [];
 
     const channels = ["RPAD", "EPOST"];
-    const taskTypes = ["NOTICE", "SUMMONS"];
+    const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS"];
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
       taskTypes?.flatMap((taskType) =>
@@ -92,14 +92,14 @@ function CourierService({
         }))
       )
     );
-  }, [processCourierData, tenantId]);
+  }, [processCourierData, tenantId, orderType]);
 
   const { data: breakupResponse, isLoading: isBreakUpLoading } = window?.Digit?.Hooks?.dristi?.useSummonsPaymentBreakUp(
     {
       Criteria: paymentCriteriaList,
     },
     {},
-    `PAYMENT-${processCourierData?.uniqueId}-${paymentCriteriaList?.length > 0}`,
+    `PAYMENT-${processCourierData?.uniqueId}-${processCourierData?.addressDetails?.length}-${paymentCriteriaList?.length > 0}`,
     Boolean(paymentCriteriaList?.length > 0)
   );
 
@@ -133,7 +133,7 @@ function CourierService({
 
     const options = Object?.values(grouped)?.map((item) => ({
       ...item,
-      channelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
+      deliveryChannelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
     }));
 
     if (Array.isArray(processCourierData?.noticeCourierService) && processCourierData?.noticeCourierService?.length > 0) {
@@ -225,7 +225,7 @@ function CourierService({
                 options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
                 selected={processCourierData?.noticeCourierService}
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
-                optionsKey="channelName"
+                optionsKey="deliveryChannelName"
                 displayKey="channelCode"
                 disable={processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
                 active={noticeActive}
@@ -268,7 +268,7 @@ function CourierService({
                 onSelect={(value) => {
                   handleCourierServiceChange(value, "summons");
                 }}
-                optionsKey="channelName"
+                optionsKey="deliveryChannelName"
                 displayKey="channelCode"
                 disable={
                   processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
@@ -320,12 +320,16 @@ function CourierService({
           headerBarEnd={
             <CloseBtn
               onClick={() => {
+                if (isAddressLoading) return;
                 setShowAddAddressModalLocal(false);
               }}
             />
           }
           actionCancelLabel={t("CS_ADDRESS_CANCEL")}
-          actionCancelOnSubmit={() => setShowAddAddressModalLocal(false)}
+          actionCancelOnSubmit={() => {
+            if (isAddressLoading) return;
+            setShowAddAddressModalLocal(false);
+          }}
           actionSaveLabel={t("CS_ADDRESS_CONFIRM")}
           actionSaveOnSubmit={async () => {
             try {
@@ -350,7 +354,6 @@ function CourierService({
             !newAddress.state ||
             Object.values(addressErrors).some((error) => error)
           }
-          isBackButtonDisabled={isAddressLoading}
           className="add-address-modal"
           popupStyles={{ maxWidth: "600px", width: "100%" }}
         >

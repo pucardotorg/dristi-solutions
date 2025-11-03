@@ -64,16 +64,25 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     const addressPayload = {
       tenantId,
       caseId,
-      partyAddresses: [{ addresses: [newAddress], partyType: accusedData?.partyType, uniqueId: accusedData?.uniqueId }],
+      partyAddresses: [{ addresses: [newAddress], partyType: "Accused", uniqueId: accusedData?.uniqueId }],
     };
     const response = await DRISTIService.addAddress(addressPayload, {});
+    const partyResponse = response?.partyAddressList?.[0];
+    if (!partyResponse) return;
+
+    const newAddr = partyResponse?.addresses[0];
+    if (!newAddr) return;
+
     const updatedAddresses = [
       ...(processCourierData?.addressDetails || []),
       {
-        addressDetails: newAddress,
+        id: newAddr?.id,
+        addressDetails: newAddr,
         checked: true,
       },
     ];
+    handleDataChange({ addressDetails: updatedAddresses });
+    window.location.reload();
   };
 
   useEffect(() => {

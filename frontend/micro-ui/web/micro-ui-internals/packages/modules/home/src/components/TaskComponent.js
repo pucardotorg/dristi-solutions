@@ -907,9 +907,45 @@ const TasksComponent = ({
       tenantId,
       caseId: courierServicePendingTask?.caseId,
       filingNumber: courierOrderDetails?.filingNumber,
-      partyAddresses: [{ addresses: [newAddress], partyType: accusedData?.partyType, uniqueId: accusedData?.uniqueId }],
+      partyAddresses: [
+        { addresses: [newAddress], partyType: accusedData?.partyType === "Respondent" ? "Accused" : "Witness", uniqueId: accusedData?.uniqueId },
+      ],
     };
     const response = await DRISTIService.addAddress(addressPayload, {});
+
+    const partyResponse = response?.partyAddressList?.[0];
+    if (!partyResponse) return;
+
+    const { uniqueId, addresses = [] } = partyResponse;
+    const newAddr = addresses[0];
+    if (!newAddr) return;
+
+    const enrichedAddress = {
+      id: newAddr?.id,
+      addressDetails: newAddr,
+      checked: true,
+    };
+
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      const parties = updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
+      const partyIndex = parties.findIndex((p) => p?.uniqueId === uniqueId);
+
+      if (partyIndex > -1) {
+        const updatedParties = [...parties];
+        const updatedParty = { ...updatedParties[partyIndex] };
+
+        const currentAddresses = updatedParty?.data?.addressDetails || [];
+        updatedParty.data.addressDetails = [...currentAddresses, enrichedAddress];
+        updatedParties[partyIndex] = updatedParty;
+
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
   };
 
   const courierServiceSteps = useMemo(() => {
@@ -960,7 +996,7 @@ const TasksComponent = ({
         };
       }) || [];
     return courierServiceSteps;
-  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, t, active, isTaskManagementLoading, isLoader]);
+  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, handleAddAddress, t, active, isTaskManagementLoading, isLoader]);
 
   // Courier service modal configuration
   const courierServiceConfig = useMemo(() => {

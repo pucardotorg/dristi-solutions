@@ -55,7 +55,7 @@ export const prepareTaskPayload = ({
           channelCode: c?.channelCode || null,
           feePaidDate: null,
           statusChangeDate: null,
-          channelName: c?.channelName || null,
+          deliveryChannelName: c?.deliveryChannelName || null,
           paymentFees: null,
           paymentTransactionId: null,
           paymentStatus: null,
