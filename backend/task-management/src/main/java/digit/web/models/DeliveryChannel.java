@@ -53,4 +53,7 @@ public class DeliveryChannel {
     @JsonProperty("channelDeliveryTime")
     private String channelDeliveryTime;
 
+    @JsonProperty("deliveryChannelName")
+    private String deliveryChannelName;
+
 }

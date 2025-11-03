@@ -13,6 +13,9 @@ import java.util.Map;
 @Builder
 public class DeliveryChannel {
 
+    @JsonProperty("deliveryChannelName")
+    private String deliveryChannelName;
+
     @JsonProperty("channelName")
     private String channelName;
 
