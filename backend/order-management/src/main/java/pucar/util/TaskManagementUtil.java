@@ -56,23 +56,24 @@ public class TaskManagementUtil {
     }
 
     public List<TaskManagement> searchTaskManagement(TaskSearchRequest request) {
-
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        StringBuilder uri = new StringBuilder(config.getTaskManagementServiceHost()).append(config.getTaskManagementSearchEndpoint());
+        StringBuilder uri = new StringBuilder(config.getTaskManagementServiceHost())
+                .append(config.getTaskManagementSearchEndpoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-
         try {
-            JsonNode jsonNode = objectMapper.valueToTree(response);
-            return objectMapper.convertValue(jsonNode,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, TaskManagement.class));
+            TaskManagementSearchResponse searchResponse = objectMapper.convertValue(response, TaskManagementSearchResponse.class);
+            if (searchResponse != null && searchResponse.getTaskManagementRecords() != null) {
+                return searchResponse.getTaskManagementRecords();
+            } else {
+                return Collections.emptyList();
+            }
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException(); // add log and code
+            throw new CustomException("TASK_SEARCH_ERROR", "Error occurred while fetching task management records");
         }
-
     }
 
     public TaskManagementResponse updateTaskManagement(TaskManagementRequest request) {
@@ -104,6 +105,7 @@ public class TaskManagementUtil {
             List<String> uniqueIds1 = getStrings(order, orderType, uniqueIds);
             if (uniqueIds1 != null) return uniqueIds1;
             TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
+                    .tenantId(order.getTenantId())
                     .filingNumber(order.getFilingNumber())
                     .status(TASK_CREATION)
                     .taskType(List.of(orderType)) // Use the actual order type (NOTICE or SUMMONS)
