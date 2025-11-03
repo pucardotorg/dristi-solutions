@@ -51,4 +51,6 @@ public class ServiceConstants {
     public static final String COMPLAINANT_PRIMARY = "complainant.primary";
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
     public static final String MANUAL = "MANUAL_";
+    public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
+    public static final String ONLINE = "ONLINE";
 }

@@ -72,4 +72,7 @@ public class TaskManagement {
     @Valid
     private WorkflowObject workflow;
 
+    @JsonProperty("documents")
+    private List<Document> documents;
+
 }

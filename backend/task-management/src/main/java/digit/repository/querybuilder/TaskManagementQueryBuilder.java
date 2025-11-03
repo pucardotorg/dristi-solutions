@@ -75,6 +75,7 @@ public class TaskManagementQueryBuilder {
             firstCriteria = addTaskCriteria(criteria.getCourtId(), query, firstCriteria, "task.court_id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getOrderNumber(), query, firstCriteria, "task.order_number = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getOrderItemId(), query, firstCriteria, "task.order_item_id = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(criteria.getStatus(), query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskListCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getFilingNumber(), query, firstCriteria, "task.filing_number = ?", preparedStmtList, preparedStmtArgList);
             addTaskCriteria(criteria.getId(), query, firstCriteria, "task.id = ?", preparedStmtList, preparedStmtArgList);

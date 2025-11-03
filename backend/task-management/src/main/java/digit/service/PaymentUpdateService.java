@@ -8,11 +8,9 @@ import digit.repository.TaskManagementRepository;
 import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.*;
-import digit.web.models.order.*;
 import digit.web.models.payment.*;
 import digit.web.models.payment.Bill;
 import digit.web.models.pendingtask.*;
-import digit.web.models.taskdetails.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -37,6 +35,7 @@ public class PaymentUpdateService {
     private final Producer producer;
     private final PendingTaskUtil pendingTaskUtil;
     private final CaseUtil caseUtil;
+    private final ETreasuryUtil etreasuryUtil;
 
     /**
      * Main entry to process incoming payment update events.
@@ -48,7 +47,7 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail detail : paymentRequest.getPayment().getPaymentDetails()) {
-                handlePaymentDetail(requestInfo, tenantId, detail);
+                handlePaymentDetail(requestInfo, detail, paymentRequest.getPayment().getPaymentMode());
             }
 
         } catch (Exception e) {
@@ -57,13 +56,13 @@ public class PaymentUpdateService {
         }
     }
 
-    private void handlePaymentDetail(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void handlePaymentDetail(RequestInfo requestInfo, PaymentDetail paymentDetail, String paymentMode) {
         if (!configuration.getTaskBusinessServiceName().equalsIgnoreCase(paymentDetail.getBusinessService())) return;
 
         try {
             String taskNumber = extractTaskNumber(paymentDetail.getBill());
             TaskManagement taskManagement = fetchTaskByNumber(taskNumber);
-            updateWorkflowStatus(requestInfo, taskManagement);
+            updateWorkflowAndAddReceipt(requestInfo, taskManagement, paymentDetail, paymentMode);
             closePaymentPendingTask(requestInfo, taskManagement);
             if (COMPLETED.equalsIgnoreCase(taskManagement.getStatus())) {
                 taskCreationService.generateFollowUpTasks(requestInfo, taskManagement);
@@ -114,7 +113,7 @@ public class PaymentUpdateService {
         return tasks.get(0);
     }
 
-    private void updateWorkflowStatus(RequestInfo requestInfo, TaskManagement taskManagement) {
+    private void updateWorkflowAndAddReceipt(RequestInfo requestInfo, TaskManagement taskManagement, PaymentDetail paymentDetail, String paymentMode) {
         Role role = Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build();
         requestInfo.getUserInfo().getRoles().add(role);
         WorkflowObject workflowObject = new WorkflowObject();
@@ -126,7 +125,13 @@ public class PaymentUpdateService {
                 .requestInfo(requestInfo)
                 .build();
         workflowService.updateWorkflowStatus(request);
-
+        Document paymentReceipt = null;
+        if (ONLINE.equalsIgnoreCase(paymentMode)) {
+            paymentReceipt = getPaymentReceipt(request, paymentDetail.getBillId(), taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix());
+        }
+        if (paymentReceipt != null) {
+            taskManagement.setDocuments(List.of(paymentReceipt));
+        }
         producer.push(configuration.getUpdateTaskManagementTopic(), request);
     }
 
@@ -152,6 +157,30 @@ public class PaymentUpdateService {
             log.error("Error fetching case for filing number: {}", filingNumber, e);
             return null;
         }
+    }
+
+    public Document getPaymentReceipt(TaskManagementRequest taskManagementRequest, String id, String consumerCode){
+        try {
+            log.info("Enriching payment receipt for case with id: {}", id);
+            JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(taskManagementRequest.getRequestInfo(), id);
+            Document document = Document.builder()
+                    .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
+                    .documentType(PAYMENT_RECEIPT)
+                    .additionalDetails(getAdditionalDetails(consumerCode))
+                    .build();
+            document.setId(String.valueOf(UUID.randomUUID()));
+            document.setDocumentUid(document.getId());
+            return document;
+        } catch (Exception e) {
+            log.error("Error enriching payment receipt: {}", e.toString());
+            throw new CustomException("ENRICHMENT_EXCEPTION", "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
+        }
+    }
+
+    private Object getAdditionalDetails(String consumerCode) {
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("consumerCode", consumerCode);
+        return additionalDetails;
     }
 //    public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
 //        for (PartyDetails party : taskManagement.getPartyDetails()) {
