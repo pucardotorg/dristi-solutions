@@ -6146,7 +6146,7 @@ public class CaseService {
         }
     }
 
-    public List<AddressResponse> addAddress(AddAddressRequest addAddressRequest) {
+    public List<PartyAddressRequest> addAddress(AddAddressRequest addAddressRequest) {
 
         try {
             CourtCase courtCase = searchRedisCache(addAddressRequest.getRequestInfo(), String.valueOf(addAddressRequest.getCaseId()));
@@ -6186,7 +6186,7 @@ public class CaseService {
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
 
-            return null;
+            return addAddressRequest.getPartyAddresses();
 
         } catch (CustomException e) {
             throw e;

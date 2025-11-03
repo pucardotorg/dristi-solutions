@@ -312,9 +312,9 @@ public class CaseApiController {
     public ResponseEntity<AddAddressResponse> caseV1AddAddress(
             @Parameter(in = ParameterIn.DEFAULT, description = "This API is used to add or update addresses for parties involved in a case. It can handle multiple addresses for multiple parties in a single request.", required = true, schema = @Schema()) @Valid @RequestBody AddAddressRequest body) {
 
-        List<AddressResponse> addressResponses = caseService.addAddress(body);
+        List<PartyAddressRequest> addressResponses = caseService.addAddress(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        AddAddressResponse addAddressResponse = AddAddressResponse.builder().addresses(addressResponses).responseInfo(responseInfo).build();
+        AddAddressResponse addAddressResponse = AddAddressResponse.builder().partyAddressList(addressResponses).responseInfo(responseInfo).build();
         return new ResponseEntity<>(addAddressResponse, HttpStatus.OK);
     }
 
