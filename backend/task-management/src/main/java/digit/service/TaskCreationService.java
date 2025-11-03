@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -114,6 +115,8 @@ public class TaskCreationService {
             for (TaskDetails detail : taskDetailsList) {
                 try {
                     taskTemplate.setTaskDetails(detail);
+                    Role role = Role.builder().code(TASK_CREATOR).name(TASK_CREATOR).tenantId(taskManagement.getTenantId()).build();
+                    requestInfo.getUserInfo().getRoles().add(role);
                     taskUtil.callCreateTask(TaskRequest.builder()
                             .requestInfo(requestInfo)
                             .task(taskTemplate)
