@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Address {
 
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("doorNo")
     private String doorNo;
 
