@@ -398,6 +398,7 @@ function EFilingCases({ path }) {
     {
       criteria: {
         filingNumber: caseDetails?.filingNumber,
+        status: "PENDING_PAYMENT",
         tenantId: tenantId,
         taskType: ["NOTICE", "SUMMONS"],
       },
@@ -713,7 +714,7 @@ function EFilingCases({ path }) {
                   middleName: accusedDetails.respondentMiddleName || "",
                   lastName: accusedDetails.respondentLastName || "",
                   addressDetails: mergedAddresses,
-                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
+                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
                 },
               },
             };
@@ -731,7 +732,7 @@ function EFilingCases({ path }) {
                   summonsCourierService: [],
                   addressDetails: accusedDetails.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                   uniqueId: accused?.uniqueId || "",
-                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
+                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
                 },
               },
               displayindex: 0,
@@ -755,7 +756,7 @@ function EFilingCases({ path }) {
                 summonsCourierService: [],
                 addressDetails: completedAccuseds?.[i]?.data?.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                 uniqueId: completedAccuseds?.[i]?.uniqueId || "",
-                isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES",
+                isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
               },
             },
             displayindex: 0,

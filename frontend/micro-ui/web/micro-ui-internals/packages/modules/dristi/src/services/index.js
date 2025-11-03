@@ -275,6 +275,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  addAddress: (data, params) =>
+    Request({
+      url: Urls.case.addAddress,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   addNewWitness: (data, params) =>
     Request({
       url: Urls.case.addNewWitness,

@@ -110,6 +110,7 @@ export const Urls = {
     addNewWitness: "/case/v2/add/witness",
     taskCreate: "/task/v1/create",
     searchTasks: "/task/v1/search",
+    addAddress: "/case/v1/address/_add",
   },
   hearing: {
     hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",

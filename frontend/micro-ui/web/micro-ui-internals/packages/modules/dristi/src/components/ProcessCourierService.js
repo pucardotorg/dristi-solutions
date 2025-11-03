@@ -3,6 +3,7 @@ import isEqual from "lodash/isEqual";
 import CourierService from "./CourierService";
 import Modal from "./Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { DRISTIService } from "../services";
 
 const Heading = (props) => {
   return <h1 className="main-heading">{props.label}</h1>;
@@ -23,6 +24,9 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [summonsActive, setSummonsActive] = useState(false);
   const [noticeActive, setNoticeActive] = useState(false);
   const [checked, setChecked] = useState(false);
+  const urlParams = new URLSearchParams(window.location.search);
+  const caseId = urlParams.get("caseId");
+  const tenantId = Digit.ULBService.getCurrentTenantId();
 
   const handleDataChange = (data) => {
     const updatedData = {
@@ -56,6 +60,22 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   };
 
+  const handleAddAddress = async (newAddress, accusedData) => {
+    const addressPayload = {
+      tenantId,
+      caseId,
+      partyAddresses: [{ addresses: [newAddress], partyType: accusedData?.partyType, uniqueId: accusedData?.uniqueId }],
+    };
+    const response = await DRISTIService.addAddress(addressPayload, {});
+    const updatedAddresses = [
+      ...(processCourierData?.addressDetails || []),
+      {
+        addressDetails: newAddress,
+        checked: true,
+      },
+    ];
+  };
+
   useEffect(() => {
     if (formData?.[config?.key] && !isEqual(processCourierData, formData?.[config?.key])) {
       setProcessCourierData(formData?.[config?.key]);
@@ -76,7 +96,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setNoticeActive={setNoticeActive}
         setChecked={setChecked}
         setShowConfirmationModal={setShowConfirmationModal}
-        handleDataChange={handleDataChange}
+        handleAddAddress={handleAddAddress}
       />
       {showConfirmationModal && (
         <Modal

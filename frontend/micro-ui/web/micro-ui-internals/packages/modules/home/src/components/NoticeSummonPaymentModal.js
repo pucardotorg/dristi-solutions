@@ -11,7 +11,7 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
-function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManagementList, courierOrderDetails }) {
+function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManagementList, courierOrderDetails, refetchPendingTasks }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const toast = useToast();
@@ -175,6 +175,7 @@ function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManage
         const fileStoreId = response?.Document?.fileStore;
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
+          await refetchPendingTasks();
           setHideCancelButton(true);
         }
       } else {

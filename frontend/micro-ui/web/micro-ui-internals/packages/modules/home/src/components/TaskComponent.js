@@ -66,7 +66,7 @@ const TasksComponent = ({
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [showCourierServiceModal, setShowCourierServiceModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
-  const [courierServicePendingTask, setCourierServicePendingTask] = useState({});
+  const [courierServicePendingTask, setCourierServicePendingTask] = useState(null);
   const [courierOrderDetails, setCourierOrderDetails] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
@@ -146,6 +146,7 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        status: "PENDING_PAYMENT",
         tenantId: tenantId,
       },
     },
@@ -901,6 +902,16 @@ const TasksComponent = ({
     });
   }, []);
 
+  const handleAddAddress = async (newAddress, accusedData) => {
+    const addressPayload = {
+      tenantId,
+      caseId: courierServicePendingTask?.caseId,
+      filingNumber: courierOrderDetails?.filingNumber,
+      partyAddresses: [{ addresses: [newAddress], partyType: accusedData?.partyType, uniqueId: accusedData?.uniqueId }],
+    };
+    const response = await DRISTIService.addAddress(addressPayload, {});
+  };
+
   const courierServiceSteps = useMemo(() => {
     const courierServiceSteps =
       courierOrderDetails?.additionalDetails?.formdata?.[formDataKeyMap[courierOrderDetails?.orderType]]?.party?.map((item, i) => {
@@ -925,6 +936,7 @@ const TasksComponent = ({
           type: "modal",
           className: "process-courier-service",
           async: true,
+          hideCancel: i === 0,
           heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderDetails?.orderType)} for ${fullName}` },
           modalBody: (
             <CourierService
@@ -938,7 +950,7 @@ const TasksComponent = ({
               noticeActive={active}
               setNoticeActive={setActive}
               orderType={orderType}
-              setCourierOrderDetails={setCourierOrderDetails}
+              handleAddAddress={handleAddAddress}
             />
           ),
           actionSaveOnSubmit: async () => {
@@ -956,6 +968,7 @@ const TasksComponent = ({
       handleClose: () => {
         setShowCourierServiceModal(false);
         setHideCancelButton(false);
+        setCourierServicePendingTask(null);
       },
       isStepperModal: true,
       actionSaveLabel: t("CS_COURIER_NEXT"),
@@ -976,6 +989,7 @@ const TasksComponent = ({
               formDataKey={formDataKeyMap[courierOrderDetails?.orderType]}
               taskManagementList={taskManagementList}
               courierOrderDetails={courierOrderDetails}
+              refetchPendingTasks={refetch}
             />
           ),
         },

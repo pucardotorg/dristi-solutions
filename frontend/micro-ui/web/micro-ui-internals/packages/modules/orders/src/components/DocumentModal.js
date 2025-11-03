@@ -101,6 +101,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
       actionSaveLabel={config?.isStepperModal ? config?.steps[step]?.actionSaveLabel || config?.actionSaveLabel : config?.actionSaveLabel}
       actionSaveOnSubmit={actionSaveOnSubmit}
       hideSubmit={config?.isStepperModal ? config?.steps[step]?.hideSubmit || config?.hideSubmit : config?.hideSubmit}
+      hideCancel={config?.isStepperModal ? config?.steps[step]?.hideCancel || config?.hideCancel : config?.hideCancel}
       actionCancelLabel={config?.isStepperModal ? config?.steps[step]?.actionCancelLabel || config?.actionCancelLabel : config?.actionCancelLabel}
       actionCancelOnSubmit={actionCancelOnSubmit}
       formId="modal-action"
