@@ -22,6 +22,6 @@ public class AddAddressResponse {
     @Valid
     private ResponseInfo responseInfo = null;
 
-    @JsonProperty("addresses")
-    private List<AddressResponse> addresses;
+    @JsonProperty("partyAddressList")
+    private List<PartyAddressRequest> partyAddressList;
 }
