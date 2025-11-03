@@ -1,20 +1,20 @@
 package digit.web.controllers;
 
+import digit.service.TaskCreationService;
 import digit.service.TaskManagementService;
 import digit.util.ResponseInfoFactory;
+import digit.util.TaskUtil;
 import digit.web.models.*;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,12 +26,14 @@ public class TaskManagementController {
 
     private final TaskManagementService taskManagementService;
     private final ResponseInfoFactory responseInfoFactory;
+    private final TaskCreationService taskCreationService;
 
 
     @Autowired
-    public TaskManagementController(TaskManagementService taskManagementService, ResponseInfoFactory responseInfoFactory) {
+    public TaskManagementController(TaskManagementService taskManagementService, ResponseInfoFactory responseInfoFactory, TaskCreationService taskCreationService) {
         this.taskManagementService = taskManagementService;
         this.responseInfoFactory = responseInfoFactory;
+        this.taskCreationService = taskCreationService;
     }
 
     @RequestMapping(value = "/v1/_create", method = RequestMethod.POST)
@@ -82,4 +84,12 @@ public class TaskManagementController {
         return ResponseEntity.accepted().body(response);
     }
 
+    @PostMapping("/v1/generate")
+    public void generateFollowUpTasks(@RequestBody TaskManagementRequest request) {
+        try {
+            taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
+        } catch (Exception e) {
+            log.error("Error generating follow-up tasks: {}", e.getMessage(), e);
+        }
+    }
 }

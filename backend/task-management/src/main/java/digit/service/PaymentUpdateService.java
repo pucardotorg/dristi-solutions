@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.kafka.Producer;
@@ -10,10 +11,12 @@ import digit.web.models.cases.*;
 import digit.web.models.order.*;
 import digit.web.models.payment.*;
 import digit.web.models.payment.Bill;
+import digit.web.models.pendingtask.*;
 import digit.web.models.taskdetails.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +35,8 @@ public class PaymentUpdateService {
     private final TaskCreationService taskCreationService;
     private final Configuration configuration;
     private final Producer producer;
+    private final PendingTaskUtil pendingTaskUtil;
+    private final CaseUtil caseUtil;
 
     /**
      * Main entry to process incoming payment update events.
@@ -57,16 +62,39 @@ public class PaymentUpdateService {
 
         try {
             String taskNumber = extractTaskNumber(paymentDetail.getBill());
-            TaskManagement task = fetchTaskByNumber(taskNumber);
-
-            updateWorkflowStatus(requestInfo, task);
-            if (COMPLETED.equalsIgnoreCase(task.getStatus())) {
-                taskCreationService.generateFollowUpTasks(requestInfo, task);
+            TaskManagement taskManagement = fetchTaskByNumber(taskNumber);
+            updateWorkflowStatus(requestInfo, taskManagement);
+            closePaymentPendingTask(requestInfo, taskManagement);
+            if (COMPLETED.equalsIgnoreCase(taskManagement.getStatus())) {
+                taskCreationService.generateFollowUpTasks(requestInfo, taskManagement);
             }
         } catch (CustomException ce) {
             throw new CustomException("PAYMENT_UPDATE_ERR", ce.getMessage());
         } catch (Exception e) {
             log.error("Error handling payment detail: {}", e.getMessage(), e);
+        }
+    }
+
+    private void closePaymentPendingTask(RequestInfo requestInfo, TaskManagement taskManagement) {
+        try {
+            log.info("Closing payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
+            String referenceId = MANUAL + taskManagement.getOrderNumber() + (taskManagement.getOrderItemId() != null ? taskManagement.getOrderItemId() : "");
+            CourtCase courtCase = fetchCase(requestInfo, taskManagement.getFilingNumber());
+            if (courtCase == null) return;
+            PendingTask pendingTask = PendingTask.builder()
+                            .referenceId(referenceId)
+                            .name("Completed")
+                            .entityType(configuration.getTaskBusinessServiceName())
+                            .status(COMPLETED)
+                            .filingNumber(courtCase.getFilingNumber())
+                            .caseId(courtCase.getId().toString())
+                            .caseTitle(courtCase.getCaseTitle())
+                            .isCompleted(true)
+                            .build();
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+            log.info("Successfully closed payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
+        } catch (CustomException e) {
+            log.error("Error closing payment pending task: {}", e.getMessage(), e);
         }
     }
 
@@ -87,6 +115,8 @@ public class PaymentUpdateService {
     }
 
     private void updateWorkflowStatus(RequestInfo requestInfo, TaskManagement taskManagement) {
+        Role role = Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build();
+        requestInfo.getUserInfo().getRoles().add(role);
         WorkflowObject workflowObject = new WorkflowObject();
         workflowObject.setAction(MAKE_PAYMENT);
         taskManagement.setWorkflow(workflowObject);
@@ -100,6 +130,29 @@ public class PaymentUpdateService {
         producer.push(configuration.getUpdateTaskManagementTopic(), request);
     }
 
+    private CourtCase fetchCase(RequestInfo requestInfo, String filingNumber) {
+        log.debug("Fetching case details for filing number: {}", filingNumber);
+
+        try {
+            JsonNode caseNode = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(List.of(CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build()))
+                    .build());
+
+            if (caseNode == null) {
+                log.error("No case found for filing number: {}", filingNumber);
+                throw new RuntimeException("Case not found for filing number: " + filingNumber);
+            }
+
+            CourtCase courtCase = objectMapper.convertValue(caseNode, CourtCase.class);
+            log.debug("Successfully fetched case with ID: {} for filing number: {}",
+                    courtCase.getId(), filingNumber);
+            return courtCase;
+        } catch (Exception e) {
+            log.error("Error fetching case for filing number: {}", filingNumber, e);
+            return null;
+        }
+    }
 //    public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
 //        for (PartyDetails party : taskManagement.getPartyDetails()) {
 //            if (party.getRespondentDetails() != null) {
