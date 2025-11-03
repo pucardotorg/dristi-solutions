@@ -15,6 +15,9 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
+import org.pucar.dristi.web.models.address.AddAddressRequest;
+import org.pucar.dristi.web.models.address.AddAddressResponse;
+import org.pucar.dristi.web.models.address.AddressResponse;
 import org.pucar.dristi.web.models.bailbond.*;
 import org.pucar.dristi.web.models.cases.AddressDetails;
 import org.pucar.dristi.web.models.cases.CourtCase;
@@ -1201,6 +1204,14 @@ public class OpenApiService {
         userInfo.setType("SYSTEM");
         userInfo.setTenantId(configuration.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    public AddAddressResponse addAddress(AddAddressRequest addAddressRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getCaseServiceHost()).append(configuration.getCaseServiceAddAddressEndpoint());
+
+        Object response = serviceRequestRepository.fetchResult(uri, addAddressRequest);
+        return objectMapper.convertValue(response, AddAddressResponse.class);
     }
 
 }
