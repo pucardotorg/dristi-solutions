@@ -189,7 +189,7 @@ public class ServiceConstants {
     public static final String msgId = "1730882648558|en_IN";
     public static final String SYSTEM = "SYSTEM";
 
-    public static final String DCA = "DCA_NOTICE";
+    public static final String DCA = "DCA Notice";
     public static final String TASK_CREATION = "TASK_CREATION";
 
     public static final String URL = "url";
