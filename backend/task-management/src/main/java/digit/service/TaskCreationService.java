@@ -144,7 +144,7 @@ public class TaskCreationService {
         try {
             JsonNode caseNode = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                     .requestInfo(requestInfo)
-                    .criteria(List.of(CaseCriteria.builder().filingNumber(filingNumber).build()))
+                    .criteria(List.of(CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build()))
                     .build());
             
             if (caseNode == null) {

@@ -155,4 +155,18 @@ public class Configuration {
 
     @Value("${judge.name}")
     private String judgeName;
+
+    // Inbox Config
+    @Value("${dristi.inbox.host}")
+    private String inboxHost;
+
+    @Value("${dristi.inbox.index.search.endpoint}")
+    private String indexSearchEndPoint;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
 }
