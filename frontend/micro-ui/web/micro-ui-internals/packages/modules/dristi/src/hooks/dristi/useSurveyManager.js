@@ -13,6 +13,8 @@ export const useSurveyManager = (params) => {
 
   const userInfo = Digit.UserService.getUser()?.info;
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
+  const hasAdvocateRole = useMemo(() => userInfo?.roles?.some(role => role.code === "ADVOCATE_ROLE"), [userInfo]);
+  const isLitigant = useMemo(() => userInfo?.type === "CITIZEN" && !hasAdvocateRole, [userInfo]);
 
   // Call backend to check eligibility
   const checkEligibility = useCallback(async () => {
@@ -30,6 +32,11 @@ export const useSurveyManager = (params) => {
     setCustomOnClose(() => onClose);
 
     if (!isCitizen) {
+      onClose?.();
+      return;
+    }
+
+    if(isLitigant && context === "JOIN_CASE_PAYMENT") {
       onClose?.();
       return;
     }
