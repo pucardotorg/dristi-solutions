@@ -17,8 +17,11 @@ import java.util.Map;
 @NoArgsConstructor
 public class DeliveryChannel {
 
+    @JsonProperty("deliveryChannelName")
+    private String deliveryChannelName;
+
     @JsonProperty("channelName")
-    private ChannelName channelName;
+    private String channelName;
 
     @JsonProperty("paymentFees")
     private String paymentFees;
