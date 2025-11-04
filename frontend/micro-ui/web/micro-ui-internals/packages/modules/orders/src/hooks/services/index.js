@@ -335,9 +335,9 @@ export const openApiService = {
       data,
       params,
     }),
-  getCaseLockStatus: (data, params) =>
+  getPaymentLockStatus: (data, params) =>
     Request({
-      url: Urls.openApi.getCaseLockStatus,
+      url: Urls.openApi.getPaymentLockStatus,
       useCache: false,
       userService: false,
       data,

@@ -51,11 +51,11 @@ export const Urls = {
     getTreasuryPaymentBreakup : "/openapi/payment/v1/_getHeadBreakDown",
     fetchBill : "/openapi/payment/v1/_fetchbill",
     eTreasury: "/openapi/payment/v1/_processChallan",
-    searchBill: "", // TODO : change url
-    billFileStoreId: "", // Todo : url
-    setCaseUnlock: "",
-    getCaseLockStatus: "",
-    setCaseLock: "",
+    searchBill: "/openapi/payment/v1/_searchbill",
+    billFileStoreId: "/openapi/payment/v1/getPaymentReceipt",
+    setCaseUnlock: "/openapi/lock/v1/_release",
+    getPaymentLockStatus: "/openapi/lock/v1/_get",
+    setCaseLock: "/openapi/lock/v1/_set",
     FileFetchByFileStore: "/openapi/v1/landing_page/file",
   },
 };
