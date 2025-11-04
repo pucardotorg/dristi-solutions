@@ -270,7 +270,6 @@ public class OrderUtil {
         for (TaskManagement taskManagement : taskManagementList) {
             log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
             expireTaskManagementWorkflow(taskManagement, requestInfo);
-            // TODO
             closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
         }
 

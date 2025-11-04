@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.taskManagement.TaskManagement;
-import org.pucar.dristi.web.models.taskManagement.TaskManagementRequest;
-import org.pucar.dristi.web.models.taskManagement.TaskManagementResponse;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
+import org.pucar.dristi.web.models.taskManagement.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -55,8 +52,8 @@ public class TaskManagementUtil {
 
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            return objectMapper.convertValue(jsonNode,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, TaskManagement.class));
+            TaskManagementSearchResponse taskManagementSearchResponse = objectMapper.convertValue(jsonNode, TaskManagementSearchResponse.class);
+            return taskManagementSearchResponse.getTaskManagementRecords();
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
