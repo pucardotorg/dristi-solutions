@@ -55,6 +55,8 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
                             .partyDetails(getObjectListFromJson(rs.getString("party_details"), new TypeReference<>() {
                             }))
                             .taskType(rs.getString("task_type"))
+                            .documents(getObjectListFromJson(rs.getString("documents"), new TypeReference<>() {
+                            }))
                             .taskManagementNumber(rs.getString("task_management_number"))
                             .auditDetails(auditDetails)
                             .build();

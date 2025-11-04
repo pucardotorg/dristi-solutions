@@ -1140,6 +1140,7 @@ public class OpenApiService {
     private JsonNode validateMobileNumber(String referenceId, String mobileNumber, String tenantId) {
         JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
 
+        JsonNode pendingTaskAdditionalDetails = null;
         if (pendingTask == null || !pendingTask.has("hits")) {
             throw new CustomException("NO_TASK_FOUND",
                     "No pending task found for referenceId: " + referenceId);
@@ -1157,12 +1158,6 @@ public class OpenApiService {
             // Step 1: Extract assignedTo UUIDs
             List<String> assignedUuids = new ArrayList<>();
             JsonNode assignedTo = source.path("assignedTo");
-
-            boolean isCompleted = source.path("isCompleted").asBoolean();
-            if (isCompleted) {
-                return null;
-            }
-
             if (assignedTo.isArray()) {
                 for (JsonNode node : assignedTo) {
                     String uuid = node.path("uuid").asText(null);
@@ -1178,21 +1173,26 @@ public class OpenApiService {
             List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
 
             // Step 4: Match mobile number
+            boolean isValidMobileNumber= false;
             for (Individual ind : individuals) {
                 if (ind.getMobileNumber() != null &&
                         ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
                     log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
-                    return source.path("additionalDetails");
+                    isValidMobileNumber= true;
+                    pendingTaskAdditionalDetails = source.path("additionalDetails");
                 }
             }
+            if(!isValidMobileNumber){
+                throw new CustomException("INVALID_MOBILE",
+                        "Provided mobile number does not match any assigned or litigant user for this referenceId");
+            }
+            boolean isCompleted = source.path("isCompleted").asBoolean(false);
+            if(isCompleted){
+                return null;
+            }
         }
-
-        throw new CustomException("INVALID_MOBILE",
-                "Provided mobile number does not match any assigned or litigant user for this referenceId");
+        return pendingTaskAdditionalDetails;
     }
-
-
-
 
     private RequestInfo createInternalRequestInfo() {
         org.egov.common.contract.request.User userInfo = new User();

@@ -22,6 +22,7 @@ public class TaskManagementQueryBuilder {
             "task.order_item_id as order_item_id, " +
             "task.task_type as task_type, " +
             "task.task_management_number as task_management_number, " +
+            "task.documents as documents, " +
             "task.party_details as party_details, " +
             "task.additional_details as additional_details, " +
             "task.tenant_id as tenant_id, " +

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
+import org.pucar.dristi.web.models.address.PartyAddressRequest;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -22,6 +23,6 @@ public class AddAddressResponse {
     @Valid
     private ResponseInfo responseInfo = null;
 
-    @JsonProperty("addresses")
-    private List<AddressResponse> addresses;
+    @JsonProperty("partyAddressList")
+    private List<PartyAddressRequest> partyAddressList;
 }
