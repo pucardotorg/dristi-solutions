@@ -162,12 +162,14 @@ export const getParties = (type, orderSchema, allParties) => {
       ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
       ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
     ];
-  } else if (["WARRANT", "SUMMONS", "NOTICE", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
+  } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
     parties = orderSchema?.orderDetails?.respondentName?.name
       ? [orderSchema?.orderDetails?.respondentName?.name]
       : orderSchema?.orderDetails?.respondentName
       ? [orderSchema?.orderDetails?.respondentName]
       : [];
+  } else if (["SUMMONS", "NOTICE"].includes(type)) {
+    parties = orderSchema?.orderDetails?.respondentName;
   } else if (type === "SECTION_202_CRPC") {
     parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
   } else if (

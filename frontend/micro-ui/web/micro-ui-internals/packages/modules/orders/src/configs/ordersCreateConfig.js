@@ -2938,7 +2938,7 @@ export const configsIssueSummons = [
         component: "NoticeSummonPartyComponent",
         key: "SummonsOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_SUMMON",
         populators: {
           inputs: [
@@ -3087,7 +3087,7 @@ export const configsIssueNotice = [
         component: "NoticeSummonPartyComponent",
         key: "noticeOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_NOTICE",
         populators: {
           inputs: [

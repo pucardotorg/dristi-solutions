@@ -561,7 +561,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -593,7 +593,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },

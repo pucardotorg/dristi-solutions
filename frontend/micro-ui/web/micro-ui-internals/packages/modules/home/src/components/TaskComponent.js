@@ -216,7 +216,7 @@ const TasksComponent = ({
       if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
-          const uniqueIdsList = courierServicePendingTask?.additionalDetails?.uniqueIds;
+          const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
 
           if (!orderNumber) return;
 
@@ -224,7 +224,7 @@ const TasksComponent = ({
           let orderDetails = order;
 
           if (order?.orderCategory === "COMPOSITE") {
-            const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.additionalDetails?.orderItemId);
+            const orderItem = order?.compositeItems?.find((item) => item?.id === courierServicePendingTask?.orderItemId);
             orderDetails = {
               ...order,
               additionalDetails: orderItem?.orderSchema?.additionalDetails,
@@ -241,7 +241,10 @@ const TasksComponent = ({
 
           if (Array?.isArray(uniqueIdsList) && uniqueIdsList?.length > 0) {
             parties = parties?.filter((party) =>
-              uniqueIdsList?.some((uid) => uid?.partyType === party?.data?.partyType && uid?.uniqueId === (party?.data?.uniqueId || party?.uniqueId))
+              uniqueIdsList?.some((uid) => {
+                const uidValue = uid?.uniqueId || Object?.entries(uid)?.find(([k]) => k?.startsWith("uniqueId"))?.[1];
+                return uid?.partyType === party?.data?.partyType && uidValue === (party?.data?.uniqueId || party?.uniqueId);
+              })
             );
           }
           const updatedParties =
@@ -533,6 +536,18 @@ const TasksComponent = ({
         caseTitle,
         ...(applicationType && { applicationType }),
       };
+      const orderItemId = data?.fields?.find((field) => field?.key === "additionalDetails.orderItemId")?.value;
+      const partyUniqueIdsMap = {};
+
+      data?.fields?.forEach(({ key, value }) => {
+        const match = key?.match(/^additionalDetails\.uniqueIds\[(\d+)\]\.(.+)$/);
+        if (match) {
+          const index = match[1];
+          const property = match[2];
+          partyUniqueIdsMap[index] = partyUniqueIdsMap[index] || {};
+          partyUniqueIdsMap[index][property] = value;
+        }
+      });
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
@@ -579,6 +594,8 @@ const TasksComponent = ({
         isCompleted,
         dueDateColor: due === "Due today" ? "#9E400A" : "",
         redirectUrl,
+        orderItemId,
+        ...(Object.keys(partyUniqueIdsMap).length > 0 ? { partyUniqueIds: Object.values(partyUniqueIdsMap) } : {}),
         params: {
           ...additionalDetails,
           cnrNumber,

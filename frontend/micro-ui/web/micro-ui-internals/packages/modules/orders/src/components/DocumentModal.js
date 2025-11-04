@@ -94,7 +94,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
         (config?.isStepperModal && (config?.steps[step]?.handleClose || config?.handleClose)) || (!config?.isStepperModal && config?.handleClose) ? (
           <CloseBtn
             onClick={config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose}
-            style={config?.steps[step]?.closeBtnStyle}
+            style={config?.isStepperModal ? config?.steps[step]?.closeBtnStyle || config?.closeBtnStyle : config?.closeBtnStyle}
           />
         ) : undefined
       }
