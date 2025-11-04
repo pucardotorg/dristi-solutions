@@ -280,7 +280,7 @@ public class OrderUtil {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(EXPIRE);
         taskManagement.setWorkflow(workflow);
-        requestInfo.getUserInfo().getRoles().add(Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).build());
+        requestInfo.getUserInfo().getRoles().add(Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build());
         TaskManagementRequest taskManagementRequest = TaskManagementRequest.builder()
                 .requestInfo(requestInfo)
                 .taskManagement(taskManagement)
