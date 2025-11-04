@@ -1165,26 +1165,23 @@ public class OpenApiService {
                 }
             }
 
-            if (assignedUuids.isEmpty()) {
-                throw new CustomException("NO_ASSOCIATED_USERS",
-                        "No assigned users found for referenceId: " + referenceId);
-            }
+            if (!assignedUuids.isEmpty()) {
+                List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
 
-            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
-
-            // Step 4: Match mobile number
-            boolean isValidMobileNumber= false;
-            for (Individual ind : individuals) {
-                if (ind.getMobileNumber() != null &&
-                        ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
-                    log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
-                    isValidMobileNumber= true;
-                    pendingTaskAdditionalDetails = source.path("additionalDetails");
+                // Step 4: Match mobile number
+                boolean isValidMobileNumber = false;
+                for (Individual ind : individuals) {
+                    if (ind.getMobileNumber() != null &&
+                            ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
+                        log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
+                        isValidMobileNumber = true;
+                        pendingTaskAdditionalDetails = source.path("additionalDetails");
+                    }
                 }
-            }
-            if(!isValidMobileNumber){
-                throw new CustomException("INVALID_MOBILE",
-                        "Provided mobile number does not match any assigned or litigant user for this referenceId");
+                if (!isValidMobileNumber) {
+                    throw new CustomException("INVALID_MOBILE",
+                            "Provided mobile number does not match any assigned or litigant user for this referenceId");
+                }
             }
             boolean isCompleted = source.path("isCompleted").asBoolean(false);
             if(isCompleted){
