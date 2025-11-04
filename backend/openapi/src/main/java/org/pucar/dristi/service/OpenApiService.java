@@ -1153,6 +1153,13 @@ public class OpenApiService {
             // Step 1: Extract assignedTo UUIDs
             List<String> assignedUuids = new ArrayList<>();
             JsonNode assignedTo = source.path("assignedTo");
+
+            boolean isCompleted = source.path("isCompleted").asBoolean();
+            if (isCompleted) {
+                throw new CustomException("TASK_ALREADY_COMPLETED",
+                        "Pending task is already completed for referenceId: " + referenceId);
+            }
+
             if (assignedTo.isArray()) {
                 for (JsonNode node : assignedTo) {
                     String uuid = node.path("uuid").asText(null);

@@ -18,6 +18,7 @@ import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -125,6 +126,12 @@ public class PaymentUpdateService {
                 .requestInfo(requestInfo)
                 .build();
         workflowService.updateWorkflowStatus(request);
+        TaskManagement taskManagement1 = request.getTaskManagement();
+        for(PartyDetails partyDetails : taskManagement1.getPartyDetails()) {
+            partyDetails.getDeliveryChannels().forEach(deliveryChannel -> {
+                deliveryChannel.setFeePaidDate(LocalDate.now().toString());
+            });
+        }
         Document paymentReceipt = null;
         if (ONLINE.equalsIgnoreCase(paymentMode)) {
             paymentReceipt = getPaymentReceipt(request, paymentDetail.getBillId(), taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix());
