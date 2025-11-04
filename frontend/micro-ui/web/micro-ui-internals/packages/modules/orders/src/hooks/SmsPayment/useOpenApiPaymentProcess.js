@@ -13,7 +13,7 @@ const useOpenApiPaymentProcess = ({ tenantId, consumerCode, service, path, caseD
   const isMockEnabled = window?.globalConfigs?.getConfig("MOCKENABLED") === "true" ? true : false;
 
   const fetchBill = async (consumerCode, tenantId, service) => {
-    return await openApiService.callFetchBill({ Criteria: { consumerCode: consumerCode, tenantId, businessService: service } }, {});
+    return await openApiService.callFetchBill({ Criteria: { consumerCode: [consumerCode], tenantId, businessService: service } }, {});
   };
   const userInfo = Digit.UserService.getUser()?.info;
   const openPaymentPortal = async (bill, billAmount = null) => {
@@ -136,8 +136,8 @@ const useOpenApiPaymentProcess = ({ tenantId, consumerCode, service, path, caseD
             const intervalId = setInterval(async () => {
               try {
                 const billAfterPayment = await openApiService.callSearchBill(
-                  {},
-                  { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+                  { Criteria: { tenantId, consumerCode: [consumerCode || billConsumerCode], service: service || billBusinessService } },
+                  {}
                 );
 
                 if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
@@ -213,8 +213,8 @@ const useOpenApiPaymentProcess = ({ tenantId, consumerCode, service, path, caseD
             if (retryCount < maxRetries) {
               retryCount++;
               const billAfterPayment = await openApiService.callSearchBill(
-                {},
-                { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+                { Criteria: { tenantId, consumerCode: [consumerCode || billConsumerCode], service: service || billBusinessService } },
+                {}
               );
               if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
                 clearInterval(checkPopupClosed);

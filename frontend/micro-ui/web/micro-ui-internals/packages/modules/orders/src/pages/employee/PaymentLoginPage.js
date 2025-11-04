@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
+import { Card, CardHeader, CardLabel, Loader, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { openApiService } from "../../hooks/services";
@@ -11,6 +11,7 @@ const PaymentLoginPage = () => {
   const { orderNumber, referenceId, orderItemId, tenantId } = Digit.Hooks.useQueryParams();
   const filingNumber = orderNumber?.split("-OR")?.[0] || "";
   const [mobileNumber, setMobileNumber] = useState("");
+  const [loader, setLoader] = useState(false);
   const [error, setError] = useState(false);
   const config = {
     name: "mobileNumber",
@@ -36,12 +37,13 @@ const PaymentLoginPage = () => {
 
     try {
       // TODO : make searchOpenApiSmsPayment in ordersService with proper api call
+      setLoader(true);
       const res = await openApiService.searchOpenApiOrders({
         tenantId,
         referenceId: referenceId,
         orderNumber: orderNumber,
         mobileNumber: mobileNumber,
-        filingNumber
+        filingNumber,
       });
       if (!res || Object.keys(res).length === 0) {
         setError(true);
@@ -65,6 +67,8 @@ const PaymentLoginPage = () => {
     } catch (error) {
       setError(true);
       return;
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -74,6 +78,25 @@ const PaymentLoginPage = () => {
 
   return (
     <React.Fragment>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="user-registration bail-bond-login-page payment-login-page">
         <div className="citizen-form-wrapper">
           <div className="login-form responsive-container">

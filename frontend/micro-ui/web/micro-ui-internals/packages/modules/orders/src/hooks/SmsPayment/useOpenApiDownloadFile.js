@@ -4,7 +4,7 @@ import { Urls } from "../services/Urls";
 
 export const useOpenApiDownloadFile = () => {
 
-  const download = useCallback(async ({ fileStoreId, tenantId = "kl", moduleName = "DRISTI" }) => {
+  const download = useCallback(async (fileStoreId, tenantId = "kl", moduleName = "DRISTI") => {
     if (!fileStoreId) return console.error("fileStoreId missing");
 
     try {

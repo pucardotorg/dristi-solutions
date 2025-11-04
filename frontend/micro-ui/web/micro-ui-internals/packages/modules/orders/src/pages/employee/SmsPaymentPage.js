@@ -57,7 +57,7 @@ const SmsPaymentPage = () => {
     Boolean(orderNumber && referenceId)
   );
 
-  const { data: taskManagementData, isLoading: isTaskManagementLoading } = useOpenApiTaskManagementSearch(
+  const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useOpenApiTaskManagementSearch(
     { criteria: { orderNumber, referenceId, orderItemId, tenantId } },
     { tenantId },
     `${orderNumber}_${referenceId}_${orderItemId}`,
@@ -74,8 +74,7 @@ const SmsPaymentPage = () => {
   ]);
 
   const processCourierData = useMemo(() => {
-    if (!orderData || !taskManagementList?.length) return null;
-
+    if (!orderData) return null;
     let orderDetails = orderData;
     // Handle composite order
     if (orderData?.orderCategory === "COMPOSITE") {
@@ -119,7 +118,7 @@ const SmsPaymentPage = () => {
           result.push({
             id: addr?.id,
             text: formatAddress(addr),
-            selected: !!match,
+            selected: addressFromTask?.length ? !!match : true,
             addressDetails: addr,
           });
         });
@@ -216,7 +215,6 @@ const SmsPaymentPage = () => {
 
       return acc;
     }, {});
-
     // Create translated and display-friendly options
     const options = Object?.values(grouped)?.map((item) => ({
       ...item,
@@ -297,20 +295,21 @@ const SmsPaymentPage = () => {
         orderItemId: orderData?.orderItemId,
         courtId: orderData?.courtId,
       });
-
+      let updatedTaskResponse = {};
       if (existingTask) {
-        await openApiService.updateTaskManagementService({ taskManagement: getPayload });
+        updatedTaskResponse = await openApiService.updateTaskManagementService({ taskManagement: getPayload });
       } else {
-        await openApiService.createTaskManagementService({ taskManagement: getPayload });
+        updatedTaskResponse = await openApiService.createTaskManagementService({ taskManagement: getPayload });
       }
       const paymentResponse = await openApiService.getTreasuryPaymentBreakup(
         { tenantId: tenantId },
         {
-          consumerCode: existingTask?.taskManagementNumber + `_${suffix}`,
+          consumerCode: updatedTaskResponse?.taskManagement?.taskManagementNumber + `_${suffix}`,
         },
         "dristi",
         true
       );
+      await refetchTaskManagement();
       setPaymentBreakDown(paymentResponse?.TreasuryHeadMapping?.calculation);
       setStep(step + 1);
     } catch (error) {
@@ -352,7 +351,7 @@ const SmsPaymentPage = () => {
       setLoader(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
+        showToast("success", t("SOMETHING_WENT_WRONG"), 50000);
         return;
       }
       const caseLockStatus = await openApiService.getPaymentLockStatus(
@@ -360,6 +359,7 @@ const SmsPaymentPage = () => {
         {
           uniqueId: taskManagement?.taskManagementNumber,
           tenantId: tenantId,
+          mobileNumber,
         }
       );
       if (caseLockStatus?.Lock?.isLocked) {
@@ -367,9 +367,12 @@ const SmsPaymentPage = () => {
         showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
         return;
       }
-      await openApiService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      await openApiService.setCaseLock(
+        { Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT", mobileNumber } },
+        { mobileNumber }
+      );
       const paymentStatus = await openPaymentPortal(bill);
-      await openApiService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId });
+      await openApiService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, mobileNumber });
       const success = Boolean(paymentStatus);
       if (success) {
         const response = await openApiService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
@@ -390,7 +393,7 @@ const SmsPaymentPage = () => {
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
-      await download(receiptFilstoreId);
+      await download(receiptFilstoreId, tenantId, "treasury");
       setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     } catch (err) {
       console.error("Error in downloading reciept:", err);
@@ -406,7 +409,7 @@ const SmsPaymentPage = () => {
 
   const handleClose = () => {
     // Redirect to some other page or close the modal
-    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
+    window.location.replace("https://oncourts-staging.kerala.gov.in");
   };
 
   // TODO : need to update successModalData based on different scenarios
@@ -421,13 +424,12 @@ const SmsPaymentPage = () => {
       notice?.courierOptions?.some((option) => option?.channelCode === "REGISTERED_POST" && option?.selected)
     );
 
-    if (taskManagementList?.length > 0 && taskManagement?.status !== "PENDING_PAYMENT") {
+    if (taskManagementList?.length > 0 && taskManagementList?.[0]?.status !== "PENDING_PAYMENT") {
       statusData = {
         status: "success",
         messageKey: "YOU_ARE_ALL_SET",
         subMessageKey: "PAYMENT_COMPLETED_SUCCESSFULLY",
       };
-      return;
     } else if (isAnyRpadSelected) {
       statusData = {
         status: "IsRpad",
@@ -443,29 +445,29 @@ const SmsPaymentPage = () => {
     }
 
     return statusData;
-  }, [noticeData, taskManagement?.status, taskManagementList?.length]);
+  }, [noticeData, taskManagementList]);
 
   // TODO : check if all process of payment is completed then set step to 4 else step 1
   useEffect(() => {
-    if (taskManagementList?.length > 0 && taskManagement?.status !== "PENDING_PAYMENT") {
+    if (taskManagementList?.length > 0 && taskManagementList?.[0]?.status !== "PENDING_PAYMENT") {
       setStep(4);
     } else {
       setStep(1);
     }
-  }, [taskManagement?.status, taskManagementList?.length]);
+  }, [taskManagementList, taskManagementList?.length]);
 
   const closeToast = () => {
     setShowErrorToast(null);
   };
 
-  // useEffect(() => {
-  //   if (showErrorToast) {
-  //     const timer = setTimeout(() => {
-  //       setShowErrorToast(null);
-  //     }, 2000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [showErrorToast]);
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
