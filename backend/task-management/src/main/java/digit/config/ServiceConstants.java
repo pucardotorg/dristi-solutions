@@ -53,4 +53,5 @@ public class ServiceConstants {
     public static final String MANUAL = "MANUAL_";
     public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
     public static final String ONLINE = "ONLINE";
+    public static final String TASK_CREATOR = "TASK_CREATOR";
 }
