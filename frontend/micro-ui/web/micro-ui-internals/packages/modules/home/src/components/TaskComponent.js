@@ -18,6 +18,7 @@ import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCas
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 import { createOrUpdateTask } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
+import { TaskManagementWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -146,7 +147,7 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
-        status: "PENDING_PAYMENT",
+        status: TaskManagementWorkflowState.PENDING_PAYMENT,
         tenantId: tenantId,
       },
     },

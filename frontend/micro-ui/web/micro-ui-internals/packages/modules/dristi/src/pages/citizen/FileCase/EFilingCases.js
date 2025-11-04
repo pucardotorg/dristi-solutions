@@ -65,7 +65,7 @@ import isMatch from "lodash/isMatch";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import { getFilingType, getSuffixByBusinessCode, getTaxPeriodByBusinessService, TaskManagementWorkflowAction } from "../../../Utils";
+import { getFilingType, getSuffixByBusinessCode, TaskManagementWorkflowState } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
@@ -398,7 +398,7 @@ function EFilingCases({ path }) {
     {
       criteria: {
         filingNumber: caseDetails?.filingNumber,
-        status: "PENDING_PAYMENT",
+        status: TaskManagementWorkflowState.TASK_CREATION,
         tenantId: tenantId,
         taskType: ["NOTICE", "SUMMONS"],
       },

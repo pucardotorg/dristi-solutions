@@ -375,3 +375,8 @@ export const TaskManagementWorkflowAction = {
   CREATE: "CREATE",
   UPDATE: "UPDATE",
 };
+
+export const TaskManagementWorkflowState = {
+  PENDING_PAYMENT: "PENDING_PAYMENT",
+  TASK_CREATION: "TASK_CREATION",
+};
