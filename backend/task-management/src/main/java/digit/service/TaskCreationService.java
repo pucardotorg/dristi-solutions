@@ -332,6 +332,7 @@ public class TaskCreationService {
                                 .channelName(channel != null ? channel.getChannelId() : null)
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
+                                .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
                                 .build())
                         .build());
             }
@@ -349,6 +350,7 @@ public class TaskCreationService {
                 .anyMatch(c -> EMAIL.equalsIgnoreCase(c.getChannelCode()) || EMAIL.equalsIgnoreCase(c.getChannelName()));
         if (!hasSMS) {
             channels.add(DeliveryChannel.builder()
+                    .channelId(SMS)
                     .channelName(SMS)
                     .channelCode(SMS)
                     .fees("0") // Default fee if applicable
@@ -356,6 +358,7 @@ public class TaskCreationService {
         }
         if (!hasEmail) {
             channels.add(DeliveryChannel.builder()
+                    .channelId(SMS)
                     .channelName(SMS)
                     .channelCode(SMS)
                     .fees("0")
@@ -436,6 +439,7 @@ public class TaskCreationService {
                 .address(address)
                 .phone(phone)
                 .age(age)
+                .pinCode(address.getPinCode())
                 .build();
     }
 
