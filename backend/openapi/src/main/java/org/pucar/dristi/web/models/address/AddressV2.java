@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AddressV2 {
 
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("doorNo")
     private String doorNo;
 
@@ -38,4 +41,5 @@ public class AddressV2 {
 
     @JsonProperty("country")
     private String country;
+
 }
