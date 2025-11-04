@@ -126,4 +126,7 @@ public class OrderDetailsSearchResponse {
 
     @JsonProperty("caseTitle")
     private String caseTitle = null;
+
+    @JsonProperty("isPendingTaskCompleted")
+    private Boolean isPendingTaskCompleted = false;
 }

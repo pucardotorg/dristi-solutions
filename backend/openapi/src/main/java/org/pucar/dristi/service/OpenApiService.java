@@ -817,10 +817,14 @@ public class OpenApiService {
             String mobileNumber = orderDetailsSearch.getMobileNumber();
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
+            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+
             //validate mobile number from pending task assigned to list
             JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber,tenantId);
-
-            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+            if(pendingTaskAdditionalDetails==null){
+                response.setIsPendingTaskCompleted(true);
+                return response;
+            }
 
             OrderCriteria criteria = OrderCriteria.builder()
                     .orderNumber(orderNumber)
@@ -1156,8 +1160,7 @@ public class OpenApiService {
 
             boolean isCompleted = source.path("isCompleted").asBoolean();
             if (isCompleted) {
-                throw new CustomException("TASK_ALREADY_COMPLETED",
-                        "Pending task is already completed for referenceId: " + referenceId);
+                return null;
             }
 
             if (assignedTo.isArray()) {
