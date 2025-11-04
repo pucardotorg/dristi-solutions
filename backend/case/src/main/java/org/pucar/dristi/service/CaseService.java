@@ -6149,19 +6149,15 @@ public class CaseService {
     public List<PartyAddressRequest> addAddress(AddAddressRequest addAddressRequest) {
 
         try {
-            CourtCase courtCase = searchRedisCache(addAddressRequest.getRequestInfo(), String.valueOf(addAddressRequest.getCaseId()));
-
-            if (courtCase == null) {
-                log.debug("CourtCase not found in Redis cache for caseId :: {}", addAddressRequest.getCaseId());
-                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(addAddressRequest.getCaseId())).build()), addAddressRequest.getRequestInfo());
+                CourtCase courtCase;
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(addAddressRequest.getFilingNumber()).build()), addAddressRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
-                    log.debug("CourtCase not found in DB for caseId :: {}", addAddressRequest.getCaseId());
+                    log.debug("CourtCase not found in DB for filingNumber :: {}", addAddressRequest.getFilingNumber());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
                 } else {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
                 }
-            }
 
             CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, addAddressRequest.getRequestInfo());
 
