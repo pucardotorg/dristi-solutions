@@ -67,5 +67,7 @@ public class TreasuryPaymentData {
 
     private double legalBenefitFee;
 
+    private double epostFee;
+
     private double totalAmount;
 }
