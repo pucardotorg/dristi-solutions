@@ -361,9 +361,9 @@ public class TaskCreationService {
         }
         if (!hasEmail) {
             channels.add(DeliveryChannel.builder()
-                    .channelId(SMS)
-                    .channelName(SMS)
-                    .channelCode(SMS)
+                    .channelId(EMAIL)
+                    .channelName(EMAIL)
+                    .channelCode(EMAIL)
                     .fees("0")
                     .build());
         }
