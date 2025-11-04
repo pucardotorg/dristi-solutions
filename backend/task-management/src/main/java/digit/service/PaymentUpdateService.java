@@ -79,18 +79,13 @@ public class PaymentUpdateService {
         try {
             log.info("Closing payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
             String referenceId = MANUAL + taskManagement.getOrderNumber() + (taskManagement.getOrderItemId() != null ? taskManagement.getOrderItemId() : "");
-            CourtCase courtCase = fetchCase(requestInfo, taskManagement.getFilingNumber());
-            if (courtCase == null) return;
-            PendingTask pendingTask = PendingTask.builder()
-                            .referenceId(referenceId)
-                            .name("Completed")
-                            .entityType(configuration.getTaskBusinessServiceName())
-                            .status(COMPLETED)
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseId(courtCase.getId().toString())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .isCompleted(true)
-                            .build();
+            JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(referenceId);
+            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
+            JsonNode hit = hitsNode.get(0);
+            JsonNode dataNode = hit.path("_source").path("Data");
+            PendingTask pendingTask = objectMapper.convertValue(dataNode, PendingTask.class);
+            pendingTask.setStatus(COMPLETED);
+            pendingTask.setIsCompleted(true);
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
             log.info("Successfully closed payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
         } catch (CustomException e) {
