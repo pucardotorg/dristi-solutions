@@ -37,6 +37,7 @@ public class ServiceConstants {
     public static final String EMAIL = "EMAIL";
 
     // workflow actions
+    public static final String EXPIRE = "EXPIRE";
     public static final String UPDATE = "UPDATE";
     public static final String CREATE = "CREATE";
     public static final String UPDATE_UPFRONT_PAYMENT = "UPDATE_UPFRONT_PAYMENT";

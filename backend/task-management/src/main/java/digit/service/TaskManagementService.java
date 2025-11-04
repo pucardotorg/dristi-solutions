@@ -78,7 +78,7 @@ public class TaskManagementService {
 
         enrichment.enrichUpdateRequest(request);
 
-        if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
+        if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction()) || EXPIRE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
             demandService.updateDemand(request);
         }
 

@@ -60,15 +60,16 @@ public class BillingUtil {
         String id = demand.getId();
         String businessService = demand.getBusinessService();
         String status = demand.getStatus().toString();
+        Long paymentCompletedDate = null;
         if (!offlinePaymentTask.isOfflinePaymentCreation()) {
             status = CANCELLED;
+            paymentCompletedDate = System.currentTimeMillis();
         }
         String tenantId = demand.getTenantId();
         String consumerCode = demand.getConsumerCode();
         String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
         String paymentType = getPaymentType(consumerCodeSplitArray[1], businessService);
         String filingNumber = offlinePaymentTask.getFilingNumber();
-        Long paymentCompletedDate = null;
 
 
         CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
