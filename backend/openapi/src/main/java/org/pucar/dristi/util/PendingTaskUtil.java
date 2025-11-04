@@ -53,6 +53,7 @@ public class PendingTaskUtil {
         String credentials = config.getEsUsername() + ":" + config.getEsPassword();
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     }
+
     private String getEsQuery(String referenceId) {
         return "{\n" +
                 "  \"query\": {\n" +
@@ -61,11 +62,6 @@ public class PendingTaskUtil {
                 "        {\n" +
                 "          \"match\": {\n" +
                 "            \"Data.referenceId.keyword\": \"" + referenceId + "\"\n" +
-                "          }\n" +
-                "        },\n" +
-                "        {\n" +
-                "          \"term\": {\n" +
-                "            \"Data.isCompleted\": false\n" +
                 "          }\n" +
                 "        }\n" +
                 "      ]\n" +
