@@ -47,5 +47,6 @@ public class Amount {
 
     private Object additionalDetails = null;
 
-
+    @JsonProperty("status")
+    private String status;
 }

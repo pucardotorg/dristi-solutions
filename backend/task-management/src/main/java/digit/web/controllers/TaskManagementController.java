@@ -84,7 +84,7 @@ public class TaskManagementController {
         return ResponseEntity.accepted().body(response);
     }
 
-    @PostMapping("/v1/generate")
+    @PostMapping("/v1/generate") //dummy endpoint
     public void generateFollowUpTasks(@RequestBody TaskManagementRequest request) {
         try {
             taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
