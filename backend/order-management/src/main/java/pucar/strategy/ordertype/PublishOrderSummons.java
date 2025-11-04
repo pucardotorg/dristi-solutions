@@ -268,17 +268,27 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     }
 
     private boolean isSummonForAccusedWitness(Order order) {
-        List<Object> parties;
-        parties = jsonUtil.getNestedValue(
+        List<Object> parties = jsonUtil.getNestedValue(
                 order.getAdditionalDetails(),
-                List.of("formdata", "summonOrder", "party"),
+                List.of("formdata", "SummonsOrder", "party"),
                 List.class
         );
-        for(Object party : parties){
-            if(party instanceof Map){
+        if (parties == null || parties.isEmpty()) {
+            return false;
+        }
+        for (Object party : parties) {
+            if (party instanceof Map) {
                 Map<String, Object> partyMap = (Map<String, Object>) party;
-                if(partyMap.containsKey("partyType") && partyMap.get("partyType").equals("Witness") && partyMap.get("ownerType").equals(ACCUSED)){
-                    return true;
+                // Extract "data" node
+                Object dataObj = partyMap.get("data");
+                if (dataObj instanceof Map) {
+                    Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+
+                    Object partyType = dataMap.get("partyType");
+                    Object ownerType = dataMap.get("ownerType");
+                    if ("Witness".equals(partyType) && ACCUSED.equals(ownerType)) {
+                        return true;
+                    }
                 }
             }
         }
