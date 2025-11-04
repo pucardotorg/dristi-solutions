@@ -280,6 +280,7 @@ public class OrderUtil {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(EXPIRE);
         taskManagement.setWorkflow(workflow);
+        requestInfo.getUserInfo().getRoles().add(Role.builder().code(PAYMENT_COLLECTOR).name(PAYMENT_COLLECTOR).build());
         TaskManagementRequest taskManagementRequest = TaskManagementRequest.builder()
                 .requestInfo(requestInfo)
                 .taskManagement(taskManagement)
