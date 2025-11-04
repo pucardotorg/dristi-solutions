@@ -52,6 +52,7 @@ const MainHomeScreen = () => {
     // VIEW_APPLICATION: 0,
     // SCHEDULE_HEARING: 0,
     BAIL_BOND_STATUS: 0,
+    NOTICE_SUMMONS_MANAGEMENT: 0,
     RESCHEDULE_APPLICATIONS: 0,
     DELAY_CONDONATION: 0,
     OTHERS: 0,
@@ -77,6 +78,7 @@ const MainHomeScreen = () => {
   const hasViewReschedulApplicationAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULE_APPLICATION"), [assignedRoles]);
   const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
+  const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
 
   const today = new Date();
 
@@ -214,6 +216,7 @@ const MainHomeScreen = () => {
   const fetchPendingTaskCounts = async () => {
     const { fromDate, toDate } = getTodayRange();
     try {
+      setLoader(true);
       const payload = {
         SearchCriteria: {
           moduleName: "Pending Tasks Service",
@@ -245,6 +248,11 @@ const MainHomeScreen = () => {
             date: null,
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
+          },
+          searchNoticeAndSummons: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Notice and Summons Management",
           },
           searchBailBonds: {
             date: toDate,
@@ -292,6 +300,7 @@ const MainHomeScreen = () => {
       const otherApplicationsCount = res?.otherApplicationsData?.totalCount || 0;
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
+      const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
@@ -300,6 +309,7 @@ const MainHomeScreen = () => {
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
+        NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
         OTHERS: otherApplicationsCount,
@@ -307,6 +317,8 @@ const MainHomeScreen = () => {
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
       console.error(err);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -334,6 +346,9 @@ const MainHomeScreen = () => {
   if (hasViewReviewBailBondAccess) {
     options.BAIL_BOND_STATUS = { name: "HOME_BAIL_BONDS_STATUS" };
   }
+  if (hasViewProcessManagementAccess) {
+    options.NOTICE_SUMMONS_MANAGEMENT = { name: "HOME_NOTICE_SUMMONS_MANAGEMENT" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -360,7 +375,7 @@ const MainHomeScreen = () => {
       setSelectedBailBond(row);
     };
 
-    if (activeTab === "REGISTRATION") {
+    if (["REGISTRATION", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
           label: "CS_CASE_NAME_ADVOCATE",

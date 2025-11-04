@@ -238,14 +238,15 @@ const TasksComponent = ({
           const orderType = orderDetails?.orderType;
 
           let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-
-          if (Array?.isArray(uniqueIdsList) && uniqueIdsList?.length > 0) {
-            parties = parties?.filter((party) =>
-              uniqueIdsList?.some((uid) => {
-                const uidValue = uid?.uniqueId || Object?.entries(uid)?.find(([k]) => k?.startsWith("uniqueId"))?.[1];
-                return uid?.partyType === party?.data?.partyType && uidValue === (party?.data?.uniqueId || party?.uniqueId);
-              })
-            );
+          if (Array.isArray(uniqueIdsList) && uniqueIdsList.length > 0) {
+            parties = parties?.filter((party) => {
+              return uniqueIdsList?.some((uid) => {
+                const uniqueIdValues = Object?.entries(uid)
+                  ?.filter(([key]) => key?.startsWith("uniqueId"))
+                  ?.map(([_, value]) => value);
+                return uid?.partyType === party?.data?.partyType && uniqueIdValues?.includes(party?.data?.uniqueId || party?.uniqueId);
+              });
+            });
           }
           const updatedParties =
             parties?.map((party) => {
