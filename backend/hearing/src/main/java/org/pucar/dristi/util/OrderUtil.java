@@ -71,6 +71,7 @@ public class OrderUtil {
             Role role = Role.builder()
                     .code(PAYMENT_COLLECTOR)
                     .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
                     .build();
             requestInfo.getUserInfo().getRoles().add(role);
 
@@ -219,6 +220,7 @@ public class OrderUtil {
             Role role = Role.builder()
                     .code(PAYMENT_COLLECTOR)
                     .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
                     .build();
             requestInfo.getUserInfo().getRoles().add(role);
 
