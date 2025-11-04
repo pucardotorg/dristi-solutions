@@ -100,7 +100,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
 
         String type = "complainant";
-        if(partyTypeToUniqueIdMap.containsKey("Witness"))
+        if(isSummonForAccusedWitness(order))
             type = "respondent";
         List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
         List<String> assignees = new ArrayList<>();
@@ -265,6 +265,24 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 //            throw new RuntimeException(e);
        } **/
 
+    }
+
+    private boolean isSummonForAccusedWitness(Order order) {
+        List<Object> parties;
+        parties = jsonUtil.getNestedValue(
+                order.getAdditionalDetails(),
+                List.of("formdata", "summonOrder", "party"),
+                List.class
+        );
+        for(Object party : parties){
+            if(party instanceof Map){
+                Map<String, Object> partyMap = (Map<String, Object>) party;
+                if(partyMap.containsKey("partyType") && partyMap.get("partyType").equals("Witness") && partyMap.get("ownerType").equals(ACCUSED)){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String getItemId(Order order) {

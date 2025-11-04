@@ -17,6 +17,27 @@ import java.util.Map;
 @NoArgsConstructor
 public class DeliveryChannel {
 
+    @JsonProperty("fees")
+    private String fees;
+
+    @JsonProperty("status")
+    private String status;
+
+    @JsonProperty("channelCode")
+    private String channelCode;
+
+    @JsonProperty("feePaidDate")
+    private String feePaidDate;
+
+    @JsonProperty("channelId")
+    private String channelId;
+
+    @JsonProperty("taskType")
+    private String taskType;
+
+    @JsonProperty("channelDeliveryTime")
+    private String channelDeliveryTime;
+
     @JsonProperty("deliveryChannelName")
     private String deliveryChannelName;
 
