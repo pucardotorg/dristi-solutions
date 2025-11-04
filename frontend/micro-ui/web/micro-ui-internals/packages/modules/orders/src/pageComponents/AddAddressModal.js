@@ -60,18 +60,14 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
       actionCancelLabel={t("Cancel")}
       actionCancelOnSubmit={() => setShowAddAddressModalLocal(false)}
       actionSaveLabel={t("Add Address")}
-      actionSaveOnSubmit={() => {
-        const updatedAddresses = [
-          ...(processCourierData?.addresses || []),
-          {
-            addresses: newAddress,
-          },
-        ];
-
-        handleDataChange({ addresses: updatedAddresses });
-        setNewAddress({});
-        setAddressErrors({});
-        setShowAddAddressModalLocal(false);
+      actionSaveOnSubmit={async () => {
+        try {
+          await handleDataChange({ address: newAddress });
+          setNewAddress({});
+          setAddressErrors({});
+        } catch (error) {
+          console.error("error while adding address ", error);
+        }
       }}
       isDisabled={
         !newAddress ||

@@ -145,6 +145,9 @@ const SmsPaymentPage = () => {
         subtitle: `${party?.data?.partyType || "Party"} - ${
           getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName) || ""
         }`,
+        firstName: party?.data?.firstName,
+        middleName: party?.data?.middleName,
+        lastName: party?.data?.lastName,
         // courierOptions,
         orderType,
         addresses: mergedAddresses,
@@ -394,10 +397,9 @@ const SmsPaymentPage = () => {
     try {
       setLoader(true);
       await download(receiptFilstoreId, tenantId, "treasury");
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     } catch (err) {
       console.error("Error in downloading reciept:", err);
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
     }
@@ -523,6 +525,9 @@ const SmsPaymentPage = () => {
           noticeData={noticeData}
           setNoticeData={setNoticeData}
           breakupResponse={breakupResponse}
+          tenantId={tenantId}
+          filingNumber={filingNumber}
+          setShowErrorToast={setShowErrorToast}
         />
       ) : step === 2 ? (
         <PaymentPage

@@ -48,8 +48,8 @@ export const Urls = {
     taskManagementUpdate: "/openapi/task-management/v1/_update",
     taskManagementSearch: "/openapi/task-management/v1/_search",
     summonsPayment: "/openapi/payment/v1/_calculate",
-    getTreasuryPaymentBreakup : "/openapi/payment/v1/_getHeadBreakDown",
-    fetchBill : "/openapi/payment/v1/_fetchbill",
+    getTreasuryPaymentBreakup: "/openapi/payment/v1/_getHeadBreakDown",
+    fetchBill: "/openapi/payment/v1/_fetchbill",
     eTreasury: "/openapi/payment/v1/_processChallan",
     searchBill: "/openapi/payment/v1/_searchbill",
     billFileStoreId: "/openapi/payment/v1/getPaymentReceipt",
@@ -57,5 +57,6 @@ export const Urls = {
     getPaymentLockStatus: "/openapi/lock/v1/_get",
     setCaseLock: "/openapi/lock/v1/_set",
     FileFetchByFileStore: "/openapi/v1/landing_page/file",
+    addAddress: "/openapi/v1/case/addAddress",
   },
 };

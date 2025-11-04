@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { InfoToolTipIcon } from "../../../dristi/src/icons/svgIndex";
 import AddAddressModal from "./AddAddressModal";
+import { openApiService } from "../hooks/services";
+import { formatAddress } from "../utils/PaymentUtitls";
 
 const AddIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -13,7 +15,7 @@ const AddIcon = () => (
   </svg>
 );
 
-const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupResponse }) => {
+const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupResponse, tenantId, filingNumber, setShowErrorToast }) => {
   // Mock data structure for notices - this would come from props or API in a real implementation
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
   const [currentNoticeId, setCurrentNoticeId] = useState(null);
@@ -132,39 +134,54 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
   };
 
   // Handler to process data from the address modal
-  const handleDataChange = (data) => {
-    if (!currentNoticeId || !data.addresses || data.addresses.length === 0) return;
+  const handleDataChange = async (data) => {
+    if (!currentNoticeId || !data.address) return;
+    try {
+      // Format the address from the modal data
+      const addressObj = data.address;
+      const currentSelectedUserNotice = noticeData?.find((notice) => notice.id === currentNoticeId);
 
-    // Get the new address that was added
-    const newAddressData = data.addresses[data.addresses.length - 1];
-    if (!newAddressData || !newAddressData.addresses) return;
-    // Format the address from the modal data
-    const addressObj = newAddressData.addresses;
-    const addressText = [addressObj.locality, addressObj.city, addressObj.district, addressObj.state, addressObj.pincode].filter(Boolean).join(", ");
+      const payload = {
+        tenantId: tenantId,
+        filingName: filingNumber,
+        partyAddresses: [
+          {
+            addresses: [addressObj],
+            partyType: currentSelectedUserNotice?.partyType === "Respondent" ? "Accused" : "Witness",
+            uniqueId: currentSelectedUserNotice?.partyUniqueId,
+          },
+        ],
+      };
 
-    // Update the notices with the new address
-    // TODO : Update Address API need to be called here to persist the new address
-    const updatedNotices = noticeData?.map((notice) => {
-      if (notice.id === currentNoticeId) {
-        // Generate a new ID for the address
-        const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1; // this might be removed when API is integrated
+      await openApiService.addAddress(payload, {});
 
-        return {
-          ...notice,
-          addresses: [
-            ...notice.addresses,
-            {
-              id: newAddressId,
-              text: addressText,
-              selected: true,
-            },
-          ],
-        };
-      }
-      return notice;
-    });
+      const updatedNotices = noticeData?.map((notice) => {
+        if (notice.id === currentNoticeId) {
+          const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1;
 
-    setNoticeData(updatedNotices);
+          return {
+            ...notice,
+            addresses: [
+              ...notice.addresses,
+              {
+                id: newAddressId,
+                text: formatAddress(addressObj),
+                addressDetails: addressObj,
+                selected: true,
+              },
+            ],
+          };
+        }
+        return notice;
+      });
+
+      setNoticeData(updatedNotices);
+      setShowAddAddressModalLocal(false);
+    } catch (err) {
+      console.error("Error while adding address", err);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      throw err;
+    }
   };
 
   return (

@@ -351,4 +351,12 @@ export const openApiService = {
       data,
       params,
     }),
+  addAddress: (data, params) =>
+    Request({
+      url: Urls.openApi.addAddress,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };
