@@ -251,6 +251,7 @@ public class OrderUtil {
         TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                 .filingNumber(order.getFilingNumber())
                 .status(PENDING_PAYMENT)
+                .tenantId(tenantId)
                 .build();
 
         org.pucar.dristi.web.models.taskManagement.TaskSearchRequest searchRequest = org.pucar.dristi.web.models.taskManagement.TaskSearchRequest.builder()
