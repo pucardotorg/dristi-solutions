@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -114,6 +115,8 @@ public class TaskCreationService {
             for (TaskDetails detail : taskDetailsList) {
                 try {
                     taskTemplate.setTaskDetails(detail);
+                    Role role = Role.builder().code(TASK_CREATOR).name(TASK_CREATOR).tenantId(taskManagement.getTenantId()).build();
+                    requestInfo.getUserInfo().getRoles().add(role);
                     taskUtil.callCreateTask(TaskRequest.builder()
                             .requestInfo(requestInfo)
                             .task(taskTemplate)
@@ -457,13 +460,14 @@ public class TaskCreationService {
         return Task.builder()
                 .tenantId(task.getTenantId())
                 .orderId(order.getId())
+                .status("INPROGRESS")
                 .filingNumber(task.getFilingNumber())
                 .cnrNumber(courtCase.getCnrNumber())
                 .caseId(courtCase.getId().toString())
                 .caseTitle(courtCase.getCaseTitle())
                 .taskType(task.getTaskType())
                 .createdDate(dateUtil.getCurrentTimeInMilis())
-                .amount(Amount.builder().type("FINE").amount("0").build())
+                .amount(Amount.builder().type("FINE").status("DONE").amount("0").build())
                 .additionalDetails(additionalDetails)
                 .workflow(getCreateWithOutPayment())
                 .build();

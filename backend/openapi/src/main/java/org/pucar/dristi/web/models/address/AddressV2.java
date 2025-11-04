@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package org.pucar.dristi.web.models.address;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,10 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Address {
-
-    @JsonProperty("id")
-    private String id;
+public class AddressV2 {
 
     @JsonProperty("doorNo")
     private String doorNo;

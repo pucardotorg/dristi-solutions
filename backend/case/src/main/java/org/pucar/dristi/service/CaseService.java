@@ -6244,7 +6244,9 @@ public class CaseService {
                         for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
                             ObjectNode newAddress = objectMapper.createObjectNode();
                             newAddress.putPOJO("addressDetails", address);
-                            newAddress.put("id", UUID.randomUUID().toString());
+                            String addressId = UUID.randomUUID().toString();
+                            address.setId(addressId);
+                            newAddress.put("id", addressId);
                             addressDetailsArray.add(newAddress);
                         }
                     }

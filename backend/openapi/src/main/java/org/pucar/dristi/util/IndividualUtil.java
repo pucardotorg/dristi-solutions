@@ -72,6 +72,44 @@ public class IndividualUtil {
         }
     }
 
+    public Individual getIndividualFromMobileNumber(RequestInfo requestInfo, String mobileNumber) throws CustomException {
+        try {
+
+            IndividualSearch individualSearch = IndividualSearch.builder()
+                    .mobileNumber(mobileNumber)
+                    .build();
+
+            IndividualSearchRequest individualSearchRequest = IndividualSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .individual(individualSearch)
+                    .build();
+
+            StringBuilder uri = new StringBuilder(config.getIndividualHost())
+                    .append(config.getIndividualSearchEndpoint())
+                    .append("?limit=1")
+                    .append("&offset=0")
+                    .append("&tenantId=").append(config.getEgovStateTenantId());
+
+            Object responseMap = serviceRequestRepository.fetchResult(uri, individualSearchRequest);
+            if (responseMap != null) {
+                String jsonString = objectMapper.writeValueAsString(responseMap);
+                log.info("Response :: {}", jsonString);
+                JsonNode rootNode = objectMapper.readTree(jsonString);
+
+                JsonNode individualNode = rootNode.path("Individual");
+                JsonNode node = individualNode.get(0);
+                return objectMapper.treeToValue(node, Individual.class);
+
+            }
+
+        } catch (Exception e) {
+            log.error("Error in search individual service: ", e);
+            log.error("Individual not found");
+        }
+
+        return null;
+    }
+
     private StringBuilder buildIndividualSearchUri(List<String> userUuid, String tenantId) {
         return new StringBuilder(config.getIndividualHost())
                 .append(config.getIndividualSearchEndpoint())

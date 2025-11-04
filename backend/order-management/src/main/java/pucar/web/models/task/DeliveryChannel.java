@@ -1,8 +1,10 @@
 package pucar.web.models.task;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Map;
@@ -11,6 +13,8 @@ import java.util.Map;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-05-29T13:38:04.562296+05:30[Asia/Calcutta]")
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class DeliveryChannel {
 
     @JsonProperty("deliveryChannelName")

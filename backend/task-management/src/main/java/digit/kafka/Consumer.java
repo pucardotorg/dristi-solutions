@@ -9,6 +9,7 @@ import digit.web.models.taskdetails.UpFrontStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -18,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static digit.config.ServiceConstants.COMPLETE_TASK_CREATION;
-import static digit.config.ServiceConstants.UPDATE_UPFRONT_PAYMENT;
+import static digit.config.ServiceConstants.*;
+import static digit.config.ServiceConstants.SYSTEM_ADMIN;
 
 @Component
 @Slf4j
@@ -37,7 +38,11 @@ public class Consumer {
         try {
             log.info("Received record: {} on topic: {}", data, topic);
             TaskManagementRequest taskManagementRequest = objectMapper.convertValue(data, TaskManagementRequest.class);
-            processUpfrontApplication(taskManagementRequest.getTaskManagement(), taskManagementRequest.getRequestInfo());
+            TaskManagement taskManagement = taskManagementRequest.getTaskManagement();
+            RequestInfo requestInfo = taskManagementRequest.getRequestInfo();
+            Role role = Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build();
+            requestInfo.getUserInfo().getRoles().add(role);
+            processUpfrontApplication(taskManagementRequest.getTaskManagement(), requestInfo);
             log.info("Upfront application processed successfully: {}", taskManagementRequest.getTaskManagement().getTaskManagementNumber());
         } catch (final Exception e) {
             log.error("Error while listening to value: {} on topic: {}: ", data, topic, e);
