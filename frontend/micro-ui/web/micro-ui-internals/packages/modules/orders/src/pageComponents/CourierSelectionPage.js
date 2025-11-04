@@ -143,7 +143,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
 
       const payload = {
         tenantId: tenantId,
-        filingName: filingNumber,
+        filingNumber: filingNumber,
         partyAddresses: [
           {
             addresses: [addressObj],
