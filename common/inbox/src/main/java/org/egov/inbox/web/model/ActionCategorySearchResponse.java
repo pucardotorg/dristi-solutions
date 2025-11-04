@@ -47,4 +47,7 @@ public class ActionCategorySearchResponse {
     @JsonProperty("registerUsersData")
     private Criteria registerUsersData;
 
+    @JsonProperty("noticeAndSummonsData")
+    private Criteria noticeAndSummonsData;
+
 }

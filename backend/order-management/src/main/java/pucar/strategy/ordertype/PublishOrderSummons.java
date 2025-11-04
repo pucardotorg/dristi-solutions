@@ -7,6 +7,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.config.Configuration;
 import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
@@ -33,26 +34,24 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private final TaskUtil taskUtil;
-    private final IndividualService individualService;
     private final SmsNotificationService smsNotificationService;
     private final UserUtil userUtil;
     private final TaskManagementUtil taskManagementUtil;
     private final UrlShortenerUtil urlShortenerUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil) {
+    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil, Configuration configuration) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-        this.taskUtil = taskUtil;
-        this.individualService = individualService;
         this.smsNotificationService = smsNotificationService;
         this.userUtil = userUtil;
         this.taskManagementUtil = taskManagementUtil;
         this.urlShortenerUtil = urlShortenerUtil;
+        this.configuration = configuration;
     }
 
     @Override
@@ -174,6 +173,8 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                     .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(false)
                     .screenType("home")
+                    .assignedRole(configuration.getTaskManagementAssignedRole())
+                    .actionCategory(configuration.getTaskManagementActionCategory())
                     .additionalDetails(additionalDetails)
                     .stateSla(sla)
                     .build();

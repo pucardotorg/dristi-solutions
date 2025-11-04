@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -264,5 +266,11 @@ public class Configuration {
 
     @Value("${egov.base.url}")
     private String baseUrl;
+
+    @Value("${task.management.action.category}")
+    private String taskManagementActionCategory;
+
+    @Value("${task.management.assigned.role}")
+    private List<String> taskManagementAssignedRole;
 
 }
