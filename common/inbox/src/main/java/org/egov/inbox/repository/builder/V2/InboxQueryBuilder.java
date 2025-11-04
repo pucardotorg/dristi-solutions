@@ -108,6 +108,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             Map<String, Object> outerSortClauseChild = new HashMap<>();
             outerSortClauseChild.put("Data.hearingDetails.serialNumber", innerSortOrderClause);
             sortList.add(outerSortClauseChild);
+            baseEsQuery.put(SORT_KEY, sortList);
         } else {
             // Sort by orderPriority ascending
             sortOrder.sort(Comparator.comparing(SortOrder::getOrderPriority, Comparator.nullsLast(Integer::compareTo)));
