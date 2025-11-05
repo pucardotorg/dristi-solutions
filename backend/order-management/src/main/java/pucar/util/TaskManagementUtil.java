@@ -120,6 +120,9 @@ public class TaskManagementUtil {
                         uniqueIds.remove(partyUniqueId);
                     }
                 }
+                taskManagement.setOrderNumber(order.getOrderNumber());
+                taskManagement.setOrderItemId(getItemId(order));
+                taskManagement.setTaskType(orderType);
                 producer.push(config.getTaskUpFrontCreateTopic(), TaskManagementRequest.builder().requestInfo(requestInfo).taskManagement(taskManagement).build());
             }
             return uniqueIds;
@@ -127,6 +130,13 @@ public class TaskManagementUtil {
             log.error("Error processing upfront payments for order type: {}", order.getOrderType(), e);
             return null;
         }
+    }
+
+    private String getItemId(Order order) {
+        if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+            return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+        }
+        return "";
     }
 
     private void extractAllUniqueIds(Order order, String orderType, List<String> uniqueIds) {
