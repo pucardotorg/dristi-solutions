@@ -41,7 +41,7 @@ public class CaseConsumer {
             CaseRequest caseRequest = objectMapper.readValue(payload.value().toString(), CaseRequest.class);
             String status = caseRequest.getCourtCase().getStatus();
             if(caseStatus.contains(status)){
-                caseService.processAndUpdateCase(caseRequest.getCourtCase());
+                caseService.processAndUpdateCase(caseRequest.getCourtCase(), caseRequest.getRequestInfo());
             }
         } catch (Exception e) {
             log.error("Error in updating PendingTask for join case.", e);

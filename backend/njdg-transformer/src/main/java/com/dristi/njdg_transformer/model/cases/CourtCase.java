@@ -183,6 +183,11 @@ public class CourtCase {
     @JsonProperty("isLPRCase")
     private Boolean isLPRCase = false;
 
+    @JsonProperty("witnessDetails")
+    @Valid
+    @Builder.Default
+    private List<WitnessDetails> witnessDetails = new ArrayList<>();
+
     public CourtCase addStatutesAndSectionsItem(StatuteSection statutesAndSectionsItem) {
         this.statutesAndSections.add(statutesAndSectionsItem);
         return this;

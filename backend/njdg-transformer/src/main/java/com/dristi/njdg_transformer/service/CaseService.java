@@ -4,15 +4,22 @@ import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.cases.WitnessDetails;
 import com.dristi.njdg_transformer.model.enums.PartyType;
+import com.dristi.njdg_transformer.model.order.Order;
+import com.dristi.njdg_transformer.model.order.OrderCriteria;
+import com.dristi.njdg_transformer.model.order.OrderListResponse;
+import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.repository.OrderRepository;
+import com.dristi.njdg_transformer.utils.OrderUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -42,10 +49,11 @@ public class CaseService {
     private final Producer producer;
     private final OrderRepository orderRepository;
     private final HearingRepository hearingRepository;
+    private final OrderUtil orderUtil;
 
-    public NJDGTransformRecord processAndUpdateCase(CourtCase courtCase) {
+    public NJDGTransformRecord processAndUpdateCase(CourtCase courtCase, RequestInfo requestInfo) {
         try {
-            NJDGTransformRecord record = convertToNJDGRecord(courtCase);
+            NJDGTransformRecord record = convertToNJDGRecord(courtCase, requestInfo);
             caseEnrichment.enrichPrimaryPartyDetails(courtCase, record, COMPLAINANT_PRIMARY);
             caseEnrichment.enrichPrimaryPartyDetails(courtCase, record, RESPONDENT_PRIMARY);
             caseEnrichment.enrichAdvocateDetails(courtCase, record, COMPLAINANT_PRIMARY);
@@ -95,13 +103,23 @@ public class CaseService {
             log.debug("Added {} extra complainant parties", extraComplainants.size());
         }
 
+        List<PartyDetails> extraWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, COMPLAINANT_PRIMARY);
+        if (extraWitnesses != null && !extraWitnesses.isEmpty()) {
+            extraParties.addAll(extraWitnesses);
+            log.debug("Added {} extra witness parties", extraWitnesses.size());
+        }
+
         // Fetch extra respondents (non-primary)
         List<PartyDetails> extraRespondents = caseEnrichment.enrichExtraPartyDetails(courtCase, RESPONDENT_PRIMARY);
         if (extraRespondents != null && !extraRespondents.isEmpty()) {
             extraParties.addAll(extraRespondents);
             log.debug("Added {} extra respondent parties", extraRespondents.size());
         }
-
+        List<PartyDetails> extraRespondentWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, RESPONDENT_PRIMARY);
+        if (extraRespondentWitnesses != null && !extraRespondentWitnesses.isEmpty()) {
+            extraParties.addAll(extraRespondentWitnesses);
+            log.debug("Added {} extra respondent witness parties", extraRespondentWitnesses.size());
+        }
         // Handle or persist the combined list
         if (!extraParties.isEmpty()) {
             producer.push("save-extra-parties", extraParties);
@@ -112,7 +130,7 @@ public class CaseService {
     }
 
 
-    private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase) {
+    private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase, RequestInfo requestInfo) {
         return NJDGTransformRecord.builder()
                 .cino(courtCase.getCnrNumber())
                 .dateOfFiling(formatDate(courtCase.getFilingDate()))
@@ -123,7 +141,7 @@ public class CaseService {
                 .regNo(extractCaseNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
                 .regYear(extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
-                .dateOfDecision(formatDate(courtCase.getJudgementDate()))
+                .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
                 .dispNature(null)//todo: configure on contested(1) and uncontested(2)
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
@@ -138,6 +156,24 @@ public class CaseService {
                 .dateNextList(setNextListDate(courtCase.getCnrNumber()))
                 .dateLastList(setNextListDate(courtCase.getCnrNumber()))
                 .build();
+    }
+
+    private LocalDate getDateOfDecision(CourtCase courtCase, RequestInfo requestInfo) {
+        OrderCriteria criteria = OrderCriteria.builder()
+                .filingNumber(courtCase.getCnrNumber())
+                .tenantId(courtCase.getTenantId())
+                .build();
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                .criteria(criteria)
+                .requestInfo(requestInfo).build();
+        OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
+        List<Order> orders = orderListResponse.getList();
+        for (Order order : orders){
+            if(orderTypes.contains(order.getOrderType().toUpperCase()) && PUBLISHED_ORDER.equalsIgnoreCase(order.getStatus())) {
+                return formatDate(order.getCreatedDate());
+            }
+        }
+        return null;
     }
 
     private LocalDate setDateFirstList(String cnrNumber) {
