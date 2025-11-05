@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -264,6 +265,8 @@ public class OrderUtil {
         List<TaskManagement> taskManagementList = taskManagementUtil.searchTaskManagement(searchRequest);
         if (CollectionUtils.isEmpty(taskManagementList)) {
             log.info("No PENDING_PAYMENT task management found for Order ID: {}", order.getId());
+            // expiring the pending tasks which not even single action taken
+            closePendingTasksWithoutAction(tenantId, requestInfo, order);
             return;
         }
 
@@ -276,6 +279,62 @@ public class OrderUtil {
         }
 
         cancelRelatedDemandsOfTaskManagement(tenantId, taskManagementList, requestInfo);
+    }
+
+    private void closePendingTasksWithoutAction(String tenantId, RequestInfo requestInfo, Order order) {
+
+        String filingNumber = order.getFilingNumber();
+
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        String caseCnrNumber = textValueOrNull(caseDetails, CASE_CNR);
+        String caseId = textValueOrNull(caseDetails, CASE_ID);
+        String caseTitle = textValueOrNull(caseDetails, CASE_TITLE);
+
+        // close manual pending task of schedule of hearing
+        log.info("close manual pending task of order with out action of id {}", order.getId());
+        pendingTaskUtil.closeManualPendingTask(MANUAL + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
+
+        List<String> orderItemIds = extractOrderItemIds(order);
+
+        if (orderItemIds.isEmpty()) {
+            log.info("No order item found for order id {}", order.getId());
+            return;
+        }
+
+        log.info("close manual pending task of order item with out action of item id's {}", orderItemIds);
+
+        for (String itemId : orderItemIds) {
+            pendingTaskUtil.closeManualPendingTask(MANUAL + itemId + "_" + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
+        }
+
+    }
+
+    private List<String> extractOrderItemIds(Order order) {
+
+        List<String> complaintOrderItemIds = new ArrayList<>();
+
+        if (order.getCompositeItems() != null) {
+            Object compositeOrderItem = order.getCompositeItems();
+            ArrayNode arrayNode = mapper.convertValue(compositeOrderItem, ArrayNode.class);
+
+            if (arrayNode != null && !arrayNode.isEmpty()) {
+                for (int i = 0; i < arrayNode.size(); i++) {
+                    ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+                    if (itemNode.has("id")) {
+                        String id = itemNode.get("id").textValue();
+                        complaintOrderItemIds.add(id);
+                    }
+                }
+            }
+        }
+
+        return complaintOrderItemIds;
+
     }
 
     private void expireTaskManagementWorkflow(TaskManagement taskManagement, RequestInfo requestInfo) {
@@ -308,7 +367,9 @@ public class OrderUtil {
         pendingTaskUtil.closeManualPendingTask(MANUAL + taskManagement.getOrderNumber(), requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
 
         if (taskManagement.getOrderItemId() != null) {
-            pendingTaskUtil.closeManualPendingTask(MANUAL + taskManagement.getOrderNumber() + taskManagement.getOrderItemId(), requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
+            String itemId = taskManagement.getOrderItemId();
+            String referenceId = MANUAL + itemId + "_" + taskManagement.getOrderNumber();
+            pendingTaskUtil.closeManualPendingTask(referenceId, requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
         }
     }
 
