@@ -72,7 +72,7 @@ public class ApplicationService {
                     || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()) || (COMPLETED.equalsIgnoreCase(body.getApplication().getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(body.getApplication().getApplicationType())))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
-            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType());
+            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType(), true);
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
@@ -114,7 +114,7 @@ public class ApplicationService {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
                 log.info("Deleted files for application with ids: {}", fileStoreIds);
             }
-            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
+            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), false);
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
             filterDocuments(new ArrayList<>() {{

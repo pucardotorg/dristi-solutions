@@ -548,18 +548,6 @@ const GenerateOrdersV2 = () => {
 
   const isBailBondFlagSelected = useMemo(() => {
     if (!currentOrder) return false;
-    const hasRefAppId = (() => {
-      if (currentOrder?.orderCategory === "INTERMEDIATE") {
-        if (currentOrder?.orderType !== "ACCEPT_BAIL") return false;
-        return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
-      }
-      if (Array.isArray(currentOrder?.compositeItems)) {
-        const acceptBailItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL");
-        return Boolean(acceptBailItem?.orderSchema?.additionalDetails?.formdata?.refApplicationId);
-      }
-      return false;
-    })();
-
     const hasFlag = (() => {
       if (currentOrder?.orderCategory === "INTERMEDIATE") {
         if (currentOrder?.orderType !== "ACCEPT_BAIL") return false;
@@ -571,7 +559,7 @@ const GenerateOrdersV2 = () => {
       }
       return false;
     })();
-    return hasFlag || hasRefAppId;
+    return hasFlag;
   }, [currentOrder]);
 
   const { data: orderTypeData, isLoading: isOrderTypeLoading } = Digit.Hooks.useCustomMDMS(
@@ -731,6 +719,16 @@ const GenerateOrdersV2 = () => {
     );
   }, [applicationData]);
 
+  const isBailApplicationPending = useMemo(() => {
+    return Boolean(
+      applicationData?.applicationList?.some(
+        (item) =>
+          item?.applicationType === "REQUEST_FOR_BAIL" &&
+          [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+      )
+    );
+  }, [applicationData]);
+
   const applicationTypeConfigUpdated = useMemo(() => {
     const updatedConfig = structuredClone(applicationTypeConfig);
     // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
@@ -774,6 +772,45 @@ const GenerateOrdersV2 = () => {
                 `WITNESS_BATTA`,
               ];
 
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
+      } else if (isBailApplicationPending) {
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
           orderTypes
         )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
@@ -935,7 +972,7 @@ const GenerateOrdersV2 = () => {
       }
     }
     return updatedConfig;
-  }, [caseDetails, isDelayApplicationPending, currentInProgressHearing]);
+  }, [caseDetails, isDelayApplicationPending, currentInProgressHearing, isBailApplicationPending]);
 
   const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -2789,6 +2826,14 @@ const GenerateOrdersV2 = () => {
       setAddOrderTypeLoader(false);
       setAddOrderModal(false);
       setEditOrderModal(false);
+
+      try {
+        if (orderType?.code === "ACCEPT_BAIL" && Boolean(updatedFormData?.bailBondRequired)) {
+          await createBailBondTaskUnified(updateOrderResponse?.order || updatedOrderData);
+        }
+      } catch (e) {
+        console.error("Failed to create bail bond task on AddOrder confirm", e);
+      }
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(

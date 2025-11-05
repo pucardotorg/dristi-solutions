@@ -35,7 +35,7 @@ public class SmsNotificationUtil {
         this.individualService = individualService;
     }
 
-    public void callNotificationService(ApplicationRequest applicationRequest, String updatedState, String applicationType) {
+    public void callNotificationService(ApplicationRequest applicationRequest, String updatedState, String applicationType, boolean isCreateCall) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
@@ -52,8 +52,14 @@ public class SmsNotificationUtil {
 
             boolean isVoluntarySubmission = null == applicationRequest.getApplication().getReferenceId();
 
-            String messageCode = APPLICATION_SUBMITTED;
+
+            String status = applicationRequest.getApplication().getStatus();
+
+            String messageCode = getMessageCode(isCreateCall);
             log.info("Message code: {}", messageCode);
+            if(messageCode == null){
+                return;
+            }
             String[] smsTopics = messageCode.split(",");
 
             for(String smsTopic: smsTopics) {
@@ -86,6 +92,14 @@ public class SmsNotificationUtil {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private String getMessageCode(boolean isCreateCall){
+        if(isCreateCall){
+            return APPLICATION_SUBMITTED;
+        }
+
+        return null;
     }
 
     public static String getPartyTypeByName(JsonNode litigants, String name) {
