@@ -300,7 +300,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
             return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
         }
-        return "";
+        return null;
     }
 
     private String getPartyType(Order order) {

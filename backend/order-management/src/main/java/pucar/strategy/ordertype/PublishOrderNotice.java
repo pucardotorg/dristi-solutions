@@ -355,7 +355,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
             return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
         }
-        return "";
+        return null;
     }
 
 
