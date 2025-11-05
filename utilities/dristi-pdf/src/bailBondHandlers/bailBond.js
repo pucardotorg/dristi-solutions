@@ -53,7 +53,7 @@ const processSureties = (bailData) => {
     return formattedAddress;
   };
 
-  return sureties.map((surety) => ({
+  return sureties?.map((surety) => ({
     suretyName: surety?.name || "",
     suretyParentName: surety?.fatherName || "",
     suretyAddress: formatAddress(surety?.address) || "",

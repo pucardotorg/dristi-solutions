@@ -35,22 +35,22 @@ const convertToFormData = (t, obj) => {
     sureties:
       Array.isArray(obj?.sureties) && obj.sureties.length > 0
         ? obj.sureties.map((surety) => ({
-            id: surety?.id,
-            name: surety?.name,
-            fatherName: surety?.fatherName,
-            mobileNumber: surety?.mobileNumber,
-            address: surety?.address,
-            email: surety?.email,
-            identityProof: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
-            },
-            proofOfSolvency: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
-            },
-            otherDocuments: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
-            },
-          }))
+          id: surety?.id,
+          name: surety?.name,
+          fatherName: surety?.fatherName,
+          mobileNumber: surety?.mobileNumber,
+          address: surety?.address,
+          email: surety?.email,
+          identityProof: {
+            document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
+          },
+          proofOfSolvency: {
+            document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
+          },
+          otherDocuments: {
+            document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
+          },
+        }))
         : [{}],
   };
 
@@ -260,16 +260,16 @@ const GenerateBailBond = () => {
         const uuid = l?.additionalDetails?.uuid || l?.individualId || l?.uuid || l?.id || "";
         return name && uuid
           ? {
-              code: name,
-              name,
-              uuid,
-            }
+            code: name,
+            name,
+            uuid,
+          }
           : null;
       })
       .filter(Boolean);
     try {
       console.log("[Bail Prefill] complainantsList options", { count: options.length, sample: options[0] || null });
-    } catch (e) {}
+    } catch (e) { }
     return options;
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
@@ -489,7 +489,7 @@ const GenerateBailBond = () => {
   const extractSureties = (formData) => {
     const existingSureties = bailBondDetails?.sureties || [];
     if (existingSureties?.length > 0 && formData?.bailType?.code === "SURETY") {
-      const activeSureties = formData?.sureties?.map((surety,index) => {
+      const activeSureties = formData?.sureties?.map((surety, index) => {
         const matchingSurety = existingSureties?.find((existing) => existing?.id === surety?.id);
         return {
           ...matchingSurety,
@@ -523,7 +523,7 @@ const GenerateBailBond = () => {
         isActive: false,
       }));
     } else {
-      return formData?.sureties?.map((surety,index) => {
+      return formData?.sureties?.map((surety, index) => {
         return {
           index: index + 1,
           name: surety?.name,
@@ -588,13 +588,13 @@ const GenerateBailBond = () => {
         const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
         const documentsFile = fileStoreId
           ? [
-              {
-                fileStore: fileStoreId,
-                documentType: action === bailBondWorkflowAction.UPLOAD ? "SIGNED" : "UNSIGNED",
-                additionalDetails: { name: `${t("BAIL_BOND")}.pdf` },
-                tenantId,
-              },
-            ]
+            {
+              fileStore: fileStoreId,
+              documentType: action === bailBondWorkflowAction.UPLOAD ? "SIGNED" : "UNSIGNED",
+              additionalDetails: { name: `${t("BAIL_BOND")}.pdf` },
+              tenantId,
+            },
+          ]
           : null;
 
         payload = {
@@ -857,7 +857,7 @@ const GenerateBailBond = () => {
       ].forEach((k) => {
         clearFormDataErrors.current && clearFormDataErrors.current(k);
       });
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const documents = useMemo(() => {
@@ -977,10 +977,10 @@ const GenerateBailBond = () => {
               const addSurety = addSuretyFromDetails != null ? addSuretyFromDetails : addSuretyFromForm;
               const derivedBailType = addSurety
                 ? {
-                    code: addSurety === "YES" ? "SURETY" : "PERSONAL",
-                    name: t((addSurety === "YES" ? "SURETY" : "PERSONAL").toUpperCase()),
-                    showSurety: addSurety === "YES",
-                  }
+                  code: addSurety === "YES" ? "SURETY" : "PERSONAL",
+                  name: t((addSurety === "YES" ? "SURETY" : "PERSONAL").toUpperCase()),
+                  showSurety: addSurety === "YES",
+                }
                 : undefined;
 
               const suretiesFromDetails = Array.isArray(appDetails?.sureties) ? appDetails.sureties : undefined;
@@ -1006,43 +1006,43 @@ const GenerateBailBond = () => {
 
               const mappedSureties = Array.isArray(sourceSureties)
                 ? sourceSureties.map((s, sIdx) => {
-                    const perSuretyDocs = Array.isArray(s?.documents) ? s.documents : [];
-                    const perIdDocs = perSuretyDocs
-                      .filter((d) => d?.documentType === "IDENTITY_PROOF")
-                      .map((d) => ({
-                        fileStore: d?.fileStore,
-                        documentType: "IDENTITY_PROOF",
-                        documentName: d?.documentName || d?.documentTitle || "identityProof.pdf",
-                        isActive: true,
-                        tenantId,
-                      }));
-                    const perSolDocs = perSuretyDocs
-                      .filter((d) => d?.documentType === "PROOF_OF_SOLVENCY")
-                      .map((d) => ({
-                        fileStore: d?.fileStore,
-                        documentType: "PROOF_OF_SOLVENCY",
-                        documentName: d?.documentName || d?.documentTitle || "proofOfSolvency.pdf",
-                        isActive: true,
-                        tenantId,
-                      }));
-                    const useAppLevelForThisSurety = sourceSureties.length === 1 && perSuretyDocs.length === 0;
+                  const perSuretyDocs = Array.isArray(s?.documents) ? s.documents : [];
+                  const perIdDocs = perSuretyDocs
+                    .filter((d) => d?.documentType === "IDENTITY_PROOF")
+                    .map((d) => ({
+                      fileStore: d?.fileStore,
+                      documentType: "IDENTITY_PROOF",
+                      documentName: d?.documentName || d?.documentTitle || "identityProof.pdf",
+                      isActive: true,
+                      tenantId,
+                    }));
+                  const perSolDocs = perSuretyDocs
+                    .filter((d) => d?.documentType === "PROOF_OF_SOLVENCY")
+                    .map((d) => ({
+                      fileStore: d?.fileStore,
+                      documentType: "PROOF_OF_SOLVENCY",
+                      documentName: d?.documentName || d?.documentTitle || "proofOfSolvency.pdf",
+                      isActive: true,
+                      tenantId,
+                    }));
+                  const useAppLevelForThisSurety = sourceSureties.length === 1 && perSuretyDocs.length === 0;
 
-                    return {
-                      name: s?.name || "",
-                      fatherName: s?.fatherName || "",
-                      mobileNumber: s?.mobileNumber || "",
-                      address: s?.address || {},
-                      email: s?.email || "",
-                      identityProof: { document: perIdDocs.length ? perIdDocs : useAppLevelForThisSurety ? appLevelIdProofDocs : [] },
-                      proofOfSolvency: { document: perSolDocs.length ? perSolDocs : useAppLevelForThisSurety ? appLevelSolvencyDocs : [] },
-                      otherDocuments: { document: [] },
-                      documents: [
-                        ...perIdDocs,
-                        ...perSolDocs,
-                        ...(useAppLevelForThisSurety ? [...appLevelIdProofDocs, ...appLevelSolvencyDocs] : []),
-                      ],
-                    };
-                  })
+                  return {
+                    name: s?.name || "",
+                    fatherName: s?.fatherName || "",
+                    mobileNumber: s?.mobileNumber || "",
+                    address: s?.address || {},
+                    email: s?.email || "",
+                    identityProof: { document: perIdDocs.length ? perIdDocs : useAppLevelForThisSurety ? appLevelIdProofDocs : [] },
+                    proofOfSolvency: { document: perSolDocs.length ? perSolDocs : useAppLevelForThisSurety ? appLevelSolvencyDocs : [] },
+                    otherDocuments: { document: [] },
+                    documents: [
+                      ...perIdDocs,
+                      ...perSolDocs,
+                      ...(useAppLevelForThisSurety ? [...appLevelIdProofDocs, ...appLevelSolvencyDocs] : []),
+                    ],
+                  };
+                })
                 : undefined;
 
               const litigantFatherNameFromDetails = appDetails?.litigantFatherName;
@@ -1061,19 +1061,19 @@ const GenerateBailBond = () => {
                 ...(current?.selectComplainant
                   ? {}
                   : mappedCandidate?.selectComplainant
-                  ? { selectComplainant: mappedCandidate.selectComplainant }
-                  : {}),
+                    ? { selectComplainant: mappedCandidate.selectComplainant }
+                    : {}),
                 ...(current?.litigantFatherName
                   ? {}
                   : mappedCandidate?.litigantFatherName
-                  ? { litigantFatherName: mappedCandidate.litigantFatherName }
-                  : {}),
+                    ? { litigantFatherName: mappedCandidate.litigantFatherName }
+                    : {}),
                 ...(current?.bailType?.code ? {} : mappedCandidate?.bailType ? { bailType: mappedCandidate.bailType } : {}),
                 ...(Array.isArray(current?.sureties) && current?.sureties?.length
                   ? {}
                   : mappedCandidate?.sureties
-                  ? { sureties: mappedCandidate.sureties }
-                  : {}),
+                    ? { sureties: mappedCandidate.sureties }
+                    : {}),
               };
               console.log("[Bail Prefill][Apps] Prefilling from application (patching empty fields only)", {
                 applicationNumber: latestApp?.applicationNumber,
