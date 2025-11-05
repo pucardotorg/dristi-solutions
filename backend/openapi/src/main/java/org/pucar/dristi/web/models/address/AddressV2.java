@@ -42,4 +42,10 @@ public class AddressV2 {
     @JsonProperty("country")
     private String country;
 
+    @JsonProperty("typeOfAddress")
+    private AddressType typeOfAddress;
+
+    @JsonProperty("coordinates")
+    private Coordinates coordinates;
+
 }
