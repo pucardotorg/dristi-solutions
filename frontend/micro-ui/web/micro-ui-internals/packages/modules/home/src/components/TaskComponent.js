@@ -950,7 +950,7 @@ const TasksComponent = ({
       const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
 
       const parties = updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-      const partyIndex = parties.findIndex((p) => p?.uniqueId === uniqueId);
+      const partyIndex = parties.findIndex((p) => p?.data?.uniqueId || p?.uniqueId === uniqueId);
 
       if (partyIndex > -1) {
         const updatedParties = [...parties];
