@@ -88,15 +88,15 @@ const BailBondSignaturePage = () => {
     };
 
     if (Array.isArray(bailBondDetails?.sureties)) {
-      bailBondDetails.sureties.forEach((surety, index) => {
+      bailBondDetails.sureties.forEach((surety) => {
         data.push({
           additionalDetails: {
             fullName: surety?.name || "",
-            type: `Surety ${index + 1}`,
+            type: `Surety ${surety?.index}`,
           },
           hasSigned: surety?.hasSigned || false,
           mobileNumber: surety?.phoneNumber,
-          placeHolder: `Surety${index + 1} Signature`,
+          placeHolder: `Surety${surety?.index} Signature`,
         });
       });
     }
