@@ -552,6 +552,7 @@ const MainHomeScreen = () => {
           const paymentPayload = {
             offlinePaymentTask: {
               tenantId,
+              status: "ACTIVE",
               filingNumber: courierOrderDetails?.filingNumber,
               consumerCode: taskManagementDetails?.taskManagementNumber + `_${suffix}`,
             },

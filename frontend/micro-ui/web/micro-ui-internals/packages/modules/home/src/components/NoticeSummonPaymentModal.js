@@ -203,6 +203,7 @@ function NoticeSummonPaymentModal({
       const paymentPayload = {
         offlinePaymentTask: {
           tenantId,
+          status: "ACTIVE",
           filingNumber: taskManagement?.filingNumber,
           consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
         },

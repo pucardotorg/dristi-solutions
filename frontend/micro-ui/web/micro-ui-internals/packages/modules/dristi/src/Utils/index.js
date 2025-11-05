@@ -379,4 +379,5 @@ export const TaskManagementWorkflowAction = {
 export const TaskManagementWorkflowState = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
   TASK_CREATION: "TASK_CREATION",
+  COMPLETED: "COMPLETED",
 };
