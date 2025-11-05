@@ -406,6 +406,11 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
   },
   {
+    key: "accept_bail_singleton",
+    orderTypes: ["ACCEPT_BAIL"],
+    unAllowedOrderTypes: ["ACCEPT_BAIL"],
+  },
+  {
     key: "no_restriction",
     orderTypes: [
       "NOTICE",
@@ -414,7 +419,7 @@ export const compositeOrderAllowedTypes = [
       "SUMMONS",
       "MANDATORY_SUBMISSIONS_RESPONSES",
       "SECTION_202_CRPC",
-      "ACCEPT_BAIL",
+      // "ACCEPT_BAIL",
       "PROCLAMATION",
       "ATTACHMENT",
       "COST",

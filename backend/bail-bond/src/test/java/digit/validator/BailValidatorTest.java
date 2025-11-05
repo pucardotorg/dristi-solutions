@@ -54,6 +54,7 @@ class BailValidatorTest {
         bail.setWorkflow(workflowObject);
 
         Surety surety = new Surety();
+        surety.setIndex(1);
         surety.setName("John Doe");
         surety.setMobileNumber("8888888888");
         bail.setSureties(List.of(surety));
@@ -107,6 +108,7 @@ class BailValidatorTest {
 
         Surety incompleteSurety = new Surety();
         incompleteSurety.setName(null);
+        incompleteSurety.setIndex(1);
         incompleteSurety.setMobileNumber(null);
 
         request.getBail().setSureties(List.of(incompleteSurety));
