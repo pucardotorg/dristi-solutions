@@ -13,7 +13,7 @@ import digit.web.models.PaymentCalculator.CalculationResponse;
 import digit.web.models.PaymentCalculator.TaskPaymentCriteria;
 import digit.web.models.PaymentCalculator.TaskPaymentRequest;
 import digit.web.models.demand.*;
-import digit.web.models.payment.BillResponse;
+import digit.web.models.enums.StatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
@@ -138,11 +138,11 @@ public class DemandService {
             log.info("Closing offline payment task for consumer code: {}", consumerCode);
 
             // Build the offline payment task request
-             OfflinePaymentTask offlinePaymentTask = OfflinePaymentTask.builder()
+            OfflinePaymentTask offlinePaymentTask = OfflinePaymentTask.builder()
                     .consumerCode(consumerCode)
                     .filingNumber(filingNumber)
                     .tenantId(tenantId)
-                    .isOfflinePaymentCreation(false)
+                    .status(StatusEnum.CANCELLED)
                     .build();
 
             OfflinePaymentTaskRequest offlinePaymentTaskRequest = OfflinePaymentTaskRequest.builder()
