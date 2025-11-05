@@ -1027,6 +1027,7 @@ const TasksComponent = ({
         setShowCourierServiceModal(false);
         setHideCancelButton(false);
         setCourierServicePendingTask(null);
+        setCourierOrderDetails({});
       },
       isStepperModal: true,
       actionSaveLabel: t("CS_COURIER_NEXT"),
