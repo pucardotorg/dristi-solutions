@@ -78,8 +78,14 @@ public class TaskManagementService {
 
         enrichment.enrichUpdateRequest(request);
 
-        if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction()) || EXPIRE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
+        if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
             demandService.updateDemand(request);
+        }
+
+        if (EXPIRE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
+            log.info("Expire action received for task management : {} ", request.getTaskManagement().getTaskManagementNumber());
+            demandService.cancelTaskManagementDemands(request);
+            log.info("demand cancelled successfully");
         }
 
         workflowService.updateWorkflowStatus(request);

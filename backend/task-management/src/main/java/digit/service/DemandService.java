@@ -88,7 +88,7 @@ public class DemandService {
 
     }
 
-    private void cancelTaskManagementDemands(TaskManagementRequest request) {
+    public void cancelTaskManagementDemands(TaskManagementRequest request) {
 
         RequestInfo requestInfo = request.getRequestInfo();
 
