@@ -225,6 +225,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return updatedGrouped;
   }, [ordersData]);
 
+  debugger;
   const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
 
   useEffect(() => {

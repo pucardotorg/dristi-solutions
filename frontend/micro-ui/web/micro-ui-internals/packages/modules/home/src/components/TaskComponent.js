@@ -1011,7 +1011,10 @@ const TasksComponent = ({
           actionSaveOnSubmit: async () => {
             return await handleProcessCourierOnSubmit(courierData);
           },
-          isDisabled: orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0,
+          isDisabled:
+            isTaskManagementLoading ||
+            isLoader ||
+            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;
@@ -1247,7 +1250,9 @@ const TasksComponent = ({
             </React.Fragment>
           )}
           {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
-          {showCourierServiceModal && courierServiceSteps?.length > 0 && <DocumentModal config={courierServiceConfig} />}
+          {showCourierServiceModal && courierServiceSteps?.length > 0 && (
+            <DocumentModal config={courierServiceConfig} disableCancel={isTaskManagementLoading || isLoader} />
+          )}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
         </React.Fragment>
