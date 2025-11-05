@@ -38,6 +38,9 @@ public class BailValidator {
             }
             if(!ObjectUtils.isEmpty(bail.getSureties())){
                 bail.getSureties().forEach(surety -> {
+                    if(ObjectUtils.isEmpty(surety.getIndex())){
+                        throw new CustomException(VALIDATION_EXCEPTION, "Surety index is required for creating bail");
+                    }
                     if(ObjectUtils.isEmpty(surety.getName())){
                         throw new CustomException(VALIDATION_EXCEPTION, "Surety name is required for creating bail");
                     }
