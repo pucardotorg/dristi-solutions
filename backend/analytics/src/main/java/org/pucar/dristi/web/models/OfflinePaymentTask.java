@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.enums.StatusEnum;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -26,8 +27,8 @@ public class OfflinePaymentTask {
     @NotNull
     private String filingNumber;
 
-    @JsonProperty("isOfflinePaymentCreation")
-    private boolean isOfflinePaymentCreation = true;
+    @JsonProperty("status")
+    private StatusEnum status;
 
     @JsonProperty("tenantId")
     @Valid

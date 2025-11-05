@@ -1,6 +1,7 @@
 package digit.web.models.demand;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.web.models.enums.StatusEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -26,8 +27,8 @@ public class OfflinePaymentTask {
     @NotNull
     private String filingNumber;
 
-    @JsonProperty("isOfflinePaymentCreation")
-    private boolean isOfflinePaymentCreation = true;
+    @JsonProperty("status")
+    private StatusEnum status;
 
     @JsonProperty("tenantId")
     @Valid

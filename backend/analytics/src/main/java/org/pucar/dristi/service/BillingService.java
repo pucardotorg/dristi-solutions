@@ -53,7 +53,12 @@ public class BillingService {
 
         RequestInfo requestInfo = offlinePaymentTaskRequest.getRequestInfo();
 
-        List<Demand> demands = billingUtil.getDemandByConsumerCode(consumerCode, "ACTIVE",  tenantId , requestInfo);
+        List<Demand> demands = billingUtil.getDemandByConsumerCode(consumerCode, ACTIVE,  tenantId , requestInfo);
+
+        if (demands == null || demands.isEmpty()) {
+            log.warn("No active demands found for consumer code: {}", consumerCode);
+            return;
+        }
 
         Demand demand = demands.get(0);
 

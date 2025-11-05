@@ -25,6 +25,7 @@ import org.pucar.dristi.web.models.OfflinePaymentTask;
 import org.pucar.dristi.web.models.billingservice.Demand;
 import org.pucar.dristi.web.models.billingservice.DemandDetail;
 import org.pucar.dristi.web.models.billingservice.DemandResponse;
+import org.pucar.dristi.web.models.enums.StatusEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,8 +62,8 @@ public class BillingUtil {
         String businessService = demand.getBusinessService();
         String status = demand.getStatus().toString();
         Long paymentCompletedDate = null;
-        if (!offlinePaymentTask.isOfflinePaymentCreation()) {
-            status = CANCELLED;
+        if (offlinePaymentTask.getStatus().equals(StatusEnum.CANCELLED) || offlinePaymentTask.getStatus().equals(StatusEnum.PAID)) {
+            status = offlinePaymentTask.getStatus().toString();
             paymentCompletedDate = System.currentTimeMillis();
         }
         String tenantId = demand.getTenantId();
@@ -74,7 +75,7 @@ public class BillingUtil {
 
         CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
         JsonNode caseObject = caseUtil.searchCaseDetails(caseSearchRequest);
-        JsonNode caseJsonNode = caseObject.isNull() ? null : caseObject.get(0);
+        JsonNode caseJsonNode = (caseObject == null || caseObject.isNull() || caseObject.isEmpty()) ? null : caseObject.get(0);
         if (caseJsonNode == null) {
             log.error("case not found with the filing number {}", filingNumber);
             throw new CustomException("CASE_NOT_FOUND", "case not found with the filing number " + filingNumber);

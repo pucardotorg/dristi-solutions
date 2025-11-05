@@ -10,6 +10,7 @@ import digit.web.models.*;
 import digit.web.models.cases.*;
 import digit.web.models.demand.OfflinePaymentTask;
 import digit.web.models.demand.OfflinePaymentTaskRequest;
+import digit.web.models.enums.StatusEnum;
 import digit.web.models.payment.*;
 import digit.web.models.payment.Bill;
 import digit.web.models.pendingtask.*;
@@ -89,7 +90,7 @@ public class PaymentUpdateService {
                     .consumerCode(consumerCode)
                     .filingNumber(filingNumber)
                     .tenantId(tenantId)
-                    .isOfflinePaymentCreation(false)
+                    .status(StatusEnum.PAID)
                     .build();
 
             OfflinePaymentTaskRequest offlinePaymentTaskRequest = OfflinePaymentTaskRequest.builder()
