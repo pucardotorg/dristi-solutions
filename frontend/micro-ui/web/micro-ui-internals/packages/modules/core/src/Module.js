@@ -52,17 +52,20 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
     return <Loader page={true} />;
   }
 
+  // Ensure initData has a default value to prevent Redux undefined state errors
+  const safeInitData = initData || {};
+
   const i18n = getI18n();
   return (
-    <Provider store={getStore(initData, moduleReducers(initData))}>
+    <Provider store={getStore(safeInitData, moduleReducers(safeInitData))}>
       <Router>
         <Body>
           <DigitApp
-            initData={initData}
+            initData={safeInitData}
             stateCode={stateCode}
             modules={moduleData}
-            appTenants={initData.tenants}
-            logoUrl={initData?.stateInfo?.logoUrl}
+            appTenants={safeInitData.tenants}
+            logoUrl={safeInitData?.stateInfo?.logoUrl}
             defaultLanding={defaultLanding}
           />
         </Body>
@@ -74,7 +77,7 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
 export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, defaultLanding }) => {
   const [privacy, setPrivacy] = useState(Digit.Utils.getPrivacyObject() || {});
   // State to manage breadcrumb parameters across the application
-const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
+  const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
 
   const { isLoading: isGetAccessToken } = useGetAccessToken("refresh-token");
 
@@ -143,9 +146,14 @@ const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadC
                 },
               }}
             >
-                            {/* Provide breadcrumb context to all child components */}
+              {/* Provide breadcrumb context to all child components */}
               <BreadCrumbsParamsDataContext.Provider value={{ BreadCrumbsParamsData, setBreadCrumbsParamsData }}>
-                <DigitUIWrapper stateCode={stateCode} enabledModules={enabledModules} moduleReducers={moduleReducers} defaultLanding={defaultLanding} />
+                <DigitUIWrapper
+                  stateCode={stateCode}
+                  enabledModules={enabledModules}
+                  moduleReducers={moduleReducers}
+                  defaultLanding={defaultLanding}
+                />
               </BreadCrumbsParamsDataContext.Provider>
             </PrivacyProvider.Provider>
           </ComponentProvider.Provider>
