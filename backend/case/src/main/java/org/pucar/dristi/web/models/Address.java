@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.v2.AddressType;
+import org.pucar.dristi.web.models.v2.Coordinates;
 
 @Data
 @AllArgsConstructor
@@ -41,4 +43,10 @@ public class Address {
 
     @JsonProperty("country")
     private String country;
+
+    @JsonProperty("typeOfAddress")
+    private AddressType typeOfAddress;
+
+    @JsonProperty("coordinates")
+    private Coordinates coordinates;
 }
