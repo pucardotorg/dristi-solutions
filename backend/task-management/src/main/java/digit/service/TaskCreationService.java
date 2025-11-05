@@ -2,6 +2,8 @@ package digit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.util.*;
 import digit.web.models.*;
@@ -102,7 +104,7 @@ public class TaskCreationService {
             ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
             
             log.info("Building summon and notice details for {} party", partyType);
-            TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType);
+            TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType, taskManagement.getOrderItemId());
 
             log.info("Building task details list for {} party", partyType);
             List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
@@ -270,8 +272,11 @@ public class TaskCreationService {
                 .build();
     }
 
-    private TaskDetails buildSummonAndNoticeDetails(Order order, CourtCase courtCase, String partyType) {
+    private TaskDetails buildSummonAndNoticeDetails(Order order, CourtCase courtCase, String partyType, String itemId) {
         String orderType = order.getOrderType();
+        if (itemId != null) {
+            extractOrderTypeFromCompositeItems(order, itemId);
+        }
         Object additionalDetails = order.getAdditionalDetails();
 
         switch (orderType) {
@@ -302,6 +307,28 @@ public class TaskCreationService {
                 return TaskDetails.builder().build();
             }
         }
+    }
+
+    private void extractOrderTypeFromCompositeItems(Order order, String itemId) {
+
+        if (order.getCompositeItems() != null) {
+            Object compositeOrderItem = order.getCompositeItems();
+            ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
+
+            if (arrayNode != null && !arrayNode.isEmpty()) {
+                for (int i = 0; i < arrayNode.size(); i++) {
+                    ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+                    if (itemNode.has("id")) {
+                        String id = itemNode.get("id").textValue();
+                        if (itemId.equals(id)) {
+                            order.setOrderType(itemNode.get("orderType").asText());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
