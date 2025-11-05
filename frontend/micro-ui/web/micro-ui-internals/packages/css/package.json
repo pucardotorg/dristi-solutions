@@ -5,6 +5,9 @@
   "license": "MIT",
   "main": "dist/index.css",
   "author": "Akshay Kumar <akshay.kumar@beehyv.com>",
+  "engines": {
+    "node": ">=22"
+  },
   "cssConfig": {
     "prefix": ""
   },
