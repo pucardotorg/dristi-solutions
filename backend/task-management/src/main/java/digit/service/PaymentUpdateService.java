@@ -138,7 +138,7 @@ public class PaymentUpdateService {
     }
 
     private CourtCase fetchCase(RequestInfo requestInfo, String filingNumber) {
-        log.debug("Fetching case details for filing number: {}", filingNumber);
+        log.info("Fetching case details for filing number: {}", filingNumber);
 
         try {
             JsonNode caseNode = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
@@ -152,7 +152,7 @@ public class PaymentUpdateService {
             }
 
             CourtCase courtCase = objectMapper.convertValue(caseNode, CourtCase.class);
-            log.debug("Successfully fetched case with ID: {} for filing number: {}",
+            log.info("Successfully fetched case with ID: {} for filing number: {}",
                     courtCase.getId(), filingNumber);
             return courtCase;
         } catch (Exception e) {
