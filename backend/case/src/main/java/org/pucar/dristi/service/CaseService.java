@@ -6240,7 +6240,7 @@ public class CaseService {
                 }else if("WITNESS".equalsIgnoreCase(partyType)){
                    List<WitnessDetails> witnessDetails = courtCase.getWitnessDetails();
                    for(WitnessDetails witnessDetail : witnessDetails){
-                       if(witnessDetail.getUniqueId().equals(uniqueId)){
+                       if(witnessDetail.getUniqueId().equals(uniqueId.toString())){
                            for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
                                AddressDetails addressDetails = new AddressDetails();
                                WitnessAddress witnessAddress = new WitnessAddress();
