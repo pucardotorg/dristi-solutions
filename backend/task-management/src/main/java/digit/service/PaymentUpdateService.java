@@ -109,7 +109,7 @@ public class PaymentUpdateService {
     private void closePaymentPendingTask(RequestInfo requestInfo, TaskManagement taskManagement) {
         try {
             log.info("Closing payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
-            String referenceId = MANUAL + (taskManagement.getOrderItemId() != null ? taskManagement.getOrderItemId() + "_" : "") +  taskManagement.getOrderNumber();
+            String referenceId = MANUAL + ((taskManagement.getOrderItemId() != null && !taskManagement.getOrderItemId().isEmpty())? taskManagement.getOrderItemId() + "_" : "") +  taskManagement.getOrderNumber();
             JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(referenceId);
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
             JsonNode hit = hitsNode.get(0);
