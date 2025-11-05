@@ -33,7 +33,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
 
     const calculationList = breakupResponse?.Calculation;
 
-    return noticeData.map((notice) => {
+    const data = noticeData?.map((notice) => {
       const selectedAddresses = notice?.addresses?.filter((addr) => addr?.selected) || [];
 
       // Case 1️⃣: No address selected → all channels off
@@ -90,6 +90,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
         courierOptions: mergedCourierOptions,
       };
     });
+    return data;
   };
 
   // Handler to toggle courier option selection
@@ -152,21 +153,25 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
           },
         ],
       };
+      const addressResponse = await openApiService.addAddress(payload, {});
 
-      await openApiService.addAddress(payload, {});
+      const partyResponse = addressResponse?.partyAddressList?.[0];
+      if (!partyResponse) return;
+
+      const { uniqueId, addresses = [] } = partyResponse;
+      const newAddr = addresses[0];
+      if (!newAddr) return;
 
       const updatedNotices = noticeData?.map((notice) => {
         if (notice.id === currentNoticeId) {
-          const newAddressId = Math.max(...notice.addresses.map((a) => a.id), 0) + 1;
-
           return {
             ...notice,
             addresses: [
               ...notice.addresses,
               {
-                id: newAddressId,
-                text: formatAddress(addressObj),
-                addressDetails: addressObj,
+                id: newAddr?.id,
+                text: formatAddress(newAddr),
+                addressDetails: { addressDetails: newAddr, id: newAddr?.id },
                 selected: true,
               },
             ],

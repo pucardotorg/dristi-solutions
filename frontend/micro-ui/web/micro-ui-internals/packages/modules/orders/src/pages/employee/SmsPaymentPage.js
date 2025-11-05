@@ -157,20 +157,37 @@ const SmsPaymentPage = () => {
     });
 
     return {
-      uniqueId: orderDetails?.orderItemId,
+      uniqueId: orderDetails?.orderItemId || orderItemId,
       orderType,
       notices: formattedParties,
       addressDetails: formattedParties?.flatMap((p) => p?.addresses) || [],
     };
-  }, [orderData, taskManagementList, orderItemId]);
+  }, [orderData, orderItemId, taskManagementList]);
+
+  // This memo acts as the single source of truth for all downstream payment calculations.
+  // It safely switches between the stable initial data (processCourierData) and the
+  // user-modified state (noticeData), preventing an infinite loop.
+  const liveCourierData = useMemo(() => {
+    if (noticeData && noticeData.length > 0) {
+      const noticeAddress = noticeData?.flatMap((p) => p?.addresses) || [];
+      if (noticeAddress.length > processCourierData?.addressDetails?.length) {
+        return {
+          ...processCourierData,
+          notices: noticeData,
+          addressDetails: noticeAddress,
+        };
+      }
+    }
+    return processCourierData;
+  }, [processCourierData, noticeData]);
 
   const paymentCriteriaList = useMemo(() => {
-    if (!processCourierData?.addressDetails?.length) return [];
+    if (!liveCourierData?.addressDetails?.length) return [];
 
     const channels = ["RPAD", "EPOST"];
-    const taskTypes = [processCourierData?.orderType];
+    const taskTypes = [liveCourierData?.orderType];
 
-    return processCourierData?.addressDetails?.flatMap((addr) =>
+    return liveCourierData?.addressDetails?.flatMap((addr) =>
       taskTypes?.flatMap((taskType) =>
         channels?.map((channelId) => ({
           channelId,
@@ -181,21 +198,21 @@ const SmsPaymentPage = () => {
         }))
       )
     );
-  }, [processCourierData, tenantId]);
+  }, [liveCourierData?.addressDetails, liveCourierData?.orderType, tenantId]);
 
   const { data: breakupResponse, isLoading: isBreakUpLoading } = useOpenApiSummonsPaymentBreakUp(
     {
       Criteria: paymentCriteriaList,
     },
     {},
-    `PAYMENT-${processCourierData?.uniqueId}-${paymentCriteriaList?.length > 0}`,
+    `PAYMENT-${liveCourierData?.uniqueId}-${liveCourierData?.addressDetails?.length}`,
     Boolean(paymentCriteriaList?.length > 0)
   );
 
   const courierBreakupOptions = useMemo(() => {
     if (!breakupResponse?.Calculation?.length) return [];
 
-    const checkedAddressIds = processCourierData?.addressDetails?.filter((addr) => addr?.selected || addr?.checked)?.map((addr) => addr?.id) || [];
+    const checkedAddressIds = liveCourierData?.addressDetails?.filter((addr) => addr?.selected || addr?.checked)?.map((addr) => addr?.id) || [];
     const grouped = breakupResponse?.Calculation?.reduce((acc, item) => {
       const [taskType, channelId, addressId] = item?.applicationId?.split("_") || [];
       const key = `${taskType}_${channelId}_${addressId}`;
@@ -229,14 +246,17 @@ const SmsPaymentPage = () => {
     }));
 
     return options;
-  }, [breakupResponse, processCourierData, t]);
+  }, [breakupResponse?.Calculation, liveCourierData?.addressDetails, t]);
 
   useEffect(() => {
-    if (!processCourierData?.notices?.length || !courierBreakupOptions?.length) return;
+    if (!liveCourierData?.notices?.length || !breakupResponse?.Calculation?.length) return;
 
-    const updatedNotices = processCourierData?.notices?.map((notice) => {
+    const updatedNotices = liveCourierData?.notices?.map((notice) => {
       const noticeAddressIds = notice?.addresses?.map((addr) => addr?.id);
-      const taskManagement = taskManagementList?.find((task) => task?.taskType === orderData?.orderType);
+
+      // Use the stable orderType property from liveCourierData
+      const taskManagement = taskManagementList?.find((task) => task?.taskType === liveCourierData?.orderType);
+
       const partyDetails = taskManagement?.partyDetails?.find((lit) => {
         if (notice?.partyType === "Respondent") {
           return notice?.partyUniqueId === lit?.respondentDetails?.uniqueId;
@@ -270,14 +290,15 @@ const SmsPaymentPage = () => {
       }));
 
       const mergedOptions = breakupOptions?.map((opt) => {
-        const alreadySelected = existingDeliveryChannels?.some((ch) => ch?.channelId === opt?.channelId);
+        const currentlySelectedInState = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId)?.selected || false;
+        const alreadySelectedInTask = existingDeliveryChannels?.some((ch) => ch?.channelId === opt?.channelId);
+
         return {
           ...opt,
-          selected: alreadySelected || opt?.selected || false,
+          selected: currentlySelectedInState || alreadySelectedInTask,
         };
       });
 
-      // Step 3: ensure each channelId appears only once
       const dedupedOptions = mergedOptions?.reduce((acc, curr) => {
         if (!acc.some((o) => o.channelId === curr.channelId)) acc.push(curr);
         return acc;
@@ -289,8 +310,27 @@ const SmsPaymentPage = () => {
       };
     });
 
+    // below check to restrict infinite loop
+    const currentNotices = liveCourierData?.notices;
+    let areOptionsTheSame = true;
+
+    if (updatedNotices.length === currentNotices.length) {
+      for (let i = 0; i < currentNotices.length; i++) {
+        if (JSON.stringify(currentNotices[i].courierOptions) !== JSON.stringify(updatedNotices[i].courierOptions)) {
+          areOptionsTheSame = false;
+          break;
+        }
+      }
+    } else {
+      areOptionsTheSame = false;
+    }
+
+    if (areOptionsTheSame) {
+      return;
+    }
+
     setNoticeData(updatedNotices);
-  }, [processCourierData, courierBreakupOptions, taskManagementList, orderData?.orderType, t]);
+  }, [breakupResponse, liveCourierData, taskManagementList, t]);
 
   const handleProceedToPaymentPage = async () => {
     try {
@@ -504,13 +544,13 @@ const SmsPaymentPage = () => {
     }
   }, [history, isAuthorised, isUserLoggedIn, orderItemId, orderNumber, referenceId, tenantId]);
 
-  if (isOrderDataLoading || isTaskManagementLoading || step === null || isBreakUpLoading || isPaymentTypeLoading) {
+  if (isOrderDataLoading || isTaskManagementLoading || step === null || isPaymentTypeLoading) {
     return <Loader />;
   }
 
   return (
     <div className="sms-payment-container">
-      {loader && (
+      {(loader || isBreakUpLoading) && (
         <div
           style={{
             width: "100vw",
