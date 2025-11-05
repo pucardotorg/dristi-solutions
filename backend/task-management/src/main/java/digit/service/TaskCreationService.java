@@ -56,11 +56,11 @@ public class TaskCreationService {
             for (PartyDetails party : taskManagement.getPartyDetails()) {
                 try {
                     if (party.getRespondentDetails() != null) {
-                        log.debug("Processing respondent party with ID: {}", party.getRespondentDetails());
+                        log.info("Processing respondent party with ID: {}", party.getRespondentDetails());
                         createTasksForParty(requestInfo, taskManagement, party, "Respondent");
                         processedParties++;
                     } else if (party.getWitnessDetails() != null) {
-                        log.debug("Processing witness party with ID: {}", party.getWitnessDetails());
+                        log.info("Processing witness party with ID: {}", party.getWitnessDetails());
                         createTasksForParty(requestInfo, taskManagement, party, "Witness");
                         processedParties++;
                     } else {
@@ -85,29 +85,29 @@ public class TaskCreationService {
                 partyType, taskManagement.getFilingNumber(), taskManagement.getOrderNumber());
         
         try {
-            log.debug("Fetching case details for filing number: {}", taskManagement.getFilingNumber());
+            log.info("Fetching case details for filing number: {}", taskManagement.getFilingNumber());
             CourtCase courtCase = fetchCase(requestInfo, taskManagement.getFilingNumber());
             
-            log.debug("Fetching order details for order number: {}", taskManagement.getOrderNumber());
+            log.info("Fetching order details for order number: {}", taskManagement.getOrderNumber());
             Order order = fetchOrder(requestInfo, taskManagement.getOrderNumber());
             
-            log.debug("Extracting additional details from order");
+            log.info("Extracting additional details from order");
             Map<String, Object> additionalDetails = extractAdditionalDetails(order);
             
-            log.debug("Fetching court details for case ID: {}", courtCase.getId());
+            log.info("Fetching court details for case ID: {}", courtCase.getId());
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
 
-            log.debug("Building case details and complainant details");
+            log.info("Building case details and complainant details");
             CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails);
             ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
             
-            log.debug("Building summon and notice details for {} party", partyType);
+            log.info("Building summon and notice details for {} party", partyType);
             TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType);
 
-            log.debug("Building task details list for {} party", partyType);
+            log.info("Building task details list for {} party", partyType);
             List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
             
-            log.debug("Building base task template");
+            log.info("Building base task template");
             Task taskTemplate = buildBaseTask(taskManagement, order, courtCase, additionalDetails);
 
             log.info("Creating {} tasks for {} party", taskDetailsList.size(), partyType);
@@ -122,7 +122,7 @@ public class TaskCreationService {
                             .task(taskTemplate)
                             .build());
                     createdTasks++;
-                    log.debug("Successfully created task {} of {} for {} party", 
+                    log.info("Successfully created task {} of {} for {} party",
                             createdTasks, taskDetailsList.size(), partyType);
                 } catch (Exception e) {
                     log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
@@ -142,7 +142,7 @@ public class TaskCreationService {
     // ---- Data Fetching Methods ---- //
 
     private CourtCase fetchCase(RequestInfo requestInfo, String filingNumber) {
-        log.debug("Fetching case details for filing number: {}", filingNumber);
+        log.info("Fetching case details for filing number: {}", filingNumber);
         
         try {
             JsonNode caseNode = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
@@ -156,7 +156,7 @@ public class TaskCreationService {
             }
             
             CourtCase courtCase = objectMapper.convertValue(caseNode, CourtCase.class);
-            log.debug("Successfully fetched case with ID: {} for filing number: {}", 
+            log.info("Successfully fetched case with ID: {} for filing number: {}",
                     courtCase.getId(), filingNumber);
             return courtCase;
         } catch (Exception e) {
@@ -166,7 +166,7 @@ public class TaskCreationService {
     }
 
     private Order fetchOrder(RequestInfo requestInfo, String orderNumber) {
-        log.debug("Fetching order details for order number: {}", orderNumber);
+        log.info("Fetching order details for order number: {}", orderNumber);
         
         try {
             OrderListResponse orderResponse = orderUtil.getOrders(OrderSearchRequest.builder()
@@ -180,7 +180,7 @@ public class TaskCreationService {
             }
             
             Order order = orderResponse.getList().get(0);
-            log.debug("Successfully fetched order with ID: {} for order number: {}", 
+            log.info("Successfully fetched order with ID: {} for order number: {}",
                     order.getId(), orderNumber);
             return order;
         } catch (Exception e) {
@@ -190,19 +190,19 @@ public class TaskCreationService {
     }
 
     private Map<String, Object> extractAdditionalDetails(Order order) {
-        log.debug("Extracting additional details from order ID: {}", order.getId());
+        log.info("Extracting additional details from order ID: {}", order.getId());
         
         try {
             String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
             Map<String, Object> details = new HashMap<>();
             if (itemId != null) {
                 details.put("itemId", itemId);
-                log.debug("Found itemId: {} in order additional details", itemId);
+                log.info("Found itemId: {} in order additional details", itemId);
             } else {
-                log.debug("No itemId found in order additional details");
+                log.info("No itemId found in order additional details");
             }
             
-            log.debug("Extracted {} additional detail entries from order", details.size());
+            log.info("Extracted {} additional detail entries from order", details.size());
             return details;
         } catch (Exception e) {
             log.error("Error extracting additional details from order ID: {}", order.getId(), e);
@@ -214,7 +214,7 @@ public class TaskCreationService {
         String tenantId = task.getTenantId();
         String courtId = courtCase.getCourtId();
         
-        log.debug("Fetching court details for court ID: {} in tenant: {}", courtId, tenantId);
+        log.info("Fetching court details for court ID: {} in tenant: {}", courtId, tenantId);
         
         try {
             Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(
@@ -228,18 +228,22 @@ public class TaskCreationService {
             }
             
             JSONArray rooms = mdmsData.get("common-masters").get("Court_Rooms");
-            log.debug("Found {} court rooms in master data for tenant: {}", rooms.size(), tenantId);
-            
-            Map<String, Object> courtDetails = rooms.stream()
-                    .filter(o -> o instanceof Map data && courtId != null && courtId.equals(data.get("code")))
-                    .map(o -> (Map<String, Object>) o)
-                    .findFirst()
-                    .orElse(new HashMap<>());
+            log.info("Found {} court rooms in master data for tenant: {}", rooms.size(), tenantId);
+            Map<String, Object> courtDetails = new HashMap<>();
+            for (Object roomObj : rooms) {
+                if (roomObj instanceof Map<?, ?> data) {
+                    Object code = data.get("code");
+                    if (code != null && code instanceof String && code.equals(courtId)) {
+                        courtDetails = (Map<String, Object>) data;
+                        break;
+                    }
+                }
+            }
             
             if (courtDetails.isEmpty()) {
                 log.warn("No court room found with ID: {} in tenant: {}", courtId, tenantId);
             } else {
-                log.debug("Found matching court room details for court ID: {}", courtId);
+                log.info("Found matching court room details for court ID: {}", courtId);
             }
             
             return courtDetails;
@@ -489,7 +493,7 @@ public class TaskCreationService {
     }
 
     private ComplainantDetails getComplainantDetails(CourtCase courtCase) {
-        log.debug("Extracting complainant details from case ID: {}", courtCase.getId());
+        log.info("Extracting complainant details from case ID: {}", courtCase.getId());
         
         try {
             ComplainantDetails complainantDetails = new ComplainantDetails();
@@ -499,7 +503,7 @@ public class TaskCreationService {
             
             if (primaryComplainant.isPresent()) {
                 String individualId = primaryComplainant.get().getIndividualId();
-                log.debug("Found primary complainant with individual ID: {} in case: {}", 
+                log.info("Found primary complainant with individual ID: {} in case: {}",
                         individualId, courtCase.getId());
                 
                 Map<String, Object> complainantDetailsFromCourtCase = getComplainantDetailsFromCourtCase(courtCase, individualId);
@@ -510,7 +514,7 @@ public class TaskCreationService {
                 complainantDetails.setAddress(complainantAddressFromIndividualDetail);
                 complainantDetails.setName(complainantName);
                 
-                log.debug("Extracted complainant details - Name: {}, Address available: {}", 
+                log.info("Extracted complainant details - Name: {}, Address available: {}",
                         complainantName, complainantAddressFromIndividualDetail != null && !complainantAddressFromIndividualDetail.isEmpty());
             } else {
                 log.warn("No primary complainant found in case ID: {}", courtCase.getId());
@@ -524,7 +528,7 @@ public class TaskCreationService {
     }
 
     public Map<String, Object> getComplainantDetailsFromCourtCase(CourtCase courtCase, String complainantIndividualId) {
-        log.debug("Extracting complainant details for individual ID: {} from case: {}", 
+        log.info("Extracting complainant details for individual ID: {} from case: {}",
                 complainantIndividualId, courtCase != null ? courtCase.getId() : "null");
         
         try {
@@ -547,7 +551,7 @@ public class TaskCreationService {
                 return Collections.emptyMap();
             }
             
-            log.debug("Found {} formdata entries for complainant details", formdataList.size());
+            log.info("Found {} formdata entries for complainant details", formdataList.size());
             
             Map complainantDetails = formdataList.stream()
                     .filter(d -> {
@@ -563,7 +567,7 @@ public class TaskCreationService {
                 log.warn("No matching complainant details found for individual ID: {} in case: {}", 
                         complainantIndividualId, courtCase.getId());
             } else {
-                log.debug("Successfully found complainant details for individual ID: {}", complainantIndividualId);
+                log.info("Successfully found complainant details for individual ID: {}", complainantIndividualId);
             }
             
             return complainantDetails;
@@ -600,7 +604,7 @@ public class TaskCreationService {
     }
 
     public String getComplainantName(Map<String, Object> complainantDetails) {
-        log.debug("Extracting complainant name from details");
+        log.info("Extracting complainant name from details");
         
         try {
             if (complainantDetails == null || complainantDetails.isEmpty()) {
@@ -612,22 +616,22 @@ public class TaskCreationService {
             String lastName = jsonUtil.getNestedValue(complainantDetails, List.of("lastName"), String.class);
             String partyName = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
             
-            log.debug("Extracted party name: {} (firstName: {}, lastName: {})", partyName, firstName, lastName);
+            log.info("Extracted party name: {} (firstName: {}, lastName: {})", partyName, firstName, lastName);
             
             Map<?, ?> complainantTypeObj = jsonUtil.getNestedValue(complainantDetails, List.of("complainantType"), Map.class);
             String complainantTypeCode = complainantTypeObj != null ? (String) complainantTypeObj.get("code") : null;
             
-            log.debug("Complainant type code: {}", complainantTypeCode);
+            log.info("Complainant type code: {}", complainantTypeCode);
             
             if (INDIVIDUAL.equalsIgnoreCase(complainantTypeCode)) {
-                log.debug("Individual complainant, returning party name: {}", partyName);
+                log.info("Individual complainant, returning party name: {}", partyName);
                 return partyName;
             }
             
             String companyName = jsonUtil.getNestedValue(complainantDetails, List.of("complainantCompanyName"), String.class);
             if (companyName != null && !companyName.isEmpty()) {
                 String fullName = String.format("%s (Represented By %s)", companyName, partyName);
-                log.debug("Company complainant, returning full name: {}", fullName);
+                log.info("Company complainant, returning full name: {}", fullName);
                 return fullName;
             }
             
