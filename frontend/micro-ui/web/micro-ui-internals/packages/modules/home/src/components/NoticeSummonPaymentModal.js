@@ -262,6 +262,7 @@ function NoticeSummonPaymentModal({
           </div>,
         ]}
         inline
+        className={"adhaar-verification-info-card"}
       />
       <div className="total-payment">
         {paymentCalculation
