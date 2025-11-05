@@ -153,6 +153,9 @@ public class Configuration {
 	@Value("${witness.kafka.update.topic}")
 	private String witnessUpdateTopic;
 
+	@Value("${case.kafka.add.address.topic}")
+	private String addAddressTopic;
+
 	@Value("${egov.workflow.case.business.name}")
 	private String caseBusinessName;
 

@@ -6177,7 +6177,7 @@ public class CaseService {
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
-            producer.push(config.getCaseEditTopic(), caseRequest);
+            producer.push(config.getAddAddressTopic(), caseRequest);
 
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
