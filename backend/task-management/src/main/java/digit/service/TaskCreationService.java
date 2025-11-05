@@ -276,6 +276,7 @@ public class TaskCreationService {
         String orderType = order.getOrderType();
         if (itemId != null) {
             extractOrderTypeFromCompositeItems(order, itemId);
+            orderType = order.getOrderType();
         }
         Object additionalDetails = order.getAdditionalDetails();
 
