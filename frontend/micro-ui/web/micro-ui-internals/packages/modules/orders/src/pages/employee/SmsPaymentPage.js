@@ -529,9 +529,11 @@ const SmsPaymentPage = () => {
           <Loader />
         </div>
       )}
-      <div className="sms-payment-header">
-        <h1>{`${t("TAKE_STEPS_FOR_CASE")} ${orderData?.caseTitle || "XYZ"}`}</h1>
-      </div>
+      {orderData?.caseTitle && (
+        <div className="sms-payment-header">
+          <h1>{`${t("TAKE_STEPS_FOR_CASE")} ${orderData?.caseTitle || "XYZ"}`}</h1>
+        </div>
+      )}
       {step === 1 ? (
         <CourierSelectionPage
           t={t}

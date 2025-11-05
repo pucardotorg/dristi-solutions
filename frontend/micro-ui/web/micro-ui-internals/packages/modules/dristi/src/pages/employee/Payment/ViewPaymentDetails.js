@@ -177,9 +177,10 @@ const ViewPaymentDetails = ({ location, match }) => {
       setIsLoading(true);
       if (
         consumerCode &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
-        paymentType?.toLowerCase()?.includes("case")
+        ((demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+          demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
+          paymentType?.toLowerCase()?.includes("case")) ||
+          (paymentType?.toLowerCase()?.includes("task") && businessService === "task-management-payment"))
       ) {
         try {
           const response = await DRISTIService.getTreasuryPaymentBreakup(

@@ -11,7 +11,15 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
-function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManagementList, courierOrderDetails, refetchPendingTasks }) {
+function NoticeSummonPaymentModal({
+  setHideCancelButton,
+  formDataKey,
+  taskManagementList,
+  courierOrderDetails,
+  refetchPendingTasks,
+  setShowCourierServiceModal,
+  setCourierServicePendingTask,
+}) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const toast = useToast();
@@ -189,6 +197,28 @@ function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManage
     }
   };
 
+  const onTaskPayOffline = async () => {
+    try {
+      setIsLoading(true);
+      const paymentPayload = {
+        offlinePaymentTask: {
+          tenantId,
+          filingNumber: taskManagement?.filingNumber,
+          consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
+        },
+      };
+      await DRISTIService.createOfflinePaymentService(paymentPayload, {});
+      setShowCourierServiceModal(false);
+      setHideCancelButton(false);
+      setCourierServicePendingTask(null);
+    } catch (error) {
+      showToast("error", t("SOMETHING_WENT_WRONG"), 2000);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
     setTimeout(() => {
@@ -273,6 +303,15 @@ function NoticeSummonPaymentModal({ setHideCancelButton, formDataKey, taskManage
         onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
         isDisabled={isCaseLocked}
       />
+      {!receiptFilstoreId && (
+        <Button
+          label={t("CS_TASK_PAY_OFFLINE")}
+          variation="secondary"
+          className={"pay-online-button"}
+          onButtonClick={onTaskPayOffline}
+          isDisabled={isCaseLocked}
+        />
+      )}
       {toastMsg && (
         <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
       )}

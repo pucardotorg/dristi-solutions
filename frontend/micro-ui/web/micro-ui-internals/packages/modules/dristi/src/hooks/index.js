@@ -123,6 +123,7 @@ export const Urls = {
     taskManagementCreate: "/task-management/v1/_create",
     taskManagementUpdate: "/task-management/v1/_update",
     taskManagementSearch: "/task-management/v1/_search",
+    createOfflinePayment: "/analytics/offline-payment/_create",
   },
 };
 

@@ -2220,6 +2220,17 @@ export const UICustomizations = {
                     if (!acc.advocateDetails) acc.advocateDetails = {};
                     acc.advocateDetails[subKey] = curr.value;
                   }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
@@ -2236,6 +2247,9 @@ export const UICustomizations = {
                 createdTime: result?.createdTime,
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                uniqueIdsList: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
@@ -2294,7 +2308,7 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link

@@ -1045,6 +1045,8 @@ const TasksComponent = ({
               taskManagementList={taskManagementList}
               courierOrderDetails={courierOrderDetails}
               refetchPendingTasks={refetch}
+              setShowCourierServiceModal={setShowCourierServiceModal}
+              setCourierServicePendingTask={setCourierServicePendingTask}
             />
           ),
         },

@@ -576,4 +576,13 @@ export const DRISTIService = {
       data,
       params,
     }),
+  createOfflinePaymentService: (data, params) => {
+    return Request({
+      url: Urls.taskManagement.createOfflinePayment,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    });
+  },
 };

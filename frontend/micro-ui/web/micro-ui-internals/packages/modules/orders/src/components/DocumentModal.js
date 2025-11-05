@@ -28,7 +28,7 @@ const Heading = ({ heading, isStatus = true }) => {
     </div>
   );
 };
-const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => {
+const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disableCancel = false }) => {
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const [step, setStep] = useState(currentStep || 0);
   // const [isDisabled, setIsDisabled] = useState(false);
@@ -53,6 +53,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
   };
 
   const actionCancelOnSubmit = () => {
+    if (disableCancel) return;
     if (config?.isStepperModal) {
       const { actionCancelType, actionCancelOnSubmit, jumpValue } = config?.steps[step] || {};
 
@@ -93,7 +94,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
       headerBarEnd={
         (config?.isStepperModal && (config?.steps[step]?.handleClose || config?.handleClose)) || (!config?.isStepperModal && config?.handleClose) ? (
           <CloseBtn
-            onClick={config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose}
+            onClick={!disableCancel && (config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose)}
             style={config?.isStepperModal ? config?.steps[step]?.closeBtnStyle || config?.closeBtnStyle : config?.closeBtnStyle}
           />
         ) : undefined
