@@ -244,7 +244,8 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
 
-            String referenceId = MANUAL + order.getOrderNumber() + getItemId(order);
+            String itemId = getItemId(order);
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
 
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(referenceId)
