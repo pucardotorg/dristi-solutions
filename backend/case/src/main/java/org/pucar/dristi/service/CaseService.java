@@ -6249,6 +6249,8 @@ public class CaseService {
                                addressDetails.setPincode(address.getPincode());
                                addressDetails.setState(address.getState());
                                addressDetails.setTypeOfAddress(address.getTypeOfAddress());
+                               addressDetails.setCoordinates(address.getCoordinates());
+                               addressDetails.setLocality(address.getLocality());
 
                                witnessAddress.setAddressDetails(addressDetails);
                                String uuid = UUID.randomUUID().toString();
