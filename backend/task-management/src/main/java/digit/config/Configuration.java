@@ -173,6 +173,9 @@ public class Configuration {
     @Value("${dristi.analytics.create.pendingtask}")
     private String createPendingTaskEndPoint;
 
+    @Value("${dristi.analytics.offline.payment.endpoint}")
+    private String offlinePaymentEndPoint;
+
     //ElasticSearch Config
     @Value("${egov.infra.indexer.host}")
     private String esHostUrl;

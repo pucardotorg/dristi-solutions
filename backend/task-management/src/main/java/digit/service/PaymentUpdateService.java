@@ -8,6 +8,9 @@ import digit.repository.TaskManagementRepository;
 import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.*;
+import digit.web.models.demand.OfflinePaymentTask;
+import digit.web.models.demand.OfflinePaymentTaskRequest;
+import digit.web.models.enums.StatusEnum;
 import digit.web.models.payment.*;
 import digit.web.models.payment.Bill;
 import digit.web.models.pendingtask.*;
@@ -37,6 +40,7 @@ public class PaymentUpdateService {
     private final PendingTaskUtil pendingTaskUtil;
     private final CaseUtil caseUtil;
     private final ETreasuryUtil etreasuryUtil;
+    private final OfflinePaymentUtil offlinePaymentUtil;
 
     /**
      * Main entry to process incoming payment update events.
@@ -65,6 +69,8 @@ public class PaymentUpdateService {
             TaskManagement taskManagement = fetchTaskByNumber(taskNumber);
             updateWorkflowAndAddReceipt(requestInfo, taskManagement, paymentDetail, paymentMode);
             closePaymentPendingTask(requestInfo, taskManagement);
+            String consumerCode = taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix();
+            closeOfflinePaymentTask(requestInfo, consumerCode, taskManagement.getFilingNumber(), taskManagement.getTenantId());
             if (COMPLETED.equalsIgnoreCase(taskManagement.getStatus())) {
                 taskCreationService.generateFollowUpTasks(requestInfo, taskManagement);
             }
@@ -72,6 +78,32 @@ public class PaymentUpdateService {
             throw new CustomException("PAYMENT_UPDATE_ERR", ce.getMessage());
         } catch (Exception e) {
             log.error("Error handling payment detail: {}", e.getMessage(), e);
+        }
+    }
+
+    private void closeOfflinePaymentTask(RequestInfo requestInfo, String consumerCode, String filingNumber, String tenantId) {
+        try {
+            log.info("Closing offline payment task for consumer code: {}", consumerCode);
+
+            // Build the offline payment task request
+            OfflinePaymentTask offlinePaymentTask = OfflinePaymentTask.builder()
+                    .consumerCode(consumerCode)
+                    .filingNumber(filingNumber)
+                    .tenantId(tenantId)
+                    .status(StatusEnum.PAID)
+                    .build();
+
+            OfflinePaymentTaskRequest offlinePaymentTaskRequest = OfflinePaymentTaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .offlinePaymentTask(offlinePaymentTask)
+                    .build();
+
+            // Call the offline payment API
+            offlinePaymentUtil.callOfflinePaymentAPI(offlinePaymentTaskRequest);
+
+            log.info("Successfully closed offline payment task for consumer code: {}", consumerCode);
+        } catch (Exception e) {
+            log.error("Error while closing offline payment task for consumer code: {}", consumerCode, e);
         }
     }
 
