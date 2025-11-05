@@ -106,7 +106,8 @@ const useOpenApiPaymentProcess = ({ tenantId, consumerCode, service, path, caseD
         }),
       };
 
-      const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
+      // const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
+      const popup = window.open("", "_blank");
       if (popup) {
         const title = popup.document.createElement("h2");
         title.textContent = "Mock Payment in Progress. It will take 15-60 seconds";
@@ -182,7 +183,8 @@ const useOpenApiPaymentProcess = ({ tenantId, consumerCode, service, path, caseD
       return status;
     } else {
       return new Promise((resolve) => {
-        const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
+        // const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
+        const popup = window.open("", "_blank");
         if (popup) {
           const form = document.createElement("form");
           form.method = "POST";

@@ -246,16 +246,29 @@ const SmsPaymentPage = () => {
       });
       const existingDeliveryChannels = partyDetails?.deliveryChannels || [];
 
-      // Step 1: collect breakup-based courier options for this notice
-      const breakupOptions = courierBreakupOptions
-        ?.filter((opt) => opt?.taskType === notice?.orderType && noticeAddressIds?.includes(opt?.addressId))
-        ?.reduce((acc, current) => {
-          const exists = acc?.some((item) => item?.channelId === current?.channelId);
-          if (!exists) acc.push(current);
-          return acc;
-        }, []);
+      const noticeBreakupOptions = courierBreakupOptions?.filter(
+        (opt) => opt?.taskType === notice?.orderType && noticeAddressIds?.includes(opt?.addressId)
+      );
 
-      // Step 2: merge with already selected delivery channels
+      const aggregatedOptionsMap = noticeBreakupOptions?.reduce((acc, current) => {
+        const key = current?.channelId;
+
+        if (!acc[key]) {
+          acc[key] = {
+            ...current,
+            fees: 0,
+            deliveryChannelName: t(current?.channelCode),
+          };
+        }
+        acc[key].fees += current?.fees || 0;
+        return acc;
+      }, {});
+
+      const breakupOptions = Object.values(aggregatedOptionsMap || {}).map((item) => ({
+        ...item,
+        deliveryChannelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
+      }));
+
       const mergedOptions = breakupOptions?.map((opt) => {
         const alreadySelected = existingDeliveryChannels?.some((ch) => ch?.channelId === opt?.channelId);
         return {
@@ -277,7 +290,7 @@ const SmsPaymentPage = () => {
     });
 
     setNoticeData(updatedNotices);
-  }, [processCourierData, courierBreakupOptions, taskManagementList, orderData?.orderType]);
+  }, [processCourierData, courierBreakupOptions, taskManagementList, orderData?.orderType, t]);
 
   const handleProceedToPaymentPage = async () => {
     try {
@@ -396,7 +409,8 @@ const SmsPaymentPage = () => {
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
-      await download(receiptFilstoreId, tenantId, "treasury");
+      const fileName = `${orderData.orderType ? orderData?.orderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
+      await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });

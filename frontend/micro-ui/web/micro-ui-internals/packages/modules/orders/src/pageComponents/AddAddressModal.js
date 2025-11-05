@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import { Button, TextInput, CardLabelError, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
 const Heading = (props) => {
@@ -32,6 +32,7 @@ const CloseBtn = (props) => {
 const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, handleDataChange }) => {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
+  const [loader, setLoader] = useState(false);
 
   // Pattern validation function
   const patternValidation = (key) => {
@@ -48,161 +49,186 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
   };
 
   return (
-    <Modal
-      headerBarMain={<Heading label={t("Add Address")} />}
-      headerBarEnd={
-        <CloseBtn
-          onClick={() => {
-            setShowAddAddressModalLocal(false);
+    <React.Fragment>
+      {" "}
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
-      }
-      actionCancelLabel={t("Cancel")}
-      actionCancelOnSubmit={() => setShowAddAddressModalLocal(false)}
-      actionSaveLabel={t("Add Address")}
-      actionSaveOnSubmit={async () => {
-        try {
-          await handleDataChange({ address: newAddress });
-          setNewAddress({});
-          setAddressErrors({});
-        } catch (error) {
-          console.error("error while adding address ", error);
+          // className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
+      <Modal
+        headerBarMain={<Heading label={t("Add Address")} />}
+        headerBarEnd={
+          <CloseBtn
+            onClick={() => {
+              setShowAddAddressModalLocal(false);
+            }}
+          />
         }
-      }}
-      isDisabled={
-        !newAddress ||
-        !newAddress.locality ||
-        !newAddress.city ||
-        !newAddress.pincode ||
-        !newAddress.district ||
-        !newAddress.state ||
-        Object.values(addressErrors).some((error) => error)
-      }
-      //   popupStyles={{ maxssWidth: "600px", width: "100%", maxHeight: "max-content" }}
-      className={"add-address-modal-payment"}
-    >
-      <div className="address-card-input add-address-modal-inputs">
-        <div className="field">
-          <div className="heading">{t("CS_RESPONDENT_NAME")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={getFullName(" ", processCourierData?.firstName, processCourierData?.middleName, processCourierData?.lastName) || ""}
-            onChange={() => {}}
-            disabled={true}
-          />
+        actionCancelLabel={t("Cancel")}
+        actionCancelOnSubmit={() => setShowAddAddressModalLocal(false)}
+        actionSaveLabel={t("Add Address")}
+        actionSaveOnSubmit={async () => {
+          try {
+            setLoader(true);
+            await handleDataChange({ address: newAddress });
+            setNewAddress({});
+            setAddressErrors({});
+          } catch (error) {
+            console.error("error while adding address ", error);
+          } finally {
+            setLoader(false);
+          }
+        }}
+        isDisabled={
+          !newAddress ||
+          !newAddress.locality ||
+          !newAddress.city ||
+          !newAddress.pincode ||
+          !newAddress.district ||
+          !newAddress.state ||
+          Object.values(addressErrors).some((error) => error)
+        }
+        //   popupStyles={{ maxssWidth: "600px", width: "100%", maxHeight: "max-content" }}
+        className={"add-address-modal-payment"}
+      >
+        <div className="address-card-input add-address-modal-inputs">
+          <div className="field">
+            <div className="heading">{t("CS_RESPONDENT_NAME")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={getFullName(" ", processCourierData?.firstName, processCourierData?.middleName, processCourierData?.lastName) || ""}
+              onChange={() => {}}
+              disabled={true}
+            />
+          </div>
+
+          <div className="field">
+            <div className="heading">{t("ADDRESS")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={newAddress.locality || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewAddress({ ...newAddress, locality: value });
+
+                if (!value || !patternValidation("address").test(value)) {
+                  setAddressErrors({
+                    ...addressErrors,
+                    locality: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+                  });
+                } else {
+                  setAddressErrors({ ...addressErrors, locality: null });
+                }
+              }}
+            />
+            {addressErrors.locality && <CardLabelError>{t(addressErrors.locality)}</CardLabelError>}
+          </div>
+
+          <div className="field">
+            <div className="heading">{t("CITY/TOWN")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={newAddress.city || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewAddress({ ...newAddress, city: value });
+
+                if (!value || !patternValidation("string").test(value)) {
+                  setAddressErrors({
+                    ...addressErrors,
+                    city: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                  });
+                } else {
+                  setAddressErrors({ ...addressErrors, city: null });
+                }
+              }}
+            />
+            {addressErrors.city && <CardLabelError>{t(addressErrors.city)}</CardLabelError>}
+          </div>
+
+          <div className="field">
+            <div className="heading">{t("PINCODE")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={newAddress.pincode || ""}
+              maxlength={6}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                setNewAddress({ ...newAddress, pincode: value });
+
+                if (!value || !patternValidation("pincode").test(value)) {
+                  setAddressErrors({
+                    ...addressErrors,
+                    pincode: "ADDRESS_PINCODE_INVALID",
+                  });
+                } else {
+                  setAddressErrors({ ...addressErrors, pincode: null });
+                }
+              }}
+            />
+            {addressErrors.pincode && <CardLabelError>{t(addressErrors.pincode)}</CardLabelError>}
+          </div>
+
+          <div className="field">
+            <div className="heading">{t("DISTRICT")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={newAddress.district || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewAddress({ ...newAddress, district: value });
+
+                if (!value || !patternValidation("string").test(value)) {
+                  setAddressErrors({
+                    ...addressErrors,
+                    district: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                  });
+                } else {
+                  setAddressErrors({ ...addressErrors, district: null });
+                }
+              }}
+            />
+          </div>
+
+          <div className="field">
+            <div className="heading">{t("STATE")}</div>
+            <TextInput
+              className="field desktop-w-full"
+              value={newAddress.state || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewAddress({ ...newAddress, state: value });
+
+                if (!value || !patternValidation("string").test(value)) {
+                  setAddressErrors({
+                    ...addressErrors,
+                    state: "CORE_COMMON_APPLICANT_STATE_INVALID",
+                  });
+                } else {
+                  setAddressErrors({ ...addressErrors, state: null });
+                }
+              }}
+            />
+            {addressErrors.state && <CardLabelError>{t(addressErrors.state)}</CardLabelError>}
+          </div>
         </div>
-
-        <div className="field">
-          <div className="heading">{t("ADDRESS")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={newAddress.locality || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNewAddress({ ...newAddress, locality: value });
-
-              if (!value || !patternValidation("address").test(value)) {
-                setAddressErrors({
-                  ...addressErrors,
-                  locality: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                });
-              } else {
-                setAddressErrors({ ...addressErrors, locality: null });
-              }
-            }}
-          />
-          {addressErrors.locality && <CardLabelError>{t(addressErrors.locality)}</CardLabelError>}
-        </div>
-
-        <div className="field">
-          <div className="heading">{t("CITY/TOWN")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={newAddress.city || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNewAddress({ ...newAddress, city: value });
-
-              if (!value || !patternValidation("string").test(value)) {
-                setAddressErrors({
-                  ...addressErrors,
-                  city: "CORE_COMMON_APPLICANT_CITY_INVALID",
-                });
-              } else {
-                setAddressErrors({ ...addressErrors, city: null });
-              }
-            }}
-          />
-          {addressErrors.city && <CardLabelError>{t(addressErrors.city)}</CardLabelError>}
-        </div>
-
-        <div className="field">
-          <div className="heading">{t("PINCODE")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={newAddress.pincode || ""}
-            maxlength={6}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, "");
-              setNewAddress({ ...newAddress, pincode: value });
-
-              if (!value || !patternValidation("pincode").test(value)) {
-                setAddressErrors({
-                  ...addressErrors,
-                  pincode: "ADDRESS_PINCODE_INVALID",
-                });
-              } else {
-                setAddressErrors({ ...addressErrors, pincode: null });
-              }
-            }}
-          />
-          {addressErrors.pincode && <CardLabelError>{t(addressErrors.pincode)}</CardLabelError>}
-        </div>
-
-        <div className="field">
-          <div className="heading">{t("DISTRICT")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={newAddress.district || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNewAddress({ ...newAddress, district: value });
-
-              if (!value || !patternValidation("string").test(value)) {
-                setAddressErrors({
-                  ...addressErrors,
-                  district: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                });
-              } else {
-                setAddressErrors({ ...addressErrors, district: null });
-              }
-            }}
-          />
-        </div>
-
-        <div className="field">
-          <div className="heading">{t("STATE")}</div>
-          <TextInput
-            className="field desktop-w-full"
-            value={newAddress.state || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setNewAddress({ ...newAddress, state: value });
-
-              if (!value || !patternValidation("string").test(value)) {
-                setAddressErrors({
-                  ...addressErrors,
-                  state: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                });
-              } else {
-                setAddressErrors({ ...addressErrors, state: null });
-              }
-            }}
-          />
-          {addressErrors.state && <CardLabelError>{t(addressErrors.state)}</CardLabelError>}
-        </div>
-      </div>
-    </Modal>
+      </Modal>
+    </React.Fragment>
   );
 };
 

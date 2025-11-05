@@ -3,8 +3,7 @@ import Axios from "axios";
 import { Urls } from "../services/Urls";
 
 export const useOpenApiDownloadFile = () => {
-
-  const download = useCallback(async (fileStoreId, tenantId = "kl", moduleName = "DRISTI") => {
+  const download = useCallback(async (fileStoreId, tenantId = "kl", moduleName = "DRISTI", filename) => {
     if (!fileStoreId) return console.error("fileStoreId missing");
 
     try {
@@ -19,8 +18,8 @@ export const useOpenApiDownloadFile = () => {
         responseType: "blob",
       });
 
-      const fileName =
-        res.headers["content-disposition"]?.split("filename=")[1] || "document.pdf";
+      let fileName = filename || "document.pdf";
+      fileName = fileName.replace(/\.[^/.]+$/, "") + ".pdf";
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
@@ -30,7 +29,6 @@ export const useOpenApiDownloadFile = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-
     } catch (err) {
       console.error("useOpenApiDownloadFile error =>", err);
       throw err;
