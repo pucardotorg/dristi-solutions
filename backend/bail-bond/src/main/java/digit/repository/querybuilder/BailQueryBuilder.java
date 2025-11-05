@@ -34,7 +34,7 @@ public class BailQueryBuilder {
                     "bail_doc.created_time as bailDocCreatedTime, bail_doc.last_modified_time as bailDocLastModifiedTime, " +
 
                     "srt.id as suretyId, srt.tenant_id as suretyTenantId, srt.bail_id as suretyBailId, srt.case_id as suretyCaseId, " +
-                    "srt.index as index" +
+                    "srt.index as index, " +
                     "srt.surety_name as suretyName, srt.surety_father_name as suretyFatherName, srt.surety_signed as suretySigned, " +
                     "srt.surety_mobile_number as suretyMobile, srt.surety_email as suretyEmail, srt.surety_approved as suretyApproved, " +
                     "srt.surety_address as suretyAddress, srt.additional_details as suretyAdditionalDetails, srt.is_active as suretyIsActive, " +
