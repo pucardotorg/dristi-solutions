@@ -3,6 +3,7 @@ package org.egov.eTreasury.model;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -67,5 +68,9 @@ public class TreasuryPaymentData {
 
     private double legalBenefitFee;
 
+    private double epostFee;
+
     private double totalAmount;
+
+    private List<FeeBreakDown> feeBreakDown;
 }

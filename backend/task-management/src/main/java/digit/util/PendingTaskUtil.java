@@ -15,16 +15,20 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
@@ -37,15 +41,13 @@ public class PendingTaskUtil {
     private final ObjectMapper objectMapper;
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
-    private final JsonUtil jsonUtil;
-    private final DateUtil dateUtil;
+    private final RestTemplate restTemplate;
 
-    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, JsonUtil jsonUtil, DateUtil dateUtil) {
+    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, JsonUtil jsonUtil, DateUtil dateUtil, RestTemplate restTemplate) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
-        this.jsonUtil = jsonUtil;
-        this.dateUtil = dateUtil;
+        this.restTemplate = restTemplate;
     }
 
     // this will use inbox service get fields end point
@@ -163,6 +165,50 @@ public class PendingTaskUtil {
         }
 
         return value; // Return as is if no conversion logic is provided
+    }
+    public JsonNode callPendingTask(String referenceId) {
+        String url = configuration.getEsHostUrl() + configuration.getPendingTaskIndexEndpoint() + configuration.getPendingTaskSearchPath();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", getESEncodedCredentials());
+
+        String query = getEsQuery(referenceId);
+
+        HttpEntity<String> entity = new HttpEntity<>(query, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            return objectMapper.readTree(response.getBody());
+        } catch (Exception e) {
+            log.error("ERROR_WHILE_FETCHING_PENDING_TASK", e);
+            throw new CustomException("ERROR_WHILE_FETCHING_PENDING_TASK", e.getMessage());
+        }
+    }
+
+    public String getESEncodedCredentials() {
+        String credentials = configuration.getEsUsername() + ":" + configuration.getEsPassword();
+        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+    }
+    private String getEsQuery(String referenceId) {
+        return "{\n" +
+                "  \"query\": {\n" +
+                "    \"bool\": {\n" +
+                "      \"must\": [\n" +
+                "        {\n" +
+                "          \"match\": {\n" +
+                "            \"Data.referenceId.keyword\": \"" + referenceId + "\"\n" +
+                "          }\n" +
+                "        },\n" +
+                "        {\n" +
+                "          \"term\": {\n" +
+                "            \"Data.isCompleted\": false\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
     }
 
 //    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, @NotNull String

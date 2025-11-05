@@ -71,6 +71,7 @@ public class OrderUtil {
             Role role = Role.builder()
                     .code(PAYMENT_COLLECTOR)
                     .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
                     .build();
             requestInfo.getUserInfo().getRoles().add(role);
 
@@ -219,6 +220,7 @@ public class OrderUtil {
             Role role = Role.builder()
                     .code(PAYMENT_COLLECTOR)
                     .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
                     .build();
             requestInfo.getUserInfo().getRoles().add(role);
 
@@ -251,6 +253,7 @@ public class OrderUtil {
         TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                 .filingNumber(order.getFilingNumber())
                 .status(PENDING_PAYMENT)
+                .tenantId(tenantId)
                 .build();
 
         org.pucar.dristi.web.models.taskManagement.TaskSearchRequest searchRequest = org.pucar.dristi.web.models.taskManagement.TaskSearchRequest.builder()
@@ -269,7 +272,6 @@ public class OrderUtil {
         for (TaskManagement taskManagement : taskManagementList) {
             log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
             expireTaskManagementWorkflow(taskManagement, requestInfo);
-            // TODO
             closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
         }
 
@@ -280,6 +282,7 @@ public class OrderUtil {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(EXPIRE);
         taskManagement.setWorkflow(workflow);
+        requestInfo.getUserInfo().getRoles().add(Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build());
         TaskManagementRequest taskManagementRequest = TaskManagementRequest.builder()
                 .requestInfo(requestInfo)
                 .taskManagement(taskManagement)

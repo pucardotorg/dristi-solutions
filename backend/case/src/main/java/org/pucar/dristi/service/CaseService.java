@@ -6149,19 +6149,15 @@ public class CaseService {
     public List<PartyAddressRequest> addAddress(AddAddressRequest addAddressRequest) {
 
         try {
-            CourtCase courtCase = searchRedisCache(addAddressRequest.getRequestInfo(), String.valueOf(addAddressRequest.getCaseId()));
-
-            if (courtCase == null) {
-                log.debug("CourtCase not found in Redis cache for caseId :: {}", addAddressRequest.getCaseId());
-                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(addAddressRequest.getCaseId())).build()), addAddressRequest.getRequestInfo());
+                CourtCase courtCase;
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(addAddressRequest.getFilingNumber()).build()), addAddressRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
-                    log.debug("CourtCase not found in DB for caseId :: {}", addAddressRequest.getCaseId());
+                    log.debug("CourtCase not found in DB for filingNumber :: {}", addAddressRequest.getFilingNumber());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
                 } else {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
                 }
-            }
 
             CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, addAddressRequest.getRequestInfo());
 
@@ -6181,7 +6177,7 @@ public class CaseService {
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
-            producer.push(config.getCaseEditTopic(), caseRequest);
+            producer.push(config.getAddAddressTopic(), caseRequest);
 
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
@@ -6206,54 +6202,71 @@ public class CaseService {
                 UUID uniqueId = party.getUniqueId();
 
                 if (partyType == null || uniqueId == null) continue;
+                if("ACCUSED".equalsIgnoreCase(partyType)){
 
-                // Determine key based on party type
-                String sectionKey = switch (partyType.toUpperCase()) {
-                    case "ACCUSED" -> "respondentDetails";
-                    case "WITNESS" -> "witnessDetails";
-                    default -> null;
-                };
+                    ObjectNode section = (ObjectNode) additionalDetails.get("respondentDetails");
+                    if (section == null || section.get("formdata") == null) continue;
 
-                if (sectionKey == null) {
-                    log.warn("Unsupported party type: {}", partyType);
-                    continue;
-                }
+                    ArrayNode formDataArray = (ArrayNode) section.get("formdata");
 
-                ObjectNode section = (ObjectNode) additionalDetails.get(sectionKey);
-                if (section == null || section.get("formdata") == null) continue;
+                    for (JsonNode formData : formDataArray) {
+                        if (formData.has("uniqueId") &&
+                                formData.get("uniqueId").asText().equalsIgnoreCase(uniqueId.toString())) {
 
-                ArrayNode formDataArray = (ArrayNode) section.get("formdata");
+                            ObjectNode dataNode = (ObjectNode) formData.get("data");
+                            if (dataNode == null) continue;
 
-                for (JsonNode formData : formDataArray) {
-                    if (formData.has("uniqueId") &&
-                            formData.get("uniqueId").asText().equalsIgnoreCase(uniqueId.toString())) {
+                            // Get or create "addressDetails" array
+                            ArrayNode addressDetailsArray;
+                            if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
+                                addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
+                            } else {
+                                addressDetailsArray = objectMapper.createArrayNode();
+                                dataNode.set("addressDetails", addressDetailsArray);
+                            }
 
-                        ObjectNode dataNode = (ObjectNode) formData.get("data");
-                        if (dataNode == null) continue;
-
-                        // Get or create "addressDetails" array
-                        ArrayNode addressDetailsArray;
-                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
-                            addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
-                        } else {
-                            addressDetailsArray = objectMapper.createArrayNode();
-                            dataNode.set("addressDetails", addressDetailsArray);
-                        }
-
-                        // Add all new addresses
-                        for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
-                            ObjectNode newAddress = objectMapper.createObjectNode();
-                            newAddress.putPOJO("addressDetails", address);
-                            String addressId = UUID.randomUUID().toString();
-                            address.setId(addressId);
-                            newAddress.put("id", addressId);
-                            addressDetailsArray.add(newAddress);
+                            // Add all new addresses
+                            for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
+                                ObjectNode newAddress = objectMapper.createObjectNode();
+                                newAddress.putPOJO("addressDetails", address);
+                                String addressId = UUID.randomUUID().toString();
+                                address.setId(addressId);
+                                newAddress.put("id", addressId);
+                                addressDetailsArray.add(newAddress);
+                            }
                         }
                     }
+
+                }else if("WITNESS".equalsIgnoreCase(partyType)){
+                   List<WitnessDetails> witnessDetails = courtCase.getWitnessDetails();
+                   for(WitnessDetails witnessDetail : witnessDetails){
+                       if(witnessDetail.getUniqueId().equals(uniqueId)){
+                           for (org.pucar.dristi.web.models.Address address : party.getAddresses()) {
+                               AddressDetails addressDetails = new AddressDetails();
+                               WitnessAddress witnessAddress = new WitnessAddress();
+                               addressDetails.setCity(address.getCity());
+                               addressDetails.setDistrict(address.getDistrict());
+                               addressDetails.setPincode(address.getPincode());
+                               addressDetails.setState(address.getState());
+                               addressDetails.setTypeOfAddress(address.getTypeOfAddress());
+
+                               witnessAddress.setAddressDetails(addressDetails);
+                               String uuid = UUID.randomUUID().toString();
+                               witnessAddress.setId(uuid);
+                               address.setId(uuid);
+
+                               // Update address details
+                               if (witnessDetail.getAddressDetails() == null) {
+                                   witnessDetail.setAddressDetails(new ArrayList<>());
+                               }
+                               witnessDetail.getAddressDetails().add(witnessAddress);
+                           }
+                       }
+                   }
                 }
             }
-
             courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetails, Object.class));
+
 
         } catch (Exception e) {
             log.error("Failed to enrich additional details for address", e);

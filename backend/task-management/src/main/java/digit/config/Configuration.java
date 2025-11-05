@@ -175,4 +175,20 @@ public class Configuration {
 
     @Value("${dristi.analytics.offline.payment.endpoint}")
     private String offlinePaymentEndPoint;
+
+    //ElasticSearch Config
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${elastic.pending.task.endpoint}")
+    private String pendingTaskIndexEndpoint;
+
+    @Value("${elastic.pending.task.search}")
+    private String pendingTaskSearchPath;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
 }

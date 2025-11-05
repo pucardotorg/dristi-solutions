@@ -7,6 +7,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.config.Configuration;
 import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
@@ -33,26 +34,24 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private final TaskUtil taskUtil;
-    private final IndividualService individualService;
     private final SmsNotificationService smsNotificationService;
     private final UserUtil userUtil;
     private final TaskManagementUtil taskManagementUtil;
     private final UrlShortenerUtil urlShortenerUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil) {
+    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil, Configuration configuration) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-        this.taskUtil = taskUtil;
-        this.individualService = individualService;
         this.smsNotificationService = smsNotificationService;
         this.userUtil = userUtil;
         this.taskManagementUtil = taskManagementUtil;
         this.urlShortenerUtil = urlShortenerUtil;
+        this.configuration = configuration;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
 
         String type = "complainant";
-        if(partyTypeToUniqueIdMap.containsKey("Witness"))
+        if(isSummonForAccusedWitness(order))
             type = "respondent";
         List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
         List<String> assignees = new ArrayList<>();
@@ -160,7 +159,8 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
 
-            String referenceId = MANUAL + order.getOrderNumber() + getItemId(order);
+            String itemId = getItemId(order);
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
 
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(referenceId)
@@ -174,6 +174,8 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                     .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(false)
                     .screenType("home")
+                    .assignedRole(configuration.getTaskManagementAssignedRole())
+                    .actionCategory(configuration.getTaskManagementActionCategory())
                     .additionalDetails(additionalDetails)
                     .stateSla(sla)
                     .build();
@@ -264,6 +266,34 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 //            throw new RuntimeException(e);
        } **/
 
+    }
+
+    private boolean isSummonForAccusedWitness(Order order) {
+        List<Object> parties = jsonUtil.getNestedValue(
+                order.getAdditionalDetails(),
+                List.of("formdata", "SummonsOrder", "party"),
+                List.class
+        );
+        if (parties == null || parties.isEmpty()) {
+            return false;
+        }
+        for (Object party : parties) {
+            if (party instanceof Map) {
+                Map<String, Object> partyMap = (Map<String, Object>) party;
+                // Extract "data" node
+                Object dataObj = partyMap.get("data");
+                if (dataObj instanceof Map) {
+                    Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+
+                    Object partyType = dataMap.get("partyType");
+                    Object ownerType = dataMap.get("ownerType");
+                    if ("Witness".equals(partyType) && ACCUSED.equals(ownerType)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private String getItemId(Order order) {

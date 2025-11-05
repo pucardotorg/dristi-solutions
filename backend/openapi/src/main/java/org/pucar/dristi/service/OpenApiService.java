@@ -817,10 +817,14 @@ public class OpenApiService {
             String mobileNumber = orderDetailsSearch.getMobileNumber();
             String filingNumber = orderDetailsSearch.getFilingNumber();
 
+            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+
             //validate mobile number from pending task assigned to list
             JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber,tenantId);
-
-            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+            if(pendingTaskAdditionalDetails==null){
+                response.setIsPendingTaskCompleted(true);
+                return response;
+            }
 
             OrderCriteria criteria = OrderCriteria.builder()
                     .orderNumber(orderNumber)
@@ -1136,6 +1140,7 @@ public class OpenApiService {
     private JsonNode validateMobileNumber(String referenceId, String mobileNumber, String tenantId) {
         JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
 
+        JsonNode pendingTaskAdditionalDetails = null;
         if (pendingTask == null || !pendingTask.has("hits")) {
             throw new CustomException("NO_TASK_FOUND",
                     "No pending task found for referenceId: " + referenceId);
@@ -1160,29 +1165,31 @@ public class OpenApiService {
                 }
             }
 
-            if (assignedUuids.isEmpty()) {
-                throw new CustomException("NO_ASSOCIATED_USERS",
-                        "No assigned users found for referenceId: " + referenceId);
-            }
+            if (!assignedUuids.isEmpty()) {
+                List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
 
-            List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
-
-            // Step 4: Match mobile number
-            for (Individual ind : individuals) {
-                if (ind.getMobileNumber() != null &&
-                        ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
-                    log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
-                    return source.path("additionalDetails");
+                // Step 4: Match mobile number
+                boolean isValidMobileNumber = false;
+                for (Individual ind : individuals) {
+                    if (ind.getMobileNumber() != null &&
+                            ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
+                        log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
+                        isValidMobileNumber = true;
+                        pendingTaskAdditionalDetails = source.path("additionalDetails");
+                    }
+                }
+                if (!isValidMobileNumber) {
+                    throw new CustomException("INVALID_MOBILE",
+                            "Provided mobile number does not match any assigned or litigant user for this referenceId");
                 }
             }
+            boolean isCompleted = source.path("isCompleted").asBoolean(false);
+            if(isCompleted){
+                return null;
+            }
         }
-
-        throw new CustomException("INVALID_MOBILE",
-                "Provided mobile number does not match any assigned or litigant user for this referenceId");
+        return pendingTaskAdditionalDetails;
     }
-
-
-
 
     private RequestInfo createInternalRequestInfo() {
         org.egov.common.contract.request.User userInfo = new User();

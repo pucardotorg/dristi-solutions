@@ -244,7 +244,8 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
 
-            String referenceId = MANUAL + order.getOrderNumber() + getItemId(order);
+            String itemId = getItemId(order);
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
 
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(referenceId)
@@ -252,12 +253,14 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
                     .entityType("task-management-payment")
                     .status(PENDING_PAYMENT)
                     .assignedTo(uniqueAssignee)
+                    .assignedRole(configuration.getTaskManagementAssignedRole())
                     .cnrNumber(courtCase.getCnrNumber())
                     .filingNumber(courtCase.getFilingNumber())
                     .caseId(courtCase.getId().toString())
                     .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(false)
                     .screenType("home")
+                    .actionCategory(configuration.getTaskManagementActionCategory())
                     .additionalDetails(additionalDetails)
                     .stateSla(sla)
                     .build();

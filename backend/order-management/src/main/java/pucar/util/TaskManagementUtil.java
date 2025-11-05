@@ -4,15 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -21,15 +15,10 @@ import pucar.config.Configuration;
 import pucar.kafka.Producer;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
-import pucar.web.models.WorkflowObject;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.task.*;
 import pucar.web.models.taskManagement.*;
 import pucar.web.models.taskManagement.TaskSearchRequest;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -37,19 +26,15 @@ import static pucar.config.ServiceConstants.*;
 @Slf4j
 public class TaskManagementUtil {
 
-    private final RestTemplate restTemplate;
     private final ServiceRequestRepository serviceRequestRepository;
     private final ObjectMapper objectMapper;
-    private final DateUtil dateUtil;
     private final JsonUtil jsonUtil;
     private final Configuration config;
     private final Producer producer;
 
     public TaskManagementUtil(RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, JsonUtil jsonUtil, Configuration config, Producer producer) {
-        this.restTemplate = restTemplate;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
-        this.dateUtil = dateUtil;
         this.jsonUtil = jsonUtil;
         this.config = config;
         this.producer = producer;
@@ -102,8 +87,9 @@ public class TaskManagementUtil {
             List<String> uniqueIds = new ArrayList<>();
 
             log.info("Processing upfront payments for order type: {}", orderType);
-            List<String> uniqueIds1 = getStrings(order, orderType, uniqueIds);
-            if (uniqueIds1 != null) return uniqueIds1;
+
+            //extract uniqueids for parties from order to compare with upfront tasks
+            extractAllUniqueIds(order, orderType, uniqueIds);
             TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                     .tenantId(order.getTenantId())
                     .filingNumber(order.getFilingNumber())
@@ -143,8 +129,7 @@ public class TaskManagementUtil {
         }
     }
 
-    @Nullable
-    private List<String> getStrings(Order order, String orderType, List<String> uniqueIds) {
+    private void extractAllUniqueIds(Order order, String orderType, List<String> uniqueIds) {
         List<Object> parties;
         // Handle different order types
         if (NOTICE.equalsIgnoreCase(orderType)) {
@@ -158,7 +143,7 @@ public class TaskManagementUtil {
 
             // For NOTICE, only process DCA notice types
             if (!DCA.equalsIgnoreCase(noticeType)) {
-                return uniqueIds;
+                log.info("Notice type {} not supported for upfront payment processing", noticeType);
             }
         } else if (SUMMONS.equalsIgnoreCase(orderType)) {
             parties = jsonUtil.getNestedValue(
@@ -171,10 +156,8 @@ public class TaskManagementUtil {
             // For SUMMONS, process all types (no specific type filtering needed)
         } else {
             // For other order types, return empty list
-            log.debug("Order type {} not supported for upfront payment processing", orderType);
-            return uniqueIds;
+            log.info("Order type {} not supported for upfront payment processing", orderType);
         }
-        return null;
     }
 
     private String extractPartyUniqueId(PartyDetails partyDetail) {
