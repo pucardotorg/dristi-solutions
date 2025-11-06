@@ -287,7 +287,7 @@ const TasksComponent = ({
                 };
               }
 
-              const addressDetailsFromItem = party?.data?.addressDetails || [];
+              const addressDetailsFromItem = partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || [];
               const addressDetailsFromParty = partyDetails?.addresses || [];
 
               const mergedAddressDetails = (() => {
