@@ -94,7 +94,7 @@ public class TaskCreationService {
             Order order = fetchOrder(requestInfo, taskManagement.getOrderNumber());
             
             log.info("Extracting additional details from order");
-            Map<String, Object> additionalDetails = extractAdditionalDetails(order);
+            Map<String, Object> additionalDetails = extractAdditionalDetails(order, taskManagement.getOrderItemId());
             
             log.info("Fetching court details for case ID: {}", courtCase.getId());
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
@@ -191,11 +191,10 @@ public class TaskCreationService {
         }
     }
 
-    private Map<String, Object> extractAdditionalDetails(Order order) {
+    private Map<String, Object> extractAdditionalDetails(Order order, String itemId) {
         log.info("Extracting additional details from order ID: {}", order.getId());
         
         try {
-            String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
             Map<String, Object> details = new HashMap<>();
             if (itemId != null) {
                 details.put("itemId", itemId);
