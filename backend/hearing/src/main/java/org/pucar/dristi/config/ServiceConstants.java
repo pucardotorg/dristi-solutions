@@ -188,4 +188,6 @@ public class ServiceConstants {
     public static final String SYSTEM = "SYSTEM";
 
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
+
+    public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
 }
