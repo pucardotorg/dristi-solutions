@@ -370,6 +370,8 @@ export const UICustomizations = {
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":
           return value || "-";
+        case "Delivery Channels":
+          return value === "EPOST" ? t("CS_POST") : t(value);
         default:
           return t("ES_COMMON_NA");
       }
