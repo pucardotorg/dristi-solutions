@@ -298,12 +298,29 @@ export const UICustomizations = {
               } else return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
             };
             const taskData = data?.list
-              ?.filter(
-                (data) =>
-                  data?.filingNumber === additionalDetails?.filingNumber &&
-                  data?.orderId === additionalDetails?.orderId &&
-                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
-              )
+              ?.filter((task) => {
+                const matchesBaseConditions =
+                  task?.filingNumber === additionalDetails?.filingNumber &&
+                  task?.orderId === additionalDetails?.orderId &&
+                  (!additionalDetails?.itemId || task?.additionalDetails?.itemId === additionalDetails?.itemId);
+
+                if (!matchesBaseConditions) return false;
+
+                if (["NOTICE", "SUMMONS"]?.includes(additionalDetails?.orderType)) {
+                  const partyType = additionalDetails?.partyType?.toLowerCase();
+                  const nameToMatch = additionalDetails?.partyName?.trim()?.toLowerCase();
+
+                  if (partyType === "witness") {
+                    const witnessName = task?.taskDetails?.witnessDetails?.name?.trim()?.toLowerCase();
+                    return Boolean(witnessName && witnessName === nameToMatch);
+                  } else {
+                    const respondent = task?.taskDetails?.respondentDetails;
+                    const respondentName = respondent?.name?.trim()?.toLowerCase();
+                    return Boolean(respondentName && respondentName === nameToMatch);
+                  }
+                }
+                return true;
+              })
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
                 taskDetail = normalizeData(taskDetail);
@@ -330,7 +347,9 @@ export const UICustomizations = {
                   };
                   return mapping[status]?.[taskType] || status; // fallback to original
                 }
-                const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                const channelDetails =
+                  taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                  taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,

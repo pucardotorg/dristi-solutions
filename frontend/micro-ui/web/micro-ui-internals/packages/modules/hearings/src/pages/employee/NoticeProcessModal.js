@@ -58,6 +58,10 @@ const CloseButton = (props) => {
   );
 };
 
+function removeAccusedSuffix(partyName) {
+  return partyName?.replace(/\s*\((Accused|witness)\)$/, "");
+}
+
 function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
@@ -114,6 +118,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
+  const [partyName, setPartyName] = useState(null);
+  const [partyType, setPartyType] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -233,6 +239,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
+    setPartyName(removeAccusedSuffix(orderListFiltered?.[0]?.partyName));
+    setPartyType(orderListFiltered?.[0]?.partyType);
   }, [orderListFiltered]);
 
   const config = useMemo(() => {
@@ -245,8 +253,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       orderType,
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
+      partyName,
+      partyType,
     });
-  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId]);
+  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
 
   const getOrderPartyData = (orderType, orderList) => {
     return orderList?.find((item) => orderType === item?.orderType)?.orderDetails?.parties;
@@ -312,10 +322,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     );
   }, [t, caseDetails?.caseTitle, filingNumber, currentHearingId, hearingDetails?.startTime, userType, caseId]);
 
-  function removeAccusedSuffix(partyName) {
-    return partyName.replace(/\s*\(Accused\)$/, "");
-  }
-
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
       {!showModal && (
@@ -335,6 +341,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
+              setPartyName(removeAccusedSuffix(item?.partyName));
+              setPartyType(item?.partyType);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);
