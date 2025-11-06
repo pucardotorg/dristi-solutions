@@ -1074,7 +1074,7 @@ function EFilingCases({ path }) {
           });
         }
         if (selected === "processCourierService" && index === 0) {
-          const isDelayCondonation = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES";
+          const isDelayCondonation = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO";
           return formConfig.map((config) => {
             return {
               ...config,
