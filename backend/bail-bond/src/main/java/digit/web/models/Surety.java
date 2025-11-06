@@ -32,6 +32,10 @@ public class Surety {
 
     private String tenantId = null;
 
+    @JsonProperty("index")
+    @NotNull
+    private Integer index = null;
+
     @JsonProperty("name")
     private String name = null;
 
