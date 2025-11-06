@@ -94,7 +94,7 @@ public class TaskCreationService {
             Order order = fetchOrder(requestInfo, taskManagement.getOrderNumber());
             
             log.info("Extracting additional details from order");
-            Map<String, Object> additionalDetails = extractAdditionalDetails(order);
+            Map<String, Object> additionalDetails = extractAdditionalDetails(order, taskManagement.getOrderItemId());
             
             log.info("Fetching court details for case ID: {}", courtCase.getId());
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
@@ -191,11 +191,10 @@ public class TaskCreationService {
         }
     }
 
-    private Map<String, Object> extractAdditionalDetails(Order order) {
+    private Map<String, Object> extractAdditionalDetails(Order order, String itemId) {
         log.info("Extracting additional details from order ID: {}", order.getId());
         
         try {
-            String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
             Map<String, Object> details = new HashMap<>();
             if (itemId != null) {
                 details.put("itemId", itemId);
@@ -491,9 +490,9 @@ public class TaskCreationService {
             return null;
         }
 
-        String firstName = respondentDetails.getFirstName() != null ? respondentDetails.getFirstName() : "";
-        String middleName = respondentDetails.getMiddleName() != null ? respondentDetails.getMiddleName() : "";
-        String lastName = respondentDetails.getLastName() != null ? respondentDetails.getLastName() : "";
+        String firstName = respondentDetails.getRespondentFirstName() != null ? respondentDetails.getRespondentFirstName() : "";
+        String middleName = respondentDetails.getRespondentMiddleName() != null ? respondentDetails.getRespondentMiddleName() : "";
+        String lastName = respondentDetails.getRespondentLastName() != null ? respondentDetails.getRespondentLastName() : "";
         String name = String.join(" ", firstName, middleName, lastName).trim();
 
         Address address = mapToAddress(addressDetails.getAddressDetails());
