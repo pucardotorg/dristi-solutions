@@ -160,7 +160,7 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
 
   // Build new party object
   const baseParty = {
-    addresses: courierData?.addressDetails,
+    addresses: courierData?.addressDetails?.filter((addr) => addr?.checked) || [],
     deliveryChannels: courierData?.[`${type?.toLowerCase()}CourierService`],
   };
 
