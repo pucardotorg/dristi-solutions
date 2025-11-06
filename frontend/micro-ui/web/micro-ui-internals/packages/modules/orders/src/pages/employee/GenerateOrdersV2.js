@@ -1957,13 +1957,16 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
       if (currentOrderType === "ACCEPT_BAIL") {
-        const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
-        updatedFormdata.bailType = {
-          type: defaultAcceptBailType,
-          code: defaultAcceptBailType,
-          name: defaultAcceptBailType,
-        };
-        setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
+        const alreadySet = updatedFormdata?.bailType && (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
+        if (!alreadySet) {
+          const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
+          updatedFormdata.bailType = {
+            type: defaultAcceptBailType,
+            code: defaultAcceptBailType,
+            name: defaultAcceptBailType,
+          };
+          setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
+        }
       }
 
       if (currentOrderType === "SET_BAIL_TERMS") {
@@ -4101,7 +4104,7 @@ const GenerateOrdersV2 = () => {
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
                     disabled={!isBailBondCheckboxEnabled || isBailBondTaskExists}
                   />
-                  <label htmlFor="bail-bond-required">{t("RAISE_BAIL_BOND")}</label>
+                  <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                 </div>
               </React.Fragment>
             )}
