@@ -359,4 +359,12 @@ export const openApiService = {
       data,
       params,
     }),
+  offlinePayment: (data, params) =>
+    Request({
+      url: Urls.openApi.offlinePayment,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };
