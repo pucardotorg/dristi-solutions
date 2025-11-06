@@ -122,6 +122,7 @@ public class Order {
     @JsonProperty("hearingSummary")
     private String hearingSummary = null;
 
+    // TODO : check this usage for composite items
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 

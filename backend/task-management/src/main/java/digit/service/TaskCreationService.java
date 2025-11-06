@@ -257,6 +257,7 @@ public class TaskCreationService {
     // ---- Builders ---- //
 
     private CaseDetails buildCaseDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails) {
+        // TODO : fix this
         String hearingDateStr = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("formdata", "dateForHearing"), String.class);
         Long hearingDateEpoch = hearingDateStr != null ? dateUtil.getEpochFromDateString(hearingDateStr, "yyyy-MM-dd") : null;
 
@@ -277,6 +278,8 @@ public class TaskCreationService {
             extractOrderTypeFromCompositeItems(order, itemId);
             orderType = order.getOrderType();
         }
+
+        // TODO : fix this
         Object additionalDetails = order.getAdditionalDetails();
 
         switch (orderType) {
@@ -292,6 +295,7 @@ public class TaskCreationService {
             }
             case NOTICE -> {
                 String docSubType = normalizePartyType(partyType);
+                // TODO : fix this
                 String noticeType = jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeType", "type"), String.class);
                 return TaskDetails.builder()
                         .noticeDetails(NoticeDetails.builder()
