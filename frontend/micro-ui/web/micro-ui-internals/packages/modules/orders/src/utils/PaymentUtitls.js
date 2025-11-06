@@ -27,11 +27,20 @@ export const prepareTaskPayload = ({
   orderItemId,
   courtId,
 }) => {
-  const findFormData = (uniqueId) => formData?.find((f) => f?.data?.uniqueId === uniqueId)?.data;
+  const findFormData = (uniqueId) => formData?.find((f) => (f?.data?.uniqueId || f?.uniqueId) === uniqueId)?.data;
   const updatedParties =
     noticeData?.map((notice) => {
       const uniqueId = notice?.partyUniqueId;
       const matchedForm = findFormData(uniqueId);
+
+      const allAddress = notice?.addresses?.map((item) => ({
+        id: item?.id,
+        addressDetails: item?.addressDetails?.addressDetails || item?.addressDetails || {},
+      }));
+      const updatedUserData = {
+        ...matchedForm,
+        addressDetails: allAddress,
+      };
 
       const selectedAddresses = notice?.addresses?.filter((a) => a?.selected) || [];
 
@@ -70,12 +79,12 @@ export const prepareTaskPayload = ({
       if (notice?.partyType === "Respondent") {
         return {
           ...baseParty,
-          respondentDetails: { ...(matchedForm || {}), uniqueId },
+          respondentDetails: { ...(updatedUserData || {}), uniqueId },
         };
       } else if (notice?.partyType === "Witness") {
         return {
           ...baseParty,
-          witnessDetails: { ...(matchedForm || {}), uniqueId },
+          witnessDetails: { ...(updatedUserData || {}), uniqueId },
         };
       } else {
         return baseParty;

@@ -50,7 +50,7 @@ const SmsPaymentPage = () => {
 
   const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-management-payment"), [paymentTypeData]);
 
-  const { data: orderData, isLoading: isOrderDataLoading } = useOpenApiOrderSearch(
+  const { data: orderDataResponse, isLoading: isOrderDataLoading } = useOpenApiOrderSearch(
     { orderNumber, tenantId, referenceId, orderItemId, filingNumber, mobileNumber },
     { tenantId },
     `${orderNumber}_${referenceId}_${orderItemId}`,
@@ -68,30 +68,15 @@ const SmsPaymentPage = () => {
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
 
-  const currentOrderType = useMemo(() => {
-    if (orderData?.orderCategory === "COMPOSITE") {
-      const matchedOrder = orderData?.compositeItems?.find((order) => order.id === orderItemId);
-      return matchedOrder?.orderType || null;
-    }
-
-    return orderData?.orderType || null;
-  }, [orderData, orderItemId]);
-
-  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === currentOrderType), [
-    taskManagementList,
-    currentOrderType,
-  ]);
-
-  const processCourierData = useMemo(() => {
-    if (!orderData) return null;
-    let orderDetails = orderData;
+  const orderData = useMemo(() => {
+    let orderDetails = orderDataResponse;
     // Handle composite order
-    if (orderData?.orderCategory === "COMPOSITE") {
-      const orderItem = orderData?.compositeItems?.find((item) => item?.id === orderItemId);
+    if (orderDetails?.orderCategory === "COMPOSITE") {
+      const orderItem = orderDataResponse?.compositeItems?.find((item) => item?.id === orderItemId);
 
       if (orderItem) {
         orderDetails = {
-          ...orderData,
+          ...orderDataResponse,
           additionalDetails: orderItem?.orderSchema?.additionalDetails,
           orderType: orderItem?.orderType,
           orderDetails: orderItem?.orderSchema?.orderDetails,
@@ -100,6 +85,17 @@ const SmsPaymentPage = () => {
       }
     }
 
+    return orderDetails;
+  }, [orderDataResponse, orderItemId]);
+
+  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === orderData?.orderType), [
+    taskManagementList,
+    orderData?.orderType,
+  ]);
+
+  const processCourierData = useMemo(() => {
+    if (!orderData) return null;
+    const orderDetails = orderData;
     const orderType = orderDetails?.orderType;
     const formDataKey = formDataKeyMap?.[orderType];
     const parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
@@ -115,7 +111,8 @@ const SmsPaymentPage = () => {
         }
       });
 
-      const addressFromOrder = party?.data?.addressDetails || [];
+      const addressFromOrder =
+        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.data?.addressDetails || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
@@ -171,7 +168,7 @@ const SmsPaymentPage = () => {
       notices: formattedParties,
       addressDetails: formattedParties?.flatMap((p) => p?.addresses) || [],
     };
-  }, [orderData, orderItemId, taskManagementList]);
+  }, [orderData, orderItemId, t, taskManagementList]);
 
   // This memo acts as the single source of truth for all downstream payment calculations.
   // It safely switches between the stable initial data (processCourierData) and the
@@ -344,7 +341,7 @@ const SmsPaymentPage = () => {
   const handleProceedToPaymentPage = async () => {
     try {
       setLoader(true);
-      const orderType = currentOrderType;
+      const orderType = orderData?.orderType;
       const formDataKey = formDataKeyMap[orderType];
       const formData = orderData?.additionalDetails?.formdata?.[formDataKey]?.party;
       const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
@@ -477,7 +474,7 @@ const SmsPaymentPage = () => {
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
-      const fileName = `${currentOrderType ? currentOrderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
+      const fileName = `${orderData?.orderType ? orderData?.orderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
       await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
