@@ -3,7 +3,7 @@ const {
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
-const { search_task_v2 } = require("../../api");
+const { search_task_v2, search_task_mangement } = require("../../api");
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
@@ -61,7 +61,34 @@ async function processPaymentReceipts(
   const taskReceipts = genericTaskDocument.data.list
     .filter((task) => task?.documents && task?.documents?.length > 0)
     .map((task) => task?.documents?.[0]);
-  const documentList = casePaymentReceipt.concat(taskReceipts);
+
+  const taskMangementData = await search_task_mangement(
+    tenantId,
+    requestInfo,
+    {
+      tenantId: tenantId,
+      status: "COMPLETED",
+      filingNumber: courtCase.filingNumber,
+    },
+    {
+      sortBy: "last_modified_time",
+      order: "asc",
+      limit: 100,
+    }
+  );
+
+  const taskMangementReceipts =
+    taskMangementData?.data?.taskManagementRecords
+      ?.map((task) =>
+        task?.documents?.find?.((d) => d?.documentType === "PAYMENT_RECEIPT")
+      )
+      ?.filter(Boolean) || [];
+
+  const documentList = [
+    ...(casePaymentReceipt || []),
+    ...(taskMangementReceipts || []),
+    ...(taskReceipts || []),
+  ];
 
   if (paymentReceiptSection?.length !== 0 && documentList?.length !== 0) {
     const section = paymentReceiptSection[0];

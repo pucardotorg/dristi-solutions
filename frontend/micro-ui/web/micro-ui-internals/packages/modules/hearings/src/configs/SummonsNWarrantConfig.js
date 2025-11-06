@@ -44,6 +44,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "Delivery Channels",
               jsonPath: "deliveryChannel",
+              additionalCustomization: true,
             },
 
             {
