@@ -275,4 +275,11 @@ public class Configuration {
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
 
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.offline.payment.endpoint}")
+    private String offlinePaymentEndPoint;
+
 }

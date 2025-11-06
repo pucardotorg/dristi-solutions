@@ -19,7 +19,8 @@
           "roles": [
             "PENDING_TASK_CREATOR",
             "SYSTEM",
-            "SYSTEM_ADMIN"
+            "SYSTEM_ADMIN",
+            "PROCESS_MANAGEMENT_CREATOR"
           ]
         },
         {
@@ -55,7 +56,6 @@
           "action": "COMPLETE_TASK_CREATION",
           "nextState": "TASK_CREATED",
           "roles": [
-            "PENDING_TASK_CREATOR",
             "SYSTEM",
             "SYSTEM_ADMIN"
           ]
@@ -80,12 +80,13 @@
           ]
         },
         {
-          "action": "REJECT",
+          "action": "EXPIRE",
           "nextState": "REJECTED",
           "roles": [
             "SYSTEM",
             "SYSTEM_ADMIN",
-            "PENDING_TASK_CREATOR"
+            "PENDING_TASK_CREATOR",
+            "PROCESS_MANAGEMENT_EDITOR"
           ]
         },
         {
@@ -94,7 +95,8 @@
           "roles": [
             "PENDING_TASK_CREATOR",
             "SYSTEM",
-            "SYSTEM_ADMIN"
+            "SYSTEM_ADMIN",
+            "PROCESS_MANAGEMENT_EDITOR"
           ]
         }
       ]
@@ -110,7 +112,7 @@
     },
     {
       "sla": null,
-      "state": "REJECTED",
+      "state": "EXPIRED",
       "applicationStatus": "INACTIVE",
       "isStateUpdatable": false,
       "docUploadRequired": false,
