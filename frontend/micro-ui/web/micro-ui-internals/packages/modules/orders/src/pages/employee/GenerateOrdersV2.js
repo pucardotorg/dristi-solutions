@@ -245,6 +245,7 @@ const GenerateOrdersV2 = () => {
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const [isBailBondTaskExistsForCurrentRef, setIsBailBondTaskExistsForCurrentRef] = useState(false);
+  const [isRaiseBailBondTaskExists, setIsRaiseBailBondTaskExists] = useState(false);
   const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -299,9 +300,6 @@ const GenerateOrdersV2 = () => {
 
   const getBailBondReferenceId = (orderObj) => {
     try {
-      // const uniqueRefPart =
-      //   orderObj?.orderNumber || orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "";
-      // return `MANUAL_BAIL_BOND_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
       const orderNo = orderObj?.orderNumber || "";
       const appNo = orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "";
 
@@ -309,12 +307,21 @@ const GenerateOrdersV2 = () => {
       const appPart = appNo ? `_APP_${appNo}` : "";
       return `MANUAL_BAIL_BOND_${filingNumber}${orderPart}${appPart}`;
     } catch (e) {
-      console.error(e);
       return `MANUAL_BAIL_BOND_${filingNumber}`;
     }
   };
 
-  const createBailBondTaskUnified = async (orderObj) => {
+  const getRaiseBailBondReferenceId = (accusedKey) => {
+    try {
+      const safeAccused = `_ACC_${accusedKey || "UNKNOWN"}`;
+      return `MANUAL_RAISE_BAIL_BOND_${filingNumber}${safeAccused}`;
+    } catch (e) {
+      console.error(e);
+      return `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`;
+    }
+  };
+
+  const createPendingTaskForJudge = async (orderObj) => {
     try {
       const referenceId = getBailBondReferenceId(orderObj);
       const existing = await HomeService.getPendingTaskService(
@@ -367,9 +374,102 @@ const GenerateOrdersV2 = () => {
     }
   };
 
+  const createPendingTaskForEmployee = async (orderObj) => {
+    try {
+      const getUserUUID = async (individualId) => {
+        try {
+          const res = await window?.Digit?.DRISTIService?.searchIndividualUser(
+            { Individual: { individualId } },
+            { tenantId, limit: 1000, offset: 0 }
+          );
+          return res?.Individual?.[0]?.userUuid || "";
+        } catch (e) {
+          console.error("Error fetching user UUID for individualId:", individualId, e);
+          return "";
+        }
+      };
+      const bailFormData = (() => {
+        if (orderObj?.orderCategory === "INTERMEDIATE") return orderObj?.additionalDetails?.formdata || {};
+        const acceptBailItem = orderObj?.compositeItems?.find?.((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+        return acceptBailItem?.orderSchema?.additionalDetails?.formdata || {};
+      })();
+      const bailOfName = bailFormData?.bailOf;
+      const bailType = bailFormData?.bailType || null;
+      const bailAmount = bailFormData?.chequeAmount || null;
+      const noOfSureties = bailFormData?.noOfSureties || null;
+
+      const candidateName = bailOfName || applicationDetails?.additionalDetails?.onBehalOfName || "";
+
+      const targetLitigant =
+        (caseDetails?.litigants || []).find((lit) => {
+          const fullName = lit?.additionalDetails?.fullName || "";
+          return candidateName && fullName?.toLowerCase?.() === candidateName?.toLowerCase?.();
+        }) || (caseDetails?.litigants || []).find((lit) => lit?.partyType?.includes?.("respondent"));
+
+      const targetIndividualId = targetLitigant?.individualId;
+      const targetUserUuid = targetIndividualId ? await getUserUUID(targetIndividualId) : "";
+
+      const accusedKey = targetIndividualId || targetLitigant?.uniqueId || targetLitigant?.partyUuid || targetLitigant?.additionalDetails?.uuid || "";
+      const referenceId = getRaiseBailBondReferenceId(accusedKey);
+
+      const poaUuids = (caseDetails?.poaHolders || [])
+        ?.filter((poa) => poa?.representingLitigants?.some?.((rep) => rep?.individualId === targetIndividualId))
+        ?.map((poa) => poa?.additionalDetails?.uuid)
+        ?.filter(Boolean);
+
+      const advocateUuids = (caseDetails?.representatives || [])
+        ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
+        ?.map((rep) => rep?.additionalDetails?.uuid)
+        ?.filter(Boolean);
+
+      const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...(advocateUuids || [])].filter(Boolean))).map((uuid) => ({
+        uuid,
+      }));
+
+      const pendingTaskPayload = {
+        pendingTask: {
+          name: t("CS_COMMON_RAISE_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId,
+          status: "PENDING_RAISE_BAIL_BOND",
+          assignedTo: assignedTo,
+          assignedRole: [],
+          actionCategory: "Bail Bond",
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+          stateSla: todayDate,
+          additionalDetails: {
+            accusedIndividualId: targetIndividualId || null,
+            accusedKey: accusedKey || null,
+            refApplicationId: orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "",
+            bailType: bailType,
+            bailAmount: bailAmount,
+            noOfSureties: noOfSureties,
+          },
+          tenantId,
+        },
+      };
+      try {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, pendingTaskPayload);
+      } catch (apiErr) {
+        console.error("[BailBond Citizen Task] API error while creating pending task:", apiErr);
+        throw apiErr;
+      }
+      setIsRaiseBailBondTaskExists(true);
+    } catch (err) {
+      console.error("Error creating raise bail bond task:", err);
+    }
+  };
+
   const createBailBondTaskForOrder = async (orderNumberOrOrderObj) => {
     const orderObj = typeof orderNumberOrOrderObj === "string" ? { orderNumber: orderNumberOrOrderObj } : orderNumberOrOrderObj || currentOrder;
-    return await createBailBondTaskUnified(orderObj);
+    const createdPendingTaskForJudge = await createPendingTaskForJudge(orderObj);
+    const createdPendingTaskForEmployee = await createPendingTaskForEmployee(orderObj);
+    return { createdPendingTaskForJudge, createdPendingTaskForEmployee };
   };
 
   const fetchInbox = useCallback(async () => {
@@ -2829,7 +2929,7 @@ const GenerateOrdersV2 = () => {
 
       try {
         if (orderType?.code === "ACCEPT_BAIL" && Boolean(updatedFormData?.bailBondRequired)) {
-          await createBailBondTaskUnified(updateOrderResponse?.order || updatedOrderData);
+          await createBailBondTaskForOrder(updateOrderResponse?.order || updatedOrderData);
         }
       } catch (e) {
         console.error("Failed to create bail bond task on AddOrder confirm", e);
