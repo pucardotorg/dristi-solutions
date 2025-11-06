@@ -377,10 +377,10 @@ public class TaskCreationService {
             RespondentDetails respondentDetails = null;
             WitnessDetails witnessDetails = null;
             if (party.getRespondentDetails() != null) {
-                respondentDetails = getRespondentDetails(party.getRespondentDetails(), null);
+                respondentDetails = getRespondentDetails(party.getRespondentDetails(), party.getAddresses().get(0));
             }
             if (party.getWitnessDetails() != null) {
-                witnessDetails = getWitnessDetails(party.getWitnessDetails(), null);
+                witnessDetails = getWitnessDetails(party.getWitnessDetails(), party.getAddresses().get(0));
             }
             for (DeliveryChannel channel : defaultChannels) {
                 log.info("Adding default channel: {}", channel);
