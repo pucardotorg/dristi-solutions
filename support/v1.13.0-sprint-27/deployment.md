@@ -1,4 +1,4 @@
-egov-persister , indexer , pdf-service need to be restarted
+egov-persister , indexer , pdf-service, gateway need to be restarted
 
 check whether openapi , task-management , order-management. hearing configured correctly for internal service calls
 

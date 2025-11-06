@@ -343,8 +343,6 @@ public class TaskCreationService {
         List<DeliveryChannel> deliveryChannels = party.getDeliveryChannels() != null
                 ? new ArrayList<>(party.getDeliveryChannels())
                 : new ArrayList<>();
-        // Ensure SMS and EMAIL channels are present
-        ensureDefaultChannels(deliveryChannels);
 
         for (PartyAddress address : party.getAddresses()) {
             RespondentDetails respondentDetails = null;
@@ -372,33 +370,77 @@ public class TaskCreationService {
                         .build());
             }
         }
+
+        List<DeliveryChannel> defaultChannels = ensureDefaultChannels(new ArrayList<>(),party);
+
+        if (!defaultChannels.isEmpty()) {
+            RespondentDetails respondentDetails = null;
+            WitnessDetails witnessDetails = null;
+            if (party.getRespondentDetails() != null) {
+                respondentDetails = getRespondentDetails(party.getRespondentDetails(), null);
+            }
+            if (party.getWitnessDetails() != null) {
+                witnessDetails = getWitnessDetails(party.getWitnessDetails(), null);
+            }
+            for (DeliveryChannel channel : defaultChannels) {
+                log.info("Adding default channel: {}", channel);
+                result.add(TaskDetails.builder()
+                        .caseDetails(caseDetails)
+                        .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
+                        .noticeDetails(baseTaskDetails != null ? baseTaskDetails.getNoticeDetails() : null)
+                        .respondentDetails(respondentDetails)
+                        .witnessDetails(witnessDetails)
+                        .complainantDetails(complainantDetails)
+                        .deliveryChannel(channel)
+                        .build());
+            }
+        }
         return result;
     }
 
     /**
      * Ensures that SMS and EMAIL delivery channels are always included.
      */
-    private void ensureDefaultChannels(List<DeliveryChannel> channels) {
-        boolean hasSMS = channels.stream()
-                .anyMatch(c -> SMS.equalsIgnoreCase(c.getChannelCode()) || SMS.equalsIgnoreCase(c.getChannelName()));
-        boolean hasEmail = channels.stream()
-                .anyMatch(c -> EMAIL.equalsIgnoreCase(c.getChannelCode()) || EMAIL.equalsIgnoreCase(c.getChannelName()));
-        if (!hasSMS) {
-            channels.add(DeliveryChannel.builder()
-                    .channelId(SMS)
-                    .channelName(SMS)
-                    .channelCode(SMS)
-                    .fees("0") // Default fee if applicable
-                    .build());
+    private List<DeliveryChannel> ensureDefaultChannels(List<DeliveryChannel> channels, PartyDetails party) {
+
+        if (party.getRespondentDetails() != null) {
+            if (party.getRespondentDetails().getEmail() != null && !party.getRespondentDetails().getEmail().isEmpty()) {
+                DeliveryChannel emailChannel = DeliveryChannel.builder()
+                        .channelName(EMAIL)
+                        .channelCode(EMAIL)
+                        .fees("0")
+                        .build();
+                channels.add(emailChannel);
+            }
+            if (party.getRespondentDetails().getPhoneNumbers() != null && !party.getRespondentDetails().getPhoneNumbers().isEmpty()) {
+                DeliveryChannel smsChannel = DeliveryChannel.builder()
+                        .channelName(SMS)
+                        .channelCode(SMS)
+                        .fees("0")
+                        .build();
+                channels.add(smsChannel);
+            }
         }
-        if (!hasEmail) {
-            channels.add(DeliveryChannel.builder()
-                    .channelId(EMAIL)
-                    .channelName(EMAIL)
-                    .channelCode(EMAIL)
-                    .fees("0")
-                    .build());
+        else if (party.getWitnessDetails() != null) {
+            if (party.getWitnessDetails().getEmails() != null && !party.getWitnessDetails().getEmails().getEmailId().isEmpty()) {
+                DeliveryChannel emailChannel = DeliveryChannel.builder()
+                        .channelName(EMAIL)
+                        .channelCode(EMAIL)
+                        .fees("0")
+                        .build();
+                channels.add(emailChannel);
+            }
+            if (party.getWitnessDetails().getPhoneNumbers() != null && !party.getWitnessDetails().getPhoneNumbers().getMobileNumber().isEmpty()) {
+                DeliveryChannel smsChannel = DeliveryChannel.builder()
+                        .channelName(SMS)
+                        .channelCode(SMS)
+                        .fees("0")
+                        .build();
+                channels.add(smsChannel);
+            }
         }
+
+        return channels;
     }
 
 
