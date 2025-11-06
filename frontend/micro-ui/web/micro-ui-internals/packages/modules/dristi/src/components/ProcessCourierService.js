@@ -64,6 +64,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     const addressPayload = {
       tenantId,
       caseId,
+      filingNumber: processCourierData?.filingNumber,
       partyAddresses: [{ addresses: [newAddress], partyType: "Accused", uniqueId: accusedData?.uniqueId }],
     };
     const response = await DRISTIService.addAddress(addressPayload, {});
