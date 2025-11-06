@@ -39,7 +39,7 @@ public class RespondentDetails {
     private List<Address> address;
 
     @JsonProperty("addressDetails")
-    private List<AddressDetails> addressDetails;
+    private List<PartyAddress> addressDetails;
 
     @JsonProperty("respondentType")
     private Object respondentType;
