@@ -325,6 +325,9 @@ public class Configuration {
     @Value("${egov.sms.notification.hearings.scheduled.tomorrow.multiple}")
     private String smsNotificationHearingsScheduledTomorrowMultipleTemplateId;
 
+    @Value("${egov.sms.notification.hearing.reScheduled.template.id}")
+    private String smsNotificationHearingReScheduledTemplateId;
+
     @Value("${state.level.tenant.id}")
     private String tenantId;
 

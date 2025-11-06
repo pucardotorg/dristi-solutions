@@ -61,6 +61,7 @@ public class SmsNotificationService {
             case HEARINGS_HELD_TODAY_MULTIPLE -> config.getSmsNotificationHearingsHeldTodayMultipleTemplateId();
             case HEARINGS_SCHEDULED_TOMORROW_SINGLE -> config.getSmsNotificationHearingsScheduledTomorrowSingleTemplateId();
             case HEARINGS_SCHEDULED_TOMORROW_MULTIPLE -> config.getSmsNotificationHearingsScheduledTomorrowMultipleTemplateId();
+            case HEARING_RESCHEDULED -> config.getSmsNotificationHearingReScheduledTemplateId();
             default -> null;
         };
 
@@ -99,6 +100,7 @@ public class SmsNotificationService {
         smsDetails.put("hearingType",smsTemplateData.getHearingType());
         smsDetails.put("caseCount", String.valueOf(smsTemplateData.getCaseCount()));
         smsDetails.put("link", smsTemplateData.getLink());
+        smsDetails.put("oldHearingDate", smsTemplateData.getOldHearingDate());
 
         return smsDetails;
     }
@@ -137,7 +139,8 @@ public class SmsNotificationService {
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
                 .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""))
                 .replace("{{caseCount}}", Optional.ofNullable(userDetailsForSMS.get("caseCount")).orElse(""))
-                .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""));
+                .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
+                .replace("{{oldHearingDate}}", Optional.ofNullable(userDetailsForSMS.get("oldHearingDate")).orElse(""));
         return message;
     }
 
