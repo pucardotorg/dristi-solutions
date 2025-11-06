@@ -1,5 +1,7 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,9 @@ import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
 import org.pucar.dristi.web.models.bailbond.*;
+import org.pucar.dristi.web.models.cases.AddressDetails;
+import org.pucar.dristi.web.models.cases.CourtCase;
+import org.pucar.dristi.web.models.cases.PartyDetails;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignRequest;
 import org.pucar.dristi.web.models.esign.ESignResponse;
@@ -63,7 +68,11 @@ public class OpenApiService {
 
     private final UserService userService;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService) {
+    private final OrderUtil orderUtil;
+
+    private final CaseUtil caseUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -76,6 +85,8 @@ public class OpenApiService {
         this.esignUtil = esignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.userService = userService;
+        this.orderUtil = orderUtil;
+        this.caseUtil = caseUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -387,7 +398,7 @@ public class OpenApiService {
             if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
             }
-            if(filterCriteria.getCaseTitle() != null) {
+            if (filterCriteria.getCaseTitle() != null) {
                 moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
             }
         }
@@ -410,7 +421,7 @@ public class OpenApiService {
     }
 
     public String getMagistrateName(String courtId, String tenantId) {
-       return hrmsUtil.getJudgeName(tenantId,courtId);
+        return hrmsUtil.getJudgeName(tenantId, courtId);
     }
 
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
@@ -439,7 +450,7 @@ public class OpenApiService {
         moduleSearchCriteria.put("filingNumber", openApiOrdersTaskIRequest.getFilingNumber());
         moduleSearchCriteria.put("courtId", openApiOrdersTaskIRequest.getCourtId());
         moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST","PAYMENT_PENDING_EMAIL",
+        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST", "PAYMENT_PENDING_EMAIL",
                 "PAYMENT_PENDING_RPAD", "PAYMENT_PENDING_POLICE", "PAYMENT_PENDING_SMS"));
         moduleSearchCriteria.put("entityType", "order-default");
 
@@ -669,7 +680,7 @@ public class OpenApiService {
                 .fuzzySearch(false)
                 .build();
 
-        BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
+        BailSearchResponse response = bailUtil.fetchBails(criteria, createInternalRequestInfoWithSystemUserType());
         List<Bail> bails = response.getBails();
 
         if (bails == null || bails.isEmpty()) {
@@ -729,7 +740,7 @@ public class OpenApiService {
                     .fuzzySearch(false)
                     .build();
 
-            BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
+            BailSearchResponse response = bailUtil.fetchBails(criteria, createInternalRequestInfoWithSystemUserType());
             List<Bail> bails = response.getBails();
 
             if (bails == null || bails.isEmpty()) {
@@ -786,6 +797,335 @@ public class OpenApiService {
             throw new CustomException("Error while updating bail bond", e.getMessage());
         }
     }
+
+    public OrderDetailsSearchResponse getOrderDetails(OrderDetailsSearch orderDetailsSearch) {
+
+        try {
+            String tenantId = orderDetailsSearch.getTenantId();
+            String orderNumber = orderDetailsSearch.getOrderNumber();
+            String orderItemId = orderDetailsSearch.getOrderItemId();
+            String referenceId = orderDetailsSearch.getReferenceId();
+            String mobileNumber = orderDetailsSearch.getMobileNumber();
+            String filingNumber = orderDetailsSearch.getFilingNumber();
+
+            //validate mobile number from pending task assigned to list
+            SearchResponse pendingTask = validateMobileNumber(referenceId, tenantId, mobileNumber);
+
+            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+
+            OrderCriteria criteria = OrderCriteria.builder()
+                    .orderNumber(orderNumber)
+                    .tenantId(tenantId)
+                    .build();
+
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .criteria(criteria)
+                    .pagination(Pagination.builder().limit(10.0).offSet(0.0).build())
+                    .build();
+
+            OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
+
+            if (!CollectionUtils.isEmpty(orderListResponse.getList())) {
+                org.pucar.dristi.web.models.order.Order order = orderListResponse.getList().get(0);
+                if (orderItemId != null) {
+                    if (order == null || order.getCompositeItems() == null) {
+                        return response;
+                    }
+
+                    try {
+                        // Convert the generic Object to a List<Map<String, Object>>
+                        List<Map<String, Object>> compositeList = objectMapper.convertValue(
+                                order.getCompositeItems(),
+                                new TypeReference<>() {
+                                }
+                        );
+
+                        // Filter the list to keep only the matching item
+                        List<Map<String, Object>> filtered = compositeList.stream()
+                                .filter(item -> orderItemId.equals(item.get("id")))
+                                .collect(Collectors.toList());
+
+                        // Set the filtered list back into the order
+                        order.setCompositeItems(filtered);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error filtering composite items", e);
+                    }
+                }
+
+                mapperOrderToOrderSearchResponse(response, order);
+            }
+
+            CourtCase courtCase = caseUtil.getCase(filingNumber);
+            response.setCaseTitle(courtCase.getCaseTitle());
+
+            enrichPartyDetails(response, courtCase.getAdditionalDetails(), pendingTask);
+
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to get order details :: {}", e.toString());
+            throw new CustomException("GET_ORDER_DETAILS_ERROR",
+                    "Error Occurred while getting order details: " + e.getMessage());
+        }
+    }
+
+    private void enrichPartyDetails(OrderDetailsSearchResponse response, Object additionalDetails, SearchResponse pendingTask) {
+        if (additionalDetails == null) {
+            return;
+        }
+
+        List<PartyDetails> partyDetailsList = new ArrayList<>();
+
+        try {
+            JsonNode rootNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+
+            // Process respondent details
+            processRespondents(rootNode, partyDetailsList);
+
+            // Process witness details
+            processWitnesses(rootNode, partyDetailsList, objectMapper);
+
+            // Set the party details in the response
+            for (Data data : pendingTask.getData()) {
+                for (Field field : data.getFields()) {
+                    if ("additionalDetails".equals(field.getKey()) && field.getValue() != null) {
+                        Map<String, Object> additionalDetailsMap = objectMapper.convertValue(field.getValue(), new TypeReference<Map<String, Object>>() {
+                        });
+
+                        // Get the uniqueIds list from additionalDetails
+                        List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
+
+                        if (uniqueIdsList == null || uniqueIdsList.isEmpty() || response.getPartyDetails() == null) {
+                            return;
+                        }
+
+                        // Extract uniqueIds to filter by
+                        Set<String> validUniqueIds = uniqueIdsList.stream()
+                                .map(entry -> entry.get("uniqueId"))
+                                .collect(Collectors.toSet());
+
+                        // Filter partyDetails to only include those with matching uniqueIds
+                        List<PartyDetails> filteredPartyDetails = response.getPartyDetails().stream()
+                                .filter(party -> party.getUniqueId() != null && validUniqueIds.contains(party.getUniqueId()))
+                                .collect(Collectors.toList());
+                        response.setPartyDetails(filteredPartyDetails);
+                        break;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error while enriching party details", e);
+            // Continue with empty party details in case of error
+        }
+    }
+
+    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList) {
+        JsonNode respondentDetails = rootNode.path("respondentDetails");
+        if (respondentDetails.isMissingNode() || !respondentDetails.has("formdata")) {
+            return;
+        }
+
+        for (JsonNode respondent : respondentDetails.path("formdata")) {
+            if (!respondent.has("data")) continue;
+
+            JsonNode data = respondent.path("data");
+            PartyDetails party = new PartyDetails();
+            party.setPartyType("RESPONDENT");
+
+            // Set name
+            if (data.has("respondentFirstName")) {
+                String firstName = data.path("respondentFirstName").asText();
+                String middleName = data.path("poaMiddleName").asText();
+                String lastName = data.path("poaLastName").asText();
+
+                String fullName = String.join(" ",
+                        firstName,
+                        middleName != null ? middleName : "",
+                        lastName != null ? lastName : ""
+                ).replaceAll("\\s+", " ").trim();
+
+                party.setPartyName(fullName);
+            }
+
+            // Set unique ID
+            if (respondent.has("uniqueId")) {
+                party.setUniqueId(respondent.path("uniqueId").asText());
+            }
+
+            // Process address details
+            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                List<AddressDetails> addresses = new ArrayList<>();
+                for (JsonNode addressNode : data.path("addressDetails")) {
+                    if (addressNode.has("addressDetails")) {
+                        JsonNode addrDetails = addressNode.path("addressDetails");
+                        AddressDetails address = new AddressDetails();
+
+                        address.setDoorNo(addrDetails.path("doorNo").asText());
+                        address.setStreet(addrDetails.path("street").asText());
+                        address.setLandmark(addrDetails.path("landmark").asText());
+                        address.setLocality(addrDetails.path("locality").asText());
+                        address.setCity(addrDetails.path("city").asText());
+                        address.setDistrict(addrDetails.path("district").asText());
+                        address.setState(addrDetails.path("state").asText());
+                        address.setPincode(addrDetails.path("pincode").asText());
+                        address.setCountry(addrDetails.path("country").asText());
+
+                        addresses.add(address);
+                    }
+                }
+                party.setAddress(addresses);
+            }
+
+            partyDetailsList.add(party);
+        }
+    }
+
+    private void processWitnesses(JsonNode rootNode, List<PartyDetails> partyDetailsList, ObjectMapper mapper) {
+        JsonNode witnessDetails = rootNode.path("witnessDetails");
+        if (witnessDetails.isMissingNode() || !witnessDetails.has("formdata")) {
+            return;
+        }
+
+        for (JsonNode witness : witnessDetails.path("formdata")) {
+            if (!witness.has("data")) continue;
+
+            JsonNode data = witness.path("data");
+            PartyDetails party = new PartyDetails();
+            party.setPartyType("WITNESS");
+
+            // Set name
+            if (data.has("firstName")) {
+                String firstName = data.path("firstName").asText();
+                String middleName = data.path("middleName").asText();
+                String lastName = data.path("lastName").asText();
+                String designation = data.path("witnessDesignation").asText();
+
+                String fullName = String.join(" ",
+                        firstName,
+                        middleName != null ? middleName : "",
+                        lastName != null ? lastName : "",
+                        designation != null ? "(" + designation + ")" : ""
+                ).replaceAll("\\s+", " ").trim();
+
+                party.setPartyName(fullName);
+            }
+
+            // Set unique ID
+            if (witness.has("uniqueId")) {
+                party.setUniqueId(witness.path("uniqueId").asText());
+            }
+
+            // Process address details if available
+            if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                List<AddressDetails> addresses = new ArrayList<>();
+                for (JsonNode addressNode : data.path("addressDetails")) {
+                    AddressDetails address = new AddressDetails();
+
+                    address.setDoorNo(addressNode.path("doorNo").asText());
+                    address.setStreet(addressNode.path("street").asText());
+                    address.setLandmark(addressNode.path("landmark").asText());
+                    address.setLocality(addressNode.path("locality").asText());
+                    address.setCity(addressNode.path("city").asText());
+                    address.setDistrict(addressNode.path("district").asText());
+                    address.setState(addressNode.path("state").asText());
+                    address.setPincode(addressNode.path("pincode").asText());
+                    address.setCountry(addressNode.path("country").asText());
+
+                    addresses.add(address);
+                }
+                party.setAddress(addresses);
+            }
+
+            partyDetailsList.add(party);
+        }
+    }
+
+    private void mapperOrderToOrderSearchResponse(OrderDetailsSearchResponse response, org.pucar.dristi.web.models.order.Order order) {
+        if (order == null || response == null) {
+            return;
+        }
+        response.setId(order.getId());
+        response.setTenantId(order.getTenantId());
+        response.setFilingNumber(order.getFilingNumber());
+        response.setCourtId(order.getCourtId());
+        response.setCnrNumber(order.getCnrNumber());
+        response.setApplicationNumber(order.getApplicationNumber());
+        response.setHearingNumber(order.getHearingNumber());
+        response.setScheduledHearingNumber(order.getScheduledHearingNumber());
+        response.setOrderNumber(order.getOrderNumber());
+        response.setLinkedOrderNumber(order.getLinkedOrderNumber());
+        response.setCreatedDate(order.getCreatedDate());
+        response.setIssuedBy(order.getIssuedBy());
+        response.setOrderType(order.getOrderType());
+        response.setOrderCategory(order.getOrderCategory());
+        response.setStatus(order.getStatus());
+        response.setComments(order.getComments());
+        response.setIsActive(order.getIsActive());
+        response.setStatuteSection(order.getStatuteSection());
+        response.setDocuments(order.getDocuments());
+        response.setOrderDetails(order.getOrderDetails());
+        response.setCompositeItems(order.getCompositeItems());
+        response.setAttendance(order.getAttendance());
+        response.setItemText(order.getItemText());
+        response.setPurposeOfNextHearing(order.getPurposeOfNextHearing());
+        response.setNextHearingDate(order.getNextHearingDate());
+        response.setOrderTitle(order.getOrderTitle());
+        response.setAdditionalDetails(order.getAdditionalDetails());
+        response.setAuditDetails(order.getAuditDetails());
+    }
+
+
+    private SearchResponse validateMobileNumber(String referenceId, String tenantId, String mobileNumber) {
+        SearchRequest searchRequest = new SearchRequest();
+        IndexSearchCriteria criteria = new IndexSearchCriteria();
+
+        criteria.setModuleName("Pending Tasks Service");
+        criteria.setLimit(10);
+        criteria.setOffset(0);
+        criteria.setTenantId(tenantId);
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("referenceId", referenceId);
+        moduleSearchCriteria.put("isCompleted", false);
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+        searchRequest.setIndexSearchCriteria(criteria);
+
+        SearchResponse searchResponse = inboxUtil.getPaymentTask(searchRequest);
+
+        if (!CollectionUtils.isEmpty(searchResponse.getData())) {
+            for (Data data : searchResponse.getData()) {
+                for (Field field : data.getFields()) {
+                    if ("assignedTo".equals(field.getKey()) && field.getValue() != null) {
+                        try {
+                            // Convert field value (which is a JSON array string) into a List of maps
+                            List<Map<String, Object>> assignedToList =
+                                    new ObjectMapper().convertValue(field.getValue(), new TypeReference<>() {
+                                    });
+
+                            boolean matchFound = assignedToList.stream()
+                                    .anyMatch(user ->
+                                            mobileNumber.equalsIgnoreCase((String) user.get("mobileNumber")));
+
+                            if (!matchFound) {
+                                throw new CustomException("INVALID_MOBILE",
+                                        "Provided mobile number does not match any assigned user for this referenceId");
+                            }
+
+                        } catch (Exception e) {
+                            throw new CustomException("MOBILE_VALIDATION_ERROR",
+                                    "Error validating mobile number: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+        } else {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
+        return searchResponse;
+    }
+
 
     private RequestInfo createInternalRequestInfo() {
         org.egov.common.contract.request.User userInfo = new User();
