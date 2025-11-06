@@ -26,4 +26,6 @@ public class SmsTemplateData {
     private int caseCount;
 
     private String link;
+
+    private String oldHearingDate;
 }
