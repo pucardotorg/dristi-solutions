@@ -32,7 +32,7 @@ public class InterimOrder {
     @JsonProperty("order_details")
     private byte[] orderDetails;
 
-    @JsonProperty("court_order_number")
+    @JsonProperty("order_number")
     private String courtOrderNumber;
 
     @JsonProperty("order_type")
