@@ -539,6 +539,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         status: TaskManagementWorkflowState.COMPLETED,
         tenantId: tenantId,
       },
+      pagination: {
+        sortBy: "last_modified_time",
+        order: "asc",
+        limit: 100,
+      },
     },
     {},
     `case-bundle-taskManagement-${filingNumber}`,
