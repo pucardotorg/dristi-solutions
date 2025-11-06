@@ -310,8 +310,11 @@ export const UICustomizations = {
                 const channelDetailsEnum = {
                   SMS: "phone",
                   Email: "email",
+                  EMAIL: "email",
                   Post: "address",
+                  EPOST: "address",
                   Police: "address",
+                  POLICE: "address",
                   RPAD: "address",
                 };
                 function mapStatus(status, taskType) {

@@ -732,6 +732,7 @@ function EFilingCases({ path }) {
                   summonsCourierService: [],
                   addressDetails: accusedDetails.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                   uniqueId: accused?.uniqueId || "",
+                  filingNumber: caseDetails?.filingNumber,
                   isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
                 },
               },
@@ -756,6 +757,7 @@ function EFilingCases({ path }) {
                 summonsCourierService: [],
                 addressDetails: completedAccuseds?.[i]?.data?.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                 uniqueId: completedAccuseds?.[i]?.uniqueId || "",
+                filingNumber: caseDetails?.filingNumber,
                 isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
               },
             },
@@ -1074,7 +1076,7 @@ function EFilingCases({ path }) {
           });
         }
         if (selected === "processCourierService" && index === 0) {
-          const isDelayCondonation = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "YES";
+          const isDelayCondonation = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO";
           return formConfig.map((config) => {
             return {
               ...config,
