@@ -249,7 +249,7 @@ public class InboxUtil {
         return value; // Return as is if no conversion logic is provided
     }
 
-    public InboxRequest getInboxRequestForOpenHearing(String tenantId, Long fromDate, Long toDate, String searchText) {
+    public InboxRequest getInboxRequestForOpenHearing(String tenantId, Long fromDate, Long toDate, String searchText,Boolean isHearingSerialNumberSorting) {
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
 
@@ -263,6 +263,7 @@ public class InboxUtil {
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Hearing Service")
                 .tenantId(tenantId)
+                .isHearingSerialNumberSorting(isHearingSerialNumberSorting)
                 .businessService(Collections.singletonList(HEARING_BUSINESS_SERVICE))
                 .build();
 
