@@ -18,14 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static pucar.config.ServiceConstants.NOTIFICATION_ENG_LOCALE_CODE;
-import static pucar.config.ServiceConstants.NOTIFICATION_LOCALIZATION_CODES_JSONPATH;
-import static pucar.config.ServiceConstants.NOTIFICATION_LOCALIZATION_MSGS_JSONPATH;
-import static pucar.config.ServiceConstants.NOTIFICATION_MODULE_CODE;
-import static pucar.config.ServiceConstants.PROCESS_FEE_PAYMENT;
-import static pucar.config.ServiceConstants.PROCESS_FEE_PAYMENT_PENDING;
-import static pucar.config.ServiceConstants.RPAD_SUBMISSION;
-import static pucar.config.ServiceConstants.RPAD_SUBMISSION_PENDING;
+import static pucar.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -66,6 +59,7 @@ public class SmsNotificationService {
             case RPAD_SUBMISSION -> config.getSmsNotificationRpadSubmissionTemplateId();
             case PROCESS_FEE_PAYMENT_PENDING -> config.getSmsNotificationProcessFeePaymentPendingTemplateId();
             case RPAD_SUBMISSION_PENDING -> config.getSmsNotificationRpadSubmissionPendingTemplateId();
+            case PAYMENT_LINK_SMS -> config.getSmsNotificationPaymentLinkTemplateId();
             default -> null;
         };
 
@@ -98,6 +92,7 @@ public class SmsNotificationService {
         Map<String, String> smsDetails = new HashMap<>();
 
         smsDetails.put("courtCaseNumber", smsTemplateData.getCourtCaseNumber());
+        smsDetails.put("shortenedUrl", smsTemplateData.getShortenedUrl());
         smsDetails.put("cmpNumber", smsTemplateData.getCmpNumber());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);

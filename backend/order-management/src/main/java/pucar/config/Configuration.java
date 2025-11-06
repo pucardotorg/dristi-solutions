@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -70,6 +72,19 @@ public class Configuration {
     @Value("${dristi.advocate.search.endpoint}")
     private String advocateSearchEndPoint;
 
+
+    // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.create.endpoint}")
+    private String taskManagementServiceCreateEndpoint;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
 
     // Task Config
     @Value("${dristi.task.host}")
@@ -227,7 +242,35 @@ public class Configuration {
     @Value("${egov.sms.notification.rpad.submission.pending.template.id}")
     private String smsNotificationRpadSubmissionPendingTemplateId;
 
+    @Value("${egov.sms.notification.payment.link.template.id}")
+    private String smsNotificationPaymentLinkTemplateId;
+
     // Tenant Id
     @Value("${egov.statelevel.tenantId}")
     private  String stateLevelTenantId;
+
+
+    @Value("${task.upfront.create.topic}")
+    private String taskUpFrontCreateTopic;
+
+    // URLShortening
+    @Value("${egov.url.shortner.host}")
+    private String urlShortnerHost;
+
+    @Value("${egov.url.shortner.endpoint}")
+    private String urlShortnerEndpoint;
+
+    // long url
+    @Value("${domain.url}")
+    private String domainUrl;
+
+    @Value("${egov.base.url}")
+    private String baseUrl;
+
+    @Value("${task.management.action.category}")
+    private String taskManagementActionCategory;
+
+    @Value("${task.management.assigned.role}")
+    private List<String> taskManagementAssignedRole;
+
 }

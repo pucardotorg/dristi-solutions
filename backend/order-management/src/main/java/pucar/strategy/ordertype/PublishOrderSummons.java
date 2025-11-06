@@ -1,7 +1,5 @@
 package pucar.strategy.ordertype;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +7,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import pucar.config.StateSlaMap;
+import pucar.config.Configuration;
 import pucar.service.IndividualService;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
@@ -21,12 +19,11 @@ import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.task.TaskRequest;
-import pucar.web.models.task.TaskResponse;
 
 import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
+import static pucar.config.ServiceConstants.MANUAL;
 
 @Component
 @Slf4j
@@ -37,22 +34,24 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private final TaskUtil taskUtil;
-    private final IndividualService individualService;
     private final SmsNotificationService smsNotificationService;
     private final UserUtil userUtil;
+    private final TaskManagementUtil taskManagementUtil;
+    private final UrlShortenerUtil urlShortenerUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil) {
+    public PublishOrderSummons(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil, IndividualService individualService, SmsNotificationService smsNotificationService, UserUtil userUtil, TaskManagementUtil taskManagementUtil, UrlShortenerUtil urlShortenerUtil, Configuration configuration) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-        this.taskUtil = taskUtil;
-        this.individualService = individualService;
         this.smsNotificationService = smsNotificationService;
         this.userUtil = userUtil;
+        this.taskManagementUtil = taskManagementUtil;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.configuration = configuration;
     }
 
     @Override
@@ -78,6 +77,17 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         log.info("post processing,result=IN_PROGRESS ,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+
+        log.info("Processing Upfront payments to create tasks.");
+        List<String> uniqueIdPendingTask = taskManagementUtil.processUpfrontPayments(order, requestInfo);
+        if(uniqueIdPendingTask == null || uniqueIdPendingTask.isEmpty()) {
+            log.info("No parties left to pay upfront.");
+            return orderRequest;
+        }
+        //for these uniqueIds fetch respondent details and create map of partytype to uniqueId from order payload inside notice parties
+        Map<String, List<String>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeToUniqueIdMapping(order, uniqueIdPendingTask);
+        log.info("Created party type mapping for {} unique IDs requiring pending tasks", partyTypeToUniqueIdMap.size());
 
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -137,79 +147,159 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
-
-
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-
+        additionalDetails.put("orderItemId", getItemId(order));
+        List<Map<String, Object>> partyTypeToUniqueIdList = new ArrayList<>();
+        //add parttype to uniqueids in additionaldetails
+        for (Map.Entry<String, List<String>> entry : partyTypeToUniqueIdMap.entrySet()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("partyType", entry.getKey());
+            map.put("uniqueId", entry.getValue());
+            partyTypeToUniqueIdList.add(map);
+        }
+        additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            for (JsonNode taskDetail : taskDetailsArray) {
 
-                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
-                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
-                });
-                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+            String itemId = getItemId(order);
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
-                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+            PendingTask pendingTask = PendingTask.builder()
+                    .referenceId(referenceId)
+                    .name("Take Steps - Summons")
+                    .entityType("task-management-payment")
+                    .status(PENDING_PAYMENT)
+                    .assignedTo(uniqueAssignee)
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
+                    .isCompleted(false)
+                    .screenType("home")
+                    .assignedRole(configuration.getTaskManagementAssignedRole())
+                    .actionCategory(configuration.getTaskManagementActionCategory())
+                    .additionalDetails(additionalDetails)
+                    .stateSla(sla)
+                    .build();
 
-                // create pending task
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
-                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
-                    String status = PAYMENT_PENDING + channel;
+            try {
 
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(name)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status(status)
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .caseId(courtCase.getId().toString())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
+                SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                        .tenantId(courtCase.getTenantId())
+                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .shortenedUrl(createShortUrl(order, referenceId))
+                        .build();
 
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-
-                    String partyType = getPartyType(order);
-                    String orderType = order.getOrderType();
-                    if (orderType != null && !orderType.isEmpty()) {
-                        orderType = orderType.substring(0, 1).toUpperCase()
-                                + orderType.substring(1).toLowerCase();
-                    }
-                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(SUMMONS));
-                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
-                            .partyType(partyType)
-                            .orderType(orderType)
-                            .tenantId(courtCase.getTenantId())
-                            .days(days)
-                            .courtCaseNumber(courtCase.getCourtCaseNumber())
-                            .cmpNumber(courtCase.getCmpNumber())
-                            .build();
-                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
-                    if(pendingTask.getName().contains(RPAD)){
-                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
-
-                    }
-                }
-
-
+                callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
+            } catch (Exception e) {
+                log.error("Error occurred while sending notification to user: {}", e.toString());
             }
 
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
         pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(),courtCase.getId().toString(),courtCase.getCaseTitle());
+        return null;
+        //TODO: REMOVE EXISTING LOGIC
+/*     String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+//
+//        try {
+//            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+//            for (JsonNode taskDetail : taskDetailsArray) {
+//
+//                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
+//                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
+//                });
+//                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+//
+//                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+//                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+//
+//                // create pending task
+//
+//                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
+//                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
+//                    String status = PAYMENT_PENDING + channel;
+//
+//                    PendingTask pendingTask = PendingTask.builder()
+//                            .name(name)
+//                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+//                            .entityType("order-default")
+//                            .status(status)
+//                            .assignedTo(uniqueAssignee)
+//                            .cnrNumber(courtCase.getCnrNumber())
+//                            .filingNumber(courtCase.getFilingNumber())
+//                            .caseTitle(courtCase.getCaseTitle())
+//                            .caseId(courtCase.getId().toString())
+//                            .isCompleted(false)
+//                            .stateSla(sla)
+//                            .additionalDetails(additionalDetails)
+//                            .screenType("home")
+//                            .build();
+//
+//                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+//                    ).pendingTask(pendingTask).build());
+//
+//                    String partyType = getPartyType(order);
+//                    String orderType = order.getOrderType();
+//                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(SUMMONS));
+//                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+//                            .partyType(partyType)
+//                            .orderType(orderType)
+//                            .tenantId(courtCase.getTenantId())
+//                            .days(days)
+//                            .courtCaseNumber(courtCase.getCourtCaseNumber())
+//                            .cmpNumber(courtCase.getCmpNumber())
+//                            .build();
+//                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
+//                    if(pendingTask.getName().contains(RPAD)){
+//                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
+//
+//                    }
+//                }
+//
+//
+//            }
+//
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+       } **/
 
+    }
 
+    private boolean isSummonForAccusedWitness(Order order) {
+        List<Object> parties = jsonUtil.getNestedValue(
+                order.getAdditionalDetails(),
+                List.of("formdata", "SummonsOrder", "party"),
+                List.class
+        );
+        if (parties == null || parties.isEmpty()) {
+            return false;
+        }
+        for (Object party : parties) {
+            if (party instanceof Map) {
+                Map<String, Object> partyMap = (Map<String, Object>) party;
+                // Extract "data" node
+                Object dataObj = partyMap.get("data");
+                if (dataObj instanceof Map) {
+                    Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+
+                    Object partyType = dataMap.get("partyType");
+                    Object ownerType = dataMap.get("ownerType");
+                    if ("Witness".equals(partyType) && ACCUSED.equals(ownerType)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private String getItemId(Order order) {
+        if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+            return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+        }
         return null;
     }
 
@@ -248,24 +338,6 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         }
     }
 
-
-    private boolean isSummonForAccusedWitness(Order order) {
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-        JsonNode taskDetailsArray = null;
-        try {
-            taskDetailsArray = objectMapper.readTree(taskDetails);
-            JsonNode taskDetail = taskDetailsArray.get(0);
-            if(taskDetail.get("witnessDetails") != null
-                    && taskDetail.get("witnessDetails").get("ownerType") != null
-                    && taskDetail.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-                return true;
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return false;
-    }
-
     @Override
     public boolean supportsCommon(OrderRequest orderRequest) {
         return false;
@@ -274,5 +346,23 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     @Override
     public CaseDiaryEntry execute(OrderRequest request) {
         return null;
+    }
+
+    public String createShortUrl(Order order, String referenceId){
+
+        String tenantId = order.getTenantId();
+        String orderNumber = order.getOrderNumber();
+        String orderItemId = null;
+
+        JsonNode additionalDetailsNode = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+
+        JsonNode orderItemNode = additionalDetailsNode.path("itemId");
+
+        if(orderItemNode != null){
+            orderItemId = orderItemNode.textValue();
+        }
+
+        return urlShortenerUtil.createShortenedUrl(tenantId, referenceId, orderNumber, orderItemId);
+
     }
 }
