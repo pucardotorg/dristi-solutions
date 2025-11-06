@@ -94,38 +94,42 @@ public class CaseService {
     }
 
     private void processAndUpdateExtraParties(CourtCase courtCase) {
-        List<PartyDetails> extraParties = new ArrayList<>();
+        try {
+            List<PartyDetails> extraParties = new ArrayList<>();
 
-        // Fetch extra complainants (non-primary)
-        List<PartyDetails> extraComplainants = caseEnrichment.enrichExtraPartyDetails(courtCase, COMPLAINANT_PRIMARY);
-        if (extraComplainants != null && !extraComplainants.isEmpty()) {
-            extraParties.addAll(extraComplainants);
-            log.debug("Added {} extra complainant parties", extraComplainants.size());
-        }
+            // Fetch extra complainants (non-primary)
+            List<PartyDetails> extraComplainants = caseEnrichment.enrichExtraPartyDetails(courtCase, COMPLAINANT_PRIMARY);
+            if (extraComplainants != null && !extraComplainants.isEmpty()) {
+                extraParties.addAll(extraComplainants);
+                log.debug("Added {} extra complainant parties", extraComplainants.size());
+            }
 
-        List<PartyDetails> extraWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, COMPLAINANT_PRIMARY);
-        if (extraWitnesses != null && !extraWitnesses.isEmpty()) {
-            extraParties.addAll(extraWitnesses);
-            log.debug("Added {} extra witness parties", extraWitnesses.size());
-        }
+            List<PartyDetails> extraWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, COMPLAINANT_PRIMARY);
+            if (extraWitnesses != null && !extraWitnesses.isEmpty()) {
+                extraParties.addAll(extraWitnesses);
+                log.debug("Added {} extra witness parties", extraWitnesses.size());
+            }
 
-        // Fetch extra respondents (non-primary)
-        List<PartyDetails> extraRespondents = caseEnrichment.enrichExtraPartyDetails(courtCase, RESPONDENT_PRIMARY);
-        if (extraRespondents != null && !extraRespondents.isEmpty()) {
-            extraParties.addAll(extraRespondents);
-            log.debug("Added {} extra respondent parties", extraRespondents.size());
-        }
-        List<PartyDetails> extraRespondentWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, RESPONDENT_PRIMARY);
-        if (extraRespondentWitnesses != null && !extraRespondentWitnesses.isEmpty()) {
-            extraParties.addAll(extraRespondentWitnesses);
-            log.debug("Added {} extra respondent witness parties", extraRespondentWitnesses.size());
-        }
-        // Handle or persist the combined list
-        if (!extraParties.isEmpty()) {
-            producer.push("save-extra-parties", extraParties);
-            log.info("Processed total {} extra parties for case {}", extraParties.size(), courtCase.getCnrNumber());
-        } else {
-            log.info("No extra parties found for case {}", courtCase.getCnrNumber());
+            // Fetch extra respondents (non-primary)
+            List<PartyDetails> extraRespondents = caseEnrichment.enrichExtraPartyDetails(courtCase, RESPONDENT_PRIMARY);
+            if (extraRespondents != null && !extraRespondents.isEmpty()) {
+                extraParties.addAll(extraRespondents);
+                log.debug("Added {} extra respondent parties", extraRespondents.size());
+            }
+            List<PartyDetails> extraRespondentWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, RESPONDENT_PRIMARY);
+            if (extraRespondentWitnesses != null && !extraRespondentWitnesses.isEmpty()) {
+                extraParties.addAll(extraRespondentWitnesses);
+                log.debug("Added {} extra respondent witness parties", extraRespondentWitnesses.size());
+            }
+            // Handle or persist the combined list
+            if (!extraParties.isEmpty()) {
+                producer.push("save-extra-parties", extraParties);
+                log.info("Processed total {} extra parties for case {}", extraParties.size(), courtCase.getCnrNumber());
+            } else {
+                log.info("No extra parties found for case {}", courtCase.getCnrNumber());
+            }
+        } catch (Exception e) {
+            log.error("Error processing extra parties for case {} with message {}", courtCase.getCnrNumber(), e.getMessage());
         }
     }
 
@@ -143,7 +147,7 @@ public class CaseService {
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
-                .dispNature(null)//todo: configure on contested(1) and uncontested(2)
+                .dispNature(courtCase.getOutcome() != null ? getDisposalNature(courtCase.getOutcome()) : null)
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
                 .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
@@ -156,6 +160,16 @@ public class CaseService {
                 .dateNextList(setNextListDate(courtCase.getCnrNumber()))
                 .dateLastList(setNextListDate(courtCase.getCnrNumber()))
                 .build();
+    }
+
+    private Character getDisposalNature(String outcome) {
+        String dispNature = caseRepository.getDisposalNature(outcome);
+        if(CONTESTED.equalsIgnoreCase(dispNature)) {
+            return '1';
+        } else if(UNCONTESTED.equalsIgnoreCase(dispNature)) {
+            return '2';
+        }
+        return null;
     }
 
     private LocalDate getDateOfDecision(CourtCase courtCase, RequestInfo requestInfo) {

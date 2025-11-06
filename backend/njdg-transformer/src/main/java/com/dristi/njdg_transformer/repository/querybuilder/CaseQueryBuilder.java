@@ -229,4 +229,8 @@ public class CaseQueryBuilder {
     public String getDesignationMasterQuery() {
         return "SELECT * FROM desg_type WHERE court_desg_code = ?";
     }
+
+    public String getDisposalNatureQuery() {
+        return "SELECT disp_nature FROM disp_type WHERE court_disp_code = ?";
+    }
 }

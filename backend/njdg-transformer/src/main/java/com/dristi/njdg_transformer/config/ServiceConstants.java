@@ -28,4 +28,6 @@ public class ServiceConstants {
     public static final String JUDGE_DESIGNATION = "JUDICIAL_MAGISTRATE";
     public static final List<String> caseStatus = List.of("CASE_ADMITTED", "CASE_DISMISSED", "PENDING_RESPONSE");
     public static final List<String> orderTypes = List.of("JUDGEMENT", "DISMISS_CASE", "SETTLEMENT_ACCEPT", "SETTLEMENT_REJECT", "WITHDRAWAL_ACCEPT","WITHDRAWAL_REJECT");
+    public static final String CONTESTED = "CONTESTED";
+    public static final String UNCONTESTED = "UNCONTESTED";
 }

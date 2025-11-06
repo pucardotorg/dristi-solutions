@@ -333,16 +333,16 @@ public class CaseEnrichment {
         List<PartyDetails> partyDetails = new ArrayList<>();
         for(WitnessDetails witnessDetail : witnessDetails){
             if(ownerType.equalsIgnoreCase(witnessDetail.getOwnerType()) && !existingPartyIds.contains(witnessDetail.getUniqueId())) {
-                String firstName = witnessDetail.getFirstName();
-                String middleName = witnessDetail.getMiddleName();
-                String lastName = witnessDetail.getLastName();
+                String firstName = witnessDetail.getFirstName() != null ? witnessDetail.getFirstName() : "";
+                String middleName = witnessDetail.getMiddleName() != null ? witnessDetail.getMiddleName() : "";
+                String lastName = witnessDetail.getLastName() != null ? witnessDetail.getLastName() : "";
                 String fullName = Stream.of(firstName, middleName, lastName)
                         .filter(s -> !s.isEmpty())
                         .collect(Collectors.joining(" "));
                 AddressDetails addressDetails = witnessDetail.getAddressDetails().get(0).getAddressDetails();
                 JsonNode addressNode = objectMapper.convertValue(addressDetails, JsonNode.class);
                 String address = extractAddress(addressNode);
-                Integer age = Integer.valueOf(witnessDetail.getWitnessAge());
+                Integer age = witnessDetail.getWitnessAge()!= null ? Integer.valueOf(witnessDetail.getWitnessAge()) : null;
                 PartyDetails details = PartyDetails.builder()
                         .id(id)
                         .cino(courtCase.getCnrNumber())

@@ -47,7 +47,7 @@ public class CaseRepository {
             );
         } catch (EmptyResultDataAccessException e) {
             log.warn("No district found for name: {}", districtName);
-            return null;
+            return 2; //default 2 for Kollam district which can be configured for multi district
         }
     }
 
@@ -282,5 +282,12 @@ public class CaseRepository {
         Object[] params = new Object[]{judgeDesignation};
         int[] types = new int[]{Types.VARCHAR};
         return jdbcTemplate.queryForObject(getJudgeMasterQuery, params, types, new BeanPropertyRowMapper<>(DesignationMaster.class));
+    }
+
+    public String getDisposalNature(String outcome) {
+        String getDisposalNatureQuery = queryBuilder.getDisposalNatureQuery();
+        Object[] params = new Object[]{outcome};
+        int[] types = new int[]{Types.VARCHAR};
+        return jdbcTemplate.queryForObject(getDisposalNatureQuery, params, types, String.class);
     }
 }
