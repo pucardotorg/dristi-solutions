@@ -16,6 +16,6 @@ public class CaseRequest {
     @JsonProperty("requestInfo")
     private RequestInfo requestInfo;
 
-    @JsonProperty("courtCase")
+    @JsonProperty("cases")
     private CourtCase courtCase;
 }

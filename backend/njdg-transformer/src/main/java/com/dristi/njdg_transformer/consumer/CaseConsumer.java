@@ -44,7 +44,7 @@ public class CaseConsumer {
                 caseService.processAndUpdateCase(caseRequest.getCourtCase(), caseRequest.getRequestInfo());
             }
         } catch (Exception e) {
-            log.error("Error in updating PendingTask for join case.", e);
+            log.error("Error in updating case: ", e);
         }
     }
 }
