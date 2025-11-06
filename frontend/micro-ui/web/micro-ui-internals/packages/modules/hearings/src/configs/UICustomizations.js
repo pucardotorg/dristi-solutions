@@ -331,7 +331,6 @@ export const UICustomizations = {
                   return mapping[status]?.[taskType] || status; // fallback to original
                 }
                 const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
-                debugger;
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
