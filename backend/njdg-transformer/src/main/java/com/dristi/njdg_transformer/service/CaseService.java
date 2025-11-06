@@ -174,7 +174,8 @@ public class CaseService {
 
     private LocalDate getDateOfDecision(CourtCase courtCase, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
-                .filingNumber(courtCase.getCnrNumber())
+                .filingNumber(courtCase.getFilingNumber())
+                .status(PUBLISHED_ORDER)
                 .tenantId(courtCase.getTenantId())
                 .build();
         OrderSearchRequest searchRequest = OrderSearchRequest.builder()
