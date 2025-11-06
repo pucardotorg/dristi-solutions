@@ -240,8 +240,9 @@ const GenerateBailBond = () => {
         );
         const bailTypeRaw = firstDefined(
           getField("additionalDetails.bailType"),
-          additionalDetailsObj && (additionalDetailsObj.bailType?.code || additionalDetailsObj.bailType),
+          additionalDetailsObj && (additionalDetailsObj.bailType?.code || additionalDetailsObj.bailType?.type || additionalDetailsObj.bailType),
           getField("additionalDetails.bailType.code"),
+          getField("additionalDetails.bailType.type"),
           getField("bailType"),
           getField("bailTypeCode"),
           getField("bail_type")
@@ -296,12 +297,21 @@ const GenerateBailBond = () => {
           const ptUuidArr = getField("additionalDetails.litigantUuid");
           const ptUuidAlt = getField("additionalDetails.litigants[0]");
           const ptIndivId = getField("individualId");
-          const pendingLitigantUuid = firstDefined(ptUuid0, Array.isArray(ptUuidArr) && ptUuidArr[0], ptUuidAlt, ptIndivId);
+          const ptAccusedId = additionalDetailsObj && (additionalDetailsObj.accusedIndividualId || additionalDetailsObj.accusedKey);
+          const pendingLitigantUuid = firstDefined(
+            ptAccusedId,
+            ptUuid0,
+            Array.isArray(ptUuidArr) && ptUuidArr[0],
+            ptUuidAlt,
+            ptIndivId
+          );
           const pendingLitigantName = firstDefined(getField("additionalDetails.litigantName"));
 
           let resolvedName = pendingLitigantName;
           if (!resolvedName && pendingLitigantUuid && caseData?.criteria?.[0]?.responseList?.[0]?.litigants) {
-            const cLit = (caseData.criteria[0].responseList[0].litigants || []).find((l) => l?.individualId === pendingLitigantUuid);
+            const cLit = (caseData.criteria[0].responseList[0].litigants || []).find(
+              (l) => String(l?.individualId) === String(pendingLitigantUuid) || String(l?.additionalDetails?.uuid) === String(pendingLitigantUuid)
+            );
             resolvedName = cLit?.additionalDetails?.fullName || cLit?.name;
           }
 
@@ -742,6 +752,119 @@ const GenerateBailBond = () => {
       setLockPrefilledFields(true);
     } catch (e) {}
   }, [fromPendingTask, complainantsList, formdata?.selectComplainant?.uuid, formdata?.selectComplainant?.name]);
+
+  // Prefill from matching pending task when the accused is selected (fresh path without application)
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const sel = formdata?.selectComplainant || defaultFormValueData?.selectComplainant;
+        const selectedUuid = sel?.uuid || sel?.individualId || sel?.id || sel?.code || sel?.name;
+        if (!selectedUuid || !filingNumber || !tenantId) return;
+
+        const userInfo = Digit?.UserService?.getUser()?.info;
+        const isCitizen = userInfo?.type === "CITIZEN";
+        const roles = (userInfo?.roles || []).map((r) => r.code);
+
+        const pendingTaskRes = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                ...(isCitizen ? { assignedTo: userInfo?.uuid } : { assignedRole: [...roles] }),
+                ...(courtId && { courtId }),
+                filingNumber,
+                entityType: "bail bond",
+              },
+              limit: 1000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+
+        const tasks = Array.isArray(pendingTaskRes?.data) ? pendingTaskRes.data : [];
+        const raiseTasks = tasks.filter((t) => {
+          const status = t?.fields?.find((f) => f.key === "status")?.value;
+          const name = t?.fields?.find((f) => f.key === "name")?.value || "";
+          const entityType = t?.fields?.find((f) => f.key === "entityType")?.value || "";
+          return (status === "PENDING_RAISE_BAIL_BOND" || /raise bail bond/i.test(name)) && /bail bond/i.test(entityType);
+        });
+
+        if (!raiseTasks.length) return;
+        const findField = (task, k) => task?.fields?.find((f) => f.key === k)?.value;
+        const matched = raiseTasks.find((t) => {
+          const add = findField(t, "additionalDetails") || {};
+          const accusedId = add?.accusedIndividualId || add?.accusedKey || findField(t, "individualId") || null;
+          return accusedId && String(accusedId) === String(selectedUuid);
+        });
+        const targetTask = matched || null;
+        if (!targetTask) return;
+
+        const getField = (k) => targetTask?.fields?.find((f) => f.key === k)?.value;
+        const additionalDetailsObj = getField("additionalDetails");
+        const firstDefined = (...vals) => {
+          for (let i = 0; i < vals.length; i++) {
+            if (vals[i] !== undefined && vals[i] !== null) return vals[i];
+          }
+          return undefined;
+        };
+        const bailAmount = firstDefined(
+          getField("additionalDetails.bailAmount"),
+          getField("additionalDetails.chequeAmount"),
+          getField("additionalDetails.amount"),
+          additionalDetailsObj && firstDefined(additionalDetailsObj.bailAmount, additionalDetailsObj.chequeAmount, additionalDetailsObj.amount)
+        );
+        const bailTypeRaw = firstDefined(
+          getField("additionalDetails.bailType"),
+          additionalDetailsObj && (additionalDetailsObj.bailType?.code || additionalDetailsObj.bailType?.type || additionalDetailsObj.bailType),
+          getField("additionalDetails.bailType.code"),
+          getField("additionalDetails.bailType.type"),
+          getField("bailType"),
+          getField("bailTypeCode"),
+          getField("bail_type")
+        );
+        const noOfSureties = firstDefined(getField("additionalDetails.noOfSureties"), additionalDetailsObj && additionalDetailsObj.noOfSureties);
+
+        const mappedDefaults = {};
+        const parseAmount = (val) => {
+          if (typeof val === "number") return val;
+          if (typeof val === "string") {
+            const sanitized = val.replace(/[\,\s]/g, "").replace(/[^0-9.]/g, "");
+            const num = parseFloat(sanitized);
+            return isNaN(num) ? undefined : num;
+          }
+          return undefined;
+        };
+        if (bailAmount != null && bailAmount !== "") {
+          const num = parseAmount(bailAmount);
+          if (!isNaN(num)) mappedDefaults.bailAmount = num;
+        }
+        if (bailTypeRaw) {
+          const code = String(bailTypeRaw).toUpperCase();
+          mappedDefaults.bailType = { code, name: t(code), showSurety: code === "SURETY" };
+        }
+        if (noOfSureties) {
+          const cnt = typeof noOfSureties === "number" ? noOfSureties : parseInt(noOfSureties, 10);
+          if (!isNaN(cnt) && cnt > 0) mappedDefaults.noOfSureties = cnt;
+        }
+
+        if (Object.keys(mappedDefaults).length > 0) {
+          setDefaultFormValueData((prev) => ({ ...(prev || {}), ...mappedDefaults }));
+          setFormdata((prev) => ({ ...(prev || {}), ...mappedDefaults }));
+          try {
+            if (typeof setFormDataValue?.current === "function") {
+              if (mappedDefaults?.bailType) setFormDataValue.current("bailType", mappedDefaults.bailType);
+              if (mappedDefaults?.bailAmount != null) setFormDataValue.current("bailAmount", mappedDefaults.bailAmount);
+              if (mappedDefaults?.noOfSureties != null) setFormDataValue.current("noOfSureties", mappedDefaults.noOfSureties);
+            }
+          } catch (e) {}
+        }
+      } catch (_) {}
+    };
+    run();
+  }, [formdata?.selectComplainant, defaultFormValueData?.selectComplainant, filingNumber, tenantId, courtId, t]);
 
   const modifiedFormConfig = useMemo(() => {
     const updatedConfig = bailBondConfig
