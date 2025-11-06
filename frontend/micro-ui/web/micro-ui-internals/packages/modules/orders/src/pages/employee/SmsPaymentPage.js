@@ -68,9 +68,18 @@ const SmsPaymentPage = () => {
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
 
-  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === orderData?.orderType), [
+  const currentOrderType = useMemo(() => {
+    if (orderData?.orderCategory === "COMPOSITE") {
+      const matchedOrder = orderData?.compositeItems?.find((order) => order.id === orderItemId);
+      return matchedOrder?.orderType || null;
+    }
+
+    return orderData?.orderType || null;
+  }, [orderData, orderItemId]);
+
+  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === currentOrderType), [
     taskManagementList,
-    orderData?.orderType,
+    currentOrderType,
   ]);
 
   const processCourierData = useMemo(() => {
@@ -141,7 +150,7 @@ const SmsPaymentPage = () => {
 
       return {
         id: index + 1,
-        title: orderType === "SUMMONS" ? "Summons Notice" : "Notice",
+        title: orderType === "SUMMONS" ? t("SUMMONS") : t("NOTICE"),
         subtitle: `${party?.data?.partyType || "Party"} - ${
           getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName) || ""
         }`,
@@ -335,7 +344,7 @@ const SmsPaymentPage = () => {
   const handleProceedToPaymentPage = async () => {
     try {
       setLoader(true);
-      const orderType = orderData?.orderType;
+      const orderType = currentOrderType;
       const formDataKey = formDataKeyMap[orderType];
       const formData = orderData?.additionalDetails?.formdata?.[formDataKey]?.party;
       const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
@@ -449,7 +458,7 @@ const SmsPaymentPage = () => {
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
-      const fileName = `${orderData.orderType ? orderData?.orderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
+      const fileName = `${currentOrderType ? currentOrderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
       await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
