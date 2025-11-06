@@ -491,9 +491,9 @@ public class TaskCreationService {
             return null;
         }
 
-        String firstName = respondentDetails.getFirstName() != null ? respondentDetails.getFirstName() : "";
-        String middleName = respondentDetails.getMiddleName() != null ? respondentDetails.getMiddleName() : "";
-        String lastName = respondentDetails.getLastName() != null ? respondentDetails.getLastName() : "";
+        String firstName = respondentDetails.getRespondentFirstName() != null ? respondentDetails.getRespondentFirstName() : "";
+        String middleName = respondentDetails.getRespondentMiddleName() != null ? respondentDetails.getRespondentMiddleName() : "";
+        String lastName = respondentDetails.getRespondentLastName() != null ? respondentDetails.getRespondentLastName() : "";
         String name = String.join(" ", firstName, middleName, lastName).trim();
 
         Address address = mapToAddress(addressDetails.getAddressDetails());

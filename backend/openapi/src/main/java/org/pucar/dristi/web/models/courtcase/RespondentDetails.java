@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.pucar.dristi.web.models.address.Address;
-import org.pucar.dristi.web.models.address.AddressDetails;
+import org.pucar.dristi.web.models.address.PartyAddress;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class RespondentDetails {
     private List<Address> address;
 
     @JsonProperty("addressDetails")
-    private List<AddressDetails> addressDetails;
+    private List<PartyAddress> addressDetails;
 
     @JsonProperty("respondentType")
     private Object respondentType;
