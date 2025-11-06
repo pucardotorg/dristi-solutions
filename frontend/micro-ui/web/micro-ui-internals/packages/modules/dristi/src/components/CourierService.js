@@ -362,7 +362,7 @@ function CourierService({
           ) : (
             <div className="address-card-input">
               <div className="field">
-                <div className="heading">{t("CS_RESPONDENT_NAME")}</div>
+                <div className="heading">{orderType ? t("TASK_ADDRESS_RECIPIENT_NAME") : t("CS_RESPONDENT_NAME")}</div>
                 <TextInput
                   className="field desktop-w-full"
                   value={getFullName(" ", processCourierData?.firstName, processCourierData?.middleName, processCourierData?.lastName) || ""}

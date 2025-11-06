@@ -58,5 +58,6 @@ export const Urls = {
     setCaseLock: "/openapi/lock/v1/_set",
     FileFetchByFileStore: "/openapi/v1/landing_page/file",
     addAddress: "/openapi/v1/case/addAddress",
+    offlinePayment: "/openapi/offline-payment/_create",
   },
 };
