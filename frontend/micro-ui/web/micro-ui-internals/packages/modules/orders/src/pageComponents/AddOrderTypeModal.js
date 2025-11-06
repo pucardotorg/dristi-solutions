@@ -35,6 +35,9 @@ const AddOrderTypeModal = ({
   setWarrantSubtypeCode,
   onBailBondRequiredChecked,
   bailBondTaskExists = false,
+  onConfirmBailBondTask,
+  onOrderFormDataChange,
+  persistedDefaultValues,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -56,7 +59,7 @@ const AddOrderTypeModal = ({
   }, [currentOrder, index]);
   const hasRefApplicationId = useMemo(() => {
     return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
-  }, [formdata?.refApplicationId]);
+  }, [formdata?.refApplicationId, currentOrder?.additionalDetails?.formdata?.refApplicationId]);
   const [caseData, setCaseData] = useState(undefined);
   const containerRef = useRef(null);
   const checkboxRef = useRef(null);
@@ -256,6 +259,9 @@ const AddOrderTypeModal = ({
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
       setWarrantSubtypeCode(formData?.warrantSubType?.templateType);
+      try {
+        if (typeof onOrderFormDataChange === "function") onOrderFormDataChange({ ...formData, bailBondRequired }, { index, orderType });
+      } catch (_) {}
     }
 
     setFormErrors.current[index] = setError;
@@ -331,16 +337,10 @@ const AddOrderTypeModal = ({
   }, [filingNumber, courtId, tenantId]);
 
   useEffect(() => {
-    if (orderType?.code === "ACCEPT_BAIL") {
-      if (hasRefApplicationId || bailBondTaskExists) {
-        setBailBondRequired(true);
-      } else {
-        setBailBondRequired(false);
-      }
-    } else {
+    if (orderType?.code !== "ACCEPT_BAIL") {
       setBailBondRequired(false);
     }
-  }, [orderType?.code, hasRefApplicationId, bailBondTaskExists]);
+  }, [orderType?.code]);
 
   useEffect(() => {
     const checkBailBondTask = async () => {
@@ -448,7 +448,10 @@ const AddOrderTypeModal = ({
             <div className="view-order order-type-form-modal">
               <FormComposerV2
                 className={"generate-orders order-type-modal"}
-                defaultValues={getDefaultValue(index)}
+                defaultValues={{
+                  ...(getDefaultValue(index) || {}),
+                  ...(orderType?.code === "ACCEPT_BAIL" ? persistedDefaultValues || {} : {}),
+                }}
                 config={modifiedFormConfig}
                 fieldStyle={{ width: "100%" }}
                 cardClassName={`order-type-form-composer new-order`}
@@ -465,6 +468,11 @@ const AddOrderTypeModal = ({
                       ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
                       : {}),
                   };
+                  try {
+                    if (typeof onConfirmBailBondTask === "function" && orderType?.code === "ACCEPT_BAIL" && bailBondRequired && !bailBondTaskExists) {
+                      await onConfirmBailBondTask();
+                    }
+                  } catch (_) {}
                   handleSubmit(outgoing, index);
                 }}
                 onSecondayActionClick={handleCancel}
@@ -478,18 +486,20 @@ const AddOrderTypeModal = ({
                 id="bail-bond-required"
                 type="checkbox"
                 className="custom-checkbox"
-                checked={bailBondRequired || (hasRefApplicationId && bailBondRequired)}
+                checked={bailBondRequired || bailBondTaskExists}
                 onChange={(e) => {
                   const checked = e?.target?.checked;
                   setBailBondRequired(checked);
-                  if (checked && !hasRefApplicationId) {
-                    onBailBondRequiredChecked && onBailBondRequiredChecked();
-                  }
+                  try {
+                    if (typeof onOrderFormDataChange === "function")
+                      onOrderFormDataChange({ ...formdata, bailBondRequired: checked }, { index, orderType });
+                  } catch (_) {}
+                  if (checked) onBailBondRequiredChecked && onBailBondRequiredChecked();
                 }}
                 style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                disabled={hasRefApplicationId || bailBondTaskExists}
+                disabled={!(orderType?.code === "ACCEPT_BAIL" && !isSubmitDisabled) || bailBondTaskExists}
               />
-              <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
+              <label htmlFor="bail-bond-required">{t("RAISE_BAIL_BOND")}</label>
             </div>
           )}
         </div>
