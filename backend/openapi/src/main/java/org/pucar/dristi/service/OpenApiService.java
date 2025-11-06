@@ -200,8 +200,9 @@ public class OpenApiService {
         String searchText = body.getSearchText();
         Long fromDate = body.getFromDate();
         Long toDate = body.getToDate();
+        Boolean isHearingSerialNumberSorting = body.getIsHearingSerialNumberSorting();
 
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText,isHearingSerialNumberSorting);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 
