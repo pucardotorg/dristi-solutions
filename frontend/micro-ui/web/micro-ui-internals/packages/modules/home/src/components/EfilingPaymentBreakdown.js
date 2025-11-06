@@ -327,7 +327,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
             {` ${t("CS_MANDATORY_STEP_TO_FILE_CASE")}`}
           </div>
-          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}>
+          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "175px", overflowY: "auto" }}>
             {paymentCalculation
               .filter((item) => !item.isTotalFee)
               .map((item) => (

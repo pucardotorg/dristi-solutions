@@ -1815,6 +1815,15 @@ const ConferenceIcon = () => (
   </svg>
 );
 
+const PrintIcon = () => (
+  <svg width="16" height="14" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M11.3333 3.33333H2C0.893333 3.33333 0 4.22667 0 5.33333V9.33333H2.66667V12H10.6667V9.33333H13.3333V5.33333C13.3333 4.22667 12.44 3.33333 11.3333 3.33333ZM9.33333 10.6667H4V7.33333H9.33333V10.6667ZM11.3333 6C10.9667 6 10.6667 5.7 10.6667 5.33333C10.6667 4.96667 10.9667 4.66667 11.3333 4.66667C11.7 4.66667 12 4.96667 12 5.33333C12 5.7 11.7 6 11.3333 6ZM10.6667 0H2.66667V2.66667H10.6667V0Z"
+      fill="#007E7E"
+    />
+  </svg>
+);
+
 export {
   AdvocateIcon,
   CalendarLeftArrow,
@@ -1896,4 +1905,5 @@ export {
   OpenInNewTabIcon,
   SmallSearchIcon,
   ConferenceIcon,
+  PrintIcon,
 };

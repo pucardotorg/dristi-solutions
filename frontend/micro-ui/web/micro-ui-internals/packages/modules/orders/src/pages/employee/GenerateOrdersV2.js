@@ -1958,7 +1958,6 @@ const GenerateOrdersV2 = () => {
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
-        const selectedChannels = newCurrentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels;
 
         if (partyUuid) {
           updatedFormdata.noticeOrder = {
@@ -1980,8 +1979,7 @@ const GenerateOrdersV2 = () => {
                   phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
                   email: item?.data?.emails?.emailId,
                 },
-              }))?.[0],
-            selectedChannels: selectedChannels,
+              })),
           };
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
@@ -2556,7 +2554,7 @@ const GenerateOrdersV2 = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
+            if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -2575,7 +2573,7 @@ const GenerateOrdersV2 = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }

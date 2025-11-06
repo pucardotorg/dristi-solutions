@@ -36,6 +36,7 @@ import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
 import { useSurveyManager } from "./dristi/useSurveyManager.js";
+import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -109,6 +110,7 @@ export const Urls = {
     addNewWitness: "/case/v2/add/witness",
     taskCreate: "/task/v1/create",
     searchTasks: "/task/v1/search",
+    addAddress: "/case/v1/address/_add",
   },
   hearing: {
     hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
@@ -117,6 +119,12 @@ export const Urls = {
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
+  taskManagement: {
+    taskManagementCreate: "/task-management/v1/_create",
+    taskManagementUpdate: "/task-management/v1/_update",
+    taskManagementSearch: "/task-management/v1/_search",
+    createOfflinePayment: "/analytics/offline-payment/_create",
+  },
 };
 
 const dristi = {
@@ -152,7 +160,8 @@ const dristi = {
   useGetAllAdvocates,
   useSearchADiaryService,
   useEtreasuryCreateDemand,
-  useSurveyManager
+  useSurveyManager,
+  useSearchTaskMangementService,
 };
 
 const Hooks = {
