@@ -181,7 +181,7 @@ public class CaseEnrichment {
         }
 
         // 🔹 Collect existing individualIds for duplicate check
-        Set<String> existingIndividualIds = existingParties.stream()
+        Set<String> existingPartyIds = existingParties.stream()
                 .map(PartyDetails::getPartyId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -211,7 +211,7 @@ public class CaseEnrichment {
             }
 
             // ✅ Skip if already exists in existingParties
-            if (formIndividualId != null && existingIndividualIds.contains(formIndividualId)) {
+            if (formIndividualId != null && existingPartyIds.contains(formIndividualId)) {
                 log.debug("Skipping {} with existing individualId: {}", partyType.toLowerCase(), formIndividualId);
                 continue;
             }
@@ -273,7 +273,7 @@ public class CaseEnrichment {
                     .build();
 
             extraParties.add(details);
-            existingIndividualIds.add(formIndividualId);
+            existingPartyIds.add(formIndividualId);
             id++;
             log.debug("Added extra {} with individualId: {}", partyType.toLowerCase(), formIndividualId);
         }

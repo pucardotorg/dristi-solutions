@@ -93,7 +93,7 @@ public class NjdgConsumer {
 
             if (existingHearingOpt.isPresent()) {
                 // Update existing hearing
-                HearingDetails existingHearing = getHearingDetails(existingHearingOpt, hearingDetails);
+                HearingDetails existingHearing = getHearingDetails(existingHearingOpt.get(), hearingDetails);
 
                 hearingRepository.updateHearingDetails(existingHearing);
                 log.info("Updated existing hearing with hearingId {} for CINO {}", hearingId, cino);
@@ -109,16 +109,15 @@ public class NjdgConsumer {
     }
 
     @NotNull
-    private static HearingDetails getHearingDetails(Optional<HearingDetails> existingHearingOpt, HearingDetails hearingDetails) {
-        HearingDetails existingHearing = existingHearingOpt.get();
-        existingHearing.setHearingDate(hearingDetails.getHearingDate());
-        existingHearing.setNextDate(hearingDetails.getNextDate());
-        existingHearing.setPurposeOfListing(hearingDetails.getPurposeOfListing());
-        existingHearing.setJudgeCode(hearingDetails.getJudgeCode());
-        existingHearing.setJoCode(hearingDetails.getJoCode());
-        existingHearing.setDesgCode(hearingDetails.getDesgCode());
-        existingHearing.setDesgName(hearingDetails.getDesgName());
-        return existingHearing;
+    private static HearingDetails getHearingDetails(HearingDetails existingHearingOpt, HearingDetails hearingDetails) {
+        existingHearingOpt.setHearingDate(hearingDetails.getHearingDate());
+        existingHearingOpt.setNextDate(hearingDetails.getNextDate());
+        existingHearingOpt.setPurposeOfListing(hearingDetails.getPurposeOfListing());
+        existingHearingOpt.setJudgeCode(hearingDetails.getJudgeCode());
+        existingHearingOpt.setJoCode(hearingDetails.getJoCode());
+        existingHearingOpt.setDesgCode(hearingDetails.getDesgCode());
+        existingHearingOpt.setDesgName(hearingDetails.getDesgName());
+        return existingHearingOpt;
     }
 
 

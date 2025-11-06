@@ -135,6 +135,8 @@ public class CaseService {
 
 
     private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase, RequestInfo requestInfo) {
+        JudgeDetails judgeDetails = caseRepository.getJudge(courtCase.getJudgeId());
+        DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
         return NJDGTransformRecord.builder()
                 .cino(courtCase.getCnrNumber())
                 .dateOfFiling(formatDate(courtCase.getFilingDate()))
@@ -159,6 +161,8 @@ public class CaseService {
                 .dateFirstList(setDateFirstList(courtCase.getCnrNumber()))
                 .dateNextList(setNextListDate(courtCase.getCnrNumber()))
                 .dateLastList(setNextListDate(courtCase.getCnrNumber()))
+                .judgeCode(judgeDetails.getJudgeCode())
+                .desigCode(designationMaster.getDesgCode())
                 .build();
     }
 

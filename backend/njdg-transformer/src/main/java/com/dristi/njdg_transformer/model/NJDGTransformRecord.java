@@ -138,6 +138,12 @@ public class NJDGTransformRecord {
     @JsonProperty("cicri_type")
     private Character cicriType = ' ';
 
+    @JsonProperty("judge_code")
+    private Integer judgeCode;
+
+    @JsonProperty("desig_code")
+    private Integer desigCode;
+
     @JsonProperty("pet_extra_party")
     private List<PartyDetails> petExtraParty;
 

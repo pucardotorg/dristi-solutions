@@ -30,8 +30,17 @@ public class OrderService {
 
     public InterimOrder processAndUpdateOrder(Order order, RequestInfo requestInfo) {
         String cino = order.getCnrNumber();
+        String orderNumber = order.getOrderNumber();
         List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
 
+        if(orderNumber != null) {
+            for(InterimOrder interimOrder : interimOrders) {
+                if(interimOrder.getCourtOrderNumber() != null && interimOrder.getCourtOrderNumber().equalsIgnoreCase(orderNumber)){
+                    log.info("Order {} already exists for CINO {}", orderNumber, cino);
+                    return interimOrder;
+                }
+            }
+        }
         // Determine next order number (handle empty list safely)
         int maxOrderNo = interimOrders.stream()
                 .mapToInt(InterimOrder::getOrderNo)
@@ -54,6 +63,8 @@ public class OrderService {
                 .orderNo(nextOrderNo)
                 .orderDate(formatDate(order.getCreatedDate()))
                 .orderDetails(getOrderPdfByte(order, requestInfo))
+                .courtOrderNumber(orderNumber)
+                .orderType(order.getOrderType()!=null ? order.getOrderType() : "")
                 .build();
 
         producer.push("save-order-details", newOrder);

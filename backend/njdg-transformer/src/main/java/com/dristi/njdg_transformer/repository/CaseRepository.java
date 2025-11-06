@@ -68,7 +68,7 @@ public class CaseRepository {
             );
         } catch (EmptyResultDataAccessException e) {
             log.warn("No judge found for ID: {}", judgeId);
-            return null;
+            return new JudgeDetails();
         }
     }
 

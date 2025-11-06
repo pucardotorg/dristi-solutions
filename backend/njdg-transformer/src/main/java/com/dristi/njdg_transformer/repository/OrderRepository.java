@@ -40,12 +40,16 @@ public class OrderRepository {
         preparedStmtList.add(interimOrder.getOrderDate());
         preparedStmtList.add(interimOrder.getOrderNo());
         preparedStmtList.add(interimOrder.getOrderDetails());
+        preparedStmtList.add(interimOrder.getCourtOrderNumber());
+        preparedStmtList.add(interimOrder.getOrderType());
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.DATE);
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.BINARY);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.VARCHAR);
         jdbcTemplate.update(insertQuery, preparedStmtList.toArray(), preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
     }
 }
