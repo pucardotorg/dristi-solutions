@@ -2,6 +2,20 @@
   {
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2766",
+    "data": {
+      "id": 2766,
+      "url": "/analytics/offline-payment/_create",
+      "code": "2766",
+      "name": "offline manual task",
+      "displayName": "offline manual task",
+      "serviceCode": "analytics"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2765",
     "data": {
       "id": 2765,

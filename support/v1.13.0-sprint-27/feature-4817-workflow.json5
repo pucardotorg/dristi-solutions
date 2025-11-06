@@ -81,7 +81,7 @@
         },
         {
           "action": "EXPIRE",
-          "nextState": "REJECTED",
+          "nextState": "EXPIRED",
           "roles": [
             "SYSTEM",
             "SYSTEM_ADMIN",
