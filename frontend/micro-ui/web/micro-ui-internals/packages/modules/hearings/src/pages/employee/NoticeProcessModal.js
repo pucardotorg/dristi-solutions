@@ -61,24 +61,30 @@ const CloseButton = (props) => {
 function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
-  filteredOrders.forEach((order) => {
-    const party = order.orderDetails?.parties?.[0];
-    if (!party) return;
+  filteredOrders?.forEach((order) => {
+    const parties = order?.orderDetails?.parties || [];
+    if (!Array?.isArray(parties) || parties?.length === 0) return;
 
-    let partyName = party.partyName.trim();
-    let partyType = party.partyType.toLowerCase();
-    if (partyType === "respondent") {
-      partyType = "Accused";
-    }
-    if (partyType === "witness") {
-      partyType = "Witness";
-    }
+    parties.forEach((party) => {
+      if (!party?.partyName) return;
 
-    if (!accusedWiseOrdersMap.has(partyName)) {
-      accusedWiseOrdersMap.set(partyName, { partyType, partyName, ordersList: [] });
-    }
+      const partyName = party?.partyName.trim();
+      let partyType = (party?.partyType || "").toLowerCase();
 
-    accusedWiseOrdersMap.get(partyName).ordersList.push(order);
+      if (partyType === "respondent") {
+        partyType = "Accused";
+      } else if (partyType === "witness") {
+        partyType = "Witness";
+      } else {
+        partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
+      }
+
+      if (!accusedWiseOrdersMap?.has(partyName)) {
+        accusedWiseOrdersMap?.set(partyName, { partyType, partyName, ordersList: [] });
+      }
+
+      accusedWiseOrdersMap?.get(partyName)?.ordersList?.push(order);
+    });
   });
 
   const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());

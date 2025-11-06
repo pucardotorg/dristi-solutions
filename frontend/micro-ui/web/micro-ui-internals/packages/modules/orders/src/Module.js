@@ -21,6 +21,9 @@ import WarrantOrderComponent from "./components/WarrantOrderComponent";
 import OrderTypeControls from "./components/OrderTypeControls";
 import OrderTypeControlItem from "./components/OrderTypeControlItem";
 import EpostTrackingPage from "./pages/employee/E-PostTracking";
+import PaymentLoginPage from "./pages/employee/PaymentLoginPage";
+import SmsPaymentPage from "./pages/employee/SmsPaymentPage";
+import NoticeSummonPartyComponent from "./components/NoticeSummonPartyComponent";
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
   const moduleCode = ["orders", "hearings", "common", "case", "workflow"];
@@ -58,6 +61,9 @@ const componentsToRegister = {
   OrderTypeControls,
   OrderTypeControlItem,
   EpostTrackingPage,
+  PaymentLoginPage,
+  SmsPaymentPage,
+  NoticeSummonPartyComponent,
 };
 
 export const initOrdersComponents = () => {

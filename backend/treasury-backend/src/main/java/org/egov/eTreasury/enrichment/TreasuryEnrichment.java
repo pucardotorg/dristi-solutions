@@ -185,15 +185,56 @@ public class TreasuryEnrichment {
                     case ADVOCATE_WELFARE_FUND -> data.setAdvocateWelfareFund(breakDown.getAmount());
                     case ADVOCATE_CLERK_WELFARE_FUND -> data.setAdvocateClerkWelfareFund(breakDown.getAmount());
                     case LEGAL_BENEFIT_FEE -> data.setLegalBenefitFee(breakDown.getAmount());
+                    case EPOST_FEE -> data.setEpostFee(breakDown.getAmount());
                 }
             }
-            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee();
+            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee() + data.getEpostFee();
             data.setTotalAmount(totalAmount);
+            buildFeeBreakDown(data);
             log.info("operation=enrichTreasuryPaymentData, result=SUCCESS");
         } catch (Exception e) {
             log.error("operation=enrichTreasuryPaymentData, result=Failure");
             throw new CustomException("ERROR_ENRICH_PAYMENT", "Error enriching payment data.");
         }
+    }
+    private void buildFeeBreakDown(TreasuryPaymentData data) {
+        List<FeeBreakDown> fees = new ArrayList<>();
+        if (data.getCourtFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Court Fees:")
+                    .feeAmount(data.getCourtFee())
+                    .build());
+        }
+
+        if (data.getAdvocateWelfareFund() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Fee for advocate welfare fund:")
+                    .feeAmount(data.getAdvocateWelfareFund())
+                    .build());
+        }
+
+        if (data.getAdvocateClerkWelfareFund() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Fee for clerk welfare fund:")
+                    .feeAmount(data.getAdvocateClerkWelfareFund())
+                    .build());
+        }
+
+        if (data.getLegalBenefitFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Legal Benefit Fund:")
+                    .feeAmount(data.getLegalBenefitFee())
+                    .build());
+        }
+
+        if (data.getEpostFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Epost Fee:")
+                    .feeAmount( data.getEpostFee())
+                    .build());
+        }
+
+        data.setFeeBreakDown(fees);
     }
 
     public String enrichGrn(RequestInfo requestInfo) {

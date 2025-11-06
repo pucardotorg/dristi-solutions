@@ -395,6 +395,9 @@ public class InboxServiceV2 {
         if (indexSearchCriteria.getSearchOtherApplications() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
         }
+        if (indexSearchCriteria.getSearchNoticeAndSummons() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
+        }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
         }

@@ -307,7 +307,7 @@ export const downloadFile = (responseBlob, fileName) => {
   window.URL.revokeObjectURL(url);
 };
 
-export const getPartyNameForInfos = (orderDetails, compositeItem, orderType) => {
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
   const formDataKeyMap = {
     NOTICE: "noticeOrder",
     SUMMONS: "SummonsOrder",
@@ -318,15 +318,14 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType) => 
   };
 
   const formdata =
-    orderDetails?.orderCategory === "COMPOSITE"
-      ? compositeItem?.orderSchema?.additionalDetails?.formdata
-      : orderDetails?.additionalDetails?.formdata;
+    orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderSchema?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
 
   const key = formDataKeyMap[orderType];
   const partyData = formdata?.[key]?.party?.data;
 
   const name =
     [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+    (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
     (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
     (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
     (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||

@@ -171,6 +171,7 @@ public class ServiceConstants {
     public static final String DOT = ". ";
 
     public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+    public static final String PAYMENT_LINK_SMS = "PAYMENT_LINK_SMS";
     public static final String RPAD_SUBMISSION = "RPAD_SUBMISSION";
 
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
@@ -187,5 +188,14 @@ public class ServiceConstants {
 
     public static final String msgId = "1730882648558|en_IN";
     public static final String SYSTEM = "SYSTEM";
+
+    public static final String DCA = "DCA Notice";
+    public static final String TASK_CREATION = "TASK_CREATION";
+
+    public static final String URL = "url";
+    public static final String REFERENCE_ID = "referenceId";
+    public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
+    public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
 
 }

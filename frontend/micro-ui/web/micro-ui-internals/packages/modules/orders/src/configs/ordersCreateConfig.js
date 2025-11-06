@@ -2935,10 +2935,10 @@ export const configsIssueSummons = [
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "SummonsOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_SUMMON",
         populators: {
           inputs: [
@@ -2946,10 +2946,7 @@ export const configsIssueSummons = [
               name: "select party",
               type: "dropdown",
               addWitness: true,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },
@@ -3087,10 +3084,10 @@ export const configsIssueNotice = [
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "noticeOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_NOTICE",
         populators: {
           inputs: [
@@ -3098,10 +3095,7 @@ export const configsIssueNotice = [
               name: "select party",
               type: "dropdown",
               addWitness: false,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },

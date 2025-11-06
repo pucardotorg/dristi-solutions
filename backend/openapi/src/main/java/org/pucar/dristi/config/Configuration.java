@@ -1,19 +1,12 @@
 package org.pucar.dristi.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import org.egov.tracer.config.TracerConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 import java.util.List;
-import java.util.TimeZone;
 
 @Component
 @Data
@@ -107,6 +100,12 @@ public class Configuration {
     @Value("${case.service.searchbycasenumber.endpoint}")
     private String caseServiceSearchByCaseNumberEndpoint;
 
+    @Value("${case.service.search.endpoint}")
+    private String caseServiceSearchEndpoint;
+
+    @Value("${case.service.add.address.endpoint}")
+    private String caseServiceAddAddressEndpoint;
+
     @Value("${hearing.service.host}")
     private String hearingServiceHost;
 
@@ -184,5 +183,96 @@ public class Configuration {
 
     @Value("${case.status.allowed.statuses}")
     private List<String> allowedCaseStatuses;
+
+    // Billing Service
+    @Value("${egov.billing.host}")
+    private String BillingHost;
+
+    @Value("${egov.billing.fetchbill.endpoint}")
+    private String billingFetchBillEndpoint;
+
+    @Value("${egov.billing.searchbill.endpoint}")
+    private String billingSearchEndpoint;
+
+    // ETreasury Service
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.get.breakdown.endpoint}")
+    private String etreasuryGetBreakdownEndpoint;
+
+    @Value("${egov.etreasury.process.challan.endpoint}")
+    private String etreasuryProcessChallanEndpoint;
+
+    @Value("${egov.etreasury.get.payment.receipt.endpoint}")
+    private String etreasuryGetPaymentReceiptEndpoint;
+
+    // Task Management Service
+    @Value("${egov.task.management.host}")
+    private String taskManagementHost;
+
+    @Value("${egov.task.management.create.endpoint}")
+    private String taskManagementCreateEndpoint;
+
+    @Value("${egov.task.management.update.endpoint}")
+    private String taskManagementUpdateEndpoint;
+
+    @Value("${egov.task.management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    // Payment Calculator Service
+    @Value("${egov.payment.calculator.host}")
+    private String paymentCalculatorHost;
+
+    @Value("${egov.payment.calculator.calculate.endpoint}")
+    private String paymentCalculatorCalculateEndpoint;
+
+    // Lock Service
+    @Value("${egov.lock.host}")
+    private String lockHost;
+
+    @Value("${egov.lock.get.endpoint}")
+    private String lockGetEndpoint;
+
+    @Value("${egov.lock.release.endpoint}")
+    private String lockReleaseEndpoint;
+
+    @Value("${egov.lock.set.endpoint}")
+    private String lockSetEndpoint;
+
+    @Value("${egov.order.host}")
+    private String orderHost;
+
+    @Value("${egov.order.search.path}")
+    private String orderSearchPath;
+
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${elastic.pending.task.endpoint}")
+    private String pendingTaskIndexEndpoint;
+
+    @Value("${elastic.pending.task.search}")
+    private String pendingTaskSearchPath;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
 
 }

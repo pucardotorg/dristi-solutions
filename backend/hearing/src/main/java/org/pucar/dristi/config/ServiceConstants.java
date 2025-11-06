@@ -186,4 +186,6 @@ public class ServiceConstants {
     public static final String HEARINGS_SCHEDULED_TOMORROW_MULTIPLE = "HEARINGS_SCHEDULED_TOMORROW_MULTIPLE";
     public static final String msgId = "1730882648558|en_IN";
     public static final String SYSTEM = "SYSTEM";
+
+    public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
 }

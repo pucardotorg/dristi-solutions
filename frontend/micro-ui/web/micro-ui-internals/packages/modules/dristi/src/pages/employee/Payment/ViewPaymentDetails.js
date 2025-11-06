@@ -177,9 +177,10 @@ const ViewPaymentDetails = ({ location, match }) => {
       setIsLoading(true);
       if (
         consumerCode &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
-        paymentType?.toLowerCase()?.includes("case")
+        ((demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+          demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
+          paymentType?.toLowerCase()?.includes("case")) ||
+          (paymentType?.toLowerCase()?.includes("task") && businessService === "task-management-payment"))
       ) {
         try {
           const response = await DRISTIService.getTreasuryPaymentBreakup(
@@ -285,13 +286,13 @@ const ViewPaymentDetails = ({ location, match }) => {
       taskHearingNumber = orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber || "";
       const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
       taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
-      if (taskOrderType === "NOTICE") {
-        const noticeOrder =
-          orderDetails?.orderCategory === "COMPOSITE"
-            ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
-            : orderDetails?.additionalDetails?.formdata?.noticeOrder;
-        taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
-      }
+      // if (taskOrderType === "NOTICE") {
+      //   const noticeOrder =
+      //     orderDetails?.orderCategory === "COMPOSITE"
+      //       ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
+      //       : orderDetails?.additionalDetails?.formdata?.noticeOrder;
+      //   taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
+      // }
       taskFilingNumber = tasksData?.filingNumber || demandBill?.additionalDetails?.filingNumber;
     }
 

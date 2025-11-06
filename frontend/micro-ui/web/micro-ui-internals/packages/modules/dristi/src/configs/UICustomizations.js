@@ -2167,6 +2167,15 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: activeTab === "NOTICE_SUMMONS_MANAGEMENT" ? false : true,
+              actionCategory: "Notice and Summons Management",
+              ...(activeTab === "NOTICE_SUMMONS_MANAGEMENT" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2183,6 +2192,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2191,6 +2201,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2209,6 +2220,17 @@ export const UICustomizations = {
                     if (!acc.advocateDetails) acc.advocateDetails = {};
                     acc.advocateDetails[subKey] = curr.value;
                   }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
@@ -2225,12 +2247,20 @@ export const UICustomizations = {
                 createdTime: result?.createdTime,
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                uniqueIdsList: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
+              return {
+                TotalCount: data?.noticeAndSummonsData?.count,
+                data: data?.noticeAndSummonsData?.data?.map((item) => processFields(item.fields)),
               };
             } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
@@ -2278,7 +2308,7 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link
@@ -2366,6 +2396,11 @@ export const UICustomizations = {
               isOnlyCountRequired: true,
               actionCategory: "Register cases",
             },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Notice and Summons Management",
+            },
             searchBailBonds: {
               date: currentDateInMs,
               isOnlyCountRequired: true,
@@ -2420,6 +2455,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2428,6 +2464,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,

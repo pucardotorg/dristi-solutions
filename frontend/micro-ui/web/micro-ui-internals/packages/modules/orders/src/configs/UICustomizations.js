@@ -135,6 +135,29 @@ export const UICustomizations = {
           throw new Error("Not implemented");
         },
       },
+      noticeOrderPartyName: {
+        formToSchema: (value) => {
+          try {
+            if (!Array?.isArray(value?.party) || value?.party?.length === 0) return [];
+
+            return value?.party?.map((p) => {
+              const isWitness = p?.data?.partyType?.toLowerCase() === "witness";
+              const partyTypeLabel = isWitness ? "(witness)" : null;
+
+              return getFormattedName(
+                p?.data?.firstName,
+                p?.data?.middleName,
+                p?.data?.lastName,
+                isWitness ? p?.data?.witnessDesignation : null,
+                partyTypeLabel
+              );
+            });
+          } catch (error) {
+            console.error("Error in parsing party name", error);
+            return [];
+          }
+        },
+      },
       customTextArea: {
         formToSchema: (obj) => {
           return obj?.text || "";
