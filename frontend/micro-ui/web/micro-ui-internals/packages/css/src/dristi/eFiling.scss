@@ -2029,6 +2029,16 @@
       margin-left: 8px;
       margin-top: 8px;
       cursor: pointer;
+
+      .place-bottom {
+        max-width: 250px;
+        word-wrap: break-word;
+        opacity: 1 !important;
+        padding: 12px;
+        line-height: 16px;
+        border-radius: 8px;
+        text-align: center;
+      }
     }
 
     .optional {
@@ -2188,6 +2198,13 @@
       font-weight: 400;
       color: #0b0c0c;
       margin-bottom: 4px;
+    }
+    input {
+      margin-bottom: 0;
+    }
+    .card-label-error {
+      color: #b91900 !important;
+      margin-bottom: 0;
     }
   }
 }
