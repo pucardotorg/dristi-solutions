@@ -585,7 +585,7 @@ export const UICustomizations = {
           }
           return t(value);
         case "DELIEVERY_CHANNEL":
-          return taskDetails?.deliveryChannels?.channelName || "N/A";
+          return taskDetails?.deliveryChannels?.channelName === "EPOST" ? t("CS_POST") : t(taskDetails?.deliveryChannels?.channelName) || "N/A";
         case "DELIEVRY_DATE":
           return delieveryDate || "-";
         case "HEARING_DATE":
