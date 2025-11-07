@@ -1,9 +1,6 @@
 package com.dristi.njdg_transformer.consumer;
 
-import com.dristi.njdg_transformer.model.cases.CaseCriteria;
-import com.dristi.njdg_transformer.model.cases.CaseRequest;
-import com.dristi.njdg_transformer.model.cases.CaseSearchRequest;
-import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.cases.*;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.utils.CaseUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -62,5 +59,35 @@ public class CaseConsumer {
         CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
+    }
+
+    @KafkaListener(topics = "case-outcome-topic", groupId = "transformer-case")
+    public void listenCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        try {
+            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
+            CaseOutcome outcome = objectMapper.readValue(payload.value().toString(), CaseOutcome.class);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), outcome.getOutcome().getFilingNumber());
+            JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
+            CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
+            caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
+            log.info("Message processed successfully on topic:: {}", topic);
+        } catch (Exception e){
+            log.error("Error in processing message:: {}", e.getMessage());
+        }
+    }
+
+    @KafkaListener(topics = "case-overall-status-topic", groupId = "transformer-case")
+    public void listenCaseOverallStatus(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        try {
+            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
+            CaseStageSubStage overallStatus = objectMapper.readValue(payload.value().toString(), CaseStageSubStage.class);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(overallStatus.getRequestInfo(), overallStatus.getCaseOverallStatus().getFilingNumber());
+            JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
+            CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
+            caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
+            log.info("Message processed successfully on topic:: {}", topic);
+        } catch (Exception e){
+            log.error("Error in processing message:: {}", e.getMessage());
+        }
     }
 }

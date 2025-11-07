@@ -56,9 +56,7 @@ public class NJDGController {
         
         try {
             // Process the case
-            NJDGTransformRecord njdgRecord = caseService.processAndUpdateCase(
-                    request.getCourtCase(), request.getRequestInfo()
-            );
+            NJDGTransformRecord njdgRecord = caseService.processAndUpdateCase(request.getCourtCase(), request.getRequestInfo());
             
             // Build success response
             CaseResponse response = CaseResponse.builder()
