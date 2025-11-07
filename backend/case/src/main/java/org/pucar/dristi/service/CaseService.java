@@ -32,6 +32,7 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
@@ -88,6 +89,7 @@ public class CaseService {
     private final FileStoreUtil fileStoreUtil;
     private final OrderUtil orderUtil;
     private final DateUtil dateUtil;
+    private final InboxUtil inboxUtil;
 
 
     @Autowired
@@ -103,7 +105,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -128,6 +130,7 @@ public class CaseService {
         this.fileStoreUtil = fileStoreUtil;
         this.orderUtil = orderUtil;
         this.dateUtil = dateUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -2129,6 +2132,8 @@ public class CaseService {
             representative.setCaseId(String.valueOf(courtCase.getId()));
             List<Party> representingList = new ArrayList<>();
 
+            AtomicBoolean isAccusedAdvocate = new AtomicBoolean(false);
+
             joinCaseData.getRepresentative().getRepresenting().forEach(representingJoinCase -> {
                 Party party = new Party();
                 party.setId(UUID.randomUUID());
@@ -2154,6 +2159,7 @@ public class CaseService {
                 additionalDetails.put("uuid", individual.getUserUuid());
 
                 if (representingJoinCase.getUniqueId() != null) {
+                    isAccusedAdvocate.set(true);
                     //respondent name enrich
                     additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individual));
                 } else {
@@ -2204,6 +2210,9 @@ public class CaseService {
                 hearingRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
                 hearingRequest.setHearing(hearing);
                 hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
+
+                //update open hearing index
+                updateHearingIndex(getName(individual),individual.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId());
             });
 
             caseObj.setRepresentatives(List.of(representative));
@@ -2235,6 +2244,50 @@ public class CaseService {
         updateCourtCaseInRedis(joinCaseData.getTenantId(), encrptedCourtCase);
 
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
+    }
+
+    private void updateHearingIndex(String name, String individualId, AtomicBoolean isAccusedAdvocate, Hearing hearing,String courtId) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, String.valueOf(hearing.getId()));
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        if(openHearingList != null && !openHearingList.isEmpty()) {
+            OpenHearing openHearing = openHearingList.get(0);
+            Advocate advocate = openHearing.getAdvocate();
+            if(isAccusedAdvocate.get()){
+                if(advocate.getAccused()==null)
+                    advocate.setAccused(new ArrayList<>());
+                advocate.getAccused().add(name);
+            }
+            else{
+                if(advocate.getComplainant()==null)
+                    advocate.setComplainant(new ArrayList<>());
+                advocate.getComplainant().add(name);
+            }
+            openHearing.getAdvocate().getIndividualIds().add(individualId);
+            producer.push(config.getOpenHearingTopic(), openHearing);
+        }
+    }
+
+    private void updateHearingIndexForReplaceAdvocate(String name, String individualId, boolean isAccusedAdvocate, Hearing hearing,String courtId,List<String> namesToBeRemoved) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, String.valueOf(hearing.getId()));
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        if(openHearingList != null && !openHearingList.isEmpty()) {
+            OpenHearing openHearing = openHearingList.get(0);
+            Advocate advocate = openHearing.getAdvocate();
+            if(isAccusedAdvocate){
+                if(advocate.getAccused()==null)
+                    advocate.setAccused(new ArrayList<>());
+                advocate.getAccused().add(name);
+                advocate.getAccused().removeAll(namesToBeRemoved);
+            }
+            else{
+                if(advocate.getComplainant()==null)
+                    advocate.setComplainant(new ArrayList<>());
+                advocate.getComplainant().add(name);
+                advocate.getComplainant().removeAll(namesToBeRemoved);
+            }
+            openHearing.getAdvocate().getIndividualIds().add(individualId);
+            producer.push(config.getOpenHearingTopic(), openHearing);
+        }
     }
 
     private void enrichAndCallEvidenceCreate(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant, RequestInfo requestInfo) {
@@ -5611,15 +5664,25 @@ public class CaseService {
 
                 String individualIdOfAdvocate = advocateUtil.getAdvocate(requestInfo, List.of(replacementAdvocateDetails.getAdvocateUuid())).stream().findFirst().orElse(null);
 
+                boolean isAccusedAdvocate = true;
+                if(replacementDetails.getLitigantDetails().getPartyType().contains("complainant")){
+                    isAccusedAdvocate = false;
+                }
+
+                List<String> namesToBeRemoved= new ArrayList<>();
                 if (!isAdvocatePartOfCase) {
                     for (int i = 0; i < attendees.size(); i++) {
                         if ((attendees.get(i).getIndividualId() != null) && attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
                             attendees.remove(i);
+                            namesToBeRemoved.add(attendees.get(i).getName());
                             break;
                         }
                     }
                 }
+                //update open hearing index
+                updateHearingIndexForReplaceAdvocate(fullName,individualTryingToReplace.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId(),namesToBeRemoved);
             }
+
 
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
 
