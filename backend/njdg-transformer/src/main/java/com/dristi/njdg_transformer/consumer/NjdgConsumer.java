@@ -105,6 +105,7 @@ public class NjdgConsumer {
             NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
             existingRecord.setDateFirstList(hearingDetails.getSrNo() ==1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
             existingRecord.setDateLastList(hearingDetails.getHearingDate());
+            existingRecord.setPurposeCode(Integer.valueOf(hearingDetails.getPurposeOfListing()));
             caseRepository.updateRecord(existingRecord);
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage(), e);
