@@ -35,6 +35,9 @@ const AddOrderTypeModal = ({
   setWarrantSubtypeCode,
   onBailBondRequiredChecked,
   bailBondTaskExists = false,
+  onConfirmBailBondTask,
+  onOrderFormDataChange,
+  persistedDefaultValues,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -56,11 +59,9 @@ const AddOrderTypeModal = ({
   }, [currentOrder, index]);
   const hasRefApplicationId = useMemo(() => {
     return Boolean(currentOrder?.additionalDetails?.formdata?.refApplicationId);
-  }, [formdata?.refApplicationId]);
+  }, [formdata?.refApplicationId, currentOrder?.additionalDetails?.formdata?.refApplicationId]);
   const [caseData, setCaseData] = useState(undefined);
   const containerRef = useRef(null);
-  const checkboxRef = useRef(null);
-  const [checkboxInjected, setCheckboxInjected] = useState(false);
   const initialRefApplicationIdRef = useRef(undefined);
   useEffect(() => {
     try {
@@ -246,16 +247,33 @@ const AddOrderTypeModal = ({
         clearFormErrors?.current?.[index]?.("chequeAmount");
       }
 
-      if (formData?.noOfSureties < 0 && !Object.keys(formState?.errors).includes("noOfSureties")) {
-        setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
-      } else if (formData?.noOfSureties > 0 && Object.keys(formState?.errors).includes("noOfSureties")) {
-        clearFormErrors?.current?.[index]?.("noOfSureties");
+      const isSurety = (() => {
+        const bt = formData?.bailType;
+        const code = typeof bt === "string" ? bt : bt?.code || bt?.type;
+        return (code || "").toUpperCase() === "SURETY";
+      })();
+
+      if (isSurety) {
+        if (formData?.noOfSureties < 0 && !Object.keys(formState?.errors).includes("noOfSureties")) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
+        } else if (formData?.noOfSureties > 0 && Object.keys(formState?.errors).includes("noOfSureties")) {
+          clearFormErrors?.current?.[index]?.("noOfSureties");
+        }
+      } else {
+        if (formData?.noOfSureties) setValue("noOfSureties", undefined);
+        if (Object.keys(formState?.errors).includes("noOfSureties")) {
+          clearFormErrors?.current?.[index]?.("noOfSureties");
+        }
+        if (bailBondRequired) setBailBondRequired(false);
       }
     }
 
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
       setWarrantSubtypeCode(formData?.warrantSubType?.templateType);
+      try {
+        if (typeof onOrderFormDataChange === "function") onOrderFormDataChange({ ...formData, bailBondRequired }, { index, orderType });
+      } catch (_) {}
     }
 
     setFormErrors.current[index] = setError;
@@ -268,43 +286,6 @@ const AddOrderTypeModal = ({
       setIsSubmitDisabled(false);
     }
   };
-
-  useEffect(() => {
-    if (orderType?.code !== "ACCEPT_BAIL") return;
-    if (!containerRef?.current || !checkboxRef?.current) return;
-
-    const tryInject = () => {
-      const actionBar = containerRef.current?.querySelector?.(".order-type-action");
-      const checkboxEl = checkboxRef.current;
-      if (actionBar && checkboxEl && !checkboxInjected) {
-        const parent = actionBar.parentElement;
-        if (parent && checkboxEl.parentElement !== parent) {
-          parent.insertBefore(checkboxEl, actionBar);
-        }
-        setCheckboxInjected(true);
-        return true;
-      }
-      return false;
-    };
-    if (tryInject()) return;
-    const observer = new MutationObserver(() => {
-      if (tryInject()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(containerRef.current, { childList: true, subtree: true });
-    const t = setTimeout(tryInject, 100);
-
-    return () => {
-      clearTimeout(t);
-      observer.disconnect();
-    };
-  }, [orderType?.code, checkboxInjected]);
-  useEffect(() => {
-    return () => {
-      setCheckboxInjected(false);
-    };
-  }, []);
 
   useEffect(() => {
     const fetchCaseDetails = async () => {
@@ -331,16 +312,10 @@ const AddOrderTypeModal = ({
   }, [filingNumber, courtId, tenantId]);
 
   useEffect(() => {
-    if (orderType?.code === "ACCEPT_BAIL") {
-      if (hasRefApplicationId || bailBondTaskExists) {
-        setBailBondRequired(true);
-      } else {
-        setBailBondRequired(false);
-      }
-    } else {
+    if (orderType?.code !== "ACCEPT_BAIL") {
       setBailBondRequired(false);
     }
-  }, [orderType?.code, hasRefApplicationId, bailBondTaskExists]);
+  }, [orderType?.code]);
 
   useEffect(() => {
     const checkBailBondTask = async () => {
@@ -446,52 +421,110 @@ const AddOrderTypeModal = ({
         <div ref={containerRef}>
           <div className="generate-orders">
             <div className="view-order order-type-form-modal">
-              <FormComposerV2
-                className={"generate-orders order-type-modal"}
-                defaultValues={getDefaultValue(index)}
-                config={modifiedFormConfig}
-                fieldStyle={{ width: "100%" }}
-                cardClassName={`order-type-form-composer new-order`}
-                actionClassName={"order-type-action"}
-                onFormValueChange={onFormValueChange}
-                label={t(saveLabel)}
-                secondaryLabel={t(cancelLabel)}
-                showSecondaryLabel={true}
-                onSubmit={async () => {
-                  const outgoing = {
-                    ...formdata,
-                    bailBondRequired,
-                    ...(formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current
-                      ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
-                      : {}),
-                  };
-                  handleSubmit(outgoing, index);
-                }}
-                onSecondayActionClick={handleCancel}
-                isDisabled={isSubmitDisabled || addOrderTypeLoader}
-              />
+              {(() => {
+                const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
+                const bt = formdata?.bailType;
+                const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
+                const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
+                let effectiveConfig = isAcceptBail
+                  ? (modifiedFormConfig || []).map((cfg) => ({
+                      ...cfg,
+                      body: cfg.body.filter((field) => {
+                        if (field.key === "noOfSureties") return showSuretyFields;
+                        return true;
+                      }),
+                    }))
+                  : modifiedFormConfig;
+
+                if (isAcceptBail && bailTypeCode === "SURETY") {
+                  const isBailBondCheckboxEnabled = (() => {
+                    if (!(orderType?.code === "ACCEPT_BAIL" && bailTypeCode === "SURETY")) return false;
+                    const amountValid = Number(formdata?.chequeAmount) > 0;
+                    const suretiesValid = Number(formdata?.noOfSureties) > 0;
+                    return amountValid && suretiesValid && !isSubmitDisabled;
+                  })();
+
+                  const CheckboxRow = () => (
+                    <div className="checkbox-item" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        id="bail-bond-required"
+                        type="checkbox"
+                        className="custom-checkbox"
+                        checked={bailBondRequired || bailBondTaskExists}
+                        onChange={(e) => {
+                          const checked = e?.target?.checked;
+                          setBailBondRequired(checked);
+                          try {
+                            if (typeof onOrderFormDataChange === "function")
+                              onOrderFormDataChange({ ...formdata, bailBondRequired: checked }, { index, orderType });
+                          } catch (_) {}
+                          if (checked) onBailBondRequiredChecked && onBailBondRequiredChecked();
+                        }}
+                        style={{ cursor: "pointer", width: 20, height: 20 }}
+                        disabled={!isBailBondCheckboxEnabled || bailBondTaskExists}
+                      />
+                      <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
+                    </div>
+                  );
+                  effectiveConfig = [
+                    ...effectiveConfig,
+                    {
+                      body: [
+                        {
+                          type: "component",
+                          key: "requestBailBond",
+                          withoutLabel: true,
+                          component: CheckboxRow,
+                          populators: {},
+                        },
+                      ],
+                    },
+                  ];
+                }
+                return (
+                  <FormComposerV2
+                    className={"generate-orders order-type-modal"}
+                    defaultValues={{
+                      ...(getDefaultValue(index) || {}),
+                      ...(orderType?.code === "ACCEPT_BAIL" ? persistedDefaultValues || {} : {}),
+                    }}
+                    config={effectiveConfig}
+                    fieldStyle={{ width: "100%" }}
+                    cardClassName={`order-type-form-composer new-order`}
+                    actionClassName={"order-type-action"}
+                    onFormValueChange={onFormValueChange}
+                    label={t(saveLabel)}
+                    secondaryLabel={t(cancelLabel)}
+                    showSecondaryLabel={true}
+                    onSubmit={async () => {
+                      const outgoing = {
+                        ...formdata,
+                        bailBondRequired,
+                        ...(formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current
+                          ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
+                          : {}),
+                      };
+                      try {
+                        if (
+                          typeof onConfirmBailBondTask === "function" &&
+                          orderType?.code === "ACCEPT_BAIL" &&
+                          bailBondRequired &&
+                          !bailBondTaskExists
+                        ) {
+                          await onConfirmBailBondTask();
+                          // After successful confirmation, mark the task as existing so the checkbox stays checked and disabled
+                          setIsBailBondTaskExists(true);
+                        }
+                      } catch (_) {}
+                      handleSubmit(outgoing, index);
+                    }}
+                    onSecondayActionClick={handleCancel}
+                    isDisabled={isSubmitDisabled || addOrderTypeLoader}
+                  />
+                );
+              })()}
             </div>
           </div>
-          {orderType?.code === "ACCEPT_BAIL" && (
-            <div className="checkbox-item" ref={checkboxRef} style={{ marginLeft: "20px", marginBottom: "20px", marginTop: "-20px" }}>
-              <input
-                id="bail-bond-required"
-                type="checkbox"
-                className="custom-checkbox"
-                checked={bailBondRequired || (hasRefApplicationId && bailBondRequired)}
-                onChange={(e) => {
-                  const checked = e?.target?.checked;
-                  setBailBondRequired(checked);
-                  if (checked && !hasRefApplicationId) {
-                    onBailBondRequiredChecked && onBailBondRequiredChecked();
-                  }
-                }}
-                style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                disabled={hasRefApplicationId || bailBondTaskExists}
-              />
-              <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
-            </div>
-          )}
         </div>
       </Modal>
     </React.Fragment>
