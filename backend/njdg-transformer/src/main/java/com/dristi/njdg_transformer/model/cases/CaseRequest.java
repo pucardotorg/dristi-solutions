@@ -13,7 +13,7 @@ import org.egov.common.contract.request.RequestInfo;
 @AllArgsConstructor
 public class CaseRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     private RequestInfo requestInfo;
 
     @JsonProperty("cases")
