@@ -71,6 +71,9 @@ public class EpostUtil {
 
         String respondentName = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
         String respondentAddress = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
+        Address address = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
+        String phone = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getPhone() : task.getTaskDetails().getRespondentDetails().getPhone();
+        String pinCode = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress().getPinCode() : task.getTaskDetails().getRespondentDetails().getAddress().getPinCode();
 
 
         EPostTracker ePostTracker = EPostTracker.builder()
@@ -80,9 +83,9 @@ public class EpostUtil {
                 .totalAmount(getTotalAmount(request))
                 .fileStoreId(getFileStore(request))
                 .address(respondentAddress)
-                .addressObj(request.getTask().getTaskDetails().getRespondentDetails().getAddress())
-                .phone(request.getTask().getTaskDetails().getRespondentDetails().getPhone())
-                .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
+                .addressObj(address)
+                .phone(phone)
+                .pinCode(pinCode)
                 .deliveryStatus(DeliveryStatus.NOT_UPDATED)
                 .additionalDetails(request.getTask().getAdditionalDetails())
                 .rowVersion(0)
