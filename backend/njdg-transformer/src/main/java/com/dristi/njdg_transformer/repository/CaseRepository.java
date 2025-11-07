@@ -168,6 +168,8 @@ public class CaseRepository {
                 record.getResAddress(),
                 record.getJocode(),
                 record.getCicriType() != null ? record.getCicriType() : null,
+                record.getJudgeCode(),
+                record.getDesigCode(),
                 record.getCino()
             );
             
@@ -222,7 +224,9 @@ public class CaseRepository {
                     record.getPetAddress(),
                     record.getResAddress(),
                     record.getJocode(),
-                    record.getCicriType() != null ? record.getCicriType().toString() : null
+                    record.getCicriType() != null ? record.getCicriType().toString() : null,
+                    record.getJudgeCode(),
+                    record.getDesigCode()
             );
 
             log.debug("Inserted {} record(s) with CINO: {}", inserted, record.getCino());
