@@ -1300,6 +1300,12 @@ function EFilingCases({ path }) {
                 }
               }
 
+              if (selected === "processCourierService") {
+                if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
+                  body.isDisableAllFields = true;
+                }
+              }
+
               if (body?.labelChildren === "optional" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }

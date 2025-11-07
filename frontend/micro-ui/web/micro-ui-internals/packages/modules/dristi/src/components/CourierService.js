@@ -42,6 +42,7 @@ function CourierService({
   setShowConfirmationModal,
   handleAddAddress,
   orderType,
+  isDisableAllFields = false,
 }) {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
@@ -227,7 +228,7 @@ function CourierService({
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="deliveryChannelName"
                 displayKey="channelCode"
-                disable={processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
+                disable={isDisableAllFields || processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
                 active={noticeActive}
                 setActive={setNoticeActive}
               />
@@ -271,6 +272,7 @@ function CourierService({
                 optionsKey="deliveryChannelName"
                 displayKey="channelCode"
                 disable={
+                  isDisableAllFields ||
                   processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
                   (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
                 }
@@ -295,6 +297,7 @@ function CourierService({
                   className="custom-checkbox"
                   id={`address-${address.id || idx}`}
                   checked={address?.checked}
+                  disabled={isDisableAllFields}
                   onChange={(e) => handleAddressSelection(address?.id, e.target.checked)}
                 />
                 <label htmlFor={`address-${address.id || idx}`}>{formatAddress(address)}</label>
@@ -310,6 +313,7 @@ function CourierService({
             className="add-address-btn"
             icon={<CustomAddIcon />}
             label={t("CS_ADD_MORE_ADDRESS")}
+            isDisabled={isDisableAllFields}
           ></Button>
         </div>
       </div>

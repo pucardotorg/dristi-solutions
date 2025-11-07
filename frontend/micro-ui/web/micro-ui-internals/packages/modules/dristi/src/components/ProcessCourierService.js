@@ -27,6 +27,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const isDisableAllFields = config?.isDisableAllFields || false;
 
   const handleDataChange = (data) => {
     const updatedData = {
@@ -107,6 +108,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setChecked={setChecked}
         setShowConfirmationModal={setShowConfirmationModal}
         handleAddAddress={handleAddAddress}
+        isDisableAllFields={isDisableAllFields}
       />
       {showConfirmationModal && (
         <Modal
