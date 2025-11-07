@@ -51,13 +51,19 @@ function NoticeSummonPaymentModal({
 
   const deliveryChannelsList = useMemo(() => {
     if (!taskManagement?.partyDetails?.length) return [];
-
-    return taskManagement?.partyDetails?.map((party) => {
+    const channelMap = {};
+    taskManagement?.partyDetails?.forEach((party) => {
       const person = party?.respondentDetails || party?.witnessDetails || {};
       const fullName = getFullName(" ", person?.firstName, person?.middleName, person?.lastName);
-      const channelCodes = party?.deliveryChannels?.map((c) => t(c?.channelCode))?.join(", ") || "—";
-      return `${fullName}: ${channelCodes}`;
+
+      party?.deliveryChannels?.forEach((channel) => {
+        const code = channel?.channelCode;
+        if (!code) return;
+        if (!channelMap[code]) channelMap[code] = [];
+        channelMap[code]?.push(fullName);
+      });
     });
+    return Object.entries(channelMap).map(([code, names]) => `${t(code)} (${names?.join(", ")})`);
   }, [t, taskManagement]);
 
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
