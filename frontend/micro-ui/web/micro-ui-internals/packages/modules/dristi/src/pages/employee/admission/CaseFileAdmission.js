@@ -298,7 +298,14 @@ function CaseFileAdmission({ t, path }) {
                   delete input.data;
                   return {
                     ...input,
-                    data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
+                    data:
+                      input?.key === "witnessDetails"
+                        ? caseDetails?.witnessDetails?.map((witness) => {
+                            return {
+                              data: witness,
+                            };
+                          }) || {}
+                        : caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
                   };
                 }),
               },
