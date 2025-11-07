@@ -15,7 +15,7 @@ public class OrderQueryBuilder {
                     "sr_no AS sr_no, " +
                     "order_date AS order_date, " +
                     "order_no AS order_no, " +
-                    "order_details AS order_details " +
+                    "order_details AS order_details, " +
                     "order_type AS order_type " +
                     "FROM interim_orders ";
 
