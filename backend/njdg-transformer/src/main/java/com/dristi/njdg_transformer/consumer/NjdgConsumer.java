@@ -102,7 +102,10 @@ public class NjdgConsumer {
                 hearingRepository.insertHearingDetails(hearingDetails);
                 log.info("Inserted new hearing with hearingId {} for CINO {}", hearingId, cino);
             }
-
+            NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
+            existingRecord.setDateFirstList(hearingDetails.getSrNo() ==1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
+            existingRecord.setDateLastList(hearingDetails.getHearingDate());
+            caseRepository.updateRecord(existingRecord);
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage(), e);
         }
