@@ -351,7 +351,7 @@ public class TaskCreationService {
         ObjectNode compositeItem = extractCompositeItems(order, itemId);
 
         if (compositeItem != null) {
-            return jsonUtil.getNestedValue(compositeItem, List.of("orderSchema", "additionalDetails","formdata", "noticeType", "type"), String.class);
+            compositeItem.path("orderSchema").path("additionalDetails").path("formdata").path("noticeType").path("type").textValue();
         }
 
         return null;
@@ -362,7 +362,7 @@ public class TaskCreationService {
         ObjectNode compositeItem = extractCompositeItems(order, itemId);
 
         if (compositeItem != null) {
-            return jsonUtil.getNestedValue(compositeItem, List.of("orderSchema", "additionalDetails","formdata", "dateForHearing"), String.class);
+            compositeItem.path("orderSchema").path("additionalDetails").path("formdata").path("dateForHearing").textValue();
         }
 
         return null;
