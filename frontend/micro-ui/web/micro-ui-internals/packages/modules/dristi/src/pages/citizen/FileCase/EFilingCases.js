@@ -2323,7 +2323,17 @@ function EFilingCases({ path }) {
             const processCourierDetails =
               caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
 
-            const respondentFormData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+            const respondentFormData =
+              caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((respondent) => {
+                return {
+                  ...respondent,
+                  data: {
+                    ...respondent?.data,
+                    email: respondent?.data?.emails?.emailId || [],
+                    phone_numbers: respondent?.data?.phonenumbers?.mobileNumber || [],
+                  },
+                };
+              }) || [];
 
             const getAccusedDetails = (type) =>
               processCourierDetails?.filter((accused) => accused?.[`${type.toLowerCase()}CourierService`]?.length > 0);
