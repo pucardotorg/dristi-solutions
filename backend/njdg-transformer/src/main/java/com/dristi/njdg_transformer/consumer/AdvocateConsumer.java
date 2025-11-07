@@ -25,7 +25,7 @@ public class AdvocateConsumer {
         this.advocateService = advocateService;
     }
 
-    @KafkaListener(topics = "user-registration-advocate")
+    @KafkaListener(topics = "user-registration-advocate", groupId = "transformer-advocate")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received message:: {} on topic:: {} ", payload.value(), topic);

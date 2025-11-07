@@ -24,7 +24,7 @@ public class CaseConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.case}'.split(',')}")
+    @KafkaListener(topics = "#{'${kafka.topics.case}'.split(',')}", groupId = "transformer-case")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
             log.info("Received message:: {} on topic:: {} ", payload.value(), topic);

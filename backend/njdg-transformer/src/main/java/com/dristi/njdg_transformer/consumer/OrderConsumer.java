@@ -24,7 +24,7 @@ public class OrderConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}")
+    @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}", groupId = "transformer-order")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
             log.info("Received message: {}", payload);

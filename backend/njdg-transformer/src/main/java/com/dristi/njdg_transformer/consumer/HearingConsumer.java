@@ -22,7 +22,7 @@ public class HearingConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.hearing}'.split(',')}")
+    @KafkaListener(topics = "#{'${kafka.topics.hearing}'.split(',')}", groupId = "transformer-hearing")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         try {
             log.info("Received message: {}", payload);
