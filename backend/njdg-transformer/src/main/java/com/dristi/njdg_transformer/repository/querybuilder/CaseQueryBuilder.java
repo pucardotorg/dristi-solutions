@@ -56,8 +56,8 @@ public class CaseQueryBuilder {
             "    pet_address AS pet_address,\n" +
             "    res_address AS res_address,\n" +
             "    jocode AS jocode,\n" +
-            "    cicri_type AS cicri_type\n" +
-            "    judge_code AS judge_code\n" +
+            "    cicri_type AS cicri_type,\n" +
+            "    judge_code AS judge_code,\n" +
             "    desig_code AS desig_code\n";
 
     private final String FROM_QUERY = " FROM cases";
