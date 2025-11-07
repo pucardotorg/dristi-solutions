@@ -66,6 +66,13 @@ public class TransformerProperties {
     @Value("${cicri.type}")
     private Character cicriType;
 
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
     //    @Value("${egov.case.host}")
 //    private String caseSearchUrlHost;
 //
