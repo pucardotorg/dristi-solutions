@@ -56,7 +56,9 @@ public class CaseQueryBuilder {
             "    pet_address AS pet_address,\n" +
             "    res_address AS res_address,\n" +
             "    jocode AS jocode,\n" +
-            "    cicri_type AS cicri_type\n";
+            "    cicri_type AS cicri_type\n" +
+            "    judge_code AS judge_code\n" +
+            "    desig_code AS desig_code\n";
 
     private final String FROM_QUERY = " FROM cases";
     public String insertQuery() {
@@ -149,7 +151,9 @@ public class CaseQueryBuilder {
                     pet_address = ?,
                     res_address = ?,
                     jocode = ?,
-                    cicri_type = ?
+                    cicri_type = ?,
+                    judge_code = ?,
+                    desig_code = ?
                 WHERE cino = ?
                 """;
     }
@@ -197,8 +201,10 @@ public class CaseQueryBuilder {
                     pet_address,
                     res_address,
                     jocode,
-                    cicri_type
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    cicri_type,
+                    judge_code,
+                    desig_code
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
     }
 
