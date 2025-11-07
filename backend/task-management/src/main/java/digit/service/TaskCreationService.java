@@ -354,8 +354,8 @@ public class TaskCreationService {
                 witnessDetails = getWitnessDetails(party.getWitnessDetails(), address);
             }
             for (DeliveryChannel channel : deliveryChannels) {
-                if("EPOST".equalsIgnoreCase(channel.getChannelName())) {
-                    channel.setChannelName("Post");
+                if("EPOST".equalsIgnoreCase(channel.getChannelId())) {
+                    channel.setChannelId("Post");
                 }
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
