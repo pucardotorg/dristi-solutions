@@ -180,7 +180,7 @@ export const bailBondConfig = [
                   {
                     name: "locality",
                     type: "text",
-                    label: "ADDRESS",
+                    label: "ADDRESS_LINE_1",
                     validation: {
                       errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
                       // pattern: {
