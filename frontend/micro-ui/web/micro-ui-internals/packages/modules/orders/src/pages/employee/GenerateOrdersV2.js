@@ -1957,7 +1957,9 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
       if (currentOrderType === "ACCEPT_BAIL") {
-        const alreadySet = updatedFormdata?.bailType && (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
+        const alreadySet =
+          updatedFormdata?.bailType &&
+          (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
         if (!alreadySet) {
           const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
           updatedFormdata.bailType = {
@@ -2363,7 +2365,61 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleAddForm = () => {
-    setAddOrderModal(true);
+    const updatedCompositeItems = (obj) => {
+      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
+      let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+      const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew.length === 0 && obj?.orderType) {
+        compositeItemsNew = [
+          {
+            orderType: obj?.orderType,
+            ...(obj?.orderNumber && {
+              orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+            }),
+            isEnabled: true,
+            displayindex: 0,
+          },
+        ];
+        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
+      }
+
+      return {
+        compositeItems: [
+          ...compositeItemsNew,
+          {
+            orderType: null,
+            isEnabled: true,
+            displayindex: totalEnabled === 0 ? 1 : totalEnabled,
+          },
+        ],
+        orderTitle: orderTitleNew,
+      };
+    };
+    const updatedItems = updatedCompositeItems(currentOrder);
+    setCurrentOrder({
+      ...currentOrder,
+      orderCategory: "COMPOSITE",
+      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
+      compositeItems: updatedItems.compositeItems,
+    });
+
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew?.length === 0) {
+        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
+      }
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
+      }
+    }
   };
 
   const isBailBondCheckboxEnabled = useMemo(() => {

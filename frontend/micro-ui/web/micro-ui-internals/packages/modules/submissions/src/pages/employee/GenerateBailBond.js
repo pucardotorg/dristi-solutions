@@ -298,13 +298,7 @@ const GenerateBailBond = () => {
           const ptUuidAlt = getField("additionalDetails.litigants[0]");
           const ptIndivId = getField("individualId");
           const ptAccusedId = additionalDetailsObj && (additionalDetailsObj.accusedIndividualId || additionalDetailsObj.accusedKey);
-          const pendingLitigantUuid = firstDefined(
-            ptAccusedId,
-            ptUuid0,
-            Array.isArray(ptUuidArr) && ptUuidArr[0],
-            ptUuidAlt,
-            ptIndivId
-          );
+          const pendingLitigantUuid = firstDefined(ptAccusedId, ptUuid0, Array.isArray(ptUuidArr) && ptUuidArr[0], ptUuidAlt, ptIndivId);
           const pendingLitigantName = firstDefined(getField("additionalDetails.litigantName"));
 
           let resolvedName = pendingLitigantName;
