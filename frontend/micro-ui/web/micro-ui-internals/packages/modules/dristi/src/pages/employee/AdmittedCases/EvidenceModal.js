@@ -1026,8 +1026,13 @@ const EvidenceModal = ({
               tenantId,
             },
           });
+          const isAcceptBail =
+            (response?.order?.orderCategory === "INTERMEDIATE" && response?.order?.orderType === "ACCEPT_BAIL") ||
+            (Array.isArray(response?.order?.compositeItems) &&
+              response?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
+          const suffix = isAcceptBail ? "&openEdit=1" : "";
           history.replace(
-            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}${suffix}`
           );
         } catch (error) {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -1098,7 +1103,13 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+          const isAcceptBail2 =
+            (res?.order?.orderCategory === "INTERMEDIATE" && res?.order?.orderType === "ACCEPT_BAIL") ||
+            (Array.isArray(res?.order?.compositeItems) && res?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
+          const suffix2 = isAcceptBail2 ? "&openEdit=1" : "";
+          history.push(
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}${suffix2}`
+          );
         } catch (error) {}
       } else {
         if (showConfirmationModal.type === "reject") {

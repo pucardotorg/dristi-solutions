@@ -214,7 +214,7 @@ const GenerateOrdersV2 = () => {
   const [currentOrder, setCurrentOrder] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { orderNumber, filingNumber, openEdit } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -263,6 +263,8 @@ const GenerateOrdersV2 = () => {
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+  // One-time guard to auto-open edit modal when needed
+  const hasAutoOpenedEditRef = useRef(false);
 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
@@ -687,6 +689,34 @@ const GenerateOrdersV2 = () => {
       ? currentOrder?.compositeItems?.some((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL")
       : false;
   }, [currentOrder]);
+
+  // Auto-open edit modal only when explicitly requested via query param (openEdit)
+  useEffect(() => {
+    try {
+      if (hasAutoOpenedEditRef.current) return;
+
+      // Allow explicit control via query param (openEdit=true|1)
+      const shouldOpenByParam = typeof openEdit !== "undefined" && ["true", "1", true].includes(openEdit);
+
+      if (shouldOpenByParam) {
+        // If order contains ACCEPT_BAIL, invoke the same flow as manual selection
+        const typeObj = { code: "ACCEPT_BAIL", name: "ORDER_TYPE_ACCEPT_BAIL" };
+        if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+          // index 0 for single/intermediate
+          handleOrderTypeChange(0, typeObj);
+          hasAutoOpenedEditRef.current = true;
+        } else if (Array.isArray(currentOrder?.compositeItems)) {
+          const idx = currentOrder?.compositeItems?.findIndex((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+          if (idx >= 0) {
+            handleOrderTypeChange(idx, typeObj);
+            hasAutoOpenedEditRef.current = true;
+          }
+        }
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [openEdit, currentOrder]);
 
   const isBailBondFlagSelected = useMemo(() => {
     if (!currentOrder) return false;
