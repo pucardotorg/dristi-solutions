@@ -690,19 +690,42 @@ const GenerateOrdersV2 = () => {
       : false;
   }, [currentOrder]);
 
-  // Auto-open edit modal only when explicitly requested via query param (openEdit)
+  // Minimal pre-seed: when opening AddOrderTypeModal for ACCEPT_BAIL, push saved formdata into persisted defaults
+  useEffect(() => {
+    try {
+      if (!showAddOrderModal) return;
+      if ((orderType?.code || "") !== "ACCEPT_BAIL") return;
+
+      const deriveFormData = () => {
+        try {
+          if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+            return { ...(currentOrder?.additionalDetails?.formdata || {}) };
+          }
+          if (Array.isArray(currentOrder?.compositeItems)) {
+            const acceptItem = currentOrder?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
+            return { ...(acceptItem?.orderSchema?.additionalDetails?.formdata || {}) };
+          }
+          return null;
+        } catch (_) {
+          return null;
+        }
+      };
+
+      const fd = deriveFormData();
+      if (fd && Object.keys(fd).length > 0) {
+        setLatestAcceptBailFormData(fd);
+      }
+    } catch (_) {}
+  }, [showAddOrderModal, orderType?.code, currentOrder]);
+
   useEffect(() => {
     try {
       if (hasAutoOpenedEditRef.current) return;
-
-      // Allow explicit control via query param (openEdit=true|1)
       const shouldOpenByParam = typeof openEdit !== "undefined" && ["true", "1", true].includes(openEdit);
 
       if (shouldOpenByParam) {
-        // If order contains ACCEPT_BAIL, invoke the same flow as manual selection
         const typeObj = { code: "ACCEPT_BAIL", name: "ORDER_TYPE_ACCEPT_BAIL" };
         if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
-          // index 0 for single/intermediate
           handleOrderTypeChange(0, typeObj);
           hasAutoOpenedEditRef.current = true;
         } else if (Array.isArray(currentOrder?.compositeItems)) {
