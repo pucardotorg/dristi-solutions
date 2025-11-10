@@ -225,7 +225,7 @@ function ReviewSubmissionModal({
                   docWidth="100%"
                   docHeight="unset"
                   showDownloadOption={false}
-                  documentName={docs.fileName}
+                  documentName={docs?.fileName || docs?.additionalDetails?.name || docs?.name}
                 />
               ))}
           </div>
