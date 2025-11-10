@@ -1,0 +1,51 @@
+<configuration>
+
+    <!-- Load Spring Boot properties -->
+    <springProperty scope="context" name="lokiEnabled" source="logging.loki.enabled" defaultValue="false"/>
+    <springProperty scope="context" name="lokiUrl" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+    <springProperty scope="context" name="appName" source="logging.loki.app" defaultValue="unknown-app"/>
+    <springProperty scope="context" name="env" source="logging.loki.environment" defaultValue="local"/>
+    <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
+
+    <!-- Console Appender (always on) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Conditionally define Loki Appender -->
+    <if condition='property("lokiEnabled").equalsIgnoreCase("true")'>
+        <then>
+            <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+                <http>
+                    <url>${lokiUrl}</url>
+                </http>
+                <format>
+                    <label>
+                        <pattern>app=${appName}, environment=${env}, level=%level</pattern>
+                        <readMarkers>true</readMarkers>
+                    </label>
+                    <message>
+                        <pattern>
+                            %d{yyyy-MM-dd HH:mm:ss} [%thread] %magenta(%-5level) %green([%-50.50class]) >>> %cyan(%msg)%n
+                        </pattern>
+                    </message>
+                </format>
+            </appender>
+
+            <!-- When Loki enabled: Console + Loki -->
+            <root level="${logLevel}">
+                <appender-ref ref="CONSOLE"/>
+                <appender-ref ref="LOKI"/>
+            </root>
+        </then>
+        <else>
+            <!-- When Loki disabled: Console only -->
+            <root level="${logLevel}">
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </else>
+    </if>
+
+</configuration>
