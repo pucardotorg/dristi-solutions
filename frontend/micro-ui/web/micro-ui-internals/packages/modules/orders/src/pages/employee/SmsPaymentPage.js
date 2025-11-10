@@ -474,7 +474,7 @@ const SmsPaymentPage = () => {
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
-      const fileName = `${orderData?.orderType ? orderData?.orderType + "_" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
+      const fileName = `${orderData?.orderType ? t(orderData?.orderType) + "-" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
       await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
@@ -490,7 +490,7 @@ const SmsPaymentPage = () => {
 
   const handleClose = () => {
     // Redirect to some other page or close the modal
-    window.location.replace("https://oncourts-staging.kerala.gov.in");
+    window.location.replace("https://oncourts.kerala.gov.in");
   };
 
   // TODO : need to update successModalData based on different scenarios
