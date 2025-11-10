@@ -1300,6 +1300,12 @@ function EFilingCases({ path }) {
                 }
               }
 
+              if (selected === "processCourierService") {
+                if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
+                  body.isDisableAllFields = true;
+                }
+              }
+
               if (body?.labelChildren === "optional" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
@@ -2323,7 +2329,17 @@ function EFilingCases({ path }) {
             const processCourierDetails =
               caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
 
-            const respondentFormData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+            const respondentFormData =
+              caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((respondent) => {
+                return {
+                  ...respondent,
+                  data: {
+                    ...respondent?.data,
+                    email: respondent?.data?.emails?.emailId || [],
+                    phone_numbers: respondent?.data?.phonenumbers?.mobileNumber || [],
+                  },
+                };
+              }) || [];
 
             const getAccusedDetails = (type) =>
               processCourierDetails?.filter((accused) => accused?.[`${type.toLowerCase()}CourierService`]?.length > 0);

@@ -974,7 +974,7 @@ const CustomReviewCardRow = ({
           <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address" style={{ position: "relative" }}>
               <div className="address-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
-                {address.map((item, index) => (
+                {(address?.length ? address : [{}])?.map((item, index) => (
                   <div key={index} className="address-block">
                     <div
                       className="row"
@@ -987,10 +987,12 @@ const CustomReviewCardRow = ({
                       <div className="label">{t(label)}</div>
                       <div className="value">
                         <p style={{ marginBottom: "8px" }}>{item?.address}</p>
-                        <LocationContent
-                          latitude={item?.coordinates?.latitude || 31.6160638}
-                          longitude={item?.coordinates?.longitude || 74.8978579}
-                        />
+                        {address?.length > 0 && (
+                          <LocationContent
+                            latitude={item?.coordinates?.latitude || 31.6160638}
+                            longitude={item?.coordinates?.longitude || 74.8978579}
+                          />
+                        )}
                       </div>
                     </div>
                     {item?.policeStation && (

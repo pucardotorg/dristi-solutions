@@ -100,7 +100,7 @@ public class TaskCreationService {
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
 
             log.info("Building case details and complainant details");
-            CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails);
+            CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails, taskManagement.getOrderItemId());
             ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
             
             log.info("Building summon and notice details for {} party", partyType);
@@ -256,8 +256,15 @@ public class TaskCreationService {
 
     // ---- Builders ---- //
 
-    private CaseDetails buildCaseDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails) {
-        String hearingDateStr = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("formdata", "dateForHearing"), String.class);
+    private CaseDetails buildCaseDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails, String itemId) {
+
+        String hearingDateStr;
+
+        if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
+            hearingDateStr = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("formdata", "dateForHearing"), String.class);
+        } else {
+            hearingDateStr = extractHearingDateFromCompositeItemAdditionalDetails(order, itemId);
+        }
         Long hearingDateEpoch = hearingDateStr != null ? dateUtil.getEpochFromDateString(hearingDateStr, "yyyy-MM-dd") : null;
 
         return CaseDetails.builder()
@@ -277,7 +284,6 @@ public class TaskCreationService {
             extractOrderTypeFromCompositeItems(order, itemId);
             orderType = order.getOrderType();
         }
-        Object additionalDetails = order.getAdditionalDetails();
 
         switch (orderType) {
             case SUMMONS -> {
@@ -292,7 +298,17 @@ public class TaskCreationService {
             }
             case NOTICE -> {
                 String docSubType = normalizePartyType(partyType);
-                String noticeType = jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeType", "type"), String.class);
+
+                String noticeType;
+
+                if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
+                    Object additionalDetails = order.getAdditionalDetails();
+                    noticeType = jsonUtil.getNestedValue(additionalDetails, List.of("formdata", "noticeType", "type"), String.class);
+                } else {
+                    noticeType = extractNoticeTypeFromCompositeItems(order, itemId);
+                }
+
+
                 return TaskDetails.builder()
                         .noticeDetails(NoticeDetails.builder()
                                 .caseFilingDate(courtCase.getFilingDate())
@@ -307,6 +323,49 @@ public class TaskCreationService {
                 return TaskDetails.builder().build();
             }
         }
+    }
+
+    private ObjectNode extractCompositeItems(Order order, String itemId) {
+
+        if (order.getCompositeItems() != null) {
+            Object compositeOrderItem = order.getCompositeItems();
+            ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
+
+            if (arrayNode != null && !arrayNode.isEmpty()) {
+                for (int i = 0; i < arrayNode.size(); i++) {
+                    ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+                    if (itemNode.has("id")) {
+                        String id = itemNode.get("id").textValue();
+                        if (itemId.equals(id)) {
+                            return itemNode;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private String extractNoticeTypeFromCompositeItems(Order order, String itemId) {
+
+        ObjectNode compositeItem = extractCompositeItems(order, itemId);
+
+        if (compositeItem != null) {
+            return compositeItem.path("orderSchema").path("additionalDetails").path("formdata").path("noticeType").path("type").textValue();
+        }
+
+        return null;
+    }
+
+    private String extractHearingDateFromCompositeItemAdditionalDetails(Order order, String itemId) {
+
+        ObjectNode compositeItem = extractCompositeItems(order, itemId);
+
+        if (compositeItem != null) {
+            return compositeItem.path("orderSchema").path("additionalDetails").path("formdata").path("dateForHearing").textValue();
+        }
+
+        return null;
     }
 
     private void extractOrderTypeFromCompositeItems(Order order, String itemId) {
@@ -353,6 +412,9 @@ public class TaskCreationService {
                 witnessDetails = getWitnessDetails(party.getWitnessDetails(), address);
             }
             for (DeliveryChannel channel : deliveryChannels) {
+                if("EPOST".equalsIgnoreCase(channel.getChannelId())) {
+                    channel.setChannelId("Post");
+                }
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
                         .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
