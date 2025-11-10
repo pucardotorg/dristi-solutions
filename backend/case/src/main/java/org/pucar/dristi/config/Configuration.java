@@ -453,4 +453,18 @@ public class Configuration {
 
 	@Value("${egov.order.search.endpoint}")
 	private String orderSearchEndpoint;
+
+
+	@Value("${app.zone.id}")
+	private String zoneId;
+
+	// inbox config
+	@Value("${egov.inbox.host}")
+	private String inboxHost;
+
+	@Value("${egov.inbox.search.endpoint}")
+	private String indexSearchEndPoint;
+
+	@Value("${open.hearing.topic}")
+	private String openHearingTopic;
 }

@@ -594,6 +594,9 @@
     input {
       margin-bottom: 4px !important;
     }
+    input::placeholder {
+      color: #b1b4b6;
+    }
     .card-label-error {
       word-wrap: break-word !important;
       word-break: break-word !important;

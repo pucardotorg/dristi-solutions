@@ -6,7 +6,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
-
 @Validated
 @Getter
 @Setter
@@ -66,9 +65,6 @@ public class OpenHearing {
     @JsonProperty("caseFilingDate")
     private Long caseFilingDate = null;
 
-    @JsonProperty("serialNumber")
-    private Integer serialNumber = null;
-
     @JsonProperty("statusOrder")
     private Integer statusOrder = null;
 
@@ -77,4 +73,8 @@ public class OpenHearing {
 
     @JsonProperty("hearingDurationInMillis")
     private Long hearingDurationInMillis = null;
+
+    @JsonProperty("serialNumber")
+    private int serialNumber;
+
 }
