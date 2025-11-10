@@ -992,6 +992,7 @@ public class OpenApiService {
                             JsonNode addrDetails = addressNode.path("addressDetails");
                             AddressDetails address = new AddressDetails();
 
+                            address.setId(addressNode.path("id").asText(""));
                             address.setDoorNo(addrDetails.path("doorNo").asText(""));
                             address.setStreet(addrDetails.path("street").asText(""));
                             address.setLandmark(addrDetails.path("landmark").asText(""));
