@@ -23,12 +23,12 @@
                 </http>
                 <format>
                     <label>
-                        <pattern>app=${appName}, environment=${env}, level=%level</pattern>
+                        <pattern>app=${appName}, environment=${env}, level=%level, file=%-50.50class, thread=%thread</pattern>
                         <readMarkers>true</readMarkers>
                     </label>
                     <message>
                         <pattern>
-                            %d{yyyy-MM-dd HH:mm:ss} [%thread] %magenta(%-5level) %green([%-50.50class]) >>> %cyan(%msg)%n
+                            %d{yyyy-MM-dd HH:mm:ss} : %magenta(%-5level) --- %cyan(%msg)
                         </pattern>
                     </message>
                 </format>
