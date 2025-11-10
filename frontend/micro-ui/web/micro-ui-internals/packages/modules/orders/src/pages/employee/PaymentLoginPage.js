@@ -111,7 +111,7 @@ const PaymentLoginPage = () => {
                 {" "}
                 <div className="form-section">
                   <CardLabel>{t(config.label)}</CardLabel>
-                  <div className="text-input-width-size field-container">
+                  <div className="text-input-width-size field-container text-validaion-input">
                     {config?.componentInFront ? (
                       <span className={`citizen-card-input citizen-card-input--front bailbondloginPage ${error ? "error-border" : ""}`}>
                         {config?.componentInFront}
@@ -137,6 +137,7 @@ const PaymentLoginPage = () => {
                       maxlength={config?.validation?.maxLength}
                       minlength={config?.validation?.minLength}
                       style={error ? { borderColor: "#BB2C2F" } : {}}
+                      placeholder={config?.placeholder}
                     />
                   </div>
 

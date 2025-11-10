@@ -135,6 +135,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
                   setAddressErrors({ ...addressErrors, locality: null });
                 }
               }}
+              placeholder={t("CS_TASK_ADDRESS_PLACEHOLDER")}
             />
             {addressErrors.locality && <CardLabelError>{t(addressErrors.locality)}</CardLabelError>}
           </div>
@@ -157,6 +158,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
                   setAddressErrors({ ...addressErrors, city: null });
                 }
               }}
+              placeholder={t("CS_TASK_CITY_PLACEHOLDER")}
             />
             {addressErrors.city && <CardLabelError>{t(addressErrors.city)}</CardLabelError>}
           </div>
@@ -180,6 +182,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
                   setAddressErrors({ ...addressErrors, pincode: null });
                 }
               }}
+              placeholder={t("CS_TASK_PINCODE_PLACEHOLDER")}
             />
             {addressErrors.pincode && <CardLabelError>{t(addressErrors.pincode)}</CardLabelError>}
           </div>
@@ -202,6 +205,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
                   setAddressErrors({ ...addressErrors, district: null });
                 }
               }}
+              placeholder={t("CS_TASK_DISTRICT_PLACEHOLDER")}
             />
           </div>
 
@@ -223,6 +227,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
                   setAddressErrors({ ...addressErrors, state: null });
                 }
               }}
+              placeholder={t("CS_TASK_STATE_PLACEHOLDER")}
             />
             {addressErrors.state && <CardLabelError>{t(addressErrors.state)}</CardLabelError>}
           </div>
