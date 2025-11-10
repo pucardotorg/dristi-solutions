@@ -1027,7 +1027,10 @@ public class OpenApiService {
                 party.setPartyType("Witness");
                 party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
                 party.setEmails(witnessDetail.getEmails().getEmailId());
-                party.setPartyName(witnessDetail.getFirstName() + " " + witnessDetail.getMiddleName() + " " + witnessDetail.getLastName());
+                String name = (witnessDetail.getFirstName()  != null ? witnessDetail.getFirstName()  : "") +
+                        (witnessDetail.getMiddleName() != null ? " " + witnessDetail.getMiddleName() : "") +
+                        (witnessDetail.getLastName() != null ? " " + witnessDetail.getLastName() : "");
+                party.setPartyName(name);
                 party.setUniqueId(witnessDetail.getUniqueId());
 
                 List<AddressDetails> addresses = new ArrayList<>();
