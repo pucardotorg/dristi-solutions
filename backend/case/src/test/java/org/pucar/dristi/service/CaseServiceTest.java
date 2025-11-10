@@ -117,6 +117,9 @@ public class CaseServiceTest {
     @Mock
     private DateUtil dateUtil;
 
+    @Mock
+    private InboxUtil inboxUtil;
+
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -179,7 +182,7 @@ public class CaseServiceTest {
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
         OrderUtil orderUtil = new OrderUtil(null, null, null);
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil );
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
