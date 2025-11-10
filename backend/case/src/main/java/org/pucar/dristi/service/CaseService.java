@@ -2255,14 +2255,20 @@ public class CaseService {
             if(isAccusedAdvocate.get()){
                 if(advocate.getAccused()==null)
                     advocate.setAccused(new ArrayList<>());
-                advocate.getAccused().add(name);
+                if(!advocate.getAccused().contains(name))
+                    advocate.getAccused().add(name);
             }
             else{
                 if(advocate.getComplainant()==null)
                     advocate.setComplainant(new ArrayList<>());
-                advocate.getComplainant().add(name);
+                if(!advocate.getComplainant().contains(name))
+                    advocate.getComplainant().add(name);
             }
-            openHearing.getAdvocate().getIndividualIds().add(individualId);
+            if(!openHearing.getSearchableFields().contains(name)){
+                openHearing.getSearchableFields().add(name);
+            }
+            if(!openHearing.getAdvocate().getIndividualIds().contains(individualId))
+                openHearing.getAdvocate().getIndividualIds().add(individualId);
             producer.push(config.getOpenHearingTopic(), openHearing);
         }
     }
@@ -2276,16 +2282,24 @@ public class CaseService {
             if(isAccusedAdvocate){
                 if(advocate.getAccused()==null)
                     advocate.setAccused(new ArrayList<>());
-                advocate.getAccused().add(name);
+                if(!advocate.getAccused().contains(name))
+                    advocate.getAccused().add(name);
                 advocate.getAccused().removeAll(namesToBeRemoved);
             }
             else{
                 if(advocate.getComplainant()==null)
                     advocate.setComplainant(new ArrayList<>());
-                advocate.getComplainant().add(name);
+                if(!advocate.getComplainant().contains(name))
+                 advocate.getComplainant().add(name);
                 advocate.getComplainant().removeAll(namesToBeRemoved);
             }
-            openHearing.getAdvocate().getIndividualIds().add(individualId);
+            if(!openHearing.getSearchableFields().contains(name)){
+                openHearing.getSearchableFields().add(name);
+            }
+            openHearing.getSearchableFields().removeAll(namesToBeRemoved);
+
+            if(!openHearing.getAdvocate().getIndividualIds().contains(individualId))
+             openHearing.getAdvocate().getIndividualIds().add(individualId);
             producer.push(config.getOpenHearingTopic(), openHearing);
         }
     }
@@ -5664,17 +5678,14 @@ public class CaseService {
 
                 String individualIdOfAdvocate = advocateUtil.getAdvocate(requestInfo, List.of(replacementAdvocateDetails.getAdvocateUuid())).stream().findFirst().orElse(null);
 
-                boolean isAccusedAdvocate = true;
-                if(replacementDetails.getLitigantDetails().getPartyType().contains("complainant")){
-                    isAccusedAdvocate = false;
-                }
+                boolean isAccusedAdvocate = !replacementDetails.getLitigantDetails().getPartyType().contains("complainant");
 
                 List<String> namesToBeRemoved= new ArrayList<>();
                 if (!isAdvocatePartOfCase) {
                     for (int i = 0; i < attendees.size(); i++) {
                         if ((attendees.get(i).getIndividualId() != null) && attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
-                            attendees.remove(i);
                             namesToBeRemoved.add(attendees.get(i).getName());
+                            attendees.remove(i);
                             break;
                         }
                     }
