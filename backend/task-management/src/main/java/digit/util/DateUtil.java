@@ -41,8 +41,7 @@ public class DateUtil {
     public LocalDate getLocalDateFromEpoch(long startTime) {
         return Instant.ofEpochMilli(startTime)
                 .atZone(ZoneId.of(config.getZoneId()))
-                .toLocalDate()
-                .format(DateTimeFormatter.ofPattern(DATE_FORMAT));
+                .toLocalDate();
     }
 
     public Long getEPochFromLocalDate(LocalDate date) {

@@ -23,6 +23,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +120,7 @@ public class Consumer {
         LocalDate feePaidDate = dateUtil.getLocalDateFromEpoch(filingDate);
         for(PartyDetails partyDetail : taskManagement.getPartyDetails()) {
             partyDetail.getDeliveryChannels().forEach(deliveryChannel -> {
-                deliveryChannel.setFeePaidDate(feePaidDate.toString());
+                deliveryChannel.setFeePaidDate(feePaidDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
             });
         }
     }
