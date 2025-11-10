@@ -266,9 +266,9 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         List<Map<String, Object>> partyTypeToUniqueIdList = new ArrayList<>();
         //add parttype to uniqueids in additionaldetails
         for (Map.Entry<String, List<String>> entry : partyTypeToUniqueIdMap.entrySet()) {
-            Map<String, Object> map = new HashMap<>();
             List<String> uniqueIds = entry.getValue();
             for(String uniqueId: uniqueIds) {
+                Map<String, Object> map = new HashMap<>();
                 map.put("partyType", entry.getKey());
                 map.put("uniqueId", uniqueId);
                 partyTypeToUniqueIdList.add(map);
