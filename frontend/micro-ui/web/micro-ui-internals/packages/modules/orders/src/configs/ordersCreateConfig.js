@@ -4609,7 +4609,7 @@ export const configsIssueBailAcceptance = [
       {
         type: "number",
         label: "NO_OF_SURETIES",
-        isMandatory: true,
+        isMandatory: false,
         key: "noOfSureties",
         schemaKeyPath: "orderDetails.noOfSureties",
         populators: {
