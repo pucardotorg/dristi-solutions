@@ -490,7 +490,7 @@ const SmsPaymentPage = () => {
 
   const handleClose = () => {
     // Redirect to some other page or close the modal
-    window.location.replace("https://oncourts.kerala.gov.in");
+    window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
   };
 
   // TODO : need to update successModalData based on different scenarios
