@@ -214,7 +214,7 @@ const GenerateOrdersV2 = () => {
   const [currentOrder, setCurrentOrder] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { orderNumber, filingNumber, openEdit } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -263,6 +263,8 @@ const GenerateOrdersV2 = () => {
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+  // One-time guard to auto-open edit modal when needed
+  const hasAutoOpenedEditRef = useRef(false);
 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
@@ -687,6 +689,57 @@ const GenerateOrdersV2 = () => {
       ? currentOrder?.compositeItems?.some((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL")
       : false;
   }, [currentOrder]);
+
+  // Minimal pre-seed: when opening AddOrderTypeModal for ACCEPT_BAIL, push saved formdata into persisted defaults
+  useEffect(() => {
+    try {
+      if (!showAddOrderModal) return;
+      if ((orderType?.code || "") !== "ACCEPT_BAIL") return;
+
+      const deriveFormData = () => {
+        try {
+          if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+            return { ...(currentOrder?.additionalDetails?.formdata || {}) };
+          }
+          if (Array.isArray(currentOrder?.compositeItems)) {
+            const acceptItem = currentOrder?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
+            return { ...(acceptItem?.orderSchema?.additionalDetails?.formdata || {}) };
+          }
+          return null;
+        } catch (_) {
+          return null;
+        }
+      };
+
+      const fd = deriveFormData();
+      if (fd && Object.keys(fd).length > 0) {
+        setLatestAcceptBailFormData(fd);
+      }
+    } catch (_) {}
+  }, [showAddOrderModal, orderType?.code, currentOrder]);
+
+  useEffect(() => {
+    try {
+      if (hasAutoOpenedEditRef.current) return;
+      const shouldOpenByParam = typeof openEdit !== "undefined" && ["true", "1", true].includes(openEdit);
+
+      if (shouldOpenByParam) {
+        const typeObj = { code: "ACCEPT_BAIL", name: "ORDER_TYPE_ACCEPT_BAIL" };
+        if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+          handleOrderTypeChange(0, typeObj);
+          hasAutoOpenedEditRef.current = true;
+        } else if (Array.isArray(currentOrder?.compositeItems)) {
+          const idx = currentOrder?.compositeItems?.findIndex((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+          if (idx >= 0) {
+            handleOrderTypeChange(idx, typeObj);
+            hasAutoOpenedEditRef.current = true;
+          }
+        }
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [openEdit, currentOrder]);
 
   const isBailBondFlagSelected = useMemo(() => {
     if (!currentOrder) return false;
@@ -1957,7 +2010,9 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
       if (currentOrderType === "ACCEPT_BAIL") {
-        const alreadySet = updatedFormdata?.bailType && (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
+        const alreadySet =
+          updatedFormdata?.bailType &&
+          (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
         if (!alreadySet) {
           const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
           updatedFormdata.bailType = {
@@ -2363,7 +2418,61 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleAddForm = () => {
-    setAddOrderModal(true);
+    const updatedCompositeItems = (obj) => {
+      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
+      let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+      const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew.length === 0 && obj?.orderType) {
+        compositeItemsNew = [
+          {
+            orderType: obj?.orderType,
+            ...(obj?.orderNumber && {
+              orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+            }),
+            isEnabled: true,
+            displayindex: 0,
+          },
+        ];
+        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
+      }
+
+      return {
+        compositeItems: [
+          ...compositeItemsNew,
+          {
+            orderType: null,
+            isEnabled: true,
+            displayindex: totalEnabled === 0 ? 1 : totalEnabled,
+          },
+        ],
+        orderTitle: orderTitleNew,
+      };
+    };
+    const updatedItems = updatedCompositeItems(currentOrder);
+    setCurrentOrder({
+      ...currentOrder,
+      orderCategory: "COMPOSITE",
+      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
+      compositeItems: updatedItems.compositeItems,
+    });
+
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew?.length === 0) {
+        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
+      }
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
+      }
+    }
   };
 
   const isBailBondCheckboxEnabled = useMemo(() => {
