@@ -1414,7 +1414,9 @@ function EFilingCases({ path }) {
                     modifiedFormComponent.addressLength = resAddressDetailsLength;
                     modifiedFormComponent.disable = false;
                   } else {
-                    modifiedFormComponent.disable = true;
+                    if (modifiedFormComponent?.component === "SelectComponentsMulti") {
+                      modifiedFormComponent.disable = true;
+                    }
                   }
                 } else {
                   // remove disability for new form
