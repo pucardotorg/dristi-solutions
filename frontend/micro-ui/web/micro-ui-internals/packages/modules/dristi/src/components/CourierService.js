@@ -379,6 +379,7 @@ function CourierService({
                 <TextInput
                   className="field desktop-w-full"
                   value={newAddress.locality || ""}
+                  placeholder={t("CS_TASK_ADDRESS_PLACEHOLDER")}
                   onChange={(e) => {
                     const value = e.target.value;
                     setNewAddress({ ...newAddress, locality: value });
@@ -397,6 +398,7 @@ function CourierService({
                 <TextInput
                   className="field desktop-w-full"
                   value={newAddress.city || ""}
+                  placeholder={t("CS_TASK_CITY_PLACEHOLDER")}
                   onChange={(e) => {
                     const value = e.target.value;
                     setNewAddress({ ...newAddress, city: value });
@@ -415,6 +417,7 @@ function CourierService({
                 <TextInput
                   className="field desktop-w-full"
                   value={newAddress.pincode || ""}
+                  placeholder={t("CS_TASK_PINCODE_PLACEHOLDER")}
                   maxlength={6}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -434,6 +437,7 @@ function CourierService({
                 <TextInput
                   className="field desktop-w-full"
                   value={newAddress.district || ""}
+                  placeholder={t("CS_TASK_DISTRICT_PLACEHOLDER")}
                   onChange={(e) => {
                     const value = e.target.value;
                     setNewAddress({ ...newAddress, district: value });
@@ -452,6 +456,7 @@ function CourierService({
                 <TextInput
                   className="field desktop-w-full"
                   value={newAddress.state || ""}
+                  placeholder={t("CS_TASK_STATE_PLACEHOLDER")}
                   onChange={(e) => {
                     const value = e.target.value;
                     setNewAddress({ ...newAddress, state: value });

@@ -22,7 +22,6 @@ import HomeScheduleHearing from "./HomeScheduleHearing";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { TaskManagementWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { createOrUpdateTask, getSuffixByBusinessCode } from "../../utils";
 
 const sectionsParentStyle = {
@@ -349,7 +348,6 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
-        status: TaskManagementWorkflowState.PENDING_PAYMENT,
         tenantId: tenantId,
       },
     },
@@ -424,7 +422,7 @@ const MainHomeScreen = () => {
           const orderType = orderDetails?.orderType;
 
           let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-          if (Array.isArray(uniqueIdsList) && uniqueIdsList.length > 0) {
+          if (Array?.isArray(uniqueIdsList) && uniqueIdsList?.length > 0) {
             parties = parties?.filter((party) => {
               return uniqueIdsList?.some((uid) => {
                 const uniqueIdValues = Object?.entries(uid)
@@ -569,7 +567,7 @@ const MainHomeScreen = () => {
         setIsProcessLoader(false);
       }
     },
-    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, suffix]
+    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, suffix, history, t]
   );
 
   const handleCourierServiceChange = useCallback((value, type, index) => {
@@ -761,9 +759,6 @@ const MainHomeScreen = () => {
   if (hasViewRegisterUserAccess) {
     options.REGISTER_USERS = { name: "HOME_REGISTER_USERS" };
   }
-  if (hasViewCollectOfflinePaymentsAccess) {
-    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
-  }
   if (hasViewScrutinyCasesAccess) {
     options.SCRUTINISE_CASES = { name: "HOME_SCRUTINISE_CASES" };
   }
@@ -778,6 +773,9 @@ const MainHomeScreen = () => {
   }
   if (hasViewProcessManagementAccess) {
     options.NOTICE_SUMMONS_MANAGEMENT = { name: "HOME_NOTICE_SUMMONS_MANAGEMENT" };
+  }
+  if (hasViewCollectOfflinePaymentsAccess) {
+    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
 
   // VIEW_APPLICATION: {

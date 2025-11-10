@@ -16,9 +16,8 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { createOrUpdateTask } from "../utils";
+import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
-import { TaskManagementWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -63,6 +62,7 @@ const TasksComponent = ({
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const hasSignOrderAccess = userInfo?.roles?.some((role) => role.code === "ORDER_ESIGN");
+  const hasProcessManagementEditorAccess = userInfo?.roles?.some((role) => role.code === "PROCESS_MANAGEMENT_EDITOR");
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [showCourierServiceModal, setShowCourierServiceModal] = useState(false);
@@ -147,7 +147,6 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
-        status: TaskManagementWorkflowState.PENDING_PAYMENT,
         tenantId: tenantId,
       },
     },
@@ -159,6 +158,19 @@ const TasksComponent = ({
   const taskManagementList = useMemo(() => {
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
+
+  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "paymentType" }],
+    {
+      select: (data) => {
+        return data?.payment?.paymentType || [];
+      },
+    }
+  );
+
+  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-management-payment"), [paymentTypeData]);
 
   useEffect(() => {
     refetch();
@@ -344,7 +356,7 @@ const TasksComponent = ({
     fetchOrderDetails();
   }, [courierServicePendingTask, getOrderDetail, taskManagementList]);
 
-  const handleProcessCourierOnSubmit = async (courierData) => {
+  const handleProcessCourierOnSubmit = async (courierData, isLast) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -361,7 +373,23 @@ const TasksComponent = ({
         tenantId,
       });
       await refetchTaskManagement();
-      return { continue: true };
+      if (isLast && hasProcessManagementEditorAccess) {
+        const paymentPayload = {
+          offlinePaymentTask: {
+            tenantId,
+            status: "ACTIVE",
+            filingNumber: courierOrderDetails?.filingNumber,
+            consumerCode: existingTask?.taskManagementNumber + `_${suffix}`,
+          },
+        };
+        await DRISTIService.createOfflinePaymentService(paymentPayload, {});
+        setShowCourierServiceModal(false);
+        setHideCancelButton(false);
+        setCourierServicePendingTask(null);
+        setCourierOrderDetails({});
+      } else {
+        return { continue: true };
+      }
     } catch (error) {
       console.error("Error creating or updating task:", error);
       return { continue: false };
@@ -968,8 +996,12 @@ const TasksComponent = ({
   };
 
   const courierServiceSteps = useMemo(() => {
+    const parties = courierOrderDetails?.additionalDetails?.formdata?.[formDataKeyMap[courierOrderDetails?.orderType]]?.party || [];
+
     const courierServiceSteps =
-      courierOrderDetails?.additionalDetails?.formdata?.[formDataKeyMap[courierOrderDetails?.orderType]]?.party?.map((item, i) => {
+      parties?.map((item, i) => {
+        const isLast = i === parties.length - 1;
+
         const courierData = {
           index: i,
           firstName: item?.data?.firstName || "",
@@ -992,6 +1024,7 @@ const TasksComponent = ({
           className: "process-courier-service",
           async: true,
           hideCancel: i === 0,
+          actionSaveLabel: isLast && hasProcessManagementEditorAccess ? t("CS_COURIER_CONFIRM") : t("CS_COURIER_NEXT"),
           heading: { label: `${t("CS_TAKE_STEPS")} - ${t(courierOrderDetails?.orderType)} for ${fullName}` },
           modalBody: (
             <CourierService
@@ -1009,7 +1042,7 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData);
+            return await handleProcessCourierOnSubmit(courierData, isLast);
           },
           isDisabled:
             isTaskManagementLoading ||
@@ -1018,7 +1051,17 @@ const TasksComponent = ({
         };
       }) || [];
     return courierServiceSteps;
-  }, [courierOrderDetails, handleAddressSelection, handleCourierServiceChange, handleAddAddress, t, active, isTaskManagementLoading, isLoader]);
+  }, [
+    courierOrderDetails,
+    handleAddressSelection,
+    handleCourierServiceChange,
+    handleAddAddress,
+    t,
+    active,
+    isTaskManagementLoading,
+    isLoader,
+    hasProcessManagementEditorAccess,
+  ]);
 
   // Courier service modal configuration
   const courierServiceConfig = useMemo(() => {
@@ -1034,29 +1077,34 @@ const TasksComponent = ({
       actionCancelLabel: t("CS_COURIER_GO_BACK"),
       steps: [
         ...courierServiceSteps,
-        {
-          type: "payment",
-          hideSubmit: true,
-          isStatus: false,
-          hideModalActionbar: hideCancelButton,
-          heading: { label: t("CS_TASK_PENDING_PAYMENT") },
-          className: "courier-payment",
-          closeBtnStyle: { paddingRight: "0px" },
-          modalBody: (
-            <NoticeSummonPaymentModal
-              setHideCancelButton={setHideCancelButton}
-              formDataKey={formDataKeyMap[courierOrderDetails?.orderType]}
-              taskManagementList={taskManagementList}
-              courierOrderDetails={courierOrderDetails}
-              refetchPendingTasks={refetch}
-              setShowCourierServiceModal={setShowCourierServiceModal}
-              setCourierServicePendingTask={setCourierServicePendingTask}
-            />
-          ),
-        },
+        ...(!hasProcessManagementEditorAccess
+          ? [
+              {
+                type: "payment",
+                hideSubmit: true,
+                isStatus: false,
+                hideModalActionbar: hideCancelButton,
+                heading: { label: t("CS_TASK_PENDING_PAYMENT") },
+                className: "courier-payment",
+                closeBtnStyle: { paddingRight: "0px" },
+                modalBody: (
+                  <NoticeSummonPaymentModal
+                    suffix={suffix}
+                    setHideCancelButton={setHideCancelButton}
+                    formDataKey={formDataKeyMap[courierOrderDetails?.orderType]}
+                    taskManagementList={taskManagementList}
+                    courierOrderDetails={courierOrderDetails}
+                    refetchPendingTasks={refetch}
+                    setShowCourierServiceModal={setShowCourierServiceModal}
+                    setCourierServicePendingTask={setCourierServicePendingTask}
+                  />
+                ),
+              },
+            ]
+          : []),
       ],
     };
-  }, [courierServiceSteps, t, taskManagementList, courierOrderDetails, formDataKeyMap, hideCancelButton]);
+  }, [courierServiceSteps, t, taskManagementList, courierOrderDetails, hideCancelButton, hasProcessManagementEditorAccess, refetch, suffix]);
 
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
@@ -1100,7 +1148,7 @@ const TasksComponent = ({
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}
-        {isLoading || isOptionsLoading ? (
+        {isLoading || isOptionsLoading || isPaymentTypeLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
