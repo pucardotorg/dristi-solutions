@@ -532,8 +532,9 @@ public class InboxServiceV2 {
         putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            List<Data> unfiltered = getDataFromSimpleSearch(searchRequest, config.getIndex());
-            criteria.setTotalCount(unfiltered.size());
+            // Get total count without pagination for unfiltered results
+            Integer unfilteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfilteredTotalCount);
         }
 
         // Optional fields
@@ -542,13 +543,15 @@ public class InboxServiceV2 {
         putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
         putOrRemove(searchCriteria, "substage", criteria.getSubstage());
 
-        // Final filtered search
-        List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex());
-        criteria.setCount(filtered.size());
+        // Get total count without pagination for filtered results
+        Integer filteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        criteria.setCount(filteredTotalCount);
 
         if (criteria.getIsOnlyCountRequired()) {
-            criteria.setTotalCount(filtered.size());
+            criteria.setTotalCount(filteredTotalCount);
         } else {
+            // Get paginated data for filtered results
+            List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex());
             criteria.setData(filtered);
         }
 
@@ -567,6 +570,19 @@ public class InboxServiceV2 {
         }
     }
 
+
+    private Integer getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE, false);
+        StringBuilder uri = getURI(index, COUNT_PATH);
+        Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        Integer totalCount = 0;
+        if (response.containsKey(COUNT_CONSTANT)) {
+            totalCount = (Integer) response.get(COUNT_CONSTANT);
+        } else {
+            throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
+        }
+        return totalCount;
+    }
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
