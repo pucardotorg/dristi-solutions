@@ -396,7 +396,7 @@ public class InboxServiceV2 {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
         }
         if (indexSearchCriteria.getSearchNoticeAndSummons() != null) {
-            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
+            populateActionCategoryDataWithoutGrouping(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
         }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
@@ -513,6 +513,43 @@ public class InboxServiceV2 {
             criteria.setTotalCount(filtered.getTotalSize());
         } else {
             criteria.setData(filtered.getRecords());
+        }
+
+        setter.accept(criteria);
+    }
+
+    private void populateActionCategoryDataWithoutGrouping(SearchRequest searchRequest,
+                                                           Criteria criteria,
+                                                           InboxQueryConfiguration config,
+                                                           Consumer<Criteria> setter) {
+
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            List<Data> unfiltered = getDataFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfiltered.size());
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Final filtered search
+        List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex());
+        criteria.setCount(filtered.size());
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filtered.size());
+        } else {
+            criteria.setData(filtered);
         }
 
         setter.accept(criteria);
