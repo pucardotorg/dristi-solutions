@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
     <!-- Load Spring Boot properties -->
     <springProperty scope="context" name="lokiEnabled" source="logging.loki.enabled" defaultValue="false"/>
     <springProperty scope="context" name="lokiUrl" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
@@ -18,20 +18,26 @@
     <if condition='property("lokiEnabled").equalsIgnoreCase("true")'>
         <then>
             <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+                <labels>
+                    app=${appName}
+                    environment=${env}
+                    host=${HOSTNAME}
+                    level=%level
+                    file=%-50.50class
+                </labels>
+                <structuredMetadata>
+                    level=%level
+                    thread=%thread
+                    logger=%logger
+                    *=%%mdc
+                    *=%%kvp
+                </structuredMetadata>
+                <message>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+                </message>
                 <http>
                     <url>${lokiUrl}</url>
                 </http>
-                <format>
-                    <label>
-                        <pattern>app=${appName}, environment=${env}, level=%level, file=%-50.50class, thread=%thread</pattern>
-                        <readMarkers>true</readMarkers>
-                    </label>
-                    <message>
-                        <pattern>
-                            %d{yyyy-MM-dd HH:mm:ss} : %magenta(%-5level) --- %cyan(%msg)
-                        </pattern>
-                    </message>
-                </format>
             </appender>
 
             <!-- When Loki enabled: Console + Loki -->
@@ -47,5 +53,4 @@
             </root>
         </else>
     </if>
-
 </configuration>
