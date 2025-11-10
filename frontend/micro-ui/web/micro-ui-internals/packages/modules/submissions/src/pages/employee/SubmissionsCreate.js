@@ -1062,6 +1062,7 @@ const SubmissionsCreate = ({ path }) => {
   const createSubmission = async () => {
     try {
       let documentsList = [];
+      let uploadFileNames = [];
       if (formdata?.listOfProducedDocuments?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.listOfProducedDocuments?.documents];
       }
@@ -1076,28 +1077,47 @@ const SubmissionsCreate = ({ path }) => {
       }
 
       if (applicationType === "REQUEST_FOR_BAIL" && Array.isArray(formdata?.sureties)) {
-        const pushIfFile = (arr, doc) => {
+        const pushIfFile = (arr, doc, displayName) => {
           if (!doc) return;
           const isPreUploaded = doc?.fileStore || doc?.fileStoreId || doc?.file?.files?.[0]?.fileStoreId;
           const isRawFile = (typeof File !== "undefined" && doc instanceof File) || (doc?.size && doc?.type);
           if (isPreUploaded || isRawFile) {
-            arr.push(doc);
+            if (isRawFile) {
+              try {
+                Object.assign(doc, { name: displayName || doc?.name });
+              } catch (e) {}
+              arr.push(doc);
+            } else {
+              const displayFileName = displayName || doc?.name;
+              const withName = {
+                ...(doc || {}),
+                name: displayFileName,
+                filename: displayFileName,
+                additionalDetails: { ...(doc?.additionalDetails || {}), name: displayFileName },
+              };
+              arr.push(withName);
+            }
+            uploadFileNames.push(displayName || doc?.name);
           }
         };
-        formdata.sureties.forEach((s) => {
+        formdata.sureties.forEach((s, sIdx) => {
           const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
           const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
           const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
 
-          if (Array.isArray(identityDocs)) identityDocs.forEach((d) => pushIfFile(documentsList, d));
-          if (Array.isArray(solvencyDocs)) solvencyDocs.forEach((d) => pushIfFile(documentsList, d));
-          if (Array.isArray(otherDocs)) otherDocs.forEach((d) => pushIfFile(documentsList, d));
+          if (Array.isArray(identityDocs))
+            identityDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Identity Proof"}.pdf`));
+          if (Array.isArray(solvencyDocs))
+            solvencyDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Proof of Solvency"}.pdf`));
+          if (Array.isArray(otherDocs))
+            otherDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Other Documents"}.pdf`));
         });
       }
       const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
         ? formdata?.supportingDocuments?.map((supportDocs) => ({
             fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
             fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+            name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
             additionalDetails: {
               ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
               documentType: supportDocs?.documentType?.code,
@@ -1107,6 +1127,7 @@ const SubmissionsCreate = ({ path }) => {
         : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
             fileType: item?.document?.documentType,
             fileStore: item?.document?.fileStore,
+            name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
             additionalDetails: {
               ...item?.document?.additionalDetails,
               documentType: item?.documentType?.code,
@@ -1114,7 +1135,7 @@ const SubmissionsCreate = ({ path }) => {
             },
           })) || [];
 
-      const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
+      const documentres = (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name)))) || [];
       let documents = [];
       let file = null;
       let evidenceReqBody = {};
@@ -1122,12 +1143,14 @@ const SubmissionsCreate = ({ path }) => {
 
       // evidence we are creating after create application (each evidenece need application Number)
       uploadedDocumentList.forEach((res, index) => {
+        const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
         file = {
           documentType: res?.fileType,
           fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
           documentOrder: index,
+          fileName: resolvedName,
           additionalDetails: {
-            name: res?.filename || res?.additionalDetails?.name,
+            name: resolvedName,
             documentType: res?.additionalDetails?.documentType,
             documentTitle: res?.additionalDetails?.documentTitle,
           },

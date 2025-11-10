@@ -121,21 +121,44 @@ const applicationBailBond = async (
 
     const applicationDocuments =
       application?.applicationDetails?.applicationDocuments || [];
-    const documentList =
-      applicationDocuments?.length > 0
-        ? applicationDocuments.map((item) => ({
-            ...item,
-            documentType:
-              messagesMap?.[item?.documentType] || item?.documentType,
-          }))
-        : [{ documentType: "" }];
+    const otherDocs = applicationDocuments.filter(
+      (d) => (d?.documentType || "").toUpperCase() === "OTHER_DOCUMENTS"
+    );
+    const otherDocsCount = otherDocs.length;
+    const nonOtherDocs = applicationDocuments.filter(
+      (d) => (d?.documentType || "").toUpperCase() !== "OTHER_DOCUMENTS"
+    );
+
+    const mappedDocs = nonOtherDocs.map((item) => {
+      const type = (item?.documentType || "").toUpperCase();
+      const displayTitle = item?.documentTitle || item?.filename || item?.name || "";
+      if (type === "IDENTITY_PROOF" || type === "PROOF_OF_SOLVENCY") {
+        return {
+          ...item,
+          documentType: displayTitle || messagesMap?.[item?.documentType] || item?.documentType,
+        };
+      }
+      return {
+        ...item,
+        documentType: messagesMap?.[item?.documentType] || item?.documentType,
+      };
+    });
+
+    const documentList = (() => {
+      if (!applicationDocuments?.length) return [{ documentType: "" }];
+      const base = [...mappedDocs];
+      if (otherDocsCount > 0) {
+        base.push({ documentType: `${otherDocsCount} other documents` });
+      }
+      return base;
+    })();
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalInformation || ""
     );
     const reasonForApplication = htmlToFormattedText(
       application?.applicationDetails?.reasonForApplicationOfBail || ""
     );
-    const prayer = application?.applicationDetails?.prayer;
+    const prayer = htmlToFormattedText(application?.applicationDetails?.prayer);
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
