@@ -95,39 +95,8 @@ public class CaseService {
 
     private void processAndUpdateExtraParties(CourtCase courtCase) {
         try {
-            List<PartyDetails> extraParties = new ArrayList<>();
-
-            // Fetch extra complainants (non-primary)
-            List<PartyDetails> extraComplainants = caseEnrichment.enrichExtraPartyDetails(courtCase, COMPLAINANT_PRIMARY);
-            if (extraComplainants != null && !extraComplainants.isEmpty()) {
-                extraParties.addAll(extraComplainants);
-                log.debug("Added {} extra complainant parties", extraComplainants.size());
-            }
-
-            List<PartyDetails> extraWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, COMPLAINANT_PRIMARY);
-            if (extraWitnesses != null && !extraWitnesses.isEmpty()) {
-                extraParties.addAll(extraWitnesses);
-                log.debug("Added {} extra witness parties", extraWitnesses.size());
-            }
-
-            // Fetch extra respondents (non-primary)
-            List<PartyDetails> extraRespondents = caseEnrichment.enrichExtraPartyDetails(courtCase, RESPONDENT_PRIMARY);
-            if (extraRespondents != null && !extraRespondents.isEmpty()) {
-                extraParties.addAll(extraRespondents);
-                log.debug("Added {} extra respondent parties", extraRespondents.size());
-            }
-            List<PartyDetails> extraRespondentWitnesses = caseEnrichment.enrichWitnessDetails(courtCase, RESPONDENT_PRIMARY);
-            if (extraRespondentWitnesses != null && !extraRespondentWitnesses.isEmpty()) {
-                extraParties.addAll(extraRespondentWitnesses);
-                log.debug("Added {} extra respondent witness parties", extraRespondentWitnesses.size());
-            }
-            // Handle or persist the combined list
-            if (!extraParties.isEmpty()) {
-                producer.push("save-extra-parties", extraParties);
-                log.info("Processed total {} extra parties for case {}", extraParties.size(), courtCase.getCnrNumber());
-            } else {
-                log.info("No extra parties found for case {}", courtCase.getCnrNumber());
-            }
+            List<PartyDetails> extraComplainants = caseEnrichment.enrichComplainantExtraParties(courtCase);
+            List<PartyDetails> extraRespondents = caseEnrichment.enrichRespondentExtraParties(courtCase);
         } catch (Exception e) {
             log.error("Error processing extra parties for case {} with message {}", courtCase.getCnrNumber(), e.getMessage());
         }
