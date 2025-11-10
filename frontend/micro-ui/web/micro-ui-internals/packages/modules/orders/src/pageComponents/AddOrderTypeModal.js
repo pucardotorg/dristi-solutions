@@ -263,9 +263,22 @@ const AddOrderTypeModal = ({
       })();
 
       if (isSurety) {
-        if (formData?.noOfSureties < 0 && !Object.keys(formState?.errors).includes("noOfSureties")) {
+        const suretiesNum = Number(formData?.noOfSureties);
+        const hasNoOfSuretiesError = Object.keys(formState?.errors).includes("noOfSureties");
+        if (
+          formState?.submitCount &&
+          !formData?.noOfSureties &&
+          !hasNoOfSuretiesError
+        ) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        } else if (
+          formState?.submitCount &&
+          Number.isFinite(suretiesNum) &&
+          suretiesNum <= 0 &&
+          !hasNoOfSuretiesError
+        ) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
-        } else if (formData?.noOfSureties > 0 && Object.keys(formState?.errors).includes("noOfSureties")) {
+        } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && hasNoOfSuretiesError) {
           clearFormErrors?.current?.[index]?.("noOfSureties");
         }
       } else {
