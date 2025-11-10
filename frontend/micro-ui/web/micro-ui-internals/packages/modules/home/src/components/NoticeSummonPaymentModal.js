@@ -151,7 +151,7 @@ function NoticeSummonPaymentModal({
       setIsLoading(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
         setIsCaseLocked(true);
         return;
       }
@@ -164,7 +164,7 @@ function NoticeSummonPaymentModal({
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
         return;
       }
       await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
