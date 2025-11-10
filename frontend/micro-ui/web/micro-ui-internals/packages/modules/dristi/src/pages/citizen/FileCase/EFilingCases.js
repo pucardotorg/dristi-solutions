@@ -599,13 +599,19 @@ function EFilingCases({ path }) {
         }
       }
 
-      if (isDraftInProgress || isCaseReAssigned) {
+      if (isDraftInProgress) {
         setFieldsRemaining(fieldsRemainingCopy);
+      } else if (isCaseReAssigned) {
+        let updatedFields = [...fieldsRemainingCopy];
+        if ((judgeObj && Object?.keys(judgeObj)?.length > 0) || (scrutinyObj && Object?.keys(scrutinyObj)?.length > 0)) {
+          updatedFields = updatedFields?.filter((field) => field?.selectedPage !== "processCourierService");
+        }
+        setFieldsRemaining(updatedFields);
       } else {
         setFieldsRemaining([{ mandatoryTotalCount: 0, optionalTotalCount: 0 }]);
       }
     }
-  }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress]);
+  }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress, judgeObj, scrutinyObj, selected]);
 
   useEffect(() => {
     const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
@@ -2149,7 +2155,11 @@ function EFilingCases({ path }) {
         return;
       }
     }
-    if (selected === "processCourierService") {
+    if (
+      selected === "processCourierService" &&
+      !(scrutinyObj && Object?.keys(scrutinyObj)?.length > 0) &&
+      !(judgeObj && Object?.keys(judgeObj)?.length > 0)
+    ) {
       const processCourierErrors = getProcessCourierRemainingFields(formdata, t);
       if (processCourierErrors?.length > 0) {
         setShowErrorDataModal({ page: "processCourierService", show: true, errorData: processCourierErrors });
