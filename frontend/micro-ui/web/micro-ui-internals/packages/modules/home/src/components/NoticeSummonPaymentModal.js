@@ -4,7 +4,6 @@ import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/To
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
-import { getSuffixByBusinessCode } from "../utils";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import { InfoCard } from "@egovernments/digit-ui-components";
@@ -12,6 +11,7 @@ import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgInd
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
 function NoticeSummonPaymentModal({
+  suffix,
   setHideCancelButton,
   formDataKey,
   taskManagementList,
@@ -65,19 +65,6 @@ function NoticeSummonPaymentModal({
     });
     return Object.entries(channelMap).map(([code, names]) => `${t(code)} (${names?.join(", ")})`);
   }, [t, taskManagement]);
-
-  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "paymentType" }],
-    {
-      select: (data) => {
-        return data?.payment?.paymentType || [];
-      },
-    }
-  );
-
-  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-management-payment"), [paymentTypeData]);
 
   useEffect(() => {
     const fetchCalculation = async () => {
@@ -233,7 +220,7 @@ function NoticeSummonPaymentModal({
     }, duration);
   };
 
-  if (isLoading || isPaymentTypeLoading) {
+  if (isLoading) {
     return (
       <div className="task-payment-loader">
         <Loader />
@@ -248,7 +235,7 @@ function NoticeSummonPaymentModal({
         label={t("CS_IMPORTANT_INFORMATION")}
         additionalElements={[
           <div className="info-card-content">
-            <ul>
+            <ul style={{ width: "100%" }}>
               <li>
                 <span>{t("CS_TASK_ISSUED_TO")}: </span>
                 <span>{accusedNameList}</span>
