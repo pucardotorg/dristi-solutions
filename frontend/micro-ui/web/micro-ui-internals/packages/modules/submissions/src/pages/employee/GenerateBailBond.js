@@ -1206,20 +1206,25 @@ const GenerateBailBond = () => {
       const fields = Array.isArray(latest?.fields) ? latest.fields : [];
       const getField = (k) => fields.find((f) => f.key === k)?.value;
       const additionalDetailsObj = getField("additionalDetails") || {};
-      const bailTypeRaw =
+      const rawBailType =
         getField("additionalDetails.bailType") ||
         additionalDetailsObj?.bailType?.code ||
+        additionalDetailsObj?.bailType?.type ||
         additionalDetailsObj?.bailType ||
         getField("bailType") ||
         getField("bailTypeCode") ||
         getField("bail_type");
-      const addSuretyPending = getField("additionalDetails.addSurety") || additionalDetailsObj?.addSurety || getField("addSurety");
+      const bailTypeRaw = typeof rawBailType === "object" && rawBailType !== null ? rawBailType.code || rawBailType.type : rawBailType;
+      const rawAddSurety = getField("additionalDetails.addSurety") || additionalDetailsObj?.addSurety || getField("addSurety");
+      const addSuretyPending = typeof rawAddSurety === "object" && rawAddSurety !== null ? rawAddSurety.code || rawAddSurety.value : rawAddSurety;
       const fatherName = getField("additionalDetails.litigantFatherName") || additionalDetailsObj?.litigantFatherName;
       const refApplicationId = getField("additionalDetails.refApplicationId") || additionalDetailsObj?.refApplicationId;
       const noOfSureties = getField("additionalDetails.noOfSureties") || additionalDetailsObj?.noOfSureties;
       const patch = {};
       if (bailTypeRaw || addSuretyPending) {
-        const code = bailTypeRaw ? String(bailTypeRaw).toUpperCase() : String(addSuretyPending).toUpperCase() === "YES" ? "SURETY" : "PERSONAL";
+        const normalizedBailType = bailTypeRaw ? String(bailTypeRaw).trim().toUpperCase() : "";
+        const normalizedAddSurety = addSuretyPending ? String(addSuretyPending).trim().toUpperCase() : "";
+        const code = normalizedBailType ? normalizedBailType : normalizedAddSurety === "YES" ? "SURETY" : "PERSONAL";
         patch.bailType = { code, name: t(code), showSurety: code === "SURETY" };
       }
       if (fatherName) patch.litigantFatherName = fatherName;
