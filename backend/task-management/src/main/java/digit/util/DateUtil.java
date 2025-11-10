@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
+import static digit.config.ServiceConstants.DATE_FORMAT;
+
 @Component
 public class DateUtil {
 
