@@ -239,6 +239,13 @@ public class Configuration {
     @Value("${case.section.and.sub.section}")
     private String caseSectionAndSubSection;
 
+	// task management config
+	@Value("${dristi.task-management.host}")
+	private String taskManagementServiceHost;
+
+	@Value("${dristi.task-management.search.endpoint}")
+	private String taskManagementSearchEndpoint;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
