@@ -57,4 +57,6 @@ public class ServiceConstants {
     public static final String TASK_CREATOR = "TASK_CREATOR";
 
     public static final String INTERMEDIATE = "INTERMEDIATE";
+
+    public static final String DATE_FORMAT="dd-MM-yyyy";
 }

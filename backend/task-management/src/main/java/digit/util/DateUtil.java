@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
+import static digit.config.ServiceConstants.DATE_FORMAT;
+
 @Component
 public class DateUtil {
 
@@ -39,7 +41,8 @@ public class DateUtil {
     public LocalDate getLocalDateFromEpoch(long startTime) {
         return Instant.ofEpochMilli(startTime)
                 .atZone(ZoneId.of(config.getZoneId()))
-                .toLocalDate();
+                .toLocalDate()
+                .format(DateTimeFormatter.ofPattern(DATE_FORMAT));
     }
 
     public Long getEPochFromLocalDate(LocalDate date) {
