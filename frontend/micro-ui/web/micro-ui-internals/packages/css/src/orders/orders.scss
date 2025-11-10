@@ -1968,6 +1968,10 @@
         .text-input {
           .employee-card-input {
             margin-bottom: 0px !important;
+
+            &::placeholder{
+              color: #b1b4b6;
+            }
           }
         }
 
@@ -2094,6 +2098,16 @@
           color: #ffffff;
           margin: 0px !important;
         }
+      }
+    }
+  }
+}
+
+.text-validaion-input{
+  .text-input{
+    .employee-card-input{
+      &::placeholder{
+        color: #b1b4b6;
       }
     }
   }

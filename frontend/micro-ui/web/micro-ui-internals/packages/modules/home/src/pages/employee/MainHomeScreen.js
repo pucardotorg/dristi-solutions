@@ -22,8 +22,8 @@ import HomeScheduleHearing from "./HomeScheduleHearing";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { TaskManagementWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { createOrUpdateTask, getSuffixByBusinessCode } from "../../utils";
+import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -349,7 +349,6 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
-        status: TaskManagementWorkflowState.PENDING_PAYMENT,
         tenantId: tenantId,
       },
     },
@@ -361,6 +360,21 @@ const MainHomeScreen = () => {
   const taskManagementList = useMemo(() => {
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
+
+  const { data: caseData, isLoading: isCaseLoading } = useCaseDetailSearchService(
+    {
+      criteria: {
+        filingNumber: courierServicePendingTask?.filingNumber,
+        tenantId: tenantId,
+      },
+    },
+    {},
+    `case-${courierServicePendingTask?.filingNumber}`,
+    courierServicePendingTask?.filingNumber,
+    Boolean(courierServicePendingTask?.filingNumber)
+  );
+
+  const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
 
   const getOrderDetail = useCallback(
     async (orderNumber) => {
@@ -424,7 +438,7 @@ const MainHomeScreen = () => {
           const orderType = orderDetails?.orderType;
 
           let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-          if (Array.isArray(uniqueIdsList) && uniqueIdsList.length > 0) {
+          if (Array?.isArray(uniqueIdsList) && uniqueIdsList?.length > 0) {
             parties = parties?.filter((party) => {
               return uniqueIdsList?.some((uid) => {
                 const uniqueIdValues = Object?.entries(uid)
@@ -438,19 +452,6 @@ const MainHomeScreen = () => {
             parties?.map((party) => {
               const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
 
-              if (!taskManagement) {
-                return {
-                  ...party,
-                  data: {
-                    ...party.data,
-                    addressDetails: (party?.data?.addressDetails || [])?.map((addr) => ({
-                      ...addr,
-                      checked: true,
-                    })),
-                  },
-                };
-              }
-
               const partyDetails = taskManagement?.partyDetails?.find((lit) => {
                 if (party?.data?.partyType === "Respondent") {
                   return party?.uniqueId === lit?.respondentDetails?.uniqueId;
@@ -459,12 +460,30 @@ const MainHomeScreen = () => {
                 }
               });
 
-              if (!partyDetails) {
+              let caseAddressDetails = [];
+
+              if (party?.data?.partyType === "Witness") {
+                const witness = caseDetails?.witnessDetails?.find((w) => w?.uniqueId === party?.data?.uniqueId);
+                caseAddressDetails = witness?.addressDetails || [];
+              } else if (party?.data?.partyType === "Respondent") {
+                const respondent = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+                  (r) => r?.uniqueId === (party?.data?.uniqueId || party?.uniqueId)
+                );
+                caseAddressDetails = respondent?.data?.addressDetails || [];
+              }
+
+              const existingAddresses = party?.data?.addressDetails || [];
+              const mergedFromCase = [
+                ...existingAddresses,
+                ...caseAddressDetails?.filter((newAddr) => !existingAddresses?.some((old) => old?.id === newAddr?.id)),
+              ];
+
+              if (!taskManagement || !partyDetails) {
                 return {
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: (party?.data?.addressDetails || []).map((addr) => ({
+                    addressDetails: mergedFromCase?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -472,7 +491,7 @@ const MainHomeScreen = () => {
                 };
               }
 
-              const addressDetailsFromItem = party?.data?.addressDetails || [];
+              const addressDetailsFromItem = partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || [];
               const addressDetailsFromParty = partyDetails?.addresses || [];
 
               const mergedAddressDetails = (() => {
@@ -492,6 +511,16 @@ const MainHomeScreen = () => {
                     result?.push({
                       ...partyAddr,
                       checked: true,
+                    });
+                  }
+                });
+
+                caseAddressDetails?.forEach((caseAddr) => {
+                  const exists = result?.some((r) => r?.id === caseAddr?.id);
+                  if (!exists) {
+                    result.push({
+                      ...caseAddr,
+                      checked: false,
                     });
                   }
                 });
@@ -527,7 +556,7 @@ const MainHomeScreen = () => {
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
   const handleProcessCourierOnSubmit = useCallback(
     async (courierData, isLast) => {
@@ -569,7 +598,7 @@ const MainHomeScreen = () => {
         setIsProcessLoader(false);
       }
     },
-    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, suffix]
+    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, suffix, history, t]
   );
 
   const handleCourierServiceChange = useCallback((value, type, index) => {
@@ -653,7 +682,7 @@ const MainHomeScreen = () => {
       const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
 
       const parties = updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-      const partyIndex = parties.findIndex((p) => p?.uniqueId === uniqueId);
+      const partyIndex = parties?.findIndex((p) => (p?.data?.uniqueId || p?.uniqueId) === uniqueId);
 
       if (partyIndex > -1) {
         const updatedParties = [...parties];
@@ -704,7 +733,7 @@ const MainHomeScreen = () => {
           modalBody: (
             <CourierService
               t={t}
-              isLoading={isTaskManagementLoading || isProcessLoader}
+              isLoading={isTaskManagementLoading || isProcessLoader || isCaseLoading}
               processCourierData={courierData}
               handleCourierServiceChange={(value, type) => handleCourierServiceChange(value, type, i)}
               handleAddressSelection={(addressId, isSelected) => handleAddressSelection(addressId, isSelected, i)}
@@ -721,6 +750,7 @@ const MainHomeScreen = () => {
           },
           isDisabled:
             isTaskManagementLoading ||
+            isCaseLoading ||
             isProcessLoader ||
             (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
@@ -735,6 +765,7 @@ const MainHomeScreen = () => {
     active,
     isProcessLoader,
     isTaskManagementLoading,
+    isCaseLoading,
     tenantId,
     suffix,
     taskManagementList,
@@ -761,9 +792,6 @@ const MainHomeScreen = () => {
   if (hasViewRegisterUserAccess) {
     options.REGISTER_USERS = { name: "HOME_REGISTER_USERS" };
   }
-  if (hasViewCollectOfflinePaymentsAccess) {
-    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
-  }
   if (hasViewScrutinyCasesAccess) {
     options.SCRUTINISE_CASES = { name: "HOME_SCRUTINISE_CASES" };
   }
@@ -778,6 +806,9 @@ const MainHomeScreen = () => {
   }
   if (hasViewProcessManagementAccess) {
     options.NOTICE_SUMMONS_MANAGEMENT = { name: "HOME_NOTICE_SUMMONS_MANAGEMENT" };
+  }
+  if (hasViewCollectOfflinePaymentsAccess) {
+    options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
 
   // VIEW_APPLICATION: {
@@ -901,7 +932,15 @@ const MainHomeScreen = () => {
                     }
                   : column;
               })
-              ?.filter((column) => (activeTab !== "OTHERS" ? column?.label !== "APPLICATION_TYPE" : true)),
+              ?.filter((column) => {
+                if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
+                if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
+                  if (column?.label === "STAGE") return false;
+                  if (column?.label === "CS_PROCESS_TYPE") return true;
+                }
+                if (activeTab !== "NOTICE_SUMMONS_MANAGEMENT" && column?.label === "CS_PROCESS_TYPE") return false;
+                return true;
+              }),
           },
         },
       },
@@ -1010,7 +1049,7 @@ const MainHomeScreen = () => {
   return (
     <React.Fragment>
       {" "}
-      {(loader || ((isTaskManagementLoading || orderLoader) && courierServiceSteps?.length === 0) || isPaymentTypeLoading) && (
+      {(loader || ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) || isPaymentTypeLoading) && (
         <div
           style={{
             width: "100vw",
@@ -1132,7 +1171,7 @@ const MainHomeScreen = () => {
           />
         )}
         {courierServicePendingTask && Object?.keys(courierServicePendingTask)?.length > 0 && courierServiceSteps?.length > 0 && (
-          <DocumentModal config={courierServiceConfig} disableCancel={isTaskManagementLoading || isProcessLoader} />
+          <DocumentModal config={courierServiceConfig} disableCancel={isCaseLoading || isTaskManagementLoading || isProcessLoader} />
         )}
       </div>
     </React.Fragment>

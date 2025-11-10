@@ -413,7 +413,9 @@ const SmsPaymentPage = () => {
       setLoader(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("SOMETHING_WENT_WRONG"), 50000);
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        setIsPaymentLocked(true);
+        setStep(4);
         return;
       }
       const caseLockStatus = await openApiService.getPaymentLockStatus(
@@ -426,7 +428,7 @@ const SmsPaymentPage = () => {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsPaymentLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
         return;
       }
       await openApiService.setCaseLock(
@@ -490,7 +492,7 @@ const SmsPaymentPage = () => {
 
   const handleClose = () => {
     // Redirect to some other page or close the modal
-    window.location.replace("https://oncourts.kerala.gov.in");
+    window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
   };
 
   // TODO : need to update successModalData based on different scenarios

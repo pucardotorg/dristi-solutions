@@ -86,7 +86,7 @@
   }
 
   .courier-payment {
-    width: 500px;
+    width: 30%;
     margin: auto;
     height: fit-content;
     h2 {
@@ -117,7 +117,7 @@
 
     .task-payment-loader {
       height: 300px;
-      width: 500px;
+      width: 30%;
       align-content: center;
     }
 
@@ -137,8 +137,12 @@
           gap: 8px;
         }
 
+        .individualElement {
+          width: 100%;
+        }
         .info-card-content {
           color: #3d3c3c;
+          width: 100%;
           ul {
             list-style-type: disc;
             margin-top: 10px;
@@ -255,6 +259,9 @@
   .add-address-modal {
     input {
       margin-bottom: 4px !important;
+    }
+    input::placeholder {
+      color: #b1b4b6;
     }
     .card-label-error {
       word-wrap: break-word !important;
@@ -309,7 +316,7 @@
   }
 
   .courier-payment {
-    width: 500px;
+    width: 30%;
     margin: auto;
     height: fit-content;
     h2 {
@@ -340,7 +347,7 @@
 
     .task-payment-loader {
       height: 300px;
-      width: 500px;
+      width: 30%;
       align-content: center;
     }
 
@@ -360,8 +367,12 @@
           gap: 8px;
         }
 
+        .individualElement {
+          width: 100%;
+        }
         .info-card-content {
           color: #3d3c3c;
+          width: 100%;
           ul {
             list-style-type: disc;
             margin-top: 10px;
@@ -478,6 +489,9 @@
   .add-address-modal {
     input {
       margin-bottom: 4px !important;
+    }
+    input::placeholder {
+      color: #b1b4b6;
     }
     .card-label-error {
       word-wrap: break-word !important;
