@@ -1,5 +1,4 @@
-package org.egov.inbox.web.model.workflow;
-
+package org.pucar.dristi.web.models.inbox;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+
 
 @Data
 @AllArgsConstructor
@@ -35,14 +35,12 @@ public class ProcessInstanceSearchCriteria {
     @JsonProperty("history")
     private Boolean history = false;
 
-    @JsonProperty("isHearingSerialNumberSorting")
-    private Boolean isHearingSerialNumberSorting = false;
-
     @JsonProperty("fromDate")
     private Long fromDate = null;
 
     @JsonProperty("toDate")
     private Long toDate = null;
+
 
     @JsonProperty("offset")
     private Integer offset;
@@ -59,18 +57,8 @@ public class ProcessInstanceSearchCriteria {
 
     @JsonIgnore
     private Boolean isProcessCountCall;
-    
+
     @JsonIgnore
     private Boolean isNearingSlaCount;
-
-
-    public Boolean isNull(){
-        if(this.getBusinessIds()==null && this.getIds()==null && this.getAssignee()==null &&
-                this.getStatus()==null)
-            return true;
-        else return false;
-    }
-
-
 
 }
