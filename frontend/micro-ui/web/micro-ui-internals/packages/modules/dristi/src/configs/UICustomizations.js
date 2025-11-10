@@ -2250,6 +2250,7 @@ export const UICustomizations = {
                 referenceId: result?.referenceId,
                 partyUniqueIds: result?.uniqueIdsList,
                 orderItemId: result?.orderItemId,
+                processType: result?.name?.trim()?.split(" ")?.pop(),
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
