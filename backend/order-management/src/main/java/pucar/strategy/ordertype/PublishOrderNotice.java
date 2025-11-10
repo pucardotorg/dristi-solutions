@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
@@ -233,14 +234,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
         additionalDetails.put("orderItemId", getItemId(order));
-        List<Map<String, Object>> partyTypeToUniqueIdList = new ArrayList<>();
-        //add parttype to uniqueids in additionaldetails
-        for (Map.Entry<String, List<String>> entry : partyTypeToUniqueIdMap.entrySet()) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("partyType", entry.getKey());
-            map.put("uniqueId", entry.getValue());
-            partyTypeToUniqueIdList.add(map);
-        }
+        List<Map<String, Object>> partyTypeToUniqueIdList = getMaps(partyTypeToUniqueIdMap);
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
         try {
 
@@ -349,6 +343,21 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 //        } catch (JsonProcessingException e) {
 //            throw new RuntimeException(e);
 //        }
+    }
+
+    private @NotNull List<Map<String, Object>> getMaps(Map<String, List<String>> partyTypeToUniqueIdMap) {
+        List<Map<String, Object>> partyTypeToUniqueIdList = new ArrayList<>();
+        //add parttype to uniqueids in additionaldetails
+        for (Map.Entry<String, List<String>> entry : partyTypeToUniqueIdMap.entrySet()) {
+            Map<String, Object> map = new HashMap<>();
+            List<String> uniqueIds = entry.getValue();
+            for(String uniqueId: uniqueIds) {
+                map.put("partyType", entry.getKey());
+                map.put("uniqueId", uniqueId);
+                partyTypeToUniqueIdList.add(map);
+            };
+        }
+        return partyTypeToUniqueIdList;
     }
 
     private String getItemId(Order order) {
