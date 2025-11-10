@@ -2248,7 +2248,7 @@ export const UICustomizations = {
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
                 referenceId: result?.referenceId,
-                uniqueIdsList: result?.uniqueIdsList,
+                partyUniqueIds: result?.uniqueIdsList,
                 orderItemId: result?.orderItemId,
               };
             };
