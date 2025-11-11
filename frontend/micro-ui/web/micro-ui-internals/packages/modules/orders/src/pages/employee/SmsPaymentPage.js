@@ -103,7 +103,7 @@ const SmsPaymentPage = () => {
       const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
 
       const partyDetails = taskManagement?.partyDetails?.find((lit) => {
-        if (party?.partyType === "Respondent") {
+        if (party?.partyType === "Respondent" || party?.partyType === "Accused") {
           return party?.uniqueId === lit?.respondentDetails?.uniqueId;
         } else {
           return (party?.data?.uniqueId || party?.uniqueId) === lit?.witnessDetails?.uniqueId;
@@ -258,7 +258,7 @@ const SmsPaymentPage = () => {
       const taskManagement = taskManagementList?.find((task) => task?.taskType === liveCourierData?.orderType);
 
       const partyDetails = taskManagement?.partyDetails?.find((lit) => {
-        if (notice?.partyType === "Respondent") {
+        if (notice?.partyType === "Respondent" || notice?.partyType === "Accused") {
           return notice?.partyUniqueId === lit?.respondentDetails?.uniqueId;
         } else {
           return notice?.partyUniqueId === lit?.witnessDetails?.uniqueId;

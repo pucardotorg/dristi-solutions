@@ -76,7 +76,7 @@ export const prepareTaskPayload = ({
         })),
       };
 
-      if (notice?.partyType === "Respondent") {
+      if (notice?.partyType === "Respondent" || notice?.partyType === "Accused") {
         return {
           ...baseParty,
           respondentDetails: { ...(updatedUserData || {}), uniqueId },
