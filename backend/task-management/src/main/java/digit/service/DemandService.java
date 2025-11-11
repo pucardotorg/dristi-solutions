@@ -120,7 +120,7 @@ public class DemandService {
             return;
         }
 
-        closeOfflinePaymentTask(requestInfo, consumerCode, request.getTaskManagement().getFilingNumber(), tenantId);
+//        closeOfflinePaymentTask(requestInfo, consumerCode, request.getTaskManagement().getFilingNumber(), tenantId);
 
         demandResponse.getDemands().forEach(d -> d.setStatus(Demand.StatusEnum.CANCELLED));
         log.info("Marking {} demands as CANCELLED", demandResponse.getDemands().size());
@@ -151,7 +151,7 @@ public class DemandService {
                     .build();
 
             // Call the offline payment API
-            offlinePaymentUtil.callOfflinePaymentAPI(offlinePaymentTaskRequest);
+//            offlinePaymentUtil.callOfflinePaymentAPI(offlinePaymentTaskRequest);
 
             log.info("Successfully closed offline payment task for consumer code: {}", consumerCode);
         } catch (Exception e) {
