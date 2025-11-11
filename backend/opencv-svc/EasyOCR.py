@@ -4,6 +4,9 @@ import easyocr
 import numpy as np
 import fitz  # PyMuPDF
 import logging
+import asyncpg
+import asyncio
+import json
 
 # ----------------------------
 # Logger Configuration
@@ -19,25 +22,81 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ----------------------------
+# Database Configuration
+# ----------------------------
+DB_CONFIG = {
+    "user": "postgres",
+    "password": "beehyv@123",
+    "database": "pucar-solutions-dev-db",
+    "host": "178.236.185.122",
+    "port": "5432"
+}
+
+# ----------------------------
 # FastAPI App
 # ----------------------------
 app = FastAPI(title="Document Quality Checker API")
-
-# Initialize EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
+
+# ----------------------------
+# Database Setup
+# ----------------------------
+async def init_db():
+    conn = await asyncpg.connect(**DB_CONFIG)
+    await conn.execute("""
+        CREATE TABLE IF NOT EXISTS ocr_data (
+            id SERIAL PRIMARY KEY,
+            tenant_id VARCHAR(64) NOT NULL,
+            filestore_id VARCHAR(128) NOT NULL,
+            case_id VARCHAR(128),
+            filing_number VARCHAR(128),
+            average_confidence NUMERIC(5,2),
+            status VARCHAR(32),
+            message VARCHAR(32),
+            extracted_data JSONB,
+            document_path TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+    """)
+    await conn.close()
+    logger.info("✅ Database and table ready.")
+
+
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+
+
+async def insert_ocr_record(tenant_id, filestore_id, case_id, filing_number, avg_conf, status, message, extracted_json, document_path):
+    try:
+        conn = await asyncpg.connect(**DB_CONFIG)
+        await conn.execute("""
+            INSERT INTO ocr_data (
+                tenant_id, filestore_id, case_id, filing_number, 
+                average_confidence, status, message, extracted_data, document_path
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9)
+        """, tenant_id, filestore_id, case_id, filing_number, avg_conf, status, message, json.dumps(extracted_json), document_path)
+        await conn.close()
+        logger.info(f"✅ OCR data inserted for filestore_id={filestore_id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to insert OCR record: {e}")
+
 
 # ----------------------------
 # Helper Function
 # ----------------------------
-def get_average_confidence_from_image_bytes(image_bytes):
+def get_text_and_confidence(image_bytes):
     """
-    Reads text from image bytes and computes average OCR confidence.
-    Returns 0.0 if no text is detected.
+    Reads text from image bytes and returns:
+    - average_confidence (float)
+    - extracted_json (list of words + confidence)
     """
     results = reader.readtext(image_bytes)
+    words_data = [{"text": res[1], "confidence": res[2]} for res in results]
     scores = [res[2] for res in results]
     avg_conf = float(np.mean(scores)) if scores else 0.0
-    return avg_conf
+    return avg_conf, {"words": words_data}
+
 
 # ----------------------------
 # API Endpoint
@@ -46,82 +105,72 @@ def get_average_confidence_from_image_bytes(image_bytes):
 async def check_document_quality(
     file: UploadFile = File(...),
     tenantId: str = Form(...),
-    filestoreId: str = Form(None),
+    filestoreId: str = Form(...),
+    caseId: str = Form(),
+    filingNumber: str = Form(),
+    documentPath: str = Form(),
     threshold: float = Form(0.5)
 ):
     try:
-        # Read file bytes
         file_bytes = await file.read()
         ext = file.filename.split(".")[-1].lower()
+        avg_conf = 0.0
+        extracted_data = {"words": []}
 
         # ----------------------------
-        # Handle image files
+        # Handle Image
         # ----------------------------
         if ext in ["png", "jpg", "jpeg"]:
-            avg_conf = get_average_confidence_from_image_bytes(file_bytes)
-            logger.info(f"Average confidence for image {file.filename}: {avg_conf:.2f}")
-
-            if avg_conf < threshold:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "tenantId": tenantId,
-                        "filestoreId": filestoreId,
-                        "average_confidence": avg_conf,
-                        "status": "POOR",
-                        "message": "Document quality is below threshold",
-                    },
-                )
+            avg_conf, extracted_data = get_text_and_confidence(file_bytes)
+            logger.info(f"🖼 Image {file.filename} avg_conf={avg_conf:.2f}")
 
         # ----------------------------
-        # Handle PDF files
+        # Handle PDF
         # ----------------------------
         elif ext == "pdf":
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             page_confidences = []
+            all_words = []
 
             for i, page in enumerate(doc, start=1):
-                if i > 3:
-                    break
                 pix = page.get_pixmap(dpi=150)
                 img_bytes = pix.tobytes("png")
-                avg_conf_page = get_average_confidence_from_image_bytes(img_bytes)
+                avg_conf_page, page_data = get_text_and_confidence(img_bytes)
                 page_confidences.append(avg_conf_page)
-                logger.info(f"Page {i} confidence: {avg_conf_page:.2f}")
+                all_words.extend(page_data["words"])
+                logger.info(f"📄 Page {i} confidence: {avg_conf_page:.2f}")
 
-            # Overall average confidence
             avg_conf = float(np.mean(page_confidences)) if page_confidences else 0.0
+            extracted_data = {"words": all_words}
 
-            if avg_conf < threshold:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "tenantId": tenantId,
-                        "filestoreId": filestoreId,
-                        "average_confidence": avg_conf,
-                        "status": "POOR",
-                        "message": "One or more pages are below quality threshold",
-                        "page_confidences": page_confidences
-                    },
-                )
-
-        # ----------------------------
-        # Unsupported file type
-        # ----------------------------
         else:
             raise HTTPException(status_code=400, detail="Unsupported file format")
 
         # ----------------------------
-        # Success Response
+        # Determine status & message
+        # ----------------------------
+        status = "ACCEPTABLE" if avg_conf >= threshold else "POOR"
+        message = "Document passed quality check" if status == "ACCEPTABLE" else "Document quality is below threshold"
+
+        # ----------------------------
+        # Insert into DB
+        # ----------------------------
+        await insert_ocr_record(tenantId, filestoreId, caseId, filingNumber, avg_conf, status, message, extracted_data, documentPath)
+
+        # ----------------------------
+        # Response
         # ----------------------------
         return JSONResponse(
-            status_code=200,
+            status_code=200 if status == "ACCEPTABLE" else 400,
             content={
                 "tenantId": tenantId,
                 "filestoreId": filestoreId,
+                "caseId": caseId,
+                "filingNumber": filingNumber,
+                "documentPath": documentPath,
                 "average_confidence": avg_conf,
-                "status": "ACCEPTABLE",
-                "message": "Document passed quality check",
+                "status": status,
+                "message": message
             }
         )
 
@@ -135,4 +184,5 @@ async def check_document_quality(
 # ----------------------------
 if __name__ == "__main__":
     import uvicorn
+    asyncio.run(init_db())  # ensure DB exists before server starts
     uvicorn.run("EasyOCR:app", host="0.0.0.0", port=8005, reload=False)
