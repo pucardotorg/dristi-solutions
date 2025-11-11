@@ -380,15 +380,6 @@ public class HearingService {
             JsonNode additionalData = objectMapper.readTree(jsonData);
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
             String hearingType = hearingRequest.getHearing().getHearingType();
-            HearingCriteria hearingCriteria = HearingCriteria.builder()
-                    .hearingId(hearingRequest.getHearing().getHearingId())
-                    .build();
-            HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
-                    .criteria(hearingCriteria)
-                    .build();
-            Hearing existingHearing = searchHearing(hearingSearchRequest).get(0);
-            long oldHearingStartTime = existingHearing.getStartTime();
-            long currentHearingStartTime = hearingRequest.getHearing().getStartTime();
             String messageCode = updatedState != null ?
                     getMessageCode(isRescheduled) :
                     null;
@@ -409,7 +400,18 @@ public class HearingService {
             if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
-            String oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
+            String oldHearingDate = null;
+            if(isRescheduled) {
+                HearingCriteria hearingCriteria = HearingCriteria.builder()
+                        .hearingId(hearingRequest.getHearing().getHearingId())
+                        .build();
+                HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                        .criteria(hearingCriteria)
+                        .build();
+                Hearing existingHearing = searchHearing(hearingSearchRequest).get(0);
+                long oldHearingStartTime = existingHearing.getStartTime();
+                oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
+            }
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
