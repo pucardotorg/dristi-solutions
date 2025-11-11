@@ -97,22 +97,21 @@ const SmsPaymentPage = () => {
     if (!orderData) return null;
     const orderDetails = orderData;
     const orderType = orderDetails?.orderType;
-    const formDataKey = formDataKeyMap?.[orderType];
-    const parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
+    const parties = orderData?.partyDetails || [];
 
     const formattedParties = parties?.map((party, index) => {
       const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
 
       const partyDetails = taskManagement?.partyDetails?.find((lit) => {
-        if (party?.data?.partyType === "Respondent") {
+        if (party?.partyType === "Respondent") {
           return party?.uniqueId === lit?.respondentDetails?.uniqueId;
         } else {
-          return party?.data?.uniqueId === lit?.witnessDetails?.uniqueId;
+          return (party?.data?.uniqueId || party?.uniqueId) === lit?.witnessDetails?.uniqueId;
         }
       });
 
       const addressFromOrder =
-        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.data?.addressDetails || [];
+        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.address || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
@@ -147,18 +146,13 @@ const SmsPaymentPage = () => {
 
       return {
         id: index + 1,
-        title: orderType === "SUMMONS" ? t("SUMMONS") : t("NOTICE"),
-        subtitle: `${party?.data?.partyType || "Party"} - ${
-          getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName) || ""
-        }`,
-        firstName: party?.data?.firstName,
-        middleName: party?.data?.middleName,
-        lastName: party?.data?.lastName,
-        // courierOptions,
+        title: orderType?.toLowerCase() === "summons" ? t("SUMMONS") : t("NOTICE"),
+        subtitle: `${party?.partyType || "Party"} - ${party?.partyName || ""}`,
+        partyName: party?.partyName,
         orderType,
         addresses: mergedAddresses,
-        partyUniqueId: party?.data?.uniqueId,
-        partyType: party?.data?.partyType,
+        partyUniqueId: party?.uniqueId,
+        partyType: party?.partyType,
       };
     });
 
