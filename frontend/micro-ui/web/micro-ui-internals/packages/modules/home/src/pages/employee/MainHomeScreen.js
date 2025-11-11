@@ -559,7 +559,7 @@ const MainHomeScreen = () => {
   }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
   const handleProcessCourierOnSubmit = useCallback(
-    async (courierData, isLast) => {
+    async (courierData) => {
       const orderType = courierOrderDetails?.orderType;
       const formDataKey = formDataKeyMap[orderType];
       const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -576,19 +576,6 @@ const MainHomeScreen = () => {
           tenantId,
         });
         await refetchTaskManagement();
-        if (isLast) {
-          const taskManagementDetails = taskManagementList?.find((item) => item?.taskType === courierOrderDetails?.orderType);
-          const paymentPayload = {
-            offlinePaymentTask: {
-              tenantId,
-              status: "ACTIVE",
-              filingNumber: courierOrderDetails?.filingNumber,
-              consumerCode: taskManagementDetails?.taskManagementNumber + `_${suffix}`,
-            },
-          };
-          await DRISTIService.createOfflinePaymentService(paymentPayload, {});
-          history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "NOTICE_SUMMONS_MANAGEMENT" });
-        }
         return { continue: true };
       } catch (error) {
         console.error("Error creating or updating task:", error);
@@ -746,7 +733,7 @@ const MainHomeScreen = () => {
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData, isLast);
+            return await handleProcessCourierOnSubmit(courierData);
           },
           isDisabled:
             isTaskManagementLoading ||

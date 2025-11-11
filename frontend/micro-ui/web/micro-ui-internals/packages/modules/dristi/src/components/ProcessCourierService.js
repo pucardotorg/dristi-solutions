@@ -23,7 +23,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [summonsActive, setSummonsActive] = useState(false);
   const [noticeActive, setNoticeActive] = useState(false);
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(true);
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -105,7 +105,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setSummonsActive={setSummonsActive}
         noticeActive={noticeActive}
         setNoticeActive={setNoticeActive}
-        setChecked={setChecked}
         setShowConfirmationModal={setShowConfirmationModal}
         handleAddAddress={handleAddAddress}
         isDisableAllFields={isDisableAllFields}
@@ -117,16 +116,19 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
             <CloseBtn
               onClick={() => {
                 setShowConfirmationModal(false);
+                setChecked(true);
               }}
             />
           }
           actionCancelLabel={t("CS_SUMMON_CANCEL")}
-          actionCancelOnSubmit={() => setShowConfirmationModal(false)}
+          actionCancelOnSubmit={() => {
+            setShowConfirmationModal(false);
+            setChecked(true);
+          }}
           actionSaveLabel={t("CS_SUMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
             setSummonsActive(true);
             setShowConfirmationModal(false);
-            setChecked(false);
           }}
           isDisabled={!checked}
         >
