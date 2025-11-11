@@ -141,13 +141,38 @@ public class CaseService {
                     .map(AdvocateMapping::getAdvocateId)
                     .toList();
 
-            if (existingAdvocates.isEmpty() && advocateIds.isEmpty()) {
-                log.info("No existing or extra advocates found for party {}", party.getPartyName());
-                continue;
+            if(advocateIds.isEmpty()) {
+                log.info("No advocates present for the party: {}", party.getPartyId());
             }
-
-
-
+            int srNo = existingAdvocates.size()+1;
+            for(String advocateId: advocateIds) {
+                AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
+                boolean advocateExists = false;
+                for(ExtraAdvocateDetails extraAdvocateDetails : existingAdvocates) {
+                    if(extraAdvocateDetails.getAdvCode().equals(advocateDetails.getAdvocateCode())) {
+                        extraAdvocateDetails.setPartyNo(party.getPartyNo());
+                        extraAdvocateDetails.setType(COMPLAINANT_PRIMARY.equals(partyType) ? 1 : 2);
+                        extraAdvocateDetails.setAdvCode(advocateDetails.getAdvocateCode());
+                        extraAdvocateDetails.setAdvName(advocateDetails.getAdvocateName());
+                        extraAdvocateDetails.setPetResName(party.getPartyName());
+                        advocateExists = true;
+                        extraAdvocatesList.add(extraAdvocateDetails);
+                    }
+                }
+                if(!advocateExists) {
+                    ExtraAdvocateDetails extraAdvocateDetails = ExtraAdvocateDetails.builder()
+                            .cino(courtCase.getCnrNumber())
+                            .advCode(advocateDetails.getAdvocateCode())
+                            .advName(advocateDetails.getAdvocateName())
+                            .type(COMPLAINANT_PRIMARY.equals(partyType) ? 1 : 2)
+                            .petResName(party.getPartyName())
+                            .partyNo(party.getPartyNo())
+                            .srNo(srNo)
+                            .build();
+                    srNo++;
+                    extraAdvocatesList.add(extraAdvocateDetails);
+                }
+            }
         }
 
         return extraAdvocatesList;
@@ -185,7 +210,7 @@ public class CaseService {
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
-                .dispNature(courtCase.getOutcome() != null ? getDisposalNature(courtCase.getOutcome()) : null)
+                .dispNature(null) //todo: need to configure for contested and uncontested when provided
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
                 .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
