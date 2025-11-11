@@ -148,13 +148,13 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
         partyAddresses: [
           {
             addresses: [addressObj],
-            partyType: currentSelectedUserNotice?.partyType === "Respondent" ? "Accused" : "Witness",
+            partyType: ["Accused", "Respondent"]?.includes(currentSelectedUserNotice?.partyType) ? "Accused" : "Witness",
             uniqueId: currentSelectedUserNotice?.partyUniqueId,
           },
         ],
       };
       const addressResponse = await openApiService.addAddress(payload, {});
-
+      
       const partyResponse = addressResponse?.partyAddressList?.[0];
       if (!partyResponse) return;
 
