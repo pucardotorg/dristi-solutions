@@ -14,16 +14,27 @@
         </encoder>
     </appender>
 
+    <!-- Filter to suppress Loki4j connection errors -->
+    <logger name="com.github.loki4j.client.pipeline.AsyncBufferPipeline" level="OFF" additivity="false"/>
+    <logger name="com.github.loki4j" level="WARN" additivity="false"/>
+
     <!-- Conditionally define Loki Appender -->
     <if condition='property("lokiEnabled").equalsIgnoreCase("true")'>
         <then>
+            <appender name="LOKI_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+                <appender-ref ref="LOKI"/>
+                <queueSize>1000</queueSize>
+                <discardingThreshold>0</discardingThreshold>
+                <neverBlock>true</neverBlock>
+            </appender>
+
             <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
                 <labels>
                     app=${appName}
                     environment=${env}
                     host=${HOSTNAME}
                     level=%level
-                    file=%-50.50class
+                    file=%logger
                 </labels>
                 <structuredMetadata>
                     level=%level
@@ -33,17 +44,24 @@
                     *=%%kvp
                 </structuredMetadata>
                 <message>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] - %msg%n</pattern>
                 </message>
                 <http>
                     <url>${lokiUrl}</url>
+                    <connectionTimeoutMs>5000</connectionTimeoutMs>
+                    <requestTimeoutMs>3000</requestTimeoutMs>
                 </http>
+                <batch>
+                    <drainOnStop>false</drainOnStop>
+                    <staticLabels>false</staticLabels>
+                </batch>
+                <verbose>false</verbose>
             </appender>
 
-            <!-- When Loki enabled: Console + Loki -->
+            <!-- When Loki enabled: Console + Loki Async -->
             <root level="${logLevel}">
                 <appender-ref ref="CONSOLE"/>
-                <appender-ref ref="LOKI"/>
+                <appender-ref ref="LOKI_ASYNC"/>
             </root>
         </then>
         <else>
