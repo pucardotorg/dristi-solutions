@@ -70,6 +70,14 @@ public class TreasuryPaymentData {
 
     private double epostFee;
 
+    private double delayCondonationFee;
+
+    private double complaintFee;
+
+    private double applicationFee;
+
+    private double petitionFee;
+
     private double totalAmount;
 
     private List<FeeBreakDown> feeBreakDown;
