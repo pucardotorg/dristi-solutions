@@ -36,10 +36,10 @@ public class NjdgConsumer {
             NJDGTransformRecord record = objectMapper.readValue(payload.value().toString(), NJDGTransformRecord.class);
             boolean recordExists = checkIfRecordExists(record.getCino());
             if (recordExists) {
-                log.debug("Updating existing record with CINO: {}", record.getCino());
+                log.info("Updating existing record with CINO: {}", record.getCino());
                 caseRepository.updateRecord(record);
             } else {
-                log.debug("Inserting new record with CINO: {}", record.getCino());
+                log.info("Inserting new record with CINO: {}", record.getCino());
                 caseRepository.insertRecord(record);
             }
             log.info("Message processed successfully. {}", payload);
@@ -136,7 +136,7 @@ public class NjdgConsumer {
                 try {
                     // Update each party in the database
                     caseRepository.updateExtraParties(party);
-                    log.debug("Successfully processed party: {}", party.getPartyName());
+                    log.info("Successfully processed party: {}", party.getPartyName());
                 } catch (Exception e) {
                     log.error("Error processing party {}: {}", party.getPartyName(), e.getMessage());
                 }
@@ -166,6 +166,22 @@ public class NjdgConsumer {
             log.info("Received message on topic: {}", topic);
             Act act = objectMapper.readValue(payload.value().toString(), Act.class);
             caseRepository.insertActDetails(act);
+            log.info("Message processed successfully. Topic: {}", topic);
+        } catch (Exception e) {
+            log.error("Error in processing message:: {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "save-extra-advocate-details")
+    public void listenExtraAdvocateDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received message on topic: {}", topic);
+            List<ExtraAdvocateDetails> extraAdvocateDetails = objectMapper.readValue(payload.value().toString(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, ExtraAdvocateDetails.class));
+            for (ExtraAdvocateDetails extraAdvocateDetail : extraAdvocateDetails) {
+                caseRepository.updateExtraAdvocates(extraAdvocateDetail);
+                log.info("Successfully processed extra advocate: {}", extraAdvocateDetail.getAdvName());
+            }
             log.info("Message processed successfully. Topic: {}", topic);
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage(), e);

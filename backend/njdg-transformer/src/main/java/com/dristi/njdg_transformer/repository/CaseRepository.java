@@ -3,6 +3,7 @@ package com.dristi.njdg_transformer.repository;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.repository.querybuilder.CaseQueryBuilder;
+import com.dristi.njdg_transformer.repository.rowmapper.AdvocateRowMapper;
 import com.dristi.njdg_transformer.repository.rowmapper.NJDGTransformRecordRowMapper;
 import com.dristi.njdg_transformer.repository.rowmapper.PartyRowMapper;
 import lombok.RequiredArgsConstructor;
@@ -99,6 +100,10 @@ public class CaseRepository {
         return jdbcTemplate.query(partyQuery, new Object[]{cino, partyType.toString()}, new int[]{Types.VARCHAR, Types.VARCHAR}, new PartyRowMapper());
     }
 
+    public List<ExtraAdvocateDetails> getExtraAdvocateDetails(String cino, Integer partyType) {
+        String query = queryBuilder.getExtraAdvocateDetailsCountQuery();
+        return jdbcTemplate.query(query, new Object[]{cino, partyType}, new int[]{Types.VARCHAR, Types.INTEGER}, new AdvocateRowMapper());
+    }
     public void updateExtraParties(PartyDetails partyDetails) {
         String updatePartyQuery = queryBuilder.getUpdatePartyQuery();
         jdbcTemplate.update(updatePartyQuery,
@@ -110,7 +115,10 @@ public class CaseRepository {
                         partyDetails.getPartyName(),
                         partyDetails.getPartyAddress(),
                         partyDetails.getPartyAge(),
-                        partyDetails.getPartyId()
+                        partyDetails.getPartyId(),
+                        partyDetails.getAdvCd(),
+                        partyDetails.getAdvName(),
+                        partyDetails.getSrNo()
                 },
                 new int[]{
                         Types.INTEGER,
@@ -120,7 +128,37 @@ public class CaseRepository {
                         Types.VARCHAR,
                         Types.VARCHAR,
                         Types.INTEGER,
-                        Types.VARCHAR
+                        Types.VARCHAR,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.INTEGER
+                }
+        );
+    }
+
+    public void updateExtraAdvocates(ExtraAdvocateDetails extraAdvocate) {
+        String upsertQuery = queryBuilder.getUpsertExtraAdvocateQuery();
+
+        jdbcTemplate.update(upsertQuery,
+                new Object[]{
+                        extraAdvocate.getId(),
+                        extraAdvocate.  getPartyNo(),
+                        extraAdvocate.getCino(),
+                        extraAdvocate.getPetResName(),
+                        extraAdvocate.getType(),
+                        extraAdvocate.getAdvName(),
+                        extraAdvocate.getAdvCode(),
+                        extraAdvocate.getSrNo()
+                },
+                new int[]{
+                        Types.INTEGER,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.VARCHAR,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.BIGINT,
+                        Types.INTEGER
                 }
         );
     }

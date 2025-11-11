@@ -106,7 +106,34 @@ public class CaseQueryBuilder {
     }
 
     public String getUpdatePartyQuery() {
-        return "INSERT INTO extra_parties (id, cino, party_type, party_no, party_name, party_address, party_age, party_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO extra_parties (\n" +
+                "    id, cino, party_type, party_no, party_name, party_address, party_age, party_id, adv_cd, adv_name, sr_no\n" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id) DO UPDATE SET\n" +
+                "    cino = EXCLUDED.cino,\n" +
+                "    party_type = EXCLUDED.party_type,\n" +
+                "    party_no = EXCLUDED.party_no,\n" +
+                "    party_name = EXCLUDED.party_name,\n" +
+                "    party_address = EXCLUDED.party_address,\n" +
+                "    party_age = EXCLUDED.party_age,\n" +
+                "    party_id = EXCLUDED.party_id,\n" +
+                "    adv_cd = EXCLUDED.adv_cd,\n" +
+                "    adv_name = EXCLUDED.adv_name,\n" +
+                "    sr_no = EXCLUDED.sr_no;";
+    }
+
+    public String getUpsertExtraAdvocateQuery() {
+        return "INSERT INTO extra_advocates (" +
+                "id, party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON CONFLICT (id) DO UPDATE SET " +
+                "party_no = EXCLUDED.party_no, " +
+                "cino = EXCLUDED.cino, " +
+                "pet_res_name = EXCLUDED.pet_res_name, " +
+                "type = EXCLUDED.type, " +
+                "adv_name = EXCLUDED.adv_name, " +
+                "adv_code = EXCLUDED.adv_code, " +
+                "sr_no = EXCLUDED.sr_no;";
     }
 
     public String getUpdateQuery() {
@@ -238,5 +265,9 @@ public class CaseQueryBuilder {
 
     public String getDisposalNatureQuery() {
         return "SELECT disp_nature FROM disp_type WHERE court_disp_code = ?";
+    }
+
+    public String getExtraAdvocateDetailsCountQuery() {
+        return "SELECT * FROM extra_advocates WHERE cino = ? AND party_type = ?";
     }
 }

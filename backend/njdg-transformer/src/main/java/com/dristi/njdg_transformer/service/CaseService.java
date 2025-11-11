@@ -3,14 +3,15 @@ package com.dristi.njdg_transformer.service;
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.*;
+import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
-import com.dristi.njdg_transformer.model.cases.WitnessDetails;
 import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderCriteria;
 import com.dristi.njdg_transformer.model.order.OrderListResponse;
 import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.producer.Producer;
+import com.dristi.njdg_transformer.repository.AdvocateRepository;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.repository.OrderRepository;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
@@ -50,6 +52,7 @@ public class CaseService {
     private final OrderRepository orderRepository;
     private final HearingRepository hearingRepository;
     private final OrderUtil orderUtil;
+    private final AdvocateRepository advocateRepository;
 
     public NJDGTransformRecord processAndUpdateCase(CourtCase courtCase, RequestInfo requestInfo) {
         try {
@@ -95,12 +98,68 @@ public class CaseService {
 
     private void processAndUpdateExtraParties(CourtCase courtCase) {
         try {
-            List<PartyDetails> extraComplainants = caseEnrichment.enrichComplainantExtraParties(courtCase);
-            List<PartyDetails> extraRespondents = caseEnrichment.enrichRespondentExtraParties(courtCase);
+            // 1️⃣ Get extra parties
+            List<PartyDetails> extraComplainants = caseEnrichment.getComplainantExtraParties(courtCase);
+            List<PartyDetails> extraRespondents = caseEnrichment.getRespondentExtraParties(courtCase);
+
+            List<PartyDetails> extraParties = new ArrayList<>();
+            extraParties.addAll(extraComplainants);
+            extraParties.addAll(extraRespondents);
+
+            // 2️⃣ Assign serial numbers
+            for (int i = 0; i < extraParties.size(); i++) {
+                extraParties.get(i).setSrNo(i + 1);
+            }
+
+            // 3️⃣ Push extra parties to Kafka
+            if (!extraParties.isEmpty()) {
+                producer.push("save-extra-parties", extraParties);
+            }
+
+            // 4️⃣ Process extra advocates for each extra party
+            List<ExtraAdvocateDetails> extraAdvocatesList = new ArrayList<>();
+            for (PartyDetails extraParty : extraParties) {
+                String individualId = extraParty.getPartyId();
+                if (individualId == null) continue;
+
+                String partyType = extraParty.getPartyType() == PartyType.PET ? COMPLAINANT_PRIMARY : RESPONDENT_PRIMARY;
+
+                // Find all advocates for this extra party
+                List<String> advocateIds = courtCase.getRepresentatives().stream()
+                        .filter(mapping -> mapping.getRepresenting().stream()
+                                .anyMatch(p -> individualId.equalsIgnoreCase(p.getIndividualId())))
+                        .map(AdvocateMapping::getAdvocateId)
+                        .toList();
+
+                int srNo = 1;
+                for (String advId : advocateIds) {
+                    AdvocateDetails advDetails = advocateRepository.getAdvocateDetails(advId);
+                    if (advDetails == null) continue;
+
+                    ExtraAdvocateDetails extraAdv = ExtraAdvocateDetails.builder()
+                            .cino(courtCase.getCnrNumber())
+                            .advCode(advDetails.getAdvocateCode())
+                            .advName(advDetails.getAdvocateName())
+                            .type(COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType) ? 1 : 2)
+                            .petResName(extraParty.getPartyName())
+                            .partyNo(extraParty.getPartyNo())
+                            .srNo(srNo++)
+                            .build();
+
+                    extraAdvocatesList.add(extraAdv);
+                }
+            }
+
+            // 5️⃣ Push extra advocates to Kafka
+            if (!extraAdvocatesList.isEmpty()) {
+                producer.push("save-extra-advocate-details", extraAdvocatesList);
+            }
+
         } catch (Exception e) {
             log.error("Error processing extra parties for case {} with message {}", courtCase.getCnrNumber(), e.getMessage());
         }
     }
+
 
 
     private NJDGTransformRecord convertToNJDGRecord(CourtCase courtCase, RequestInfo requestInfo) {
@@ -311,9 +370,9 @@ public class CaseService {
             return null;
         }
 
-        // Fetch and set interim orders
-        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
-        record.setInterimOrders(interimOrders != null ? interimOrders : new ArrayList<>());
+//        // Fetch and set interim orders
+//        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
+//        record.setInterimOrders(interimOrders != null ? interimOrders : new ArrayList<>());
 
         // Fetch and set complainant parties
         List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);

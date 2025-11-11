@@ -42,4 +42,7 @@ public class PartyDetails {
 
     @JsonProperty("adv_cd")
     private Integer advCd;
+
+    @JsonProperty("sr_no")
+    private Integer srNo;
 }
