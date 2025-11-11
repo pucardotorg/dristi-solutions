@@ -130,13 +130,13 @@ public class TaskCreationService {
                     taskTemplate.setTaskDetails(detail);
                     Role role = Role.builder().code(TASK_CREATOR).name(TASK_CREATOR).tenantId(taskManagement.getTenantId()).build();
                     requestInfo.getUserInfo().getRoles().add(role);
-                    taskUtil.callCreateTask(TaskRequest.builder()
+                    TaskResponse taskResponse = taskUtil.callCreateTask(TaskRequest.builder()
                             .requestInfo(requestInfo)
                             .task(taskTemplate)
                             .build());
                     createdTasks++;
                     log.info("Successfully created task {} of {} for {} party", createdTasks, taskDetailsList.size(), partyType);
-                    createPendingTaskForRPAD(taskTemplate, requestInfo);
+                    createPendingTaskForRPAD(taskResponse.getTask(), requestInfo);
                 } catch (Exception e) {
                     log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
                     // Continue with next task
