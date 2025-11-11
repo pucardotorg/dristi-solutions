@@ -35,6 +35,8 @@
                     host=${HOSTNAME}
                     level=%level
                     file=%logger
+                    tenant_id=%mdc{TENANTID:-null}
+                    correlation_id=%mdc{CORRELATION_ID:-null}
                 </labels>
                 <structuredMetadata>
                     level=%level
