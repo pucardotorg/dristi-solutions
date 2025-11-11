@@ -147,6 +147,7 @@ public class CaseService {
             int srNo = existingAdvocates.size()+1;
             for(String advocateId: advocateIds) {
                 AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
+                if (advocateDetails.getAdvocateCode().equals(party.getAdvCd())) continue;
                 boolean advocateExists = false;
                 for(ExtraAdvocateDetails extraAdvocateDetails : existingAdvocates) {
                     if(extraAdvocateDetails.getAdvCode().equals(advocateDetails.getAdvocateCode())) {

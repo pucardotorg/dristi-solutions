@@ -202,43 +202,43 @@ public class CaseEnrichment {
     private void addExtraAdvocates(CourtCase courtCase, NJDGTransformRecord record, String party,
                                    List<String> advocateIds, String primaryAdvocateId) {
 
-        List<ExtraAdvocateDetails> existingAdvocates = repository.getExtraAdvocateDetails(
-                courtCase.getCnrNumber(),
-                COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2
-        );
-
-        Map<Integer, ExtraAdvocateDetails> existingMap = existingAdvocates.stream()
-                .filter(e -> e.getPartyNo() == 0)
-                .collect(Collectors.toMap(ExtraAdvocateDetails::getAdvCode, e -> e));
+        List<ExtraAdvocateDetails> existingAdvocates = repository
+                .getExtraAdvocateDetails(courtCase.getCnrNumber(), COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2)
+                .stream()
+                .filter(existingAdvocate -> Objects.equals(existingAdvocate.getPartyNo(), 0))
+                .toList();
 
         List<ExtraAdvocateDetails> extraAdvocateDetailsList = new ArrayList<>();
-        int srNo = 1;
+        int srNo = existingAdvocates.size()+1;
 
         for (String advocateId : advocateIds) {
+            if(primaryAdvocateId.equalsIgnoreCase(advocateId)) continue;
             AdvocateDetails advocateDetail = advocateRepository.getAdvocateDetails(advocateId);
-            if (advocateDetail == null || advocateDetail.getAdvocateId().equalsIgnoreCase(primaryAdvocateId)) continue;
-
-            ExtraAdvocateDetails extraDetails = existingMap.getOrDefault(
-                    advocateDetail.getAdvocateCode(),
-                    ExtraAdvocateDetails.builder()
-                            .cino(courtCase.getCnrNumber())
-                            .advCode(advocateDetail.getAdvocateCode())
-                            .advName(advocateDetail.getAdvocateName())
-                            .type(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2)
-                            .petResName(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? record.getPetName() : record.getResName())
-                            .partyNo(0)
-                            .srNo(srNo)
-                            .build()
-            );
-
-            extraDetails.setAdvName(advocateDetail.getAdvocateName());
-            extraDetails.setType(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2);
-            extraDetails.setPetResName(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? record.getPetName() : record.getResName());
-            extraDetails.setPartyNo(0);
-            extraDetails.setSrNo(srNo);
-
-            srNo++;
-            extraAdvocateDetailsList.add(extraDetails);
+            boolean advocateExists = false;
+            for(ExtraAdvocateDetails extraAdvocateDetails : existingAdvocates) {
+                if(extraAdvocateDetails.getAdvCode().equals(advocateDetail.getAdvocateCode())) {
+                    extraAdvocateDetails.setPartyNo(0);
+                    extraAdvocateDetails.setType(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2);
+                    extraAdvocateDetails.setAdvCode(advocateDetail.getAdvocateCode());
+                    extraAdvocateDetails.setAdvName(advocateDetail.getAdvocateName());
+                    extraAdvocateDetails.setPetResName(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? record.getPetName() : record.getResName());
+                    advocateExists = true;
+                    extraAdvocateDetailsList.add(extraAdvocateDetails);
+                }
+            }
+            if(!advocateExists) {
+                ExtraAdvocateDetails extraAdvocateDetails = ExtraAdvocateDetails.builder()
+                        .cino(courtCase.getCnrNumber())
+                        .advCode(advocateDetail.getAdvocateCode())
+                        .advName(advocateDetail.getAdvocateName())
+                        .type(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2)
+                        .petResName(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? record.getPetName() : record.getResName())
+                        .partyNo(0)
+                        .srNo(srNo)
+                        .build();
+                srNo++;
+                extraAdvocateDetailsList.add(extraAdvocateDetails);
+            }
         }
 
         if (!extraAdvocateDetailsList.isEmpty()) {
