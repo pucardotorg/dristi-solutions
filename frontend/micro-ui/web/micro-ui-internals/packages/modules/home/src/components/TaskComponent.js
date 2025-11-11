@@ -387,7 +387,7 @@ const TasksComponent = ({
     fetchOrderDetails();
   }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
-  const handleProcessCourierOnSubmit = async (courierData, isLast) => {
+  const handleProcessCourierOnSubmit = async (courierData) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -404,23 +404,7 @@ const TasksComponent = ({
         tenantId,
       });
       await refetchTaskManagement();
-      if (isLast && hasProcessManagementEditorAccess) {
-        const paymentPayload = {
-          offlinePaymentTask: {
-            tenantId,
-            status: "ACTIVE",
-            filingNumber: courierOrderDetails?.filingNumber,
-            consumerCode: existingTask?.taskManagementNumber + `_${suffix}`,
-          },
-        };
-        await DRISTIService.createOfflinePaymentService(paymentPayload, {});
-        setShowCourierServiceModal(false);
-        setHideCancelButton(false);
-        setCourierServicePendingTask(null);
-        setCourierOrderDetails({});
-      } else {
-        return { continue: true };
-      }
+      return { continue: true };
     } catch (error) {
       console.error("Error creating or updating task:", error);
       return { continue: false };
@@ -1073,7 +1057,7 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData, isLast);
+            return await handleProcessCourierOnSubmit(courierData);
           },
           isDisabled:
             isTaskManagementLoading ||
