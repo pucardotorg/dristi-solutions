@@ -110,7 +110,9 @@ public class CaseRepository {
                         partyDetails.getPartyName(),
                         partyDetails.getPartyAddress(),
                         partyDetails.getPartyAge(),
-                        partyDetails.getPartyId()
+                        partyDetails.getPartyId(),
+                        partyDetails.getAdvCd(),
+                        partyDetails.getAdvName()
                 },
                 new int[]{
                         Types.INTEGER,
@@ -120,9 +122,12 @@ public class CaseRepository {
                         Types.VARCHAR,
                         Types.VARCHAR,
                         Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.INTEGER,
                         Types.VARCHAR
                 }
         );
+
     }
     public void updateRecord(NJDGTransformRecord record) {
         String updateQuery = queryBuilder.getUpdateQuery();

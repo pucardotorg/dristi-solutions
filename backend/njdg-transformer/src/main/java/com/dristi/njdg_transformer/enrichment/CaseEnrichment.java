@@ -307,7 +307,9 @@ public class CaseEnrichment {
                         partyDetailsList.add(partyDetail);
                     }
                 }
+                int index = partyDetails.size();
                 PartyDetails extraPartyDetails = updateExtraPartyDetails(dataNode, new PartyDetails(), courtCase);
+                extraPartyDetails.setPartyNo(index+1);
                 partyDetailsList.add(extraPartyDetails);
             }
             return partyDetailsList;
@@ -356,6 +358,7 @@ public class CaseEnrichment {
         if (completeAddress != null && !completeAddress.isEmpty()) {
             partyDetails.setPartyAddress(completeAddress);
         }
+        partyDetails.setPartyType(PartyType.PET);
         if (individualId != null && !individualId.isEmpty()) {
             partyDetails.setPartyId(individualId);
             AdvocateDetails advocateDetails = getAdvocateDetailsIfExists(courtCase, individualId);
@@ -396,7 +399,9 @@ public class CaseEnrichment {
                         partyDetailsList.add(partyDetail);
                     }
                 }
+                int index = partyDetails.size();
                 PartyDetails extraPartyDetails = updateRespondentExtraPartyDetails(dataNode, new PartyDetails(), courtCase);
+                extraPartyDetails.setPartyNo(index+1);
                 partyDetailsList.add(extraPartyDetails);
             }
             return partyDetailsList;
@@ -453,6 +458,7 @@ public class CaseEnrichment {
         }
 
         partyDetails.setPartyId(uniqueId);
+        partyDetails.setPartyType(PartyType.RES);
         AdvocateDetails advocateDetails = getAdvocateDetailsIfExists(courtCase, uniqueId);
         if(advocateDetails != null) {
             partyDetails.setAdvCd(advocateDetails.getAdvocateCode());

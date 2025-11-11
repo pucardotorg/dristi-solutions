@@ -102,11 +102,32 @@ public class CaseQueryBuilder {
     }
 
     public String getPartyQuery() {
-        return "SELECT party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age, party_id as party_id FROM extra_parties WHERE cino = ? AND party_type = ?";
+        return "SELECT " +
+                "party_name AS party_name, " +
+                "party_no AS party_no, " +
+                "party_address AS party_address, " +
+                "party_age AS party_age, " +
+                "party_id AS party_id, " +
+                "adv_cd AS adv_cd, " +
+                "adv_name AS adv_name " +
+                "FROM extra_parties " +
+                "WHERE cino = ? AND party_type = ?";
     }
 
     public String getUpdatePartyQuery() {
-        return "INSERT INTO extra_parties (id, cino, party_type, party_no, party_name, party_address, party_age, party_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO extra_parties (\n" +
+                "    id, cino, party_type, party_no, party_name, party_address, party_age, party_id, adv_cd, adv_name\n" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n" +
+                "ON CONFLICT (party_id) DO UPDATE SET\n" +
+                "    id = EXCLUDED.id,\n" +
+                "    cino = EXCLUDED.cino,\n" +
+                "    party_type = EXCLUDED.party_type,\n" +
+                "    party_no = EXCLUDED.party_no,\n" +
+                "    party_name = EXCLUDED.party_name,\n" +
+                "    party_address = EXCLUDED.party_address,\n" +
+                "    party_age = EXCLUDED.party_age,\n" +
+                "    adv_cd = EXCLUDED.adv_cd,\n" +
+                "    adv_name = EXCLUDED.adv_name;";
     }
 
     public String getUpdateQuery() {

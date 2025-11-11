@@ -97,6 +97,7 @@ public class CaseService {
         try {
             List<PartyDetails> extraComplainants = caseEnrichment.enrichComplainantExtraParties(courtCase);
             List<PartyDetails> extraRespondents = caseEnrichment.enrichRespondentExtraParties(courtCase);
+
         } catch (Exception e) {
             log.error("Error processing extra parties for case {} with message {}", courtCase.getCnrNumber(), e.getMessage());
         }
@@ -118,7 +119,7 @@ public class CaseService {
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
-                .dispNature(courtCase.getOutcome() != null ? getDisposalNature(courtCase.getOutcome()) : null)
+                .dispNature(courtCase.getOutcome() != null ? getDisposalNature(courtCase.getOutcome()) : null)//todo: configure this
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
                 .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
@@ -312,8 +313,8 @@ public class CaseService {
         }
 
         // Fetch and set interim orders
-        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
-        record.setInterimOrders(interimOrders != null ? interimOrders : new ArrayList<>());
+//        List<InterimOrder> interimOrders = orderRepository.getInterimOrderByCino(cino);
+//        record.setInterimOrders(interimOrders != null ? interimOrders : new ArrayList<>());
 
         // Fetch and set complainant parties
         List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);

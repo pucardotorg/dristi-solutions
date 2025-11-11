@@ -9,10 +9,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.caseStatus;
 
@@ -33,7 +37,7 @@ public class CaseConsumer {
             processAndUpdateCase(payload);
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Error in processing case message:: {}", e.getMessage());
         }
 
     }
@@ -56,9 +60,52 @@ public class CaseConsumer {
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
-        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(true).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
+    }
+
+    @KafkaListener(topics = "#{'${kafka.topics.join.case}'.split(',')}", groupId = "transformer-case")
+    public void listenJoinCase(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        try {
+            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
+            processAndUpdateJoinCase(payload);
+            log.info("Message processed successfully on topic:: {}", topic);
+        } catch (Exception e){
+            log.error("Error in processing join case message:: {}", e.getMessage());
+        }
+
+    }
+
+    private void processAndUpdateJoinCase(ConsumerRecord<String, Object> payload) {
+        try {
+            CourtCase courtCase = objectMapper.readValue(payload.value().toString(), CourtCase.class);
+            String filingNumber = courtCase.getFilingNumber();
+            RequestInfo requestInfo = RequestInfo.builder()
+                    .apiId("Rainmaker")
+                    .userInfo(User.builder()
+                            .userName("internalUser")
+                            .name("internal")
+                            .mobileNumber("1002335566")
+                            .type("EMPLOYEE")
+                            .tenantId("kl")
+                            .roles(List.of(Role.builder()
+                                    .tenantId("kl")
+                                    .code("CASE_VIEWER")
+                                    .name("CASE_VIEWER").build(),
+                                    Role.builder()
+                                            .tenantId("kl")
+                                            .code("ORDER_VIEWER")
+                                            .name("ORDER_VIEWER").build()))
+                            .build())
+                    .build();
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+            JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
+            CourtCase courtCases = objectMapper.convertValue(courtCaseNode, CourtCase.class);
+            caseService.processAndUpdateCase(courtCases, requestInfo);
+        } catch (Exception e) {
+            log.error("Error in processing join case message:: {}", e.getMessage());
+        }
     }
 
     @KafkaListener(topics = "case-outcome-topic", groupId = "transformer-case")
@@ -72,7 +119,7 @@ public class CaseConsumer {
             caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Error in processing case outcome message:: {}", e.getMessage());
         }
     }
 
@@ -87,7 +134,7 @@ public class CaseConsumer {
             caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Error in processing case status message:: {}", e.getMessage());
         }
     }
 }
