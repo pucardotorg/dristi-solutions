@@ -105,7 +105,7 @@ public class HearingService {
 
             // send the sms after creating hearing
 
-            callNotificationService(body, body.getHearing().getStatus());
+            callNotificationService(body, body.getHearing().getStatus(), false);
 
             return body.getHearing();
         } catch (CustomException e) {
@@ -167,7 +167,7 @@ public class HearingService {
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
             String updatedState = hearingRequest.getHearing().getStatus();
-            callNotificationService(hearingRequest, updatedState);
+            callNotificationService(hearingRequest, updatedState, false);
 
             filterDocuments(new ArrayList<>() {{
                                 add(hearing);
@@ -369,7 +369,7 @@ public class HearingService {
 
     }
 
-    private void callNotificationService(HearingRequest hearingRequest, String updatedState) {
+    private void callNotificationService(HearingRequest hearingRequest, String updatedState, boolean isRescheduled) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
@@ -390,7 +390,7 @@ public class HearingService {
             long oldHearingStartTime = existingHearing.getStartTime();
             long currentHearingStartTime = hearingRequest.getHearing().getStartTime();
             String messageCode = updatedState != null ?
-                    getMessageCode(oldHearingStartTime, currentHearingStartTime) :
+                    getMessageCode(isRescheduled) :
                     null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
@@ -436,9 +436,9 @@ public class HearingService {
         return caseSearchRequest;
     }
 
-    private String getMessageCode(long oldHearingStartTime, long currentHearingStartTIme) {
+    private String getMessageCode(boolean isRescheduled) {
 
-        if(oldHearingStartTime != currentHearingStartTIme){
+        if(isRescheduled){
             return HEARING_RESCHEDULED;
         }
         return null;
@@ -750,7 +750,7 @@ public class HearingService {
 
         for(Hearing hearing : hearingList){
             hearingRequest.setHearing(hearing);
-            callNotificationService(hearingRequest, hearing.getStatus());
+            callNotificationService(hearingRequest, hearing.getStatus(), true);
         }
 
     }
