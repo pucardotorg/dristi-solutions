@@ -18,6 +18,7 @@ import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCas
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
+import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -159,6 +160,21 @@ const TasksComponent = ({
     return taskManagementData?.taskManagementRecords;
   }, [taskManagementData]);
 
+  const { data: caseData, isLoading: isCaseLoading } = useCaseDetailSearchService(
+    {
+      criteria: {
+        filingNumber: courierServicePendingTask?.filingNumber,
+        tenantId: tenantId,
+      },
+    },
+    {},
+    `case-${courierServicePendingTask?.filingNumber}`,
+    courierServicePendingTask?.filingNumber,
+    Boolean(courierServicePendingTask?.filingNumber)
+  );
+
+  const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "payment",
@@ -265,19 +281,6 @@ const TasksComponent = ({
             parties?.map((party) => {
               const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
 
-              if (!taskManagement) {
-                return {
-                  ...party,
-                  data: {
-                    ...party.data,
-                    addressDetails: (party?.data?.addressDetails || [])?.map((addr) => ({
-                      ...addr,
-                      checked: true,
-                    })),
-                  },
-                };
-              }
-
               const partyDetails = taskManagement?.partyDetails?.find((lit) => {
                 if (party?.data?.partyType === "Respondent") {
                   return party?.uniqueId === lit?.respondentDetails?.uniqueId;
@@ -286,12 +289,30 @@ const TasksComponent = ({
                 }
               });
 
-              if (!partyDetails) {
+              let caseAddressDetails = [];
+
+              if (party?.data?.partyType === "Witness") {
+                const witness = caseDetails?.witnessDetails?.find((w) => w?.uniqueId === party?.data?.uniqueId);
+                caseAddressDetails = witness?.addressDetails || [];
+              } else if (party?.data?.partyType === "Respondent") {
+                const respondent = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+                  (r) => r?.uniqueId === (party?.data?.uniqueId || party?.uniqueId)
+                );
+                caseAddressDetails = respondent?.data?.addressDetails || [];
+              }
+
+              const existingAddresses = party?.data?.addressDetails || [];
+              const mergedFromCase = [
+                ...existingAddresses,
+                ...caseAddressDetails?.filter((newAddr) => !existingAddresses?.some((old) => old?.id === newAddr?.id)),
+              ];
+
+              if (!taskManagement || !partyDetails) {
                 return {
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: (party?.data?.addressDetails || []).map((addr) => ({
+                    addressDetails: mergedFromCase?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -319,6 +340,16 @@ const TasksComponent = ({
                     result?.push({
                       ...partyAddr,
                       checked: true,
+                    });
+                  }
+                });
+
+                caseAddressDetails?.forEach((caseAddr) => {
+                  const exists = result?.some((r) => r?.id === caseAddr?.id);
+                  if (!exists) {
+                    result.push({
+                      ...caseAddr,
+                      checked: false,
                     });
                   }
                 });
@@ -354,9 +385,9 @@ const TasksComponent = ({
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
-  const handleProcessCourierOnSubmit = async (courierData, isLast) => {
+  const handleProcessCourierOnSubmit = async (courierData) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -373,23 +404,7 @@ const TasksComponent = ({
         tenantId,
       });
       await refetchTaskManagement();
-      if (isLast && hasProcessManagementEditorAccess) {
-        const paymentPayload = {
-          offlinePaymentTask: {
-            tenantId,
-            status: "ACTIVE",
-            filingNumber: courierOrderDetails?.filingNumber,
-            consumerCode: existingTask?.taskManagementNumber + `_${suffix}`,
-          },
-        };
-        await DRISTIService.createOfflinePaymentService(paymentPayload, {});
-        setShowCourierServiceModal(false);
-        setHideCancelButton(false);
-        setCourierServicePendingTask(null);
-        setCourierOrderDetails({});
-      } else {
-        return { continue: true };
-      }
+      return { continue: true };
     } catch (error) {
       console.error("Error creating or updating task:", error);
       return { continue: false };
@@ -1029,7 +1044,7 @@ const TasksComponent = ({
           modalBody: (
             <CourierService
               t={t}
-              isLoading={isTaskManagementLoading || isLoader}
+              isLoading={isTaskManagementLoading || isLoader || isCaseLoading}
               processCourierData={courierData}
               handleCourierServiceChange={(value, type) => handleCourierServiceChange(value, type, i)}
               handleAddressSelection={(addressId, isSelected) => handleAddressSelection(addressId, isSelected, i)}
@@ -1042,10 +1057,11 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData, isLast);
+            return await handleProcessCourierOnSubmit(courierData);
           },
           isDisabled:
             isTaskManagementLoading ||
+            isCaseLoading ||
             isLoader ||
             (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
@@ -1059,6 +1075,7 @@ const TasksComponent = ({
     t,
     active,
     isTaskManagementLoading,
+    isCaseLoading,
     isLoader,
     hasProcessManagementEditorAccess,
   ]);
@@ -1300,7 +1317,7 @@ const TasksComponent = ({
           )}
           {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
           {showCourierServiceModal && courierServiceSteps?.length > 0 && (
-            <DocumentModal config={courierServiceConfig} disableCancel={isTaskManagementLoading || isLoader} />
+            <DocumentModal config={courierServiceConfig} disableCancel={isCaseLoading || isTaskManagementLoading || isLoader} />
           )}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}

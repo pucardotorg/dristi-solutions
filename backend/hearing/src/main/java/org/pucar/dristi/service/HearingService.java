@@ -105,7 +105,7 @@ public class HearingService {
 
             // send the sms after creating hearing
 
-            callNotificationService(body, body.getHearing().getStatus());
+            callNotificationService(body, body.getHearing().getStatus(), false);
 
             return body.getHearing();
         } catch (CustomException e) {
@@ -167,7 +167,7 @@ public class HearingService {
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
             String updatedState = hearingRequest.getHearing().getStatus();
-            callNotificationService(hearingRequest, updatedState);
+            callNotificationService(hearingRequest, updatedState, false);
 
             filterDocuments(new ArrayList<>() {{
                                 add(hearing);
@@ -369,7 +369,7 @@ public class HearingService {
 
     }
 
-    private void callNotificationService(HearingRequest hearingRequest, String updatedState) {
+    private void callNotificationService(HearingRequest hearingRequest, String updatedState, boolean isRescheduled) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
@@ -380,8 +380,9 @@ public class HearingService {
             JsonNode additionalData = objectMapper.readTree(jsonData);
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
             String hearingType = hearingRequest.getHearing().getHearingType();
-
-            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned, hearingType) : null;
+            String messageCode = updatedState != null ?
+                    getMessageCode(isRescheduled) :
+                    null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
 
@@ -399,9 +400,18 @@ public class HearingService {
             if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
-            Hearing existingHearing = getExistingHearings(List.of(hearingRequest.getHearing())).get(0);
-            Long oldHearingStartTime = existingHearing.getStartTime();
-            String oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
+            String oldHearingDate = null;
+            if(isRescheduled) {
+                HearingCriteria hearingCriteria = HearingCriteria.builder()
+                        .hearingId(hearingRequest.getHearing().getHearingId())
+                        .build();
+                HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                        .criteria(hearingCriteria)
+                        .build();
+                Hearing existingHearing = searchHearing(hearingSearchRequest).get(0);
+                long oldHearingStartTime = existingHearing.getStartTime();
+                oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
+            }
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
@@ -428,10 +438,12 @@ public class HearingService {
         return caseSearchRequest;
     }
 
-    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned, String hearingType) {
+    private String getMessageCode(boolean isRescheduled) {
 
-        log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
-        return HEARING_RESCHEDULED;
+        if(isRescheduled){
+            return HEARING_RESCHEDULED;
+        }
+        return null;
     }
 
     public Set<String> extractIndividualIds(JsonNode caseDetails) {
@@ -740,7 +752,7 @@ public class HearingService {
 
         for(Hearing hearing : hearingList){
             hearingRequest.setHearing(hearing);
-            callNotificationService(hearingRequest, hearing.getStatus());
+            callNotificationService(hearingRequest, hearing.getStatus(), true);
         }
 
     }

@@ -22,6 +22,7 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -69,8 +70,9 @@ public class PaymentUpdateService {
             TaskManagement taskManagement = fetchTaskByNumber(taskNumber);
             updateWorkflowAndAddReceipt(requestInfo, taskManagement, paymentDetail, paymentMode);
             closePaymentPendingTask(requestInfo, taskManagement);
-            String consumerCode = taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix();
-            closeOfflinePaymentTask(requestInfo, consumerCode, taskManagement.getFilingNumber(), taskManagement.getTenantId());
+            // NOTE : closeOfflinePaymentTask is not called as it is not required for now
+//            String consumerCode = taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix();
+//            closeOfflinePaymentTask(requestInfo, consumerCode, taskManagement.getFilingNumber(), taskManagement.getTenantId());
             if (COMPLETED.equalsIgnoreCase(taskManagement.getStatus())) {
                 taskCreationService.generateFollowUpTasks(requestInfo, taskManagement);
             }
@@ -156,7 +158,8 @@ public class PaymentUpdateService {
         TaskManagement taskManagement1 = request.getTaskManagement();
         for(PartyDetails partyDetails : taskManagement1.getPartyDetails()) {
             partyDetails.getDeliveryChannels().forEach(deliveryChannel -> {
-                deliveryChannel.setFeePaidDate(LocalDate.now().toString());
+                LocalDate localDate = LocalDate.now();
+                deliveryChannel.setFeePaidDate(localDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
             });
         }
         Document paymentReceipt = null;

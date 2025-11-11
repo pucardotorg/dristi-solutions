@@ -151,7 +151,7 @@ function NoticeSummonPaymentModal({
       setIsLoading(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
         setIsCaseLocked(true);
         return;
       }
@@ -164,7 +164,7 @@ function NoticeSummonPaymentModal({
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
         return;
       }
       await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
@@ -184,29 +184,6 @@ function NoticeSummonPaymentModal({
       }
     } catch (error) {
       toast.error(t("CS_PAYMENT_ERROR"));
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onTaskPayOffline = async () => {
-    try {
-      setIsLoading(true);
-      const paymentPayload = {
-        offlinePaymentTask: {
-          tenantId,
-          status: "ACTIVE",
-          filingNumber: taskManagement?.filingNumber,
-          consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
-        },
-      };
-      await DRISTIService.createOfflinePaymentService(paymentPayload, {});
-      setShowCourierServiceModal(false);
-      setHideCancelButton(false);
-      setCourierServicePendingTask(null);
-    } catch (error) {
-      showToast("error", t("SOMETHING_WENT_WRONG"), 2000);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -298,15 +275,6 @@ function NoticeSummonPaymentModal({
         onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
         isDisabled={isCaseLocked}
       />
-      {!receiptFilstoreId && (
-        <Button
-          label={t("CS_TASK_PAY_OFFLINE")}
-          variation="secondary"
-          className={"pay-online-button"}
-          onButtonClick={onTaskPayOffline}
-          isDisabled={isCaseLocked}
-        />
-      )}
       {toastMsg && (
         <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
       )}

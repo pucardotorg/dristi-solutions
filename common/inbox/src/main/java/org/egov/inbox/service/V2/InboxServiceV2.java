@@ -396,7 +396,7 @@ public class InboxServiceV2 {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
         }
         if (indexSearchCriteria.getSearchNoticeAndSummons() != null) {
-            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
+            populateActionCategoryDataWithoutGrouping(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
         }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
@@ -518,6 +518,46 @@ public class InboxServiceV2 {
         setter.accept(criteria);
     }
 
+    private void populateActionCategoryDataWithoutGrouping(SearchRequest searchRequest,
+                                                           Criteria criteria,
+                                                           InboxQueryConfiguration config,
+                                                           Consumer<Criteria> setter) {
+
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            // Get total count without pagination for unfiltered results
+            Integer unfilteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfilteredTotalCount);
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Get total count without pagination for filtered results
+        Integer filteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        criteria.setCount(filteredTotalCount);
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filteredTotalCount);
+        } else {
+            // Get paginated data for filtered results
+            List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setData(filtered);
+        }
+
+        setter.accept(criteria);
+    }
+
     /**
      * Helper to either put a value into the map if not null,
      * or remove the key if the value is null.
@@ -530,6 +570,19 @@ public class InboxServiceV2 {
         }
     }
 
+
+    private Integer getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE, false);
+        StringBuilder uri = getURI(index, COUNT_PATH);
+        Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        Integer totalCount = 0;
+        if (response.containsKey(COUNT_CONSTANT)) {
+            totalCount = (Integer) response.get(COUNT_CONSTANT);
+        } else {
+            throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
+        }
+        return totalCount;
+    }
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);

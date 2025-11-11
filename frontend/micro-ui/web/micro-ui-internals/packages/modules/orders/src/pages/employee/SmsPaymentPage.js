@@ -97,22 +97,21 @@ const SmsPaymentPage = () => {
     if (!orderData) return null;
     const orderDetails = orderData;
     const orderType = orderDetails?.orderType;
-    const formDataKey = formDataKeyMap?.[orderType];
-    const parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
+    const parties = orderData?.partyDetails || [];
 
     const formattedParties = parties?.map((party, index) => {
       const taskManagement = taskManagementList?.find((task) => task?.taskType === orderType);
 
       const partyDetails = taskManagement?.partyDetails?.find((lit) => {
-        if (party?.data?.partyType === "Respondent") {
+        if (party?.partyType === "Respondent") {
           return party?.uniqueId === lit?.respondentDetails?.uniqueId;
         } else {
-          return party?.data?.uniqueId === lit?.witnessDetails?.uniqueId;
+          return (party?.data?.uniqueId || party?.uniqueId) === lit?.witnessDetails?.uniqueId;
         }
       });
 
       const addressFromOrder =
-        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.data?.addressDetails || [];
+        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.address || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
@@ -147,18 +146,13 @@ const SmsPaymentPage = () => {
 
       return {
         id: index + 1,
-        title: orderType === "SUMMONS" ? t("SUMMONS") : t("NOTICE"),
-        subtitle: `${party?.data?.partyType || "Party"} - ${
-          getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName) || ""
-        }`,
-        firstName: party?.data?.firstName,
-        middleName: party?.data?.middleName,
-        lastName: party?.data?.lastName,
-        // courierOptions,
+        title: orderType?.toLowerCase() === "summons" ? t("SUMMONS") : t("NOTICE"),
+        subtitle: `${party?.partyType || "Party"} - ${party?.partyName || ""}`,
+        partyName: party?.partyName,
         orderType,
         addresses: mergedAddresses,
-        partyUniqueId: party?.data?.uniqueId,
-        partyType: party?.data?.partyType,
+        partyUniqueId: party?.uniqueId,
+        partyType: party?.partyType,
       };
     });
 
@@ -413,7 +407,9 @@ const SmsPaymentPage = () => {
       setLoader(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("SOMETHING_WENT_WRONG"), 50000);
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        setIsPaymentLocked(true);
+        setStep(4);
         return;
       }
       const caseLockStatus = await openApiService.getPaymentLockStatus(
@@ -426,7 +422,7 @@ const SmsPaymentPage = () => {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsPaymentLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
         return;
       }
       await openApiService.setCaseLock(
@@ -444,25 +440,6 @@ const SmsPaymentPage = () => {
         }
         setStep(step + 1);
       }
-    } catch (error) {
-      console.error("Error in proceeding to payment:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    } finally {
-      setLoader(false);
-    }
-  };
-
-  const handleOfflinePayment = async () => {
-    try {
-      setLoader(true);
-      const payload = {
-        tenantId,
-        filingNumber,
-        status: "ACTIVE",
-        consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
-      };
-      await openApiService.offlinePayment({ offlinePaymentTask: payload }, {});
-      setStep(step + 2);
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -490,7 +467,7 @@ const SmsPaymentPage = () => {
 
   const handleClose = () => {
     // Redirect to some other page or close the modal
-    window.location.replace("https://oncourts.kerala.gov.in");
+    window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
   };
 
   // TODO : need to update successModalData based on different scenarios
@@ -616,10 +593,8 @@ const SmsPaymentPage = () => {
           onPrevious={handlePrevious}
           paymentStatus={"PENDING"}
           paymentCardButtonLabel={"CS_PAY_ONLINE"}
-          paymentOfflineCardLabel={"CS_TASK_PAY_OFFLINE"}
           paymentDetails={paymentBreakDown}
           handlePayment={handlePyament}
-          handleOfflinePayment={handleOfflinePayment}
           isPaymentLocked={isPaymentLocked}
         />
       ) : step === 3 ? (

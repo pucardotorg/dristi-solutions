@@ -1366,14 +1366,16 @@ const GenerateOrdersV2 = () => {
           { tenantId }
         );
         const refId = getBailBondReferenceId(currentOrder);
-        const exists = Array.isArray(bailBondPendingTask?.data) && bailBondPendingTask?.data?.some?.((t) => t?.referenceId === refId);
-        setIsBailBondTaskExistsForCurrentRef(Boolean(exists));
+        const list = Array.isArray(bailBondPendingTask?.data) ? bailBondPendingTask.data : [];
+        const matchRef = list.some?.((task) => task?.referenceId === refId);
+        const anyBailBondPending = list.length > 0;
+        setIsBailBondTaskExists(Boolean(matchRef || anyBailBondPending));
       } catch (err) {
         console.error(err);
       }
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
-  }, [userType]);
+  }, [userType, filingNumber, courtId, roles, tenantId, currentOrder]);
 
   // Initialize presentAttendees and absentAttendees from currentOrder.attendance
   useEffect(() => {
@@ -2338,6 +2340,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleBailBondRequiredClick = () => {
+    if (isBailBondTaskExists) return;
     const errorsList = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling);
 
     if (errorsList?.some((obj) => obj?.errors?.length > 0)) {
@@ -2362,7 +2365,6 @@ const GenerateOrdersV2 = () => {
         const requiredAttendees = ["COMPLAINANT", "ACCUSED"];
         const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
         const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
-
         if (!requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
           allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
         }
@@ -4211,7 +4213,7 @@ const GenerateOrdersV2 = () => {
                     onChange={handleBailBondRequiredClick}
                     checked={isBailBondTaskExists}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    disabled={!isBailBondCheckboxEnabled || isBailBondTaskExists}
+                    disabled={isBailBondTaskExists}
                   />
                   <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                 </div>
