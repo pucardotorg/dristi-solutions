@@ -380,8 +380,18 @@ public class HearingService {
             JsonNode additionalData = objectMapper.readTree(jsonData);
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
             String hearingType = hearingRequest.getHearing().getHearingType();
-
-            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned, hearingType) : null;
+            HearingCriteria hearingCriteria = HearingCriteria.builder()
+                    .hearingId(hearingRequest.getHearing().getHearingId())
+                    .build();
+            HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                    .criteria(hearingCriteria)
+                    .build();
+            Hearing existingHearing = searchHearing(hearingSearchRequest).get(0);
+            long oldHearingStartTime = existingHearing.getStartTime();
+            long currentHearingStartTime = hearingRequest.getHearing().getStartTime();
+            String messageCode = updatedState != null ?
+                    getMessageCode(oldHearingStartTime, currentHearingStartTime) :
+                    null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
 
@@ -399,8 +409,6 @@ public class HearingService {
             if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
-            Hearing existingHearing = getExistingHearings(List.of(hearingRequest.getHearing())).get(0);
-            Long oldHearingStartTime = existingHearing.getStartTime();
             String oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
@@ -428,10 +436,12 @@ public class HearingService {
         return caseSearchRequest;
     }
 
-    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned, String hearingType) {
+    private String getMessageCode(long oldHearingStartTime, long currentHearingStartTIme) {
 
-        log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
-        return HEARING_RESCHEDULED;
+        if(oldHearingStartTime != currentHearingStartTIme){
+            return HEARING_RESCHEDULED;
+        }
+        return null;
     }
 
     public Set<String> extractIndividualIds(JsonNode caseDetails) {
