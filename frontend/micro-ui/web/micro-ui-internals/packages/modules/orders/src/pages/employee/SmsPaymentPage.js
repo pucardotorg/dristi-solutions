@@ -448,25 +448,6 @@ const SmsPaymentPage = () => {
     }
   };
 
-  const handleOfflinePayment = async () => {
-    try {
-      setLoader(true);
-      const payload = {
-        tenantId,
-        filingNumber,
-        status: "ACTIVE",
-        consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
-      };
-      await openApiService.offlinePayment({ offlinePaymentTask: payload }, {});
-      setStep(step + 2);
-    } catch (error) {
-      console.error("Error in proceeding to payment:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    } finally {
-      setLoader(false);
-    }
-  };
-
   const handleDownloadReciept = async () => {
     try {
       setLoader(true);
@@ -612,10 +593,8 @@ const SmsPaymentPage = () => {
           onPrevious={handlePrevious}
           paymentStatus={"PENDING"}
           paymentCardButtonLabel={"CS_PAY_ONLINE"}
-          paymentOfflineCardLabel={"CS_TASK_PAY_OFFLINE"}
           paymentDetails={paymentBreakDown}
           handlePayment={handlePyament}
-          handleOfflinePayment={handleOfflinePayment}
           isPaymentLocked={isPaymentLocked}
         />
       ) : step === 3 ? (
