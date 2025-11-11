@@ -1075,7 +1075,10 @@ const GenerateBailBond = () => {
     // } catch (e) {}
     if (formData?.bailType?.code === "SURETY") {
       const sureties = Array.isArray(formData?.sureties) ? formData.sureties : [];
-      if (!Array.isArray(formData?.sureties) || (Array.isArray(formData?.sureties) && formData.sureties.length === 0)) {
+      const hasPrefilledSureties =
+        (Array.isArray(defaultFormValueData?.sureties) && defaultFormValueData.sureties.length > 0) ||
+        (Array.isArray(formdata?.sureties) && formdata.sureties.length > 0);
+      if (!hasPrefilledSureties && (!Array.isArray(formData?.sureties) || (Array.isArray(formData?.sureties) && formData.sureties.length === 0))) {
         try {
           setValue("sureties", [{}], { shouldValidate: false, shouldDirty: true });
           if (!(typeof formData?.noOfSureties === "number" && formData.noOfSureties > 0)) {
@@ -1121,8 +1124,11 @@ const GenerateBailBond = () => {
     }
     setIsSubmitDisabled(Object.keys(formState?.errors || {}).length > 0);
 
-    if (!isEqual(formdata, formData)) {
-      setFormdata(formData);
+    // Do not overwrite prefilled application data before defaults are initialized
+    if (hasInitFromDefaultRef.current) {
+      if (!isEqual(formdata, formData)) {
+        setFormdata(formData);
+      }
     }
     try {
       const prevUuid = formdata?.selectComplainant?.uuid;

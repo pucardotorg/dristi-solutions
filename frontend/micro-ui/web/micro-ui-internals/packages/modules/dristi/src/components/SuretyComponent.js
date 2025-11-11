@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
@@ -17,10 +17,39 @@ const CloseBtn = () => {
 
 const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}, {}]);
-  // Capture the initial snapshot of prefilled values once for locking logic
   const initialPrefillRef = useRef(formData?.[config?.key] ? JSON.parse(JSON.stringify(formData?.[config?.key])) : []);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
+  useEffect(() => {
+    const incoming = formData?.[config?.key];
+    if (Array.isArray(incoming)) {
+      const hasIncoming = incoming.length > 0;
+      const changed = JSON.stringify(incoming) !== JSON.stringify(formInstances);
+      const hasAnyPrefill = (arr) => {
+        if (!Array.isArray(arr)) return false;
+        return arr.some((inst) => {
+          if (!inst || typeof inst !== "object") return false;
+          const baseKeys = ["name", "fatherName", "mobileNumber", "email"];
+          const hasBase = baseKeys.some((k) => Boolean(inst?.[k]));
+          const hasAddr = inst?.address && Object.keys(inst.address || {}).some((k) => Boolean(inst.address[k]));
+          const hasIdDocs = Array.isArray(inst?.identityProof?.document) && inst.identityProof.document.length > 0;
+          const hasSolvencyDocs = Array.isArray(inst?.proofOfSolvency?.document) && inst.proofOfSolvency.document.length > 0;
+          const hasOtherDocs = Array.isArray(inst?.otherDocuments?.document) && inst.otherDocuments.document.length > 0;
+          return hasBase || hasAddr || hasIdDocs || hasSolvencyDocs || hasOtherDocs;
+        });
+      };
+      if (hasIncoming && changed) {
+        setFormInstances(incoming.map((i) => i || {}));
+      }
+      if (hasIncoming) {
+        const snapshotHasPrefill = hasAnyPrefill(initialPrefillRef.current);
+        const incomingHasPrefill = hasAnyPrefill(incoming);
+        if (!snapshotHasPrefill && incomingHasPrefill) {
+          initialPrefillRef.current = JSON.parse(JSON.stringify(incoming));
+        }
+      }
+    }
+  }, [formData?.[config?.key]]);
 
   const addAnotherForm = () => {
     const newFormInstances = [...formInstances, {}];
@@ -79,6 +108,19 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
     setValue(value, input.key, input, formIndex);
   };
 
+  const isInstanceLockedAt = (idx) => {
+    if (!config?.lockPrefilledFields) return false;
+    const prefilled = initialPrefillRef.current?.[idx] || {};
+    if (!prefilled || typeof prefilled !== "object") return false;
+    const baseKeys = ["name", "fatherName", "mobileNumber", "email"];
+    const hasBase = baseKeys.some((k) => Boolean(prefilled?.[k]));
+    const hasAddr = prefilled?.address && Object.keys(prefilled.address || {}).some((k) => Boolean(prefilled.address[k]));
+    const hasIdDocs = Array.isArray(prefilled?.identityProof?.document) && prefilled.identityProof.document.length > 0;
+    const hasSolvencyDocs = Array.isArray(prefilled?.proofOfSolvency?.document) && prefilled.proofOfSolvency.document.length > 0;
+    const hasOtherDocs = Array.isArray(prefilled?.otherDocuments?.document) && prefilled.otherDocuments.document.length > 0;
+    return hasBase || hasAddr || hasIdDocs || hasSolvencyDocs || hasOtherDocs;
+  };
+
   return (
     <React.Fragment>
       <div>
@@ -97,7 +139,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
               }}
             >
               <div style={{ fontSize: "20px", fontWeight: 700, color: "#0B0C0C", padding: "12px 22px" }}>{`${t(config?.name)} ${formIndex + 1}`}</div>
-              {formInstances.length > 1 && !disable && (
+              {formInstances.length > 1 && !disable && !isInstanceLockedAt(formIndex) && (
                 <button
                   type="button"
                   style={{ background: "none", border: "none", padding: "12px 22px", cursor: "pointer" }}
@@ -117,23 +159,15 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
             >
               {inputs?.map((input, inputIndex) => {
                 const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
-                const isLockEnabled = Boolean(config?.lockPrefilledFields);
-
-                const prefilledInstance = initialPrefillRef.current?.[formIndex] || {};
-
-                const isTextPrefilled = (name) => Boolean(prefilledInstance?.[name]);
-
-                const isUploadPrefilled = (key) => {
-                  const docs = prefilledInstance?.[key]?.document || prefilledInstance?.[key]?.uploadedDocs || [];
-                  return Array.isArray(docs) && docs.length > 0;
-                };
+                const instanceLocked = isInstanceLockedAt(formIndex);
 
                 const getAddressConfigWithDisable = () => {
-                  if (!isLockEnabled) return input;
+                  if (!config?.lockPrefilledFields) return input;
+                  const prefilledInstance = initialPrefillRef.current?.[formIndex] || {};
                   const addressPrefill = prefilledInstance?.[input?.key] || {};
                   const updatedPopInputs = (input?.populators?.inputs || []).map((addrInput) => ({
                     ...addrInput,
-                    isDisabled: Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name])),
+                    isDisabled: instanceLocked ? true : Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name])),
                   }));
                   return {
                     ...input,
@@ -180,7 +214,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                                 handleChange(e, input, formIndex);
                               }
                             }}
-                            disable={Boolean(input?.isDisabled || (isLockEnabled && isTextPrefilled(input?.name)))}
+                            disable={Boolean(input?.isDisabled || instanceLocked)}
                             isRequired={input?.validation?.isRequired}
                             pattern={input?.validation?.pattern}
                             errMsg={input?.validation?.errMsg}
@@ -207,7 +241,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                     {input?.component === "SelectMultiUpload" && (
                       <div style={{ marginBottom: "20px" }}>
                         <SelectCustomDragDrop
-                          config={{ ...input, disable: Boolean(input?.disable || (isLockEnabled && isUploadPrefilled(input?.key))) }}
+                          config={{ ...input, disable: Boolean(input?.disable || instanceLocked) }}
                           t={t}
                           onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
                           formData={formInstances[formIndex]}
