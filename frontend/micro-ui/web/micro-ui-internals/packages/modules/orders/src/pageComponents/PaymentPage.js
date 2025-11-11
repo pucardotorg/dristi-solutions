@@ -11,8 +11,6 @@ const PaymentPage = ({
   handlePayment,
   handleDownloadReciept,
   isPaymentLocked = false,
-  paymentOfflineCardLabel,
-  handleOfflinePayment,
 }) => {
   // Mock data for payment sections - this would come from props or API in a real implementation
   // TODO : useMemo for this and make like this structure based on paymentDetails prop
@@ -66,15 +64,9 @@ const PaymentPage = ({
             </div>
 
             {section.status === "PENDING" ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {" "}
-                <button className="pay-online-button" onClick={handlePayment} disabled={isPaymentLocked}>
-                  {t(paymentCardButtonLabel || "Pay Online")}
-                </button>
-                <button className="pay-online-button" onClick={handleOfflinePayment}>
-                  {t(paymentOfflineCardLabel || "Pay Offline")}
-                </button>
-              </div>
+              <button className="pay-online-button" onClick={handlePayment} disabled={isPaymentLocked}>
+                {t(paymentCardButtonLabel || "Pay Online")}
+              </button>
             ) : (
               <button className="pay-online-button download-reciept-button" onClick={handleDownloadReciept}>
                 <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
