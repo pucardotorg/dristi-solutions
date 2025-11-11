@@ -135,8 +135,8 @@ public class TaskCreationService {
                             .task(taskTemplate)
                             .build());
                     createdTasks++;
-                    log.info("Successfully created task {} of {} for {} party",
-                            createdTasks, taskDetailsList.size(), partyType);
+                    log.info("Successfully created task {} of {} for {} party", createdTasks, taskDetailsList.size(), partyType);
+                    createPendingTaskForRPAD(taskTemplate, requestInfo);
                 } catch (Exception e) {
                     log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
                     // Continue with next task
@@ -788,7 +788,9 @@ public class TaskCreationService {
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
                 || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
+            log.info("Creating pending task for envelope submission");
             createPendingTaskForEnvelope(task, requestInfo);
+            log.info("Successfully created pending task for envelope submission");
         }
     }
 
