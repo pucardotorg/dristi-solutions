@@ -381,4 +381,82 @@ public class CaseEnrichment {
         }
         return null;
     }
+
+
+    public List<PartyDetails> getWitnessDetails(CourtCase courtCase, PartyType partyType) {
+
+        List<PartyDetails> witnessPartyDetails = new ArrayList<>();
+        List<WitnessDetails> witnessDetails = courtCase.getWitnessDetails();
+
+        if (witnessDetails == null || witnessDetails.isEmpty()) {
+            log.info("No witness present:: {}", courtCase.getCnrNumber());
+            return witnessPartyDetails;
+        }
+
+        // ✅ Get only required existing parties for PET or RES
+        List<PartyDetails> existingParties =
+                repository.getPartyDetails(courtCase.getCnrNumber(), partyType);
+
+        int partyNo = existingParties.size() + 1;
+
+        // ✅ Filter witnesses based on partyType
+        List<WitnessDetails> filteredWitnesses = witnessDetails.stream()
+                .filter(w -> matchesPartyType(w.getOwnerType(), partyType))
+                .toList();
+
+        for (WitnessDetails w : filteredWitnesses) {
+
+            String uniqueId = w.getUniqueId();
+            PartyDetails existing = findExistingParty(existingParties, uniqueId);
+
+            if (existing != null) {
+                witnessPartyDetails.add(existing);
+                continue;
+            }
+
+            String fullName = w.getFirstName()
+                    + (w.getMiddleName() != null ? w.getMiddleName() : "")
+                    + w.getLastName();
+
+            String address = extractAddress(
+                    objectMapper.convertValue(
+                            w.getAddressDetails().get(0).getAddressDetails(),
+                            JsonNode.class
+                    )
+            );
+
+            PartyDetails newWitness = PartyDetails.builder()
+                    .partyId(uniqueId)
+                    .partyName(fullName)
+                    .partyAge(Integer.parseInt(w.getWitnessAge()))
+                    .partyAddress(address)
+                    .partyType(partyType)
+                    .cino(courtCase.getCnrNumber())
+                    .partyNo(partyNo++)
+                    .build();
+
+            witnessPartyDetails.add(newWitness);
+        }
+
+        return witnessPartyDetails;
+    }
+
+    private boolean matchesPartyType(String ownerType, PartyType partyType) {
+        if (partyType == PartyType.PET) {
+            return "COMPLAINANT".equalsIgnoreCase(ownerType);
+        } else if (partyType == PartyType.RES) {
+            return "ACCUSED".equalsIgnoreCase(ownerType);
+        }
+        return false;
+    }
+
+    private PartyDetails findExistingParty(List<PartyDetails> parties, String uniqueId) {
+        for (PartyDetails pd : parties) {
+            if (pd.getPartyId().equals(uniqueId)) {
+                return pd;
+            }
+        }
+        return null;
+    }
+
 }

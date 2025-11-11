@@ -5,6 +5,7 @@ import com.dristi.njdg_transformer.enrichment.CaseEnrichment;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.cases.WitnessDetails;
 import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderCriteria;
@@ -188,6 +189,10 @@ public class CaseService {
         extraParties.addAll(extraComplainants);
         extraParties.addAll(extraRespondents);
 
+        List<PartyDetails> petWitnessDetails = caseEnrichment.getWitnessDetails(courtCase, PartyType.PET);
+        extraParties.addAll(petWitnessDetails);
+        List<PartyDetails> resWitnessDetails = caseEnrichment.getWitnessDetails(courtCase, PartyType.RES);
+        extraParties.addAll(resWitnessDetails);
         // Assign serial numbers
         for (int i = 0; i < extraParties.size(); i++) {
             extraParties.get(i).setSrNo(i + 1);
