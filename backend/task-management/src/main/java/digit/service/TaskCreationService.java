@@ -9,21 +9,30 @@ import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.AddressDetails;
 import digit.web.models.cases.CourtCase;
+import digit.web.models.cases.POAHolder;
 import digit.web.models.cases.Party;
 import digit.web.models.cases.PartyAddress;
 import digit.web.models.order.Order;
 import digit.web.models.order.OrderCriteria;
 import digit.web.models.order.OrderListResponse;
 import digit.web.models.order.OrderSearchRequest;
+import digit.web.models.pendingtask.PendingTask;
+import digit.web.models.pendingtask.PendingTaskRequest;
 import digit.web.models.taskdetails.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
 import static digit.config.ServiceConstants.ACCUSED;
@@ -48,6 +57,8 @@ public class TaskCreationService {
     private final MdmsUtil mdmsUtil;
     private final TaskUtil taskUtil;
     private final Configuration configuration;
+    private final AdvocateUtil advocateUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
         log.info("Starting follow-up task generation for filing number: {} with {} parties", 
@@ -773,4 +784,143 @@ public class TaskCreationService {
             return "";
         }
     }
+
+    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
+            createPendingTaskForEnvelope(task, requestInfo);
+        }
+    }
+
+    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo) {
+
+        try {
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .task(task)
+                    .build();
+
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(taskRequest);
+            if (CollectionUtils.isEmpty(courtCases)) {
+                log.error("Error while creating pending task for envelope submission, courtCase not found");
+                return;
+            }
+
+            CourtCase courtCase = courtCases.get(0);
+            Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
+            Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
+            List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
+            List<String> assigneeUUIDs = collectAssigneeUUIDs(complainants, advocateMapping, poaMapping);
+
+            List<User> uniqueAssignees = assigneeUUIDs.stream()
+                    .distinct()
+                    .map(uuid -> User.builder().uuid(uuid).build())
+                    .collect(Collectors.toList());
+
+            PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
+            pendingTaskUtil.createPendingTask(
+                    PendingTaskRequest.builder()
+                            .requestInfo(requestInfo)
+                            .pendingTask(pendingTask)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error while creating pending task for envelope submission", e);
+            throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
+        }
+    }
+
+    private List<String> collectAssigneeUUIDs(
+            List<Party> complainants,
+            Map<String, List<String>> advocateMapping,
+            Map<String, List<POAHolder>> poaMapping
+    ) {
+        List<String> assigneeUUIDs = new ArrayList<>();
+
+        for (Party party : complainants) {
+            String litigantUUID = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
+
+            // Add advocates and the party's own UUID
+            if (advocateMapping.containsKey(litigantUUID)) {
+                assigneeUUIDs.addAll(advocateMapping.get(litigantUUID));
+            }
+            assigneeUUIDs.add(litigantUUID);
+
+            // Add POA holders
+            List<POAHolder> poaHolders = poaMapping.get(party.getIndividualId());
+            if (poaHolders != null) {
+                for (POAHolder holder : poaHolders) {
+                    String poaUUID = jsonUtil.getNestedValue(holder.getAdditionalDetails(), List.of("uuid"), String.class);
+                    if (poaUUID != null) {
+                        assigneeUUIDs.add(poaUUID);
+                    }
+                }
+            }
+        }
+
+        return assigneeUUIDs;
+    }
+
+    private PendingTask buildPendingTask(Task task, CourtCase courtCase, List<User> assignees) {
+
+        String taskType = task.getTaskType();
+
+        String entityType = getEntityType(taskType);
+
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZonedDateTime istTime = ZonedDateTime.now(zoneId);
+        long currentISTMillis = istTime.toInstant().toEpochMilli();
+
+        long sla = configuration.getEnvelopeSlaValue() + currentISTMillis;
+
+
+        return PendingTask.builder()
+                .name(PENDING_ENVELOPE_SUBMISSION)
+                .referenceId(MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION)
+                .entityType(entityType)
+                .status(PENDING_ENVELOPE_SUBMISSION)
+                .assignedTo(assignees)
+                .cnrNumber(courtCase.getCnrNumber())
+                .filingNumber(courtCase.getFilingNumber())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
+                .isCompleted(false)
+                .stateSla(sla)
+                .screenType("home")
+                .build();
+    }
+
+    private String getEntityType(String taskType) {
+
+        return switch (taskType) {
+            case SUMMON -> "task-summons";
+            case WARRANT -> "task-warrant";
+            case PROCLAMATION -> "task-proclamation";
+            case ATTACHMENT -> "task-attachment";
+            case NOTICE -> "task-notice";
+            default -> null;
+        };
+    }
+
+    public boolean isRPADdeliveryChannel(Task task) {
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        // Check if deliveryChannels exists
+        ObjectNode deliveryChannels = null;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        }
+
+        if (deliveryChannels == null) {
+            return false;
+        }
+
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+            String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
+        }
+        return false;
+    }
+
 }

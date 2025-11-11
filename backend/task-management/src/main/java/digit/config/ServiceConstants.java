@@ -59,4 +59,17 @@ public class ServiceConstants {
     public static final String INTERMEDIATE = "INTERMEDIATE";
 
     public static final String DATE_FORMAT="dd-MM-yyyy";
+
+    // task type
+    public static final String SUMMON = "SUMMONS";
+    public static final String WARRANT = "WARRANT";
+    public static final String PROCLAMATION = "PROCLAMATION";
+    public static final String ATTACHMENT = "ATTACHMENT";
+
+    public static final String CHANNEL_CODE = "channelCode";
+    public static final String RPAD = "RPAD";
+
+    public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
+    public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
 }

@@ -58,8 +58,8 @@ public class POAHolder {
     @JsonProperty("hasSigned")
     private Boolean hasSigned = false;
 
-//    @JsonProperty("representingLitigants")
-//    @NotNull
-//    @NotEmpty(message = "representing litigants should not be empty")
-//    private List<PoaParty> representingLitigants   ;  // store this as json b , create new class
+    @JsonProperty("representingLitigants")
+    @NotNull
+    @NotEmpty(message = "representing litigants should not be empty")
+    private List<PoaParty> representingLitigants   ;  // store this as json b , create new class
 }
