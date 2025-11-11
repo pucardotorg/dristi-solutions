@@ -185,6 +185,7 @@ public class TreasuryEnrichment {
                     case ADVOCATE_WELFARE_FUND -> data.setAdvocateWelfareFund(breakDown.getAmount());
                     case ADVOCATE_CLERK_WELFARE_FUND -> data.setAdvocateClerkWelfareFund(breakDown.getAmount());
                     case LEGAL_BENEFIT_FEE -> data.setLegalBenefitFee(breakDown.getAmount());
+                    case EPOST_FEE -> data.setEpostFee(breakDown.getAmount());
                     case DELAY_CONDONATION_FEE -> data.setDelayCondonationFee(breakDown.getAmount());
                     case COMPLAINT_FEE -> data.setComplaintFee(breakDown.getAmount());
                     case APPLICATION_FEE -> data.setApplicationFee(breakDown.getAmount());
