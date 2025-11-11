@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.web.models.cases.CourtCase;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -81,5 +82,9 @@ public class CaseCriteria {
 
     @Valid
     private Pagination pagination = null;
+
+    @JsonProperty("responseList")
+    @Valid
+    private List<CourtCase> responseList = null;
 
 }

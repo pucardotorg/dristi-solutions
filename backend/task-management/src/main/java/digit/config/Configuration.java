@@ -191,4 +191,15 @@ public class Configuration {
 
     @Value("${egov.indexer.es.password}")
     private String esPassword;
+
+    // Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    // Sla values
+    @Value("${sla.envelope.sla.value}")
+    private Long envelopeSlaValue;
 }
