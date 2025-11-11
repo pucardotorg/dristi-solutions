@@ -71,5 +71,6 @@ public class ServiceConstants {
 
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
-    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String EPOST = "EPOST";
+    public static final String REGISTERED_POST = "REGISTERED_POST";
 }
