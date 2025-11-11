@@ -109,12 +109,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
         <div className="address-card-input add-address-modal-inputs">
           <div className="field">
             <div className="heading">{t("TASK_ADDRESS_RECIPIENT_NAME")}</div>
-            <TextInput
-              className="field desktop-w-full"
-              value={getFullName(" ", processCourierData?.firstName, processCourierData?.middleName, processCourierData?.lastName) || ""}
-              onChange={() => {}}
-              disabled={true}
-            />
+            <TextInput className="field desktop-w-full" value={processCourierData?.partyName || ""} onChange={() => {}} disabled={true} />
           </div>
 
           <div className="field">
