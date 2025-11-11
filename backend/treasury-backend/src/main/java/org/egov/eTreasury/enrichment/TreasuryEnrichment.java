@@ -238,6 +238,27 @@ public class TreasuryEnrichment {
                     .build());
         }
 
+        if (data.getDelayCondonationFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Delay Condonation Fee:")
+                    .feeAmount(data.getDelayCondonationFee())
+                    .build());
+        }
+
+        if (data.getComplaintFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Complaint Fee:")
+                    .feeAmount(data.getComplaintFee())
+                    .build());
+        }
+
+        if (data.getApplicationFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Application Fee:")
+                    .feeAmount(data.getApplicationFee())
+                    .build());
+        }
+
         data.setFeeBreakDown(fees);
     }
 
