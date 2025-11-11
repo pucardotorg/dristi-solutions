@@ -571,6 +571,7 @@ const TasksComponent = ({
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
+      const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = {
@@ -640,6 +641,7 @@ const TasksComponent = ({
         dueDateColor: due === "Due today" ? "#9E400A" : "",
         redirectUrl,
         orderItemId,
+        bailBondId,
         ...(Object.keys(partyUniqueIdsMap).length > 0 ? { partyUniqueIds: Object.values(partyUniqueIdsMap) } : {}),
         params: {
           ...additionalDetails,

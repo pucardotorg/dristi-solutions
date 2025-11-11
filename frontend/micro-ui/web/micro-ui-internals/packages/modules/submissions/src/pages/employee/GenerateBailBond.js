@@ -16,6 +16,8 @@ import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionW
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { HomeService, Urls as HomeUrls } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { convertTaskResponseToPayload } from "../../utils";
+import { Urls } from "../../hooks/services/Urls";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -123,6 +125,7 @@ const GenerateBailBond = () => {
   const latestRaiseTaskRef = useRef(null);
   const persistedRaiseRefKey = useMemo(() => `RAISE_BB_REF_${filingNumber}`, [filingNumber]);
   const hasInitFromDefaultRef = useRef(false);
+  const [pendingTaskData, setPendingTaskData] = useState([]);
 
   const defaultFormValue = useMemo(() => {
     try {
@@ -576,9 +579,10 @@ const GenerateBailBond = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const bailBondDetails = useMemo(() => {
-    if (Object.keys(defaultFormValueData).length > 0) {
-      return defaultFormValueData;
-    }
+    // TODO: check if we need to prioritize defaultFormValueData over bailBond else remove commented code
+    // if (Object.keys(defaultFormValueData).length > 0) {
+    //   return defaultFormValueData;
+    // }
     return bailBond?.bails?.[0];
   }, [defaultFormValueData, bailBond]);
 
@@ -802,6 +806,7 @@ const GenerateBailBond = () => {
         );
 
         const tasks = Array.isArray(pendingTaskRes?.data) ? pendingTaskRes.data : [];
+        setPendingTaskData(tasks);
         const raiseTasks = tasks.filter((t) => {
           const status = t?.fields?.find((f) => f.key === "status")?.value;
           const name = t?.fields?.find((f) => f.key === "name")?.value || "";
@@ -1646,10 +1651,21 @@ const GenerateBailBond = () => {
         setLoader(false);
         return;
       }
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTaskData);
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            additionalDetails: {
+              ...getPendingTaskPayload?.additionalDetails,
+              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+            },
+            tenantId,
+          },
+        });
         try {
           if (latestRaiseTaskRef.current) {
             sessionStorage.setItem(persistedRaiseRefKey, JSON.stringify(latestRaiseTaskRef.current));
@@ -1682,10 +1698,24 @@ const GenerateBailBond = () => {
 
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTaskData);
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            additionalDetails: {
+              ...getPendingTaskPayload?.additionalDetails,
+              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+            },
+            tenantId,
+          },
+        });
+        history.replace(
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
+        );
       } else {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
@@ -2318,6 +2348,11 @@ const GenerateBailBond = () => {
       );
     }
   }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber, history, userType]);
+
+  // if pass directly this in formComposer will work normally
+  // const getDefaultFormValue = useMemo(() => {
+  //   return convertToFormData(t, bailBondDetails || {});
+  // }, [bailBondDetails, t]);
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
