@@ -142,7 +142,7 @@ public class CaseRepository {
         jdbcTemplate.update(upsertQuery,
                 new Object[]{
                         extraAdvocate.getId(),
-                        extraAdvocate.  getPartyNo(),
+                        extraAdvocate.getPartyNo(),
                         extraAdvocate.getCino(),
                         extraAdvocate.getPetResName(),
                         extraAdvocate.getType(),
@@ -157,7 +157,7 @@ public class CaseRepository {
                         Types.VARCHAR,
                         Types.INTEGER,
                         Types.VARCHAR,
-                        Types.BIGINT,
+                        Types.INTEGER,
                         Types.INTEGER
                 }
         );
