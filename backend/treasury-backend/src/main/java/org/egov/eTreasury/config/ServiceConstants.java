@@ -90,6 +90,7 @@ public class ServiceConstants {
     public static final String ADVOCATE_WELFARE_FUND = "ADVOCATE_WELFARE_FUND";
     public static final String ADVOCATE_CLERK_WELFARE_FUND = "ADVOCATE_CLERK_WELFARE_FUND";
     public static final String LEGAL_BENEFIT_FEE = "LEGAL_BENEFIT_FEE";
+    public static final String EPOST_FEE = "E_POST";
     public static final String COMPLAINT_FEE = "COMPLAINT_FEE";
     public static final String APPLICATION_FEE = "APPLICATION_FEE";
     public static final String PETITION_FEE = "PETITION_FEE";
