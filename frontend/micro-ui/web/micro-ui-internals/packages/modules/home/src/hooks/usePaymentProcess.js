@@ -176,7 +176,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
 
       const status = await checkBillStatus();
 
-      if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {
+      if (scenario !== "applicationSubmission") {
         setShowPaymentModal(false);
       }
       return status;
@@ -229,7 +229,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
             }
           }
         }, 1000);
-        if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {
+        if (scenario !== "applicationSubmission") {
           setShowPaymentModal(false);
         }
       });

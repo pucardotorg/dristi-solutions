@@ -1,4 +1,4 @@
-import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -11,9 +11,6 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { getSuffixByBusinessCode } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
-import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 const CloseBtn = (props) => {
   return (
     <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -44,10 +41,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const path = "";
   const [toastMsg, setToastMsg] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
-  const { downloadPdf } = useDownloadCasePdf();
-  const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
-  const [retryPayment, setRetryPayment] = useState(false);
-  const [loader, setLoader] = useState(false);
+  const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "payment",
@@ -80,7 +74,51 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }),
     [caseData]
   );
+  const isDelayCondonation = useMemo(() => {
+    const dcaData = caseDetails?.caseDetails?.["delayApplications"]?.formdata[0]?.data;
+    if (
+      dcaData?.delayCondonationType?.code === "YES" ||
+      (dcaData?.delayCondonationType?.code === "NO" && dcaData?.isDcaSkippedInEFiling?.code === "YES")
+    ) {
+      return false;
+    }
+    return true;
+  }, [caseDetails]);
+  // check for partial Liability
+  const chequeDetails = useMemo(() => {
+    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
+    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
+      return {
+        totalAmount: debtLiability?.totalAmount,
+      };
+    } else {
+      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
+      const totalAmount = chequeData.reduce((sum, item) => {
+        return sum + parseFloat(item.data.chequeAmount);
+      }, 0);
+      return {
+        totalAmount: totalAmount.toString(),
+      };
+    }
+  }, [caseDetails]);
 
+  // const { data: calculationResponse1, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
+  //   {
+  //     EFillingCalculationCriteria: [
+  //       {
+  //         checkAmount: chequeDetails?.totalAmount,
+  //         numberOfApplication: 1,
+  //         tenantId: tenantId,
+  //         caseId: caseId,
+  //         isDelayCondonation: isDelayCondonation,
+  //         filingNumber: caseDetails?.filingNumber,
+  //       },
+  //     ],
+  //   },
+  //   {},
+  //   "dristi",
+  //   Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
+  // );
   const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "case-default"), [paymentTypeData]);
   const [calculationResponse, setCalculationResponse] = useState(null);
   const [ispaymentLoading, setIsLoading] = useState(false);
@@ -112,12 +150,10 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
     fetchCalculation();
   }, [tenantId, caseDetails, suffix]);
-
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
   }, [calculationResponse?.Calculation]);
-
   const paymentCalculation = useMemo(() => {
     const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
     const updatedCalculation = breakdown.map((item) => ({
@@ -134,9 +170,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     });
 
     return updatedCalculation;
-  }, [calculationResponse?.Calculation, totalAmount]);
+  }, [calculationResponse?.Calculation]);
 
-  const { fetchBill, openPaymentPortal, paymentLoader, setShowPaymentModal } = usePaymentProcess({
+  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
     tenantId,
     consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
       ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
@@ -169,9 +205,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   }, [caseDetails?.filingNumber]);
 
-  const onTaskPayOnline = async () => {
+  const onSubmitCase = async () => {
     try {
-      setLoader(true);
       const bill = await fetchBill(
         caseDetails?.additionalDetails?.lastSubmissionConsumerCode
           ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
@@ -180,8 +215,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         "case-default"
       );
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
         setIsCaseLocked(true);
+        setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT");
         return;
       }
 
@@ -194,7 +230,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
+        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
         return;
       }
 
@@ -203,6 +240,19 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       const paymentStatus = await openPaymentPortal(bill);
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
       const success = Boolean(paymentStatus);
+
+      const receiptData = {
+        header: "CS_HEADER_FOR_E_FILING_PAYMENT",
+        subHeader: "CS_SUBHEADER_TEXT_FOR_E_FILING_PAYMENT",
+        isArrow: false,
+        showTable: true,
+        caseInfo: [
+          { key: "Mode of Payment", value: "Online", copyData: false },
+          { key: "Amount", value: totalAmount, copyData: false },
+          { key: "Transaction ID", value: caseDetails?.filingNumber, copyData: true },
+        ],
+        showCopytext: true,
+      };
 
       if (success) {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -221,23 +271,24 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             tenantId,
           },
         });
-        const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
-        const fileStoreId = response?.Document?.fileStore;
+        const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
         if (fileStoreId) {
-          setReceiptFilstoreId(fileStoreId);
+          history.push(`e-filing-payment-response`, {
+            state: { success: true, receiptData, fileStoreId: fileStoreId?.Document?.fileStore },
+          });
         }
       } else {
-        setRetryPayment(true);
+        history.push(`e-filing-payment-response`, {
+          state: { success: false, receiptData, caseId },
+        });
       }
     } catch (error) {
       toast.error(t("CS_PAYMENT_ERROR"));
       console.error(error);
-    } finally {
-      setLoader(false);
     }
   };
 
-  if (isLoading || ispaymentLoading || isPaymentTypeLoading || loader) {
+  if (isLoading || ispaymentLoading || isPaymentTypeLoading) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
@@ -248,66 +299,91 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   };
   return (
     <div className="e-filing-payment">
-      <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>
-        <div className="payment-wrapper">
+      <Modal
+        headerBarEnd={<CloseBtn onClick={onCancel} />}
+        actionSaveLabel={t("CS_PAY_ONLINE")}
+        formId="modal-action"
+        actionSaveOnSubmit={() => onSubmitCase()}
+        titleSaveButton={isCaseLocked ? t(payOnlineButtonTitle) : ""}
+        isDisabled={paymentLoader || isCaseLocked}
+        headerBarMain={<Heading label={t("CS_PAY_TO_FILE_CASE")} />}
+      >
+        <div className="payment-due-wrapper" style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}>
           <InfoCard
             variant={"default"}
-            label={t("CS_IMPORTANT_INFORMATION")}
+            label={t("CS_COMMON_NOTE")}
+            style={{ backgroundColor: "#ECF3FD", marginBottom: "8px" }}
             additionalElements={[
-              <div className="info-card-content">
-                <ul style={{ width: "100%" }}>
-                  <li>
-                    <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
-                  </li>
-                  <li>
-                    <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
-                  </li>
-                </ul>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
               </div>,
             ]}
             inline
+            textStyle={{}}
             className={"adhaar-verification-info-card"}
           />
-          <div className="total-payment">
-            {paymentCalculation
-              ?.filter((item) => item?.isTotalFee)
-              ?.map((item) => (
-                <div className={`total-payment-item ${paymentCalculation?.length > 6 ? "has-many-items" : ""}`}>
-                  <span className="total-payment-label">
-                    {item?.key}{" "}
-                    <CustomChip
-                      text={receiptFilstoreId ? t("CS_TASK_PAYMENT_DONE") : t("CS_TASK_PENDING")}
-                      shade={receiptFilstoreId ? "green" : "orange"}
-                      style={{ marginLeft: "6px", fontWeight: "500", padding: "5px 15px" }}
-                    />
-                  </span>
-                  <span className="total-payment-amount">
-                    {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
-                  </span>
-                </div>
-              ))}
+          <div className="payment-due-text" style={{ fontSize: "18px" }}>
+            {`${t("CS_DUE_PAYMENT")} `}
+            <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
+            {` ${t("CS_MANDATORY_STEP_TO_FILE_CASE")}`}
           </div>
-          <div className="breakdown-payment">
+          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "175px", overflowY: "auto" }}>
             {paymentCalculation
-              ?.filter((item) => !item.isTotalFee)
-              ?.map((item) => (
-                <div className="breakdown-payment-item">
-                  <span>{item?.key}</span>
+              .filter((item) => !item.isTotalFee)
+              .map((item) => (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingRight: "16px",
+                  }}
+                >
+                  <span>{item.key}</span>
                   <span>
-                    {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
+                    {item.currency} {parseFloat(item.value).toFixed(2)}
                   </span>
                 </div>
               ))}
           </div>
-
-          <Button
-            label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
-            variation="secondary"
-            className={"pay-online-button"}
-            icon={receiptFilstoreId && <PrintIcon />}
-            onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
-            isDisabled={paymentLoader || isCaseLocked}
-          />
+          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
+            {paymentCalculation
+              .filter((item) => item.isTotalFee)
+              .map((item) => (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderTop: "1px solid #BBBBBD",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    paddingTop: "12px",
+                    paddingRight: paymentCalculation.length > 6 ? "28px" : "16px",
+                  }}
+                >
+                  <span>{item.key}</span>
+                  <span>
+                    {item.currency} {parseFloat(item.value).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+          </div>
+          <div>
+            <InfoCard
+              variant={"default"}
+              label={t("CS_COMMON_NOTE")}
+              style={{ backgroundColor: "#ECF3FD" }}
+              additionalElements={[
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
+                </div>,
+              ]}
+              inline
+              textStyle={{}}
+              className={"adhaar-verification-info-card"}
+            />
+          </div>
         </div>
         {toastMsg && (
           <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
