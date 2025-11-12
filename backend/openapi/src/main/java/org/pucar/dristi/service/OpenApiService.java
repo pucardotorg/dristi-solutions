@@ -1026,12 +1026,15 @@ public class OpenApiService {
             if (validUniqueIds.contains(witnessDetail.getUniqueId())) {
                 PartyDetails party = new PartyDetails();
                 party.setPartyType("Witness");
-                party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
-                party.setEmails(witnessDetail.getEmails().getEmailId());
+                if(witnessDetail.getPhoneNumbers()!=null)
+                    party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
+                if(witnessDetail.getEmails()!=null)
+                    party.setEmails(witnessDetail.getEmails().getEmailId());
                 String name = (witnessDetail.getFirstName()  != null ? witnessDetail.getFirstName()  : "") +
                         (witnessDetail.getMiddleName() != null ? " " + witnessDetail.getMiddleName() : "") +
                         (witnessDetail.getLastName() != null ? " " + witnessDetail.getLastName() : "");
                 party.setPartyName(name);
+                party.setWitnessDesignation(witnessDetail.getWitnessDesignation());
                 party.setUniqueId(witnessDetail.getUniqueId());
 
                 List<AddressDetails> addresses = new ArrayList<>();
