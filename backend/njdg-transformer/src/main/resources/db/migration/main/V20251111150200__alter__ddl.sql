@@ -23,9 +23,4 @@ TABLESPACE pg_default;
 ALTER SEQUENCE public.extra_advocates_id_seq
     OWNED BY public.extra_advocates.id;
 
-ALTER SEQUENCE public.extra_advocates_id_seq
-    OWNER TO postgres;
-ALTER TABLE IF EXISTS public.extra_advocates
-    OWNER to postgres;
-
 ALTER TABLE IF EXISTS public.extra_parties ADD COLUMN sr_no smallint DEFAULT 0;
