@@ -394,7 +394,7 @@ public class CaseEnrichment {
         List<PartyDetails> existingParties =
                 repository.getPartyDetails(courtCase.getCnrNumber(), partyType);
 
-        int partyNo = existingParties.size() + 1;
+        int partyNo = !existingParties.isEmpty() ? existingParties.get(existingParties.size()-1).getPartyNo() + 1 : 2;
 
         // ✅ Filter witnesses based on partyType
         List<WitnessDetails> filteredWitnesses = witnessDetails.stream()
@@ -425,7 +425,7 @@ public class CaseEnrichment {
             PartyDetails newWitness = PartyDetails.builder()
                     .partyId(uniqueId)
                     .partyName(fullName)
-                    .partyAge(Integer.parseInt(w.getWitnessAge()))
+                    .partyAge(w.getWitnessAge() != null ? Integer.parseInt(w.getWitnessAge()) : null)
                     .partyAddress(address)
                     .partyType(partyType)
                     .cino(courtCase.getCnrNumber())
