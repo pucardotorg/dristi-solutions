@@ -7,11 +7,8 @@ import logging
 import asyncpg
 import asyncio
 import json
-from dotenv import load_dotenv
 
 import os
-
-load_dotenv("DBCred.env")  # loads .env file automatically
 
 # ----------------------------
 # Logger Configuration
@@ -31,11 +28,11 @@ logger = logging.getLogger(__name__)
 # ----------------------------
 
 DB_CONFIG = {
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
-    "host": os.getenv("DB_HOST"),
-    "port": os.getenv("DB_PORT")
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"),
+    "database": os.environ.get("DB_NAME"),
+    "host": os.environ.get("DB_HOST"),
+    "port": os.environ.get("DB_PORT")
 }
 
 # ----------------------------
