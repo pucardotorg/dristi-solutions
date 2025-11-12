@@ -1031,6 +1031,7 @@ public class OpenApiService {
                         (witnessDetail.getMiddleName() != null ? " " + witnessDetail.getMiddleName() : "") +
                         (witnessDetail.getLastName() != null ? " " + witnessDetail.getLastName() : "");
                 party.setPartyName(name);
+                party.setWitnessDesignation(witnessDetail.getWitnessDesignation());
                 party.setUniqueId(witnessDetail.getUniqueId());
 
                 List<AddressDetails> addresses = new ArrayList<>();
