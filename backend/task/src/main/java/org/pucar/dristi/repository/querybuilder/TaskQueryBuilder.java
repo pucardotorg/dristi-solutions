@@ -142,11 +142,13 @@ public class TaskQueryBuilder {
     private String getPartyCondition(String partyType, String partyName) {
         String partyCondition = null;
 
-        if (partyType != null && partyName != null) {
+        if (partyType != null && !partyType.trim().isEmpty() && partyName != null && !partyName.trim().isEmpty()) {
             if ("respondent".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
+            }  else {
+                log.warn("Unrecognized partyType value: {}. Filter will be ignored.", partyType);
             }
         }
         return partyCondition;
