@@ -566,7 +566,7 @@ const MainHomeScreen = () => {
   }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
   const handleProcessCourierOnSubmit = useCallback(
-    async (courierData) => {
+    async (courierData, isLast) => {
       const orderType = courierOrderDetails?.orderType;
       const formDataKey = formDataKeyMap[orderType];
       const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -583,6 +583,10 @@ const MainHomeScreen = () => {
           tenantId,
         });
         await refetchTaskManagement();
+        if (isLast) {
+          setCourierServicePendingTask(null);
+          setCourierOrderDetails({});
+        }
         return { continue: true };
       } catch (error) {
         console.error("Error creating or updating task:", error);
@@ -749,7 +753,7 @@ const MainHomeScreen = () => {
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData);
+            return await handleProcessCourierOnSubmit(courierData, isLast);
           },
           isDisabled:
             isTaskManagementLoading ||
