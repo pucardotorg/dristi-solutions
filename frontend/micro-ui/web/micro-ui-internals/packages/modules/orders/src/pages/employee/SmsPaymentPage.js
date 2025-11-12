@@ -144,10 +144,20 @@ const SmsPaymentPage = () => {
         return result;
       })();
 
+      let name = "";
+      if (party?.partyType === "Respondent" || party?.partyType === "Accused") {
+        name = party?.partyName;
+      } else {
+        name =
+          party?.partyName && party?.witnessDesignation
+            ? `${party?.partyName} (${party?.witnessDesignation})`
+            : party?.partyName || party?.witnessDesignation;
+      }
+
       return {
         id: index + 1,
         title: orderType?.toLowerCase() === "summons" ? t("SUMMONS") : t("NOTICE"),
-        subtitle: `${party?.partyType || "Party"} - ${party?.partyName || ""}`,
+        subtitle: `${party?.partyType || "Party"} - ${name || ""}`,
         partyName: party?.partyName,
         orderType,
         addresses: mergedAddresses,
