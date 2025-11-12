@@ -1,20 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Header,
-  ActionBar,
-  InboxSearchComposer,
-  SubmitBar,
-  Toast,
-  CloseSvg,
-  BreadCrumb,
-  Loader,
-  Banner,
-} from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
-import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
 import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
 import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
@@ -981,7 +970,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedItems?.length === 0) {
           setShowErrorToast({
             message: t("FAILED_TO_PERFORM_BULK_SIGN"),
-            error: false,
+            error: true,
           });
           setTimeout(() => {
             setShowErrorToast(null);
