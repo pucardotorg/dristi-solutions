@@ -16,11 +16,11 @@ import os
 # ----------------------------
 # Environment Defaults
 # ----------------------------
-os.environ.setdefault("DB_USER", "postgres")
-os.environ.setdefault("DB_PASSWORD", "beehyv@123")
-os.environ.setdefault("DB_NAME", "pucar-solutions-dev-db")
-os.environ.setdefault("DB_HOST", "178.236.185.122")
-os.environ.setdefault("DB_PORT", "5432")
+os.environ.setdefault("DB_USER", "")
+os.environ.setdefault("DB_PASSWORD", "")
+os.environ.setdefault("DB_NAME", "")
+os.environ.setdefault("DB_HOST", "")
+os.environ.setdefault("DB_PORT", "")
 os.environ.setdefault("FILESTORE_HOST", "http://localhost:8080")
 os.environ.setdefault("FILESTORE_ENDPOINT", "/filestore/v1/files")
 
