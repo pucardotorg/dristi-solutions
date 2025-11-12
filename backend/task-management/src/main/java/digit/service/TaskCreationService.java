@@ -33,6 +33,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 import static digit.config.ServiceConstants.ACCUSED;
@@ -527,7 +528,12 @@ public class TaskCreationService {
         String firstName = witnessDetails.getFirstName() != null ? witnessDetails.getFirstName() : "";
         String middleName = witnessDetails.getMiddleName() != null ? witnessDetails.getMiddleName() : "";
         String lastName = witnessDetails.getLastName() != null ? witnessDetails.getLastName() : "";
-        String name = String.join(" ", firstName, middleName, lastName).trim();
+        List<String> nameParts = Stream.of(firstName, middleName, lastName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        String name = String.join(" ", nameParts);
         String designation = witnessDetails.getWitnessDesignation();
 
         if (!name.isEmpty()) {
@@ -578,7 +584,13 @@ public class TaskCreationService {
         String firstName = respondentDetails.getRespondentFirstName() != null ? respondentDetails.getRespondentFirstName() : "";
         String middleName = respondentDetails.getRespondentMiddleName() != null ? respondentDetails.getRespondentMiddleName() : "";
         String lastName = respondentDetails.getRespondentLastName() != null ? respondentDetails.getRespondentLastName() : "";
-        String name = String.join(" ", firstName, middleName, lastName).trim();
+        List<String> nameParts = Stream.of(firstName, middleName, lastName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        String name = String.join(" ", nameParts);
+
 
         Address address = mapToAddress(addressDetails.getAddressDetails());
 
