@@ -21,6 +21,8 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           tenantId: Digit.ULBService.getCurrentTenantId(),
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
+          partyName: partyName,
+          partyType: partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase(),
         },
       },
       masterName: "commonUiConfig",
