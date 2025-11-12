@@ -209,7 +209,7 @@ public class CaseEnrichment {
                 .toList();
 
         List<ExtraAdvocateDetails> extraAdvocateDetailsList = new ArrayList<>();
-        int srNo = existingAdvocates.size()+1;
+        int srNo = existingAdvocates.get(existingAdvocates.size()-1).getSrNo()+1;
 
         for (String advocateId : advocateIds) {
             if(primaryAdvocateId.equalsIgnoreCase(advocateId)) continue;

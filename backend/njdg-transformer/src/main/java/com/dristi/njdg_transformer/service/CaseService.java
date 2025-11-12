@@ -145,7 +145,7 @@ public class CaseService {
             if(advocateIds.isEmpty()) {
                 log.info("No advocates present for the party: {}", party.getPartyId());
             }
-            int srNo = existingAdvocates.size()+1;
+            int srNo = existingAdvocates.get(existingAdvocates.size()-1).getSrNo()+1;
             for(String advocateId: advocateIds) {
                 AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
                 if (advocateDetails.getAdvocateCode().equals(party.getAdvCd())) continue;
@@ -255,6 +255,7 @@ public class CaseService {
         OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
         List<Order> orders = orderListResponse.getList();
         for (Order order : orders){
+            //handle composite order
             if(orderTypes.contains(order.getOrderType().toUpperCase()) && PUBLISHED_ORDER.equalsIgnoreCase(order.getStatus())) {
                 return formatDate(order.getCreatedDate());
             }
