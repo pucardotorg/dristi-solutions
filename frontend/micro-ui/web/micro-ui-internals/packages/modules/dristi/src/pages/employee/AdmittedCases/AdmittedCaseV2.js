@@ -3138,10 +3138,6 @@ const AdmittedCaseV2 = () => {
                   label: "END_HEARING",
                 },
                 {
-                  value: "GENERATE_ORDER",
-                  label: "GENERATE_ORDER",
-                },
-                {
                   value: "SUBMIT_DOCUMENTS",
                   label: "SUBMIT_DOCUMENTS",
                 },
@@ -3641,6 +3637,14 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("Generate Order")}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
+                              ></Button>
+                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
@@ -3686,6 +3690,14 @@ const AdmittedCaseV2 = () => {
                                     value: "NEXT_HEARING",
                                   })
                                 }
+                              ></Button>
+                            )}
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("GENERATE_ORDER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
                               ></Button>
                             )}
                             <ActionButton
