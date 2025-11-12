@@ -12,6 +12,7 @@ import axios from "axios";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
+import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -41,6 +42,8 @@ function BulkESignView() {
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
+  const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
+  const [signedList, setSignedList] = useState([]);
 
   const [showErrorToast, setShowErrorToast] = useState(null);
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
@@ -352,12 +355,21 @@ function BulkESignView() {
           },
           {}
         );
-        history.replace(homePath, {
-          bulkSignSuccess: {
-            show: true,
-            bulkSignOrderListLength: updateOrderResponse?.orders?.length,
-          },
-        });
+        const signedList = updateOrderResponse?.orders;
+
+        if (signedList?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: true,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
+        setSignedList(signedList);
+        setShowBulkSignSuccessModal(true);
       });
     } catch (e) {
       setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
@@ -432,6 +444,7 @@ function BulkESignView() {
           }
         />
       )}
+      {showBulkSignSuccessModal && <OrderIssueBulkSuccesModal t={t} history={history} bulkSignOrderListLength={signedList?.length} />}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );

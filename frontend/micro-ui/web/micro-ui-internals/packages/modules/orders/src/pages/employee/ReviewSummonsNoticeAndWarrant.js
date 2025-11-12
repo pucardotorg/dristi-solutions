@@ -1,20 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Header,
-  ActionBar,
-  InboxSearchComposer,
-  SubmitBar,
-  Toast,
-  CloseSvg,
-  BreadCrumb,
-  Loader,
-  Banner,
-} from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
-import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
 import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
 import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
@@ -939,7 +928,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleActualBulkSign = useCallback(async () => {
     setIsBulkLoading(true);
 
-    const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
+    let selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
@@ -968,13 +957,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        await processManagementService.updateSignedProcess(
+        const signedResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
           },
           {}
         );
+        const signedList = signedResponse?.tasks || signedResponse?.orders;
+        selectedItems = selectedItems?.filter((item) => signedList?.some((signed) => signed?.taskNumber === item?.taskNumber));
+
+        if (selectedItems?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: true,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
         setShowErrorToast({
           message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
           error: false,
@@ -1689,7 +1692,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <Banner
               whichSvg={"tick"}
               successful={true}
-              message={t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT")}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${bulkSendList?.length} ${t("MARKED_DOCUMENT")}`}
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%", marginTop: "0px" }}
             />

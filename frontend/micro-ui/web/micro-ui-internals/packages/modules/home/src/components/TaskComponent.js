@@ -14,11 +14,12 @@ import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/D
 import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { getFullName, updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
+import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -29,6 +30,14 @@ const formDataKeyMap = {
   NOTICE: "noticeOrder",
   SUMMONS: "SummonsOrder",
 };
+
+const displayPartyType = {
+  complainant: "COMPLAINANT_ATTENDEE",
+  respondent: "RESPONDENT_ATTENDEE",
+  witness: "WITNESS_ATTENDEE",
+  advocate: "ADVOCATE_ATTENDEE",
+};
+
 const dayInMillisecond = 1000 * 3600 * 24;
 
 const LITIGANT_REVIEW_TASK_NAME = "Review Litigant Details Change";
@@ -1024,6 +1033,7 @@ const TasksComponent = ({
           firstName: item?.data?.firstName || "",
           middleName: item?.data?.middleName || "",
           lastName: item?.data?.lastName || "",
+          witnessDesignation: item?.data?.witnessDesignation || "",
           noticeCourierService: item?.noticeCourierService || [],
           summonsCourierService: item?.summonsCourierService || [],
           addressDetails: item?.data?.addressDetails || [],
@@ -1033,7 +1043,15 @@ const TasksComponent = ({
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
         };
-        const fullName = getFullName(" ", courierData?.firstName, courierData?.middleName, courierData?.lastName);
+
+        const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
+        const fullName = getFormattedName(
+          courierData?.firstName,
+          courierData?.middleName,
+          courierData?.lastName,
+          courierData?.witnessDesignation,
+          partyTypeLabel
+        );
         const orderType = courierOrderDetails?.orderType;
 
         return {

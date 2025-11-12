@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
-import { Button, Dropdown, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
 import { getFormattedName } from "../utils";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
