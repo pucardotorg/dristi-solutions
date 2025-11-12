@@ -99,6 +99,7 @@ public class ServiceConstants {
     public static final String ERRORS_PATH = "$.errors";
     public static final String ORDER_TYPE_PATH = "$.orderType";
     public static final String ORDER_FINDINGS_PATH = "$.additionalDetails.formdata.findings.code";
+    public static final String COMPOSITE_ORDER_FINDINGS_PATH = "$.orderSchema.additionalDetails.formdata.findings.code";
     public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
     public static final String APPLICATION_TYPE_PATH = "$.applicationType";

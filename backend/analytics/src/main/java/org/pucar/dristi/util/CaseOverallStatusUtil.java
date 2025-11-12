@@ -111,11 +111,11 @@ public class CaseOverallStatusUtil {
                 }
                 for (int i = 0; i < compositeItems.length(); i++) {
                     JSONObject compositeItem = compositeItems.getJSONObject(i);
-                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject);
+                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE);
                 }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -270,7 +270,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject) {
+	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject, String orderCategory) {
 		if (!"published".equalsIgnoreCase(status)) return null;
 
 		org.pucar.dristi.web.models.CaseOutcomeType caseOutcomeType = mdmsDataConfig.getCaseOutcomeTypeMap().get(orderType);
@@ -281,7 +281,7 @@ public class CaseOverallStatusUtil {
 
 		try {
 			if (caseOutcomeType.getIsJudgement()) {
-				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject);
+				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {
 				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome());
 			}
@@ -291,9 +291,9 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject) {
+	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject, String orderCategory) {
 		try {
-			String outcome = JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
+			String outcome = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_FINDINGS_PATH) : JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
 			if (caseOutcomeType.getJudgementList().contains(outcome)) {
 				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome);
 			} else {
@@ -336,9 +336,9 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject) {
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
         publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject, orderCategory), request);
     }
 }
