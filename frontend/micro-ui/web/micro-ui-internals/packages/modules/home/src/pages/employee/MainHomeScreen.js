@@ -398,7 +398,7 @@ const MainHomeScreen = () => {
           },
         },
         {
-          label: "CS_CASE_NAME_ADVOCATE",
+          label: "CS_CASE_NAME_NUMBER_ADVOCATE",
           type: "text",
           key: "caseSearchText",
           isMandatory: false,
