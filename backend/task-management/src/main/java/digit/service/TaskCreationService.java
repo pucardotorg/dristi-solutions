@@ -528,6 +528,15 @@ public class TaskCreationService {
         String middleName = witnessDetails.getMiddleName() != null ? witnessDetails.getMiddleName() : "";
         String lastName = witnessDetails.getLastName() != null ? witnessDetails.getLastName() : "";
         String name = String.join(" ", firstName, middleName, lastName).trim();
+        String designation = witnessDetails.getWitnessDesignation();
+
+        if (!name.isEmpty()) {
+            if (designation != null && !designation.isBlank()) {
+                name = name + " - " + designation;
+            }
+        } else if (designation != null && !designation.isBlank()) {
+            name = designation;
+        }
 
         Integer age = null;
         try {
