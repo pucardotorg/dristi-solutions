@@ -26,4 +26,7 @@ public class Act {
 
     @JsonProperty("act_section")
     private String actSection;
+
+    @JsonProperty("sr_no")
+    private Integer srNo;
 }

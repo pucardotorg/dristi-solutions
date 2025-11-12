@@ -320,18 +320,39 @@ public class CaseRepository {
         return jdbcTemplate.queryForObject(actMasterQuery, params, types, new BeanPropertyRowMapper<>(Act.class));
     }
 
-    public void insertActDetails(Act act) {
-        String insertActQuery = queryBuilder.getInsertActQuery();
+    public void upsertActDetails(Act act) {
         try {
-            int inserted = jdbcTemplate.update(insertActQuery,
-                    act.getId(),
-                    act.getCino(),
-                    act.getActCode(),
-                    act.getActName(),
-                    act.getActSection());
-            log.debug("Inserted {} record(s) with CINO: {}", inserted, act.getCino());
+            // Fetch only by primary key (id)
+            String selectQuery = "SELECT id FROM acts WHERE cino = ?";;
+            List<Integer> existingIds = jdbcTemplate.query(
+                    selectQuery,
+                    new Object[]{act.getCino()},
+                    (rs, rowNum) -> rs.getInt("id")
+            );
+
+            if (existingIds.isEmpty()) {
+                // INSERT
+                String insertQuery = queryBuilder.getInsertActQuery();
+                int inserted = jdbcTemplate.update(insertQuery,
+                        act.getCino(),
+                        act.getActCode(),
+                        act.getActName(),
+                        act.getActSection());
+                log.debug("Inserted {} record(s) for Act with ID: {}", inserted, act.getId());
+            } else {
+                // UPDATE
+                String updateQuery = queryBuilder.getUpdateActQuery();
+                int updated = jdbcTemplate.update(updateQuery,
+                        act.getActCode(),
+                        act.getActName(),
+                        act.getActSection(),
+                        act.getCino());
+                log.debug("Updated {} record(s) for Act with ID: {}", updated, act.getId());
+            }
+
         } catch (DataAccessException e) {
-            throw new RuntimeException(e);
+            log.error("Database error while upserting Act with ID {}: {}", act.getId(), e.getMessage(), e);
+            throw new RuntimeException("Error upserting Act record", e);
         }
     }
 

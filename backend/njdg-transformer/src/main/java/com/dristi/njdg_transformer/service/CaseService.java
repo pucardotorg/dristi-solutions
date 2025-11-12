@@ -80,13 +80,14 @@ public class CaseService {
     private void processAndUpdateActs(CourtCase courtCase) {
         //todo: configuring for single act, need to configure for multiple
         List<Act> acts = caseRepository.getActs(courtCase.getCnrNumber());
+        int srNo = 1;
         if(!acts.isEmpty()) {
-            return;
+            srNo = acts.get(acts.size()-1).getSrNo() + 1;
         }
         Act actMaster = caseRepository.getActMaster(ACT_NAME);
         if(actMaster != null){
             Act newAct = Act.builder()
-                    .id(acts.size()+1)
+                    .srNo(srNo)
                     .cino(courtCase.getCnrNumber())
                     .actCode(actMaster.getActCode())
                     .actName(actMaster.getActName())
@@ -282,10 +283,10 @@ public class CaseService {
 
     private Integer getPurposeCode(CourtCase courtCase) {
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(courtCase.getCnrNumber());
-        Integer purposeCode = null;
+        int purposeCode = 0; //default as it has not null constraint
         if(hearingDetails != null && !hearingDetails.isEmpty()) {
             int n = hearingDetails.size();
-            purposeCode =  Integer.valueOf(hearingDetails.get(n-1).getPurposeOfListing());
+            purposeCode =  Integer.parseInt(hearingDetails.get(n-1).getPurposeOfListing());
         }
         return purposeCode;
     }

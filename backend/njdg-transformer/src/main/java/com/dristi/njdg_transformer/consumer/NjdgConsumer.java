@@ -165,7 +165,7 @@ public class NjdgConsumer {
         try {
             log.info("Received message on topic: {}", topic);
             Act act = objectMapper.readValue(payload.value().toString(), Act.class);
-            caseRepository.insertActDetails(act);
+            caseRepository.upsertActDetails(act);
             log.info("Message processed successfully. Topic: {}", topic);
         } catch (Exception e) {
             log.error("Error in processing message:: {}", e.getMessage(), e);

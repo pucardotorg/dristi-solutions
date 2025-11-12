@@ -246,12 +246,11 @@ public class CaseQueryBuilder {
     public String getInsertActQuery() {
         return """
                 INSERT INTO acts (
-                    id,
                     cino,
                     act_code,
                     act_name,
                     act_section
-                ) VALUES (?,?,?,?,?)
+                ) VALUES (?,?,?,?)
                 """;
     }
 
@@ -269,5 +268,9 @@ public class CaseQueryBuilder {
 
     public String getExtraAdvocateDetailsCountQuery() {
         return "SELECT id, party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no  FROM extra_advocates WHERE cino = ? AND type = ?";
+    }
+
+    public String getUpdateActQuery() {
+        return "UPDATE acts SET act_code = ?, act_name = ?, act_section = ? WHERE cino = ?";
     }
 }
