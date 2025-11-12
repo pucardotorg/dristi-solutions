@@ -9,7 +9,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import BailBondEsignLockModal from "../../components/BailBondEsignLockModal";
-import { combineMultipleFiles, formatAddress } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -101,11 +101,11 @@ const GenerateBailBondV2 = () => {
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const [caseApiError, setCaseApiError] = useState(undefined);
   const isBreadCrumbsParamsDataSet = useRef(false);
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const courtId = localStorage.getItem("courtId");
+  const [clearAutoPopulatedData, setClearAutoPopulatedData] = useState(false);
 
   const fetchCaseDetails = async () => {
     try {
@@ -133,7 +133,7 @@ const GenerateBailBondV2 = () => {
         isBreadCrumbsParamsDataSet.current = true;
       }
     } catch (err) {
-      setCaseApiError(err);
+      console.error(err);
     } finally {
       setIsCaseDetailsLoading(false);
     }
@@ -142,7 +142,7 @@ const GenerateBailBondV2 = () => {
   // Fetch case details on component mount
   useEffect(() => {
     fetchCaseDetails();
-  }, [courtId]);
+  }, []);
 
   const { data: bailBond, isLoading: isBailBondLoading } = useSearchBailBondService(
     {
@@ -176,7 +176,7 @@ const GenerateBailBondV2 = () => {
     },
     { tenantId },
     `get-pending-task-${bailBondId}`,
-    Boolean(!bailBondId && filingNumber)
+    Boolean(filingNumber)
   );
 
   const getUserUUID = useCallback(
@@ -211,24 +211,23 @@ const GenerateBailBondV2 = () => {
     return Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
   }, [pendingTasksResponse]);
 
-  const refApplicationId = useMemo(() => {
-    const pendingTaskData = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
-    return pendingTaskData?.refApplicationId || null;
+  const pendingTaskAdditionalDetails = useMemo(() => {
+    return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
   }, [pendingTasks]);
 
-  const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
-        applicationNumber: refApplicationId,
+        applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
         tenantId,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
-    refApplicationId + filingNumber,
-    Boolean(!bailBondId && filingNumber && refApplicationId)
+    pendingTaskAdditionalDetails?.refApplicationId + filingNumber,
+    Boolean(!bailBondId && filingNumber && pendingTaskAdditionalDetails?.refApplicationId)
   );
 
   const applicationDetails = useMemo(() => {
@@ -293,7 +292,29 @@ const GenerateBailBondV2 = () => {
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const modifiedFormConfig = useMemo(() => {
-    const updatedConfig = bailBondConfig
+    let bailnewConfig = bailBondConfig;
+
+    const noOfSuretiesField = {
+      type: "text",
+      label: "NO_OF_SURETIES",
+      isMandatory: false,
+      key: "noOfSureties",
+      disable: true,
+      populators: {
+        name: "noOfSureties",
+        disable: true,
+      },
+    };
+
+    const bodyFields = bailnewConfig?.[0]?.body || [];
+    if (!clearAutoPopulatedData && pendingTaskAdditionalDetails?.noOfSureties) {
+      const alreadyExists = bodyFields.some((field) => field?.key === "noOfSureties");
+      if (!alreadyExists) {
+        bailnewConfig[0].body.push(noOfSuretiesField);
+      }
+    }
+
+    const updatedConfig = bailnewConfig
       .filter((config) => {
         const dependentKeys = config?.dependentKey;
         if (!dependentKeys) {
@@ -341,6 +362,19 @@ const GenerateBailBondV2 = () => {
                 return updatedBody;
               }
             }
+
+            if (body?.key === "litigantFatherName" && applicationDetails?.applicationDetails?.litigantFatherName && !clearAutoPopulatedData) {
+              return { ...body, disable: true };
+            }
+
+            if (body?.key === "bailType" && pendingTaskAdditionalDetails?.bailType?.code && !clearAutoPopulatedData) {
+              return { ...body, disable: true };
+            }
+
+            if (body?.key === "bailAmount" && pendingTaskAdditionalDetails?.bailAmount && !clearAutoPopulatedData) {
+              return { ...body, disable: true };
+            }
+
             return {
               ...body,
             };
@@ -348,7 +382,7 @@ const GenerateBailBondV2 = () => {
         };
       });
     return updatedConfig;
-  }, [complainantsList, formdata]);
+  }, [applicationDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
@@ -401,7 +435,22 @@ const GenerateBailBondV2 = () => {
   };
 
   const defaultFormValue = useMemo(() => {
-    if (pendingTasks?.length > 0 && applicationDetails) {
+    if (clearAutoPopulatedData) {
+      if (!complainantsList || complainantsList.length === 0) return {};
+
+      if (complainantsList.length === 1) {
+        const onlyComplainant = complainantsList[0];
+        return {
+          selectComplainant: {
+            code: onlyComplainant.code,
+            name: onlyComplainant.name,
+            uuid: onlyComplainant.uuid,
+          },
+        };
+      }
+    }
+
+    if (pendingTasks?.length > 0 && applicationDetails && complainantsList?.length === 1) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const applicationDetailsData = applicationDetails?.applicationDetails || {};
 
@@ -463,7 +512,7 @@ const GenerateBailBondV2 = () => {
     }
 
     return {};
-  }, [bailBondDetails, complainantsList, defaultFormValueData, t]);
+  }, [applicationDetails, bailBondDetails, clearAutoPopulatedData, complainantsList, defaultFormValueData, pendingTasks, t]);
 
   const onDocumentUpload = async (fileData, filename) => {
     const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
@@ -858,9 +907,6 @@ const GenerateBailBondV2 = () => {
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
-        history.replace(
-          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
-        );
       } else {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
@@ -872,6 +918,12 @@ const GenerateBailBondV2 = () => {
     } finally {
       setLoader(false);
     }
+  };
+
+  const handleClearAutoPopulatedData = () => {
+    setDefaultFormValueData({});
+    setFormdata({});
+    setClearAutoPopulatedData(true);
   };
 
   const handleCloseSignatureModal = () => {
@@ -886,10 +938,18 @@ const GenerateBailBondV2 = () => {
   const handleESign = async () => {
     // TODO: call Api then close this modal and show next modal
     try {
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(bailBondFileStoreId, bailBondWorkflowAction.INITIATEESIGN);
       setBailBondSignatureURL(res?.bails?.[0]?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
+      await submissionService.customApiService(Urls.pendingTask, {
+        pendingTask: {
+          ...getPendingTaskPayload,
+          isCompleted: true,
+          tenantId,
+        },
+      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -902,10 +962,18 @@ const GenerateBailBondV2 = () => {
     // TODO: api call with fileStoreID then
     try {
       setLoader(false);
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
+      await submissionService.customApiService(Urls.pendingTask, {
+        pendingTask: {
+          ...getPendingTaskPayload,
+          isCompleted: true,
+          tenantId,
+        },
+      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -966,7 +1034,7 @@ const GenerateBailBondV2 = () => {
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
       );
     }
-  }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber]);
+  }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber, history, userType]);
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading || isApplicationLoading || isPendingtaskDataLoading) {
     return <Loader />;
@@ -997,6 +1065,7 @@ const GenerateBailBondV2 = () => {
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
           <FormComposerV2
+            key={"bailbond-form-composer" + clearAutoPopulatedData}
             className={"bailbond"}
             label={t("REVIEW_BAIL_BOND")}
             secondaryLabel={t("SAVE_AS_DRAFT")}
@@ -1010,6 +1079,25 @@ const GenerateBailBondV2 = () => {
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />
+          <button
+            type="button"
+            onClick={handleClearAutoPopulatedData}
+            className="tertiary-clear-btn"
+            style={{
+              position: "fixed",
+              bottom: 12,
+              left: 32,
+              background: "transparent",
+              border: "1px solid #007E7E",
+              color: "#007E7E",
+              padding: "8px 16px",
+              fontWeight: 600,
+              cursor: "pointer",
+              zIndex: 1000,
+            }}
+          >
+            {t("CLEAR_INFORMATION")}
+          </button>
         </div>
 
         {showBailBondReview && (

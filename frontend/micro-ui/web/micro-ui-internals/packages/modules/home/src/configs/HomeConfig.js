@@ -1748,7 +1748,6 @@ export const pendingTaskForBailBondActions = {
     redirectDetails: {
       url: "/submissions/bail-bond",
       params: [
-        { key: "source", defaultValue: "pendingTasks" },
         { key: "filingNumber", value: "filingNumber" },
       ],
     },
