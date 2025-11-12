@@ -78,6 +78,10 @@ const MainHomeScreen = () => {
   const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
 
+  // Keep separate scrutiny counts to reliably render sidebar as "due+sent"
+  const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [scrutinySentCount, setScrutinySentCount] = useState(0);
+
   const today = new Date();
 
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -293,10 +297,63 @@ const MainHomeScreen = () => {
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
 
+      // Fetch separate counts for Scrutinise Cases: due and sent for correction
+      const scrutinyDuePayload = {
+        SearchCriteria: {
+          moduleName: "Pending Tasks Service",
+          tenantId: tenantId,
+          moduleSearchCriteria: {
+            screenType: ["home", "applicationCompositeOrder"],
+            isCompleted: false,
+            courtId: localStorage.getItem("courtId"),
+            assignedRole: assignedRoles,
+          },
+          limit: 10,
+          offset: 0,
+          searchScrutinyCases: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Scrutinise cases",
+            status: ["UNDER_SCRUTINY"],
+          },
+        },
+      };
+      const scrutinySentPayload = {
+        SearchCriteria: {
+          moduleName: "Pending Tasks Service",
+          tenantId: tenantId,
+          moduleSearchCriteria: {
+            screenType: ["home", "applicationCompositeOrder"],
+            isCompleted: false,
+            courtId: localStorage.getItem("courtId"),
+            assignedRole: assignedRoles,
+          },
+          limit: 10,
+          offset: 0,
+          searchScrutinyCases: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Scrutinise cases",
+            status: ["CASE_REASSIGNED"],
+          },
+        },
+      };
+
+      const [dueRes, sentRes] = await Promise.all([
+        HomeService.pendingTaskSearch(scrutinyDuePayload, { tenantId: tenantId }),
+        HomeService.pendingTaskSearch(scrutinySentPayload, { tenantId: tenantId }),
+      ]);
+
+      const scrutinyDue = dueRes?.scrutinyCasesData?.totalCount || 0;
+      const scrutinySent = sentRes?.scrutinyCasesData?.totalCount || 0;
+      setScrutinyDueCount(scrutinyDue);
+      setScrutinySentCount(scrutinySent);
+
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
         OFFLINE_PAYMENTS: offlinePaymentsCount,
-        SCRUTINISE_CASES: scrutinyCasesCount,
+        // We still store a string here, but rendering will always derive from state too
+        SCRUTINISE_CASES: `${scrutinyDue}+${scrutinySent}`,
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
@@ -456,7 +513,16 @@ const MainHomeScreen = () => {
         },
       },
       additionalDetails: {
-        setCount: setPendingTaskCount,
+        setCount: (value) => {
+          if (typeof value === "function") {
+            setPendingTaskCount((prev) => {
+              const next = value(prev);
+              return { ...next, SCRUTINISE_CASES: prev.SCRUTINISE_CASES };
+            });
+          } else {
+            setPendingTaskCount((prev) => ({ ...prev, ...value, SCRUTINISE_CASES: prev.SCRUTINISE_CASES }));
+          }
+        },
         activeTab: activeTab,
         setShowBailBondModal: setShowBailBondModal,
         setSelectedBailBond: setSelectedBailBond,
@@ -533,6 +599,20 @@ const MainHomeScreen = () => {
     [activeTab, updateCounter, modifiedConfig]
   );
 
+  const setPendingTaskCountGuarded = useCallback(
+    (value) => {
+      if (typeof value === "function") {
+        setPendingTaskCount((prev) => {
+          const next = value(prev);
+          return { ...next, SCRUTINISE_CASES: prev.SCRUTINISE_CASES };
+        });
+      } else {
+        setPendingTaskCount((prev) => ({ ...prev, ...value, SCRUTINISE_CASES: prev.SCRUTINISE_CASES }));
+      }
+    },
+    []
+  );
+
   const scrutinyInboxSearchComposer = useMemo(
     () =>
       tabData ? (
@@ -542,7 +622,7 @@ const MainHomeScreen = () => {
           configs={{
             ...scrutinyConfig,
             additionalDetails: {
-              setCount: setPendingTaskCount,
+              setCount: setPendingTaskCountGuarded,
               activeTab: activeTab,
               hasCaseReviewerAccess: hasCaseReviewerAccess,
             },
@@ -589,6 +669,7 @@ const MainHomeScreen = () => {
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
           pendingTaskCount={pendingTaskCount}
+          scrutinyDisplayCount={`${scrutinyDueCount}+${scrutinySentCount}`}
           showToast={showToast}
         />
         {activeTab === "TOTAL_HEARINGS_TAB" ? (

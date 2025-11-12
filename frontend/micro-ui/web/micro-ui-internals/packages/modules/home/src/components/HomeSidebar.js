@@ -13,6 +13,7 @@ const HomeSidebar = ({
   applicationOptions,
   hearingCount = 0,
   pendingTaskCount,
+  scrutinyDisplayCount,
   showToast = () => {},
 }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -76,7 +77,7 @@ const HomeSidebar = ({
                 t={t}
                 key={index}
                 label={options[key]?.name}
-                count={pendingTaskCount[key]}
+                count={key === "SCRUTINISE_CASES" ? scrutinyDisplayCount : pendingTaskCount[key]}
                 active={activeTab === key}
                 onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
               />

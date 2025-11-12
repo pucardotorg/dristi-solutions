@@ -23,7 +23,7 @@ const SidebarItem = ({ t, label, count, active, onClick, href }) => {
   const content = (
     <React.Fragment>
       <span style={{ flex: 1 }}>{t(label)}</span>
-      {typeof count === "number" && (
+      {count !== undefined && count !== null && count !== "" && (
         <span
           style={{
             fontSize: 14,
