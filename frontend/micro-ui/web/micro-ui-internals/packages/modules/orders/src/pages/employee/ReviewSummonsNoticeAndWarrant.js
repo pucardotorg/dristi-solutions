@@ -939,7 +939,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleActualBulkSign = useCallback(async () => {
     setIsBulkLoading(true);
 
-    const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
+    let selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
@@ -968,13 +968,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        await processManagementService.updateSignedProcess(
+        const signedResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
           },
           {}
         );
+        const signedList = signedResponse?.tasks || signedResponse?.orders;
+        selectedItems = selectedItems?.filter((item) => signedList?.some((signed) => signed?.taskNumber === item?.taskNumber));
+
+        if (selectedItems?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: false,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
         setShowErrorToast({
           message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
           error: false,
@@ -1689,7 +1703,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <Banner
               whichSvg={"tick"}
               successful={true}
-              message={t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT")}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${bulkSendList?.length} ${t("MARKED_DOCUMENT")}`}
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%", marginTop: "0px" }}
             />
