@@ -50,7 +50,9 @@ public class CaseConsumer {
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(caseRequest.getRequestInfo(), caseRequest.getCourtCase().getFilingNumber());
                 JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
                 CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
-                caseService.processAndUpdateCase(courtCase, caseRequest.getRequestInfo());
+                if(courtCase.getCnrNumber()!=null){
+                    caseService.processAndUpdateCase(courtCase, caseRequest.getRequestInfo());
+                }
             }
         } catch (Exception e) {
             log.error("Error in updating case: ", e);
@@ -102,7 +104,9 @@ public class CaseConsumer {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
             JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCases = objectMapper.convertValue(courtCaseNode, CourtCase.class);
-            caseService.processAndUpdateCase(courtCases, requestInfo);
+            if(courtCases.getCnrNumber() != null){
+                caseService.processAndUpdateCase(courtCases, requestInfo);
+            }
         } catch (Exception e) {
             log.error("Error in processing join case message:: {}", e.getMessage());
         }
@@ -117,7 +121,9 @@ public class CaseConsumer {
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
             courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getCreatedTime());
-            caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
+            if(courtCase.getCnrNumber() != null) {
+                caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
+            }
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
             log.error("Error in processing case outcome message:: {}", e.getMessage());
@@ -132,7 +138,9 @@ public class CaseConsumer {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(overallStatus.getRequestInfo(), overallStatus.getCaseOverallStatus().getFilingNumber());
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
-            caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
+            if(courtCase.getCnrNumber() != null) {
+                caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
+            }
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
             log.error("Error in processing case status message:: {}", e.getMessage());
