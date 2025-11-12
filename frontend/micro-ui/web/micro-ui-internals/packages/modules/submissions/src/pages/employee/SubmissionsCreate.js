@@ -452,7 +452,7 @@ const SubmissionsCreate = ({ path }) => {
                     ...input.populators.mdmsConfig,
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
-                    }].includes(item.type)).map((item) => {return { ...item, name: item.type };});}`, // name: 'APPLICATION_TYPE_'+item.type
+                    }].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}`, // name: 'APPLICATION_TYPE_'+item.type
                   },
                 },
               };
