@@ -72,6 +72,8 @@ public class HearingService {
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
                 .desgCode(designationMaster.getDesgCode().toString())
                 .hearingId(hearing.getHearingId())
+                .business(hearing.getHearingSummary())
+                .courtNo(1)
                 .build();
 
         // Update previous hearing's nextDate

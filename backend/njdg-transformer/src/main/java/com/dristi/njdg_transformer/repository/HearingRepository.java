@@ -32,7 +32,6 @@ public class HearingRepository {
         String insertQuery = hearingQueryBuilder.getHearingInsertQuery();
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgsList = new ArrayList<>();
-        preparedStmtList.add(hearingDetails.getId());
         preparedStmtList.add(hearingDetails.getCino());
         preparedStmtList.add(hearingDetails.getSrNo());
         preparedStmtList.add(hearingDetails.getDesgName());
@@ -43,6 +42,8 @@ public class HearingRepository {
         preparedStmtList.add(hearingDetails.getJoCode());
         preparedStmtList.add(hearingDetails.getDesgCode());
         preparedStmtList.add(hearingDetails.getHearingId());
+        preparedStmtList.add(hearingDetails.getBusiness());
+        preparedStmtList.add(hearingDetails.getCourtNo());
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.INTEGER);
@@ -54,6 +55,11 @@ public class HearingRepository {
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        preparedStmtArgsList.add(Types.INTEGER);
         jdbcTemplate.update(insertQuery, preparedStmtList.toArray(), preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
     }
 
@@ -76,6 +82,8 @@ public class HearingRepository {
         preparedStmtList.add(hearingDetails.getJudgeCode());
         preparedStmtList.add(hearingDetails.getJoCode());
         preparedStmtList.add(hearingDetails.getDesgCode());
+        preparedStmtList.add(hearingDetails.getBusiness());
+        preparedStmtList.add(hearingDetails.getCourtNo());
 
         // WHERE clause parameters
         preparedStmtList.add(hearingDetails.getCino());
@@ -90,6 +98,8 @@ public class HearingRepository {
         preparedStmtArgsList.add(Types.VARCHAR);  // judge_code
         preparedStmtArgsList.add(Types.VARCHAR);  // jocode
         preparedStmtArgsList.add(Types.VARCHAR);  // desg_code
+        preparedStmtArgsList.add(Types.VARCHAR);  // business
+        preparedStmtArgsList.add(Types.INTEGER);  // court_no
 
         preparedStmtArgsList.add(Types.VARCHAR);  // cino
         preparedStmtArgsList.add(Types.VARCHAR);  // hearing_id

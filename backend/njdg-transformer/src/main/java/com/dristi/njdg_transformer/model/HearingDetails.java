@@ -46,4 +46,10 @@ public class HearingDetails {
 
     @JsonProperty("hearing_id")
     private String hearingId;
+
+    @JsonProperty("business")
+    private String business;
+
+    @JsonProperty("court_no")
+    private Integer courtNo;
 }

@@ -24,7 +24,7 @@ public class HearingQueryBuilder {
     }
 
     public String getHearingInsertQuery() {
-        return "INSERT INTO case_hearings (id, cino, sr_no, desg_name, hearing_date, next_date, purpose_of_listing, judge_code, jocode, desg_code, hearing_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO case_hearings (cino, sr_no, desg_name, hearing_date, next_date, purpose_of_listing, judge_code, jocode, desg_code, hearing_id, business, court_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 
     public String getHearingPurposeQuery() {
@@ -32,6 +32,6 @@ public class HearingQueryBuilder {
     }
 
     public String getHearingUpdateQuery() {
-        return "UPDATE case_hearings SET sr_no = ?, desg_name = ?, hearing_date = ?, next_date = ?, purpose_of_listing = ?, judge_code = ?, jocode = ?, desg_code = ? WHERE cino = ? AND hearing_id = ?";
+        return "UPDATE case_hearings SET sr_no = ?, desg_name = ?, hearing_date = ?, next_date = ?, purpose_of_listing = ?, judge_code = ?, jocode = ?, desg_code = ?, business = ?, court_no = ? WHERE cino = ? AND hearing_id = ?";
     }
 }
