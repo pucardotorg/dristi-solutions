@@ -330,8 +330,12 @@ public class OrderRegistrationService {
 
             String receiver = getReceiverParty(messageCode);
 
-            Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
-
+            Set<String> litigantIndividualIds = extractLitigantIndividualIds(caseDetails, receiver);
+            Set<String> individualIds = new HashSet<>(litigantIndividualIds);
+            if(shouldSendSMSToAdvocate(messageCode)){
+                Set<String> advocateIndividualIds = extractAdvocateIndividualIds(caseDetails, receiver);
+                individualIds.addAll(advocateIndividualIds);
+            }
             if (receiver == null || receiver.equalsIgnoreCase(COMPLAINANT)) {
                 extractPowerOfAttorneyIds(caseDetails, individualIds);
             }
@@ -385,6 +389,10 @@ public class OrderRegistrationService {
         }
     }
 
+    private boolean shouldSendSMSToAdvocate(String messageCode){
+        return List.of(HEARING_SCHEDULED, HEARING_RESCHEDULED, ORDER_ISSUED).contains(messageCode);
+    }
+
     private static String getReceiverParty(String messageCode) {
         if (messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
             return RESPONDENT;
@@ -433,17 +441,17 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public  Set<String> extractLitigantIndividualIds(JsonNode caseDetails, String receiver) {
+
         JsonNode litigantNode = caseDetails.get("litigants");
-        JsonNode representativeNode = caseDetails.get("representatives");
-        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
         Set<String> uuids = new HashSet<>();
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
+                String uuid = node.path("additionalDetails").get("uuid").asText();
                 String partyType = node.get("partyType").asText().toLowerCase();
-                if (partyType.contains(partyTypeToMatch)) {
-                    String uuid = node.path("additionalDetails").get("uuid").asText();
+                if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
                     if (!uuid.isEmpty()) {
                         uuids.add(uuid);
                     }
@@ -451,12 +459,21 @@ public class OrderRegistrationService {
             }
         }
 
+        return uuids;
+    }
+
+    public Set<String> extractAdvocateIndividualIds(JsonNode caseDetails,String receiver) {
+
+        JsonNode representativeNode = caseDetails.get("representatives");
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
+        Set<String> uuids = new HashSet<>();
+
         if (representativeNode.isArray()) {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if (partyType.contains(partyTypeToMatch)) {
+                    if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
                         if (!uuid.isEmpty()) {
                             uuids.add(uuid);
@@ -465,6 +482,7 @@ public class OrderRegistrationService {
                 }
             }
         }
+
         return uuids;
     }
 
