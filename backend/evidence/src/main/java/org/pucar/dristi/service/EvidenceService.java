@@ -677,7 +677,8 @@ public class EvidenceService {
             String action = evidenceRequest.getArtifact().getWorkflow().getAction();
             String smsTopic = getSmsTopic(sourceType, isCreateCall, action);
             log.info("Message Code : {}", smsTopic);
-            Set<String> individualIds = extractIndividualIds(caseDetails,null);
+            Set<String> litigantIndividualIds = extractLitigantIndividualIds(caseDetails,null);
+            Set<String> individualIds = new HashSet<>(litigantIndividualIds);
             Set<String> powerOfAttorneyIds = extractPowerOfAttorneyIds(caseDetails,individualIds);
             individualIds.addAll(powerOfAttorneyIds);
 
@@ -690,7 +691,7 @@ public class EvidenceService {
 
             for (String topic : smsTopics) {
 
-                Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
+                Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), litigantIndividualIds);
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                         .courtCaseNumber(caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null)
@@ -790,10 +791,9 @@ public class EvidenceService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails,String receiver) {
+    public  Set<String> extractLitigantIndividualIds(JsonNode caseDetails, String receiver) {
 
         JsonNode litigantNode = caseDetails.get("litigants");
-        JsonNode representativeNode = caseDetails.get("representatives");
         String partyTypeToMatch = (receiver != null) ? receiver : "";
         Set<String> uuids = new HashSet<>();
 
@@ -809,6 +809,15 @@ public class EvidenceService {
             }
         }
 
+        return uuids;
+    }
+
+    public Set<String> extractAdvocateIndividualIds(JsonNode caseDetails,String receiver) {
+
+        JsonNode representativeNode = caseDetails.get("representatives");
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
+        Set<String> uuids = new HashSet<>();
+
         if (representativeNode.isArray()) {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
@@ -823,6 +832,7 @@ public class EvidenceService {
                 }
             }
         }
+
         return uuids;
     }
 
