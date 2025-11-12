@@ -163,13 +163,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     } else history.goBack();
   };
 
-  const handleNavigate = () => {
-    const contextPath = window?.contextPath || "";
-    history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${currentHearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
-    );
-  };
-
   const { data: ordersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
@@ -257,30 +250,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       partyType,
     });
   }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
-
-  const getOrderPartyData = (orderType, orderList) => {
-    return orderList?.find((item) => orderType === item?.orderType)?.orderDetails?.parties;
-  };
-
-  const { data: tasksData, isLoading: isTaskLoading } = Digit.Hooks.hearings.useGetTaskList(
-    {
-      criteria: {
-        tenantId: tenantId,
-        cnrNumber: taskCnrNumber || cnrNumber,
-      },
-    },
-    {},
-    filingNumber,
-    Boolean(filingNumber)
-  );
-
-  const isButtonVisible = useMemo(() => {
-    if (!tasksData || !orderId) return false;
-
-    const filteredTasks = tasksData?.list?.filter((task) => task?.orderId === orderId);
-
-    return filteredTasks?.some((task) => task?.status === "UNDELIVERED" || task?.status === "NOT_EXECUTED");
-  }, [orderId, tasksData]);
 
   const CloseButton = (props) => {
     return (
