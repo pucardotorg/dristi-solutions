@@ -31,21 +31,40 @@ public class NjdgConsumer {
 
     @KafkaListener(topics = "save-case-details")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        String cino = null;
+        
+        log.info("Received case details message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message: {}", payload);
             NJDGTransformRecord record = objectMapper.readValue(payload.value().toString(), NJDGTransformRecord.class);
-            boolean recordExists = checkIfRecordExists(record.getCino());
+            cino = record.getCino();
+            
+            log.debug("Processing case details | CINO: {}", cino);
+            
+            boolean recordExists = checkIfRecordExists(cino);
             if (recordExists) {
-                log.info("Updating existing record with CINO: {}", record.getCino());
+                log.debug("Updating existing case record | CINO: {}", cino);
                 caseRepository.updateRecord(record);
+                log.info("Successfully updated case record | CINO: {}", cino);
             } else {
-                log.info("Inserting new record with CINO: {}", record.getCino());
+                log.debug("Inserting new case record | CINO: {}", cino);
                 caseRepository.insertRecord(record);
+                log.info("Successfully inserted case record | CINO: {}", cino);
             }
-            log.info("Message processed successfully. {}", payload);
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Failed to process case details | CINO: {} | messageId: {} | error: {}", 
+                     cino, messageId, e.getMessage(), e);
         }
+    }
+
+    /**
+     * Extract message identifier for logging purposes
+     */
+    private String extractMessageId(ConsumerRecord<String, Object> payload) {
+        return payload.key() != null ? payload.key() : 
+               String.format("p%d-o%d", payload.partition(), payload.offset());
     }
 
     /**
@@ -60,55 +79,79 @@ public class NjdgConsumer {
             NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
             return existingRecord != null;
         } catch (Exception e) {
-            log.warn("Error checking if record exists with CINO: {}. Error: {}", cino, e.getMessage());
+            log.warn("Error checking if record exists | CINO: {} | error: {}", cino, e.getMessage());
             return false; // Assume record doesn't exist if there's an error checking
         }
     }
 
-    @KafkaListener(topics = "save-order-details")
-    public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        try {
-            log.info("Received message on topic: {}", topic);
-            InterimOrder interimOrder = objectMapper.readValue(payload.value().toString(), InterimOrder.class);
-            orderRepository.insertInterimOrder(interimOrder);
-            log.info("Message processed successfully for order {}", interimOrder.getOrderNo());
-        } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage());
-        }
-    }
+//    @KafkaListener(topics = "save-order-details")
+//    public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+//        String messageId = extractMessageId(payload);
+//        String orderNo = null;
+//
+//        log.info("Received order details message on topic: {} | messageId: {} | partition: {} | offset: {}",
+//                topic, messageId, payload.partition(), payload.offset());
+//
+//        try {
+//            InterimOrder interimOrder = objectMapper.readValue(payload.value().toString(), InterimOrder.class);
+//            orderNo = interimOrder.getOrderNo();
+//
+//            log.debug("Processing order details | orderNo: {}", orderNo);
+//
+//            orderRepository.insertInterimOrder(interimOrder);
+//            log.info("Successfully processed order | orderNo: {}", orderNo);
+//        } catch (Exception e) {
+//            log.error("Failed to process order | orderNo: {} | messageId: {} | error: {}",
+//                     orderNo, messageId, e.getMessage(), e);
+//        }
+//    }
 
     @KafkaListener(topics = "save-hearing-details")
     public void listenHearing(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        String cino = null;
+        String hearingId = null;
+        
+        log.info("Received hearing details message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message: {}, on topic: {}", payload, topic);
             // Deserialize payload
             HearingDetails hearingDetails = objectMapper.readValue(payload.value().toString(), HearingDetails.class);
-            String cino = hearingDetails.getCino();
-            String hearingId = hearingDetails.getHearingId();
+            cino = hearingDetails.getCino();
+            hearingId = hearingDetails.getHearingId();
 
+            log.debug("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
+
+            String finalHearingId = hearingId;
             Optional<HearingDetails> existingHearingOpt = hearingRepository.getHearingDetailsByCino(cino)
                     .stream()
-                    .filter(h -> h.getHearingId() != null && h.getHearingId().equals(hearingId))
+                    .filter(h -> h.getHearingId() != null && h.getHearingId().equals(finalHearingId))
                     .findFirst();
 
             if (existingHearingOpt.isPresent()) {
                 // Update existing hearing
                 HearingDetails existingHearing = getHearingDetails(existingHearingOpt.get(), hearingDetails);
-
                 hearingRepository.updateHearingDetails(existingHearing);
-                log.info("Updated existing hearing with hearingId {} for CINO {}", hearingId, cino);
+                log.info("Successfully updated hearing | CINO: {} | hearingId: {}", cino, hearingId);
             } else {
                 // Insert new hearing
                 hearingRepository.insertHearingDetails(hearingDetails);
-                log.info("Inserted new hearing with hearingId {} for CINO {}", hearingId, cino);
+                log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
             }
+            
+            // Update case record with hearing information
             NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
-            existingRecord.setDateFirstList(hearingDetails.getSrNo() ==1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
-            existingRecord.setDateNextList(hearingDetails.getHearingDate());
-            existingRecord.setPurposeCode(Integer.valueOf(hearingDetails.getPurposeOfListing()));
-            caseRepository.updateRecord(existingRecord);
+            if (existingRecord != null) {
+                existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
+                existingRecord.setDateNextList(hearingDetails.getHearingDate());
+                existingRecord.setPurposeCode(Integer.valueOf(hearingDetails.getPurposeOfListing()));
+                caseRepository.updateRecord(existingRecord);
+                log.debug("Updated case record with hearing info | CINO: {}", cino);
+            }
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage(), e);
+            log.error("Failed to process hearing details | CINO: {} | hearingId: {} | messageId: {} | error: {}", 
+                     cino, hearingId, messageId, e.getMessage(), e);
         }
     }
 
@@ -127,64 +170,122 @@ public class NjdgConsumer {
 
     @KafkaListener(topics = "save-extra-parties") 
     public void listenExtraParties(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        int totalParties = 0;
+        int processedCount = 0;
+        int failedCount = 0;
+        
+        log.info("Received extra parties message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message on topic: {}", topic);
             // Convert payload to List of PartyDetails
             List<PartyDetails> partyDetailsList = objectMapper.readValue((String) payload.value(),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, PartyDetails.class));;
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, PartyDetails.class));
+            
+            totalParties = partyDetailsList.size();
+            log.info("Processing extra parties | totalParties: {}", totalParties);
+            
             for (PartyDetails party : partyDetailsList) {
                 try {
-                    // Update each party in the database
+                    log.debug("Processing extra party | partyName: {} | CINO: {}", 
+                             party.getPartyName(), party.getCino());
                     caseRepository.updateExtraParties(party);
-                    log.info("Successfully processed party: {}", party.getPartyName());
+                    processedCount++;
                 } catch (Exception e) {
-                    log.error("Error processing party {}: {}", party.getPartyName(), e.getMessage());
+                    failedCount++;
+                    log.error("Failed to process extra party | partyName: {} | CINO: {} | error: {}", 
+                             party.getPartyName(), party.getCino(), e.getMessage(), e);
                 }
             }
-            log.info("Message processed successfully. Topic: {}, Payload size: {}", 
-                    topic, partyDetailsList.size());
+            
+            log.info("Completed extra parties processing | totalParties: {} | processed: {} | failed: {}", 
+                    totalParties, processedCount, failedCount);
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage(), e);
+            log.error("Failed to process extra parties | messageId: {} | totalParties: {} | error: {}", 
+                     messageId, totalParties, e.getMessage(), e);
         }
     }
 
     @KafkaListener(topics = "save-advocate-details")
     public void listenAdvocates(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        Integer advocateCode = null;
+        
+        log.info("Received advocate details message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message on topic: {}", topic);
             AdvocateDetails advocateDetails = objectMapper.readValue(payload.value().toString(), AdvocateDetails.class);
+            advocateCode = advocateDetails.getAdvocateCode();
+            
+            log.debug("Processing advocate details | advocateCode: {}", advocateCode);
+            
             advocateRepository.insertAdvocateDetails(advocateDetails);
-            log.info("Message processed successfully. Topic: {}", topic);
+            log.info("Successfully processed advocate | advocateCode: {}", advocateCode);
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage(), e);
+            log.error("Failed to process advocate | advocateCode: {} | messageId: {} | error: {}", 
+                     advocateCode, messageId, e.getMessage(), e);
         }
     }
 
     @KafkaListener(topics = "save-act-details")
     public void listenActDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        Integer actCode = null;
+
+        log.info("Received act details message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message on topic: {}", topic);
             Act act = objectMapper.readValue(payload.value().toString(), Act.class);
+            actCode = act.getActCode();
+            
+            log.debug("Processing act details | actCode: {} | CINO: {}", actCode, act.getCino());
+            
             caseRepository.upsertActDetails(act);
-            log.info("Message processed successfully. Topic: {}", topic);
+            log.info("Successfully processed act | actCode: {} | CINO: {}", actCode, act.getCino());
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage(), e);
+            log.error("Failed to process act | actCode: {} | messageId: {} | error: {}", 
+                     actCode, messageId, e.getMessage(), e);
         }
     }
 
     @KafkaListener(topics = "save-extra-advocate-details")
     public void listenExtraAdvocateDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        int totalAdvocates = 0;
+        int processedCount = 0;
+        int failedCount = 0;
+        
+        log.info("Received extra advocate details message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message on topic: {}", topic);
             List<ExtraAdvocateDetails> extraAdvocateDetails = objectMapper.readValue(payload.value().toString(),
                     objectMapper.getTypeFactory().constructCollectionType(List.class, ExtraAdvocateDetails.class));
+            
+            totalAdvocates = extraAdvocateDetails.size();
+            log.info("Processing extra advocates | totalAdvocates: {}", totalAdvocates);
+            
             for (ExtraAdvocateDetails extraAdvocateDetail : extraAdvocateDetails) {
-                caseRepository.updateExtraAdvocates(extraAdvocateDetail);
-                log.info("Successfully processed extra advocate: {}", extraAdvocateDetail.getAdvName());
+                try {
+                    log.debug("Processing extra advocate | advocateName: {} | CINO: {}", 
+                             extraAdvocateDetail.getAdvName(), extraAdvocateDetail.getCino());
+                    caseRepository.updateExtraAdvocates(extraAdvocateDetail);
+                    processedCount++;
+                } catch (Exception e) {
+                    failedCount++;
+                    log.error("Failed to process extra advocate | advocateName: {} | CINO: {} | error: {}", 
+                             extraAdvocateDetail.getAdvName(), extraAdvocateDetail.getCino(), e.getMessage(), e);
+                }
             }
-            log.info("Message processed successfully. Topic: {}", topic);
+            
+            log.info("Completed extra advocates processing | totalAdvocates: {} | processed: {} | failed: {}", 
+                    totalAdvocates, processedCount, failedCount);
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage(), e);
+            log.error("Failed to process extra advocates | messageId: {} | totalAdvocates: {} | error: {}", 
+                     messageId, totalAdvocates, e.getMessage(), e);
         }
     }
 }

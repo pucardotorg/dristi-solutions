@@ -24,3 +24,5 @@ ALTER SEQUENCE public.extra_advocates_id_seq
     OWNED BY public.extra_advocates.id;
 
 ALTER TABLE IF EXISTS public.extra_parties ADD COLUMN sr_no smallint DEFAULT 0;
+ALTER TABLE IF EXISTS public.case_hearings ADD COLUMN business text;
+ALTER TABLE IF EXISTS public.case_hearings ADD COLUMN court_no integer;

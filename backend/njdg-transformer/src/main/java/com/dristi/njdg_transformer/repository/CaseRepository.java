@@ -54,8 +54,13 @@ public class CaseRepository {
 
 
     public PoliceStationDetails getPoliceStationDetails(String policeStationCode) {
-        String query = queryBuilder.getPoliceStationQuery();
-        return jdbcTemplate.queryForObject(query, new Object[]{policeStationCode}, new int[]{Types.VARCHAR}, new BeanPropertyRowMapper<>(PoliceStationDetails.class));
+        try {
+            String query = queryBuilder.getPoliceStationQuery();
+            return jdbcTemplate.queryForObject(query, new Object[]{policeStationCode}, new int[]{Types.VARCHAR}, new BeanPropertyRowMapper<>(PoliceStationDetails.class));
+        } catch (Exception e) {
+            log.info("Police station not found for code:: {}", policeStationCode);
+            return null;
+        }
     }
 
     public JudgeDetails getJudge(String judgeId) {

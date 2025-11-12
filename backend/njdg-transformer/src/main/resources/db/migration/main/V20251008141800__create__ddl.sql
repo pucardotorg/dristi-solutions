@@ -150,7 +150,7 @@ CREATE TABLE public.cases (
     CONSTRAINT cases_pend_disp_check CHECK ((pend_disp = ANY (ARRAY['P'::bpchar, 'D'::bpchar])))
 );
 
-ALTER TABLE public.cases OWNER TO pucar;
+ALTER TABLE public.cases OWNER TO postgres;
 
 CREATE TABLE public.desg_type (
     desg_code integer NOT NULL,
@@ -158,14 +158,14 @@ CREATE TABLE public.desg_type (
     nat_code text
 );
 
-ALTER TABLE public.desg_type OWNER TO pucar;
+ALTER TABLE public.desg_type OWNER TO postgres;
 
 CREATE TABLE public.disp_type (
     type_code integer NOT NULL,
     type_name character varying(100) NOT NULL
 );
 
-ALTER TABLE public.disp_type OWNER TO pucar;
+ALTER TABLE public.disp_type OWNER TO postgres;
 
 CREATE TABLE public.district_t (
     district_code integer NOT NULL,
@@ -173,7 +173,7 @@ CREATE TABLE public.district_t (
     nat_code text
 );
 
-ALTER TABLE public.district_t OWNER TO pucar;
+ALTER TABLE public.district_t OWNER TO postgres;
 
 CREATE TABLE public.doc_type (
     doc_code integer NOT NULL,
@@ -181,7 +181,7 @@ CREATE TABLE public.doc_type (
     nat_code text
 );
 
-ALTER TABLE public.doc_type OWNER TO pucar;
+ALTER TABLE public.doc_type OWNER TO postgres;
 
 CREATE TABLE public.extra_parties (
     id integer NOT NULL,
@@ -194,7 +194,7 @@ CREATE TABLE public.extra_parties (
     CONSTRAINT extra_parties_party_type_check CHECK ((party_type = ANY (ARRAY['PET'::bpchar, 'RES'::bpchar])))
 );
 
-ALTER TABLE public.extra_parties OWNER TO pucar;
+ALTER TABLE public.extra_parties OWNER TO postgres;
 
 CREATE SEQUENCE public.extra_parties_id_seq
     AS integer
@@ -204,7 +204,7 @@ CREATE SEQUENCE public.extra_parties_id_seq
     NO MAXVALUE
     CACHE 1;
 
-ALTER TABLE public.extra_parties_id_seq OWNER TO pucar;
+ALTER TABLE public.extra_parties_id_seq OWNER TO postgres;
 ALTER SEQUENCE public.extra_parties_id_seq OWNED BY public.extra_parties.id;
 
 CREATE TABLE public.ia_case_type (
@@ -212,7 +212,7 @@ CREATE TABLE public.ia_case_type (
     ia_type_name character varying(50) NOT NULL
 );
 
-ALTER TABLE public.ia_case_type OWNER TO pucar;
+ALTER TABLE public.ia_case_type OWNER TO postgres;
 
 CREATE TABLE public.ia_filings (
     id integer NOT NULL,
@@ -226,7 +226,7 @@ CREATE TABLE public.ia_filings (
     CONSTRAINT ia_filings_status_check CHECK ((status = ANY (ARRAY['P'::bpchar, 'D'::bpchar])))
 );
 
-ALTER TABLE public.ia_filings OWNER TO pucar;
+ALTER TABLE public.ia_filings OWNER TO postgres;
 
 CREATE SEQUENCE public.ia_filings_id_seq
     AS integer
@@ -236,7 +236,7 @@ CREATE SEQUENCE public.ia_filings_id_seq
     NO MAXVALUE
     CACHE 1;
 
-ALTER TABLE public.ia_filings_id_seq OWNER TO pucar;
+ALTER TABLE public.ia_filings_id_seq OWNER TO postgres;
 ALTER SEQUENCE public.ia_filings_id_seq OWNED BY public.ia_filings.id;
 
 CREATE TABLE public.ia_objections (
@@ -247,7 +247,7 @@ CREATE TABLE public.ia_objections (
     obj_receipt_date date
 );
 
-ALTER TABLE public.ia_objections OWNER TO pucar;
+ALTER TABLE public.ia_objections OWNER TO postgres;
 
 CREATE SEQUENCE public.ia_objections_id_seq
     AS integer
@@ -257,7 +257,7 @@ CREATE SEQUENCE public.ia_objections_id_seq
     NO MAXVALUE
     CACHE 1;
 
-ALTER TABLE public.ia_objections_id_seq OWNER TO pucar;
+ALTER TABLE public.ia_objections_id_seq OWNER TO postgres;
 ALTER SEQUENCE public.ia_objections_id_seq OWNED BY public.ia_objections.id;
 
 CREATE TABLE public.interim_orders (
@@ -269,7 +269,7 @@ CREATE TABLE public.interim_orders (
     order_details bytea
 );
 
-ALTER TABLE public.interim_orders OWNER TO pucar;
+ALTER TABLE public.interim_orders OWNER TO postgres;
 
 CREATE SEQUENCE public.interim_orders_id_seq
     AS integer
@@ -279,7 +279,7 @@ CREATE SEQUENCE public.interim_orders_id_seq
     NO MAXVALUE
     CACHE 1;
 
-ALTER TABLE public.interim_orders_id_seq OWNER TO pucar;
+ALTER TABLE public.interim_orders_id_seq OWNER TO postgres;
 ALTER SEQUENCE public.interim_orders_id_seq OWNED BY public.interim_orders.id;
 
 CREATE TABLE public.judge_t (
@@ -288,7 +288,7 @@ CREATE TABLE public.judge_t (
     jocode character varying(20)
 );
 
-ALTER TABLE public.judge_t OWNER TO pucar;
+ALTER TABLE public.judge_t OWNER TO postgres;
 
 CREATE TABLE public.lc_case_type_t (
     lc_case_type_code integer NOT NULL,
@@ -296,14 +296,14 @@ CREATE TABLE public.lc_case_type_t (
     nat_code text
 );
 
-ALTER TABLE public.lc_case_type_t OWNER TO pucar;
+ALTER TABLE public.lc_case_type_t OWNER TO postgres;
 
 CREATE TABLE public.objection_t (
     obj_type_code integer NOT NULL,
     obj_type_name character varying(200) NOT NULL
 );
 
-ALTER TABLE public.objection_t OWNER TO pucar;
+ALTER TABLE public.objection_t OWNER TO postgres;
 
 CREATE TABLE public.org_t (
     org_type integer NOT NULL,
@@ -311,14 +311,14 @@ CREATE TABLE public.org_t (
     nat_code text
 );
 
-ALTER TABLE public.org_t OWNER TO pucar;
+ALTER TABLE public.org_t OWNER TO postgres;
 
 CREATE TABLE public.organization_master (
     org_id integer NOT NULL,
     org_name character varying(200) NOT NULL
 );
 
-ALTER TABLE public.organization_master OWNER TO pucar;
+ALTER TABLE public.organization_master OWNER TO postgres;
 
 CREATE TABLE public.police_t (
     police_st_code integer NOT NULL,
@@ -326,7 +326,7 @@ CREATE TABLE public.police_t (
     nat_code text
 );
 
-ALTER TABLE public.police_t OWNER TO pucar;
+ALTER TABLE public.police_t OWNER TO postgres;
 
 CREATE TABLE public.purpose_code (
     purpose_code integer NOT NULL,
@@ -334,14 +334,14 @@ CREATE TABLE public.purpose_code (
     nat_code text
 );
 
-ALTER TABLE public.purpose_code OWNER TO pucar;
+ALTER TABLE public.purpose_code OWNER TO postgres;
 
 CREATE TABLE public.short_orders_t (
     type_id integer NOT NULL,
     name character varying(200) NOT NULL
 );
 
-ALTER TABLE public.short_orders_t OWNER TO pucar;
+ALTER TABLE public.short_orders_t OWNER TO postgres;
 
 CREATE TABLE public.taluk_t (
     taluk_code integer NOT NULL,
@@ -349,4 +349,4 @@ CREATE TABLE public.taluk_t (
     nat_code text
 );
 
-ALTER TABLE public.taluk_t OWNER TO pucar;
+ALTER TABLE public.taluk_t OWNER TO postgres;

@@ -32,31 +32,59 @@ public class CaseConsumer {
 
     @KafkaListener(topics = "#{'${kafka.topics.case}'.split(',')}", groupId = "transformer-case")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        String messageId = extractMessageId(payload);
+        log.info("Received case message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             processAndUpdateCase(payload);
-            log.info("Message processed successfully on topic:: {}", topic);
+            log.info("Successfully processed case message on topic: {} | messageId: {}", topic, messageId);
         } catch (Exception e){
-            log.error("Error in processing case message:: {}", e.getMessage());
+            log.error("Failed to process case message on topic: {} | messageId: {} | error: {}", 
+                     topic, messageId, e.getMessage(), e);
         }
-
     }
 
     private void processAndUpdateCase(ConsumerRecord<String, Object> payload) {
+        String filingNumber = null;
+        String status = null;
+        
         try {
             CaseRequest caseRequest = objectMapper.readValue(payload.value().toString(), CaseRequest.class);
-            String status = caseRequest.getCourtCase().getStatus();
+            filingNumber = caseRequest.getCourtCase().getFilingNumber();
+            status = caseRequest.getCourtCase().getStatus();
+            
+            log.debug("Processing case update | filingNumber: {} | status: {}", filingNumber, status);
+            
             if(caseStatus.contains(status)){
-                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(caseRequest.getRequestInfo(), caseRequest.getCourtCase().getFilingNumber());
+                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(caseRequest.getRequestInfo(), filingNumber);
                 JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
                 CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
-                if(courtCase.getCnrNumber()!=null){
+                
+                if(courtCase.getCnrNumber() != null){
+                    log.debug("Found case with CNR: {} for filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                     caseService.processAndUpdateCase(courtCase, caseRequest.getRequestInfo());
+                    log.info("Successfully updated case | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
+                } else {
+                    log.warn("No CNR found for case | filingNumber: {}", filingNumber);
                 }
+            } else {
+                log.debug("Skipping case processing due to status | filingNumber: {} | status: {} | allowedStatuses: {}", 
+                         filingNumber, status, caseStatus);
             }
         } catch (Exception e) {
-            log.error("Error in updating case: ", e);
+            log.error("Failed to process case update | filingNumber: {} | status: {} | error: {}", 
+                     filingNumber, status, e.getMessage(), e);
+            throw new RuntimeException("Case processing failed", e);
         }
+    }
+
+    /**
+     * Extract message identifier for logging purposes
+     */
+    private String extractMessageId(ConsumerRecord<String, Object> payload) {
+        return payload.key() != null ? payload.key() : 
+               String.format("p%d-o%d", payload.partition(), payload.offset());
     }
 
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
@@ -69,20 +97,28 @@ public class CaseConsumer {
 
     @KafkaListener(topics = "#{'${kafka.topics.join.case}'.split(',')}", groupId = "transformer-case")
     public void listenJoinCase(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        String messageId = extractMessageId(payload);
+        log.info("Received join case message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             processAndUpdateJoinCase(payload);
-            log.info("Message processed successfully on topic:: {}", topic);
+            log.info("Successfully processed join case message on topic: {} | messageId: {}", topic, messageId);
         } catch (Exception e){
-            log.error("Error in processing join case message:: {}", e.getMessage());
+            log.error("Failed to process join case message on topic: {} | messageId: {} | error: {}", 
+                     topic, messageId, e.getMessage(), e);
         }
-
     }
 
     private void processAndUpdateJoinCase(ConsumerRecord<String, Object> payload) {
+        String filingNumber = null;
+        
         try {
             CourtCase courtCase = objectMapper.readValue(payload.value().toString(), CourtCase.class);
-            String filingNumber = courtCase.getFilingNumber();
+            filingNumber = courtCase.getFilingNumber();
+            
+            log.debug("Processing join case | filingNumber: {}", filingNumber);
+            
             RequestInfo requestInfo = RequestInfo.builder()
                     .apiId("Rainmaker")
                     .userInfo(User.builder()
@@ -101,49 +137,84 @@ public class CaseConsumer {
                                             .name("ORDER_VIEWER").build()))
                             .build())
                     .build();
+                    
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
             JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCases = objectMapper.convertValue(courtCaseNode, CourtCase.class);
+            
             if(courtCases.getCnrNumber() != null){
+                log.debug("Found case with CNR: {} for join case | filingNumber: {}", courtCases.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCases, requestInfo);
+                log.info("Successfully processed join case | filingNumber: {} | CNR: {}", filingNumber, courtCases.getCnrNumber());
+            } else {
+                log.warn("No CNR found for join case | filingNumber: {}", filingNumber);
             }
         } catch (Exception e) {
-            log.error("Error in processing join case message:: {}", e.getMessage());
+            log.error("Failed to process join case | filingNumber: {} | error: {}", filingNumber, e.getMessage(), e);
+            throw new RuntimeException("Join case processing failed", e);
         }
     }
 
     @KafkaListener(topics = "case-outcome-topic", groupId = "transformer-case")
     public void listenCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        String messageId = extractMessageId(payload);
+        String filingNumber = null;
+        
+        log.info("Received case outcome message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             CaseOutcome outcome = objectMapper.readValue(payload.value().toString(), CaseOutcome.class);
-            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), outcome.getOutcome().getFilingNumber());
+            filingNumber = outcome.getOutcome().getFilingNumber();
+            
+            log.debug("Processing case outcome | filingNumber: {}", filingNumber);
+            
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), filingNumber);
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
             courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getCreatedTime());
+            
             if(courtCase.getCnrNumber() != null) {
+                log.debug("Found case with CNR: {} for outcome | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
+                log.info("Successfully processed case outcome | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
+            } else {
+                log.warn("No CNR found for case outcome | filingNumber: {}", filingNumber);
             }
-            log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
-            log.error("Error in processing case outcome message:: {}", e.getMessage());
+            log.error("Failed to process case outcome | filingNumber: {} | messageId: {} | error: {}", 
+                     filingNumber, messageId, e.getMessage(), e);
         }
     }
 
     @KafkaListener(topics = "case-overall-status-topic", groupId = "transformer-case")
     public void listenCaseOverallStatus(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        String messageId = extractMessageId(payload);
+        String filingNumber = null;
+        
+        log.info("Received case status message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             CaseStageSubStage overallStatus = objectMapper.readValue(payload.value().toString(), CaseStageSubStage.class);
-            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(overallStatus.getRequestInfo(), overallStatus.getCaseOverallStatus().getFilingNumber());
+            filingNumber = overallStatus.getCaseOverallStatus().getFilingNumber();
+            
+            log.debug("Processing case status update | filingNumber: {}", filingNumber);
+            
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(overallStatus.getRequestInfo(), filingNumber);
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
+            
             if(courtCase.getCnrNumber() != null) {
+                log.debug("Found case with CNR: {} for status update | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
+                log.info("Successfully processed case status | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
+            } else {
+                log.warn("No CNR found for case status | filingNumber: {}", filingNumber);
             }
-            log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
-            log.error("Error in processing case status message:: {}", e.getMessage());
+            log.error("Failed to process case status | filingNumber: {} | messageId: {} | error: {}", 
+                     filingNumber, messageId, e.getMessage(), e);
         }
     }
 }

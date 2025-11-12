@@ -27,23 +27,49 @@ public class AdvocateConsumer {
 
     @KafkaListener(topics = "user-registration-advocate", groupId = "transformer-advocate")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        log.info("Received advocate message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
         try {
-            log.info("Received message:: {} on topic:: {} ", payload.value(), topic);
             processAndUpdateAdvocates(payload);
-            log.info("Message processed successfully on topic:: {}", topic);
+            log.info("Successfully processed advocate message on topic: {} | messageId: {}", topic, messageId);
         } catch (Exception e){
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Failed to process advocate message on topic: {} | messageId: {} | error: {}", 
+                     topic, messageId, e.getMessage(), e);
         }
     }
 
+    /**
+     * Extract message identifier for logging purposes
+     */
+    private String extractMessageId(ConsumerRecord<String, Object> payload) {
+        return payload.key() != null ? payload.key() : 
+               String.format("p%d-o%d", payload.partition(), payload.offset());
+    }
+
     private void processAndUpdateAdvocates(ConsumerRecord<String, Object> payload) {
+        String advocateId = null;
+        String status = null;
+        
         try {
             AdvocateRequest advocateRequest = objectMapper.readValue(payload.value().toString(), AdvocateRequest.class);
-            if(ACTIVE.equalsIgnoreCase(advocateRequest.getAdvocate().getStatus())){
+            advocateId = advocateRequest.getAdvocate().getId().toString();
+            status = advocateRequest.getAdvocate().getStatus();
+            
+            log.debug("Processing advocate registration | advocateId: {} | status: {}", advocateId, status);
+            
+            if(ACTIVE.equalsIgnoreCase(status)){
                 advocateService.processAndUpdateAdvocates(advocateRequest);
+                log.info("Successfully processed advocate registration | advocateId: {} | status: {}", advocateId, status);
+            } else {
+                log.debug("Skipping advocate processing due to status | advocateId: {} | status: {} | expectedStatus: {}", 
+                         advocateId, status, ACTIVE);
             }
         } catch (Exception e) {
-            log.error("Error in processing message:: {}", e.getMessage());
+            log.error("Failed to process advocate registration | advocateId: {} | status: {} | error: {}", 
+                     advocateId, status, e.getMessage(), e);
+            throw new RuntimeException("Advocate processing failed", e);
         }
     }
 }

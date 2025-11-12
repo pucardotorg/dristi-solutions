@@ -1,11 +1,19 @@
 package com.dristi.njdg_transformer.enrichment;
 
-import com.dristi.njdg_transformer.model.*;
-import com.dristi.njdg_transformer.model.cases.*;
+import com.dristi.njdg_transformer.model.AdvocateDetails;
+import com.dristi.njdg_transformer.model.ExtraAdvocateDetails;
+import com.dristi.njdg_transformer.model.NJDGTransformRecord;
+import com.dristi.njdg_transformer.model.PartyDetails;
+import com.dristi.njdg_transformer.model.PoliceStationDetails;
+import com.dristi.njdg_transformer.model.cases.AdvocateMapping;
+import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.cases.Party;
+import com.dristi.njdg_transformer.model.cases.WitnessDetails;
 import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.AdvocateRepository;
 import com.dristi.njdg_transformer.repository.CaseRepository;
+import com.dristi.njdg_transformer.service.interfaces.PartyEnricher;
 import com.dristi.njdg_transformer.utils.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,10 +28,14 @@ import java.util.stream.Stream;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
+/**
+ * Refactored CaseEnrichment class implementing PartyEnricher interface
+ * Follows Single Responsibility Principle and Interface Segregation Principle
+ */
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class CaseEnrichment {
+public class CaseEnrichment implements PartyEnricher {
 
     private final ObjectMapper objectMapper;
     private final AdvocateRepository advocateRepository;
@@ -31,75 +43,79 @@ public class CaseEnrichment {
     private final JsonUtil jsonUtil;
     private final Producer producer;
 
-    // -------------------- PUBLIC METHODS --------------------
+    // -------------------- PARTY ENRICHER INTERFACE METHODS --------------------
 
+    @Override
     public void enrichPrimaryPartyDetails(CourtCase courtCase, NJDGTransformRecord record, String partyType) {
-        JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
-        if (additionalDetails == null) {
-            log.warn("No additional details found in court case");
-            return;
-        }
-
-        List<Party> litigants = courtCase.getLitigants();
-        if (litigants == null || litigants.isEmpty()) {
-            log.warn("No litigants found in court case");
-            return;
-        }
-
-        Party primaryParty = findPrimaryParty(litigants, partyType);
-        if (primaryParty == null || primaryParty.getIndividualId() == null || primaryParty.getIndividualId().isEmpty()) {
-            log.warn("No primary {} with individualId found", partyType);
-            return;
-        }
-
-        enrichPartyFormData(additionalDetails, record, primaryParty.getIndividualId(), partyType);
-    }
-
-    public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record, String party) {
-        List<String> advocateIds = courtCase.getRepresentatives().stream()
-                .map(mapping -> findPrimaryParty(mapping.getRepresenting(), party))
-                .filter(Objects::nonNull)
-                .map(partyTemp -> getAdvocateId(courtCase, partyTemp.getIndividualId()))
-                .collect(Collectors.toList());
-
-        if (advocateIds.isEmpty()) {
-            log.warn("No advocate found for {}", party);
-            return;
-        }
-
-        String primaryAdvocateId = advocateIds.get(0);
-        Optional.ofNullable(advocateRepository.getAdvocateDetails(primaryAdvocateId))
-                .ifPresentOrElse(advocateDetails -> {
-                    setPrimaryAdvocate(record, party, advocateDetails);
-                    addExtraAdvocates(courtCase, record, party, advocateIds, primaryAdvocateId);
-                }, () -> log.info("No advocate details found for {}", primaryAdvocateId));
-    }
-
-    public void enrichPoliceStationDetails(CourtCase courtCase, NJDGTransformRecord record) {
+        log.debug("Enriching primary party details for party type: {} in case CNR: {}", 
+                 partyType, courtCase.getCnrNumber());
+        
         try {
-            JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
-            if (caseDetails == null) return;
-
-            JsonNode policeStationNode = caseDetails.path("chequeDetails")
-                    .path("formdata").get(0)
-                    .path("data")
-                    .path("policeStationJurisDictionCheque");
-
-            if (policeStationNode.isMissingNode()) return;
-
-            String policeStationCode = policeStationNode.path("code").asText();
-            if (policeStationCode == null || policeStationCode.isEmpty()) return;
-
-            PoliceStationDetails policeDetails = repository.getPoliceStationDetails(policeStationCode);
-            if (policeDetails != null) {
-                record.setPoliceStCode(policeDetails.getPoliceStationCode());
-                record.setPoliceNcode(policeDetails.getNatCode());
-                record.setPoliceStation(policeDetails.getStName());
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            if (additionalDetails == null) {
+                log.warn("No additional details found in court case CNR: {}", courtCase.getCnrNumber());
+                return;
             }
+
+            List<Party> litigants = courtCase.getLitigants();
+            if (litigants == null || litigants.isEmpty()) {
+                log.warn("No litigants found in court case CNR: {}", courtCase.getCnrNumber());
+                return;
+            }
+
+            Party primaryParty = findPrimaryParty(litigants, partyType);
+            if (primaryParty == null || primaryParty.getIndividualId() == null || primaryParty.getIndividualId().isEmpty()) {
+                log.warn("No primary {} with individualId found in case CNR: {}", 
+                        partyType, courtCase.getCnrNumber());
+                return;
+            }
+
+            enrichPartyFormData(additionalDetails, record, primaryParty.getIndividualId(), partyType);
+            log.debug("Successfully enriched primary party details for party type: {} in case CNR: {}", 
+                     partyType, courtCase.getCnrNumber());
+            
         } catch (Exception e) {
-            log.error("Error enriching police station details: {}", e.getMessage());
+            log.error("Error enriching primary party details for party type: {} in case CNR: {}: {}", 
+                     partyType, courtCase.getCnrNumber(), e.getMessage(), e);
+            throw new RuntimeException("Failed to enrich primary party details", e);
         }
     }
+
+    @Override
+    public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record, String party) {
+        log.debug("Enriching advocate details for party: {} in case CNR: {}", 
+                 party, courtCase.getCnrNumber());
+        
+        try {
+            List<String> advocateIds = courtCase.getRepresentatives().stream()
+                    .map(mapping -> findPrimaryParty(mapping.getRepresenting(), party))
+                    .filter(Objects::nonNull)
+                    .map(partyTemp -> getAdvocateId(courtCase, partyTemp.getIndividualId()))
+                    .collect(Collectors.toList());
+
+            if (advocateIds.isEmpty()) {
+                log.warn("No advocate found for party: {} in case CNR: {}", party, courtCase.getCnrNumber());
+                return;
+            }
+
+            String primaryAdvocateId = advocateIds.get(0);
+            Optional.ofNullable(advocateRepository.getAdvocateDetails(primaryAdvocateId))
+                    .ifPresentOrElse(advocateDetails -> {
+                        setPrimaryAdvocate(record, party, advocateDetails);
+                        addExtraAdvocates(courtCase, record, party, advocateIds, primaryAdvocateId);
+                        log.debug("Successfully enriched advocate details for party: {} in case CNR: {}", 
+                                 party, courtCase.getCnrNumber());
+                    }, () -> log.warn("No advocate details found for advocate ID: {} in case CNR: {}", 
+                                     primaryAdvocateId, courtCase.getCnrNumber()));
+                                     
+        } catch (Exception e) {
+            log.error("Error enriching advocate details for party: {} in case CNR: {}: {}", 
+                     party, courtCase.getCnrNumber(), e.getMessage(), e);
+            throw new RuntimeException("Failed to enrich advocate details", e);
+        }
+    }
+
+    // -------------------- ADDITIONAL PUBLIC METHODS --------------------
 
     public List<PartyDetails> getComplainantExtraParties(CourtCase courtCase) {
         return getExtraParties(courtCase, COMPLAINANT_PRIMARY, PartyType.PET);
@@ -145,7 +161,7 @@ public class CaseEnrichment {
                 fullName = buildFullName(dataNode.path("firstName"), dataNode.path("lastName"));
                 ageStr = dataNode.path(ageKey).asText(null);
                 address = extractAddress(dataNode.path("addressDetails"));
-            } else {
+            } else  {
                 fullName = buildFullName(dataNode.path("respondentFirstName"),
                         dataNode.path("respondentMiddleName"),
                         dataNode.path("respondentLastName"));
@@ -192,7 +208,7 @@ public class CaseEnrichment {
             record.setPetAdvCd(advocateDetails.getAdvocateCode());
             record.setPetAdvBarReg(advocateDetails.getBarRegNo());
             record.setPetAdv(advocateDetails.getAdvocateName());
-        } else {
+        } else if (RESPONDENT_PRIMARY.equalsIgnoreCase(party)) {
             record.setResAdvCd(advocateDetails.getAdvocateCode());
             record.setResAdvBarReg(advocateDetails.getBarRegNo());
             record.setResAdv(advocateDetails.getAdvocateName());
@@ -269,7 +285,7 @@ public class CaseEnrichment {
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
-            int partyNo = 1;
+            int partyNo = 2;
             for (JsonNode dataNode : formDataArray) {
                 PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
                 if (partyDetails != null) {
@@ -409,9 +425,7 @@ public class CaseEnrichment {
                 continue;
             }
 
-            String fullName = w.getFirstName()
-                    + (w.getMiddleName() != null ? w.getMiddleName() : "")
-                    + w.getLastName();
+            String fullName = buildFullName(w.getFirstName(), w.getMiddleName(), w.getLastName());
 
             String address = extractAddress(
                     objectMapper.convertValue(
@@ -452,6 +466,28 @@ public class CaseEnrichment {
             }
         }
         return null;
+    }
+
+    /**
+     * Builds full name from first, middle, and last name components
+     * Handles null values properly to avoid "null" strings in the result
+     */
+    private String buildFullName(String firstName, String middleName, String lastName) {
+        StringBuilder fullName = new StringBuilder();
+        
+        if (firstName != null && !firstName.trim().isEmpty()) {
+            fullName.append(firstName.trim());
+        }
+        
+        if (middleName != null && !middleName.trim().isEmpty()) {
+            fullName.append(middleName.trim());
+        }
+        
+        if (lastName != null && !lastName.trim().isEmpty()) {
+            fullName.append(lastName.trim());
+        }
+        
+        return fullName.toString().trim();
     }
 
 }

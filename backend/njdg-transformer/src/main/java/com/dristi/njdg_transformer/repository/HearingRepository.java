@@ -44,15 +44,11 @@ public class HearingRepository {
         preparedStmtList.add(hearingDetails.getHearingId());
         preparedStmtList.add(hearingDetails.getBusiness());
         preparedStmtList.add(hearingDetails.getCourtNo());
-        preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.DATE);
         preparedStmtArgsList.add(Types.DATE);
-        preparedStmtArgsList.add(Types.VARCHAR);
-        preparedStmtArgsList.add(Types.VARCHAR);
-        preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
