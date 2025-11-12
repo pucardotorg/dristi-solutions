@@ -1,3 +1,11 @@
+CREATE SEQUENCE IF NOT EXISTS public.extra_advocates_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+
 CREATE TABLE IF NOT EXISTS public.extra_advocates
 (
     id integer NOT NULL DEFAULT nextval('extra_advocates_id_seq'::regclass),
@@ -12,7 +20,11 @@ CREATE TABLE IF NOT EXISTS public.extra_advocates
 )
 
 TABLESPACE pg_default;
+ALTER SEQUENCE public.extra_advocates_id_seq
+    OWNED BY public.extra_advocates.id;
 
+ALTER SEQUENCE public.extra_advocates_id_seq
+    OWNER TO postgres;
 ALTER TABLE IF EXISTS public.extra_advocates
     OWNER to postgres;
 

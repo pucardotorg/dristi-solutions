@@ -266,13 +266,10 @@ public class CaseEnrichment {
     private List<PartyDetails> getExtraParties(CourtCase courtCase, String primaryPartyType, PartyType partyTypeEnum) {
         List<PartyDetails> partyDetailsList = new ArrayList<>();
         try {
-            JsonNode formDataArray = jsonUtil.getNestedValue(
-                    courtCase.getAdditionalDetails(),
-                    List.of(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails", "formdata"),
-                    JsonNode.class
-            );
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
-            int partyNo = 2;
+            int partyNo = 1;
             for (JsonNode dataNode : formDataArray) {
                 PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
                 if (partyDetails != null) {
@@ -304,16 +301,16 @@ public class CaseEnrichment {
         Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
         if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) return null;
 
-        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
-        for (PartyDetails pd : existingParties) {
-            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
-                PartyDetails updated = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
-                        updatePartyDetails(dataNode, pd, courtCase, true) :
-                        updatePartyDetails(dataNode, pd, courtCase, false);
-                updated.setPartyNo(partyNo);
-                return updated;
-            }
-        }
+//        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
+//        for (PartyDetails pd : existingParties) {
+//            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
+//                PartyDetails updated = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
+//                        updatePartyDetails(dataNode, pd, courtCase, true) :
+//                        updatePartyDetails(dataNode, pd, courtCase, false);
+//                updated.setPartyNo(partyNo);
+//                return updated;
+//            }
+//        }
 
         PartyDetails newParty = updatePartyDetails(dataNode, new PartyDetails(), courtCase, COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType));
         newParty.setPartyNo(partyNo);

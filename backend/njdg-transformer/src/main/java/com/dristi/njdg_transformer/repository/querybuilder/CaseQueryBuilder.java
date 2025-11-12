@@ -108,7 +108,7 @@ public class CaseQueryBuilder {
     public String getUpdatePartyQuery() {
         return "INSERT INTO extra_parties (\n" +
                 "    id, cino, party_type, party_no, party_name, party_address, party_age, party_id, adv_cd, adv_name, sr_no\n" +
-                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n" +
                 "ON CONFLICT (id) DO UPDATE SET\n" +
                 "    cino = EXCLUDED.cino,\n" +
                 "    party_type = EXCLUDED.party_type,\n" +
@@ -124,8 +124,8 @@ public class CaseQueryBuilder {
 
     public String getUpsertExtraAdvocateQuery() {
         return "INSERT INTO extra_advocates (" +
-                "id, party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no" +
-                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                "party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?) " +
                 "ON CONFLICT (id) DO UPDATE SET " +
                 "party_no = EXCLUDED.party_no, " +
                 "cino = EXCLUDED.cino, " +
@@ -268,6 +268,6 @@ public class CaseQueryBuilder {
     }
 
     public String getExtraAdvocateDetailsCountQuery() {
-        return "SELECT * FROM extra_advocates WHERE cino = ? AND party_type = ?";
+        return "SELECT id, party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no  FROM extra_advocates WHERE cino = ? AND type = ?";
     }
 }

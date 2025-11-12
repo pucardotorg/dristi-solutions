@@ -105,62 +105,85 @@ public class CaseRepository {
         return jdbcTemplate.query(query, new Object[]{cino, partyType}, new int[]{Types.VARCHAR, Types.INTEGER}, new AdvocateRowMapper());
     }
     public void updateExtraParties(PartyDetails partyDetails) {
-        String updatePartyQuery = queryBuilder.getUpdatePartyQuery();
-        jdbcTemplate.update(updatePartyQuery,
-                new Object[]{
-                        partyDetails.getId(),
-                        partyDetails.getCino(),
-                        partyDetails.getPartyType(),
-                        partyDetails.getPartyNo(),
-                        partyDetails.getPartyName(),
-                        partyDetails.getPartyAddress(),
-                        partyDetails.getPartyAge(),
-                        partyDetails.getPartyId(),
-                        partyDetails.getAdvCd(),
-                        partyDetails.getAdvName(),
-                        partyDetails.getSrNo()
-                },
-                new int[]{
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.INTEGER
-                }
-        );
+        // First, check if the record exists based on a logical unique key
+        String checkQuery = "SELECT id FROM extra_parties WHERE cino = ? AND party_type = ? AND party_no = ?";
+
+        List<Integer> ids = jdbcTemplate.queryForList(checkQuery, Integer.class,
+                partyDetails.getCino(),
+                partyDetails.getPartyType().toString(),
+                partyDetails.getPartyNo());
+
+        if (!ids.isEmpty()) {
+            // Record exists → UPDATE
+            String updateQuery = "UPDATE extra_parties SET " +
+                    "party_name = ?, party_address = ?, party_age = ?, party_id = ?, adv_cd = ?, adv_name = ?, sr_no = ? " +
+                    "WHERE id = ?";
+
+            jdbcTemplate.update(updateQuery,
+                    partyDetails.getPartyName(),
+                    partyDetails.getPartyAddress(),
+                    partyDetails.getPartyAge(),
+                    partyDetails.getPartyId(),
+                    partyDetails.getAdvCd(),
+                    partyDetails.getAdvName(),
+                    partyDetails.getSrNo(),
+                    ids.get(0));
+        } else {
+            // Record does not exist → INSERT
+            String insertQuery = "INSERT INTO extra_parties (" +
+                    "cino, party_type, party_no, party_name, party_address, party_age, party_id, adv_cd, adv_name, sr_no" +
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            jdbcTemplate.update(insertQuery,
+                    partyDetails.getCino(),
+                    partyDetails.getPartyType().toString(),
+                    partyDetails.getPartyNo(),
+                    partyDetails.getPartyName(),
+                    partyDetails.getPartyAddress(),
+                    partyDetails.getPartyAge(),
+                    partyDetails.getPartyId(),
+                    partyDetails.getAdvCd(),
+                    partyDetails.getAdvName(),
+                    partyDetails.getSrNo());
+        }
     }
 
     public void updateExtraAdvocates(ExtraAdvocateDetails extraAdvocate) {
-        String upsertQuery = queryBuilder.getUpsertExtraAdvocateQuery();
+        // Check if this advocate already exists for the same party
+        String checkQuery = "SELECT id FROM extra_advocates WHERE cino = ? AND party_no = ? AND adv_code = ?";
 
-        jdbcTemplate.update(upsertQuery,
-                new Object[]{
-                        extraAdvocate.getId(),
-                        extraAdvocate.getPartyNo(),
-                        extraAdvocate.getCino(),
-                        extraAdvocate.getPetResName(),
-                        extraAdvocate.getType(),
-                        extraAdvocate.getAdvName(),
-                        extraAdvocate.getAdvCode(),
-                        extraAdvocate.getSrNo()
-                },
-                new int[]{
-                        Types.INTEGER,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.INTEGER
-                }
-        );
+        List<Integer> ids = jdbcTemplate.queryForList(checkQuery, Integer.class,
+                extraAdvocate.getCino(),
+                extraAdvocate.getPartyNo(),
+                extraAdvocate.getAdvCode());
+
+        if (!ids.isEmpty()) {
+            // Record exists → UPDATE
+            String updateQuery = "UPDATE extra_advocates SET " +
+                    "pet_res_name = ?, type = ?, adv_name = ?, sr_no = ? " +
+                    "WHERE id = ?";
+
+            jdbcTemplate.update(updateQuery,
+                    extraAdvocate.getPetResName(),
+                    extraAdvocate.getType(),
+                    extraAdvocate.getAdvName(),
+                    extraAdvocate.getSrNo(),
+                    ids.get(0));
+        } else {
+            // Record does not exist → INSERT
+            String insertQuery = "INSERT INTO extra_advocates (" +
+                    "party_no, cino, pet_res_name, type, adv_name, adv_code, sr_no" +
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            jdbcTemplate.update(insertQuery,
+                    extraAdvocate.getPartyNo(),
+                    extraAdvocate.getCino(),
+                    extraAdvocate.getPetResName(),
+                    extraAdvocate.getType(),
+                    extraAdvocate.getAdvName(),
+                    extraAdvocate.getAdvCode(),
+                    extraAdvocate.getSrNo());
+        }
     }
     public void updateRecord(NJDGTransformRecord record) {
         String updateQuery = queryBuilder.getUpdateQuery();
