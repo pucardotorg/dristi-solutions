@@ -8,5 +8,5 @@ logging
 asyncpg
 asyncio
 json
-
+aiohttp
 os
