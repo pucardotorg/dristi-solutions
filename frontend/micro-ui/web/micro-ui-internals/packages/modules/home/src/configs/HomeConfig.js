@@ -945,15 +945,6 @@ export const getUnifiedEmployeeConfig = (roles) => {
   const baseConfig = { ...TabUnifiedEmployeeSearchConfig };
   const hasCaseReviewerRole = roles?.some((role) => role.code === "CASE_REVIEWER");
   const allTabs = [...baseConfig.TabSearchConfig];
-  // Add the 6th tab i.e. scrutiny only if user has CASE_REVIEWER role.
-  const sixthTab = {
-    ...CaseReviewerAdditionalTab,
-    showForRoles: ["CASE_REVIEWER"],
-    isConditional: true,
-  };
-  if (hasCaseReviewerRole) {
-    allTabs.push(sixthTab);
-  }
   baseConfig.TabSearchConfig = allTabs;
   return baseConfig;
 };
