@@ -3,10 +3,6 @@ uvicorn[standard]
 pillow
 numpy
 python-multipart
-fitz
-logging
+PyMuPDF
 asyncpg
-asyncio
-json
-
-os
+easyocr
