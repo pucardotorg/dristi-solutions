@@ -104,7 +104,8 @@ public class EvidenceService {
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
             String tag = body.getArtifact().getTag();
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
+            String artifactType = body.getArtifact().getArtifactType();
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) &&
                     SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
                 if(tag != null && !hasNumberSuffix(tag)){
@@ -112,10 +113,7 @@ public class EvidenceService {
                 }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
-            if ((body.getArtifact().getArtifactType() != null &&
-                    body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) ||
-                    (body.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()))) {
+            if (artifactType != null && artifactType.equals(DEPOSITION) || body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -124,7 +122,17 @@ public class EvidenceService {
             if(tag != null && !tag.isEmpty()) {
                 body.getArtifact().setTag(tag);
             }
-            callNotificationService(body,false,true);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(body.getRequestInfo(), body.getArtifact().getFilingNumber());
+            JsonNode caseNode = caseUtil.searchCaseDetails(caseSearchRequest);
+            String stage = Optional.ofNullable(caseNode)
+                    .map(n -> n.path("stage"))
+                    .map(n -> n.asText(""))
+                    .orElse("");
+
+            if(!WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) ||
+                    (WITNESS_DEPOSITION.equalsIgnoreCase(artifactType) && Trial.equalsIgnoreCase(stage))) {
+                callNotificationService(body,false,true);
+            }
             return body.getArtifact();
         } catch (CustomException e) {
             log.error("Custom Exception occurred while creating evidence");
@@ -665,33 +673,16 @@ public class EvidenceService {
 
             Artifact artifact = evidenceRequest.getArtifact();
 
-            String smsTopic = getSmsTopic(isEvidence, artifact, isCreateCall);
+            String sourceType = evidenceRequest.getArtifact().getSourceType();
+            String action = evidenceRequest.getArtifact().getWorkflow().getAction();
+            String smsTopic = getSmsTopic(sourceType, isCreateCall, action);
             log.info("Message Code : {}", smsTopic);
-            Set<String> individualIds = extractIndividualIds(caseDetails,null);
+            Set<String> litigantIndividualIds = extractLitigantIndividualIds(caseDetails,null);
+            Set<String> individualIds = new HashSet<>(litigantIndividualIds);
             Set<String> powerOfAttorneyIds = extractPowerOfAttorneyIds(caseDetails,individualIds);
             individualIds.addAll(powerOfAttorneyIds);
 
-            // Individual ids of filing advocate and related litigant
-            Set<String> filingIndividualIds = new HashSet<>();
-            Set<String> oppositeIndividualIds = new HashSet<>(individualIds);
 
-            if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
-                String receiverId = evidenceRequest.getRequestInfo().getUserInfo().getUuid();
-                String partyType = getPartyTypeByUUID(caseDetails,receiverId);
-                String receiverParty = null;
-                if (partyType != null) {
-                    receiverParty = getReceiverParty(partyType);
-                }
-                filingIndividualIds = extractIndividualIds(caseDetails,receiverParty);
-                if (receiverParty != null && receiverParty.equalsIgnoreCase(COMPLAINANT)) {
-                    // Add the power of attorney ids to the filing advocate ids
-                    filingIndividualIds.addAll(powerOfAttorneyIds);
-                } else if (receiverParty != null && receiverParty.equalsIgnoreCase(RESPONDENT)) {
-                    // Add the power of attorney ids to the opposite party ids
-                    oppositeIndividualIds.addAll(powerOfAttorneyIds);
-                }
-                oppositeIndividualIds.removeAll(filingIndividualIds);
-            }
 
             List<String> smsTopics = new ArrayList<>();
             if (smsTopic != null) {
@@ -700,17 +691,7 @@ public class EvidenceService {
 
             for (String topic : smsTopics) {
 
-                Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
-                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_FILING) || Objects.equals(topic, EVIDENCE_SUBMISSION)) {
-                    if (!filingIndividualIds.isEmpty()) {
-                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), filingIndividualIds);
-                    }
-                }
-                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
-                    if (!oppositeIndividualIds.isEmpty()) {
-                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), oppositeIndividualIds);
-                    }
-                }
+                Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), litigantIndividualIds);
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                         .courtCaseNumber(caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null)
@@ -731,18 +712,11 @@ public class EvidenceService {
         }
     }
 
-    private String getSmsTopic(Boolean isEvidence, Artifact artifact,Boolean isCreateCall) {
-        String status = artifact.getStatus();
-        String filingType = artifact.getFilingType();
-        String smsTopic = null;
-        if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
-            smsTopic = "DOCUMENT_MARKED_EXHIBIT";
+    private String getSmsTopic(String sourceType, boolean isCreateCall, String action) {
+        if(!isCreateCall && COMPLAINANT.equals(sourceType) && E_SIGN.equals(action)) {
+            return DOCUMENT_SUBMITTED;
         }
-        if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && isCreateCall))
-                || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && isCreateCall))) {
-            smsTopic = EVIDENCE_SUBMISSION_CODE;
-        }
-        return smsTopic;
+        return null;
     }
 
     private static String getReceiverParty(String partyType) {
@@ -817,10 +791,9 @@ public class EvidenceService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails,String receiver) {
+    public  Set<String> extractLitigantIndividualIds(JsonNode caseDetails, String receiver) {
 
         JsonNode litigantNode = caseDetails.get("litigants");
-        JsonNode representativeNode = caseDetails.get("representatives");
         String partyTypeToMatch = (receiver != null) ? receiver : "";
         Set<String> uuids = new HashSet<>();
 
@@ -836,6 +809,15 @@ public class EvidenceService {
             }
         }
 
+        return uuids;
+    }
+
+    public Set<String> extractAdvocateIndividualIds(JsonNode caseDetails,String receiver) {
+
+        JsonNode representativeNode = caseDetails.get("representatives");
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
+        Set<String> uuids = new HashSet<>();
+
         if (representativeNode.isArray()) {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
@@ -850,6 +832,7 @@ public class EvidenceService {
                 }
             }
         }
+
         return uuids;
     }
 

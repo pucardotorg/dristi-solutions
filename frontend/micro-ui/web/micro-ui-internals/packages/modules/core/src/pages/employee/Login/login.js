@@ -59,12 +59,12 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     }
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
     const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-    function hasPostManagerRole() {
-      return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
-    }
-    if (hasPostManagerRole()) {
-      redirectPath = `/${window?.contextPath}/${userType}/orders/tracking`;
-    }
+    // function hasPostManagerRole() {
+    //   return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
+    // }
+    // if (hasPostManagerRole()) {
+    //   redirectPath = `/${window?.contextPath}/${userType}/home/epost-home-screen`;
+    // }
     history.replace(redirectPath);
   }, [user]);
 
@@ -111,14 +111,14 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       }
       if (employeeData?.length > 0) {
         const userAccountExpiryDate = employeeData?.[0]?.assignments?.[0]?.toDate;
-        if(userAccountExpiryDate) {
-        const date = new Date(userAccountExpiryDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (date < today) {
-          throw new Error(t("USER_ACCOUNT_VALIDITY_EXPIRED"));
+        if (userAccountExpiryDate) {
+          const date = new Date(userAccountExpiryDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (date < today) {
+            throw new Error("USER_ACCOUNT_VALIDITY_EXPIRED");
+          }
         }
-      }
       }
       const assignments = employeeData?.[0]?.assignments?.find((assignment) => assignment?.courtroom === data?.courtroom?.code);
       if (!assignments) {

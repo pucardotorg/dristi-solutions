@@ -20,6 +20,7 @@ export const Urls = {
   FileFetchById: "/filestore/v1/files/id",
   Epost: {
     EpostUpdate: "/epost-tracker/epost/v1/_updateEPost",
+    EpostReportDownload: "/epost-tracker/epost/v1/download/excel",
   },
   Scheduler: {
     reschedule: "/scheduler/hearing/v1/_reschedule",
@@ -36,9 +37,27 @@ export const Urls = {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
-  processManagement:{
-    getProcessToSign:"/task/v1/_getTasksToSign",
-    updateSignedProcess:"/task/v1/_updateSignedTasks",
-    bulkSend:"/task/v1/bulk-send",
-  }
+  processManagement: {
+    getProcessToSign: "/task/v1/_getTasksToSign",
+    updateSignedProcess: "/task/v1/_updateSignedTasks",
+    bulkSend: "/task/v1/bulk-send",
+  },
+  openApi: {
+    searchOrders: "/openapi/v1/getOrderDetails",
+    taskManagementCreate: "/openapi/task-management/v1/_create",
+    taskManagementUpdate: "/openapi/task-management/v1/_update",
+    taskManagementSearch: "/openapi/task-management/v1/_search",
+    summonsPayment: "/openapi/payment/v1/_calculate",
+    getTreasuryPaymentBreakup: "/openapi/payment/v1/_getHeadBreakDown",
+    fetchBill: "/openapi/payment/v1/_fetchbill",
+    eTreasury: "/openapi/payment/v1/_processChallan",
+    searchBill: "/openapi/payment/v1/_searchbill",
+    billFileStoreId: "/openapi/payment/v1/getPaymentReceipt",
+    setCaseUnlock: "/openapi/lock/v1/_release",
+    getPaymentLockStatus: "/openapi/lock/v1/_get",
+    setCaseLock: "/openapi/lock/v1/_set",
+    FileFetchByFileStore: "/openapi/v1/landing_page/file",
+    addAddress: "/openapi/v1/case/addAddress",
+    offlinePayment: "/openapi/offline-payment/_create",
+  },
 };

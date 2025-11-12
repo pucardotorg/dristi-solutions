@@ -168,7 +168,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
               }}
             >
               {/* {formattedTime()} */}
-              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
+              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)}
             </div>
             <div
               style={{
@@ -196,7 +196,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
                 : t("PASSED_OVER")
             }
             style={{
-             ...(scheduledHearing?.status !== "IN_PROGRESS" ? {cursor: "default"} : {cursor: "pointer"})
+              ...(scheduledHearing?.status !== "IN_PROGRESS" ? { cursor: "default" } : { cursor: "pointer" }),
             }}
           />
         )}

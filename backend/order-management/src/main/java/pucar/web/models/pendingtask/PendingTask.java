@@ -84,4 +84,7 @@ public class PendingTask {
     @JsonProperty("screenType")
     private String screenType = null;
 
+    @JsonProperty("createdTime")
+    private Long createdTime = null;
+
 }

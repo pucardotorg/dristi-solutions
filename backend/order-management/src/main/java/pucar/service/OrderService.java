@@ -12,6 +12,7 @@ import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
 import pucar.util.ADiaryUtil;
 import pucar.util.CaseUtil;
+import pucar.util.DateUtil;
 import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
 import pucar.web.models.*;
@@ -23,6 +24,8 @@ import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,22 +42,26 @@ public class OrderService {
     private final HearingUtil hearingUtil;
     private final CaseUtil caseUtil;
     private final Configuration configuration;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil, Configuration configuration) {
+    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil, Configuration configuration, DateUtil dateUtil) {
         this.orderUtil = orderUtil;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
         this.caseUtil = caseUtil;
         this.configuration = configuration;
+        this.dateUtil = dateUtil;
     }
 
 
     public Order createOrder(@Valid OrderRequest request) {
         log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
+        LocalDate today = LocalDate.now(ZoneId.of(configuration.getZoneId()));
+        Long now = dateUtil.getEPochFromLocalDate(today);
+        request.getOrder().setCreatedDate(now);
         OrderResponse orderResponse = orderUtil.createOrder(request);
-        updateHearingSummary(request);
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
@@ -105,7 +112,9 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        updateHearingSummary(request);
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+            updateHearingSummary(request);
+        }
 
         return orderResponse.getOrder();
     }

@@ -148,8 +148,9 @@ const EvidenceModal = ({
       }
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
-        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-        !isBail
+        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
+        // &&
+        // !isBail
       );
     } else {
       if (modalType === "Documents") {
@@ -215,8 +216,9 @@ const EvidenceModal = ({
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions" &&
-      !isBail
+      modalType === "Submissions"
+      // &&
+      // !isBail
     ) {
       return t("REJECT");
     }
@@ -945,10 +947,6 @@ const EvidenceModal = ({
                 orderCategory: "COMPOSITE",
                 orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
                 compositeItems,
-                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
                 ...(linkedOrderNumber && { linkedOrderNumber }),
                 workflow: {
                   action: OrderWorkflowAction.SAVE_DRAFT,
@@ -1028,8 +1026,13 @@ const EvidenceModal = ({
               tenantId,
             },
           });
+          const isAcceptBail =
+            (response?.order?.orderCategory === "INTERMEDIATE" && response?.order?.orderType === "ACCEPT_BAIL") ||
+            (Array.isArray(response?.order?.compositeItems) &&
+              response?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
+          const suffix = isAcceptBail ? "&openEdit=1" : "";
           history.replace(
-            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}${suffix}`
           );
         } catch (error) {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -1073,7 +1076,8 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          // const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
@@ -1099,7 +1103,13 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+          const isAcceptBail2 =
+            (res?.order?.orderCategory === "INTERMEDIATE" && res?.order?.orderType === "ACCEPT_BAIL") ||
+            (Array.isArray(res?.order?.compositeItems) && res?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
+          const suffix2 = isAcceptBail2 ? "&openEdit=1" : "";
+          history.push(
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}${suffix2}`
+          );
         } catch (error) {}
       } else {
         if (showConfirmationModal.type === "reject") {

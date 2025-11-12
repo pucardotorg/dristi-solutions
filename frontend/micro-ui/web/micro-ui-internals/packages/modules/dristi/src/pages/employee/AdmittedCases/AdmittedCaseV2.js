@@ -858,7 +858,13 @@ const AdmittedCaseV2 = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+            const isAcceptBail =
+              (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_BAIL") ||
+              (Array.isArray(order?.compositeItems) && order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
+            const suffix = isAcceptBail ? "&openEdit=1" : "";
+            history.push(
+              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}${suffix}`
+            );
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
@@ -3740,10 +3746,25 @@ const AdmittedCaseV2 = () => {
         </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="sub-details-text">
-              {caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}
-            </div>
-            <hr className="vertical-line" />
+            {caseDetails?.cmpNumber && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.cmpNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
+            {caseDetails?.isLPRCase ? (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.lprNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            ) : (
+              caseDetails?.courtCaseNumber && (
+                <React.Fragment>
+                  <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                  <hr className="vertical-line" />
+                </React.Fragment>
+              )
+            )}
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
                 {" "}
@@ -3761,12 +3782,10 @@ const AdmittedCaseV2 = () => {
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
             <hr className="vertical-line" />
             {advocateName && <div className="sub-details-text">{advocateName}</div>}
-            {delayCondonationData?.delayCondonationType?.code === "NO" && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && !isDelayApplicationCompleted && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
-                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                  isDelayApplicationPending ||
-                  isDelayApplicationCompleted
+                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) || isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>
@@ -3837,7 +3856,7 @@ const AdmittedCaseV2 = () => {
             )} */}
           {(showMakeSubmission || userRoles?.includes("ALLOW_ADD_WITNESS")) && config?.label === "Parties" && (
             <Button
-              label={t("ADD_NEW_WITNESS")}
+              label={userRoles.includes("CITIZEN") ? t("ADD_NEW_WITNESS") : t("CS_CASE_ADD_WITNESS")}
               variation={"secondary"}
               onButtonClick={() => setShowAddWitnessModal(true)}
               style={{ marginRight: "30px" }}

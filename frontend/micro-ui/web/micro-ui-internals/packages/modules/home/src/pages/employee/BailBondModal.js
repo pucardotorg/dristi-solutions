@@ -5,6 +5,7 @@ import { useHistory } from "react-router-dom";
 import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { Urls } from "../../hooks";
+import { HomeService } from "../../hooks/services";
 
 const CloseBtn = (props) => {
   return (
@@ -215,22 +216,98 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const closePendingTask = async () => {
     try {
       setLoader(true);
+      const getRefFromRow = (r) => {
+        if (!r) return null;
+        const direct = r?.referenceId || r?.taskReferenceId || r?.refId || r?.taskRefId;
+        if (direct) return direct;
+        const fields = Array.isArray(r?.fields) ? r.fields : [];
+        const getField = (k) => fields?.find((f) => f?.key === k)?.value;
+        return (
+          getField("referenceId") ||
+          getField("taskReferenceId") ||
+          getField("refId") ||
+          getField("taskRefId") ||
+          null
+        );
+      };
+
+      let resolvedRefId = getRefFromRow(row) || `MANUAL_BAIL_BOND_${filingNumber}`;
+      try {
+        const roles = (userInfo?.roles || []).map((r) => r.code);
+        const pendingTaskRes = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                assignedRole: [...roles],
+                ...(courtId && { courtId }),
+                filingNumber,
+                entityType: "bail bond",
+              },
+              limit: 1000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+        const tasks = Array.isArray(pendingTaskRes?.data) ? pendingTaskRes.data : [];
+        const confirmTasks = tasks.filter((t) => {
+          const name = t?.fields?.find((f) => f.key === "name")?.value || "";
+          const status = t?.fields?.find((f) => f.key === "status")?.value || "";
+          return /bail\s*bond/i.test(name) || /PENDING_SIGN|PENDING_REVIEW|PENDING_RAISE_BAIL_BOND/i.test(status);
+        });
+        if (!getRefFromRow(row)) {
+          const pool = confirmTasks.length > 0 ? confirmTasks : tasks;
+          if (pool.length > 0) {
+            const latest = pool
+              .map((t) => ({ task: t, createdTime: t?.fields?.find((f) => f.key === "createdTime")?.value || 0 }))
+              .sort((a, b) => (b.createdTime || 0) - (a.createdTime || 0))?.[0]?.task;
+            const getFieldLatest = (k) => latest?.fields?.find((f) => f.key === k)?.value;
+            resolvedRefId =
+              getFieldLatest("referenceId") ||
+              getFieldLatest("taskReferenceId") ||
+              getFieldLatest("refId") ||
+              getFieldLatest("taskRefId") ||
+              (() => {
+                const anyRef = (latest?.fields || []).find((f) => /ref(erence)?id/i.test(String(f?.key)) && typeof f?.value === "string");
+                return anyRef?.value || resolvedRefId;
+              })();
+          }
+        }
+      } catch (e) {
+      }
+      const caseDetailsRes = await DRISTIService.caseDetailSearchService(
+        {
+          criteria: { filingNumber },
+          tenantId,
+        },
+        {}
+      );
+      const cnrNumber = caseDetailsRes?.cases?.cnrNumber;
       await DRISTIService.customApiService(Urls.pendingTask, {
         pendingTask: {
           name: t("CS_COMMON_BAIL_BOND"),
           entityType: "bail bond",
-          referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
+          referenceId: resolvedRefId,
           status: "completed",
           assignedTo: [],
-          assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+          assignedRole: [],
+          actionCategory: "Bail Bond",
+          screenType: "home",
           filingNumber,
+          cnrNumber,
+          courtId,
           isCompleted: true,
           caseId: caseId,
           caseTitle: caseTitle,
           additionalDetails: {},
           tenantId,
         },
-      }).then((res) => {
+      });
+
+      Promise.resolve().then(() => {
         if (queryStrings?.filingNumber) {
           setTimeout(() => {
             history.goBack();

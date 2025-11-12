@@ -216,17 +216,18 @@ function ReviewSubmissionModal({
           </div>
           <div className="application-view">
             {showDocument}
-            {_getSortedByOrder(documents)?.map((docs) => (
-              <DocViewerWrapper
-                key={docs.fileStore}
-                fileStoreId={docs.fileStore}
-                tenantId={tenantId}
-                docWidth="100%"
-                docHeight="unset"
-                showDownloadOption={false}
-                documentName={docs.fileName}
-              />
-            ))}
+            {applicationPreviewPdf &&
+              _getSortedByOrder(documents)?.map((docs) => (
+                <DocViewerWrapper
+                  key={docs.fileStore}
+                  fileStoreId={docs.fileStore}
+                  tenantId={tenantId}
+                  docWidth="100%"
+                  docHeight="unset"
+                  showDownloadOption={false}
+                  documentName={docs?.fileName || docs?.additionalDetails?.name || docs?.name}
+                />
+              ))}
           </div>
         </div>
       </div>

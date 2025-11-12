@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Header, ActionBar, InboxSearchComposer, SubmitBar, Toast, CloseSvg, BreadCrumb, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
-import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
 import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
 import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
@@ -14,13 +13,12 @@ import { ordersService, taskService, processManagementService } from "../../hook
 import axios from "axios";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
-import { convertToDateInputFormat, formatDate } from "../../utils/index";
+import { convertToDateInputFormat, formatDate, getPartyNameForInfos } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import CustomSubmitModal from "@egovernments/digit-ui-module-dristi/src/components/CustomSubmitModal";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -233,6 +231,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     tasksData?.list[0]?.orderId,
     Boolean(tasksData && courtId)
   );
+
+  const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
   const compositeItem = useMemo(
     () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === tasksData?.list[0]?.additionalDetails?.itemId),
@@ -550,7 +550,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -561,7 +561,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -582,7 +582,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -593,13 +593,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -612,7 +612,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -928,7 +928,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleActualBulkSign = useCallback(async () => {
     setIsBulkLoading(true);
 
-    const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
+    let selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
@@ -957,13 +957,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        await processManagementService.updateSignedProcess(
+        const signedResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
           },
           {}
         );
+        const signedList = signedResponse?.tasks || signedResponse?.orders;
+        selectedItems = selectedItems?.filter((item) => signedList?.some((signed) => signed?.taskNumber === item?.taskNumber));
+
+        if (selectedItems?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: true,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
         setShowErrorToast({
           message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
           error: false,
@@ -1510,12 +1524,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           uiConfig: {
             ...baseConfig?.sections?.searchResult?.uiConfig,
             columns: baseConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
-              return column.label === "SELECT"
-                ? {
-                    ...column,
-                    updateOrderFunc: updateTaskFunc,
-                  }
-                : column;
+              if (column.label === "SELECT") {
+                return {
+                  ...column,
+                  updateOrderFunc: updateTaskFunc,
+                };
+              }
+              if (column.label === "CASE_TITLE") {
+                return {
+                  ...column,
+                  clickFunc: handleRowClick,
+                };
+              } else {
+                return column;
+              }
             }),
           },
         },
@@ -1534,7 +1556,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewWarrantAccess,
     hasViewNoticeAccess,
   ]);
-
   return (
     <React.Fragment>
       {isLoading ? (
@@ -1554,11 +1575,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 tabData={tabData}
                 onTabChange={onTabChange}
                 onFormValueChange={onFormValueChange}
-                additionalConfig={{
-                  resultsTable: {
-                    onClickRow: handleRowClick,
-                  },
-                }}
                 customStyle={sectionsParentStyle}
               ></InboxSearchComposer>
               {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
@@ -1667,29 +1683,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
           headerBarMain={<Heading label="" />}
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSignSuccessModal(false)} />}
           actionCancelLabel={t("DOWNLOAD_DOCUMENTS")}
-          popupModuleActionBarStyles={{
-            display: "flex",
-            justifyContent: "space-between",
-            width: "100%",
-            maxWidth: "500px",
-            margin: "0px 24px 0px",
-          }}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
           actionCancelOnSubmit={handleBulkDownload}
           actionSaveLabel={!allSelectedPolice ? t("MARK_AS_SEND") : t("CS_COMMON_CLOSE")}
           actionSaveOnSubmit={!allSelectedPolice ? handleProceedToBulkSend : handleClose}
+          className="process-bulk-success-modal"
         >
-          <CustomSubmitModal
-            t={t}
-            submitModalInfo={{
-              header: t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT"),
-            }}
-          />
+          <div style={{ width: "100%", textAlign: "center" }}>
+            <Banner
+              whichSvg={"tick"}
+              successful={true}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${bulkSendList?.length} ${t("MARKED_DOCUMENT")}`}
+              headerStyles={{ fontSize: "32px" }}
+              style={{ minWidth: "100%", marginTop: "0px" }}
+            />
+          </div>
         </Modal>
       )}
       {showBulkSendConfirmModal && (

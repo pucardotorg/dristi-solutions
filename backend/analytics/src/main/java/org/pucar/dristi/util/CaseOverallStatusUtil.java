@@ -17,8 +17,6 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.HearingUtil;
-import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseOutcome;
 import org.pucar.dristi.web.models.CaseOutcomeType;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -111,11 +108,11 @@ public class CaseOverallStatusUtil {
                 }
                 for (int i = 0; i < compositeItems.length(); i++) {
                     JSONObject compositeItem = compositeItems.getJSONObject(i);
-                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject);
+                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE);
                 }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -155,40 +152,39 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-				sendSmsForCaseStatusChange(filingNumber,requestInfo);
-				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
 		return null;
 	}
 
-	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo) {
+	private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String subStage) {
 		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
 		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 		String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
+		String cmpNumber = caseUtil.getCmpNumber(caseDetails);
 		JsonNode litigants = caseUtil.getLitigants(caseDetails);
 		Set<String> individualIds = caseUtil.getIndividualIds(litigants);
-		JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
-		Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
-		Set<String> powerOfAttorneyIds = caseUtil.extractPowerOfAttorneyIds(caseDetails,individualIds);
-		if(!powerOfAttorneyIds.isEmpty()){
-			individualIds.addAll(powerOfAttorneyIds);
-		}
-
-		if(!representativeIds.isEmpty()){
-			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
-		}
-		individualIds.addAll(representativeIds);
-		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, courtCaseNumber, requestInfo);
+		SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, cmpNumber, courtCaseNumber, requestInfo, subStage);
 		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String courtCaseNumber, RequestInfo requestInfo) {
+	private boolean shouldSendSMSForSubStageChange(String subStage) {
+		if(subStage == null){
+			return false;
+		}
+		List<String> consideredSubStages = List.of(APPEARANCE, ARGUMENTS, EVIDENCE, LONG_PENDING_REGISTER, REFER_TO_ADR);
+		return consideredSubStages.contains(subStage);
+	}
+
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String cmpNumber, String courtCaseNumber, RequestInfo requestInfo,String subStage) {
 		return SmsTemplateData.builder()
 				.efilingNumber(filingNumber)
+				.subStage(subStage)
+				.cmpNumber(cmpNumber)
 				.courtCaseNumber(courtCaseNumber)
 				.tenantId(requestInfo.getUserInfo().getTenantId())
 				.build();
@@ -261,6 +257,10 @@ public class CaseOverallStatusUtil {
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
 				caseOverallStatus.setAuditDetails(auditDetails);
+				String subStage = caseOverallStatus.getSubstage();
+				if(shouldSendSMSForSubStageChange(subStage)){
+					sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
+				}
 				org.pucar.dristi.web.models.CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo,caseOverallStatus);
 				log.info("Publishing to kafka topic: {}, caseStageSubstage: {}",config.getCaseOverallStatusTopic(), caseStageSubStage);
 				producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
@@ -270,7 +270,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject) {
+	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject, String orderCategory) {
 		if (!"published".equalsIgnoreCase(status)) return null;
 
 		org.pucar.dristi.web.models.CaseOutcomeType caseOutcomeType = mdmsDataConfig.getCaseOutcomeTypeMap().get(orderType);
@@ -281,7 +281,7 @@ public class CaseOverallStatusUtil {
 
 		try {
 			if (caseOutcomeType.getIsJudgement()) {
-				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject);
+				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {
 				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome());
 			}
@@ -291,9 +291,9 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject) {
+	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject, String orderCategory) {
 		try {
-			String outcome = JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
+			String outcome = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_FINDINGS_PATH) : JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
 			if (caseOutcomeType.getJudgementList().contains(outcome)) {
 				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome);
 			} else {
@@ -336,9 +336,9 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject) {
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
         publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject, orderCategory), request);
     }
 }

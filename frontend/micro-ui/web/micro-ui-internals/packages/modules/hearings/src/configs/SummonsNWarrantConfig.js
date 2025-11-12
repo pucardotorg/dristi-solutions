@@ -4,7 +4,7 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, courtId }) => {
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyName, partyType }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -21,6 +21,8 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           tenantId: Digit.ULBService.getCurrentTenantId(),
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
+          partyName: partyName,
+          partyType: partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase(),
         },
       },
       masterName: "commonUiConfig",
@@ -44,6 +46,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "Delivery Channels",
               jsonPath: "deliveryChannel",
+              additionalCustomization: true,
             },
 
             {
@@ -77,6 +80,6 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
         show: true,
       },
     },
-    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId },
+    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId, partyName, partyType, orderType },
   };
 };

@@ -121,7 +121,6 @@ public class EncryptionDecryptionUtil {
 
         for (Role role:userInfo.getRoles()){
             String code = role.getCode();
-            //TODO : check with mani about internal microservice role
             if (code.equalsIgnoreCase(INTERNAL_MICROSERVICE_ROLE) || code.equalsIgnoreCase(DECRYPT_DATA_ROLE)){
                 return true;
             }

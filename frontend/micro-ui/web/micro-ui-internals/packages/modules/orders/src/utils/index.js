@@ -125,11 +125,12 @@ export const constructFullName = (firstName, middleName, lastName) => {
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ");
 
-  const nameWithDesignation = (designation && nameParts) 
-  ? (`${nameParts} - ${designation}`) 
-  : (designation || nameParts);
+  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
@@ -202,4 +203,139 @@ export const numberToWords = (num) => {
 export const formatAddress = (value) => {
   const parts = [value?.locality, value?.city, value?.district, value?.pincode];
   return parts.filter((part) => part !== undefined && part !== null && part !== "").join(", ");
+};
+
+const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+
+function getISTEpoch(year, month, day, hour, minute, second, ms) {
+  const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - IST_OFFSET);
+
+  return utcDate;
+}
+
+export function getEpochRangeFromDateIST(dateStr) {
+  if (!dateStr) return { start: null, end: null };
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const monthIndex = month - 1;
+
+  const start = getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
+  const end = getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
+
+  return { start, end };
+}
+
+export function getEpochRangeFromMonthIST(monthStr) {
+  if (!monthStr) return { start: null, end: null };
+
+  const [year, month] = monthStr.split("-").map(Number);
+  const monthIndex = month - 1;
+
+  const start = getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
+
+  // Gets the number of the last day of the month
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+
+  const end = getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
+
+  return { start, end };
+}
+
+export const formatDateWithTime = (dateInput, showTime = false) => {
+  if (!dateInput) return "-";
+
+  const date = new Date(dateInput);
+
+  if (isNaN(date.getTime())) return "N/A";
+  const dateInIST = new Date(date.getTime() + IST_OFFSET);
+
+  const day = String(dateInIST.getUTCDate()).padStart(2, "0");
+  const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
+  const year = dateInIST.getUTCFullYear();
+
+  let formattedDate = `${day}-${month}-${year}`;
+
+  if (showTime) {
+    const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
+    const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
+
+    formattedDate += ` ${hours}:${minutes}:${seconds}`;
+  }
+
+  return formattedDate;
+};
+
+export const _getDate = (epoch, formatDate = false) => {
+  const date = epoch ? new Date(epoch) : new Date();
+
+  const options = { timeZone: "Asia/Kolkata" };
+  const istDate = new Date(date.toLocaleString("en-US", options));
+
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, "0");
+  const day = String(istDate.getDate()).padStart(2, "0");
+
+  if (formatDate) {
+    return `${day}-${month}-${year}`;
+  }
+
+  return `${year}-${month}-${day}`;
+};
+
+export const _toEpoch = (dateString) => {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split("-").map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  return utcDate.getTime() - istOffset;
+};
+
+export const _getStatus = (status, dropdownData = []) => {
+  if (!status || !dropdownData?.length) return null;
+  return dropdownData?.find((item) => item.code === status) || null;
+};
+
+export const downloadFile = (responseBlob, fileName) => {
+  if (!(responseBlob instanceof Blob)) {
+    throw new Error("Invalid response format for download.");
+  }
+  const url = window.URL.createObjectURL(responseBlob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+  const formDataKeyMap = {
+    NOTICE: "noticeOrder",
+    SUMMONS: "SummonsOrder",
+    WARRANT: "warrantFor",
+    PROCLAMATION: "proclamationFor",
+    ATTACHMENT: "attachmentFor", // same formdata key as WARRANT
+    // Add more types here easily in future
+  };
+
+  const formdata =
+    orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderSchema?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
+
+  const key = formDataKeyMap[orderType];
+  const partyData = formdata?.[key]?.party?.data;
+
+  const name =
+    [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+    (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
+    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
+    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    formdata?.warrantFor ||
+    formdata?.proclamationFor ||
+    formdata?.attachmentFor ||
+    "";
+
+  return name;
 };

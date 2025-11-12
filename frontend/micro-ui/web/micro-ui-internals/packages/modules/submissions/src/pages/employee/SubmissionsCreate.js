@@ -139,6 +139,8 @@ const SubmissionsCreate = ({ path }) => {
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
+
   const hasSubmissionRole = useMemo(
     () =>
       ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"].reduce((result, current) => {
@@ -395,7 +397,9 @@ const SubmissionsCreate = ({ path }) => {
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
-            (application) => !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+            (application) =>
+              !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
+              "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
     [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
@@ -448,7 +452,7 @@ const SubmissionsCreate = ({ path }) => {
                     ...input.populators.mdmsConfig,
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
-                    }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
+                    }].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}`, // name: 'APPLICATION_TYPE_'+item.type
                   },
                 },
               };
@@ -492,46 +496,56 @@ const SubmissionsCreate = ({ path }) => {
 
     if (newConfig.length > 0) {
       const updatedConfig = newConfig?.map((config) => {
-        return {
-          ...config,
-          body: config?.body?.map((body) => {
-            if (body?.populators?.validation?.customValidationFn) {
-              const customValidations =
-                Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                  body.populators.validation.customValidationFn.masterName
-                ];
-
-              if (customValidations) {
-                body.populators.validation = {
-                  ...body.populators.validation,
-                  ...customValidations(),
-                };
-              }
-            }
-            if (body?.key === "suretyDocuments") {
-              body.populators.inputs[0].modalData = documentTypeData;
-            }
-            if (body?.key === "selectComplainant") {
-              body.populators.options = complainantsList;
-              if (complainantsList?.length === 1 || litigant) {
-                const updatedBody = {
+        const mappedBody = (config?.body || []).map((body) => {
+          if (applicationType === "REQUEST_FOR_BAIL" && typeof body?.show === "function") {
+            try {
+              const shouldShow = body.show(formdata);
+              if (!shouldShow) {
+                return {
                   ...body,
-                  disable: true,
+                  populators: { ...(body?.populators || {}), hideInForm: true },
                 };
-                return updatedBody;
               }
+              body = { ...body, populators: { ...(body?.populators || {}), hideInForm: false } };
+            } catch (e) {}
+          }
+          if (body?.populators?.validation?.customValidationFn) {
+            const customValidations =
+              Digit.Customizations[body.populators.validation.customValidationFn.moduleName]?.[
+                body.populators.validation.customValidationFn.masterName
+              ];
+
+            if (customValidations) {
+              body.populators.validation = {
+                ...body.populators.validation,
+                ...customValidations(),
+              };
             }
-            return {
-              ...body,
-            };
-          }),
-        };
+          }
+          if (body?.key === "suretyDocuments") {
+            body.populators.inputs[0].modalData = documentTypeData;
+          }
+          if (body?.key === "selectComplainant") {
+            body.populators.options = complainantsList;
+            if (complainantsList?.length === 1 || litigant) {
+              const updatedBody = {
+                ...body,
+                disable: true,
+              };
+              return updatedBody;
+            }
+          }
+          return {
+            ...body,
+          };
+        });
+        return { ...config, body: mappedBody };
       });
       return updatedConfig;
     } else {
       return [];
     }
-  }, [applicationType, documentTypeData, isCitizen, complainantsList]);
+  }, [applicationType, documentTypeData, isCitizen, complainantsList, formdata]);
 
   const formatDate = (date, format) => {
     const day = String(date.getDate()).padStart(2, "0");
@@ -833,6 +847,11 @@ const SubmissionsCreate = ({ path }) => {
           isActive: true,
         },
         applicationDate: formatDate(new Date()),
+        ...(applicationType === "REQUEST_FOR_BAIL"
+          ? {
+              addSurety: { code: "NO", name: "No", showSurety: false },
+            }
+          : {}),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else {
@@ -923,7 +942,7 @@ const SubmissionsCreate = ({ path }) => {
       });
     }
 
-    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType) && formState?.submitCount) {
+    if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType) && formState?.submitCount) {
       if (!formData?.supportingDocuments && !Object.keys(formState?.errors).includes("supportingDocuments")) {
         setValue("supportingDocuments", [{}]);
         setError("supportingDocuments", { message: t("CORE_REQUIRED_FIELD_ERROR") });
@@ -945,6 +964,34 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
 
+    if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
+      if (formData?.supportingDocuments?.length > 0 && !Object.keys(formState?.errors).includes("supportingDocuments")) {
+        formData?.supportingDocuments?.forEach((docs, index) => {
+          if (docs?.submissionDocuments?.uploadedDocs && Object.keys(formState?.errors).includes(`submissionDocuments_${index}`)) {
+            clearErrors(`submissionDocuments_${index}`);
+          }
+        });
+      } else if (formData?.supportingDocuments?.length > 0 && Object.keys(formState?.errors).includes("supportingDocuments")) {
+        clearErrors("supportingDocuments");
+      }
+    }
+    if (applicationType === "REQUEST_FOR_BAIL") {
+      const addSurety = formData?.addSurety;
+      const isSuretySelected = typeof addSurety === "object" ? addSurety?.code === "YES" || addSurety?.showSurety === true : addSurety === "YES";
+      if (isSuretySelected && Array.isArray(formData?.sureties)) {
+        formData.sureties.forEach((s, idx) => {
+          const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
+          const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
+          if (identityDocs?.length && Object.keys(formState?.errors).includes(`identityProof_${idx}`)) {
+            clearErrors(`identityProof_${idx}`);
+          }
+          if (solvencyDocs?.length && Object.keys(formState?.errors).includes(`proofOfSolvency_${idx}`)) {
+            clearErrors(`proofOfSolvency_${idx}`);
+          }
+        });
+      }
+    }
+
     if (Object.keys(formState?.errors).length) {
       setIsSubmitDisabled(true);
     } else {
@@ -962,6 +1009,15 @@ const SubmissionsCreate = ({ path }) => {
   };
   const onDocumentUpload = async (fileData, filename) => {
     if (fileData?.fileStore) return fileData;
+    // const preUploadedFileStore = fileData?.fileStore || fileData?.fileStoreId || fileData?.file?.files?.[0]?.fileStoreId;
+    // if (preUploadedFileStore) {
+    //   return {
+    //     fileType: fileData?.documentType || fileData?.fileType,
+    //     fileStore: preUploadedFileStore,
+    //     filename: filename || fileData?.filename || fileData?.name,
+    //     additionalDetails: fileData?.additionalDetails,
+    //   };
+    // }
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
@@ -1006,6 +1062,7 @@ const SubmissionsCreate = ({ path }) => {
   const createSubmission = async () => {
     try {
       let documentsList = [];
+      let uploadFileNames = [];
       if (formdata?.listOfProducedDocuments?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.listOfProducedDocuments?.documents];
       }
@@ -1019,10 +1076,48 @@ const SubmissionsCreate = ({ path }) => {
         documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
       }
 
-      const applicationDocuments = ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
+      if (applicationType === "REQUEST_FOR_BAIL" && Array.isArray(formdata?.sureties)) {
+        const pushIfFile = (arr, doc, displayName) => {
+          if (!doc) return;
+          const isPreUploaded = doc?.fileStore || doc?.fileStoreId || doc?.file?.files?.[0]?.fileStoreId;
+          const isRawFile = (typeof File !== "undefined" && doc instanceof File) || (doc?.size && doc?.type);
+          if (isPreUploaded || isRawFile) {
+            if (isRawFile) {
+              try {
+                Object.assign(doc, { name: displayName || doc?.name });
+              } catch (e) {}
+              arr.push(doc);
+            } else {
+              const displayFileName = displayName || doc?.name;
+              const withName = {
+                ...(doc || {}),
+                name: displayFileName,
+                filename: displayFileName,
+                additionalDetails: { ...(doc?.additionalDetails || {}), name: displayFileName },
+              };
+              arr.push(withName);
+            }
+            uploadFileNames.push(displayName || doc?.name);
+          }
+        };
+        formdata.sureties.forEach((s, sIdx) => {
+          const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
+          const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
+          const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
+
+          if (Array.isArray(identityDocs))
+            identityDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Identity Proof"}.pdf`));
+          if (Array.isArray(solvencyDocs))
+            solvencyDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Proof of Solvency"}.pdf`));
+          if (Array.isArray(otherDocs))
+            otherDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Other Documents"}.pdf`));
+        });
+      }
+      const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
         ? formdata?.supportingDocuments?.map((supportDocs) => ({
             fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
             fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+            name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
             additionalDetails: {
               ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
               documentType: supportDocs?.documentType?.code,
@@ -1032,6 +1127,7 @@ const SubmissionsCreate = ({ path }) => {
         : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
             fileType: item?.document?.documentType,
             fileStore: item?.document?.fileStore,
+            name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
             additionalDetails: {
               ...item?.document?.additionalDetails,
               documentType: item?.documentType?.code,
@@ -1039,7 +1135,7 @@ const SubmissionsCreate = ({ path }) => {
             },
           })) || [];
 
-      const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
+      const documentres = (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name)))) || [];
       let documents = [];
       let file = null;
       let evidenceReqBody = {};
@@ -1047,12 +1143,14 @@ const SubmissionsCreate = ({ path }) => {
 
       // evidence we are creating after create application (each evidenece need application Number)
       uploadedDocumentList.forEach((res, index) => {
+        const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
         file = {
           documentType: res?.fileType,
           fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
           documentOrder: index,
+          fileName: resolvedName,
           additionalDetails: {
-            name: res?.filename || res?.additionalDetails?.name,
+            name: resolvedName,
             documentType: res?.additionalDetails?.documentType,
             documentTitle: res?.additionalDetails?.documentTitle,
           },
@@ -1090,6 +1188,86 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
 
+      if (applicationType === "REQUEST_FOR_BAIL") {
+        try {
+          const sanitizedSureties = Array.isArray(formdata?.sureties)
+            ? formdata.sureties.map((s) => ({
+                name: s?.name || "",
+                fatherName: s?.fatherName || "",
+                mobileNumber: s?.mobileNumber || "",
+                email: s?.email || "",
+                address: {
+                  pincode: s?.address?.pincode || "",
+                  state: s?.address?.state || "",
+                  district: s?.address?.district || "",
+                  city: s?.address?.city || "",
+                  locality: s?.address?.locality || "",
+                },
+              }))
+            : [];
+          const bailApplicationDocuments = [];
+          const processDocs = async (docsArr, docType, defaultName) => {
+            if (!Array.isArray(docsArr) || docsArr.length === 0) return;
+            const hasRaw = docsArr.some(
+              (d) => (typeof File !== "undefined" && d instanceof File) || (d?.file && d?.file instanceof File) || (d?.size && d?.type)
+            );
+            let toUpload = docsArr;
+            if (hasRaw && docsArr.length > 0) {
+              try {
+                const combined = await combineMultipleFiles(docsArr, `${defaultName}.pdf`, "submissionDocuments");
+                toUpload = combined || docsArr;
+              } catch (e) {}
+            }
+            const uploaded = await onDocumentUpload(toUpload?.[0], `${defaultName}.pdf`);
+            const fileStore = uploaded?.fileStore || uploaded?.file?.files?.[0]?.fileStoreId;
+            if (fileStore) {
+              bailApplicationDocuments.push({
+                fileStore,
+                documentType: docType,
+                documentTitle: uploaded?.filename || `${defaultName}.pdf`,
+                tenantId,
+              });
+            }
+          };
+
+          if (Array.isArray(formdata?.sureties)) {
+            for (const s of formdata.sureties) {
+              const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
+              const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
+              const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
+              // Map to documentTypes used in GenerateBailBond
+              await processDocs(identityDocs, "IDENTITY_PROOF", "identityProof");
+              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "proofOfSolvency");
+              await processDocs(otherDocs, "OTHER_DOCUMENTS", "otherDocuments");
+            }
+          }
+
+          applicationSchema = {
+            ...applicationSchema,
+            applicationDetails: {
+              ...applicationSchema?.applicationDetails,
+              litigantFatherName: formdata?.litigantFatherName || "",
+              addSurety:
+                typeof formdata?.addSurety === "object" ? formdata?.addSurety?.code || formdata?.addSurety?.name || "" : formdata?.addSurety || "",
+              sureties: sanitizedSureties,
+              ...(bailApplicationDocuments.length > 0 && { applicationDocuments: bailApplicationDocuments }),
+            },
+          };
+        } catch (e) {
+          console.error("Failed to map surety details for Request for Bail", e);
+        }
+      }
+      let filteredFormdata = { ...formdata };
+      if (applicationType === "REQUEST_FOR_BAIL") {
+        try {
+          delete filteredFormdata.litigantFatherName;
+          delete filteredFormdata.addSurety;
+          delete filteredFormdata.sureties;
+          delete filteredFormdata.reasonForApplicationOfBail;
+          delete filteredFormdata.prayer;
+        } catch (e) {}
+      }
+
       const applicationReqBody = {
         tenantId,
         application: {
@@ -1108,7 +1286,7 @@ const SubmissionsCreate = ({ path }) => {
           statuteSection: { tenantId },
           additionalDetails: {
             formdata: {
-              ...formdata,
+              ...filteredFormdata,
               refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
             },
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
@@ -1181,11 +1359,11 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      
+
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      const documentsFile = (mockESignEnabled)
+      const documentsFile = mockESignEnabled
         ? [
             {
               documentType: "SIGNED",
@@ -1287,7 +1465,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleDocumentUploadValidation = (formData) => {
     let documentErrorFlag = false;
-    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION", "PRODUCTION_DOCUMENTS"].includes(applicationType)) {
+    if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION", "PRODUCTION_DOCUMENTS"].includes(applicationType)) {
       formData?.supportingDocuments?.forEach((docs, index) => {
         if (!docs?.submissionDocuments?.uploadedDocs?.length && !Object.keys(setFormState.current?.errors).includes(`submissionDocuments_${index}`)) {
           setFormErrors.current(`submissionDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
@@ -1299,6 +1477,28 @@ const SubmissionsCreate = ({ path }) => {
           clearFormDataErrors.current(`submissionDocuments_${index}`);
         }
       });
+    }
+    if (applicationType === "REQUEST_FOR_BAIL") {
+      const addSurety = formData?.addSurety;
+      const isSuretySelected = typeof addSurety === "object" ? addSurety?.code === "YES" || addSurety?.showSurety === true : addSurety === "YES";
+      if (isSuretySelected && Array.isArray(formData?.sureties)) {
+        formData.sureties.forEach((s, idx) => {
+          const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
+          const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
+          if (!identityDocs?.length && !Object.keys(setFormState.current?.errors).includes(`identityProof_${idx}`)) {
+            setFormErrors.current(`identityProof_${idx}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+            documentErrorFlag = true;
+          } else if (identityDocs?.length && Object.keys(setFormState.current?.errors).includes(`identityProof_${idx}`)) {
+            clearFormDataErrors.current(`identityProof_${idx}`);
+          }
+          if (!solvencyDocs?.length && !Object.keys(setFormState.current?.errors).includes(`proofOfSolvency_${idx}`)) {
+            setFormErrors.current(`proofOfSolvency_${idx}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+            documentErrorFlag = true;
+          } else if (solvencyDocs?.length && Object.keys(setFormState.current?.errors).includes(`proofOfSolvency_${idx}`)) {
+            clearFormDataErrors.current(`proofOfSolvency_${idx}`);
+          }
+        });
+      }
     }
     if (applicationType === "PRODUCTION_DOCUMENTS") {
       formdata?.submissionDocuments?.submissionDocuments?.forEach((docs, index) => {
@@ -1322,7 +1522,7 @@ const SubmissionsCreate = ({ path }) => {
     if (handleDocumentUploadValidation(formData)) return;
     setLoader(true);
 
-    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
+    if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
       setFormdata(updatedFormData);
     }
@@ -1382,9 +1582,17 @@ const SubmissionsCreate = ({ path }) => {
       if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
         history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
-        history.replace(
-          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
-        );
+        if (showSuccessModal) {
+          triggerSurvey("APPLICATION_PAYMENT", () => {
+            history.replace(
+              `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+            );
+          });
+        } else {
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
       }
     }
   };
@@ -1645,6 +1853,7 @@ const SubmissionsCreate = ({ path }) => {
           }
         />
       )}
+      {SurveyUI}
     </div>
   );
 };

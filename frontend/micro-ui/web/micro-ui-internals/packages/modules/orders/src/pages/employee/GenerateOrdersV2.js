@@ -214,7 +214,7 @@ const GenerateOrdersV2 = () => {
   const [currentOrder, setCurrentOrder] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { orderNumber, filingNumber, openEdit } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -244,7 +244,9 @@ const GenerateOrdersV2 = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
-  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
+  const [isBailBondTaskExistsForCurrentRef, setIsBailBondTaskExistsForCurrentRef] = useState(false);
+  const [isRaiseBailBondTaskExists, setIsRaiseBailBondTaskExists] = useState(false);
+  const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
@@ -257,9 +259,12 @@ const GenerateOrdersV2 = () => {
   const [errors, setErrors] = useState({});
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
+  const [latestAcceptBailFormData, setLatestAcceptBailFormData] = useState(null);
   const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+  // One-time guard to auto-open edit modal when needed
+  const hasAutoOpenedEditRef = useRef(false);
 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
@@ -294,6 +299,221 @@ const GenerateOrdersV2 = () => {
     } finally {
       setIsCaseDetailsLoading(false);
     }
+  };
+
+  const getBailBondReferenceId = (orderObj) => {
+    try {
+      const orderNo = orderObj?.orderNumber || "";
+      const appNo = orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "";
+
+      const orderPart = orderNo ? `_ORD_${orderNo}` : "";
+      const appPart = appNo ? `_APP_${appNo}` : "";
+      return `MANUAL_BAIL_BOND_${filingNumber}${orderPart}${appPart}`;
+    } catch (e) {
+      return `MANUAL_BAIL_BOND_${filingNumber}`;
+    }
+  };
+
+  const getRaiseBailBondReferenceId = (accusedKey) => {
+    try {
+      const safeAccused = `_ACC_${accusedKey || "UNKNOWN"}`;
+      return `MANUAL_RAISE_BAIL_BOND_${filingNumber}${safeAccused}`;
+    } catch (e) {
+      console.error(e);
+      return `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`;
+    }
+  };
+
+  const createPendingTaskForJudge = async (orderObj) => {
+    try {
+      const referenceId = getBailBondReferenceId(orderObj);
+      const existing = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 1000,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+      const exists = Array.isArray(existing?.data) && existing?.data?.some?.((task) => task?.referenceId === referenceId);
+      if (exists) {
+        setIsBailBondTaskExistsForCurrentRef(true);
+        return;
+      }
+
+      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: t("CS_COMMON_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId,
+          status: "PENDING_SIGN",
+          assignedTo: [],
+          assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
+          actionCategory: "Bail Bond",
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+          stateSla: todayDate,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      setIsBailBondTaskExistsForCurrentRef(true);
+    } catch (e) {
+      console.error("Error creating bail bond task:", e);
+    }
+  };
+
+  const createPendingTaskForEmployee = async (orderObj) => {
+    try {
+      const getUserUUID = async (individualId) => {
+        try {
+          const res = await window?.Digit?.DRISTIService?.searchIndividualUser(
+            { Individual: { individualId } },
+            { tenantId, limit: 1000, offset: 0 }
+          );
+          return res?.Individual?.[0]?.userUuid || "";
+        } catch (e) {
+          console.error("Error fetching user UUID for individualId:", individualId, e);
+          return "";
+        }
+      };
+      const bailFormData = (() => {
+        if (orderObj?.orderCategory === "INTERMEDIATE" && (orderObj?.orderType === "ACCEPT_BAIL" || orderType?.code === "ACCEPT_BAIL")) {
+          return latestAcceptBailFormData || orderObj?.additionalDetails?.formdata || {};
+        }
+        const acceptBailItem = orderObj?.compositeItems?.find?.((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+        return (
+          (latestAcceptBailFormData && acceptBailItem ? latestAcceptBailFormData : acceptBailItem?.orderSchema?.additionalDetails?.formdata) || {}
+        );
+      })();
+      const bailOfName = bailFormData?.bailOf;
+      const bailType = bailFormData?.bailType || null;
+      const bailAmount = bailFormData?.chequeAmount || null;
+      const noOfSureties = bailFormData?.noOfSureties || null;
+
+      const candidateName = bailOfName || applicationDetails?.additionalDetails?.onBehalOfName || "";
+
+      const targetLitigant =
+        (caseDetails?.litigants || []).find((lit) => {
+          const fullName = lit?.additionalDetails?.fullName || "";
+          return candidateName && fullName?.toLowerCase?.() === candidateName?.toLowerCase?.();
+        }) || (caseDetails?.litigants || []).find((lit) => lit?.partyType?.includes?.("respondent"));
+
+      const targetIndividualId = targetLitigant?.individualId;
+      const targetUserUuid = targetIndividualId ? await getUserUUID(targetIndividualId) : "";
+
+      const accusedKey = targetIndividualId || targetLitigant?.uniqueId || targetLitigant?.partyUuid || targetLitigant?.additionalDetails?.uuid || "";
+      const referenceId = getRaiseBailBondReferenceId(accusedKey);
+
+      const poaUuids = (() => {
+        const poaList = caseDetails?.poaHolders || [];
+        if (!targetIndividualId) {
+          return poaList.map((poa) => poa?.additionalDetails?.uuid).filter(Boolean);
+        }
+        return poaList
+          ?.filter((poa) => poa?.representingLitigants?.some?.((rep) => rep?.individualId === targetIndividualId))
+          ?.map((poa) => poa?.additionalDetails?.uuid)
+          ?.filter(Boolean);
+      })();
+
+      const advocateUuids = (() => {
+        const reps = caseDetails?.representatives || [];
+        if (!targetIndividualId) {
+          return reps.map((rep) => rep?.additionalDetails?.uuid).filter(Boolean);
+        }
+        return reps
+          ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
+          ?.map((rep) => rep?.additionalDetails?.uuid)
+          ?.filter(Boolean);
+      })();
+
+      const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...(advocateUuids || [])].filter(Boolean))).map((uuid) => ({
+        uuid,
+      }));
+
+      const accusedName = targetLitigant?.additionalDetails?.fullName || targetLitigant?.name || "";
+      const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
+      const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
+      const additionalDetails = {
+        accusedIndividualId: targetIndividualId || null,
+        accusedKey: accusedKey || null,
+        litigantUuid: targetIndividualId || accusedKey || null,
+        individualId: targetIndividualId || null,
+        litigantName: accusedName || null,
+        addSurety: bailTypeCode === "SURETY" ? "YES" : bailTypeCode ? "NO" : undefined,
+        refApplicationId: orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "",
+        bailType: bailTypeObj || bailTypeCode || bailType || null,
+        ...(bailTypeCode ? { bailTypeCode } : {}),
+        ...(targetIndividualId || accusedKey ? { litigants: [targetIndividualId || accusedKey] } : {}),
+      };
+      if (bailAmount != null) {
+        const amt = Number(bailAmount);
+        additionalDetails.bailAmount = amt;
+        additionalDetails.chequeAmount = Number.isFinite(amt) ? amt : undefined;
+        additionalDetails.amount = Number.isFinite(amt) ? amt : undefined;
+      }
+      if (noOfSureties != null) additionalDetails.noOfSureties = Number(noOfSureties);
+
+      const pendingTaskPayload = {
+        pendingTask: {
+          name: t("CS_COMMON_RAISE_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId,
+          status: "PENDING_RAISE_BAIL_BOND",
+          assignedTo: assignedTo,
+          assignedRole: [],
+          actionCategory: "Bail Bond",
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+          stateSla: todayDate,
+          additionalDetails,
+          tenantId,
+        },
+      };
+      try {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, pendingTaskPayload);
+        try {
+          const persisted = {
+            referenceId,
+            name: "RAISE BAIL BOND",
+            createdTime: Date.now(),
+            additionalDetails,
+          };
+          sessionStorage.setItem(`RAISE_BB_REF_${filingNumber}`, JSON.stringify(persisted));
+        } catch (_) {}
+      } catch (apiErr) {
+        console.error("[BailBond Citizen Task] API error while creating pending task:", apiErr);
+        throw apiErr;
+      }
+      setIsRaiseBailBondTaskExists(true);
+    } catch (err) {
+      console.error("Error creating raise bail bond task:", err);
+    }
+  };
+
+  const createBailBondTaskForOrder = async (orderNumberOrOrderObj) => {
+    const orderObj = typeof orderNumberOrOrderObj === "string" ? { orderNumber: orderNumberOrOrderObj } : orderNumberOrOrderObj || currentOrder;
+    const createdPendingTaskForJudge = await createPendingTaskForJudge(orderObj);
+    const createdPendingTaskForCitizen = await createPendingTaskForEmployee(orderObj);
+    return { createdPendingTaskForJudge, createdPendingTaskForCitizen };
   };
 
   const fetchInbox = useCallback(async () => {
@@ -460,6 +680,83 @@ const GenerateOrdersV2 = () => {
     return isPresent;
   }, [hearingsData]);
 
+  const isAcceptBailOrderSelected = useMemo(() => {
+    if (!currentOrder) return false;
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      return currentOrder?.orderType === "ACCEPT_BAIL";
+    }
+    return Array.isArray(currentOrder?.compositeItems)
+      ? currentOrder?.compositeItems?.some((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL")
+      : false;
+  }, [currentOrder]);
+
+  // Minimal pre-seed: when opening AddOrderTypeModal for ACCEPT_BAIL, push saved formdata into persisted defaults
+  useEffect(() => {
+    try {
+      if (!showAddOrderModal) return;
+      if ((orderType?.code || "") !== "ACCEPT_BAIL") return;
+
+      const deriveFormData = () => {
+        try {
+          if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+            return { ...(currentOrder?.additionalDetails?.formdata || {}) };
+          }
+          if (Array.isArray(currentOrder?.compositeItems)) {
+            const acceptItem = currentOrder?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
+            return { ...(acceptItem?.orderSchema?.additionalDetails?.formdata || {}) };
+          }
+          return null;
+        } catch (_) {
+          return null;
+        }
+      };
+
+      const fd = deriveFormData();
+      if (fd && Object.keys(fd).length > 0) {
+        setLatestAcceptBailFormData(fd);
+      }
+    } catch (_) {}
+  }, [showAddOrderModal, orderType?.code, currentOrder]);
+
+  useEffect(() => {
+    try {
+      if (hasAutoOpenedEditRef.current) return;
+      const shouldOpenByParam = typeof openEdit !== "undefined" && ["true", "1", true].includes(openEdit);
+
+      if (shouldOpenByParam) {
+        const typeObj = { code: "ACCEPT_BAIL", name: "ORDER_TYPE_ACCEPT_BAIL" };
+        if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
+          handleOrderTypeChange(0, typeObj);
+          hasAutoOpenedEditRef.current = true;
+        } else if (Array.isArray(currentOrder?.compositeItems)) {
+          const idx = currentOrder?.compositeItems?.findIndex((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+          if (idx >= 0) {
+            handleOrderTypeChange(idx, typeObj);
+            hasAutoOpenedEditRef.current = true;
+          }
+        }
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [openEdit, currentOrder]);
+
+  const isBailBondFlagSelected = useMemo(() => {
+    if (!currentOrder) return false;
+    const hasFlag = (() => {
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        if (currentOrder?.orderType !== "ACCEPT_BAIL") return false;
+        return Boolean(currentOrder?.additionalDetails?.formdata?.bailBondRequired);
+      }
+      if (Array.isArray(currentOrder?.compositeItems)) {
+        const acceptBailItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType === "ACCEPT_BAIL");
+        return Boolean(acceptBailItem?.orderSchema?.additionalDetails?.formdata?.bailBondRequired);
+      }
+      return false;
+    })();
+    return hasFlag;
+  }, [currentOrder]);
+
   const { data: orderTypeData, isLoading: isOrderTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "Order",
@@ -617,6 +914,16 @@ const GenerateOrdersV2 = () => {
     );
   }, [applicationData]);
 
+  const isBailApplicationPending = useMemo(() => {
+    return Boolean(
+      applicationData?.applicationList?.some(
+        (item) =>
+          item?.applicationType === "REQUEST_FOR_BAIL" &&
+          [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+      )
+    );
+  }, [applicationData]);
+
   const applicationTypeConfigUpdated = useMemo(() => {
     const updatedConfig = structuredClone(applicationTypeConfig);
     // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
@@ -660,6 +967,45 @@ const GenerateOrdersV2 = () => {
                 `WITNESS_BATTA`,
               ];
 
+        updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
+          orderTypes
+        )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
+      } else if (isBailApplicationPending) {
+        const orderTypes =
+          currentInProgressHearing || currentOrder?.hearingNumber
+            ? [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ]
+            : [
+                `TAKE_COGNIZANCE`,
+                `DISMISS_CASE`,
+                `SUMMONS`,
+                `NOTICE`,
+                `SECTION_202_CRPC`,
+                `MANDATORY_SUBMISSIONS_RESPONSES`,
+                `REFERRAL_CASE_TO_ADR`,
+                `SCHEDULE_OF_HEARING_DATE`,
+                `WARRANT`,
+                `OTHERS`,
+                `JUDGEMENT`,
+                `PROCLAMATION`,
+                `ATTACHMENT`,
+                `COST`,
+                `WITNESS_BATTA`,
+              ];
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
           orderTypes
         )}.includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}`;
@@ -821,7 +1167,7 @@ const GenerateOrdersV2 = () => {
       }
     }
     return updatedConfig;
-  }, [caseDetails, isDelayApplicationPending, currentInProgressHearing]);
+  }, [caseDetails, isDelayApplicationPending, currentInProgressHearing, isBailApplicationPending]);
 
   const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -1019,15 +1365,17 @@ const GenerateOrdersV2 = () => {
           },
           { tenantId }
         );
-        if (bailBondPendingTask?.data?.length > 0) {
-          setIsBailBondTaskExists(true);
-        }
+        const refId = getBailBondReferenceId(currentOrder);
+        const list = Array.isArray(bailBondPendingTask?.data) ? bailBondPendingTask.data : [];
+        const matchRef = list.some?.((task) => task?.referenceId === refId);
+        const anyBailBondPending = list.length > 0;
+        setIsBailBondTaskExists(Boolean(matchRef || anyBailBondPending));
       } catch (err) {
         console.error(err);
       }
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
-  }, [userType]);
+  }, [userType, filingNumber, courtId, roles, tenantId, currentOrder]);
 
   // Initialize presentAttendees and absentAttendees from currentOrder.attendance
   useEffect(() => {
@@ -1055,55 +1403,64 @@ const GenerateOrdersV2 = () => {
   }, [data, currentInProgressHearing, todayScheduledHearing]);
 
   const nextHearing = useCallback(
-    (isStartHearing) => {
-      if (data?.length === 0) {
-        history.push(`/${window?.contextPath}/employee/home/home-screen`);
-      } else {
-        const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-        const index = validData?.findIndex(
+    async () => {
+      try {
+        const validData = (data || []).filter((item) =>
+          ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
+        );
+
+        if (!validData?.length) {
+          setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+          return;
+        }
+
+        const currentIndex = validData?.findIndex(
           (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
         );
-        if (index === -1 || validData?.length === 1) {
-          history.push(`/${window?.contextPath}/employee/home/home-screen`);
-        } else {
-          const row = validData[(index + 1) % validData?.length];
-          if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
-            if (isStartHearing) {
-              hearingService
-                .searchHearings(
-                  {
-                    criteria: {
-                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                      ...(row?.businessObject?.hearingDetails?.courtId &&
-                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
-                    },
-                  },
-                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
-                )
-                .then((response) => {
-                  hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                    window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
-                  });
-                })
-                .catch((error) => {
-                  console.error("Error starting hearing", error);
-                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
-                });
-            } else {
-              history.push(
-                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-              );
-            }
-          } else {
-            history.push(
-              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+
+        for (let step = 1; step < validData.length; step++) {
+          const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
+          const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
+          const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
+          const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
+          const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
+          if (!nextFiling) continue;
+
+          try {
+            const response = await ordersService.searchOrder(
+              {
+                tenantId: nextTenantId,
+                criteria: {
+                  tenantId: nextTenantId,
+                  filingNumber: nextFiling,
+                  hearingNumber: nextHearingNumber,
+                  applicationNumber: "",
+                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                  ...(nextCourtId && { courtId: nextCourtId }),
+                },
+                pagination: { limit: 1, offset: 0 },
+              },
+              { tenantId: nextTenantId }
             );
+
+            const orderDraft = response?.list?.[0];
+            if (orderDraft?.orderNumber) {
+              history.push(
+                `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
+              );
+              return;
+            }
+          } catch (e) {
+            // continue to next item on error
           }
         }
+
+        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+      } catch (e) {
+        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
       }
     },
-    [currentInProgressHearing, todayScheduledHearing, data, history, userType]
+    [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]
   );
 
   // TODO: temporary Form Config, need to be replaced with the actual config
@@ -1364,6 +1721,27 @@ const GenerateOrdersV2 = () => {
                     },
                   };
                 }
+                const refApplicationId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
+                // if (field.key === "refApplicationId") {
+                //   return {
+                //     ...field,
+                //     populators: {
+                //       ...field.populators,
+                //       hideInForm: !refApplicationId,
+                //     },
+                //   };
+                // }
+                if (field.key === "bailType" && refApplicationId) {
+                  return {
+                    ...field,
+                    disable: false,
+                    populators: {
+                      ...field.populators,
+                      defaultValue: { code: "SURETY", name: "SURETY" },
+                    },
+                  };
+                }
+
                 return field;
               }),
             };
@@ -1642,6 +2020,20 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
+      if (currentOrderType === "ACCEPT_BAIL") {
+        const alreadySet =
+          updatedFormdata?.bailType &&
+          (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
+        if (!alreadySet) {
+          const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
+          updatedFormdata.bailType = {
+            type: defaultAcceptBailType,
+            code: defaultAcceptBailType,
+            name: defaultAcceptBailType,
+          };
+          setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
+        }
+      }
 
       if (currentOrderType === "SET_BAIL_TERMS") {
         updatedFormdata.partyId = newApplicationDetails?.createdBy;
@@ -1777,7 +2169,6 @@ const GenerateOrdersV2 = () => {
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
-        const selectedChannels = newCurrentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels;
 
         if (partyUuid) {
           updatedFormdata.noticeOrder = {
@@ -1799,8 +2190,7 @@ const GenerateOrdersV2 = () => {
                   phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
                   email: item?.data?.emails?.emailId,
                 },
-              }))?.[0],
-            selectedChannels: selectedChannels,
+              })),
           };
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
@@ -1957,6 +2347,148 @@ const GenerateOrdersV2 = () => {
   const handleEditConfirmationOrder = () => {
     setAddOrderModal(true);
   };
+
+  const handleBailBondRequiredClick = async (e) => {
+    try {
+      if (isBailBondTaskExists) return;
+      const checked = e?.target?.checked;
+      if (checked) {
+        await createBailBondTask();
+      }
+    } catch (_) {}
+  };
+
+  const createBailBondTask = async () => {
+    try {
+      setBailBondLoading(true);
+      await createBailBondTaskForOrder(currentOrder);
+      setIsBailBondTaskExists(true);
+      setShowBailBondModal(false);
+      // Defensive: if session hint not set inside API create, set a minimal marker now
+      try {
+        const key = `RAISE_BB_REF_${filingNumber}`;
+        if (!sessionStorage.getItem(key)) {
+          const fallback = {
+            referenceId: getRaiseBailBondReferenceId(
+              currentOrder?.additionalDetails?.formdata?.accusedKey ||
+                "" ||
+                (caseDetails?.litigants || [])?.[0]?.individualId ||
+                (caseDetails?.litigants || [])?.[0]?.additionalDetails?.uuid ||
+                ""
+            ),
+            name: "RAISE BAIL BOND",
+            createdTime: Date.now(),
+          };
+          sessionStorage.setItem(key, JSON.stringify(fallback));
+        }
+      } catch (_) {}
+    } catch (e) {
+      console.error(e);
+      setShowErrorToast({ label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"), error: true });
+    } finally {
+      setBailBondLoading(false);
+      setShowBailBondModal(false);
+    }
+  };
+
+  const handleAddForm = () => {
+    const updatedCompositeItems = (obj) => {
+      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
+      let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+      const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew.length === 0 && obj?.orderType) {
+        compositeItemsNew = [
+          {
+            orderType: obj?.orderType,
+            ...(obj?.orderNumber && {
+              orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+            }),
+            isEnabled: true,
+            displayindex: 0,
+          },
+        ];
+        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
+      }
+
+      return {
+        compositeItems: [
+          ...compositeItemsNew,
+          {
+            orderType: null,
+            isEnabled: true,
+            displayindex: totalEnabled === 0 ? 1 : totalEnabled,
+          },
+        ],
+        orderTitle: orderTitleNew,
+      };
+    };
+    const updatedItems = updatedCompositeItems(currentOrder);
+    setCurrentOrder({
+      ...currentOrder,
+      orderCategory: "COMPOSITE",
+      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
+      compositeItems: updatedItems.compositeItems,
+    });
+
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew?.length === 0) {
+        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
+      }
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
+      }
+    }
+  };
+
+  const isBailBondCheckboxEnabled = useMemo(() => {
+    try {
+      const errorsList = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling);
+      if (errorsList?.some((obj) => obj?.errors?.length > 0)) return false;
+
+      const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
+
+      if (currentInProgressHearing || currentOrder?.hearingNumber) {
+        mandatoryOrderFields?.push({ presentAttendees: currentOrder?.attendance?.Present }, { absentAttendees: currentOrder?.attendance?.Absent });
+        if (!skipScheduling) {
+          mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
+        }
+      }
+
+      const allErrors = {};
+      mandatoryOrderFields?.forEach((field) => {
+        const [key, value] = Object?.entries(field)[0];
+
+        if (key === "absentAttendees" || key === "presentAttendees") {
+          const requiredAttendees = ["COMPLAINANT", "ACCUSED"];
+          const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
+          const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
+          if (!requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
+            allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
+          }
+        } else if (key === "itemText") {
+          const isEmptyHtml = !value || (typeof value === "string" && value.replace(/<[^>]*>/g, "").trim() === "");
+          if (isEmptyHtml) {
+            allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+          }
+        } else if (!value || (Array?.isArray(value) && value?.length === 0)) {
+          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+        }
+      });
+
+      return Object.keys(allErrors).length === 0;
+    } catch (_) {
+      return false;
+    }
+  }, [currentOrder, currentInProgressHearing, skipScheduling, getModifiedFormConfig]);
 
   const createTaskPayload = async (orderType, orderDetails) => {
     let payload = {};
@@ -2375,7 +2907,7 @@ const GenerateOrdersV2 = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
+            if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -2394,7 +2926,7 @@ const GenerateOrdersV2 = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -2510,6 +3042,15 @@ const GenerateOrdersV2 = () => {
             setPrevOrder(response?.order);
             sessionStorage.removeItem("businessOfTheDay");
             setShowSuccessModal(true);
+            try {
+              const publishedOrder = response?.order;
+              const shouldCreateBailBondTask = isAcceptBailOrderSelected && isBailBondFlagSelected;
+              if (shouldCreateBailBondTask && publishedOrder?.orderNumber) {
+                createBailBondTaskForOrder(publishedOrder);
+              }
+            } catch (e) {
+              console.error("Failed to create bail bond task post-publish", e);
+            }
           }
           if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
             setPrevOrder(response?.order);
@@ -2945,131 +3486,8 @@ const GenerateOrdersV2 = () => {
     }
     setCompositeOrderIndex(index !== null ? index : 0);
     setOrderType(orderType);
-    setAddOrderModal(true);
-  };
-
-  const createBailBondTask = async () => {
-    setBailBondLoading(true);
-    try {
-      const bailBondPendingTask = await HomeService.getPendingTaskService(
-        {
-          SearchCriteria: {
-            tenantId,
-            moduleName: "Pending Tasks Service",
-            moduleSearchCriteria: {
-              isCompleted: false,
-              assignedRole: [...roles],
-              filingNumber: filingNumber,
-              courtId: courtId,
-              entityType: "bail bond",
-            },
-            limit: 10,
-            offset: 0,
-          },
-        },
-        { tenantId }
-      );
-
-      if (bailBondPendingTask?.data?.length > 0) {
-        setIsBailBondTaskExists(true);
-        setShowErrorToast({
-          label: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
-          error: true,
-        });
-        return;
-      } else {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: t("CS_COMMON_BAIL_BOND"),
-            entityType: "bail bond",
-            referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
-            status: "PENDING_SIGN",
-            assignedTo: [],
-            assignedRole: ["PENDING_TASK_CONFIRM_BOND_SUBMISSION"],
-            actionCategory: "Bail Bond",
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: false,
-            expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
-            stateSla: todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-        setTimeout(() => {
-          setBailBondLoading(false);
-          setIsBailBondTaskExists(true);
-          setShowBailBondModal(false);
-        }, 1000);
-      }
-    } catch (e) {
-      console.error(e);
-      setBailBondLoading(false);
-
-      setShowErrorToast({
-        label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
-        error: true,
-      });
-    }
-  };
-
-  const handleAddForm = () => {
-    const updatedCompositeItems = (obj) => {
-      let orderTitleNew = obj?.orderTitle || t("DEFAULT_ORDER_TITLE");
-      let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
-      const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
-
-      if (compositeItemsNew.length === 0 && obj?.orderType) {
-        compositeItemsNew = [
-          {
-            orderType: obj?.orderType,
-            ...(obj?.orderNumber && {
-              orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
-            }),
-            isEnabled: true,
-            displayindex: 0,
-          },
-        ];
-        orderTitleNew = obj?.orderType ? `${t(obj?.orderType)} and Other Items` : t("DEFAULT_ORDER_TITLE");
-      }
-
-      return {
-        compositeItems: [
-          ...compositeItemsNew,
-          {
-            orderType: null,
-            isEnabled: true,
-            displayindex: totalEnabled === 0 ? 1 : totalEnabled,
-          },
-        ],
-        orderTitle: orderTitleNew,
-      };
-    };
-    const updatedItems = updatedCompositeItems(currentOrder);
-    setCurrentOrder({
-      ...currentOrder,
-      orderCategory: "COMPOSITE",
-      orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
-      compositeItems: updatedItems.compositeItems,
-    });
-
-    if (
-      !currentOrder?.orderNumber ||
-      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
-    ) {
-      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
-      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
-
-      if (compositeItemsNew?.length === 0) {
-        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
-      }
-
-      if (totalEnabled === 1) {
-        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
-        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
-      }
+    if (!showAddOrderModal) {
+      setAddOrderModal(true);
     }
   };
 
@@ -3487,7 +3905,7 @@ const GenerateOrdersV2 = () => {
 
   const handleNextHearingClick = async () => {
     await handleSaveDraft(currentOrder);
-    nextHearing(false);
+    nextHearing();
   };
 
   const handleGoBack = async () => {
@@ -3504,7 +3922,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {(isJudge || isTypist) && !hideNextHearingButton && (
+          {(isJudge || isTypist) && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}
@@ -3764,14 +4182,12 @@ const GenerateOrdersV2 = () => {
                     id="bail-bond-required"
                     type="checkbox"
                     className="custom-checkbox"
-                    onChange={() => {
-                      setShowBailBondModal(true);
-                    }}
+                    onChange={handleBailBondRequiredClick}
                     checked={isBailBondTaskExists}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
                     disabled={isBailBondTaskExists}
                   />
-                  <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
+                  <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                 </div>
               </React.Fragment>
             )}
@@ -3951,7 +4367,11 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
           }}
-          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)}` : `${t("ADD")} ${t(orderType?.code)}`}
+          headerLabel={
+            showEditOrderModal
+              ? `${t("EDIT")} ${orderType?.code === "ACCEPT_BAIL" ? "BAIL" : t(orderType?.code)}`
+              : `${t("ADD")} ${orderType?.code === "ACCEPT_BAIL" ? "BAIL" : t(orderType?.code)}`
+          }
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}
@@ -3965,10 +4385,33 @@ const GenerateOrdersV2 = () => {
           setValueRef={setValueRef}
           addOrderTypeLoader={addOrderTypeLoader}
           setWarrantSubtypeCode={setWarrantSubtypeCode}
+          onBailBondRequiredChecked={() => setShowBailBondModal(true)}
+          bailBondTaskExists={isBailBondTaskExists}
+          onOrderFormDataChange={(formData, meta) => {
+            if ((orderType?.code || meta?.orderType?.code) === "ACCEPT_BAIL") {
+              setLatestAcceptBailFormData(formData || {});
+              try {
+                if (currentOrder?.orderCategory === "INTERMEDIATE") {
+                  setCurrentOrder((prev) => ({
+                    ...prev,
+                    additionalDetails: {
+                      ...(prev?.additionalDetails || {}),
+                      formdata: {
+                        ...((prev?.additionalDetails || {}).formdata || {}),
+                        ...(formData || {}),
+                      },
+                    },
+                  }));
+                }
+              } catch (_) {}
+            }
+          }}
+          persistedDefaultValues={latestAcceptBailFormData}
         />
       )}
-      {showBailBondModal && !isBailBondTaskExists && (
+      {showBailBondModal && (
         <Modal
+          style={{ zIndex: 9999 }}
           headerBarEnd={<CloseBtn onClick={() => !bailBondLoading && setShowBailBondModal(false)} />}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={createBailBondTask}
@@ -3999,7 +4442,7 @@ const GenerateOrdersV2 = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
-          saveSignLater={canSaveSignLater}
+          saveSignLater={canSaveSignLater && !currentDiaryEntry}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
