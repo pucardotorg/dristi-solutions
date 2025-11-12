@@ -19,6 +19,13 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
+function addParamToUrl(url, key, value) {
+  const [baseUrl, queryString] = url.split("?");
+  const params = new URLSearchParams(queryString);
+  params.set(key, value);
+  return `${baseUrl}?${params.toString()}`;
+}
+
 function PendingTaskAccordion({
   pendingTasks,
   t,
@@ -158,6 +165,11 @@ function PendingTaskAccordion({
                     onClick={() => {
                       if (modalView) {
                         setShowAllPendingTasksModal(false);
+                      }
+                      if (item?.bailBondId && item?.status === "PENDING_RAISE_BAIL_BOND") {
+                        const updatedUrl = addParamToUrl(item?.redirectUrl, "bailBondId", item?.bailBondId);
+                        redirectPendingTaskUrl(updatedUrl, item?.isCustomFunction, item?.params);
+                        return;
                       }
                       if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                         setShowOfflineStampEnvelopeModal(true);
@@ -360,6 +372,11 @@ function PendingTaskAccordion({
                   key={`${item?.filingNumber}-${item?.referenceId}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
+                    if (item?.bailBondId && item?.status === "PENDING_RAISE_BAIL_BOND") {
+                      const updatedUrl = addParamToUrl(item?.redirectUrl, "bailBondId", item?.bailBondId);
+                      redirectPendingTaskUrl(updatedUrl, item?.isCustomFunction, item?.params);
+                      return;
+                    }
                     if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                       setShowOfflineStampEnvelopeModal(true);
                       return;

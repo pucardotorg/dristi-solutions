@@ -2339,51 +2339,14 @@ const GenerateOrdersV2 = () => {
     setAddOrderModal(true);
   };
 
-  const handleBailBondRequiredClick = () => {
-    if (isBailBondTaskExists) return;
-    const errorsList = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling);
-
-    if (errorsList?.some((obj) => obj?.errors?.length > 0)) {
-      setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errorsList });
-      return;
-    }
-
-    const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
-
-    if (currentInProgressHearing || currentOrder?.hearingNumber) {
-      mandatoryOrderFields?.push({ presentAttendees: currentOrder?.attendance?.Present }, { absentAttendees: currentOrder?.attendance?.Absent });
-      if (!skipScheduling) {
-        mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
+  const handleBailBondRequiredClick = async (e) => {
+    try {
+      if (isBailBondTaskExists) return;
+      const checked = e?.target?.checked;
+      if (checked) {
+        await createBailBondTask();
       }
-    }
-
-    const allErrors = {};
-    mandatoryOrderFields?.forEach((field) => {
-      const [key, value] = Object?.entries(field)[0];
-
-      if (key === "absentAttendees" || key === "presentAttendees") {
-        const requiredAttendees = ["COMPLAINANT", "ACCUSED"];
-        const allAttendees = [...(currentOrder?.attendance?.Present || []), ...(currentOrder?.attendance?.Absent || [])];
-        const requiredAttendeesComplete = requiredAttendees.every((req) => allAttendees.includes(req));
-        if (!requiredAttendeesComplete && (!value || !requiredAttendees.includes(value))) {
-          allErrors[ErrorAttendeesKey] = { msg: "ATTENDEE_ERROR_MESSAGE" };
-        }
-      } else if (key === "itemText") {
-        const isEmptyHtml = !value || (typeof value === "string" && value.replace(/<[^>]*>/g, "").trim() === "");
-        if (isEmptyHtml) {
-          allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
-        }
-      } else if (!value || (Array?.isArray(value) && value?.length === 0)) {
-        allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
-      }
-    });
-
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
-      return;
-    }
-
-    setShowBailBondModal(true);
+    } catch (_) {}
   };
 
   const createBailBondTask = async () => {
@@ -4395,7 +4358,11 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
           }}
-          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)}` : `${t("ADD")} ${t(orderType?.code)}`}
+          headerLabel={
+            showEditOrderModal
+              ? `${t("EDIT")} ${orderType?.code === "ACCEPT_BAIL" ? "BAIL" : t(orderType?.code)}`
+              : `${t("ADD")} ${orderType?.code === "ACCEPT_BAIL" ? "BAIL" : t(orderType?.code)}`
+          }
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}
