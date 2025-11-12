@@ -62,7 +62,6 @@ public class HearingService {
 
         // Create new hearing detail
         HearingDetails newHearingDetail = HearingDetails.builder()
-                .id(nextId)
                 .cino(cino)
                 .srNo(nextSrNo)
                 .desgName(designationMaster.getDesgName())

@@ -293,9 +293,7 @@ public class CaseEnrichment {
                 .asText(null);
 
         if (uniqueId == null || uniqueId.isEmpty()) {
-            uniqueId = dataNode.path("data")
-                    .path("uniqueId")
-                    .asText(null);
+            uniqueId = dataNode.path("uniqueId").asText(null);
         }
 
         Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
