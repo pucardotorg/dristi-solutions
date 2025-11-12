@@ -823,6 +823,10 @@ const GenerateBailBondV2 = () => {
       if (validateSurities(formdata?.sureties)) {
         return;
       }
+      if (formdata?.sureties?.length < pendingTaskAdditionalDetails?.noOfSureties) {
+        setShowErrorToast({ label: t("NUMBER_OF_SURETIES_IS_LESS_THAN_EXPECTED"), error: true });
+        return;
+      }
 
       const inputs = bailBondConfig?.[1]?.body?.[0]?.populators?.inputs?.find((input) => input?.key === "address")?.populators?.inputs;
       for (let i = 0; i < formdata?.sureties?.length; i++) {
@@ -934,7 +938,7 @@ const GenerateBailBondV2 = () => {
   const handleDownload = () => {
     downloadPdf(tenantId, bailBondFileStoreId);
   };
-
+  console.log(formdata, "formData");
   const handleESign = async () => {
     // TODO: call Api then close this modal and show next modal
     try {
