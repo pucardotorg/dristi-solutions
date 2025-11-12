@@ -339,6 +339,6 @@ public class CaseOverallStatusUtil {
     private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
         publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject, orderCategory), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
     }
 }
