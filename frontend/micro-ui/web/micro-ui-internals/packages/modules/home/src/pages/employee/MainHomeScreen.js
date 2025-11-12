@@ -20,10 +20,10 @@ import { scrutinyPendingTaskConfig } from "../../configs/ScrutinyPendingTaskConf
 import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/src/pages/employee/ReviewSummonsNoticeAndWarrant";
 import HomeScheduleHearing from "./HomeScheduleHearing";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
-import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { createOrUpdateTask, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -36,6 +36,13 @@ const sectionsParentStyle = {
 const formDataKeyMap = {
   NOTICE: "noticeOrder",
   SUMMONS: "SummonsOrder",
+};
+
+const displayPartyType = {
+  complainant: "COMPLAINANT_ATTENDEE",
+  respondent: "RESPONDENT_ATTENDEE",
+  witness: "WITNESS_ATTENDEE",
+  advocate: "ADVOCATE_ATTENDEE",
 };
 
 const MainHomeScreen = () => {
@@ -232,7 +239,7 @@ const MainHomeScreen = () => {
   };
 
   const fetchPendingTaskCounts = async () => {
-    const { fromDate, toDate } = getTodayRange();
+    const { toDate } = getTodayRange();
     try {
       setLoader(true);
       const payload = {
@@ -585,7 +592,7 @@ const MainHomeScreen = () => {
         setIsProcessLoader(false);
       }
     },
-    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, suffix, history, t]
+    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, t]
   );
 
   const handleCourierServiceChange = useCallback((value, type, index) => {
@@ -697,6 +704,7 @@ const MainHomeScreen = () => {
           firstName: item?.data?.firstName || "",
           middleName: item?.data?.middleName || "",
           lastName: item?.data?.lastName || "",
+          witnessDesignation: item?.data?.witnessDesignation || "",
           noticeCourierService: item?.noticeCourierService || [],
           summonsCourierService: item?.summonsCourierService || [],
           addressDetails: item?.data?.addressDetails || [],
@@ -706,7 +714,15 @@ const MainHomeScreen = () => {
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
         };
-        const fullName = getFullName(" ", courierData?.firstName, courierData?.middleName, courierData?.lastName);
+
+        const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
+        const fullName = getFormattedName(
+          courierData?.firstName,
+          courierData?.middleName,
+          courierData?.lastName,
+          courierData?.witnessDesignation,
+          partyTypeLabel
+        );
         const orderType = courierOrderDetails?.orderType;
 
         return {

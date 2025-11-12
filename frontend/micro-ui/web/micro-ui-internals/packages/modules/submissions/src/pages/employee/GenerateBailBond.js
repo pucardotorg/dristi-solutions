@@ -16,6 +16,8 @@ import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionW
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { HomeService, Urls as HomeUrls } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { convertTaskResponseToPayload } from "../../utils";
+import { Urls } from "../../hooks/services/Urls";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -123,6 +125,9 @@ const GenerateBailBond = () => {
   const latestRaiseTaskRef = useRef(null);
   const persistedRaiseRefKey = useMemo(() => `RAISE_BB_REF_${filingNumber}`, [filingNumber]);
   const hasInitFromDefaultRef = useRef(false);
+  const [pendingTaskData, setPendingTaskData] = useState([]);
+  const bbPersistKey = useMemo(() => `BB_FORM_${filingNumber}`, [filingNumber]);
+  const bbPersistLockedKey = useMemo(() => `BB_FORM_LOCKED_${filingNumber}`, [filingNumber]);
 
   const defaultFormValue = useMemo(() => {
     try {
@@ -132,6 +137,50 @@ const GenerateBailBond = () => {
     } catch (e) {}
     return undefined;
   }, [defaultFormValueData, t]);
+
+  const hydrateFromMapped = useCallback(
+    (mapped, options) => {
+      try {
+        if (!mapped || typeof mapped !== "object" || Object.keys(mapped).length === 0) return;
+        const opts = options || {};
+        const doMerge = !!opts.merge;
+        const doReset = !!opts.reset;
+        if (doMerge) {
+          setFormdata((prev) => ({ ...(prev || {}), ...mapped }));
+        } else {
+          setFormdata(mapped);
+        }
+        try {
+          if (typeof setFormDataValue?.current === "function") {
+            if (mapped?.selectComplainant) setFormDataValue.current("selectComplainant", mapped.selectComplainant);
+            if (mapped?.bailType) setFormDataValue.current("bailType", mapped.bailType);
+            if (mapped?.bailAmount != null) setFormDataValue.current("bailAmount", mapped.bailAmount);
+            if (mapped?.noOfSureties != null) setFormDataValue.current("noOfSureties", mapped.noOfSureties);
+            if (Array.isArray(mapped?.sureties)) setFormDataValue.current("sureties", mapped.sureties);
+            if (mapped?.litigantFatherName != null) setFormDataValue.current("litigantFatherName", mapped.litigantFatherName);
+          }
+        } catch (e) {}
+        if (doReset && typeof resetFormData?.current === "function") {
+          try {
+            resetFormData.current(mapped);
+            if (typeof clearFormDataErrors?.current === "function") clearFormDataErrors.current();
+          } catch (e) {}
+        }
+        try {
+          if (mapped?.selectComplainant && (mapped.selectComplainant.uuid || mapped.selectComplainant.name)) {
+            targetPetitionerRef.current = mapped.selectComplainant.uuid || mapped.selectComplainant.name;
+          }
+        } catch (_) {}
+        try {
+          if (mapped?.bailType?.code && String(mapped.bailType.code).toUpperCase() === "SURETY") {
+            const need = Number(mapped?.noOfSureties) > 0 ? Number(mapped.noOfSureties) : Array.isArray(mapped?.sureties) ? mapped.sureties.length : null;
+            if (need) setRequiredSuretyCount(need);
+          }
+        } catch (_) {}
+      } catch (_) {}
+    },
+    [setFormdata, setRequiredSuretyCount]
+  );
 
   useEffect(() => {
     try {
@@ -144,6 +193,41 @@ const GenerateBailBond = () => {
       }
     } catch (_) {}
   }, [persistedRaiseRefKey]);
+
+  useEffect(() => {
+    try {
+      const snapRaw = sessionStorage.getItem(bbPersistKey);
+      if (snapRaw) {
+        const snap = JSON.parse(snapRaw);
+        if (snap && typeof snap === "object") {
+          setDefaultFormValueData((prev) => ({ ...(prev || {}), ...snap }));
+          hydrateFromMapped(snap, { merge: true, reset: true });
+          const locked = sessionStorage.getItem(bbPersistLockedKey);
+          if (locked) setLockPrefilledFields(true);
+        }
+      }
+    } catch (_) {}
+  }, [bbPersistKey, bbPersistLockedKey]);
+
+  useEffect(() => {
+    if (!formReady || typeof setFormDataValue?.current !== "function") return;
+    try {
+      const snapRaw = sessionStorage.getItem(bbPersistKey);
+      if (!snapRaw) return;
+      const snap = JSON.parse(snapRaw);
+      if (!snap || typeof snap !== "object") return;
+      if (snap?.bailType?.code && snap?.bailType?.showSurety == null) {
+        snap.bailType.showSurety = String(snap.bailType.code).toUpperCase() === "SURETY";
+      }
+      if (Array.isArray(snap?.sureties) && Number(snap?.noOfSureties) > 0) {
+        const need = Number(snap.noOfSureties);
+        const curr = [...snap.sureties];
+        while (curr.length < need) curr.push({});
+        snap.sureties = curr;
+      }
+      hydrateFromMapped(snap, { merge: true, reset: false });
+    } catch (_) {}
+  }, [formReady, bbPersistKey]);
 
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
@@ -576,9 +660,10 @@ const GenerateBailBond = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const bailBondDetails = useMemo(() => {
-    if (Object.keys(defaultFormValueData).length > 0) {
-      return defaultFormValueData;
-    }
+    // TODO: check if we need to prioritize defaultFormValueData over bailBond else remove commented code
+    // if (Object.keys(defaultFormValueData).length > 0) {
+    //   return defaultFormValueData;
+    // }
     return bailBond?.bails?.[0];
   }, [defaultFormValueData, bailBond]);
 
@@ -802,6 +887,7 @@ const GenerateBailBond = () => {
         );
 
         const tasks = Array.isArray(pendingTaskRes?.data) ? pendingTaskRes.data : [];
+        setPendingTaskData(tasks);
         const raiseTasks = tasks.filter((t) => {
           const status = t?.fields?.find((f) => f.key === "status")?.value;
           const name = t?.fields?.find((f) => f.key === "name")?.value || "";
@@ -1006,8 +1092,8 @@ const GenerateBailBond = () => {
   ]);
   const formInstanceKey = useMemo(() => {
     const complCount = Array.isArray(complainantsList) ? complainantsList.length : 0;
-    return [String(filingNumber || "new"), complCount, formInstanceNonce].join("-");
-  }, [filingNumber, complainantsList, formInstanceNonce]);
+    return [String(filingNumber || "new"), String(bailBondId || ""), complCount, formInstanceNonce].join("-");
+  }, [filingNumber, bailBondId, complainantsList, formInstanceNonce]);
   useEffect(() => {
     const sel = defaultFormValue?.selectComplainant || formdata?.selectComplainant;
     if (sel && typeof setFormDataValue?.current === "function") {
@@ -1070,7 +1156,10 @@ const GenerateBailBond = () => {
     // } catch (e) {}
     if (formData?.bailType?.code === "SURETY") {
       const sureties = Array.isArray(formData?.sureties) ? formData.sureties : [];
-      if (!Array.isArray(formData?.sureties) || (Array.isArray(formData?.sureties) && formData.sureties.length === 0)) {
+      const hasPrefilledSureties =
+        (Array.isArray(defaultFormValueData?.sureties) && defaultFormValueData.sureties.length > 0) ||
+        (Array.isArray(formdata?.sureties) && formdata.sureties.length > 0);
+      if (!hasPrefilledSureties && (!Array.isArray(formData?.sureties) || (Array.isArray(formData?.sureties) && formData.sureties.length === 0))) {
         try {
           setValue("sureties", [{}], { shouldValidate: false, shouldDirty: true });
           if (!(typeof formData?.noOfSureties === "number" && formData.noOfSureties > 0)) {
@@ -1116,8 +1205,11 @@ const GenerateBailBond = () => {
     }
     setIsSubmitDisabled(Object.keys(formState?.errors || {}).length > 0);
 
-    if (!isEqual(formdata, formData)) {
-      setFormdata(formData);
+    // Do not overwrite prefilled application data before defaults are initialized
+    if (hasInitFromDefaultRef.current) {
+      if (!isEqual(formdata, formData)) {
+        setFormdata(formData);
+      }
     }
     try {
       const prevUuid = formdata?.selectComplainant?.uuid;
@@ -1638,6 +1730,51 @@ const GenerateBailBond = () => {
     }
 
     try {
+      try {
+        const sanitizeDocs = (docs) =>
+          Array.isArray(docs)
+            ? docs
+                .map((d) =>
+                  d && typeof d === "object"
+                    ? {
+                        fileStore: d.fileStore,
+                        documentName: d.documentName,
+                        documentType: d.documentType,
+                        tenantId: d.tenantId,
+                      }
+                    : null
+                )
+                .filter(Boolean)
+            : [];
+        const sanitizeSurety = (s) =>
+          s && typeof s === "object"
+            ? {
+                id: s.id,
+                name: s.name,
+                fatherName: s.fatherName,
+                mobileNumber: s.mobileNumber,
+                address: s.address,
+                email: s.email,
+                identityProof: { document: sanitizeDocs(s?.identityProof?.document || s?.identityProof?.uploadedDocs) },
+                proofOfSolvency: { document: sanitizeDocs(s?.proofOfSolvency?.document || s?.proofOfSolvency?.uploadedDocs) },
+                otherDocuments: { document: sanitizeDocs(s?.otherDocuments?.document || s?.otherDocuments?.uploadedDocs) },
+              }
+            : {};
+        const sanitized = {
+          selectComplainant: formdata?.selectComplainant
+            ? { uuid: formdata.selectComplainant.uuid, name: formdata.selectComplainant.name, code: formdata.selectComplainant.code }
+            : undefined,
+          bailType: formdata?.bailType?.code
+            ? { code: formdata.bailType.code, name: formdata.bailType.name, showSurety: String(formdata.bailType.code).toUpperCase() === "SURETY" }
+            : undefined,
+          bailAmount: formdata?.bailAmount,
+          litigantFatherName: formdata?.litigantFatherName,
+          noOfSureties: formdata?.noOfSureties,
+          sureties: Array.isArray(formdata?.sureties) ? formdata.sureties.map(sanitizeSurety) : undefined,
+        };
+        sessionStorage.setItem(bbPersistKey, JSON.stringify(sanitized));
+        sessionStorage.setItem(bbPersistLockedKey, "1");
+      } catch (_) {}
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata);
@@ -1646,10 +1783,21 @@ const GenerateBailBond = () => {
         setLoader(false);
         return;
       }
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTaskData);
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            additionalDetails: {
+              ...getPendingTaskPayload?.additionalDetails,
+              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+            },
+            tenantId,
+          },
+        });
         try {
           if (latestRaiseTaskRef.current) {
             sessionStorage.setItem(persistedRaiseRefKey, JSON.stringify(latestRaiseTaskRef.current));
@@ -1663,6 +1811,7 @@ const GenerateBailBond = () => {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         setShowBailBondReview(true);
+        setLockPrefilledFields(true);
       }
     } catch (error) {
       console.error("Error while creating bail bond:", error);
@@ -1682,10 +1831,24 @@ const GenerateBailBond = () => {
 
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTaskData);
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            additionalDetails: {
+              ...getPendingTaskPayload?.additionalDetails,
+              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+            },
+            tenantId,
+          },
+        });
+        history.replace(
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
+        );
       } else {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
@@ -1927,7 +2090,7 @@ const GenerateBailBond = () => {
   const clearAutoPopulated = () => {
     try {
       hasClearedRef.current = true;
-      const shouldPreserveComplainant = fromPendingTask || (Array.isArray(complainantsList) && complainantsList.length === 1);
+      const shouldPreserveComplainant = Array.isArray(complainantsList) && complainantsList.length === 1;
       const preservedComplainant = shouldPreserveComplainant ? formdata?.selectComplainant || {} : {};
       setFormDataValue.current && setFormDataValue.current("bailAmount", undefined);
       setFormDataValue.current && setFormDataValue.current("bailType", {});
@@ -1981,6 +2144,10 @@ const GenerateBailBond = () => {
       setLockPrefilledFields(false);
       setRequiredSuretyCount(null);
       setFormInstanceNonce((n) => n + 1);
+      try {
+        sessionStorage.removeItem(bbPersistKey);
+        sessionStorage.removeItem(bbPersistLockedKey);
+      } catch (_) {}
 
       const errorKeys = Object.keys(setFormState.current?.errors || {});
       [
@@ -2041,10 +2208,81 @@ const GenerateBailBond = () => {
 
   useEffect(() => {
     try {
+      if (hasClearedRef.current) return;
       const mapped = convertToFormData(t, bailBondDetails || {});
       const hasExisting = formdata && Object.keys(formdata || {}).length > 0;
-      if (!hasExisting && Object.keys(mapped || {}).length > 0) {
+      const hasMapped = Object.keys(mapped || {}).length > 0;
+      if (!hasMapped) return;
+      const needsSureties =
+        Array.isArray(mapped?.sureties) && mapped.sureties.length > 0 && (!Array.isArray(formdata?.sureties) || formdata.sureties.length === 0);
+      const needsBailType = mapped?.bailType?.code && !formdata?.bailType?.code;
+      const needsNoOfSureties =
+        mapped?.noOfSureties != null && mapped?.noOfSureties !== "" && (formdata?.noOfSureties == null || formdata?.noOfSureties === "");
+      const needsComplainant = mapped?.selectComplainant && !(formdata?.selectComplainant?.uuid || formdata?.selectComplainant?.name);
+      const needsFather = mapped?.litigantFatherName && !formdata?.litigantFatherName;
+
+      if (!hasExisting) {
         setFormdata(mapped);
+        try {
+          if (typeof setFormDataValue?.current === "function") {
+            if (mapped?.selectComplainant) setFormDataValue.current("selectComplainant", mapped.selectComplainant);
+            if (mapped?.bailType) setFormDataValue.current("bailType", mapped.bailType);
+            if (mapped?.bailAmount != null) setFormDataValue.current("bailAmount", mapped.bailAmount);
+            if (mapped?.noOfSureties != null) setFormDataValue.current("noOfSureties", mapped.noOfSureties);
+            if (Array.isArray(mapped?.sureties)) setFormDataValue.current("sureties", mapped.sureties);
+            if (mapped?.litigantFatherName != null) setFormDataValue.current("litigantFatherName", mapped.litigantFatherName);
+          }
+        } catch (e) {}
+        if (typeof resetFormData?.current === "function") {
+          try {
+            resetFormData.current(mapped);
+            if (typeof clearFormDataErrors?.current === "function") clearFormDataErrors.current();
+          } catch (e) {}
+        }
+        try {
+          if (mapped?.selectComplainant && (mapped.selectComplainant.uuid || mapped.selectComplainant.name)) {
+            targetPetitionerRef.current = mapped.selectComplainant.uuid || mapped.selectComplainant.name;
+          }
+        } catch (_) {}
+        try {
+          if (mapped?.bailType?.code && String(mapped.bailType.code).toUpperCase() === "SURETY") {
+            const need =
+              Number(mapped?.noOfSureties) > 0 ? Number(mapped.noOfSureties) : Array.isArray(mapped?.sureties) ? mapped.sureties.length : null;
+            if (need) setRequiredSuretyCount(need);
+          }
+        } catch (_) {}
+        hasInitFromDefaultRef.current = true;
+        setLockPrefilledFields(true);
+      } else if (needsSureties || needsBailType || needsNoOfSureties || needsComplainant || needsFather) {
+        const patch = {
+          ...(needsComplainant ? { selectComplainant: mapped.selectComplainant } : {}),
+          ...(needsBailType ? { bailType: mapped.bailType } : {}),
+          ...(needsNoOfSureties ? { noOfSureties: mapped.noOfSureties } : {}),
+          ...(needsSureties ? { sureties: mapped.sureties } : {}),
+          ...(needsFather ? { litigantFatherName: mapped.litigantFatherName } : {}),
+        };
+        setFormdata((p) => ({ ...(p || {}), ...patch }));
+        try {
+          if (typeof setFormDataValue?.current === "function") {
+            if (patch?.selectComplainant) setFormDataValue.current("selectComplainant", patch.selectComplainant);
+            if (patch?.bailType) setFormDataValue.current("bailType", patch.bailType);
+            if (patch?.noOfSureties != null) setFormDataValue.current("noOfSureties", patch.noOfSureties);
+            if (Array.isArray(patch?.sureties)) setFormDataValue.current("sureties", patch.sureties);
+            if (patch?.litigantFatherName != null) setFormDataValue.current("litigantFatherName", patch.litigantFatherName);
+          }
+        } catch (e) {}
+        try {
+          if (
+            (patch?.bailType?.code || formdata?.bailType?.code) &&
+            String(patch?.bailType?.code || formdata?.bailType?.code).toUpperCase() === "SURETY"
+          ) {
+            const noVal = patch && patch.noOfSureties != null ? patch.noOfSureties : formdata && formdata.noOfSureties;
+            const suretiesArr = Array.isArray(patch?.sureties) ? patch.sureties : Array.isArray(formdata?.sureties) ? formdata.sureties : [];
+            const need = Number(noVal) || 0 || suretiesArr.length;
+            if (need) setRequiredSuretyCount(need);
+          }
+        } catch (_) {}
+        setLockPrefilledFields(true);
       }
     } catch (e) {}
   }, [bailBondDetails, t, formdata]);
@@ -2318,6 +2556,11 @@ const GenerateBailBond = () => {
       );
     }
   }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber, history, userType]);
+
+  // if pass directly this in formComposer will work normally
+  // const getDefaultFormValue = useMemo(() => {
+  //   return convertToFormData(t, bailBondDetails || {});
+  // }, [bailBondDetails, t]);
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
