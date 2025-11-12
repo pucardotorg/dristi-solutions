@@ -145,7 +145,7 @@ public class CaseService {
             if(advocateIds.isEmpty()) {
                 log.info("No advocates present for the party: {}", party.getPartyId());
             }
-            int srNo = existingAdvocates.get(existingAdvocates.size()-1).getSrNo()+1;
+            int srNo = !existingAdvocates.isEmpty() ? existingAdvocates.get(existingAdvocates.size()-1).getSrNo()+1 : 1;
             for(String advocateId: advocateIds) {
                 AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
                 if (advocateDetails.getAdvocateCode().equals(party.getAdvCd())) continue;
@@ -214,7 +214,7 @@ public class CaseService {
                 .regNo(extractCaseNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
                 .regYear(extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
-                .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
+                .dateOfDecision(courtCase.getJudgementDate() != null ? formatDate(courtCase.getJudgementDate()) : null)
                 .dispReason(courtCase.getOutcome() != null ? getDisposalReason(courtCase.getOutcome()) : "")
                 .dispNature(null) //todo: need to configure for contested and uncontested when provided
                 .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
@@ -255,7 +255,6 @@ public class CaseService {
         OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
         List<Order> orders = orderListResponse.getList();
         for (Order order : orders){
-            //handle composite order
             if(orderTypes.contains(order.getOrderType().toUpperCase()) && PUBLISHED_ORDER.equalsIgnoreCase(order.getStatus())) {
                 return formatDate(order.getCreatedDate());
             }

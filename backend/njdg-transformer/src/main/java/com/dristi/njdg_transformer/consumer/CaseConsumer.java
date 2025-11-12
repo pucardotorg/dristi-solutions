@@ -60,7 +60,7 @@ public class CaseConsumer {
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
-        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(true).build();
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
@@ -87,7 +87,7 @@ public class CaseConsumer {
                             .userName("internalUser")
                             .name("internal")
                             .mobileNumber("1002335566")
-                            .type("EMPLOYEE")
+                            .type("SYSTEM")
                             .tenantId("kl")
                             .roles(List.of(Role.builder()
                                     .tenantId("kl")
@@ -116,6 +116,7 @@ public class CaseConsumer {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), outcome.getOutcome().getFilingNumber());
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
+            courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getCreatedTime());
             caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
             log.info("Message processed successfully on topic:: {}", topic);
         } catch (Exception e){
