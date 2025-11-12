@@ -57,7 +57,7 @@ jobs:
 
       - name: Build and Push Docker image for opencv-svc
         run: |
-          docker build -t docker.io/venkatramireddyb/opencv:${{ env.VERSION }}-${{ env.commit_hash }} -f backend/opencv-svc/Dockerfile .
+          docker build -t docker.io/venkatramireddyb/opencv:${{ env.VERSION }}-${{ env.commit_hash }} .
           docker push docker.io/venkatramireddyb/opencv:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/opencv-svc
 
