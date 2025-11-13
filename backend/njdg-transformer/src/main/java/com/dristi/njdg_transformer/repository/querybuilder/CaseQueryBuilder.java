@@ -249,8 +249,9 @@ public class CaseQueryBuilder {
                     cino,
                     act_code,
                     act_name,
-                    act_section
-                ) VALUES (?,?,?,?)
+                    act_section,
+                    sr_no
+                ) VALUES (?,?,?,?,?)
                 """;
     }
 

@@ -342,7 +342,8 @@ public class CaseRepository {
                         act.getCino(),
                         act.getActCode(),
                         act.getActName(),
-                        act.getActSection());
+                        act.getActSection(),
+                        act.getSrNo());
                 log.debug("Inserted {} record(s) for Act with ID: {}", inserted, act.getId());
             } else {
                 // UPDATE
