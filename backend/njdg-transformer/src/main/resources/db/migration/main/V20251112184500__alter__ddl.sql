@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS public.court_info (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-ALTER TABLE public.court_info OWNER TO postgres;
+ALTER TABLE public.court_info OWNER TO pucar;
 
