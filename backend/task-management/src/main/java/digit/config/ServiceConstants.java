@@ -73,4 +73,11 @@ public class ServiceConstants {
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
     public static final String EPOST = "EPOST";
     public static final String REGISTERED_POST = "REGISTERED_POST";
+
+    public static final String RPAD_SUBMISSION = "RPAD_SUBMISSION";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 }
