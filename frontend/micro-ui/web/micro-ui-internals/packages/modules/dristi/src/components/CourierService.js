@@ -4,8 +4,8 @@ import { CustomAddIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
 import Modal from "./Modal";
-import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import SelectCustomNote from "./SelectCustomNote";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -369,7 +369,15 @@ function CourierService({
                 <div className="heading">{orderType ? t("TASK_ADDRESS_RECIPIENT_NAME") : t("CS_RESPONDENT_NAME")}</div>
                 <TextInput
                   className="field desktop-w-full"
-                  value={getFullName(" ", processCourierData?.firstName, processCourierData?.middleName, processCourierData?.lastName) || ""}
+                  value={
+                    getFormattedName(
+                      processCourierData?.firstName,
+                      processCourierData?.middleName,
+                      processCourierData?.lastName,
+                      processCourierData?.witnessDesignation,
+                      ""
+                    ) || ""
+                  }
                   onChange={() => {}}
                   disabled={true}
                 />
