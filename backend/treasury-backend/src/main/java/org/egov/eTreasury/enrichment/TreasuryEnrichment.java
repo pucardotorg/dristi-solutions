@@ -212,14 +212,14 @@ public class TreasuryEnrichment {
 
         if (data.getAdvocateWelfareFund() > 0) {
             fees.add(FeeBreakDown.builder()
-                    .feeName("Fee For Advocate Welfare Fund:")
+                    .feeName("Fee for Advocate Welfare Fund:")
                     .feeAmount(data.getAdvocateWelfareFund())
                     .build());
         }
 
         if (data.getAdvocateClerkWelfareFund() > 0) {
             fees.add(FeeBreakDown.builder()
-                    .feeName("Fee For Clerk Welfare fund:")
+                    .feeName("Fee for Clerk Welfare fund:")
                     .feeAmount(data.getAdvocateClerkWelfareFund())
                     .build());
         }
