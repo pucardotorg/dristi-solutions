@@ -79,7 +79,7 @@ const GenerateBailBondV2 = () => {
   const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
   const { state, pathname, search } = useLocation();
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
-  const pendingTaskId = state?.state?.params?.refId || null;
+  // const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
@@ -111,6 +111,7 @@ const GenerateBailBondV2 = () => {
   const [clearAutoPopulatedData, setClearAutoPopulatedData] = useState(false);
   const prevComplainantUuid = useRef(null);
   const [complainantToProcessUuid, setComplainantToProcessUuid] = useState(null);
+  const [pendingTaskId, setPendingTaskId] = useState(state?.state?.params?.refId || null);
   const fetchCaseDetails = async () => {
     try {
       setIsCaseDetailsLoading(true);
@@ -323,9 +324,8 @@ const GenerateBailBondV2 = () => {
     const bodyFields = bailnewConfig?.[0]?.body || [];
     if (
       !clearAutoPopulatedData &&
-      pendingTaskAdditionalDetails?.noOfSureties &&
-      formdata?.selectComplainant?.name &&
-      bailBondDetails?.sureties?.length > 0
+      ((bailBondDetails && bailBondDetails?.sureties?.length > 0) || pendingTaskAdditionalDetails?.noOfSureties) &&
+      formdata?.selectComplainant?.name
     ) {
       const alreadyExists = bodyFields.some((field) => field?.key === "noOfSureties");
       if (!alreadyExists) {
@@ -453,6 +453,7 @@ const GenerateBailBondV2 = () => {
             },
           },
         });
+        return;
       }
 
       if (selectedTaskPayload?.bailBondId && selectedTaskPayload?.bailBondId !== bailBondId) {
@@ -461,21 +462,6 @@ const GenerateBailBondV2 = () => {
           pathname,
           search: `?${currentParams.toString()}`,
         });
-
-        await submissionService
-          ?.searchBailBond({
-            criteria: { bailId: selectedTaskPayload?.bailBondId },
-            tenantId,
-          })
-          .then((bailData) => {
-            const bailDetails = bailData?.bails?.[0] || {};
-            const convertedFormData = convertToFormData(t, bailDetails);
-            if (convertedFormData) {
-              Object.keys(convertedFormData).forEach((key) => {
-                if (key !== "selectComplainant") setValue(key, convertedFormData[key]);
-              });
-            }
-          });
       } else if (selectedTaskPayload?.refApplicationId && filingNumber) {
         const res = await submissionService?.searchApplication(
           {
@@ -547,26 +533,10 @@ const GenerateBailBondV2 = () => {
             }
           });
         }
-
-        const selectedTaskPayload = filteredTaskData?.additionalDetails || {};
-        const currentParams = new URLSearchParams(window.location.search);
-        if (bailBondId) {
-          currentParams.delete("bailBondId");
-          history.replace({
-            pathname,
-            search: `?${currentParams.toString()}`,
-            state: {
-              state: {
-                params: {
-                  refId: filteredTaskData?.referenceId,
-                },
-              },
-            },
-          });
-        }
       }
     } else {
       setClearAutoPopulatedData(true);
+      setPendingTaskId(null);
     }
   };
 
@@ -1286,10 +1256,10 @@ const GenerateBailBondV2 = () => {
         }
       }
     };
-    if (newUuidToProcess && newUuidToProcess !== lastProcessedUuid && !pendingTaskrefId && !pendingTaskId && complainantsList?.length > 1) {
+    if (newUuidToProcess && newUuidToProcess !== lastProcessedUuid && complainantsList?.length > 1) {
       fetchAndPopulateComplainantData();
     }
-  }, [complainantToProcessUuid, complainantsList, pendingTaskrefId, pendingTaskId]);
+  }, [complainantToProcessUuid, complainantsList, bailBondId]);
 
   useEffect(() => {
     if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
