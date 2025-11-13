@@ -1055,61 +1055,55 @@ const GenerateOrdersV2 = () => {
   }, [data, currentInProgressHearing, todayScheduledHearing]);
 
   const nextHearing = useCallback(
-     async () => {
-      try {
-        const validData = (data || []).filter((item) =>
-          ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
-        );
-
-        if (!validData?.length) {
-          setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-          return;
-        }
-
-        const currentIndex = validData?.findIndex(
+    (isStartHearing) => {
+      if (data?.length === 0) {
+        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+      } else {
+        const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+        const index = validData?.findIndex(
           (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
         );
-        for (let step = 1; step < validData.length; step++) {
-          const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
-          const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
-          const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
-          const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
-          const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
-          if (!nextFiling) continue;
-
-          try {
-            const response = await ordersService.searchOrder(
-              {
-                tenantId: nextTenantId,
-                criteria: {
-                  tenantId: nextTenantId,
-                  filingNumber: nextFiling,
-                  hearingNumber: nextHearingNumber,
-                  applicationNumber: "",
-                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                  ...(nextCourtId && { courtId: nextCourtId }),
-                },
-                pagination: { limit: 1, offset: 0 },
-              },
-              { tenantId: nextTenantId }
-            );
-
-            const orderDraft = response?.list?.[0];
-             if (orderDraft?.orderNumber) {
+        if (index === -1 || validData?.length === 1) {
+          history.push(`/${window?.contextPath}/employee/home/home-screen`);
+        } else {
+          const row = validData[(index + 1) % validData?.length];
+          if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
+            if (isStartHearing) {
+              hearingService
+                .searchHearings(
+                  {
+                    criteria: {
+                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                      ...(row?.businessObject?.hearingDetails?.courtId &&
+                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                    },
+                  },
+                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                )
+                .then((response) => {
+                  hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error starting hearing", error);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                });
+            } else {
               history.push(
-                `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
+                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
               );
-              return;
-            } 
-            } catch (e) {
+            }
+          } else {
+            history.push(
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+            );
           }
         }
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-      } catch (e) {
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
       }
     },
-    [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]
+    [currentInProgressHearing, todayScheduledHearing, data, history, userType]
   );
 
   // TODO: temporary Form Config, need to be replaced with the actual config
@@ -3493,7 +3487,7 @@ const GenerateOrdersV2 = () => {
 
   const handleNextHearingClick = async () => {
     await handleSaveDraft(currentOrder);
-    nextHearing();
+    nextHearing(false);
   };
 
   const handleGoBack = async () => {
@@ -3510,7 +3504,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {(isJudge || isTypist) && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}
