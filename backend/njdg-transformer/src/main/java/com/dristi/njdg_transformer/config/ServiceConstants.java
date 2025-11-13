@@ -27,7 +27,10 @@ public class ServiceConstants {
     public static final String ACT_NAME = "Negotiable Instruments Act%";
     public static final String JUDGE_DESIGNATION = "JUDICIAL_MAGISTRATE";
     public static final List<String> caseStatus = List.of("CASE_ADMITTED", "CASE_DISMISSED", "PENDING_RESPONSE");
-    public static final List<String> orderTypes = List.of("JUDGEMENT", "DISMISS_CASE", "SETTLEMENT_ACCEPT", "SETTLEMENT_REJECT", "WITHDRAWAL_ACCEPT","WITHDRAWAL_REJECT");
+    public static final List<String> orderTypes = List.of("JUDGEMENT", "DISMISS_CASE", "SETTLEMENT_ACCEPT", "WITHDRAWAL_ACCEPT");
     public static final String CONTESTED = "CONTESTED";
     public static final String UNCONTESTED = "UNCONTESTED";
+    public static final String JUDGEMENT = "JUDGEMENT";
+    public static final String COMPOSITE = "COMPOSITE";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
 }

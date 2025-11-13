@@ -77,13 +77,13 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .dispReason(courtCase.getOutcome() != null ? 
                            getDisposalReason(courtCase.getOutcome()) : "")
                 .dispNature(null) // TODO: Configure for contested/uncontested when provided
-                .desgname(caseRepository.getJudgeDesignation(JUDGE_DESIGNATION))
+                .desgname(designationMaster.getDesgName())
                 .courtNo(properties.getCourtNumber())
                 .estCode(courtCase.getCourtId())
                 .stateCode(properties.getStateCode())
                 .distCode(getDistrictCode(courtCase))
                 .purposeCode(getPurposeCode(courtCase))
-                .jocode(getJoCodeForJudge(courtCase.getJudgeId()))
+                .jocode(judgeDetails.getJocode())
                 .cicriType(properties.getCicriType())
                 .dateFirstList(setDateFirstList(courtCase.getCnrNumber()))
                 .dateNextList(setNextListDate(courtCase.getCnrNumber()))

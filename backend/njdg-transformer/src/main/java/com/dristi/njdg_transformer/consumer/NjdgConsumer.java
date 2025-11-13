@@ -84,27 +84,27 @@ public class NjdgConsumer {
         }
     }
 
-//    @KafkaListener(topics = "save-order-details")
-//    public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-//        String messageId = extractMessageId(payload);
-//        String orderNo = null;
-//
-//        log.info("Received order details message on topic: {} | messageId: {} | partition: {} | offset: {}",
-//                topic, messageId, payload.partition(), payload.offset());
-//
-//        try {
-//            InterimOrder interimOrder = objectMapper.readValue(payload.value().toString(), InterimOrder.class);
-//            orderNo = interimOrder.getOrderNo();
-//
-//            log.debug("Processing order details | orderNo: {}", orderNo);
-//
-//            orderRepository.insertInterimOrder(interimOrder);
-//            log.info("Successfully processed order | orderNo: {}", orderNo);
-//        } catch (Exception e) {
-//            log.error("Failed to process order | orderNo: {} | messageId: {} | error: {}",
-//                     orderNo, messageId, e.getMessage(), e);
-//        }
-//    }
+    @KafkaListener(topics = "save-order-details")
+    public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        String orderNo = null;
+
+        log.info("Received order details message on topic: {} | messageId: {} | partition: {} | offset: {}",
+                topic, messageId, payload.partition(), payload.offset());
+
+        try {
+            InterimOrder interimOrder = objectMapper.readValue(payload.value().toString(), InterimOrder.class);
+            orderNo = interimOrder.getCourtOrderNumber();
+
+            log.debug("Processing order details | orderNo: {}", orderNo);
+
+            orderRepository.insertInterimOrder(interimOrder);
+            log.info("Successfully processed order | orderNo: {}", orderNo);
+        } catch (Exception e) {
+            log.error("Failed to process order | orderNo: {} | messageId: {} | error: {}",
+                     orderNo, messageId, e.getMessage(), e);
+        }
+    }
 
     @KafkaListener(topics = "save-hearing-details")
     public void listenHearing(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {

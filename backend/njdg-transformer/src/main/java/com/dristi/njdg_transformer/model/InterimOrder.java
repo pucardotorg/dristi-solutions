@@ -37,4 +37,22 @@ public class InterimOrder {
 
     @JsonProperty("order_type")
     private String orderType;
+
+    @JsonProperty("doc_type")
+    private Integer docType;
+
+    @JsonProperty("jocode")
+    private String joCode;
+
+    @JsonProperty("disp_nature")
+    private Integer dispNature;
+
+    @JsonProperty("court_no")
+    private Integer courtNo;
+
+    @JsonProperty("judge_code")
+    private Integer judgeCode;
+
+    @JsonProperty("desg_code")
+    private Integer desgCode;
 }

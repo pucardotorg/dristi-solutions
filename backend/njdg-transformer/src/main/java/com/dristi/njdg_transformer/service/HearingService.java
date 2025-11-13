@@ -73,7 +73,7 @@ public class HearingService {
                 .desgCode(designationMaster.getDesgCode().toString())
                 .hearingId(hearing.getHearingId())
                 .business(hearing.getHearingSummary())
-                .courtNo(1)
+                .courtNo(properties.getCourtNumber())
                 .build();
 
         // Update previous hearing's nextDate

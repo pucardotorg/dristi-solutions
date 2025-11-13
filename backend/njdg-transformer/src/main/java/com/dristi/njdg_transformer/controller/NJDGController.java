@@ -9,26 +9,30 @@ import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
+import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.AdvocateService;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.dristi.njdg_transformer.repository.OrderRepository;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.ACTIVE;
+import java.util.*;
+
+import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 @RestController
 @RequestMapping("/njdg/v1")
@@ -40,6 +44,7 @@ public class NJDGController {
     private final OrderService orderService;
     private final HearingService hearingService;
     private final AdvocateService advocateService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Process and upsert a court case into NJDG format
@@ -100,6 +105,28 @@ public class NJDGController {
     @PostMapping("_processorder")
     public ResponseEntity<InterimOrder> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
         try {
+            String orderId = orderRequest.getOrder().getOrderNumber();
+            String status = orderRequest.getOrder().getStatus();
+            if(PUBLISHED_ORDER.equals(status)){
+                Order order = orderRequest.getOrder();
+                if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+                    List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
+                    boolean result = itemListFormCompositeItem.stream()
+                            .map(Order::getOrderType)
+                            .anyMatch(JUDGEMENT::equalsIgnoreCase);
+                    if(result) {
+                        orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+                    }
+                } else if(INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())){
+                    if(JUDGEMENT.equalsIgnoreCase(order.getOrderType())) {
+                        orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
+                    }
+                }
+                log.info("Successfully processed order | orderId: {} | status: {}", orderId, status);
+            } else {
+                log.debug("Skipping order processing due to status | orderId: {} | status: {} | expectedStatus: {}",
+                        orderId, status, PUBLISHED_ORDER);
+            }
             InterimOrder order = orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
             return ResponseEntity.ok(order);
         } catch (Exception e) {
@@ -150,5 +177,53 @@ public class NJDGController {
             log.error("Error processing advocate: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AdvocateDetails());
         }
+    }
+
+    public List<Order> getItemListFormCompositeItem(Order order) {
+        log.info("method=getItemListFormCompositeItem , result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+
+        Object compositeItems = order.getCompositeItems();
+        ObjectNode orderNode = null;
+        try {
+            String jsonString = objectMapper.writeValueAsString(order);
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+            if (jsonNode.isObject()) {
+                orderNode = (ObjectNode) jsonNode;
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Error while converting order to json", e);
+            throw new CustomException("COMPOSITE_ORDER_CONVERSION_ERROR", "Error while converting order to json");
+        }
+
+        List<Order> compositeItemsList = new ArrayList<>();
+
+        try {
+            log.info("enriching order type ,order details and additional details");
+            JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
+            for (JsonNode item : compositeItemArray) {
+                String orderType = item.get("orderType").asText();
+                JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
+                ObjectNode additionalDetailsNode = (ObjectNode) additionalDetails;
+                additionalDetailsNode.put("itemId", item.get("id").asText());
+
+                JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
+
+                assert orderNode != null;
+                orderNode.put("orderType", orderType);
+                orderNode.set("additionalDetails", additionalDetailsNode);
+                orderNode.set("orderDetails", orderDetails);
+
+                Order orderItem = objectMapper.convertValue(orderNode, Order.class);
+                compositeItemsList.add(orderItem);
+            }
+            log.info("successfully enriched order type ,order details and additional details completed");
+
+
+        } catch (Exception e) {
+            log.error("Error while enriching order type ,order details and additional details", e);
+            throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error while enriching order type ,order details and additional details");
+        }
+        return compositeItemsList;
     }
 }

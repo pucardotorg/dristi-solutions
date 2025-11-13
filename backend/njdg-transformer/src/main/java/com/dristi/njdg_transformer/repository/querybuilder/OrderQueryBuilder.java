@@ -16,14 +16,35 @@ public class OrderQueryBuilder {
                     "order_date AS order_date, " +
                     "order_no AS order_no, " +
                     "order_details AS order_details, " +
-                    "order_type AS order_type " +
-                    "FROM interim_orders ";
+                    "order_type AS order_type, " +
+                    "doc_type AS doc_type, " +
+                    "jocode AS jocode, " +
+                    "disp_nature AS disp_nature, " +
+                    "court_no AS court_no, " +
+                    "judge_code AS judge_code, " +
+                    "desg_code AS desg_code " +
+                    "FROM interim_orders";
 
     public String getInterimOrderQuery(){
         return ORDER_QUERY + " WHERE cino = ?  ORDER BY order_no ASC";
     }
 
     public String getInsertInterimOrderQuery() {
-        return "INSERT INTO interim_orders (id, cino, sr_no, order_date, order_no, order_details, order_number, order_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        return "INSERT INTO interim_orders (" +
+                "id, " +
+                "cino, " +
+                "sr_no, " +
+                "order_date, " +
+                "order_no, " +
+                "order_details, " +
+                "order_number, " +
+                "order_type, " +
+                "doc_type, " +
+                "jocode, " +
+                "disp_nature, " +
+                "court_no, " +
+                "judge_code, " +
+                "desg_code" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 }
