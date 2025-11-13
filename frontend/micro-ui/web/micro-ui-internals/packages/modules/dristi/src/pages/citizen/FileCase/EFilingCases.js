@@ -1091,27 +1091,27 @@ function EFilingCases({ path }) {
                   type: "component",
                   component: "SelectCustomNote",
                   key: "processCourierServiceNote",
+                  styles: { padding: "15px" },
                   populators: {
                     inputs: [
                       {
                         infoHeader: "CS_COMMON_NOTE",
-                        infoText: isDelayCondonation
-                          ? "CS_PROCESS_DELIVERY_COURIER_SERVICE_NOTE"
-                          : "CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE",
                         showTooltip: true,
-                        children: (
-                          <span style={{ color: "#3D3C3C" }}>
-                            <p style={{ margin: "0px" }}>
-                              {isDelayCondonation
-                                ? t("FIRST_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")
-                                : t("FIRST_POINT_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
-                            </p>
-                            <p style={{ margin: "6px 0px" }}>
-                              {isDelayCondonation
-                                ? t("SECOND_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")
-                                : t("SECOND_POINT_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
-                            </p>
-                          </span>
+                        children: isDelayCondonation ? (
+                          <div className="info-card-content">
+                            <ul style={{ width: "100%" }}>
+                              <li>
+                                <span>{t("FIRST_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                              </li>
+                              <li>
+                                <span>{t("SECOND_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                              </li>
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="info-card-content">
+                            <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                          </div>
                         ),
                       },
                     ],
