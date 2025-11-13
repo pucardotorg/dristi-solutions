@@ -7,7 +7,7 @@ import BailBondReviewModal from "../../components/BailBondReviewModal";
 import BailUploadSignatureModal from "../../components/BailUploadSignatureModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BailBondEsignLockModal from "../../components/BailBondEsignLockModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
@@ -77,6 +77,8 @@ const GenerateBailBondV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
+  const { state } = useLocation();
+  const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
@@ -207,37 +209,6 @@ const GenerateBailBondV2 = () => {
     return bailBond?.bails?.[0];
   }, [defaultFormValueData, bailBond]);
 
-  const pendingTasks = useMemo(() => {
-    return Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
-  }, [pendingTasksResponse]);
-
-  const pendingTaskAdditionalDetails = useMemo(() => {
-    return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
-  }, [pendingTasks]);
-
-  const selectedRepresentative = useMemo(() => {
-    return caseDetails?.litigants?.filter((litigant) => litigant?.individualId === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
-  }, [caseDetails?.litigants, pendingTaskAdditionalDetails?.litigantUuid]);
-
-  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber,
-        applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
-        tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
-      },
-      tenantId,
-    },
-    {},
-    pendingTaskAdditionalDetails?.refApplicationId + filingNumber,
-    Boolean(!bailBondId && filingNumber && pendingTaskAdditionalDetails?.refApplicationId)
-  );
-
-  const applicationDetails = useMemo(() => {
-    return applicationData?.applicationList?.[0];
-  }, [applicationData]);
-
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
       ?.filter((litigant) => litigant.partyType.includes("complainant"))
@@ -295,6 +266,43 @@ const GenerateBailBondV2 = () => {
     return [];
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
+  const pendingTasks = useMemo(() => {
+    if (complainantsList?.length === 1 || !pendingTaskrefId) {
+      return Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
+    } else {
+      return (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
+        item?.fields?.some((field) => field.key === "referenceId" && field.value === pendingTaskrefId)
+      );
+    }
+  }, [complainantsList, pendingTaskrefId, pendingTasksResponse]);
+
+  const pendingTaskAdditionalDetails = useMemo(() => {
+    return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
+  }, [pendingTasks]);
+
+  const selectedRepresentative = useMemo(() => {
+    return caseDetails?.litigants?.filter((litigant) => litigant?.individualId === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
+  }, [caseDetails?.litigants, pendingTaskAdditionalDetails?.litigantUuid]);
+
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
+        tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+      tenantId,
+    },
+    {},
+    pendingTaskAdditionalDetails?.refApplicationId + filingNumber,
+    Boolean(!bailBondId && filingNumber && pendingTaskAdditionalDetails?.refApplicationId)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData]);
+
   const modifiedFormConfig = useMemo(() => {
     let bailnewConfig = bailBondConfig;
 
@@ -316,6 +324,10 @@ const GenerateBailBondV2 = () => {
       if (!alreadyExists) {
         bailnewConfig[0].body.push(noOfSuretiesField);
       }
+    }
+
+    if (clearAutoPopulatedData) {
+      bailnewConfig[0].body = bailnewConfig?.[0]?.body?.filter((field) => field?.key !== "noOfSureties");
     }
 
     const updatedConfig = bailnewConfig
@@ -358,7 +370,7 @@ const GenerateBailBondV2 = () => {
             }
             if (body?.key === "selectComplainant") {
               body.populators.options = complainantsList;
-              if (complainantsList?.length === 1) {
+              if (complainantsList?.length === 1 || pendingTaskrefId) {
                 const updatedBody = {
                   ...body,
                   disable: true,
@@ -386,7 +398,7 @@ const GenerateBailBondV2 = () => {
         };
       });
     return updatedConfig;
-  }, [applicationDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails]);
+  }, [applicationDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails, pendingTaskrefId]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
@@ -454,7 +466,7 @@ const GenerateBailBondV2 = () => {
       }
     }
 
-    if (!bailBond && pendingTasks?.length > 0 && applicationDetails && complainantsList?.length === 1) {
+    if ((pendingTaskrefId || complainantsList?.length === 1) && !bailBond && pendingTasks?.length > 0 && applicationDetails) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const applicationDetailsData = applicationDetails?.applicationDetails || {};
 
@@ -495,7 +507,12 @@ const GenerateBailBondV2 = () => {
       return convertToFormData(t, newObject);
     }
 
-    if (!bailBond && pendingTasks?.length > 0 && !pendingTaskAdditionalDetails?.refApplicationId && complainantsList?.length === 1) {
+    if (
+      !bailBond &&
+      pendingTasks?.length > 0 &&
+      !pendingTaskAdditionalDetails?.refApplicationId &&
+      (pendingTaskrefId || complainantsList?.length === 1)
+    ) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const newObject = {
         ...getPendingTaskPayload,
@@ -528,11 +545,13 @@ const GenerateBailBondV2 = () => {
     return {};
   }, [
     applicationDetails,
+    bailBond,
     bailBondDetails,
     clearAutoPopulatedData,
     complainantsList,
     defaultFormValueData,
     pendingTaskAdditionalDetails,
+    pendingTaskrefId,
     pendingTasks,
     selectedRepresentative,
     t,
@@ -962,7 +981,7 @@ const GenerateBailBondV2 = () => {
   const handleDownload = () => {
     downloadPdf(tenantId, bailBondFileStoreId);
   };
-  console.log(formdata, "formData");
+
   const handleESign = async () => {
     // TODO: call Api then close this modal and show next modal
     try {
@@ -1093,7 +1112,7 @@ const GenerateBailBondV2 = () => {
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
           <FormComposerV2
-            key={"bailbond-form-composer" + clearAutoPopulatedData}
+            key={"bailbond-form-composer" + clearAutoPopulatedData + JSON.stringify(defaultFormValue)}
             className={"bailbond"}
             label={t("REVIEW_BAIL_BOND")}
             secondaryLabel={t("SAVE_AS_DRAFT")}
