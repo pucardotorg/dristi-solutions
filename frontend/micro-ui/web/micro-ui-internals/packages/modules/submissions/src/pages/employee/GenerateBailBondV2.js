@@ -109,7 +109,8 @@ const GenerateBailBondV2 = () => {
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const courtId = localStorage.getItem("courtId");
   const [clearAutoPopulatedData, setClearAutoPopulatedData] = useState(false);
-
+  const prevComplainantUuid = useRef(null);
+  const [complainantToProcessUuid, setComplainantToProcessUuid] = useState(null);
   const fetchCaseDetails = async () => {
     try {
       setIsCaseDetailsLoading(true);
@@ -268,7 +269,7 @@ const GenerateBailBondV2 = () => {
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const pendingTasks = useMemo(() => {
-    if (complainantsList?.length === 1 || !pendingTaskrefId || !pendingTaskId) {
+    if (complainantsList?.length === 1 || (!pendingTaskrefId && !pendingTaskId)) {
       return Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
     } else {
       return (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
@@ -423,7 +424,7 @@ const GenerateBailBondV2 = () => {
     return updatedConfig;
   }, [applicationDetails, bailBondDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails, pendingTaskrefId]);
 
-  const handleComplainantSelection = (selectedComplainant, setValue) => {
+  const handleComplainantSelection = async (selectedComplainant, setValue) => {
     if (!selectedComplainant?.uuid || complainantsList?.length <= 1) return;
 
     const litigantId =
@@ -461,7 +462,7 @@ const GenerateBailBondV2 = () => {
           search: `?${currentParams.toString()}`,
         });
 
-        submissionService
+        await submissionService
           ?.searchBailBond({
             criteria: { bailId: selectedTaskPayload?.bailBondId },
             tenantId,
@@ -476,8 +477,8 @@ const GenerateBailBondV2 = () => {
             }
           });
       } else if (selectedTaskPayload?.refApplicationId && filingNumber) {
-        submissionService
-          ?.searchApplication({
+        const res = await submissionService?.searchApplication(
+          {
             criteria: {
               filingNumber,
               applicationNumber: selectedTaskPayload?.refApplicationId,
@@ -485,55 +486,51 @@ const GenerateBailBondV2 = () => {
               ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
-          })
-          ?.then((appData) => {
-            const appDetails = appData?.applicationList?.[0] || {};
-            const applicationDetailsData = appDetails?.applicationDetails || {};
+          },
+          {}
+        );
+        const appDetails = res?.applicationList?.[0] || {};
+        const applicationDetailsData = appDetails?.applicationDetails || {};
 
-            const noOfSureties = selectedTaskPayload?.noOfSureties || 0;
-            const providedSureties = Array.isArray(applicationDetailsData?.sureties)
-              ? applicationDetailsData.sureties.map((s) => ({
-                  id: s?.id || null,
-                  name: s?.name || "",
-                  fatherName: s?.fatherName || "",
-                  mobileNumber: s?.mobileNumber || "",
-                  address: s?.address || {},
-                  email: s?.email || "",
-                  documents: [
-                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || []),
-                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY") || []),
-                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS") || []),
-                  ].map((d) => ({
-                    ...d,
-                    documentName: d?.documentTitle,
-                    isActive: true,
-                  })),
-                }))
-              : [];
+        const noOfSureties = selectedTaskPayload?.noOfSureties || 0;
+        const providedSureties = Array.isArray(applicationDetailsData?.sureties)
+          ? applicationDetailsData.sureties.map((s, index) => ({
+              id: s?.id || s?.index || null,
+              name: s?.name || "",
+              fatherName: s?.fatherName || "",
+              mobileNumber: s?.mobileNumber || "",
+              address: s?.address || {},
+              email: s?.email || "",
+              documents: [...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.suretyIndex === s?.suretyIndex) || [])].map((d) => ({
+                ...d,
+                documentName: d?.documentTitle,
+                isActive: true,
+              })),
+            }))
+          : [];
 
-            const sureties =
-              providedSureties.length < noOfSureties
-                ? [...providedSureties, ...Array.from({ length: noOfSureties - providedSureties.length }, () => ({}))]
-                : providedSureties;
+        const sureties =
+          providedSureties.length < noOfSureties
+            ? [...providedSureties, ...Array.from({ length: noOfSureties - providedSureties.length }, () => ({}))]
+            : providedSureties;
 
-            const completeObject = {
-              ...selectedTaskPayload,
-              litigantId: selectedComplainant.uuid,
-              litigantName: selectedComplainant.name,
-              litigantFatherName: applicationDetailsData?.litigantFatherName || selectedTaskPayload?.litigantFatherName,
-              sureties,
-            };
+        const completeObject = {
+          ...selectedTaskPayload,
+          litigantId: selectedComplainant.uuid,
+          litigantName: selectedComplainant.name,
+          litigantFatherName: applicationDetailsData?.litigantFatherName || selectedTaskPayload?.litigantFatherName,
+          sureties,
+        };
 
-            const convertedFormData = convertToFormData(t, completeObject);
+        const convertedFormData = convertToFormData(t, completeObject);
 
-            if (convertedFormData) {
-              Object.keys(convertedFormData).forEach((key) => {
-                if (key !== "selectComplainant") {
-                  setValue(key, convertedFormData[key]);
-                }
-              });
+        if (convertedFormData) {
+          Object.keys(convertedFormData).forEach((key) => {
+            if (key !== "selectComplainant") {
+              setValue(key, convertedFormData[key]);
             }
           });
+        }
       } else {
         const newObject = {
           ...selectedTaskPayload,
@@ -550,19 +547,39 @@ const GenerateBailBondV2 = () => {
             }
           });
         }
+
+        const selectedTaskPayload = filteredTaskData?.additionalDetails || {};
+        const currentParams = new URLSearchParams(window.location.search);
+        if (bailBondId) {
+          currentParams.delete("bailBondId");
+          history.replace({
+            pathname,
+            search: `?${currentParams.toString()}`,
+            state: {
+              state: {
+                params: {
+                  refId: filteredTaskData?.referenceId,
+                },
+              },
+            },
+          });
+        }
       }
+    } else {
+      setClearAutoPopulatedData(true);
     }
   };
 
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    // Check if complainant selection changed and handle filtering/auto-population
+  const onFormValueChange = async (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    const newComplainantUuid = formData?.selectComplainant?.uuid;
     if (
       (!pendingTaskrefId || !pendingTaskId) &&
       complainantsList?.length > 1 &&
-      formData?.selectComplainant?.uuid &&
-      formData?.selectComplainant?.uuid !== formdata?.selectComplainant?.uuid
+      newComplainantUuid &&
+      newComplainantUuid !== complainantToProcessUuid
     ) {
-      handleComplainantSelection(formData.selectComplainant, setValue);
+      setComplainantToProcessUuid(newComplainantUuid);
+      setClearAutoPopulatedData(false);
     }
 
     // Continue with the existing validation logic
@@ -638,21 +655,16 @@ const GenerateBailBondV2 = () => {
     if ((pendingTaskrefId || pendingTaskId || complainantsList?.length === 1) && !bailBond && pendingTasks?.length > 0 && applicationDetails) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const applicationDetailsData = applicationDetails?.applicationDetails || {};
-
       const noOfSureties = getPendingTaskPayload?.noOfSureties || 0;
       const providedSureties = Array.isArray(applicationDetailsData?.sureties)
-        ? applicationDetailsData.sureties.map((s) => ({
-            id: s?.id || null,
+        ? applicationDetailsData.sureties.map((s, index) => ({
+            id: s?.id || s?.index || null,
             name: s?.name || "",
             fatherName: s?.fatherName || "",
             mobileNumber: s?.mobileNumber || "",
             address: s?.address || {},
             email: s?.email || "",
-            documents: [
-              ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || []),
-              ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY") || []),
-              ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS") || []),
-            ].map((d) => ({
+            documents: [...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.suretyIndex === s?.suretyIndex) || [])].map((d) => ({
               ...d,
               documentName: d?.documentTitle,
               isActive: true,
@@ -1248,6 +1260,38 @@ const GenerateBailBondV2 = () => {
   }, [bailBondDetails, t]);
 
   useEffect(() => {
+    if (defaultFormValue?.selectComplainant?.uuid && !complainantToProcessUuid) {
+      setComplainantToProcessUuid(defaultFormValue.selectComplainant.uuid);
+    }
+  }, [defaultFormValue, complainantToProcessUuid]);
+
+  useEffect(() => {
+    const newUuidToProcess = complainantToProcessUuid;
+    const lastProcessedUuid = prevComplainantUuid.current;
+    const fetchAndPopulateComplainantData = async () => {
+      if (complainantToProcessUuid) {
+        try {
+          const selectedComplainant = complainantsList?.find((c) => c.uuid === complainantToProcessUuid);
+
+          if (selectedComplainant && setFormDataValue.current) {
+            setLoader(true);
+            await handleComplainantSelection(selectedComplainant, setFormDataValue.current);
+            setFormDataValue.current("selectComplainant", selectedComplainant);
+            prevComplainantUuid.current = newUuidToProcess;
+          }
+        } catch (error) {
+          console.error("Error while fetching and populating complainant data:", error);
+        } finally {
+          setLoader(false);
+        }
+      }
+    };
+    if (newUuidToProcess && newUuidToProcess !== lastProcessedUuid && !pendingTaskrefId && !pendingTaskId && complainantsList?.length > 1) {
+      fetchAndPopulateComplainantData();
+    }
+  }, [complainantToProcessUuid, complainantsList, pendingTaskrefId, pendingTaskId]);
+
+  useEffect(() => {
     if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
       history.replace(
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
@@ -1255,7 +1299,7 @@ const GenerateBailBondV2 = () => {
     }
   }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber, history, userType]);
 
-  if (isCaseDetailsLoading || !caseDetails || isBailBondLoading || isApplicationLoading || isPendingtaskDataLoading) {
+  if (isCaseDetailsLoading || !caseDetails || isBailBondLoading || isPendingtaskDataLoading || isApplicationLoading) {
     return <Loader />;
   }
 
