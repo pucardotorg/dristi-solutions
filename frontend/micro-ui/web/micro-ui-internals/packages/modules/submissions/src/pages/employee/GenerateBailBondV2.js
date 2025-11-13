@@ -540,18 +540,7 @@ const GenerateBailBondV2 = () => {
     }
   };
 
-  const onFormValueChange = async (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    const newComplainantUuid = formData?.selectComplainant?.uuid;
-    if (
-      (!pendingTaskrefId || !pendingTaskId) &&
-      complainantsList?.length > 1 &&
-      newComplainantUuid &&
-      newComplainantUuid !== complainantToProcessUuid
-    ) {
-      setComplainantToProcessUuid(newComplainantUuid);
-      setClearAutoPopulatedData(false);
-    }
-
+  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     // Continue with the existing validation logic
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
       setError("bailAmount", { message: t("Must be greater than zero") });
@@ -594,6 +583,11 @@ const GenerateBailBondV2 = () => {
 
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
+
+      if (formData?.selectComplainant?.uuid !== formdata?.selectComplainant?.uuid) {
+        setComplainantToProcessUuid(formData?.selectComplainant?.uuid);
+        setClearAutoPopulatedData(false);
+      }
     }
     setFormErrors.current = setError;
     setFormState.current = formState;
@@ -620,6 +614,10 @@ const GenerateBailBondV2 = () => {
           selectComplainant: formdata?.selectComplainant || {},
         };
       }
+    }
+
+    if (bailBondDetails) {
+      return convertToFormData(t, bailBondDetails || {});
     }
 
     if ((pendingTaskrefId || pendingTaskId || complainantsList?.length === 1) && !bailBond && pendingTasks?.length > 0 && applicationDetails) {
@@ -675,9 +673,6 @@ const GenerateBailBondV2 = () => {
 
     if (Object.keys(defaultFormValueData).length > 0) {
       return convertToFormData(t, defaultFormValueData);
-    }
-    if (bailBondDetails) {
-      return convertToFormData(t, bailBondDetails || {});
     }
 
     if (!complainantsList || complainantsList.length === 0) return {};
@@ -1229,11 +1224,11 @@ const GenerateBailBondV2 = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  useEffect(() => {
-    if (defaultFormValue?.selectComplainant?.uuid && !complainantToProcessUuid) {
-      setComplainantToProcessUuid(defaultFormValue.selectComplainant.uuid);
-    }
-  }, [defaultFormValue, complainantToProcessUuid]);
+  // useEffect(() => {
+  //   if (defaultFormValue?.selectComplainant?.uuid && !complainantToProcessUuid) {
+  //     setComplainantToProcessUuid(defaultFormValue.selectComplainant.uuid);
+  //   }
+  // }, [defaultFormValue, complainantToProcessUuid]);
 
   useEffect(() => {
     const newUuidToProcess = complainantToProcessUuid;
@@ -1259,7 +1254,7 @@ const GenerateBailBondV2 = () => {
     if (newUuidToProcess && newUuidToProcess !== lastProcessedUuid && complainantsList?.length > 1) {
       fetchAndPopulateComplainantData();
     }
-  }, [complainantToProcessUuid, complainantsList, bailBondId]);
+  }, [complainantToProcessUuid, complainantsList]);
 
   useEffect(() => {
     if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
