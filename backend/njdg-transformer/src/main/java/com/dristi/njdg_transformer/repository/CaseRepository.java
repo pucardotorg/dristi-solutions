@@ -351,6 +351,7 @@ public class CaseRepository {
                         act.getActCode(),
                         act.getActName(),
                         act.getActSection(),
+                        act.getSrNo(),
                         act.getCino());
                 log.debug("Updated {} record(s) for Act with ID: {}", updated, act.getId());
             }

@@ -68,8 +68,10 @@ public class ActsProcessorImpl implements DataProcessor {
             log.debug("No existing acts found, starting with serial number 1");
             return 1;
         }
-        
-        int nextSrNo = existingActs.get(existingActs.size() - 1).getSrNo() + 1;
+
+        int nextSrNo = 1;
+        Integer lastSrNo = existingActs.get(existingActs.size() - 1).getSrNo();
+        nextSrNo = (lastSrNo != null ? lastSrNo + 1 : 1);
         log.debug("Calculated next serial number: {} based on {} existing acts", 
                  nextSrNo, existingActs.size());
         return nextSrNo;

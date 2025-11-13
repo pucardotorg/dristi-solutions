@@ -356,7 +356,7 @@ public class CaseEnrichment implements PartyEnricher {
                 .path("individualDetails")
                 .path("individualId")
                 .asText(null);
-        if (individualId == null || individualId.isEmpty()) individualId = data.path("uniqueId").asText(null);
+        if (individualId == null || individualId.isEmpty()) individualId = dataNode.path("uniqueId").asText(null);
 
         if (!fullName.isEmpty()) partyDetails.setPartyName(fullName);
         if (age != null) partyDetails.setPartyAge(age);

@@ -102,7 +102,7 @@ public class CaseQueryBuilder {
     }
 
     public String getPartyQuery() {
-        return "SELECT party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age, party_id as party_id FROM extra_parties WHERE cino = ? AND party_type = ?";
+        return "SELECT id as id, cino as cino, party_type as party_type, party_name as party_name, party_no as party_no, party_address as party_address, party_age as party_age, party_id as party_id, adv_name as adv_name, adv_cd as adv_cd, sr_no as sr_no FROM extra_parties WHERE cino = ? AND party_type = ?";
     }
 
     public String getUpdatePartyQuery() {
@@ -271,6 +271,6 @@ public class CaseQueryBuilder {
     }
 
     public String getUpdateActQuery() {
-        return "UPDATE acts SET act_code = ?, act_name = ?, act_section = ? WHERE cino = ?";
+        return "UPDATE acts SET act_code = ?, act_name = ?, act_section = ?, sr_no = ? WHERE cino = ?";
     }
 }
