@@ -60,6 +60,8 @@ public class TaskCreationService {
     private final Configuration configuration;
     private final AdvocateUtil advocateUtil;
     private final PendingTaskUtil pendingTaskUtil;
+    private final UserUtil userUtil;
+    private final SmsNotificationService smsNotificationService;
 
     public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
         log.info("Starting follow-up task generation for filing number: {} with {} parties", 
@@ -851,6 +853,7 @@ public class TaskCreationService {
                             .pendingTask(pendingTask)
                             .build()
             );
+            callNotificationServiceForRPADSubmission(requestInfo, courtCase, assigneeUUIDs);
         } catch (Exception e) {
             log.error("Error while creating pending task for envelope submission", e);
             throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
@@ -947,6 +950,27 @@ public class TaskCreationService {
             return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
         }
         return false;
+    }
+
+    private void callNotificationServiceForRPADSubmission(RequestInfo requestInfo, CourtCase courtCase, List<String> assigneeUuids) {
+
+        long sla = configuration.getEnvelopeSlaValue();
+        long slaInDays = sla/(1000 * 60 * 60 * 24);
+        String days = Long.toString(slaInDays);
+
+        SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                .tenantId(courtCase.getTenantId())
+                .cmpNumber(courtCase.getCmpNumber())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .days(days)
+                .build();
+
+        List<User> users = userUtil.getUserListFromUserUuid(assigneeUuids);
+        List<String> mobileNumbers = users.stream()
+                .map(User::getMobileNumber)
+                .toList();
+
+        mobileNumbers.forEach(mobileNumber -> smsNotificationService.sendNotification(requestInfo, smsTemplateData, RPAD_SUBMISSION, mobileNumber));
     }
 
 }

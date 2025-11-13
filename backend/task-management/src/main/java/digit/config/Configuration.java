@@ -40,6 +40,9 @@ public class Configuration {
     @Value("${egov.user.context.path}")
     private String userContextPath;
 
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
     @Value("${egov.user.create.path}")
     private String userCreateEndpoint;
 
@@ -202,4 +205,16 @@ public class Configuration {
     // Sla values
     @Value("${sla.envelope.sla.value}")
     private Long envelopeSlaValue;
+
+    // SMS Template IDs
+    @Value("${egov.sms.notification.rpad.submission.template.id}")
+    private String smsNotificationRpadSubmissionTemplateId;
+
+    // Localization config
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
 }
