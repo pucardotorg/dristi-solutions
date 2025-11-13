@@ -88,9 +88,9 @@ public class CaseEnrichment implements PartyEnricher {
         
         try {
             List<String> advocateIds = courtCase.getRepresentatives().stream()
-                    .map(mapping -> findPrimaryParty(mapping.getRepresenting(), party))
+                    .filter(mapping -> findPrimaryParty(mapping.getRepresenting(), party) != null)
+                    .map(AdvocateMapping::getAdvocateId)
                     .filter(Objects::nonNull)
-                    .map(partyTemp -> getAdvocateId(courtCase, partyTemp.getIndividualId()))
                     .collect(Collectors.toList());
 
             if (advocateIds.isEmpty()) {
