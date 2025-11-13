@@ -57,8 +57,9 @@ const MainHomeScreen = () => {
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
-  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
+  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[1]));
   const [tabData, setTabData] = useState(null);
+  const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -288,7 +289,7 @@ const MainHomeScreen = () => {
             date: null,
             isOnlyCountRequired: true,
             actionCategory: "Scrutinise cases",
-            status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
+            status: ["UNDER_SCRUTINY"],
           },
           searchRescheduleHearingsApplication: {
             date: null,
@@ -319,7 +320,7 @@ const MainHomeScreen = () => {
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
-      const scrutinyCasesCount = res?.scrutinyCasesData?.totalCount || 0;
+      const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
       const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.totalCount || 0;
       const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.totalCount || 0;
       const otherApplicationsCount = res?.otherApplicationsData?.totalCount || 0;
@@ -986,10 +987,13 @@ const MainHomeScreen = () => {
             },
           });
           const totalCount = response?.scrutinyCasesData?.count;
+          if (index === 1) {
+            setScrutinyDueCount(totalCount || 0);
+          }
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
-            active: index === 0 ? true : false,
+            active: index === 1 ? true : false,
           };
         }) || []
       );
@@ -1084,7 +1088,7 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={pendingTaskCount}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
           showToast={showToast}
         />
         {activeTab === "TOTAL_HEARINGS_TAB" ? (
