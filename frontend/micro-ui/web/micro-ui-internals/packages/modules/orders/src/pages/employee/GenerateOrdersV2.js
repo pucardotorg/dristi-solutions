@@ -79,7 +79,14 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
+import {
+  getRespondantName,
+  getComplainantName,
+  constructFullName,
+  removeInvalidNameParts,
+  getFormattedName,
+  convertTaskResponseToPayload,
+} from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -3164,6 +3171,56 @@ const GenerateOrdersV2 = () => {
       }
       setAddOrderTypeLoader(true);
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
+      debugger;
+      const isAcceptBailOrder = updatedFormData?.orderType?.code === "ACCEPT_BAIL";
+      const pendingTaskRefId = updatedFormData?.refApplicationId;
+
+      if (isAcceptBailOrder && pendingTaskRefId) {
+        try {
+          const pendingTaskResponse = await ordersService.getPendingTaskService(
+            {
+              SearchCriteria: {
+                tenantId,
+                moduleName: "Pending Tasks Service",
+                moduleSearchCriteria: {
+                  isCompleted: false,
+                  filingNumber,
+                  entityType: "bail bond",
+                },
+                limit: 1000,
+                offset: 0,
+              },
+            },
+            {}
+          );
+
+          if (pendingTaskResponse) {
+            const pendingTask = Array.isArray(pendingTaskResponse?.data) ? pendingTaskResponse.data : [];
+            const currApplication = pendingTask?.filter((item) =>
+              item?.fields?.some((field) => field.key === "additionalDetails.refApplicationId" && field.value === pendingTaskRefId)
+            );
+            const pendingTaskPayload = convertTaskResponseToPayload(currApplication);
+
+            await ordersService.customApiService(Urls.dristi.pendingTask, {
+              pendingTask: {
+                ...pendingTaskPayload,
+                additionalDetails: {
+                  ...pendingTaskPayload?.additionalDetails,
+                  amount: parseInt(updatedFormData?.chequeAmount) || 0,
+                  bailAmount: parseInt(updatedFormData?.chequeAmount) || 0,
+                  chequeAmount: parseInt(updatedFormData?.chequeAmount) || 0,
+                  noOfSureties: parseInt(updatedFormData?.noOfSureties),
+                  bailType: updatedFormData?.bailType || {},
+                },
+                tenantId,
+              },
+            });
+          }
+        } catch (error) {
+          console.error("Error updating pending task for accept bail:", error);
+        }
+      }
+
       const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       setCurrentOrder(updateOrderResponse?.order);
