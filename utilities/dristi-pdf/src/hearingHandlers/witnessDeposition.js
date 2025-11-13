@@ -29,6 +29,7 @@ function getOrdinalSuffix(day) {
 
 const witnessDeposition = async (req, res, qrCode) => {
   const cnrNumber = req.query.cnrNumber;
+  const filingNumber = req.query.filingNumber;
   const artifactNumber = req.query.artifactNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -38,6 +39,7 @@ const witnessDeposition = async (req, res, qrCode) => {
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
+  if (!filingNumber) missingFields.push("filingNumber");
   if (!artifactNumber) missingFields.push("artifactNumber");
   if (!tenantId) missingFields.push("tenantId");
   if (!courtId) missingFields.push("courtId");
@@ -80,6 +82,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           {
             courtId,
             cnrNumber,
+            filingNumber,
             tenantId,
             filingType: "CASE_FILING",
             artifactNumber,
