@@ -7,7 +7,7 @@ import BailBondReviewModal from "../../components/BailBondReviewModal";
 import BailUploadSignatureModal from "../../components/BailUploadSignatureModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom";
 import BailBondEsignLockModal from "../../components/BailBondEsignLockModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
@@ -77,8 +77,9 @@ const GenerateBailBondV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
-  const { state } = useLocation();
+  const { state, pathname, search } = useLocation();
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
+  const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
@@ -267,14 +268,14 @@ const GenerateBailBondV2 = () => {
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const pendingTasks = useMemo(() => {
-    if (complainantsList?.length === 1 || !pendingTaskrefId) {
+    if (complainantsList?.length === 1 || !pendingTaskrefId || !pendingTaskId) {
       return Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
     } else {
       return (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
-        item?.fields?.some((field) => field.key === "referenceId" && field.value === pendingTaskrefId)
+        item?.fields?.some((field) => field.key === "referenceId" && field.value === (pendingTaskrefId || pendingTaskId))
       );
     }
-  }, [complainantsList, pendingTaskrefId, pendingTasksResponse]);
+  }, [complainantsList, pendingTaskId, pendingTaskrefId, pendingTasksResponse]);
 
   const pendingTaskAdditionalDetails = useMemo(() => {
     return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
@@ -319,11 +320,18 @@ const GenerateBailBondV2 = () => {
     };
 
     const bodyFields = bailnewConfig?.[0]?.body || [];
-    if (!clearAutoPopulatedData && pendingTaskAdditionalDetails?.noOfSureties) {
+    if (
+      !clearAutoPopulatedData &&
+      pendingTaskAdditionalDetails?.noOfSureties &&
+      formdata?.selectComplainant?.name &&
+      bailBondDetails?.sureties?.length > 0
+    ) {
       const alreadyExists = bodyFields.some((field) => field?.key === "noOfSureties");
       if (!alreadyExists) {
         bailnewConfig[0].body.push(noOfSuretiesField);
       }
+    } else {
+      bailnewConfig[0].body = bailnewConfig?.[0]?.body?.filter((field) => field?.key !== "noOfSureties");
     }
 
     if (clearAutoPopulatedData) {
@@ -379,15 +387,30 @@ const GenerateBailBondV2 = () => {
               }
             }
 
-            if (body?.key === "litigantFatherName" && applicationDetails?.applicationDetails?.litigantFatherName && !clearAutoPopulatedData) {
+            if (
+              body?.key === "litigantFatherName" &&
+              applicationDetails?.applicationDetails?.litigantFatherName &&
+              !clearAutoPopulatedData &&
+              formdata?.selectComplainant?.name
+            ) {
               return { ...body, disable: true };
             }
 
-            if (body?.key === "bailType" && pendingTaskAdditionalDetails?.bailType?.code && !clearAutoPopulatedData) {
+            if (
+              body?.key === "bailType" &&
+              pendingTaskAdditionalDetails?.bailType?.code &&
+              !clearAutoPopulatedData &&
+              formdata?.selectComplainant?.name
+            ) {
               return { ...body, disable: true };
             }
 
-            if (body?.key === "bailAmount" && pendingTaskAdditionalDetails?.bailAmount && !clearAutoPopulatedData) {
+            if (
+              body?.key === "bailAmount" &&
+              pendingTaskAdditionalDetails?.bailAmount &&
+              !clearAutoPopulatedData &&
+              formdata?.selectComplainant?.name
+            ) {
               return { ...body, disable: true };
             }
 
@@ -398,9 +421,151 @@ const GenerateBailBondV2 = () => {
         };
       });
     return updatedConfig;
-  }, [applicationDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails, pendingTaskrefId]);
+  }, [applicationDetails, bailBondDetails, clearAutoPopulatedData, complainantsList, formdata, pendingTaskAdditionalDetails, pendingTaskrefId]);
+
+  const handleComplainantSelection = (selectedComplainant, setValue) => {
+    if (!selectedComplainant?.uuid || complainantsList?.length <= 1) return;
+
+    const litigantId =
+      caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === selectedComplainant?.uuid)?.[0]?.individualId || {};
+
+    const filteredTasks = (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
+      item?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === litigantId)
+    );
+
+    if (filteredTasks?.length > 0) {
+      const filteredTaskData = convertTaskResponseToPayload(filteredTasks);
+      if (!filteredTaskData) return;
+      const selectedTaskPayload = filteredTaskData?.additionalDetails || {};
+      const currentParams = new URLSearchParams(window.location.search);
+
+      if (!selectedTaskPayload?.bailBondId && bailBondId) {
+        currentParams.delete("bailBondId");
+        history.replace({
+          pathname,
+          search: `?${currentParams.toString()}`,
+          state: {
+            state: {
+              params: {
+                refId: filteredTaskData?.referenceId,
+              },
+            },
+          },
+        });
+      }
+
+      if (selectedTaskPayload?.bailBondId && selectedTaskPayload?.bailBondId !== bailBondId) {
+        currentParams.set("bailBondId", selectedTaskPayload.bailBondId);
+        history.replace({
+          pathname,
+          search: `?${currentParams.toString()}`,
+        });
+
+        submissionService
+          ?.searchBailBond({
+            criteria: { bailId: selectedTaskPayload?.bailBondId },
+            tenantId,
+          })
+          .then((bailData) => {
+            const bailDetails = bailData?.bails?.[0] || {};
+            const convertedFormData = convertToFormData(t, bailDetails);
+            if (convertedFormData) {
+              Object.keys(convertedFormData).forEach((key) => {
+                if (key !== "selectComplainant") setValue(key, convertedFormData[key]);
+              });
+            }
+          });
+      } else if (selectedTaskPayload?.refApplicationId && filingNumber) {
+        submissionService
+          ?.searchApplication({
+            criteria: {
+              filingNumber,
+              applicationNumber: selectedTaskPayload?.refApplicationId,
+              tenantId,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
+            tenantId,
+          })
+          ?.then((appData) => {
+            const appDetails = appData?.applicationList?.[0] || {};
+            const applicationDetailsData = appDetails?.applicationDetails || {};
+
+            const noOfSureties = selectedTaskPayload?.noOfSureties || 0;
+            const providedSureties = Array.isArray(applicationDetailsData?.sureties)
+              ? applicationDetailsData.sureties.map((s) => ({
+                  id: s?.id || null,
+                  name: s?.name || "",
+                  fatherName: s?.fatherName || "",
+                  mobileNumber: s?.mobileNumber || "",
+                  address: s?.address || {},
+                  email: s?.email || "",
+                  documents: [
+                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || []),
+                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY") || []),
+                    ...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS") || []),
+                  ].map((d) => ({
+                    ...d,
+                    documentName: d?.documentTitle,
+                    isActive: true,
+                  })),
+                }))
+              : [];
+
+            const sureties =
+              providedSureties.length < noOfSureties
+                ? [...providedSureties, ...Array.from({ length: noOfSureties - providedSureties.length }, () => ({}))]
+                : providedSureties;
+
+            const completeObject = {
+              ...selectedTaskPayload,
+              litigantId: selectedComplainant.uuid,
+              litigantName: selectedComplainant.name,
+              litigantFatherName: applicationDetailsData?.litigantFatherName || selectedTaskPayload?.litigantFatherName,
+              sureties,
+            };
+
+            const convertedFormData = convertToFormData(t, completeObject);
+
+            if (convertedFormData) {
+              Object.keys(convertedFormData).forEach((key) => {
+                if (key !== "selectComplainant") {
+                  setValue(key, convertedFormData[key]);
+                }
+              });
+            }
+          });
+      } else {
+        const newObject = {
+          ...selectedTaskPayload,
+          litigantId: selectedComplainant.uuid,
+          litigantName: selectedComplainant.name,
+        };
+
+        const convertedFormData = convertToFormData(t, newObject);
+
+        if (convertedFormData) {
+          Object.keys(convertedFormData).forEach((key) => {
+            if (key !== "selectComplainant") {
+              setValue(key, convertedFormData[key]);
+            }
+          });
+        }
+      }
+    }
+  };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    // Check if complainant selection changed and handle filtering/auto-population
+    if (
+      (!pendingTaskrefId || !pendingTaskId) &&
+      complainantsList?.length > 1 &&
+      formData?.selectComplainant?.uuid &&
+      formData?.selectComplainant?.uuid !== formdata?.selectComplainant?.uuid
+    ) {
+      handleComplainantSelection(formData.selectComplainant, setValue);
+    }
+
+    // Continue with the existing validation logic
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
       setError("bailAmount", { message: t("Must be greater than zero") });
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {
@@ -463,10 +628,14 @@ const GenerateBailBondV2 = () => {
             uuid: onlyComplainant.uuid,
           },
         };
+      } else {
+        return {
+          selectComplainant: formdata?.selectComplainant || {},
+        };
       }
     }
 
-    if ((pendingTaskrefId || complainantsList?.length === 1) && !bailBond && pendingTasks?.length > 0 && applicationDetails) {
+    if ((pendingTaskrefId || pendingTaskId || complainantsList?.length === 1) && !bailBond && pendingTasks?.length > 0 && applicationDetails) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const applicationDetailsData = applicationDetails?.applicationDetails || {};
 
@@ -511,7 +680,7 @@ const GenerateBailBondV2 = () => {
       !bailBond &&
       pendingTasks?.length > 0 &&
       !pendingTaskAdditionalDetails?.refApplicationId &&
-      (pendingTaskrefId || complainantsList?.length === 1)
+      (pendingTaskrefId || pendingTaskId || complainantsList?.length === 1)
     ) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const newObject = {
@@ -550,8 +719,10 @@ const GenerateBailBondV2 = () => {
     clearAutoPopulatedData,
     complainantsList,
     defaultFormValueData,
+    formdata,
     pendingTaskAdditionalDetails,
     pendingTaskrefId,
+    pendingTaskId,
     pendingTasks,
     selectedRepresentative,
     t,
@@ -947,6 +1118,7 @@ const GenerateBailBondV2 = () => {
             additionalDetails: {
               ...getPendingTaskPayload?.additionalDetails,
               bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+              noOfSureties: formdata?.sureties?.length || 0,
             },
             tenantId,
           },
@@ -969,7 +1141,7 @@ const GenerateBailBondV2 = () => {
 
   const handleClearAutoPopulatedData = () => {
     setDefaultFormValueData({});
-    setFormdata({});
+    // setFormdata({});
     setClearAutoPopulatedData(true);
   };
 
