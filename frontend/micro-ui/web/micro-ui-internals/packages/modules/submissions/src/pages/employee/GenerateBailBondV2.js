@@ -215,6 +215,10 @@ const GenerateBailBondV2 = () => {
     return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
   }, [pendingTasks]);
 
+  const selectedRepresentative = useMemo(() => {
+    return caseDetails?.litigants?.filter((litigant) => litigant?.individualId === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
+  }, [caseDetails?.litigants, pendingTaskAdditionalDetails?.litigantUuid]);
+
   const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -450,7 +454,7 @@ const GenerateBailBondV2 = () => {
       }
     }
 
-    if (pendingTasks?.length > 0 && applicationDetails && complainantsList?.length === 1) {
+    if (!bailBond && pendingTasks?.length > 0 && applicationDetails && complainantsList?.length === 1) {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
       const applicationDetailsData = applicationDetails?.applicationDetails || {};
 
@@ -484,10 +488,20 @@ const GenerateBailBondV2 = () => {
         ...getPendingTaskPayload,
         litigantFatherName: applicationDetailsData?.litigantFatherName || getPendingTaskPayload?.litigantFatherName,
         litigantName: applicationDetails?.additionalDetails?.formdata?.selectComplainant?.name || getPendingTaskPayload?.litigantName,
-        litigantId: applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid || getPendingTaskPayload?.litigantId,
+        litigantId: applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid || selectedRepresentative?.additionalDetails?.uuid,
         sureties,
       };
 
+      return convertToFormData(t, newObject);
+    }
+
+    if (!bailBond && pendingTasks?.length > 0 && !pendingTaskAdditionalDetails?.refApplicationId && complainantsList?.length === 1) {
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
+      const newObject = {
+        ...getPendingTaskPayload,
+        litigantId: selectedRepresentative?.additionalDetails?.uuid || getPendingTaskPayload?.litigantUuid,
+        litigantName: getPendingTaskPayload?.litigantName || selectedRepresentative?.additionalDetails?.fullName,
+      };
       return convertToFormData(t, newObject);
     }
 
@@ -512,7 +526,17 @@ const GenerateBailBondV2 = () => {
     }
 
     return {};
-  }, [applicationDetails, bailBondDetails, clearAutoPopulatedData, complainantsList, defaultFormValueData, pendingTasks, t]);
+  }, [
+    applicationDetails,
+    bailBondDetails,
+    clearAutoPopulatedData,
+    complainantsList,
+    defaultFormValueData,
+    pendingTaskAdditionalDetails,
+    pendingTasks,
+    selectedRepresentative,
+    t,
+  ]);
 
   const onDocumentUpload = async (fileData, filename) => {
     const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
