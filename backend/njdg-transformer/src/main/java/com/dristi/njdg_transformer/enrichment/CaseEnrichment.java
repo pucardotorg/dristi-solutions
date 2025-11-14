@@ -285,7 +285,7 @@ public class CaseEnrichment implements PartyEnricher {
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
-            int partyNo = 2;
+            int partyNo = PartyType.PET.equals(partyTypeEnum) ? 2 : 1;
             for (JsonNode dataNode : formDataArray) {
                 PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
                 if (partyDetails != null) {

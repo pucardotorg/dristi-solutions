@@ -29,7 +29,7 @@ public class InterimOrderRowMapper implements RowMapper<InterimOrder> {
         interimOrder.setDispNature(rs.getInt("disp_nature"));
         interimOrder.setCourtNo(rs.getInt("court_no"));
         interimOrder.setJudgeCode(rs.getInt("judge_code"));
-        interimOrder.setDesgCode(rs.getInt("desg_code"));
+        interimOrder.setDesigCode(rs.getInt("desig_code"));
         return interimOrder;
     }
 }

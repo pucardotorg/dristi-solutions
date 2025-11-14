@@ -172,7 +172,7 @@ public class CaseConsumer {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), filingNumber);
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
-            courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getCreatedTime());
+            courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getLastModifiedTime());
             
             if(courtCase.getCnrNumber() != null) {
                 log.debug("Found case with CNR: {} for outcome | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);

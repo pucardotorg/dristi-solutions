@@ -47,7 +47,7 @@ public class OrderRepository {
         preparedStmtList.add(interimOrder.getDispNature());
         preparedStmtList.add(interimOrder.getCourtNo());
         preparedStmtList.add(interimOrder.getJudgeCode());
-        preparedStmtList.add(interimOrder.getDesgCode());
+        preparedStmtList.add(interimOrder.getDesigCode());
 
         // Corresponding SQL types
         preparedStmtArgsList.add(Types.VARCHAR); // cino

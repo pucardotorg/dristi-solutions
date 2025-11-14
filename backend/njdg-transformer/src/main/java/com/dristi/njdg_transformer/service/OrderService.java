@@ -80,7 +80,7 @@ public class OrderService {
                 .courtNo(properties.getCourtNumber())
                 .joCode(judgeDetails.getJocode())
                 .judgeCode(judgeDetails.getJudgeCode())
-                .desgCode(designationMaster.getDesgCode())
+                .desigCode(designationMaster.getDesgCode())
                 .dispNature(null)//todo: need to config this when start capturing in system
                 .build();
 

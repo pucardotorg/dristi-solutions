@@ -53,6 +53,6 @@ public class InterimOrder {
     @JsonProperty("judge_code")
     private Integer judgeCode;
 
-    @JsonProperty("desg_code")
-    private Integer desgCode;
+    @JsonProperty("desig_code")
+    private Integer desigCode;
 }

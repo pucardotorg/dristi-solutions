@@ -22,7 +22,7 @@ public class OrderQueryBuilder {
                     "disp_nature AS disp_nature, " +
                     "court_no AS court_no, " +
                     "judge_code AS judge_code, " +
-                    "desg_code AS desg_code " +
+                    "desig_code AS desig_code " +
                     "FROM interim_orders";
 
     public String getInterimOrderQuery(){
@@ -43,7 +43,7 @@ public class OrderQueryBuilder {
                 "disp_nature, " +
                 "court_no, " +
                 "judge_code, " +
-                "desg_code" +
+                "desig_code" +
                 ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 }
