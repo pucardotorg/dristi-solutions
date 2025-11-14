@@ -102,12 +102,23 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
         log.debug("Added {} respondent witnesses for case CNR: {}", 
                  resWitnessDetails.size(), courtCase.getCnrNumber());
 
-        // Assign serial numbers
-        for (int i = 0; i < extraParties.size(); i++) {
-            extraParties.get(i).setSrNo(i + 1);
+        // If first complainant exists → srNo = 0
+        if (!extraComplainants.isEmpty()) {
+            extraComplainants.get(0).setSrNo(0);
         }
 
-        log.debug("Total extra parties found: {} for case CNR: {}", 
+        // If first respondent exists → srNo = 0
+        if (!extraRespondents.isEmpty()) {
+            extraRespondents.get(0).setSrNo(0);
+        }
+
+        int srCounter = 1;
+        for (PartyDetails party : extraParties) {
+            if (party.getSrNo() != null && party.getSrNo() == 0) continue;
+            party.setSrNo(srCounter++);
+        }
+
+        log.debug("Total extra parties found: {} for case CNR: {}",
                  extraParties.size(), courtCase.getCnrNumber());
         return extraParties;
     }

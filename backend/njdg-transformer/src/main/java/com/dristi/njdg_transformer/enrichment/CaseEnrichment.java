@@ -285,12 +285,10 @@ public class CaseEnrichment implements PartyEnricher {
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
-            int partyNo = PartyType.PET.equals(partyTypeEnum) ? 2 : 1;
+            int partyNo = 1;
             for (JsonNode dataNode : formDataArray) {
                 PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
-                if (partyDetails != null) {
-                    partyDetailsList.add(partyDetails);
-                }
+                partyDetailsList.add(partyDetails);
             }
         } catch (Exception e) {
             log.error("Error enriching extra parties: {}", e.getMessage());
@@ -299,22 +297,18 @@ public class CaseEnrichment implements PartyEnricher {
     }
 
     private PartyDetails mapExtraPartyDetails(CourtCase courtCase, JsonNode dataNode, String partyType, int partyNo, PartyType partyTypeEnum) {
-        String individualIdPath = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
-                "complainantVerification" : "respondentVerification";
-
-        String uniqueId = dataNode.path("data")
-                .path(individualIdPath)
-                .path("individualDetails")
-                .path("individualId")
-                .asText(null);
-
-        if (uniqueId == null || uniqueId.isEmpty()) {
-            uniqueId = dataNode.path("uniqueId").asText(null);
-        }
-
-        Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
-        if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) return null;
-
+//        String individualIdPath = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
+//                "complainantVerification" : "respondentVerification";
+//        String uniqueId = dataNode.path("data")
+//                .path(individualIdPath)
+//                .path("individualDetails")
+//                .path("individualId")
+//                .asText(null);
+//        if (uniqueId == null || uniqueId.isEmpty()) {
+//            uniqueId = dataNode.path("uniqueId").asText(null);
+//        }
+//        Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
+//        if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) return null;
 //        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
 //        for (PartyDetails pd : existingParties) {
 //            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
