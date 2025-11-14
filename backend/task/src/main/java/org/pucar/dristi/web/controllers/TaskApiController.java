@@ -3,6 +3,7 @@ package org.pucar.dristi.web.controllers;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.TaskService;
+import org.pucar.dristi.util.RequestInfoGenerator;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.models.*;
 
@@ -31,15 +32,19 @@ public class TaskApiController {
 
     private ResponseInfoFactory responseInfoFactory;
 
+    private RequestInfoGenerator requestInfoGenerator;
+
     @Autowired
-    public TaskApiController(TaskService taskService, ResponseInfoFactory responseInfoFactory) {
+    public TaskApiController(TaskService taskService, ResponseInfoFactory responseInfoFactory, RequestInfoGenerator requestInfoGenerator) {
         this.taskService = taskService;
         this.responseInfoFactory = responseInfoFactory;
+        this.requestInfoGenerator = requestInfoGenerator;
     }
 
-    public void setMockInjects(TaskService taskService, ResponseInfoFactory responseInfoFactory){
+    public void setMockInjects(TaskService taskService, ResponseInfoFactory responseInfoFactory, RequestInfoGenerator requestInfoGenerator){
         this.taskService = taskService;
         this.responseInfoFactory = responseInfoFactory;
+        this.requestInfoGenerator = requestInfoGenerator;
     }
 
     @RequestMapping(value = "/v1/create", method = RequestMethod.POST)
@@ -138,7 +143,9 @@ public class TaskApiController {
 
     @PostMapping("/v1/enrich-party-uuids")
     public ResponseEntity<List<TaskUpdateState>> enrichAllUniqueIds() {
-        RequestInfo requestInfo = null; //todo change
+
+        RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+
         List<TaskUpdateState> taskUpdateStates = taskService.enrichPartyUuidInTaskDetails(requestInfo);
         return new ResponseEntity<>(taskUpdateStates, HttpStatus.OK);
     }

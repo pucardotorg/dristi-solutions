@@ -211,4 +211,6 @@ public class ServiceConstants {
 
     public static final String RESPONDENT = "respondent";
     public static final String WITNESS = "witness";
+
+    public static final String msgId = "1730882648558|en_IN";
 }
