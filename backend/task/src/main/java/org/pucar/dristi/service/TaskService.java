@@ -302,9 +302,9 @@ public class TaskService {
         Map<String, String> witnessNameToUniqueIdMap = new HashMap<>();
 
         for (WitnessDetails witnessDetails : courtCase.getWitnessDetails()) {
-            String witnessFirstName = witnessDetails.getFirstName();
-            String witnessMiddleName = witnessDetails.getMiddleName();
-            String witnessLastName = witnessDetails.getLastName();
+            String witnessFirstName = witnessDetails.getFirstName() == null ? "" : witnessDetails.getFirstName();
+            String witnessMiddleName = witnessDetails.getMiddleName() == null ? "" : witnessDetails.getMiddleName();
+            String witnessLastName = witnessDetails.getLastName() == null ? "" : witnessDetails.getLastName();
 
             List<String> nameParts = Stream.of(witnessFirstName, witnessMiddleName, witnessLastName)
                     .map(String::trim)
