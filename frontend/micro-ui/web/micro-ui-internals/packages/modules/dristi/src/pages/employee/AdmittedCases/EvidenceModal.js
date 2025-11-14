@@ -140,7 +140,7 @@ const EvidenceModal = ({
           return true;
         }
 
-        return [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus);
+        return false;
       }
       if (modalType === "Documents") {
         if (documentSubmission?.[0]?.artifactList?.isVoid) return false;
@@ -203,9 +203,18 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-
+  const actionCustomLabel = useMemo(() => {
+    let label = "";
+    if (modalType === "Submissions") {
+      if (userType === "employee") {
+        label = t("SET_TERMS_OF_BAIL");
+      }
+    }
+    return label;
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
   const actionCancelLabel = useMemo(() => {
     if (
+      userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
       modalType === "Submissions"
       // &&
@@ -1380,7 +1389,9 @@ const EvidenceModal = ({
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={currentDiaryEntry || !showSubmit} // Not allowing submit action for court room manager
-          actionCancelLabel={documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCancelLabel={
+            documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry || !isJudge ? false : actionCancelLabel
+          } // Not allowing cancel action for court room manager
           // actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}

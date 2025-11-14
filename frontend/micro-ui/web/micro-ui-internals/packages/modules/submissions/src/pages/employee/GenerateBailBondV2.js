@@ -1048,16 +1048,18 @@ const GenerateBailBondV2 = () => {
         const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
-        await submissionService.customApiService(Urls.pendingTask, {
-          pendingTask: {
-            ...getPendingTaskPayload,
-            additionalDetails: {
-              ...getPendingTaskPayload?.additionalDetails,
-              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+        if (pendingTasks?.length > 0) {
+          await submissionService.customApiService(Urls.pendingTask, {
+            pendingTask: {
+              ...getPendingTaskPayload,
+              additionalDetails: {
+                ...getPendingTaskPayload?.additionalDetails,
+                bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+              },
+              tenantId,
             },
-            tenantId,
-          },
-        });
+          });
+        }
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}&showModal=true`
         );
@@ -1089,17 +1091,18 @@ const GenerateBailBondV2 = () => {
         const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
         bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
-        await submissionService.customApiService(Urls.pendingTask, {
-          pendingTask: {
-            ...getPendingTaskPayload,
-            additionalDetails: {
-              ...getPendingTaskPayload?.additionalDetails,
-              bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
-              noOfSureties: formdata?.sureties?.length || 0,
+        if (pendingTasks?.length > 0) {
+          await submissionService.customApiService(Urls.pendingTask, {
+            pendingTask: {
+              ...getPendingTaskPayload,
+              additionalDetails: {
+                ...getPendingTaskPayload?.additionalDetails,
+                bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+              },
+              tenantId,
             },
-            tenantId,
-          },
-        });
+          });
+        }
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );

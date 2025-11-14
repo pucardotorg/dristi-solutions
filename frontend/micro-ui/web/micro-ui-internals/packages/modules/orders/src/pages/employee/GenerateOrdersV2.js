@@ -3171,7 +3171,6 @@ const GenerateOrdersV2 = () => {
       }
       setAddOrderTypeLoader(true);
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
-      debugger;
       const isAcceptBailOrder = updatedFormData?.orderType?.code === "ACCEPT_BAIL";
       const pendingTaskRefId = updatedFormData?.refApplicationId;
 
