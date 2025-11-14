@@ -173,9 +173,6 @@ public class TaskService {
                     continue;  // Skip this case if case search fails
                 }
 
-                    for (CourtCase courtCase : caseList) {
-                        Map<String, String> respondentNameToUniqueIdMap = getRespondentNameToUniqueIdMap(courtCase);
-                        Map<String, String> witnessNameToUniqueIdMap = getWitnessNameToUniqueIdMap(courtCase);
                 for (CourtCase courtCase : caseList) {
                     Map<String, String> respondentNameToUniqueIdMap = getRespondentNameToUniqueIdMap(courtCase);
                     Map<String, String> witnessNameToUniqueIdMap = getWitnessNameToUniqueIdMap(courtCase);
