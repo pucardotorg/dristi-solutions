@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.ACT_NAME;
 
@@ -39,8 +40,11 @@ public class ActsProcessorImpl implements DataProcessor {
         try {
             // TODO: Currently configured for single act, need to configure for multiple acts
             List<Act> existingActs = caseRepository.getActs(courtCase.getCnrNumber());
-            log.debug("Found {} existing acts for case CNR: {}", 
-                     existingActs.size(), courtCase.getCnrNumber());
+            if(!existingActs.isEmpty()){
+                log.info("Found {} existing acts for case CNR: {}",
+                        existingActs.size(), courtCase.getCnrNumber());
+                return;
+            }
             
             int srNo = calculateNextSerialNumber(existingActs);
             Act actMaster = caseRepository.getActMaster(ACT_NAME);
@@ -65,20 +69,24 @@ public class ActsProcessorImpl implements DataProcessor {
 
     private int calculateNextSerialNumber(List<Act> existingActs) {
         if (existingActs.isEmpty()) {
-            log.debug("No existing acts found, starting with serial number 1");
+            log.info("No existing acts found, starting with serial number 1");
             return 1;
         }
 
-        int nextSrNo = 1;
-        Integer lastSrNo = existingActs.get(existingActs.size() - 1).getSrNo();
-        nextSrNo = (lastSrNo != null ? lastSrNo + 1 : 1);
-        log.debug("Calculated next serial number: {} based on {} existing acts", 
-                 nextSrNo, existingActs.size());
+        int maxSrNo = existingActs.stream()
+                .map(Act::getSrNo)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        int nextSrNo = maxSrNo + 1;
+
+        log.info("Calculated next serial number: {} (max existing srNo: {})", nextSrNo, maxSrNo);
         return nextSrNo;
     }
 
     private Act buildNewAct(CourtCase courtCase, Act actMaster, int srNo) {
-        log.debug("Building new act with serial number {} for case CNR: {}", 
+        log.info("Building new act with serial number {} for case CNR: {}",
                  srNo, courtCase.getCnrNumber());
         
         String actSection = extractActSection(courtCase);
@@ -91,7 +99,7 @@ public class ActsProcessorImpl implements DataProcessor {
                 .actSection(actSection)
                 .build();
         
-        log.debug("Built new act: code={}, name={}, section={} for case CNR: {}", 
+        log.info("Built new act: code={}, name={}, section={} for case CNR: {}",
                  newAct.getActCode(), newAct.getActName(), newAct.getActSection(), 
                  courtCase.getCnrNumber());
         
@@ -106,11 +114,11 @@ public class ActsProcessorImpl implements DataProcessor {
                 !courtCase.getStatutesAndSections().get(0).getSubsections().isEmpty()) {
                 
                 String actSection = courtCase.getStatutesAndSections().get(0).getSubsections().get(0);
-                log.debug("Extracted act section: {} for case CNR: {}", actSection, courtCase.getCnrNumber());
+                log.info("Extracted act section: {} for case CNR: {}", actSection, courtCase.getCnrNumber());
                 return actSection;
             }
             
-            log.debug("No act section found for case CNR: {}", courtCase.getCnrNumber());
+            log.info("No act section found for case CNR: {}", courtCase.getCnrNumber());
             return null;
             
         } catch (Exception e) {

@@ -53,13 +53,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
             }
 
             // Process and push extra advocates
-            List<ExtraAdvocateDetails> extraAdvocates = buildExtraAdvocates(courtCase, extraParties);
-            if (!extraAdvocates.isEmpty()) {
-                producer.push("save-extra-advocate-details", extraAdvocates);
-                log.info("Pushed {} extra advocates to Kafka for case CNR: {}", 
-                        extraAdvocates.size(), courtCase.getCnrNumber());
-            }
-
+            buildExtraAdvocates(courtCase, extraParties);
             log.info("Successfully processed extra parties for case CNR: {}", courtCase.getCnrNumber());
 
         } catch (Exception e) {
@@ -102,20 +96,11 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
         log.debug("Added {} respondent witnesses for case CNR: {}", 
                  resWitnessDetails.size(), courtCase.getCnrNumber());
 
-        // If first complainant exists → srNo = 0
-        if (!extraComplainants.isEmpty()) {
-            extraComplainants.get(0).setSrNo(0);
-        }
-
-        // If first respondent exists → srNo = 0
-        if (!extraRespondents.isEmpty()) {
-            extraRespondents.get(0).setSrNo(0);
-        }
-
-        int srCounter = 1;
-        for (PartyDetails party : extraParties) {
-            if (party.getSrNo() != null && party.getSrNo() == 0) continue;
-            party.setSrNo(srCounter++);
+        // Assign serial numbers only if there are extra parties
+        if (!extraParties.isEmpty()) {
+            for (int i = 0; i < extraParties.size(); i++) {
+                extraParties.get(i).setSrNo(i + 1);
+            }
         }
 
         log.debug("Total extra parties found: {} for case CNR: {}",
@@ -123,7 +108,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
         return extraParties;
     }
 
-    private List<ExtraAdvocateDetails> buildExtraAdvocates(CourtCase courtCase, List<PartyDetails> extraParties) {
+    private void buildExtraAdvocates(CourtCase courtCase, List<PartyDetails> extraParties) {
         log.debug("Building extra advocates for {} parties in case CNR: {}", 
                  extraParties.size(), courtCase.getCnrNumber());
         
@@ -131,7 +116,16 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
 
         for (PartyDetails party : extraParties) {
             try {
-                processPartyAdvocates(courtCase, party, extraAdvocatesList);
+                List<ExtraAdvocateDetails> partyAdvocatesList = new ArrayList<>();
+                processPartyAdvocates(courtCase, party, partyAdvocatesList);
+                if(!partyAdvocatesList.isEmpty()) {
+                    // Add serial numbers to extra advocate list for that party
+                    for (int i = 0; i < partyAdvocatesList.size(); i++) {
+                        partyAdvocatesList.get(i).setSrNo(i + 1);
+                    }
+                    producer.push("save-extra-advocate-details", partyAdvocatesList);
+                    extraAdvocatesList.addAll(partyAdvocatesList);
+                }
             } catch (Exception e) {
                 log.error("Error processing advocates for party {} in case CNR: {}: {}", 
                          party.getPartyId(), courtCase.getCnrNumber(), e.getMessage(), e);
@@ -141,7 +135,6 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
 
         log.debug("Built {} extra advocates for case CNR: {}", 
                  extraAdvocatesList.size(), courtCase.getCnrNumber());
-        return extraAdvocatesList;
     }
 
     private void processPartyAdvocates(CourtCase courtCase, PartyDetails party, 
@@ -165,13 +158,10 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
             return;
         }
 
-        int srNo = !existingAdvocates.isEmpty() ? 
-                   existingAdvocates.get(existingAdvocates.size() - 1).getSrNo() + 1 : 1;
-
         for (String advocateId : advocateIds) {
             try {
                 processAdvocate(courtCase, party, partyType, existingAdvocates, 
-                              extraAdvocatesList, advocateId, srNo++);
+                              extraAdvocatesList, advocateId);
             } catch (Exception e) {
                 log.error("Error processing advocate {} for party {} in case CNR: {}: {}", 
                          advocateId, party.getPartyId(), courtCase.getCnrNumber(), e.getMessage(), e);
@@ -200,35 +190,35 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
     private void processAdvocate(CourtCase courtCase, PartyDetails party, String partyType,
                                List<ExtraAdvocateDetails> existingAdvocates,
                                List<ExtraAdvocateDetails> extraAdvocatesList,
-                               String advocateId, int srNo) {
-        
+                               String advocateId) {
+
         AdvocateDetails advocateDetails = advocateRepository.getAdvocateDetails(advocateId);
         if (advocateDetails == null) {
-            log.warn("No advocate details found for advocate ID: {} in case CNR: {}", 
+            log.warn("No advocate details found for advocate ID: {} in case CNR: {}",
                     advocateId, courtCase.getCnrNumber());
             return;
         }
 
         if (advocateDetails.getAdvocateCode().equals(party.getAdvCd())) {
-            log.debug("Skipping advocate {} as it matches party advocate code in case CNR: {}", 
+            log.debug("Skipping advocate {} as it matches party advocate code in case CNR: {}",
                      advocateId, courtCase.getCnrNumber());
             return;
         }
 
         // Check if advocate already exists
-        boolean advocateExists = updateExistingAdvocate(existingAdvocates, extraAdvocatesList, 
+        boolean advocateExists = updateExistingAdvocate(existingAdvocates, extraAdvocatesList,
                                                        advocateDetails, party, partyType);
 
         if (!advocateExists) {
-            createNewExtraAdvocate(courtCase, advocateDetails, party, partyType, 
-                                 extraAdvocatesList, srNo);
+            createNewExtraAdvocate(courtCase, advocateDetails, party, partyType,
+                                 extraAdvocatesList);
         }
     }
 
     private boolean updateExistingAdvocate(List<ExtraAdvocateDetails> existingAdvocates,
                                          List<ExtraAdvocateDetails> extraAdvocatesList,
                                          AdvocateDetails advocateDetails, PartyDetails party, String partyType) {
-        
+
         for (ExtraAdvocateDetails extraAdvocateDetails : existingAdvocates) {
             if (extraAdvocateDetails.getAdvCode().equals(advocateDetails.getAdvocateCode())) {
                 extraAdvocateDetails.setPartyNo(party.getSrNo());
@@ -237,8 +227,8 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                 extraAdvocateDetails.setAdvName(advocateDetails.getAdvocateName());
                 extraAdvocateDetails.setPetResName(party.getPartyName());
                 extraAdvocatesList.add(extraAdvocateDetails);
-                
-                log.debug("Updated existing advocate {} for party {} in case", 
+
+                log.debug("Updated existing advocate {} for party {} in case",
                          advocateDetails.getAdvocateCode(), party.getPartyId());
                 return true;
             }
@@ -247,8 +237,8 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
     }
 
     private void createNewExtraAdvocate(CourtCase courtCase, AdvocateDetails advocateDetails, PartyDetails party,
-                                      String partyType, List<ExtraAdvocateDetails> extraAdvocatesList, int srNo) {
-        
+                                      String partyType, List<ExtraAdvocateDetails> extraAdvocatesList) {
+
         ExtraAdvocateDetails extraAdvocateDetails = ExtraAdvocateDetails.builder()
                 .cino(courtCase.getCnrNumber())
                 .advCode(advocateDetails.getAdvocateCode())
@@ -256,11 +246,10 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                 .type(COMPLAINANT_PRIMARY.equals(partyType) ? 1 : 2)
                 .petResName(party.getPartyName())
                 .partyNo(party.getSrNo())
-                .srNo(srNo)
                 .build();
-        
+
         extraAdvocatesList.add(extraAdvocateDetails);
-        log.debug("Created new extra advocate {} for party {} in case CNR: {}", 
+        log.debug("Created new extra advocate {} for party {} in case CNR: {}",
                  advocateDetails.getAdvocateCode(), party.getPartyId(), courtCase.getCnrNumber());
     }
 }

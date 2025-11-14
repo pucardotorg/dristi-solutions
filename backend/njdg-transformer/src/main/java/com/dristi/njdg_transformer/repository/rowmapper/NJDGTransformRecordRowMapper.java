@@ -32,6 +32,8 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         record.setPetAddress(rs.getString("pet_address"));
         record.setResAddress(rs.getString("res_address"));
         record.setJocode(rs.getString("jocode"));
+        record.setJudgeCode(rs.getInt("judge_code"));
+        record.setDesigCode(rs.getInt("desig_code"));
         
         // Character fields
         String pendDisp = rs.getString("pend_disp");

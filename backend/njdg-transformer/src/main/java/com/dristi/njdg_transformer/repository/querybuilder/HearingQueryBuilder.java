@@ -16,7 +16,9 @@ public class HearingQueryBuilder {
             "judge_code as judge_code, " +
             "jocode as jocode, " +
             "desg_code as desg_code, " +
-            "hearing_id as hearing_id " +
+            "hearing_id as hearing_id, " +
+            "business as business, " +
+            "court_no as court_no " +
             "FROM case_hearings ";
 
     public String getHearingQuery(){

@@ -145,6 +145,7 @@ public class NjdgConsumer {
             if (existingRecord != null) {
                 existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
                 existingRecord.setDateNextList(hearingDetails.getHearingDate());
+                existingRecord.setDateLastList(hearingDetails.getHearingDate());
                 existingRecord.setPurposeCode(Integer.valueOf(hearingDetails.getPurposeOfListing()));
                 caseRepository.updateRecord(existingRecord);
                 log.debug("Updated case record with hearing info | CINO: {}", cino);

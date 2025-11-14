@@ -225,8 +225,6 @@ public class CaseEnrichment implements PartyEnricher {
                 .toList();
 
         List<ExtraAdvocateDetails> extraAdvocateDetailsList = new ArrayList<>();
-        int srNo = !existingAdvocates.isEmpty() ? existingAdvocates.get(existingAdvocates.size()-1).getSrNo()+1 : 1;
-
         for (String advocateId : advocateIds) {
             if(primaryAdvocateId.equalsIgnoreCase(advocateId)) continue;
             AdvocateDetails advocateDetail = advocateRepository.getAdvocateDetails(advocateId);
@@ -250,14 +248,15 @@ public class CaseEnrichment implements PartyEnricher {
                         .type(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? 1 : 2)
                         .petResName(COMPLAINANT_PRIMARY.equalsIgnoreCase(party) ? record.getPetName() : record.getResName())
                         .partyNo(0)
-                        .srNo(srNo)
                         .build();
-                srNo++;
                 extraAdvocateDetailsList.add(extraAdvocateDetails);
             }
         }
 
         if (!extraAdvocateDetailsList.isEmpty()) {
+            for (int i = 0; i < extraAdvocateDetailsList.size(); i++) {
+                extraAdvocateDetailsList.get(i).setSrNo(i + 1);
+            }
             producer.push("save-extra-advocate-details", extraAdvocateDetailsList);
         }
     }
@@ -285,10 +284,12 @@ public class CaseEnrichment implements PartyEnricher {
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
-            int partyNo = 1;
+            int partyNo = 2;
             for (JsonNode dataNode : formDataArray) {
                 PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
-                partyDetailsList.add(partyDetails);
+                if (partyDetails != null) {
+                    partyDetailsList.add(partyDetails);
+                }
             }
         } catch (Exception e) {
             log.error("Error enriching extra parties: {}", e.getMessage());
@@ -297,18 +298,27 @@ public class CaseEnrichment implements PartyEnricher {
     }
 
     private PartyDetails mapExtraPartyDetails(CourtCase courtCase, JsonNode dataNode, String partyType, int partyNo, PartyType partyTypeEnum) {
-//        String individualIdPath = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
-//                "complainantVerification" : "respondentVerification";
-//        String uniqueId = dataNode.path("data")
-//                .path(individualIdPath)
-//                .path("individualDetails")
-//                .path("individualId")
-//                .asText(null);
-//        if (uniqueId == null || uniqueId.isEmpty()) {
-//            uniqueId = dataNode.path("uniqueId").asText(null);
-//        }
-//        Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
-//        if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) return null;
+        String individualIdPath = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
+                "complainantVerification" : "respondentVerification";
+        String uniqueId = dataNode.path("data")
+                .path(individualIdPath)
+                .path("individualDetails")
+                .path("individualId")
+                .asText(null);
+        if (uniqueId == null || uniqueId.isEmpty()) {
+            uniqueId = dataNode.path("uniqueId").asText(null);
+        }
+        Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
+        if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) {
+            log.debug("Skipping party mapping - uniqueId {} matches primary party {} for case CNR: {}", 
+                     uniqueId, partyType, courtCase.getCnrNumber());
+            return null;
+        }
+        if(PartyType.RES.equals(partyTypeEnum) && primaryParty == null) {
+            log.info("No primary respondent joined the case CNR: {} - skipping respondent mapping",
+                    courtCase.getCnrNumber());
+            return null;
+        }
 //        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
 //        for (PartyDetails pd : existingParties) {
 //            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
