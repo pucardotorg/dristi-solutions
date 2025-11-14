@@ -1,5 +1,6 @@
 package org.pucar.dristi.web.controllers;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.TaskService;
 import org.pucar.dristi.util.ResponseInfoFactory;
@@ -131,6 +132,15 @@ public class TaskApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         BulkSendResponse taskResponse = BulkSendResponse.builder().bulkSendTasks(bulkSendTasks).responseInfo(responseInfo).build();
         return new ResponseEntity<>(taskResponse, HttpStatus.OK);
+    }
+
+    
+
+    @PostMapping("/v1/enrich-party-uuids")
+    public ResponseEntity<List<TaskUpdateState>> enrichAllUniqueIds() {
+        RequestInfo requestInfo = null; //todo change
+        List<TaskUpdateState> taskUpdateStates = taskService.enrichPartyUuidInTaskDetails(requestInfo);
+        return new ResponseEntity<>(taskUpdateStates, HttpStatus.OK);
     }
 
 }

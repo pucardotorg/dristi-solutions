@@ -20,6 +20,8 @@ import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
@@ -33,6 +35,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -130,6 +133,202 @@ public class TaskService {
             log.error("Error occurred while creating task :: {}", e.toString());
             throw new CustomException(CREATE_TASK_ERR, e.getMessage());
         }
+    }
+
+    public List<TaskUpdateState> enrichPartyUuidInTaskDetails(RequestInfo requestInfo) {
+        List<TaskUpdateState> taskUpdateStates = new ArrayList<>();  // Store task states
+
+        try {
+            List<String> filingNumbers = taskRepository.getDistinctFilingNumbers();
+            int caseCount = filingNumbers.size();
+
+            // Loop through cases and tasks
+            for (int i = 0; i < caseCount; i += 10) {
+                CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                        .requestInfo(requestInfo)
+                        .criteria(Collections.emptyList())
+                        .build();
+
+                for (int j = 0; j < 10 && i + j < caseCount; j++) {
+                    String filingNumber = filingNumbers.get(i + j);
+                    CaseCriteria caseCriteria = CaseCriteria.builder()
+                            .filingNumber(filingNumber)
+                            .defaultFields(false)
+                            .build();
+                    caseSearchRequest.getCriteria().add(caseCriteria);
+
+                    // Case Search Call with error handling
+                    List<CourtCase> caseList = null;
+                    try {
+                        caseList = caseUtil.searchCases(caseSearchRequest);
+                    } catch (Exception e) {
+                        log.error("Error occurred during case search for filing number {}: {}", filingNumber, e.toString());
+                        // Optionally, add to taskUpdateStates with an error status
+                        taskUpdateStates.add(new TaskUpdateState(
+                                filingNumber,
+                                null,  // No task details because case search failed
+                                null,  // No task details because case search failed
+                                "Error - Case Search Failed"
+                        ));
+                        continue;  // Skip this case if case search fails
+                    }
+
+                    for (CourtCase courtCase : caseList) {
+                        Map<String, String> respondentNameToUniqueIdMap = getRespondentNameToUniqueIdMap(courtCase);
+                        Map<String, String> witnessNameToUniqueIdMap = getWitnessNameToUniqueIdMap(courtCase);
+
+                        TaskCriteria taskCriteria = TaskCriteria.builder()
+                                .filingNumber(courtCase.getFilingNumber())
+                                .build();
+
+                        List<Task> caseTasks = taskRepository.getTasks(taskCriteria, null);
+                        for (Task task : caseTasks) {
+                            // Process each task with error handling
+                            try {
+                                Object taskDetails = task.getTaskDetails();
+                                JsonNode taskDetailsNodeBefore = objectMapper.convertValue(taskDetails, JsonNode.class);
+                                JsonNode taskDetailsNodeAfter = taskDetailsNodeBefore.deepCopy();  // Make a copy for after update
+
+                                boolean taskUpdated = false;
+
+                                ObjectNode respondentDetailsNodeBefore = (ObjectNode) taskDetailsNodeBefore.path("respondentDetails");
+                                ObjectNode witnessDetailsNodeBefore = (ObjectNode) taskDetailsNodeBefore.path("witnessDetails");
+
+                                ObjectNode respondentDetailsNodeAfter = (ObjectNode) taskDetailsNodeAfter.path("respondentDetails");
+                                ObjectNode witnessDetailsNodeAfter = (ObjectNode) taskDetailsNodeAfter.path("witnessDetails");
+
+                                // Respondent Details Update
+                                if (respondentDetailsNodeBefore != null && !respondentDetailsNodeBefore.isNull()) {
+                                    String respondentName = respondentDetailsNodeBefore.path("name").asText();
+                                    String respondentUniqueId = respondentNameToUniqueIdMap.get(respondentName);
+                                    if (respondentUniqueId != null) {
+                                        // Modify taskDetailsNodeAfter
+                                        respondentDetailsNodeAfter.put("uniqueId", respondentUniqueId);
+                                        taskUpdated = true;
+                                    }
+                                }
+
+                                // Witness Details Update
+                                if (witnessDetailsNodeBefore != null && !witnessDetailsNodeBefore.isNull()) {
+                                    String witnessName = witnessDetailsNodeBefore.path("name").asText();
+                                    String witnessUniqueId = witnessNameToUniqueIdMap.get(witnessName);
+                                    if (witnessUniqueId != null) {
+                                        // Modify taskDetailsNodeAfter
+                                        witnessDetailsNodeAfter.put("uniqueId", witnessUniqueId);
+                                        taskUpdated = true;
+                                    }
+                                }
+
+                                // After Update: Capture updated state
+                                if (taskUpdated) {
+                                    TaskRequest taskRequest = TaskRequest.builder()
+                                            .requestInfo(requestInfo)
+                                            .task(task)
+                                            .build();
+                                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+
+                                    // After update: Add to result list
+                                    taskUpdateStates.add(new TaskUpdateState(
+                                            task.getFilingNumber(),
+                                            taskDetailsNodeBefore,  // Before Update
+                                            taskDetailsNodeAfter,   // After Update
+                                            "Updated"
+                                    ));
+                                } else {
+                                    // If the task was not updated (due to missing uniqueId)
+                                    taskUpdateStates.add(new TaskUpdateState(
+                                            task.getFilingNumber(),
+                                            taskDetailsNodeBefore,  // Before Update
+                                            taskDetailsNodeAfter,   // After Update (no changes)
+                                            "Ignored - Duplicate Names or Missing UniqueId"
+                                    ));
+                                }
+                            } catch (Exception e) {
+                                log.error("Error occurred while processing task for filing number {}: {}", task.getFilingNumber(), e.toString());
+                                taskUpdateStates.add(new TaskUpdateState(
+                                        task.getFilingNumber(),
+                                        null,  // No task details because task processing failed
+                                        null,  // No task details because task processing failed
+                                        "Error - Task Processing Failed"
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error occurred during the overall process: {}", e.toString());
+            // You can optionally add a final entry to indicate the failure of the whole process
+            taskUpdateStates.add(new TaskUpdateState(
+                    "N/A",  // Indicate no specific task or filing number
+                    null,  // No task details because the whole process failed
+                    null,  // No task details because the whole process failed
+                    "Error - Overall Process Failed"
+            ));
+        }
+
+        // Return the list of task update states (before and after the update)
+        return taskUpdateStates;
+    }
+
+
+
+    private Map<String, String> getRespondentNameToUniqueIdMap(CourtCase courtCase){
+
+        Map<String, String> respondentNameToUniqueIdMap = new HashMap<>();
+
+        JsonNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        JsonNode respondentFormNode = additionalDetailsNode.path("respondentDetails").path("formdata");
+        for(JsonNode respondentNode: respondentFormNode){
+            JsonNode respondentDataNode = respondentNode.path("data");
+            String respondentFirstName = respondentDataNode.path("respondentFirstName").textValue();
+            String respondentMiddleName = respondentDataNode.path("respondentMiddleName").textValue();
+            String respondentLastName = respondentDataNode.path("respondentLastName").textValue();
+
+            List<String> nameParts = Stream.of(respondentFirstName, respondentMiddleName, respondentLastName)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            String respondentFullName = String.join(" ", nameParts);
+
+            String uniqueId = respondentNode.get("uniqueId").textValue();
+            respondentNameToUniqueIdMap.put(respondentFullName, uniqueId);
+
+        }
+
+        return respondentNameToUniqueIdMap;
+    }
+
+    private Map<String, String> getWitnessNameToUniqueIdMap(CourtCase courtCase){
+        Map<String, String> witnessNameToUniqueIdMap = new HashMap<>();
+
+        for(WitnessDetails witnessDetails: courtCase.getWitnessDetails()){
+            String witnessFirstName = witnessDetails.getFirstName();
+            String witnessMiddleName = witnessDetails.getMiddleName();
+            String witnessLastName = witnessDetails.getLastName();
+
+            List<String> nameParts = Stream.of(witnessFirstName, witnessMiddleName, witnessLastName)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            String witnessFullName = String.join(" ", nameParts);
+            String designation = witnessDetails.getWitnessDesignation();
+
+            if (!witnessFullName.isEmpty()) {
+                if (designation != null && !designation.isBlank()) {
+                    witnessFullName = witnessFullName + " - " + designation;
+                }
+            } else if (designation != null && !designation.isBlank()) {
+                witnessFullName = designation;
+            }
+
+            witnessNameToUniqueIdMap.put(witnessFullName, witnessDetails.getUniqueId());
+
+        }
+
+        return witnessNameToUniqueIdMap;
     }
 
     public void createDemandForPayment(TaskRequest body) {

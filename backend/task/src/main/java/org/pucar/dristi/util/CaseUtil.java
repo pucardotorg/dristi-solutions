@@ -160,4 +160,18 @@ public class CaseUtil {
         }
         return litigantPoaMapping;
     }
+
+    public List<CourtCase> searchCases(CaseSearchRequest caseSearchRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getCaseHost()).append(config.getCaseSearchPath());
+        try{
+            CaseListResponse caseListResponse = restTemplate.postForObject(uri.toString(), caseSearchRequest, CaseListResponse.class);
+            List<CourtCase> courtCases = new ArrayList<>();
+            caseListResponse.getCriteria().forEach(criteria -> courtCases.addAll(criteria.getResponseList()));
+            return courtCases;
+        } catch (Exception e) {
+            log.error("Error while searching case", e);
+        }
+        return Collections.emptyList();
+    }
 }
