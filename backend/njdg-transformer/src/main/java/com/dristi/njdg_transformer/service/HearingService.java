@@ -40,10 +40,15 @@ public class HearingService {
 
         if (alreadyExists) {
             log.info("Hearing with ID {} already exists for CINO {}. Skipping insert.", hearing.getHearingId(), cino);
-            return hearingDetails.stream()
+           HearingDetails existingHearings = hearingDetails.stream()
                     .filter(h -> h.getHearingId() != null && h.getHearingId().equals(hearing.getHearingId()))
                     .findFirst()
                     .orElse(null);
+           if(existingHearings != null) {
+               existingHearings.setBusiness(hearing.getHearingSummary());
+               producer.push("save-hearing-details", existingHearings);
+               return existingHearings;
+           }
         }
 
         // Determine the next max values for id and sr_no
