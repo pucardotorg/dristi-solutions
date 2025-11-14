@@ -36,6 +36,7 @@ const WitnessDepositionReviewModal = ({
   setShowsignatureModal,
   courtId,
   cnrNumber,
+  filingNumber
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -59,6 +60,7 @@ const WitnessDepositionReviewModal = ({
           tenantId: tenantId,
           artifactNumber: currentEvidence?.artifactNumber, // need to change
           cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
           qrCode: false,
           hearingPdfType: witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"], // need to change
           courtId: courtId,

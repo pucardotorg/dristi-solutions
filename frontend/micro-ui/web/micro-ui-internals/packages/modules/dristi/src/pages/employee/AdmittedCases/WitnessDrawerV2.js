@@ -624,6 +624,7 @@ const WitnessDrawerV2 = ({
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
+  const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails]);
 
   const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
@@ -1426,6 +1427,7 @@ const WitnessDrawerV2 = ({
             currentEvidence={currentEvidence}
             courtId={caseCourtId}
             cnrNumber={cnrNumber}
+            filingNumber={filingNumber}
             setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
             tag={obtainedTag || selectedWitnessType?.value}
           />
