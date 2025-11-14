@@ -781,12 +781,21 @@ const WitnessDrawerV2 = ({
   };
 
   const isWitnessTypeDisabled = useMemo(() => {
-    const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
-    if (party?.tag) {
-      return true;
-    }
-    return false;
+    const party = allParties?.find(
+      (p) =>
+        p?.uuid === selectedWitness?.value ||
+        p?.uniqueId === selectedWitness?.value
+    );
+
+    // Check if tag ends with a number
+    const hasNumberSuffix = (tag) => {
+      if (!tag || !tag.trim()) return false;
+      return /\d+$/.test(tag);   // same as Java's ".*\\d+$"
+    };
+
+    return hasNumberSuffix(party?.tag);
   }, [selectedWitness, allParties]);
+
 
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
