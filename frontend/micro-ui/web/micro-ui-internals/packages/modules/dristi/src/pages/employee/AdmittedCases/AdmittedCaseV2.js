@@ -55,6 +55,7 @@ import MarkAsEvidence from "./MarkAsEvidence";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
+import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -2484,13 +2485,39 @@ const AdmittedCaseV2 = () => {
         } else if (option.value === "GENERATE_BAIL_BOND") {
           if (complainantsList?.length === 1) {
             setApiCalled(true);
-            const res = await DRISTIService?.searchBailBonds(
-              { criteria: { filingNumber, litigantIndId: complainantsList?.[0]?.uuid, status: ["DRAFT_IN_PROGRESS"] } },
+            const res = await DRISTIService?.getPendingTaskService(
+              {
+                SearchCriteria: {
+                  tenantId,
+                  moduleName: "Pending Tasks Service",
+                  moduleSearchCriteria: {
+                    isCompleted: false,
+                    ...(isCitizen && { assignedTo: userInfo?.uuid }),
+                    ...(courtId && { courtId }),
+                    filingNumber,
+                    entityType: "bail bond",
+                  },
+                  limit: 1000,
+                  offset: 0,
+                },
+              },
               { tenantId }
             );
-            const bailbondId = res?.bails?.[0]?.bailId;
-            if (bailbondId) {
-              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond/view?filingNumber=${filingNumber}&bailBondId=${bailbondId}`);
+            const pendingTaskResponse = res?.data || [];
+            const pendingTaskDetails = convertTaskResponseToPayload(pendingTaskResponse);
+
+            if (pendingTaskResponse?.length > 0 && pendingTaskDetails?.additionalDetails?.bailbondId) {
+              history.push(
+                `/${window?.contextPath}/citizen/submissions/bail-bond/view?filingNumber=${filingNumber}&bailBondId=${pendingTaskDetails?.additionalDetails?.bailbondId}`
+              );
+            } else if (pendingTaskResponse?.length > 0) {
+              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`, {
+                state: {
+                  params: {
+                    actualReferenceId: pendingTaskDetails?.referenceId,
+                  },
+                },
+              });
             } else {
               history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
             }
@@ -2505,7 +2532,7 @@ const AdmittedCaseV2 = () => {
         setApiCalled(false);
       }
     },
-    [history, filingNumber, complainantsList, tenantId]
+    [history, filingNumber]
   );
 
   const handleCourtAction = useCallback(() => {

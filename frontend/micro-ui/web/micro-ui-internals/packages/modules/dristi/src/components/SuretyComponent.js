@@ -214,7 +214,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                                 handleChange(e, input, formIndex);
                               }
                             }}
-                            disable={Boolean(input?.isDisabled || instanceLocked)}
+                            disable={input?.isDisabled || formIndex < config?.formDisbalityCount || instanceLocked}
                             isRequired={input?.validation?.isRequired}
                             pattern={input?.validation?.pattern}
                             errMsg={input?.validation?.errMsg}
@@ -241,20 +241,21 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                     {input?.component === "SelectMultiUpload" && (
                       <div style={{ marginBottom: "20px" }}>
                         <SelectCustomDragDrop
-                          config={{ ...input, disable: Boolean(input?.disable || instanceLocked) }}
+                          config={input}
                           t={t}
                           onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
                           formData={formInstances[formIndex]}
                           errors={errors}
                           setError={setError}
                           clearErrors={clearErrors}
+                          formDisbalityCount={formIndex < config?.formDisbalityCount}
                         />
                       </div>
                     )}
                     {input?.component === "AddressBailBond" && (
                       <div>
                         <AddressBailBond
-                          config={getAddressConfigWithDisable()}
+                          config={input}
                           t={t}
                           onSelect={(key, data) => {
                             setValue(data, key, input, formIndex);
@@ -265,6 +266,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                           clearErrors={clearErrors}
                           control={control}
                           watch={watch}
+                          formDisbalityCount={formIndex < config?.formDisbalityCount}
                         />
                       </div>
                     )}

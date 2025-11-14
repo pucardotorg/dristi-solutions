@@ -306,6 +306,26 @@ const GenerateBailBondV2 = () => {
     return applicationData?.applicationList?.[0];
   }, [applicationData]);
 
+  const _getNoOfSureties = (bailBondDetails, pendingTasks) => {
+    if (bailBondDetails && bailBondDetails?.status?.toUpperCase() !== "SURETY") {
+      return false;
+    }
+
+    if (bailBondDetails && bailBondDetails?.status?.toUpperCase() === "SURETY" && bailBondDetails?.sureties?.length < 1) {
+      return false;
+    }
+
+    if (pendingTasks?.length < 1) {
+      return false;
+    }
+
+    if (pendingTasks?.additionalDetails?.noOfSureties < 1) {
+      return false;
+    }
+
+    return true;
+  };
+
   const modifiedFormConfig = useMemo(() => {
     let bailnewConfig = bailBondConfig;
 
@@ -322,11 +342,7 @@ const GenerateBailBondV2 = () => {
     };
 
     const bodyFields = bailnewConfig?.[0]?.body || [];
-    if (
-      !clearAutoPopulatedData &&
-      ((bailBondDetails && bailBondDetails?.sureties?.length > 0) || pendingTaskAdditionalDetails?.noOfSureties) &&
-      formdata?.selectComplainant?.name
-    ) {
+    if (!clearAutoPopulatedData && _getNoOfSureties(bailBondDetails, pendingTasks) && formdata?.selectComplainant?.name) {
       const alreadyExists = bodyFields.some((field) => field?.key === "noOfSureties");
       if (!alreadyExists) {
         bailnewConfig[0].body.push(noOfSuretiesField);
@@ -413,6 +429,18 @@ const GenerateBailBondV2 = () => {
               formdata?.selectComplainant?.name
             ) {
               return { ...body, disable: true };
+            }
+
+            if (
+              body?.key === "sureties" &&
+              !clearAutoPopulatedData &&
+              formdata?.selectComplainant?.name &&
+              pendingTaskAdditionalDetails?.noOfSureties > 0
+            ) {
+              return {
+                ...body,
+                formDisbalityCount: applicationDetails?.applicationDetails?.sureties?.length || 0,
+              };
             }
 
             return {
