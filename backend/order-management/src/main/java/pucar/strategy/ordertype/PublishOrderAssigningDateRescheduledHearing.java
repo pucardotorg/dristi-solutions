@@ -91,9 +91,16 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
             hearingNumber = orderUtil.getHearingNumberFormApplicationAdditionalDetails(applications.get(0).getAdditionalDetails());
         }
         log.info("hearingNumber:{}", hearingNumber);
-        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-        Hearing hearing = hearings.get(0);
+        Hearing hearing = null;
+        if(hearingNumber!=null) {
+            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+             hearing = hearings.get(0);
+        }else{
+            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
+            hearing = hearings.get(0);
+        }
 
         order.setHearingNumber(hearing.getHearingId());
 
