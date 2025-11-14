@@ -35,7 +35,6 @@ public class OrderRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgsList = new ArrayList<>();
 
-        preparedStmtList.add(interimOrder.getId());
         preparedStmtList.add(interimOrder.getCino());
         preparedStmtList.add(interimOrder.getSrNo());
         preparedStmtList.add(interimOrder.getOrderDate());
@@ -51,7 +50,6 @@ public class OrderRepository {
         preparedStmtList.add(interimOrder.getDesgCode());
 
         // Corresponding SQL types
-        preparedStmtArgsList.add(Types.INTEGER); // id
         preparedStmtArgsList.add(Types.VARCHAR); // cino
         preparedStmtArgsList.add(Types.INTEGER); // sr_no
         preparedStmtArgsList.add(Types.DATE);    // order_date

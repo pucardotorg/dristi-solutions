@@ -64,21 +64,12 @@ public class OrderService {
 
         int nextOrderNo = maxOrderNo + 1;
 
-        // Determine next ID (optional: sequential like before)
-        int maxId = interimOrders.stream()
-                .mapToInt(InterimOrder::getId)
-                .max()
-                .orElse(0);
-
-        int nextId = maxId + 1;
-
         CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, order.getFilingNumber());
         JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
         CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
         DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
         JudgeDetails judgeDetails = caseRepository.getJudge(courtCase.getJudgeId());
         InterimOrder newOrder = InterimOrder.builder()
-                .id(nextId)
                 .cino(cino)
                 .orderNo(nextOrderNo)
                 .orderDate(formatDate(order.getCreatedDate()))

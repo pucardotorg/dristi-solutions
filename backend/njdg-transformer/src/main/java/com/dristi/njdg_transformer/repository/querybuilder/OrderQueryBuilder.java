@@ -31,7 +31,6 @@ public class OrderQueryBuilder {
 
     public String getInsertInterimOrderQuery() {
         return "INSERT INTO interim_orders (" +
-                "id, " +
                 "cino, " +
                 "sr_no, " +
                 "order_date, " +
@@ -45,6 +44,6 @@ public class OrderQueryBuilder {
                 "court_no, " +
                 "judge_code, " +
                 "desg_code" +
-                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 }
