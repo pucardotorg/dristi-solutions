@@ -283,7 +283,7 @@ const AddOrderTypeModal = ({
   }, [currentOrder, index]);
 
   const initialBailType = useMemo(() => {
-    const bt = newCurrentOrder?.additionalDetails?.bailType;
+    const bt = newCurrentOrder?.additionalDetails?.formdata?.bailType;
     if (bt == null) return { type: "SURETY", code: "SURETY", name: "SURETY" };
     if (typeof bt === "object" && Object.keys(bt).length === 0) return { type: "SURETY", code: "SURETY", name: "SURETY" };
     return bt;
