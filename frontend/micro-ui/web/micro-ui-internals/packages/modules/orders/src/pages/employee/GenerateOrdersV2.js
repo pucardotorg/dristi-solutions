@@ -1856,25 +1856,25 @@ const GenerateOrdersV2 = () => {
     [currentOrder]
   );
 
-  const getDefaultValue = useCallback(
-    (index) => {
-      if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
-        return {
-          orderType: {
-            ...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
-          },
-        };
-      }
+const getDefaultValue = useCallback(
+(index) => {
+if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
+return {
+orderType: {
+...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
+},
+};
+}
 
-      const newCurrentOrder =
-        currentOrder?.orderCategory === "COMPOSITE"
-          ? {
-              ...currentOrder,
-              additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
-              orderDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.orderDetails,
-              orderType: currentOrder?.compositeItems?.[index]?.orderType,
-            }
-          : currentOrder;
+const newCurrentOrder =
+currentOrder?.orderCategory === "COMPOSITE"
+? {
+...currentOrder,
+additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
+orderDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.orderDetails,
+orderType: currentOrder?.compositeItems?.[index]?.orderType,
+}
+: currentOrder;
 
       let updatedFormdata = newCurrentOrder?.additionalDetails?.formdata || {};
       const currentOrderType = newCurrentOrder?.orderType || orderType?.code || "";
@@ -1942,20 +1942,6 @@ const GenerateOrdersV2 = () => {
 
         updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
-      }
-      if (currentOrderType === "ACCEPT_BAIL") {
-        const alreadySet =
-          updatedFormdata?.bailType &&
-          (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
-        if (!alreadySet) {
-          const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
-        updatedFormdata.bailType = {
-            type: defaultAcceptBailType,
-            code: defaultAcceptBailType,
-            name: defaultAcceptBailType,
-        };
-          setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
-        }
       }
 
       if (currentOrderType === "SET_BAIL_TERMS") {
@@ -3046,9 +3032,10 @@ const GenerateOrdersV2 = () => {
       setAddOrderTypeLoader(true);
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
+      const requestBailBond = orderFormData?.requestBailBond;
       const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
-      if (isAcceptBailOrder) {
+      if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
         await createPendingTaskForEmployee(updateOrderResponse?.order);
       }

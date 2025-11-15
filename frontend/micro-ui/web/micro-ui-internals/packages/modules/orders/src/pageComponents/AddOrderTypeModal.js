@@ -282,6 +282,13 @@ const AddOrderTypeModal = ({
     return currentOrder;
   }, [currentOrder, index]);
 
+  const initialBailType = useMemo(() => {
+    const bt = newCurrentOrder?.additionalDetails?.bailType;
+    if (bt == null) return { type: "SURETY", code: "SURETY", name: "SURETY" };
+    if (typeof bt === "object" && Object.keys(bt).length === 0) return { type: "SURETY", code: "SURETY", name: "SURETY" };
+    return bt;
+  }, [newCurrentOrder]);
+
   return (
     <React.Fragment>
       <Modal
@@ -350,6 +357,7 @@ const AddOrderTypeModal = ({
                     className={"generate-orders order-type-modal"}
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
+                      ...(orderType?.code === "ACCEPT_BAIL" && { bailType: initialBailType }),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}
@@ -362,7 +370,9 @@ const AddOrderTypeModal = ({
                     onSubmit={() => {
                       const updatedFormData = {
                         ...formdata,
-                        requestBailBond: newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
+                        ...(newCurrentOrder?.orderType === "ACCEPT_BAIL" && {
+                          requestBailBond: newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
+                        }),
                       };
                       handleSubmit(updatedFormData, index);
                     }}
