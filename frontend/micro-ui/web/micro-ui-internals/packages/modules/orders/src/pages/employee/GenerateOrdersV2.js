@@ -362,7 +362,7 @@ const GenerateOrdersV2 = () => {
     }
   };
 
-  const createPendingTaskForEmployee = async (orderObj, bailFormData) => {
+  const createPendingTaskForEmployee = async (orderObj) => {
     try {
       const getUserUUID = async (individualId) => {
         try {
@@ -377,6 +377,8 @@ const GenerateOrdersV2 = () => {
         }
       };
 
+      console.log(orderObj, "klkl");
+
       const bailFormData = (() => {
         if (orderObj?.orderCategory === "INTERMEDIATE" && (orderObj?.orderType === "ACCEPT_BAIL" || orderType?.code === "ACCEPT_BAIL")) {
           return orderObj?.additionalDetails?.formdata || {};
@@ -384,6 +386,7 @@ const GenerateOrdersV2 = () => {
         const acceptBailItem = orderObj?.compositeItems?.find?.((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
         return acceptBailItem?.orderSchema?.additionalDetails?.formdata || {};
       })();
+      console.log(bailFormData, "gfg");
 
       const bailOfName = bailFormData?.bailOf;
       const bailType = bailFormData?.bailType?.code || null;
@@ -457,8 +460,9 @@ const GenerateOrdersV2 = () => {
           })()),
         ...(noOfSureties != null && { noOfSureties: Number(noOfSureties) }),
       };
+      console.log(additionalDetails, "klkkl");
 
-      if (accusedKey) {
+      if (referenceId !== `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`) {
         const res = await ordersService.getPendingTaskService({
           SearchCriteria: {
             tenantId,
@@ -524,13 +528,6 @@ const GenerateOrdersV2 = () => {
     } catch (err) {
       console.error("Error creating raise bail bond task:", err);
     }
-  };
-
-  const createBailBondTaskForOrder = async (orderNumberOrOrderObj) => {
-    const orderObj = typeof orderNumberOrOrderObj === "string" ? { orderNumber: orderNumberOrOrderObj } : orderNumberOrOrderObj || currentOrder;
-    const createdPendingTaskForJudge = await createPendingTaskForJudge(orderObj);
-    const createdPendingTaskForCitizen = await createPendingTaskForEmployee(orderObj);
-    return { createdPendingTaskForJudge, createdPendingTaskForCitizen };
   };
 
   const fetchInbox = useCallback(async () => {
@@ -2934,6 +2931,7 @@ const GenerateOrdersV2 = () => {
           if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
             setPrevOrder(response?.order);
           }
+          return response;
         });
     } catch (error) {
       setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
@@ -3052,12 +3050,12 @@ const GenerateOrdersV2 = () => {
       }
       setAddOrderTypeLoader(true);
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
-      const isAcceptBailOrder = updatedFormData?.orderType?.code === "ACCEPT_BAIL";
-
+      const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder) {
-        await createBailBondTaskForOrder(updateOrderResponse?.order);
+        await createPendingTaskForJudge(updateOrderResponse?.order);
+        await createPendingTaskForEmployee(updateOrderResponse?.order);
       }
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
