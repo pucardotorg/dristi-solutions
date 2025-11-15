@@ -38,6 +38,26 @@ public class InboxUtil {
         this.configuration = configuration;
     }
 
+    public void validateMobileNumber(InboxRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        InboxResponse inboxResponse;
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            inboxResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+            List<Inbox> items = inboxResponse.getItems();
+            //validate user mobile number from assignee list
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+
+    }
 
     public List<OpenHearing> getOpenHearings(InboxRequest request) {
 
@@ -229,7 +249,7 @@ public class InboxUtil {
         return value; // Return as is if no conversion logic is provided
     }
 
-    public InboxRequest getInboxRequestForOpenHearing(String tenantId, Long fromDate, Long toDate, String searchText) {
+    public InboxRequest getInboxRequestForOpenHearing(String tenantId, Long fromDate, Long toDate, String searchText, Boolean isHearingSerialNumberSorting) {
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
 
@@ -243,6 +263,7 @@ public class InboxUtil {
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Hearing Service")
                 .tenantId(tenantId)
+                .isHearingSerialNumberSorting(isHearingSerialNumberSorting)
                 .businessService(Collections.singletonList(HEARING_BUSINESS_SERVICE))
                 .build();
 

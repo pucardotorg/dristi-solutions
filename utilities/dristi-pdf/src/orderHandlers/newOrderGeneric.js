@@ -265,6 +265,8 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           judgeSignature: judgeDetails.judgeSignature,
           courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
+          bailAmount: order?.orderDetails?.chequeAmount || "",
+          noOfSureties: order?.orderDetails?.noOfSureties || "",
         },
       ],
     };

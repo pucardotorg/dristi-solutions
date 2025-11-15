@@ -1,0 +1,42 @@
+// TODO: create new schema using api
+{
+  "tenantId": "kl",
+  "code": "survey.SurveyConfig",
+  "description": "Survey configuration for in-portal survey including remind me later duration, max attempts, and expiry duration after feedback",
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id",
+      "noOfDaysForRemindMeLater",
+      "maxNoOfAttempts",
+      "noOfDaysForExpiryAfterFeedBack"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "Unique identifier for the survey configuration"
+      },
+      "maxNoOfAttempts": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Maximum number of attempts allowed for remind me later"
+      },
+      "noOfDaysForRemindMeLater": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Duration in milliseconds for remind me later functionality (e.g., 172800000 = 2 days)"
+      },
+      "noOfDaysForExpiryAfterFeedBack": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Duration in milliseconds after which user becomes eligible again after submitting feedback (e.g., 5184000000 = 60 days)"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

@@ -1742,6 +1742,17 @@ export const pendingTaskForBailBondActions = {
       params: [{ key: "bailbondId", value: "referenceId" }],
     },
   },
+  PENDING_RAISE_BAIL_BOND: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Raise Bail Bond",
+    redirectDetails: {
+      url: "/submissions/bail-bond",
+      params: [
+        { key: "source", defaultValue: "pendingTasks" },
+        { key: "filingNumber", value: "filingNumber" },
+      ],
+    },
+  },
 };
 
 export const pendingTaskForWitnessDepositionActions = {

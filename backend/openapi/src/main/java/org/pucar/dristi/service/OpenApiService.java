@@ -1,5 +1,7 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +15,12 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
+import org.pucar.dristi.web.models.address.*;
 import org.pucar.dristi.web.models.bailbond.*;
+import org.pucar.dristi.web.models.cases.AddressDetails;
+import org.pucar.dristi.web.models.cases.CourtCase;
+import org.pucar.dristi.web.models.cases.PartyDetails;
+import org.pucar.dristi.web.models.courtcase.WitnessDetails;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignRequest;
 import org.pucar.dristi.web.models.esign.ESignResponse;
@@ -63,7 +70,15 @@ public class OpenApiService {
 
     private final UserService userService;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService) {
+    private final OrderUtil orderUtil;
+
+    private final CaseUtil caseUtil;
+
+    private final PendingTaskUtil pendingTaskUtil;
+
+    private final IndividualUtil individualUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService, OrderUtil orderUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, IndividualUtil individualUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -76,6 +91,10 @@ public class OpenApiService {
         this.esignUtil = esignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.userService = userService;
+        this.orderUtil = orderUtil;
+        this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
+        this.individualUtil = individualUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -180,8 +199,9 @@ public class OpenApiService {
         String searchText = body.getSearchText();
         Long fromDate = body.getFromDate();
         Long toDate = body.getToDate();
+        Boolean isHearingSerialNumberSorting = body.getIsHearingSerialNumberSorting();
 
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText, isHearingSerialNumberSorting);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 
@@ -387,7 +407,7 @@ public class OpenApiService {
             if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
             }
-            if(filterCriteria.getCaseTitle() != null) {
+            if (filterCriteria.getCaseTitle() != null) {
                 moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
             }
         }
@@ -410,7 +430,7 @@ public class OpenApiService {
     }
 
     public String getMagistrateName(String courtId, String tenantId) {
-       return hrmsUtil.getJudgeName(tenantId,courtId);
+        return hrmsUtil.getJudgeName(tenantId, courtId);
     }
 
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
@@ -439,7 +459,7 @@ public class OpenApiService {
         moduleSearchCriteria.put("filingNumber", openApiOrdersTaskIRequest.getFilingNumber());
         moduleSearchCriteria.put("courtId", openApiOrdersTaskIRequest.getCourtId());
         moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST","PAYMENT_PENDING_EMAIL",
+        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST", "PAYMENT_PENDING_EMAIL",
                 "PAYMENT_PENDING_RPAD", "PAYMENT_PENDING_POLICE", "PAYMENT_PENDING_SMS"));
         moduleSearchCriteria.put("entityType", "order-default");
 
@@ -669,7 +689,7 @@ public class OpenApiService {
                 .fuzzySearch(false)
                 .build();
 
-        BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
+        BailSearchResponse response = bailUtil.fetchBails(criteria, createInternalRequestInfoWithSystemUserType());
         List<Bail> bails = response.getBails();
 
         if (bails == null || bails.isEmpty()) {
@@ -729,7 +749,7 @@ public class OpenApiService {
                     .fuzzySearch(false)
                     .build();
 
-            BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
+            BailSearchResponse response = bailUtil.fetchBails(criteria, createInternalRequestInfoWithSystemUserType());
             List<Bail> bails = response.getBails();
 
             if (bails == null || bails.isEmpty()) {
@@ -787,6 +807,346 @@ public class OpenApiService {
         }
     }
 
+    public OrderDetailsSearchResponse getOrderDetails(OrderDetailsSearch orderDetailsSearch) {
+
+        try {
+            String tenantId = orderDetailsSearch.getTenantId();
+            String orderNumber = orderDetailsSearch.getOrderNumber();
+            String orderItemId = orderDetailsSearch.getOrderItemId();
+            String referenceId = orderDetailsSearch.getReferenceId();
+            String mobileNumber = orderDetailsSearch.getMobileNumber();
+            String filingNumber = orderDetailsSearch.getFilingNumber();
+
+            OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
+
+            //validate mobile number from pending task assigned to list
+            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber, tenantId);
+            if (pendingTaskAdditionalDetails == null) {
+                response.setIsPendingTaskCompleted(true);
+                return response;
+            }
+
+            OrderCriteria criteria = OrderCriteria.builder()
+                    .orderNumber(orderNumber)
+                    .tenantId(tenantId)
+                    .build();
+
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .criteria(criteria)
+                    .pagination(Pagination.builder().limit(10.0).offSet(0.0).build())
+                    .build();
+
+            OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
+
+            if (!CollectionUtils.isEmpty(orderListResponse.getList())) {
+                org.pucar.dristi.web.models.order.Order order = orderListResponse.getList().get(0);
+                if (orderItemId != null) {
+                    if (order == null || order.getCompositeItems() == null) {
+                        return response;
+                    }
+
+                    try {
+                        // Convert the generic Object to a List<Map<String, Object>>
+                        List<Map<String, Object>> compositeList = objectMapper.convertValue(
+                                order.getCompositeItems(),
+                                new TypeReference<>() {
+                                }
+                        );
+
+                        // Filter the list to keep only the matching item
+                        List<Map<String, Object>> filtered = compositeList.stream()
+                                .filter(item -> orderItemId.equals(item.get("id")))
+                                .collect(Collectors.toList());
+
+                        // Set the filtered list back into the order
+                        order.setCompositeItems(filtered);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error filtering composite items", e);
+                    }
+                }
+
+                mapperOrderToOrderSearchResponse(response, order);
+            }
+
+            CourtCase courtCase = caseUtil.getCase(filingNumber);
+            response.setCaseTitle(courtCase.getCaseTitle());
+
+            enrichPartyDetails(response, courtCase, pendingTaskAdditionalDetails);
+
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to get order details :: {}", e.toString());
+            throw new CustomException("GET_ORDER_DETAILS_ERROR",
+                    "Error Occurred while getting order details: " + e.getMessage());
+        }
+    }
+
+    private void enrichPartyDetails(OrderDetailsSearchResponse response, CourtCase courtCase, JsonNode pendingTaskAdditionalDetails) {
+
+        List<PartyDetails> partyDetailsList = new ArrayList<>();
+
+        try {
+            // Convert additionalDetails into a JsonNode for parsing
+            JsonNode rootNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+
+            // ✅ Now handle pending task additionalDetails for filtering uniqueIds
+            if (pendingTaskAdditionalDetails != null && !pendingTaskAdditionalDetails.isEmpty()) {
+                // Convert JsonNode to Map for easier manipulation
+                Map<String, Object> additionalDetailsMap = objectMapper.convertValue(
+                        pendingTaskAdditionalDetails,
+                        new TypeReference<Map<String, Object>>() {
+                        }
+                );
+
+                // Extract uniqueIds list
+                List<Map<String, String>> uniqueIdsList = (List<Map<String, String>>) additionalDetailsMap.get("uniqueIds");
+
+                if (uniqueIdsList != null && !uniqueIdsList.isEmpty()) {
+                    // Build a set of uniqueIds for fast lookup
+                    Set<String> validUniqueIds = uniqueIdsList.stream()
+                            .map(entry -> entry.get("uniqueId"))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+
+
+                    // Process respondent details
+                    processRespondents(rootNode, partyDetailsList, validUniqueIds);
+
+                    // Process witness details
+                    processWitnesses(courtCase.getWitnessDetails(), partyDetailsList, validUniqueIds);
+
+                    response.setPartyDetails(partyDetailsList);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error while enriching party details", e);
+            // Fallback: continue with unfiltered party details if something goes wrong
+        }
+    }
+
+
+    private void processRespondents(JsonNode rootNode, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
+        JsonNode respondentDetails = rootNode.path("respondentDetails");
+        if (respondentDetails.isMissingNode() || !respondentDetails.has("formdata")) {
+            return;
+        }
+
+        for (JsonNode respondent : respondentDetails.path("formdata")) {
+            if (!respondent.has("data")) continue;
+
+            JsonNode data = respondent.path("data");
+
+            if (respondent.has("uniqueId") && validUniqueIds.contains(respondent.path("uniqueId").asText())) {
+
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Accused");
+
+                // ✅ Extract and build full name
+                String firstName = data.path("respondentFirstName").asText("");
+                String middleName = data.path("respondentMiddleName").asText(""); // optional field
+                String lastName = data.path("respondentLastName").asText("");
+
+                String fullName = String.join(" ",
+                        firstName,
+                        middleName,
+                        lastName
+                ).replaceAll("\\s+", " ").trim();
+
+                party.setPartyName(fullName);
+
+                // ✅ Unique ID
+                if (respondent.has("uniqueId")) {
+                    party.setUniqueId(respondent.path("uniqueId").asText());
+                }
+
+                // ✅ Extract phone numbers (if any)
+                if (data.has("phonenumbers")) {
+                    JsonNode phoneNumbers = data.path("phonenumbers").path("mobileNumber");
+                    if (phoneNumbers.isArray() && phoneNumbers.size() > 0) {
+                        List<String> mobileList = new ArrayList<>();
+                        for (JsonNode phone : phoneNumbers) {
+                            mobileList.add(phone.asText());
+                        }
+                        party.setMobileNumbers(mobileList);
+                    }
+                }
+
+                // ✅ Extract email addresses (if any)
+                if (data.has("emails")) {
+                    JsonNode emails = data.path("emails").path("emailId");
+                    if (emails.isArray() && emails.size() > 0) {
+                        List<String> emailList = new ArrayList<>();
+                        for (JsonNode email : emails) {
+                            emailList.add(email.asText());
+                        }
+                        party.setEmails(emailList);
+                    }
+                }
+
+                // ✅ Process address details
+                if (data.has("addressDetails") && data.get("addressDetails").isArray()) {
+                    List<AddressDetails> addresses = new ArrayList<>();
+                    for (JsonNode addressNode : data.path("addressDetails")) {
+                        if (addressNode.has("addressDetails")) {
+                            JsonNode addrDetails = addressNode.path("addressDetails");
+                            AddressDetails address = new AddressDetails();
+
+                            address.setId(addressNode.path("id").asText(""));
+                            address.setDoorNo(addrDetails.path("doorNo").asText(""));
+                            address.setStreet(addrDetails.path("street").asText(""));
+                            address.setLandmark(addrDetails.path("landmark").asText(""));
+                            address.setLocality(addrDetails.path("locality").asText(""));
+                            address.setCity(addrDetails.path("city").asText(""));
+                            address.setDistrict(addrDetails.path("district").asText(""));
+                            address.setState(addrDetails.path("state").asText(""));
+                            address.setPincode(addrDetails.path("pincode").asText(""));
+                            address.setCountry(addrDetails.path("country").asText(""));
+
+                            addresses.add(address);
+                        }
+                    }
+                    party.setAddress(addresses);
+                }
+
+                // ✅ Add party details
+                partyDetailsList.add(party);
+            }
+        }
+    }
+
+
+    private void processWitnesses(List<WitnessDetails> witnessDetails, List<PartyDetails> partyDetailsList, Set<String> validUniqueIds) {
+        if (witnessDetails == null || witnessDetails.isEmpty()) {
+            return;
+        }
+
+        for (WitnessDetails witnessDetail : witnessDetails) {
+            if (validUniqueIds.contains(witnessDetail.getUniqueId())) {
+                PartyDetails party = new PartyDetails();
+                party.setPartyType("Witness");
+                if(witnessDetail.getPhoneNumbers()!=null)
+                 party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
+                if(witnessDetail.getEmails()!=null)
+                 party.setEmails(witnessDetail.getEmails().getEmailId());
+                String name = (witnessDetail.getFirstName()  != null ? witnessDetail.getFirstName()  : "") +
+                        (witnessDetail.getMiddleName() != null ? " " + witnessDetail.getMiddleName() : "") +
+                        (witnessDetail.getLastName() != null ? " " + witnessDetail.getLastName() : "");
+                party.setPartyName(name);
+                party.setWitnessDesignation(witnessDetail.getWitnessDesignation());
+                party.setUniqueId(witnessDetail.getUniqueId());
+
+                List<AddressDetails> addresses = new ArrayList<>();
+                for (PartyAddress partyAddress : witnessDetail.getAddressDetails()) {
+                    AddressDetails address = new AddressDetails();
+
+                    address.setId(partyAddress.getId());
+                    address.setCity(partyAddress.getAddressDetails().getCity());
+                    address.setDistrict(partyAddress.getAddressDetails().getDistrict());
+                    address.setLocality(partyAddress.getAddressDetails().getLocality());
+                    address.setState(partyAddress.getAddressDetails().getState());
+                    address.setPincode(partyAddress.getAddressDetails().getPincode());
+                    address.setCoordinates(partyAddress.getAddressDetails().getCoordinates());
+                    address.setTypeOfAddress(partyAddress.getAddressDetails().getTypeOfAddress());
+
+                    addresses.add(address);
+                }
+                party.setAddress(addresses);
+                partyDetailsList.add(party);
+            }
+
+        }
+    }
+
+    private void mapperOrderToOrderSearchResponse(OrderDetailsSearchResponse response, org.pucar.dristi.web.models.order.Order order) {
+        if (order == null || response == null) {
+            return;
+        }
+        response.setId(order.getId());
+        response.setTenantId(order.getTenantId());
+        response.setFilingNumber(order.getFilingNumber());
+        response.setCourtId(order.getCourtId());
+        response.setCnrNumber(order.getCnrNumber());
+        response.setApplicationNumber(order.getApplicationNumber());
+        response.setHearingNumber(order.getHearingNumber());
+        response.setScheduledHearingNumber(order.getScheduledHearingNumber());
+        response.setOrderNumber(order.getOrderNumber());
+        response.setLinkedOrderNumber(order.getLinkedOrderNumber());
+        response.setCreatedDate(order.getCreatedDate());
+        response.setIssuedBy(order.getIssuedBy());
+        response.setOrderType(order.getOrderType());
+        response.setOrderCategory(order.getOrderCategory());
+        response.setStatus(order.getStatus());
+        response.setComments(order.getComments());
+        response.setIsActive(order.getIsActive());
+        response.setStatuteSection(order.getStatuteSection());
+        response.setDocuments(order.getDocuments());
+        response.setOrderDetails(order.getOrderDetails());
+        response.setCompositeItems(order.getCompositeItems());
+        response.setAttendance(order.getAttendance());
+        response.setItemText(order.getItemText());
+        response.setPurposeOfNextHearing(order.getPurposeOfNextHearing());
+        response.setNextHearingDate(order.getNextHearingDate());
+        response.setOrderTitle(order.getOrderTitle());
+        response.setAdditionalDetails(order.getAdditionalDetails());
+        response.setAuditDetails(order.getAuditDetails());
+    }
+
+
+    private JsonNode validateMobileNumber(String referenceId, String mobileNumber, String tenantId) {
+        JsonNode pendingTask = pendingTaskUtil.callPendingTask(referenceId);
+
+        JsonNode pendingTaskAdditionalDetails = null;
+        if (pendingTask == null || !pendingTask.has("hits")) {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
+
+        JsonNode hits = pendingTask.path("hits").path("hits");
+        if (!hits.isArray() || hits.isEmpty()) {
+            throw new CustomException("NO_TASK_FOUND",
+                    "No pending task found for referenceId: " + referenceId);
+        }
+
+        for (JsonNode hit : hits) {
+            JsonNode source = hit.path("_source").path("Data");
+
+            // Step 1: Extract assignedTo UUIDs
+            List<String> assignedUuids = new ArrayList<>();
+            JsonNode assignedTo = source.path("assignedTo");
+            if (assignedTo.isArray()) {
+                for (JsonNode node : assignedTo) {
+                    String uuid = node.path("uuid").asText(null);
+                    if (uuid != null) assignedUuids.add(uuid);
+                }
+            }
+
+            if (!assignedUuids.isEmpty()) {
+                List<Individual> individuals = individualUtil.getIndividuals(RequestInfo.builder().userInfo(new User()).build(), assignedUuids, tenantId);
+
+                // Step 4: Match mobile number
+                boolean isValidMobileNumber = false;
+                for (Individual ind : individuals) {
+                    if (ind.getMobileNumber() != null &&
+                            ind.getMobileNumber().equalsIgnoreCase(mobileNumber)) {
+                        log.info("Mobile number matched for individual UUID: {}", ind.getUserUuid());
+                        isValidMobileNumber = true;
+                        pendingTaskAdditionalDetails = source.path("additionalDetails");
+                    }
+                }
+                if (!isValidMobileNumber) {
+                    throw new CustomException("INVALID_MOBILE",
+                            "Provided mobile number does not match any assigned or litigant user for this referenceId");
+                }
+            }
+            boolean isCompleted = source.path("isCompleted").asBoolean(false);
+            if (isCompleted) {
+                return null;
+            }
+        }
+        return pendingTaskAdditionalDetails;
+    }
+
     private RequestInfo createInternalRequestInfo() {
         org.egov.common.contract.request.User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
@@ -807,6 +1167,14 @@ public class OpenApiService {
         userInfo.setType("SYSTEM");
         userInfo.setTenantId(configuration.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    public AddAddressResponse addAddress(AddAddressRequest addAddressRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getCaseServiceHost()).append(configuration.getCaseServiceAddAddressEndpoint());
+
+        Object response = serviceRequestRepository.fetchResult(uri, addAddressRequest);
+        return objectMapper.convertValue(response, AddAddressResponse.class);
     }
 
 }
