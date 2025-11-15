@@ -307,11 +307,11 @@ const GenerateBailBondV2 = () => {
   }, [applicationData]);
 
   const _getNoOfSureties = (bailBondDetails, pendingTasks) => {
-    if (bailBondDetails && bailBondDetails?.status?.toUpperCase() !== "SURETY") {
+    if (bailBondDetails && bailBondDetails?.bailType?.toUpperCase() !== "SURETY") {
       return false;
     }
 
-    if (bailBondDetails && bailBondDetails?.status?.toUpperCase() === "SURETY" && bailBondDetails?.sureties?.length < 1) {
+    if (bailBondDetails && bailBondDetails?.bailType?.toUpperCase() === "SURETY" && bailBondDetails?.sureties?.length < 1) {
       return false;
     }
 
@@ -439,7 +439,7 @@ const GenerateBailBondV2 = () => {
             ) {
               return {
                 ...body,
-                formDisbalityCount: applicationDetails?.applicationDetails?.sureties?.length || 0,
+                formDisbalityCount: applicationDetails?.applicationDetails?.sureties?.length || pendingTaskAdditionalDetails?.noOfSureties || 0,
               };
             }
 
