@@ -131,11 +131,15 @@ const applicationBailBond = async (
 
     const mappedDocs = nonOtherDocs.map((item) => {
       const type = (item?.documentType || "").toUpperCase();
-      const displayTitle = item?.documentTitle || item?.filename || item?.name || "";
+      const displayTitle =
+        item?.documentTitle || item?.filename || item?.name || "";
       if (type === "IDENTITY_PROOF" || type === "PROOF_OF_SOLVENCY") {
         return {
           ...item,
-          documentType: displayTitle || messagesMap?.[item?.documentType] || item?.documentType,
+          documentType:
+            displayTitle ||
+            messagesMap?.[item?.documentType] ||
+            item?.documentType,
         };
       }
       return {

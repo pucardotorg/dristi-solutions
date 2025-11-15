@@ -544,7 +544,7 @@ const PaymentForSummonModal = ({ path }) => {
         ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
             addressDetails?.pincode || ""
           }`
-        : addressDetails; 
+        : addressDetails;
     return [
       { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
       { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },

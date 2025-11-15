@@ -119,7 +119,6 @@ export const UICustomizations = {
       min: new Date().toISOString().split("T")[0],
     };
   },
-
   maxTodayDateValidation: () => {
     return {
       max: new Date().toISOString().split("T")[0],
