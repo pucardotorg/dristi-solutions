@@ -266,6 +266,22 @@ const AddOrderTypeModal = ({
     return false;
   }, [orderType, formdata]);
 
+  const newCurrentOrder = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      const item = currentOrder?.compositeItems?.[index];
+      const schema = item?.orderSchema;
+
+      return {
+        ...currentOrder,
+        additionalDetails: schema?.additionalDetails,
+        orderDetails: schema?.orderDetails,
+        orderType: item?.orderType,
+      };
+    }
+
+    return currentOrder;
+  }, [currentOrder, index]);
+
   return (
     <React.Fragment>
       <Modal
@@ -299,7 +315,7 @@ const AddOrderTypeModal = ({
                         id="bail-bond-required"
                         type="checkbox"
                         className="custom-checkbox"
-                        checked={currentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired}
+                        checked={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired}
                         onChange={(e) => {
                           const checked = e?.target?.checked;
                           if (checked === true) {
@@ -309,7 +325,7 @@ const AddOrderTypeModal = ({
                           }
                         }}
                         style={{ cursor: "pointer", width: 20, height: 20 }}
-                        disabled={currentOrder?.additionalDetails?.formdata?.requestBailBond ? true : !isBailBondCheckboxEnabled}
+                        disabled={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond ? true : !isBailBondCheckboxEnabled}
                       />
                       <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                     </div>
@@ -334,7 +350,6 @@ const AddOrderTypeModal = ({
                     className={"generate-orders order-type-modal"}
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
-                      ...(orderType?.code === "ACCEPT_BAIL" ? persistedDefaultValues || {} : {}),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}
@@ -347,9 +362,9 @@ const AddOrderTypeModal = ({
                     onSubmit={() => {
                       const updatedFormData = {
                         ...formdata,
-                        requestBailBond: currentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
+                        requestBailBond: newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
                       };
-                      handleSubmit(updatedFormData);
+                      handleSubmit(updatedFormData, index);
                     }}
                     onSecondayActionClick={handleCancel}
                     isDisabled={isSubmitDisabled || addOrderTypeLoader}

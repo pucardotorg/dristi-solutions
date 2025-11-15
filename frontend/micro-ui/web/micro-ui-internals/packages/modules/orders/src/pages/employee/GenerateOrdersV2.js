@@ -376,17 +376,13 @@ const GenerateOrdersV2 = () => {
           return "";
         }
       };
-
-      console.log(orderObj, "klkl");
-
       const bailFormData = (() => {
         if (orderObj?.orderCategory === "INTERMEDIATE" && (orderObj?.orderType === "ACCEPT_BAIL" || orderType?.code === "ACCEPT_BAIL")) {
           return orderObj?.additionalDetails?.formdata || {};
         }
-        const acceptBailItem = orderObj?.compositeItems?.find?.((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL");
+        const acceptBailItem = orderObj?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
         return acceptBailItem?.orderSchema?.additionalDetails?.formdata || {};
       })();
-      console.log(bailFormData, "gfg");
 
       const bailOfName = bailFormData?.bailOf;
       const bailType = bailFormData?.bailType?.code || null;
@@ -460,7 +456,6 @@ const GenerateOrdersV2 = () => {
           })()),
         ...(noOfSureties != null && { noOfSureties: Number(noOfSureties) }),
       };
-      console.log(additionalDetails, "klkkl");
 
       if (referenceId !== `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`) {
         const res = await ordersService.getPendingTaskService({
@@ -1954,11 +1949,11 @@ const GenerateOrdersV2 = () => {
           (updatedFormdata?.bailType?.code || updatedFormdata?.bailType?.type || typeof updatedFormdata?.bailType === "string");
         if (!alreadySet) {
           const defaultAcceptBailType = window?.globalConfigs?.getConfig?.("defaultAcceptBailType") || "SURETY";
-          updatedFormdata.bailType = {
+        updatedFormdata.bailType = {
             type: defaultAcceptBailType,
             code: defaultAcceptBailType,
             name: defaultAcceptBailType,
-          };
+        };
           setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
         }
       }
