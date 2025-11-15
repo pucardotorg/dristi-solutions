@@ -33,61 +33,15 @@ const AddOrderTypeModal = ({
   orderType,
   addOrderTypeLoader,
   setWarrantSubtypeCode,
-  onBailBondRequiredChecked,
-  bailBondTaskExists = false,
-  onConfirmBailBondTask,
   onOrderFormDataChange,
   persistedDefaultValues,
+  bailBondRequired,
+  setBailBondRequired,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
-  const [bailBondRequired, setBailBondRequired] = useState(false);
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { filingNumber } = Digit.Hooks.useQueryParams();
-  const courtId = localStorage.getItem("courtId");
-  const getBailBondSessionKey = useCallback(() => {
-    try {
-      const uniqueRefPart =
-        currentOrder?.orderNumber ||
-        currentOrder?.additionalDetails?.formdata?.refApplicationId ||
-        currentOrder?.additionalDetails?.refApplicationId ||
-        "";
-      return `RAISE_BB_REF_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
-    } catch (_) {
-      return `RAISE_BB_REF_${filingNumber || ""}`;
-    }
-  }, [currentOrder, filingNumber]);
-  const existingRefApplicationId = useMemo(() => {
-    try {
-      if (currentOrder?.orderCategory === "INTERMEDIATE") {
-        return currentOrder?.additionalDetails?.formdata?.refApplicationId || currentOrder?.additionalDetails?.refApplicationId;
-      }
-      if (Array.isArray(currentOrder?.compositeItems)) {
-        const ad = currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
-        return ad?.formdata?.refApplicationId || ad?.refApplicationId;
-      }
-      return undefined;
-    } catch (e) {
-      return undefined;
-    }
-  }, [currentOrder, index]);
-  const [caseData, setCaseData] = useState(undefined);
   const containerRef = useRef(null);
-  const initialRefApplicationIdRef = useRef(undefined);
-  useEffect(() => {
-    try {
-      const dv = getDefaultValue?.(index) || {};
-      if (typeof initialRefApplicationIdRef.current === "undefined" && typeof dv?.refApplicationId !== "undefined") {
-        initialRefApplicationIdRef.current = dv.refApplicationId;
-      }
-    } catch (e) {
-      // noop
-    }
-  }, [getDefaultValue, index]);
-  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
-  const roles = useMemo(() => userInfo?.roles || [], [userInfo]);
-  const caseDetails = useMemo(() => ({ ...(caseData?.criteria?.[0]?.responseList?.[0] || {}) }), [caseData]);
+  const [showBailBondModal, setShowBailBondModal] = useState(false);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -277,7 +231,7 @@ const AddOrderTypeModal = ({
         if (Object.keys(formState?.errors).includes("noOfSureties")) {
           clearFormErrors?.current?.[index]?.("noOfSureties");
         }
-        if (bailBondRequired) setBailBondRequired(false);
+        // if (bailBondRequired) setBailBondRequired(false);
       }
     }
 
@@ -300,159 +254,40 @@ const AddOrderTypeModal = ({
     }
   };
 
-  useEffect(() => {
-    const fetchCaseDetails = async () => {
-      if (!filingNumber) return;
-      try {
-        const res = await DRISTIService.searchCaseService(
-          {
-            criteria: [
-              {
-                filingNumber,
-                ...(courtId && { courtId }),
-              },
-            ],
-            tenantId,
-          },
-          {}
-        );
-        setCaseData(res);
-      } catch (err) {
-        // noop
-      }
-    };
-    fetchCaseDetails();
-  }, [filingNumber, courtId, tenantId]);
+  const isBailBondCheckboxEnabled = useMemo(() => {
+    const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
+    const isSurety = formdata?.bailType?.code === "SURETY";
+    const amountValid = Number(formdata?.chequeAmount) > 0;
+    const suretiesValid = Number(formdata?.noOfSureties) > 0;
 
-  useEffect(() => {
-    try {
-      const hasAcceptBail =
-        orderType?.code === "ACCEPT_BAIL" ||
-        (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") ||
-        (Array.isArray(currentOrder?.compositeItems) &&
-          currentOrder?.compositeItems?.some?.((it) => it?.isEnabled && it?.orderType === "ACCEPT_BAIL"));
-      if (hasAcceptBail) {
-        const persisted = (persistedDefaultValues || {}).bailBondRequired;
-        const defaults = (getDefaultValue?.(index) || {}).bailBondRequired;
-        const readBailFlag = (fd) => {
-          if (!fd) return undefined;
-          if (typeof fd?.bailBondRequired !== "undefined") return fd?.bailBondRequired;
-          if (typeof fd?.acceptBail?.bailBondRequired !== "undefined") return fd?.acceptBail?.bailBondRequired;
-          if (typeof fd?.bail?.bailBondRequired !== "undefined") return fd?.bail?.bailBondRequired;
-          return undefined;
-        };
-        const currentOrderValue = (() => {
-          try {
-            if (currentOrder?.orderCategory === "INTERMEDIATE") {
-              if (currentOrder?.orderType === "ACCEPT_BAIL") {
-                return readBailFlag(currentOrder?.additionalDetails?.formdata);
-              }
-            } else if (Array.isArray(currentOrder?.compositeItems)) {
-              const acceptItem = currentOrder?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
-              return readBailFlag(acceptItem?.orderSchema?.additionalDetails?.formdata);
-            }
-            return undefined;
-          } catch (_) {
-            return undefined;
-          }
-        })();
-        const initial =
-          typeof persisted !== "undefined"
-            ? persisted
-            : typeof currentOrderValue !== "undefined"
-            ? currentOrderValue
-            : typeof defaults !== "undefined"
-            ? defaults
-            : bailBondRequired;
-        if (typeof initial !== "undefined") {
-          setBailBondRequired(Boolean(initial));
-        }
-      }
-    } catch (_) {}
-  }, [orderType?.code, index, persistedDefaultValues, currentOrder]);
-
-  const hasBailBondTask = useMemo(() => Boolean(bailBondTaskExists || isBailBondTaskExists), [bailBondTaskExists, isBailBondTaskExists]);
-  const hasSessionPersisted = useMemo(() => {
-    try {
-      const key = getBailBondSessionKey();
-      return sessionStorage.getItem(key) === "true";
-    } catch (_) {
-      return false;
+    if (isAcceptBail && isSurety && amountValid && suretiesValid) {
+      return true;
     }
-  }, [getBailBondSessionKey]);
+    return false;
+  }, [orderType, formdata]);
 
-  const effectiveBailBondRequired = useMemo(() => {
-    try {
-      if (bailBondRequired) return true;
-      if (hasBailBondTask) return true;
-      if (hasSessionPersisted) return true;
-      if (formdata?.bailBondRequired || formdata?.acceptBail?.bailBondRequired || formdata?.bail?.bailBondRequired) return true;
-      if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_BAIL") {
-        const fd = currentOrder?.additionalDetails?.formdata;
-        return Boolean(fd?.bailBondRequired || fd?.acceptBail?.bailBondRequired || fd?.bail?.bailBondRequired);
-      }
-      if (Array.isArray(currentOrder?.compositeItems)) {
-        const acceptItem = currentOrder?.compositeItems?.find?.((it) => it?.orderType === "ACCEPT_BAIL");
-        const fd = acceptItem?.orderSchema?.additionalDetails?.formdata;
-        return Boolean(fd?.bailBondRequired || fd?.acceptBail?.bailBondRequired || fd?.bail?.bailBondRequired);
-      }
-      return false;
-    } catch (_) {
-      return false;
+  const newCurrentOrder = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      const item = currentOrder?.compositeItems?.[index];
+      const schema = item?.orderSchema;
+
+      return {
+        ...currentOrder,
+        additionalDetails: schema?.additionalDetails,
+        orderDetails: schema?.orderDetails,
+        orderType: item?.orderType,
+      };
     }
-  }, [bailBondRequired, hasBailBondTask, hasSessionPersisted, formdata, currentOrder, index]);
 
-  useEffect(() => {
-    if (effectiveBailBondRequired && !bailBondRequired) {
-      setBailBondRequired(true);
-    }
-  }, []);
+    return currentOrder;
+  }, [currentOrder, index]);
 
-  useEffect(() => {
-    try {
-      if (effectiveBailBondRequired) {
-        const key = getBailBondSessionKey();
-        sessionStorage.setItem(key, "true");
-      }
-    } catch (_) {}
-  }, []);
-
-  useEffect(() => {
-    const checkBailBondTask = async () => {
-      if (!filingNumber) return;
-      try {
-        const uniqueRefPart =
-          currentOrder?.orderNumber ||
-          currentOrder?.additionalDetails?.formdata?.refApplicationId ||
-          currentOrder?.additionalDetails?.refApplicationId ||
-          "";
-        const expectedRefId = `MANUAL_BAIL_BOND_${filingNumber}${uniqueRefPart ? `_${uniqueRefPart}` : ""}`;
-        const pendingTask = await HomeService.getPendingTaskService(
-          {
-            SearchCriteria: {
-              tenantId,
-              moduleName: "Pending Tasks Service",
-              moduleSearchCriteria: {
-                isCompleted: false,
-                assignedRole: [...roles],
-                filingNumber: filingNumber,
-                courtId: courtId,
-                entityType: "bail bond",
-              },
-              limit: 1000,
-              offset: 0,
-            },
-          },
-          { tenantId }
-        );
-        const exists = Array.isArray(pendingTask?.data) && pendingTask?.data?.some?.((task) => task?.referenceId === expectedRefId);
-        setIsBailBondTaskExists(Boolean(exists));
-      } catch (e) {
-        // noop
-      }
-    };
-    checkBailBondTask();
-  }, [filingNumber, courtId, roles, tenantId]);
+  const initialBailType = useMemo(() => {
+    const bt = newCurrentOrder?.additionalDetails?.formdata?.bailType;
+    if (bt == null) return { type: "SURETY", code: "SURETY", name: "SURETY" };
+    if (typeof bt === "object" && Object.keys(bt).length === 0) return { type: "SURETY", code: "SURETY", name: "SURETY" };
+    return bt;
+  }, [newCurrentOrder]);
 
   return (
     <React.Fragment>
@@ -481,37 +316,23 @@ const AddOrderTypeModal = ({
                   : modifiedFormConfig;
 
                 if (isAcceptBail && bailTypeCode === "SURETY") {
-                  const isBailBondCheckboxEnabled = (() => {
-                    if (!(orderType?.code === "ACCEPT_BAIL" && bailTypeCode === "SURETY")) return false;
-                    const amountValid = Number(formdata?.chequeAmount) > 0;
-                    const suretiesValid = Number(formdata?.noOfSureties) > 0;
-                    return amountValid && suretiesValid && !isSubmitDisabled;
-                  })();
-
                   const CheckboxRow = () => (
                     <div className="checkbox-item" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
                         id="bail-bond-required"
                         type="checkbox"
                         className="custom-checkbox"
-                        checked={effectiveBailBondRequired}
+                        checked={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired}
                         onChange={(e) => {
                           const checked = e?.target?.checked;
-                          setBailBondRequired(checked);
-                          try {
-                            if (typeof onOrderFormDataChange === "function")
-                              onOrderFormDataChange({ ...formdata, bailBondRequired: checked }, { index, orderType });
-                          } catch (_) {}
-                          if (checked) {
-                            try {
-                              const key = getBailBondSessionKey();
-                              sessionStorage.setItem(key, "true");
-                            } catch (_) {}
-                            onBailBondRequiredChecked && onBailBondRequiredChecked();
+                          if (checked === true) {
+                            setShowBailBondModal(true);
+                          } else {
+                            setBailBondRequired(false);
                           }
                         }}
                         style={{ cursor: "pointer", width: 20, height: 20 }}
-                        disabled={!isBailBondCheckboxEnabled || hasBailBondTask || effectiveBailBondRequired}
+                        disabled={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond ? true : !isBailBondCheckboxEnabled}
                       />
                       <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                     </div>
@@ -536,7 +357,7 @@ const AddOrderTypeModal = ({
                     className={"generate-orders order-type-modal"}
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
-                      ...(orderType?.code === "ACCEPT_BAIL" ? persistedDefaultValues || {} : {}),
+                      ...(orderType?.code === "ACCEPT_BAIL" && { bailType: initialBailType }),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}
@@ -546,27 +367,14 @@ const AddOrderTypeModal = ({
                     label={t(saveLabel)}
                     secondaryLabel={t(cancelLabel)}
                     showSecondaryLabel={true}
-                    onSubmit={async () => {
-                      const outgoing = {
+                    onSubmit={() => {
+                      const updatedFormData = {
                         ...formdata,
-                        bailBondRequired,
-                        ...(formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current
-                          ? { refApplicationId: formdata?.refApplicationId || existingRefApplicationId || initialRefApplicationIdRef.current }
-                          : {}),
+                        ...(newCurrentOrder?.orderType === "ACCEPT_BAIL" && {
+                          requestBailBond: newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
+                        }),
                       };
-                      try {
-                        if (
-                          typeof onConfirmBailBondTask === "function" &&
-                          orderType?.code === "ACCEPT_BAIL" &&
-                          bailBondRequired &&
-                          !bailBondTaskExists
-                        ) {
-                          await onConfirmBailBondTask();
-                          // After successful confirmation, mark the task as existing so the checkbox stays checked and disabled
-                          setIsBailBondTaskExists(true);
-                        }
-                      } catch (_) {}
-                      handleSubmit(outgoing, index);
+                      handleSubmit(updatedFormData, index);
                     }}
                     onSecondayActionClick={handleCancel}
                     isDisabled={isSubmitDisabled || addOrderTypeLoader}
@@ -577,6 +385,29 @@ const AddOrderTypeModal = ({
           </div>
         </div>
       </Modal>
+
+      {showBailBondModal && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => setShowBailBondModal(false)} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={() => {
+            setBailBondRequired(true);
+            setShowBailBondModal(false);
+          }}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          isBackButtonDisabled={false}
+          actionCancelOnSubmit={() => {
+            setShowBailBondModal(false);
+            setBailBondRequired(false);
+          }}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CREATE_BAIL_BOND_TASK")} />}
+          className="upload-signature-modal"
+          submitTextClassName="upload-signature-button"
+        >
+          <div style={{ margin: "16px 16px" }}>{t("CREATE_BAIL_BOND_TASK_TEXT")}</div>
+        </Modal>
+      )}
     </React.Fragment>
   );
 };

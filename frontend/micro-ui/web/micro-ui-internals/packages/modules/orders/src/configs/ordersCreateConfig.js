@@ -4548,7 +4548,7 @@ export const configsIssueBailAcceptance = [
         schemaKeyPath: "orderDetails.refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId", hideInForm: true },
+        populators: { name: "refApplicationId" },
       },
       {
         isMandatory: true,
