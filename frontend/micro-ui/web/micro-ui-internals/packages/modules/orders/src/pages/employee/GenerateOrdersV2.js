@@ -2885,45 +2885,56 @@ const GenerateOrdersV2 = () => {
           ...(actionResponse && { action: actionResponse }),
         },
       };
-      return await ordersService.updateOrder(
-        {
-          order: {
-            ...order,
-            ...orderSchema,
-            ...(isSigning && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
-            ...((currentInProgressHearing || hearingId) && {
-              hearingSummary: order?.itemText,
-            }),
-            ...(order?.orderCategory === "INTERMEDIATE"
-              ? {
-                  orderTitle: t(order?.orderType) || order?.orderTitle || t("DEFAULT_ORDER_TITLE"),
-                }
-              : {
-                  orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
-                }),
-            additionalDetails: {
-              ...order?.additionalDetails,
-              ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
-              ...((currentInProgressHearing || hearingId) &&
-                !skipScheduling && {
-                  formdata: {
-                    ...(order?.additionalDetails?.formdata || {}),
-                    attendees: attendeeOptions,
-                    refHearingId: order?.hearingNumber,
-                    namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
-                  },
-                }),
-              refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
+      return await ordersService
+        .updateOrder(
+          {
+            order: {
+              ...order,
+              ...orderSchema,
+              ...(isSigning && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
+              ...((currentInProgressHearing || hearingId) && {
+                hearingSummary: order?.itemText,
+              }),
+              ...(order?.orderCategory === "INTERMEDIATE"
+                ? {
+                    orderTitle: t(order?.orderType) || order?.orderTitle || t("DEFAULT_ORDER_TITLE"),
+                  }
+                : {
+                    orderTitle: `${t(currentOrder?.compositeItems?.[0]?.orderType)} and Other Items`,
+                  }),
+              additionalDetails: {
+                ...order?.additionalDetails,
+                ...(isSigning && order?.orderCategory === "INTERMEDIATE" && taskDetails ? { taskDetails } : {}),
+                ...((currentInProgressHearing || hearingId) &&
+                  !skipScheduling && {
+                    formdata: {
+                      ...(order?.additionalDetails?.formdata || {}),
+                      attendees: attendeeOptions,
+                      refHearingId: order?.hearingNumber,
+                      namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  }),
+                refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
+              },
+              ...(currentScheduledHearing && {
+                scheduledHearingNumber: currentScheduledHearing?.hearingId,
+              }),
+              documents: updatedDocuments,
+              workflow: { ...order.workflow, action, documents: [{}] },
             },
-            ...(currentScheduledHearing && {
-              scheduledHearingNumber: currentScheduledHearing?.hearingId,
-            }),
-            documents: updatedDocuments,
-            workflow: { ...order.workflow, action, documents: [{}] },
           },
-        },
-        { tenantId }
-      );
+          { tenantId }
+        )
+        .then((response) => {
+          if (action === OrderWorkflowAction.ESIGN) {
+            setPrevOrder(response?.order);
+            sessionStorage.removeItem("businessOfTheDay");
+            setShowSuccessModal(true);
+          }
+          if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
+            setPrevOrder(response?.order);
+          }
+        });
     } catch (error) {
       setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
     }
