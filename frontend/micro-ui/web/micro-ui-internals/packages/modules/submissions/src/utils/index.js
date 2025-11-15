@@ -81,10 +81,19 @@ export const convertToDateInputFormat = (dateInput) => {
   return formatDate(date);
 };
 
-export function convertTaskResponseToPayload(responseArray) {
+export function convertTaskResponseToPayload(responseArray, id = null) {
   if (!Array.isArray(responseArray) || !responseArray.length) return null;
 
-  const flatData = responseArray?.[0]?.fields || [];
+  let data = [];
+  if (id) {
+    const matchedTask = responseArray?.find((task) =>
+      task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field?.value === id)
+    );
+    data = matchedTask?.fields || [];
+  } else {
+    data = responseArray?.[0]?.fields || [];
+  }
+  const flatData = data;
   const structuredData = {};
 
   function setDeepValue(obj, path, value) {

@@ -585,4 +585,12 @@ export const DRISTIService = {
       params,
     });
   },
+  searchBailBonds: (data, params) =>
+    Request({
+      url: Urls.dristi.searchBailBonds,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };

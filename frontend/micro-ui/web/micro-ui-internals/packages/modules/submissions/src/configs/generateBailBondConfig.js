@@ -76,17 +76,7 @@ export const bailBondConfig = [
           ],
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
-      },
-      {
-        type: "text",
-        label: "NO_OF_SURETIES",
-        isMandatory: false,
-        key: "noOfSureties",
-        populators: {
-          name: "noOfSureties",
-          disabled: true,
-        },
-      },
+      }
     ],
   },
   {
