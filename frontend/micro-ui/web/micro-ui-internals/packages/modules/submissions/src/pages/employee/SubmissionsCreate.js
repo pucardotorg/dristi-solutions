@@ -1191,7 +1191,8 @@ const SubmissionsCreate = ({ path }) => {
       if (applicationType === "REQUEST_FOR_BAIL") {
         try {
           const sanitizedSureties = Array.isArray(formdata?.sureties)
-            ? formdata.sureties.map((s) => ({
+            ? formdata.sureties.map((s, index) => ({
+                suretyIndex: index,
                 name: s?.name || "",
                 fatherName: s?.fatherName || "",
                 mobileNumber: s?.mobileNumber || "",
@@ -1206,22 +1207,28 @@ const SubmissionsCreate = ({ path }) => {
               }))
             : [];
           const bailApplicationDocuments = [];
-          const processDocs = async (docsArr, docType, defaultName) => {
+
+          const processDocs = async (docsArr, docType, defaultName, suretyIndex = null) => {
             if (!Array.isArray(docsArr) || docsArr.length === 0) return;
+
             const hasRaw = docsArr.some(
               (d) => (typeof File !== "undefined" && d instanceof File) || (d?.file && d?.file instanceof File) || (d?.size && d?.type)
             );
+
             let toUpload = docsArr;
             if (hasRaw && docsArr.length > 0) {
               try {
                 const combined = await combineMultipleFiles(docsArr, `${defaultName}.pdf`, "submissionDocuments");
                 toUpload = combined || docsArr;
-              } catch (e) {}
+              } catch (e) {
+                console.error("Error combining files:", e);
+              }
             }
             const uploaded = await onDocumentUpload(toUpload?.[0], `${defaultName}.pdf`);
             const fileStore = uploaded?.fileStore || uploaded?.file?.files?.[0]?.fileStoreId;
             if (fileStore) {
               bailApplicationDocuments.push({
+                suretyIndex,
                 fileStore,
                 documentType: docType,
                 documentTitle: uploaded?.filename || `${defaultName}.pdf`,
@@ -1231,14 +1238,15 @@ const SubmissionsCreate = ({ path }) => {
           };
 
           if (Array.isArray(formdata?.sureties)) {
-            for (const s of formdata.sureties) {
+            for (const [index, s] of formdata.sureties.entries()) {
               const identityDocs = s?.identityProof?.uploadedDocs || s?.identityProof?.document || [];
               const solvencyDocs = s?.proofOfSolvency?.uploadedDocs || s?.proofOfSolvency?.document || [];
               const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
-              // Map to documentTypes used in GenerateBailBond
-              await processDocs(identityDocs, "IDENTITY_PROOF", "identityProof");
-              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "proofOfSolvency");
-              await processDocs(otherDocs, "OTHER_DOCUMENTS", "otherDocuments");
+
+              // Pass suretyIndex for linkage
+              await processDocs(identityDocs, "IDENTITY_PROOF", "identityProof", index);
+              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "proofOfSolvency", index);
+              await processDocs(otherDocs, "OTHER_DOCUMENTS", "otherDocuments", index);
             }
           }
 

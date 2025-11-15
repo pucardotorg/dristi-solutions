@@ -29,4 +29,5 @@ export const Urls = {
     updateWitnessDeposition: "/openapi/v1/witness_deposition/update",
   },
   pendingTask: "/analytics/pending_task/v1/create",
+  getPendingTaskFields: "/inbox/v2/_getFields",
 };
