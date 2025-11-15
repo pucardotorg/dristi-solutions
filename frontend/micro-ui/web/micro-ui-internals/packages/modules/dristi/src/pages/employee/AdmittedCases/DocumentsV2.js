@@ -242,7 +242,6 @@ const DocumentsV2 = ({
                 criteria: {
                   ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
-                  status: ["DRAFT_IN_PROGRESS", "COMPLETED"],
                 },
               },
             },
