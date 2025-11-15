@@ -441,7 +441,11 @@ const GenerateOrdersV2 = () => {
         litigantUuid: targetIndividualId || accusedKey || null,
         individualId: targetIndividualId || null,
         addSurety: bailTypeCode === "SURETY" ? "YES" : bailTypeCode ? "NO" : undefined,
-        refApplicationId: orderObj?.additionalDetails?.formdata?.refApplicationId || orderObj?.additionalDetails?.refApplicationId || "",
+        refApplicationId:
+          orderObj?.additionalDetails?.formdata?.refApplicationId ||
+          orderObj?.additionalDetails?.refApplicationId ||
+          bailFormData?.refApplicationId ||
+          "",
         bailType: bailTypeObj || bailTypeCode || bailType || null,
         ...(bailTypeCode && { bailTypeCode }),
         ...(targetIndividualId || accusedKey ? { litigants: [targetIndividualId || accusedKey] } : {}),
@@ -1400,10 +1404,21 @@ const GenerateOrdersV2 = () => {
 
       let formConfig = [...newConfig];
       let selectedOrderType = "";
+      let currentSelectedOrder = {};
       if (currentOrder?.orderCategory === "COMPOSITE") {
         selectedOrderType = currentOrder?.compositeItems?.[compositeActiveOrderIndex]?.orderType || orderType?.code || "";
+        const item = currentOrder?.compositeItems?.[compositeActiveOrderIndex];
+        const schema = item?.orderSchema;
+
+        currentSelectedOrder = {
+          ...currentOrder,
+          additionalDetails: schema?.additionalDetails,
+          orderDetails: schema?.orderDetails,
+          orderType: item?.orderType,
+        };
       } else {
         selectedOrderType = currentOrder?.orderType || orderType?.code || "";
+        currentSelectedOrder = currentOrder;
       }
 
       if (selectedOrderType && configKeys.hasOwnProperty(selectedOrderType)) {
@@ -1589,7 +1604,7 @@ const GenerateOrdersV2 = () => {
             return {
               ...section,
               body: section.body.filter((field) => {
-                const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
+                const isRejected = currentSelectedOrder?.additionalDetails?.applicationStatus === t("REJECTED");
                 return !(field.key === "newSubmissionDate" && isRejected);
               }),
             };
@@ -1644,7 +1659,7 @@ const GenerateOrdersV2 = () => {
                     },
                   };
                 }
-                const refApplicationId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
+                const refApplicationId = currentSelectedOrder?.additionalDetails?.formdata?.refApplicationId;
                 if (field.key === "refApplicationId" && !refApplicationId) {
                   return {
                     ...field,
@@ -1856,25 +1871,25 @@ const GenerateOrdersV2 = () => {
     [currentOrder]
   );
 
-const getDefaultValue = useCallback(
-(index) => {
-if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
-return {
-orderType: {
-...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
-},
-};
-}
+  const getDefaultValue = useCallback(
+    (index) => {
+      if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
+        return {
+          orderType: {
+            ...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
+          },
+        };
+      }
 
-const newCurrentOrder =
-currentOrder?.orderCategory === "COMPOSITE"
-? {
-...currentOrder,
-additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
-orderDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.orderDetails,
-orderType: currentOrder?.compositeItems?.[index]?.orderType,
-}
-: currentOrder;
+      const newCurrentOrder =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? {
+              ...currentOrder,
+              additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
+              orderDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.orderDetails,
+              orderType: currentOrder?.compositeItems?.[index]?.orderType,
+            }
+          : currentOrder;
 
       let updatedFormdata = newCurrentOrder?.additionalDetails?.formdata || {};
       const currentOrderType = newCurrentOrder?.orderType || orderType?.code || "";
