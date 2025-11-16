@@ -406,8 +406,8 @@ const GenerateBailBondV2 = () => {
 
             if (
               body?.key === "litigantFatherName" &&
-              applicationDetails?.applicationDetails?.litigantFatherName &&
-              !clearAutoPopulatedData &&
+              (bailBondDetails?.additionalDetails?.isFormReset || pendingTaskAdditionalDetails?.refApplicationId) &&
+              (bailBondDetails?.additionalDetails?.isFormReset ? !bailBondDetails?.additionalDetails?.isFormReset : !clearAutoPopulatedData) &&
               formdata?.selectComplainant?.name
             ) {
               return { ...body, disable: true };
@@ -415,8 +415,8 @@ const GenerateBailBondV2 = () => {
 
             if (
               body?.key === "bailType" &&
-              pendingTaskAdditionalDetails?.bailType?.code &&
-              !clearAutoPopulatedData &&
+              (bailBondDetails?.additionalDetails?.isFormReset || pendingTaskAdditionalDetails?.bailType?.code) &&
+              (bailBondDetails?.additionalDetails?.isFormReset ? !bailBondDetails?.additionalDetails?.isFormReset : !clearAutoPopulatedData) &&
               formdata?.selectComplainant?.name
             ) {
               return { ...body, disable: true };
@@ -424,8 +424,8 @@ const GenerateBailBondV2 = () => {
 
             if (
               body?.key === "bailAmount" &&
-              pendingTaskAdditionalDetails?.bailAmount &&
-              !clearAutoPopulatedData &&
+              (bailBondDetails?.additionalDetails?.isFormReset || pendingTaskAdditionalDetails?.bailAmount) &&
+              (bailBondDetails?.additionalDetails?.isFormReset ? !bailBondDetails?.additionalDetails?.isFormReset : !clearAutoPopulatedData) &&
               formdata?.selectComplainant?.name
             ) {
               return { ...body, disable: true };
@@ -433,13 +433,15 @@ const GenerateBailBondV2 = () => {
 
             if (
               body?.key === "sureties" &&
-              !clearAutoPopulatedData &&
+              (bailBondDetails?.additionalDetails?.isFormReset ? !bailBondDetails?.additionalDetails?.isFormReset : !clearAutoPopulatedData) &&
               formdata?.selectComplainant?.name &&
+              pendingTaskAdditionalDetails?.refApplicationId &&
               pendingTaskAdditionalDetails?.noOfSureties > 0
             ) {
               return {
                 ...body,
-                formDisbalityCount: applicationDetails?.applicationDetails?.sureties?.length || pendingTaskAdditionalDetails?.noOfSureties || 0,
+                formDisbalityCount:
+                  bailBondDetails?.additionalDetails?.formDisableCount || applicationDetails?.applicationDetails?.sureties?.length || 0,
               };
             }
 
@@ -898,6 +900,8 @@ const GenerateBailBondV2 = () => {
           documents: [],
           additionalDetails: {
             createdUserName: userInfo?.name,
+            isFormReset: clearAutoPopulatedData,
+            formDisableCount: applicationDetails?.applicationDetails?.sureties?.length || 0,
           },
           workflow: {
             action: bailBondWorkflowAction.SAVEDRAFT,
@@ -951,7 +955,9 @@ const GenerateBailBondV2 = () => {
             litigantFatherName: updatedFormData?.litigantFatherName,
             litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
             additionalDetails: {
+              ...bailBondDetails.additionalDetails,
               createdUserName: userInfo?.name,
+              isFormReset: bailBondDetails?.additionalDetails?.isFormReset || clearAutoPopulatedData,
             },
             workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
           },
@@ -1042,9 +1048,18 @@ const GenerateBailBondV2 = () => {
       if (validateSurities(formdata?.sureties)) {
         return;
       }
-      if (formdata?.sureties?.length < pendingTaskAdditionalDetails?.noOfSureties) {
-        setShowErrorToast({ label: t("NUMBER_OF_SURETIES_IS_LESS_THAN_EXPECTED"), error: true });
-        return;
+
+      const isFormReset = bailBondDetails?.additionalDetails?.isFormReset;
+
+      // If NOT form reset → perform sureties validation
+      if (!clearAutoPopulatedData && !isFormReset) {
+        if (formdata?.sureties?.length < pendingTaskAdditionalDetails?.noOfSureties) {
+          setShowErrorToast({
+            label: t("NUMBER_OF_SURETIES_IS_LESS_THAN_EXPECTED"),
+            error: true,
+          });
+          return;
+        }
       }
 
       const inputs = bailBondConfig?.[1]?.body?.[0]?.populators?.inputs?.find((input) => input?.key === "address")?.populators?.inputs;
