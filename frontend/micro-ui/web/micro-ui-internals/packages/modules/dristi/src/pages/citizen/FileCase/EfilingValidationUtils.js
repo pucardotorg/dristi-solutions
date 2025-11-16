@@ -3483,7 +3483,7 @@ export const createOrUpdateTask = async ({
 
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
-    addresses: accused?.addressDetails,
+    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
     deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
