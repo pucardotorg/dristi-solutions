@@ -370,8 +370,8 @@ const AddOrderTypeModal = ({
                     onSubmit={() => {
                       const updatedFormData = {
                         ...formdata,
-                        ...(newCurrentOrder?.orderType === "ACCEPT_BAIL" && {
-                          requestBailBond: newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired,
+                        ...(orderType?.code === "ACCEPT_BAIL" && {
+                          requestBailBond: Boolean(newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired),
                         }),
                       };
                       handleSubmit(updatedFormData, index);

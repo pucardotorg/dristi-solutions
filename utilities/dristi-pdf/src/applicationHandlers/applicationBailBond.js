@@ -69,7 +69,12 @@ const applicationBailBond = async (
   try {
     const resMessage = await handleApiCall(
       () =>
-        search_message(tenantId, "rainmaker-submissions", "en_IN", requestInfo),
+        search_message(
+          tenantId,
+          "rainmaker-submissions,rainmaker-common",
+          "en_IN",
+          requestInfo
+        ),
       "Failed to query Localized messages"
     );
     const messages = resMessage?.data?.messages || [];
@@ -121,41 +126,29 @@ const applicationBailBond = async (
 
     const applicationDocuments =
       application?.applicationDetails?.applicationDocuments || [];
-    const otherDocs = applicationDocuments.filter(
-      (d) => (d?.documentType || "").toUpperCase() === "OTHER_DOCUMENTS"
-    );
-    const otherDocsCount = otherDocs.length;
-    const nonOtherDocs = applicationDocuments.filter(
-      (d) => (d?.documentType || "").toUpperCase() !== "OTHER_DOCUMENTS"
-    );
 
-    const mappedDocs = nonOtherDocs.map((item) => {
-      const type = (item?.documentType || "").toUpperCase();
-      const displayTitle =
-        item?.documentTitle || item?.filename || item?.name || "";
-      if (type === "IDENTITY_PROOF" || type === "PROOF_OF_SOLVENCY") {
-        return {
-          ...item,
-          documentType:
-            displayTitle ||
-            messagesMap?.[item?.documentType] ||
-            item?.documentType,
-        };
-      }
-      return {
-        ...item,
-        documentType: messagesMap?.[item?.documentType] || item?.documentType,
-      };
-    });
+    const documentList =
+      applicationDocuments?.length > 0
+        ? applicationDocuments.map((item) => {
+            const isOtherDoc = item?.documentType === "OTHER_DOCUMENTS";
+            const count = item?.additionalDetails?.originalCount || 1;
 
-    const documentList = (() => {
-      if (!applicationDocuments?.length) return [{ documentType: "" }];
-      const base = [...mappedDocs];
-      if (otherDocsCount > 0) {
-        base.push({ documentType: `${otherDocsCount} other documents` });
-      }
-      return base;
-    })();
+            let typeLabel = "";
+
+            if (isOtherDoc) {
+              typeLabel = `${count} other document${count > 1 ? "s" : ""}`;
+            } else {
+              typeLabel =
+                messagesMap?.[item?.documentType] || item?.documentType;
+            }
+
+            return {
+              ...item,
+              documentType: `Surety${item?.suretyIndex + 1} - ${typeLabel}`,
+            };
+          })
+        : [{ documentType: "" }];
+
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalInformation || ""
     );
