@@ -1113,50 +1113,53 @@ const SubmissionsCreate = ({ path }) => {
             otherDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Other Documents"}.pdf`));
         });
       }
-      const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
-        ? formdata?.supportingDocuments?.map((supportDocs) => ({
-            fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
-            fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-            name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
-            additionalDetails: {
-              ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
-              documentType: supportDocs?.documentType?.code,
-              documentTitle: supportDocs?.documentTitle,
-            },
-          })) || []
-        : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
-            fileType: item?.document?.documentType,
-            fileStore: item?.document?.fileStore,
-            name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
-            additionalDetails: {
-              ...item?.document?.additionalDetails,
-              documentType: item?.documentType?.code,
-              documentTitle: item?.documentTitle,
-            },
-          })) || [];
 
-      const documentres = (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name)))) || [];
       let documents = [];
-      let file = null;
       let evidenceReqBody = {};
-      const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
+      if (applicationType !== "REQUEST_FOR_BAIL") {
+        const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
+          ? formdata?.supportingDocuments?.map((supportDocs) => ({
+              fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+              fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+              name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
+              additionalDetails: {
+                ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+                documentType: supportDocs?.documentType?.code,
+                documentTitle: supportDocs?.documentTitle,
+              },
+            })) || []
+          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
+              fileType: item?.document?.documentType,
+              fileStore: item?.document?.fileStore,
+              name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
+              additionalDetails: {
+                ...item?.document?.additionalDetails,
+                documentType: item?.documentType?.code,
+                documentTitle: item?.documentTitle,
+              },
+            })) || [];
 
-      // evidence we are creating after create application (each evidenece need application Number)
-      uploadedDocumentList.forEach((res, index) => {
-        const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
-        file = {
-          documentType: res?.fileType,
-          fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
-          documentOrder: index,
-          fileName: resolvedName,
-          additionalDetails: {
-            name: resolvedName,
-            documentType: res?.additionalDetails?.documentType,
-            documentTitle: res?.additionalDetails?.documentTitle,
-          },
-        };
-        documents.push(file);
-      });
+        const documentres = (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name)))) || [];
+        let file = null;
+        const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
+
+        // evidence we are creating after create application (each evidenece need application Number)
+        uploadedDocumentList.forEach((res, index) => {
+          const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
+          file = {
+            documentType: res?.fileType,
+            fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
+            documentOrder: index,
+            fileName: resolvedName,
+            additionalDetails: {
+              name: resolvedName,
+              documentType: res?.additionalDetails?.documentType,
+              documentTitle: res?.additionalDetails?.documentTitle,
+            },
+          };
+          documents.push(file);
+        });
+      }
 
       let applicationSchema = {};
       try {
@@ -1188,6 +1191,7 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
 
+      const bailApplicationDocuments = [];
       if (applicationType === "REQUEST_FOR_BAIL") {
         try {
           const sanitizedSureties = Array.isArray(formdata?.sureties)
@@ -1206,10 +1210,11 @@ const SubmissionsCreate = ({ path }) => {
                 },
               }))
             : [];
-          const bailApplicationDocuments = [];
 
           const processDocs = async (docsArr, docType, defaultName, suretyIndex = null) => {
             if (!Array.isArray(docsArr) || docsArr.length === 0) return;
+
+            const originalCount = docsArr.length;
 
             const hasRaw = docsArr.some(
               (d) => (typeof File !== "undefined" && d instanceof File) || (d?.file && d?.file instanceof File) || (d?.size && d?.type)
@@ -1233,6 +1238,10 @@ const SubmissionsCreate = ({ path }) => {
                 documentType: docType,
                 documentTitle: uploaded?.filename || `${defaultName}.pdf`,
                 tenantId,
+                additionalDetails: {
+                  originalCount,
+                  combined: originalCount > 1,
+                }
               });
             }
           };
@@ -1265,6 +1274,28 @@ const SubmissionsCreate = ({ path }) => {
           console.error("Failed to map surety details for Request for Bail", e);
         }
       }
+
+      if (applicationType === "REQUEST_FOR_BAIL" && Array.isArray(bailApplicationDocuments)) {
+        bailApplicationDocuments.forEach((res, index) => {
+          const resolvedName = res?.documentTitle;
+
+          const file = {
+            documentType: res?.documentType,
+            fileStore: res?.fileStore,
+            documentOrder: index,
+            fileName: resolvedName,
+            additionalDetails: {
+              name: resolvedName,
+              documentType: res?.documentType,
+              documentTitle: res?.documentTitle,
+              suretyIndex: res?.suretyIndex,
+            },
+          };
+
+          documents.push(file);
+        });
+      }
+
       let filteredFormdata = { ...formdata };
       if (applicationType === "REQUEST_FOR_BAIL") {
         try {
