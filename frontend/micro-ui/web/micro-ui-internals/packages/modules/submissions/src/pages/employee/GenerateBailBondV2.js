@@ -315,6 +315,10 @@ const GenerateBailBondV2 = () => {
       return false;
     }
 
+    if(bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
+      return false;
+    }
+
     if (pendingTasks?.length < 1) {
       return false;
     }
