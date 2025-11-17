@@ -2396,6 +2396,9 @@ export const updateCaseDetails = async ({
             data: {
               ...data.data,
               ...documentData,
+              firstName: data?.data?.firstName?.trim(),
+              middleName: data?.data?.middleName?.trim(),
+              lastName: data?.data?.lastName?.trim(),
               complainantVerification: {
                 ...data?.data?.complainantVerification,
                 ...updatedComplainantVerification,
@@ -2576,6 +2579,9 @@ export const updateCaseDetails = async ({
             ...data,
             data: {
               ...data.data,
+              respondentFirstName: data?.data?.respondentFirstName?.trim(),
+              respondentMiddleName: data?.data?.respondentMiddleName?.trim(),
+              respondentLastName: data?.data?.respondentLastName?.trim(),
               ...documentData,
             },
             uniqueId: data?.uniqueId || generateUUID(),
@@ -2794,6 +2800,9 @@ export const updateCaseDetails = async ({
       if (!obj?.uniqueId) {
         obj.uniqueId = generateUUID();
       }
+      obj.data.firstName = obj?.data?.firstName?.trim();
+      obj.data.middleName = obj?.data?.middleName?.trim();
+      obj.data.lastName = obj?.data?.lastName?.trim();
       obj.data.ownerType = "COMPLAINANT";
     }
 
