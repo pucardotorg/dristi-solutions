@@ -109,3 +109,6 @@ jobs:
           image_name: "ab_diary"
           image_tag: ${{ env.VERSION }}-${{ env.commit_hash }}
           sops_key: ${{ secrets.SOPS_KEY }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          helmfile_env: ${{ vars.HELMFILE_ENV }}
+          devops_branch: ${{ vars.DEVOPS_BRANCH }}
