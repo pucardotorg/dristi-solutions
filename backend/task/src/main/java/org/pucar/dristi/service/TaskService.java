@@ -165,7 +165,7 @@ public class TaskService {
                     log.error("Error occurred during case search for filing number {}:", e.toString());
                     // Optionally, add to taskUpdateStates with an error status
                     taskUpdateStates.add(new TaskUpdateState(
-                            caseList.get(i + j).getFilingNumber(),
+                            "N/A",
                             null,  // No task details because case search failed
                             null,  // No task details because case search failed
                             "Error - Case Search Failed"
@@ -174,6 +174,31 @@ public class TaskService {
                 }
 
                 for (CourtCase courtCase : caseList) {
+                    // Detect duplicate respondents or witnesses
+                    if (hasDuplicateRespondents(courtCase)) {
+                        log.warn("Duplicate respondent names found for filing number {}. Skipping case.",
+                                courtCase.getFilingNumber());
+                        taskUpdateStates.add(new TaskUpdateState(
+                                courtCase.getFilingNumber(),
+                                null,
+                                null,
+                                "Skipped - Duplicate Respondent Names"
+                        ));
+                        continue;  // Skip this case
+                    }
+
+                    if (hasDuplicateWitnesses(courtCase)) {
+                        log.warn("Duplicate witness names found for filing number {}. Skipping case.",
+                                courtCase.getFilingNumber());
+                        taskUpdateStates.add(new TaskUpdateState(
+                                courtCase.getFilingNumber(),
+                                null,
+                                null,
+                                "Skipped - Duplicate Witness Names"
+                        ));
+                        continue;  // Skip this case
+                    }
+
                     Map<String, String> respondentNameToUniqueIdMap = getRespondentNameToUniqueIdMap(courtCase);
                     Map<String, String> witnessNameToUniqueIdMap = getWitnessNameToUniqueIdMap(courtCase);
 
@@ -231,7 +256,7 @@ public class TaskService {
                                         .requestInfo(requestInfo)
                                         .task(task)
                                         .build();
-                                producer.push(config.getTaskUpdateTopic(), taskRequest);
+                                producer.push(config.getTaskPartyUuidEnrichmentTopic(), taskRequest);
 
                                 // After update: Add to result list
                                 taskUpdateStates.add(new TaskUpdateState(
@@ -334,6 +359,67 @@ public class TaskService {
 
         return witnessNameToUniqueIdMap;
     }
+
+    // Helper method to detect duplicate respondents
+    private boolean hasDuplicateRespondents(CourtCase courtCase) {
+        JsonNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        JsonNode respondentFormNode = additionalDetailsNode.path("respondentDetails").path("formdata");
+
+        Set<String> names = new HashSet<>();
+        for (JsonNode respondentNode : respondentFormNode) {
+            JsonNode data = respondentNode.path("data");
+
+            String first = data.path("respondentFirstName").asText("");
+            String middle = data.path("respondentMiddleName").asText("");
+            String last = data.path("respondentLastName").asText("");
+
+            String fullName = Stream.of(first, middle, last)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.joining(" "));
+
+
+
+            if (!names.add(fullName)) {
+                return true;  // Duplicate found
+            }
+        }
+        return false;
+    }
+
+    // Helper method to detect duplicate witnesses
+    private boolean hasDuplicateWitnesses(CourtCase courtCase) {
+
+        Set<String> names = new HashSet<>();
+
+        for (WitnessDetails witnessDetail : courtCase.getWitnessDetails()) {
+            String witnessFirstName = witnessDetail.getFirstName() == null ? "" : witnessDetail.getFirstName();
+            String witnessMiddleName = witnessDetail.getMiddleName() == null ? "" : witnessDetail.getMiddleName();
+            String witnessLastName = witnessDetail.getLastName() == null ? "" : witnessDetail.getLastName();
+
+            List<String> nameParts = Stream.of(witnessFirstName, witnessMiddleName, witnessLastName)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            String witnessFullName = String.join(" ", nameParts);
+            String designation = witnessDetail.getWitnessDesignation();
+
+            if (!witnessFullName.isEmpty()) {
+                if (designation != null && !designation.isBlank()) {
+                    witnessFullName = witnessFullName + " - " + designation;
+                }
+            } else if (designation != null && !designation.isBlank()) {
+                witnessFullName = designation;
+            }
+
+            if (!names.add(witnessFullName)) {
+                return true; // Duplicate found
+            }
+        }
+        return false;
+    }
+
 
     public void createDemandForPayment(TaskRequest body) {
         try {
