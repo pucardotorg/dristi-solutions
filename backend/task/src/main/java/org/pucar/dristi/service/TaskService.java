@@ -191,29 +191,35 @@ public class TaskService {
 
                             boolean taskUpdated = false;
 
-                            ObjectNode respondentDetailsNodeBefore = (ObjectNode) taskDetailsNodeBefore.path("respondentDetails");
-                            ObjectNode witnessDetailsNodeBefore = (ObjectNode) taskDetailsNodeBefore.path("witnessDetails");
+                            JsonNode respondentNodeBefore = taskDetailsNodeBefore.get("respondentDetails");
+                            JsonNode witnessNodeBefore = taskDetailsNodeBefore.get("witnessDetails");
 
-                            ObjectNode respondentDetailsNodeAfter = (ObjectNode) taskDetailsNodeAfter.path("respondentDetails");
-                            ObjectNode witnessDetailsNodeAfter = (ObjectNode) taskDetailsNodeAfter.path("witnessDetails");
+                            JsonNode respondentNodeAfter = taskDetailsNodeAfter.get("respondentDetails");
+                            JsonNode witnessNodeAfter = taskDetailsNodeAfter.get("witnessDetails");
 
                             // Respondent Details Update
-                            if (respondentDetailsNodeBefore != null && !respondentDetailsNodeBefore.isNull()) {
-                                String respondentName = respondentDetailsNodeBefore.path("name").asText();
+                            if (respondentNodeBefore != null && respondentNodeBefore.isObject()) {
+                                ObjectNode respondentDetailsNodeBefore = (ObjectNode) respondentNodeBefore;
+
+                                String respondentName = respondentDetailsNodeBefore.path("name").asText(null);
                                 String respondentUniqueId = respondentNameToUniqueIdMap.get(respondentName);
-                                if (respondentUniqueId != null) {
-                                    // Modify taskDetailsNodeAfter
+
+                                if (respondentUniqueId != null && respondentNodeAfter != null && respondentNodeAfter.isObject()) {
+                                    ObjectNode respondentDetailsNodeAfter = (ObjectNode) respondentNodeAfter;
                                     respondentDetailsNodeAfter.put("uniqueId", respondentUniqueId);
                                     taskUpdated = true;
                                 }
                             }
 
                             // Witness Details Update
-                            if (witnessDetailsNodeBefore != null && !witnessDetailsNodeBefore.isNull()) {
-                                String witnessName = witnessDetailsNodeBefore.path("name").asText();
+                            if (witnessNodeBefore != null && witnessNodeBefore.isObject()) {
+                                ObjectNode witnessDetailsNodeBefore = (ObjectNode) witnessNodeBefore;
+
+                                String witnessName = witnessDetailsNodeBefore.path("name").asText(null);
                                 String witnessUniqueId = witnessNameToUniqueIdMap.get(witnessName);
-                                if (witnessUniqueId != null) {
-                                    // Modify taskDetailsNodeAfter
+
+                                if (witnessUniqueId != null && witnessNodeAfter != null && witnessNodeAfter.isObject()) {
+                                    ObjectNode witnessDetailsNodeAfter = (ObjectNode) witnessNodeAfter;
                                     witnessDetailsNodeAfter.put("uniqueId", witnessUniqueId);
                                     taskUpdated = true;
                                 }
