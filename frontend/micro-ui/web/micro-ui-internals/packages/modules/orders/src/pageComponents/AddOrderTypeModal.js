@@ -222,9 +222,9 @@ const AddOrderTypeModal = ({
         if (!formData?.noOfSureties && !hasNoOfSuretiesError) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
         } else if (Number.isFinite(suretiesNum) && suretiesNum <= 0 && !hasNoOfSuretiesError) {
-          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MINIMUM_SURETIES_ERROR") });
         } else if (Number.isFinite(suretiesNum) && suretiesNum > 100 && !hasNoOfSuretiesError) {
-          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Maximum 100 sureties allowed") });
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MAXIMUM_SURETIES_ERROR") });
         } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && suretiesNum <= 100 && hasNoOfSuretiesError) {
           clearFormErrors?.current?.[index]?.("noOfSureties");
         }
