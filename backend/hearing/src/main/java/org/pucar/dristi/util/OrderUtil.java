@@ -254,6 +254,7 @@ public class OrderUtil {
         TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                 .filingNumber(order.getFilingNumber())
                 .status(PENDING_PAYMENT)
+                .orderNumber(order.getOrderNumber())
                 .tenantId(tenantId)
                 .build();
 
@@ -274,8 +275,9 @@ public class OrderUtil {
 
         for (TaskManagement taskManagement : taskManagementList) {
             log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
-            expireTaskManagementWorkflow(taskManagement, requestInfo);
             closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
+            closePendingTasksWithoutAction(tenantId, requestInfo, order);
+            expireTaskManagementWorkflow(taskManagement, requestInfo);
         }
 
         cancelRelatedDemandsOfTaskManagement(tenantId, taskManagementList, requestInfo);
