@@ -79,7 +79,8 @@ function CourierService({
   const paymentCriteriaList = useMemo(() => {
     if (!processCourierData?.addressDetails?.length) return [];
 
-    const channels = ["RPAD", "EPOST"];
+    // add "EPOST" when it is needed
+    const channels = ["RPAD"];
     const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS"];
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
