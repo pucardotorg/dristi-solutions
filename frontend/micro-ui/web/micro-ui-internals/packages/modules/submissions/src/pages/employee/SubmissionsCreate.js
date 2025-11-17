@@ -1253,9 +1253,9 @@ const SubmissionsCreate = ({ path }) => {
               const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
 
               // Pass suretyIndex for linkage
-              await processDocs(identityDocs, "IDENTITY_PROOF", "identityProof", index);
-              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "proofOfSolvency", index);
-              await processDocs(otherDocs, "OTHER_DOCUMENTS", "otherDocuments", index);
+              await processDocs(identityDocs, "IDENTITY_PROOF", "IdentityProof", index);
+              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "ProofOfSolvency", index);
+              await processDocs(otherDocs, "OTHER_DOCUMENTS", "OtherDocuments", index);
             }
           }
 
