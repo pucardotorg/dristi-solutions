@@ -273,10 +273,12 @@ public class OrderUtil {
 
         log.info("Found {} PENDING_PAYMENT task management for Order ID: {}", taskManagementList.size(), order.getId());
 
+        // close the pending tasks which not even single action taken
+        closePendingTasksWithoutAction(tenantId, requestInfo, order);
+
         for (TaskManagement taskManagement : taskManagementList) {
             log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
             closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
-            closePendingTasksWithoutAction(tenantId, requestInfo, order);
             expireTaskManagementWorkflow(taskManagement, requestInfo);
         }
 
