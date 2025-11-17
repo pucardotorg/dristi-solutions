@@ -3479,7 +3479,19 @@ export const createOrUpdateTask = async ({
   isUpfrontPayment,
   status,
 }) => {
-  if (!accusedDetails?.length) return;
+  if (existingTask && (!accusedDetails || accusedDetails?.length === 0)) {
+    const expirePayload = {
+      ...existingTask,
+      workflow: { action: TaskManagementWorkflowAction.EXPIRE },
+    };
+
+    await DRISTIService.updateTaskManagementService({
+      taskManagement: expirePayload,
+    });
+
+    return;
+  }
+  if (!accusedDetails || accusedDetails?.length === 0) return;
 
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
