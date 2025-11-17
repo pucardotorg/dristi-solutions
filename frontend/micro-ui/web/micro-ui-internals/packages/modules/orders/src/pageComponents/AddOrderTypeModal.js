@@ -219,20 +219,13 @@ const AddOrderTypeModal = ({
       if (isSurety) {
         const suretiesNum = Number(formData?.noOfSureties);
         const hasNoOfSuretiesError = Object.keys(formState?.errors).includes("noOfSureties");
-        if (
-          formState?.submitCount &&
-          !formData?.noOfSureties &&
-          !hasNoOfSuretiesError
-        ) {
+        if (!formData?.noOfSureties && !hasNoOfSuretiesError) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        } else if (
-          formState?.submitCount &&
-          Number.isFinite(suretiesNum) &&
-          suretiesNum <= 0 &&
-          !hasNoOfSuretiesError
-        ) {
-          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
-        } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && hasNoOfSuretiesError) {
+        } else if (Number.isFinite(suretiesNum) && suretiesNum <= 0 && !hasNoOfSuretiesError) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MINIMUM_SURETIES_ERROR") });
+        } else if (Number.isFinite(suretiesNum) && suretiesNum > 100 && !hasNoOfSuretiesError) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MAXIMUM_SURETIES_ERROR") });
+        } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && suretiesNum <= 100 && hasNoOfSuretiesError) {
           clearFormErrors?.current?.[index]?.("noOfSureties");
         }
       } else {
