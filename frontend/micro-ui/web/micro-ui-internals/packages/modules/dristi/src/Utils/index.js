@@ -372,6 +372,7 @@ export const isEmptyValue = (value) => {
 export const TaskManagementWorkflowAction = {
   CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
   UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",
+  EXPIRE: "EXPIRE",
   CREATE: "CREATE",
   UPDATE: "UPDATE",
 };
