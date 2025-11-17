@@ -512,11 +512,22 @@ public class TaskCreationService {
                 .toList();
 
         String name = String.join(" ", nameParts);
+        String designation = witnessDetails.getWitnessDesignation();
 
+        if (!name.isEmpty()) {
+            if (designation != null && !designation.isBlank()) {
+                name = name + " - " + designation;
+            }
+        } else if (designation != null && !designation.isBlank()) {
+            name = designation;
+        }
         // Parse age as Integer safely
-        Integer age = witnessDetails.getWitnessAge() != null
-                    ? Integer.valueOf(witnessDetails.getWitnessAge())
-                    : null;
+        Integer age = null;
+        try {
+            age = witnessDetails.getWitnessAge() != null ? Integer.valueOf(witnessDetails.getWitnessAge()) : null;
+        } catch (NumberFormatException ex) {
+            log.error("Error formatting age: {}", ex.getMessage());
+        }
 
         // Add entries from phone list
         if (SMS.equalsIgnoreCase(channel.getChannelCode()) && witnessDetails.getPhoneNumbers() != null &&
