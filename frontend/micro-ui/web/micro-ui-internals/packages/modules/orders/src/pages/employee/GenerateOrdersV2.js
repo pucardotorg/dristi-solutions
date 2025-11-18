@@ -1395,15 +1395,18 @@ const GenerateOrdersV2 = () => {
   }, [currentOrder?.attendance]);
 
   const hideNextHearingButton = useMemo(() => {
+    // Hide when there is a scheduled hearing
+    if (currentScheduledHearing) return true;
+
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing, currentScheduledHearing]);
 
   const nextHearing = useCallback(
-    async () => {
+      async () => {
       try {
         const validData = (data || []).filter((item) =>
           ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
@@ -1417,8 +1420,7 @@ const GenerateOrdersV2 = () => {
         const currentIndex = validData?.findIndex(
           (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
         );
-
-        for (let step = 1; step < validData.length; step++) {
+       for (let step = 1; step < validData.length; step++) {
           const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
           const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
           const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
@@ -1444,18 +1446,16 @@ const GenerateOrdersV2 = () => {
             );
 
             const orderDraft = response?.list?.[0];
-            if (orderDraft?.orderNumber) {
-              history.push(
-                `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
-              );
-              return;
-            }
-          } catch (e) {
-            // continue to next item on error
+             if (orderDraft?.orderNumber) {
+            history.push(
+              `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
+            );
+            return;
+            } 
+            } catch (e) {
           }
         }
-
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+         setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
       } catch (e) {
         setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
       }
