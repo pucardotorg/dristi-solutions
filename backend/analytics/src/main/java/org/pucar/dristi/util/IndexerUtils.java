@@ -176,7 +176,7 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
-        String caseNumber = filingNumber;
+        String caseNumber = null;
         String actionCategory = pendingTask.getActionCategory();
         Long filingDate = pendingTask.getFilingDate();
         String sectionAndSubSection = pendingTask.getSectionAndSubSection();
@@ -216,7 +216,10 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            searchableFieldsList.add(caseNumber);
+            searchableFieldsList.add(filingNumber);
+            if (caseNumber != null) {
+                searchableFieldsList.add(caseNumber);
+            }
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
@@ -371,7 +374,7 @@ public class IndexerUtils {
         String caseSubStage = null;
         String advocateDetails = "{}";
         String searchableFields = null;
-        String caseNumber = filingNumber;
+        String caseNumber = null;
 
         if (caseDetails == null && filingNumber != null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
@@ -405,7 +408,10 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            searchableFieldsList.add(caseNumber);
+            if (caseNumber != null) {
+                searchableFieldsList.add(caseNumber);
+            }
+            searchableFieldsList.add(filingNumber);
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());

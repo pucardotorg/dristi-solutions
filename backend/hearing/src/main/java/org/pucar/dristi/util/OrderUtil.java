@@ -252,6 +252,7 @@ public class OrderUtil {
         TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                 .filingNumber(order.getFilingNumber())
                 .status(PENDING_PAYMENT)
+                .orderNumber(order.getOrderNumber())
                 .tenantId(tenantId)
                 .build();
 
@@ -260,26 +261,28 @@ public class OrderUtil {
                 .criteria(searchCriteria)
                 .build();
 
+        // close all the pending task's with or with 
+        closeProcessesPendingTasks(requestInfo, order);
         List<TaskManagement> taskManagementList = taskManagementUtil.searchTaskManagement(searchRequest);
         if (CollectionUtils.isEmpty(taskManagementList)) {
             log.info("No PENDING_PAYMENT task management found for Order ID: {}", order.getId());
             // expiring the pending tasks which not even single action taken
-            closePendingTasksWithoutAction(tenantId, requestInfo, order);
             return;
         }
 
         log.info("Found {} PENDING_PAYMENT task management for Order ID: {}", taskManagementList.size(), order.getId());
 
+        // close the pending tasks which not even single action taken
+
         for (TaskManagement taskManagement : taskManagementList) {
             log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
             expireTaskManagementWorkflow(taskManagement, requestInfo);
-            closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
         }
 
         cancelRelatedDemandsOfTaskManagement(tenantId, taskManagementList, requestInfo);
     }
 
-    private void closePendingTasksWithoutAction(String tenantId, RequestInfo requestInfo, Order order) {
+    private void closeProcessesPendingTasks(RequestInfo requestInfo, Order order) {
 
         String filingNumber = order.getFilingNumber();
 
