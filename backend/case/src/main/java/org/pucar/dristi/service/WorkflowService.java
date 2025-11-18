@@ -153,7 +153,6 @@ public class WorkflowService {
         ProcessInstance process = ProcessInstance.builder()
                 .businessService(config.getCaseBusinessServiceName())
                 .businessId(caseCriteria.getFilingNumber())
-                .comment("Payment for Case processed")
                 .moduleName(config.getCaseBusinessName())
                 .tenantId(tenantId)
                 .action(MAKE_PAYMENT)
