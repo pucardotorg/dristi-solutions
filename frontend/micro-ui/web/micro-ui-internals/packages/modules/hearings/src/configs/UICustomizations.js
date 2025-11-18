@@ -310,8 +310,11 @@ export const UICustomizations = {
                 const channelDetailsEnum = {
                   SMS: "phone",
                   Email: "email",
+                  EMAIL: "email",
                   Post: "address",
+                  EPOST: "address",
                   Police: "address",
+                  POLICE: "address",
                   RPAD: "address",
                 };
                 function mapStatus(status, taskType) {
@@ -327,7 +330,9 @@ export const UICustomizations = {
                   };
                   return mapping[status]?.[taskType] || status; // fallback to original
                 }
-                const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                const channelDetails =
+                  taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                  taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
@@ -370,6 +375,8 @@ export const UICustomizations = {
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":
           return value || "-";
+        case "Delivery Channels":
+          return value === "EPOST" ? t("CS_POST") : t(value);
         default:
           return t("ES_COMMON_NA");
       }

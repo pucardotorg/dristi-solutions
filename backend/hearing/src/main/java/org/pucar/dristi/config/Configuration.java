@@ -215,6 +215,13 @@ public class Configuration {
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
 
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
 
     @Value("${egov.indexer.es.username}")
     private String esUsername;
@@ -291,4 +298,50 @@ public class Configuration {
 
     @Value("${hearing.statuses.to.filter}")
     private List<String> hearingStatusesToFilter;
+
+    @Value("${notification.sms.enabled}")
+    private Boolean isSMSEnabled;
+
+    // Default User
+    @Value("${egov.default.user.username}")
+    private String defaultUserUserName;
+
+    @Value("${egov.default.user.password}")
+    private String defaultUserPassword;
+
+    @Value("${user.oauth.url}")
+    private String userOauthUrl;
+
+    // Template ids for hearing notifications
+    @Value("${egov.sms.notification.hearings.held.today.single}")
+    private String smsNotificationHearingsHeldTodaySingleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.held.today.multiple}")
+    private String smsNotificationHearingsHeldTodayMultipleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.scheduled.tomorrow.single}")
+    private String smsNotificationHearingsScheduledTomorrowSingleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.scheduled.tomorrow.multiple}")
+    private String smsNotificationHearingsScheduledTomorrowMultipleTemplateId;
+
+    @Value("${egov.sms.notification.hearing.reScheduled.template.id}")
+    private String smsNotificationHearingReScheduledTemplateId;
+
+    @Value("${state.level.tenant.id}")
+    private String tenantId;
+
+    // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
+
+    @Value("${task.management.suffix}")
+    private String taskManagementSuffix;
+
 }

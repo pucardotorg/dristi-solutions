@@ -368,3 +368,17 @@ export const isEmptyValue = (value) => {
     return false;
   }
 };
+
+export const TaskManagementWorkflowAction = {
+  CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
+  UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",
+  EXPIRE: "EXPIRE",
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+};
+
+export const TaskManagementWorkflowState = {
+  PENDING_PAYMENT: "PENDING_PAYMENT",
+  TASK_CREATION: "TASK_CREATION",
+  COMPLETED: "COMPLETED",
+};

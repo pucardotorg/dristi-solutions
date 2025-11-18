@@ -125,17 +125,18 @@ const BailBondReviewModal = ({
           <div className="application-details">
             <div className="application-view">
               {showDocument}
-              {documents?.map((docs) => (
-                <DocViewerWrapper
-                  key={docs.fileStore}
-                  fileStoreId={docs.fileStore}
-                  tenantId={tenantId}
-                  docWidth="100%"
-                  docHeight={"unset"}
-                  showDownloadOption={false}
-                  documentName={docs?.name}
-                />
-              ))}
+              {bailBondPreviewPdf &&
+                documents?.map((docs) => (
+                  <DocViewerWrapper
+                    key={docs.fileStore}
+                    fileStoreId={docs.fileStore}
+                    tenantId={tenantId}
+                    docWidth="100%"
+                    docHeight={"unset"}
+                    showDownloadOption={false}
+                    documentName={docs?.name}
+                  />
+                ))}
             </div>
           </div>
         </div>

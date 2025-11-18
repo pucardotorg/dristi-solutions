@@ -138,4 +138,6 @@ public class ServiceConstants {
     public static final String REJECT = "REJECT";
     public static final List<String> DEFINED_VOLUNTARY_SUBMISSIONS = Arrays.asList("RE_SCHEDULE", "CHECKOUT_REQUEST", "EXTENSION_SUBMISSION_DEADLINE");
 
+    public static final String APPLICATION_SUBMITTED = "APPLICATION_SUBMITTED";
+
 }

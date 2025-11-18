@@ -1,9 +1,13 @@
 package org.pucar.dristi.web.controllers;
 
 
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.OpenApiService;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HrmsUtil;
+import org.pucar.dristi.util.RequestInfoGenerator;
+import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.validator.FileStoreValidator;
 import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +16,8 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.pucar.dristi.web.models.LandingPageCaseListRequest;
 import org.pucar.dristi.web.models.LandingPageCaseListResponse;
+import org.pucar.dristi.web.models.address.AddAddressRequest;
+import org.pucar.dristi.web.models.address.AddAddressResponse;
 import org.pucar.dristi.web.models.bailbond.OpenApiBailResponse;
 import org.pucar.dristi.web.models.bailbond.OpenApiBailSearchRequest;
 import org.pucar.dristi.web.models.bailbond.OpenApiUpdateBailBondRequest;
@@ -46,15 +52,19 @@ public class OpenapiApiController {
     private final FileStoreUtil fileStoreUtil;
 
     private final FileStoreValidator fileStoreValidator;
+    private final RequestInfoGenerator requestInfoGenerator;
+    private final ResponseInfoFactory responseInfoFactory;
 
     @Autowired
-    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil, FileStoreValidator fileStoreValidator) {
+    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil, FileStoreValidator fileStoreValidator, RequestInfoGenerator requestInfoGenerator, ResponseInfoFactory responseInfoFactory) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.openApiService = openApiService;
         this.hrmsUtil = hrmsUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.fileStoreValidator = fileStoreValidator;
+        this.requestInfoGenerator = requestInfoGenerator;
+        this.responseInfoFactory = responseInfoFactory;
     }
 
     @RequestMapping(value = "/openapi/v1/{tenantId}/case/cnr/{cnrNumber}", method = RequestMethod.GET)
@@ -144,5 +154,25 @@ public class OpenapiApiController {
     public ResponseEntity<ESignResponse> eSignDocument(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true) @PathVariable("tenantId") String tenantId, @RequestBody @Valid ESignParameter eSignParameter, HttpServletRequest servletRequest) {
         ESignResponse response = openApiService.eSignDocument(tenantId, eSignParameter, servletRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/openapi/v1/getOrderDetails", method = RequestMethod.POST)
+    public ResponseEntity<OrderDetailsSearchResponse> getOrderDetails(@Parameter(description = "Details for searching order details", required = true, schema = @Schema(implementation = OpenApiBailSearchRequest.class)) @RequestBody @Valid OrderDetailsSearch orderDetailsSearch) {
+        OrderDetailsSearchResponse response = openApiService.getOrderDetails(orderDetailsSearch);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/openapi/v1/case/addAddress")
+    public ResponseEntity<AddAddressResponse> addAddress(@RequestBody @Valid AddAddressRequest addAddressRequest) {
+
+        // This api is accessed before login so internal request info is set
+        RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+        addAddressRequest.setRequestInfo(requestInfo);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        AddAddressResponse response = openApiService.addAddress(addAddressRequest);
+        response.setResponseInfo(responseInfo);
+
+        return ResponseEntity.ok(response);
+
     }
 }

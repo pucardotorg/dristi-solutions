@@ -90,5 +90,16 @@ public class ServiceConstants {
     public static final String ADVOCATE_WELFARE_FUND = "ADVOCATE_WELFARE_FUND";
     public static final String ADVOCATE_CLERK_WELFARE_FUND = "ADVOCATE_CLERK_WELFARE_FUND";
     public static final String LEGAL_BENEFIT_FEE = "LEGAL_BENEFIT_FEE";
+    public static final String EPOST_FEE = "E_POST";
+    public static final String COMPLAINT_FEE = "COMPLAINT_FEE";
+    public static final String APPLICATION_FEE = "APPLICATION_FEE";
+    public static final String PETITION_FEE = "PETITION_FEE";
     public static final String CASE_DEFAULT_ENTITY_TYPE = "case-default";
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String PAYMENT_COMPLETED_SUCCESSFULLY = "PAYMENT_COMPLETED_SUCCESSFULLY";
+
 }

@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -17,6 +18,10 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.demand.*;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
+import org.pucar.dristi.web.models.taskManagement.TaskManagement;
+import org.pucar.dristi.web.models.taskManagement.TaskManagementRequest;
+import org.pucar.dristi.web.models.taskManagement.TaskManagementResponse;
+import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
 import org.pucar.dristi.web.models.tasks.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,10 +45,12 @@ public class OrderUtil {
     private final DemandUtil demandUtil;
     private final MdmsUtil mdmsUtil;
     private final PendingTaskUtil pendingTaskUtil;
+    private final TaskManagementUtil taskManagementUtil;
+    private final CaseUtil caseUtil;
 
     @Autowired
     public OrderUtil(ServiceRequestRepository serviceRequestRepository, ObjectMapper mapper, Configuration configuration,
-                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil, MdmsUtil mdmsUtil, PendingTaskUtil pendingTaskUtil) {
+                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil, MdmsUtil mdmsUtil, PendingTaskUtil pendingTaskUtil, TaskManagementUtil taskManagementUtil, CaseUtil caseUtil) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.mapper = mapper;
         this.configuration = configuration;
@@ -53,6 +60,8 @@ public class OrderUtil {
         this.demandUtil = demandUtil;
         this.mdmsUtil = mdmsUtil;
         this.pendingTaskUtil = pendingTaskUtil;
+        this.taskManagementUtil = taskManagementUtil;
+        this.caseUtil = caseUtil;
     }
 
     public void closeActivePaymentPendingTasks(HearingRequest hearingRequest) {
@@ -63,6 +72,7 @@ public class OrderUtil {
             Role role = Role.builder()
                     .code(PAYMENT_COLLECTOR)
                     .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
                     .build();
             requestInfo.getUserInfo().getRoles().add(role);
 
@@ -203,6 +213,201 @@ public class OrderUtil {
         cancelRelatedDemands(tenantId, taskList, requestInfo);
     }
 
+    public void closeActivePaymentPendingTasksOfProcesses(HearingRequest hearingRequest) {
+        try {
+            String hearingId = hearingRequest.getHearing().getHearingId();
+            String tenantId = hearingRequest.getHearing().getTenantId();
+            RequestInfo requestInfo = hearingRequest.getRequestInfo();
+            Role role = Role.builder()
+                    .code(PAYMENT_COLLECTOR)
+                    .name(PAYMENT_COLLECTOR)
+                    .tenantId(tenantId)
+                    .build();
+            requestInfo.getUserInfo().getRoles().add(role);
+
+            if (hearingId == null) {
+                log.warn("Hearing ID is null. Skipping the closing tasks process.");
+                return;
+            }
+
+            log.info("Closing active payment pending tasks of processes for Hearing ID: {}, Tenant ID: {}", hearingId, tenantId);
+
+            List<Order> orders = fetchRelevantOrders(hearingId, tenantId);
+            if (CollectionUtils.isEmpty(orders)) {
+                log.info("No relevant orders are found for hearingId: {}", hearingId);
+                return;
+            }
+
+            for (Order order : orders) {
+                log.info("Processing orders : {} of type {}", order.getId(), order.getOrderType());
+                processTasksForOrderOfProcesses(order, tenantId, requestInfo);
+            }
+
+        } catch (Exception e) {
+            log.error("Error while closing active payment pending tasks", e);
+        }
+    }
+
+    private void processTasksForOrderOfProcesses(Order order, String tenantId, RequestInfo requestInfo) {
+        log.info("Searching PENDING_PAYMENT task management process for Order ID: {}", order.getId());
+
+        TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
+                .filingNumber(order.getFilingNumber())
+                .status(PENDING_PAYMENT)
+                .tenantId(tenantId)
+                .build();
+
+        org.pucar.dristi.web.models.taskManagement.TaskSearchRequest searchRequest = org.pucar.dristi.web.models.taskManagement.TaskSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(searchCriteria)
+                .build();
+
+        List<TaskManagement> taskManagementList = taskManagementUtil.searchTaskManagement(searchRequest);
+        if (CollectionUtils.isEmpty(taskManagementList)) {
+            log.info("No PENDING_PAYMENT task management found for Order ID: {}", order.getId());
+            // expiring the pending tasks which not even single action taken
+            closePendingTasksWithoutAction(tenantId, requestInfo, order);
+            return;
+        }
+
+        log.info("Found {} PENDING_PAYMENT task management for Order ID: {}", taskManagementList.size(), order.getId());
+
+        for (TaskManagement taskManagement : taskManagementList) {
+            log.info("Expiring the task: {}", taskManagement.getTaskManagementNumber());
+            expireTaskManagementWorkflow(taskManagement, requestInfo);
+            closePaymentPendingTaskOfTaskManagement(taskManagement, requestInfo);
+        }
+
+        cancelRelatedDemandsOfTaskManagement(tenantId, taskManagementList, requestInfo);
+    }
+
+    private void closePendingTasksWithoutAction(String tenantId, RequestInfo requestInfo, Order order) {
+
+        String filingNumber = order.getFilingNumber();
+
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        String caseCnrNumber = textValueOrNull(caseDetails, CASE_CNR);
+        String caseId = textValueOrNull(caseDetails, CASE_ID);
+        String caseTitle = textValueOrNull(caseDetails, CASE_TITLE);
+
+        // close manual pending task of schedule of hearing
+        log.info("close manual pending task of order with out action of id {}", order.getId());
+        pendingTaskUtil.closeManualPendingTask(MANUAL + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
+
+        List<String> orderItemIds = extractOrderItemIds(order);
+
+        if (orderItemIds.isEmpty()) {
+            log.info("No order item found for order id {}", order.getId());
+            return;
+        }
+
+        log.info("close manual pending task of order item with out action of item id's {}", orderItemIds);
+
+        for (String itemId : orderItemIds) {
+            pendingTaskUtil.closeManualPendingTask(MANUAL + itemId + "_" + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
+        }
+
+    }
+
+    private List<String> extractOrderItemIds(Order order) {
+
+        List<String> complaintOrderItemIds = new ArrayList<>();
+
+        if (order.getCompositeItems() != null) {
+            Object compositeOrderItem = order.getCompositeItems();
+            ArrayNode arrayNode = mapper.convertValue(compositeOrderItem, ArrayNode.class);
+
+            if (arrayNode != null && !arrayNode.isEmpty()) {
+                for (int i = 0; i < arrayNode.size(); i++) {
+                    ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+                    if (itemNode.has("id")) {
+                        String id = itemNode.get("id").textValue();
+                        complaintOrderItemIds.add(id);
+                    }
+                }
+            }
+        }
+
+        return complaintOrderItemIds;
+
+    }
+
+    private void expireTaskManagementWorkflow(TaskManagement taskManagement, RequestInfo requestInfo) {
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(EXPIRE);
+        taskManagement.setWorkflow(workflow);
+        requestInfo.getUserInfo().getRoles().add(Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build());
+        TaskManagementRequest taskManagementRequest = TaskManagementRequest.builder()
+                .requestInfo(requestInfo)
+                .taskManagement(taskManagement)
+                .build();
+        TaskManagementResponse response = taskManagementUtil.updateTaskManagement(taskManagementRequest);
+        log.info("Updated task management: {} with response: {}", taskManagement.getTaskManagementNumber(), response);
+    }
+
+    private void closePaymentPendingTaskOfTaskManagement(TaskManagement taskManagement, RequestInfo requestInfo) {
+
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(taskManagement.getFilingNumber()).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        String caseCnrNumber = textValueOrNull(caseDetails, CASE_CNR);
+        String caseId = textValueOrNull(caseDetails, CASE_ID);
+        String caseTitle = textValueOrNull(caseDetails, CASE_TITLE);
+
+        // close manual pending task of schedule of hearing
+        log.info("close manual pending task of schedule of hearing");
+        pendingTaskUtil.closeManualPendingTask(MANUAL + taskManagement.getOrderNumber(), requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
+
+        if (taskManagement.getOrderItemId() != null) {
+            String itemId = taskManagement.getOrderItemId();
+            String referenceId = MANUAL + itemId + "_" + taskManagement.getOrderNumber();
+            pendingTaskUtil.closeManualPendingTask(referenceId, requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
+        }
+    }
+
+    private void cancelRelatedDemandsOfTaskManagement(String tenantId, List<TaskManagement> taskManagementList, RequestInfo requestInfo) {
+
+        Set<String> consumerCodes = taskManagementList.stream()
+                .map(task -> task.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix())
+                .collect(Collectors.toSet());
+
+        DemandCriteria criteria = new DemandCriteria();
+        criteria.setConsumerCode(consumerCodes);
+        criteria.setTenantId(tenantId);
+
+        RequestInfoWrapper wrapper = new RequestInfoWrapper();
+        wrapper.setRequestInfo(requestInfo);
+
+        if (consumerCodes.isEmpty()) {
+            log.info("No consumer codes found for task management");
+            return;
+        }
+
+        DemandResponse demandResponse = demandUtil.searchDemand(criteria, wrapper);
+        if (CollectionUtils.isEmpty(demandResponse.getDemands())) {
+            log.info("No demands found for consumer codes of task management: {}", consumerCodes);
+            return;
+        }
+
+        demandResponse.getDemands().forEach(d -> d.setStatus(Demand.StatusEnum.CANCELLED));
+        log.info("Marking {} demands as CANCELLED ", demandResponse.getDemands().size());
+
+        DemandRequest demandRequest = new DemandRequest();
+        demandRequest.setRequestInfo(requestInfo);
+        demandRequest.setDemands(demandResponse.getDemands());
+
+        demandUtil.updateDemand(demandRequest);
+        log.info("Updated demand status to CANCELLED for consumer codes : {}", consumerCodes);
+    }
+
     private void closePaymentPendingTask(Task task, RequestInfo requestInfo) {
         String referenceId = MANUAL + task.getTaskNumber();
         pendingTaskUtil.closeManualPendingTask(referenceId, requestInfo, task.getFilingNumber(), task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
@@ -336,6 +541,10 @@ public class OrderUtil {
             return deliveryChannels.get("channelName").textValue();
         }
         return null;
+    }
+
+    private String textValueOrNull(JsonNode node, String field) {
+        return node.get(field).isNull() ? null : node.get(field).textValue();
     }
 
 }

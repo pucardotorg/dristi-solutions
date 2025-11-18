@@ -170,11 +170,13 @@ public class ServiceConstants {
 
     public static final String DEMAND_SERVICE_EXCEPTION = "DEMAND_SERVICE_EXCEPTION : {} ";
     public static final String DEMAND_SERVICE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service";
+    public static final String DEMAND_SERVICE_CONSUMER_CODE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service for consumer code";
 
     public static final String REQUEST_INFO = "RequestInfo";
     public static final String FILING_NUMBER = "filingNumber";
     public static final String CNR_NUMBER_KEY = "cnrNumber";
     public static final String STRING_FORMAT = "%s?tenantId=%s&demandId=%s";
+    public static final String CONSUMER_CODE_FORMAT = "%s?tenantId=%s&consumerCode=%s&status=%s";
 
     public static final String PAYMENT_TYPE_PATH = "$.[*].paymentType";
 
@@ -267,5 +269,12 @@ public class ServiceConstants {
     public static final String EXCLUDED_ASSIGNED_UUIDS = "excludedAssignedUuids";
 
     public static final String POA_JOIN_CASE_TOPIC = "poa-join-case";
+
+    public static final String APPEARANCE = "APPEARANCE";
+    public static final String ARGUMENTS = "ARGUMENTS";
+    public static final String EVIDENCE = "EVIDENCE";
+    public static final String LONG_PENDING_REGISTER = "Long Pending Register";
+    public static final String REFER_TO_ADR = "REFER_TO_ADR";
+    public static final String ACTIVE = "ACTIVE";
 
 }
