@@ -2822,7 +2822,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (mockESignEnabled) {
+      if (mockESignEnabled && !unsignedFileStoreId) {
         localStorageID = orderPdfFileStoreID;
       }
 
@@ -3537,6 +3537,12 @@ const GenerateOrdersV2 = () => {
   const handleGoBackSignatureModal = () => {
     sessionStorage.removeItem("fileStoreId");
     sessionStorage.removeItem("businessOfTheDay");
+    setSignedDocumentUploadID("");
+    setFileStoreIds(prev => {
+      const updated = new Set(prev);
+      updated.delete(signedDoucumentUploadedID);
+      return updated;
+    });
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };
