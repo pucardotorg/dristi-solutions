@@ -322,11 +322,12 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
-    caseDetails?.status,
-    userRoles,
-    isCitizen,
-  ]);
+  const showTakeAction = useMemo(() => {
+    const statusOk = actionEnabledStatuses.includes(caseDetails?.status);
+    const base = userRoles?.includes("ORDER_CREATOR") && !isCitizen && statusOk;
+    const alt = (isJudge || isTypist || hasHearingPriorityView) && !isCitizen && statusOk;
+    return base || alt;
+  }, [caseDetails?.status, userRoles, isCitizen, isJudge, isTypist, hasHearingPriorityView]);
 
   const {
     isLoading: isWorkFlowLoading,
@@ -3179,7 +3180,18 @@ const AdmittedCaseV2 = () => {
     });
   }, [employeeActionOptions, roles, employeeActionsPermissionsMapping]);
 
-  const courtActionOptions = useMemo(
+const showGenerateOrderButton = useMemo(() => {
+  return Boolean(isJudge || isTypist);
+}, [isJudge, isTypist]);
+
+
+ const displayedEmployeeActionOptions = useMemo(() => {
+  return allowedEmployeeActionOptions?.filter(
+    (opt) => !((isJudge || isTypist) && opt?.value === "GENERATE_ORDER")
+  );
+}, [allowedEmployeeActionOptions, isJudge, isTypist]);
+
+
     () => [
       {
         value: "SUBMIT_DOCUMENTS",
@@ -3187,7 +3199,6 @@ const AdmittedCaseV2 = () => {
       },
     ],
     []
-  );
 
   const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
 
@@ -3623,7 +3634,16 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            {hasHearingPriorityView && hasHearingEditAccess && (
+            
+                            {(isJudge || isTypist) && (
+                            <Button
+                              variation={"outlined"}
+                              label={t("Generate Order")}
+                              onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                              style={{ boxShadow: "none" }}
+                            ></Button>
+                            )}
+                     {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
                                 label={t("CS_CASE_PASS_OVER")}
@@ -3704,13 +3724,13 @@ const AdmittedCaseV2 = () => {
                       >
                         <CustomThreeDots />
                         {showOtherMenu && (
-                          <Menu
-                            t={t}
-                            localeKeyPrefix={"CS_CASE"}
-                            options={allowedEmployeeActionOptions}
-                            optionKey={"label"}
-                            onSelect={handleEmployeeAction}
-                          ></Menu>
+                            <Menu
+                              t={t}
+                              localeKeyPrefix={"CS_CASE"} optionKey={"label"}
+                              textStyles={{ cursor: "pointer" }}
+                              options={displayedEmployeeActionOptions} // ✅ filtered list here
+                              onSelect={handleEmployeeAction}
+                            ></Menu>
                         )}
                       </div>
                     </div>
