@@ -68,13 +68,20 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       "span",
       "img",
     ],
+
     ALLOWED_ATTR: {
-      a: ["href", "name", "target"],
-      img: ["src", "alt", "title", "width", "height"],
-      p: ["class", "style"],
-      div: ["class", "style"],
-      span: ["class", "style"],
+      "*": ["style", "class", "href", "src", "alt", "title", "width", "height", "name", "target"],
     },
+
+    ALLOWED_STYLES: {
+      "*": {
+        "text-align": [/^left$/, /^right$/, /^center$/, /^justify$/],
+      },
+    },
+
+    KEEP_CONTENT: true,
+    ALLOW_ARBITRARY_ATTRIBUTES: true,
+    ADD_ATTR: ["style"],
   };
 
   const inputName = inputs?.[0]?.name;

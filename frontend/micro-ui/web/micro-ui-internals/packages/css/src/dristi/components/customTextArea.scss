@@ -19,12 +19,8 @@
   padding: 12px;
 }
 
-.custom-editor {
-  max-width: 100%;
-  word-break: break-word;
-}
 
-.custom-editor-wrapper {
+.demo-wrapper {
   border: 1px solid #ccc;
   border-radius: 4px;
 
@@ -44,36 +40,6 @@
     border: none;
     padding: 12px;
     box-sizing: border-box;
-
-    counter-reset: clean-counter;
-
-    ol {
-      list-style-type: none !important;
-      padding-left: 0 !important;
-      margin: 0 !important;
-
-      li {
-        list-style-type: none !important;
-        position: relative;
-        padding-left: 30px !important;
-        margin: 0 !important;
-      }
-    }
-
-    ol {
-      li {
-        counter-increment: clean-counter;
-
-        &::before {
-          content: counter(clean-counter) ". ";
-          position: absolute;
-          left: 0;
-          top: 0;
-          font-weight: normal;
-          color: currentColor;
-        }
-      }
-    }
   }
 
   .DraftEditor-root {
@@ -117,22 +83,4 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
-}
-
-.value ol {
-  padding-left: 20px;
-  list-style-type: decimal;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.value ul {
-  padding-left: 20px;
-  list-style-type: disc;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.value li {
-  margin-bottom: 0.25rem;
 }
