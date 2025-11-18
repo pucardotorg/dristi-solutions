@@ -39,6 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
 
@@ -76,11 +77,15 @@ public class PaymentService {
 
     private final TreasuryMappingRepository treasuryMappingRepository;
 
+    private final IndividualService individualService;
+
+    private final SMSNotificationService smsNotificationService;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository, IndividualService individualService, SMSNotificationService smsNotificationService) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -96,6 +101,8 @@ public class PaymentService {
         this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
         this.treasuryMappingRepository = treasuryMappingRepository;
+        this.individualService = individualService;
+        this.smsNotificationService = smsNotificationService;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -407,6 +414,77 @@ public class PaymentService {
         }
         PaymentRequest paymentRequest = new PaymentRequest(request.getRequestInfo(), payment);
         collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
+        sendNotificationForPaymentCompleted(request);
+    }
+
+    public void sendNotificationForPaymentCompleted(TreasuryPaymentRequest request) {
+        String filingNumber = request.getTreasuryPaymentData().getCaseNumber();
+        CourtCase courtCase = fetchCourtCase(filingNumber);
+        if(courtCase == null) return;
+        Set<String> individualIds = collectIndividualIds(courtCase);
+        List<Individual> individuals = fetchIndividuals(individualIds);
+        Set<String> phoneNumbers = extractPhoneNumbers(individuals);
+        SMSTemplateData smsTemplateData = buildSmsTemplateData(filingNumber, courtCase);
+
+        callNotificationService(smsTemplateData, phoneNumbers, PAYMENT_COMPLETED_SUCCESSFULLY, request.getRequestInfo());
+    }
+
+
+    private CourtCase fetchCourtCase(String filingNumber) {
+        CaseCriteria criteria = CaseCriteria.builder()
+                .filingNumber(filingNumber)
+                .build();
+
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .criteria(List.of(criteria))
+                .build();
+
+        return caseUtil.searchCaseDetails(caseSearchRequest);
+    }
+
+    private Set<String> collectIndividualIds(CourtCase courtCase) {
+        Set<String> individualIds = new HashSet<>();
+        individualIds.addAll(getLitigantIndividualIds(courtCase));
+        individualIds.addAll(getPOAIndividualIds(courtCase));
+        return individualIds;
+    }
+
+    private List<Individual> fetchIndividuals(Set<String> individualIds) {
+        return individualService.getIndividualsBylId(null, new ArrayList<>(individualIds));
+    }
+
+    private Set<String> extractPhoneNumbers(List<Individual> individuals) {
+        return individuals.stream()
+                .map(Individual::getMobileNumber)
+                .collect(Collectors.toSet());
+    }
+
+    private SMSTemplateData buildSmsTemplateData(String filingNumber, CourtCase courtCase) {
+        return SMSTemplateData.builder()
+                .filingNumber(filingNumber)
+                .cmpNumber(courtCase.getCmpNumber())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .build();
+    }
+
+
+    private void callNotificationService(SMSTemplateData templateData, Set<String> phoneNumbers, String messageCode, RequestInfo requestInfo) {
+        for(String phoneNumber : phoneNumbers){
+            smsNotificationService.sendNotification(requestInfo, templateData, messageCode, phoneNumber);
+
+        }
+    }
+
+    private Set<String> getLitigantIndividualIds(CourtCase courtCase) {
+        return courtCase.getLitigants().stream()
+                .map(Party::getIndividualId)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> getPOAIndividualIds(CourtCase courtCase) {
+        return courtCase.getPoaHolders().stream()
+                .map(POAHolder::getIndividualId)
+                .collect(Collectors.toSet());
     }
 
     public DemandResponse createDemand(DemandCreateRequest demandRequest) {
@@ -499,14 +577,27 @@ public class PaymentService {
     private List<DemandDetail> getDemandDetailSummons(List<Calculation> calculation, String entityType, String deliveryChannel, Map<String, Map<String, JSONArray>> paymentMasterData) {
         Map<String, String> taxHeadMasterCodes = getTaxHeadMasterCodes(paymentMasterData, entityType, deliveryChannel);
         List<DemandDetail> demandDetails = new ArrayList<>();
-        for(BreakDown breakDown : calculation.get(0).getBreakDown()) {
-            String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
-            if (taxHeadCode != null) {
-                demandDetails.add(DemandDetail.builder()
-                        .tenantId(config.getEgovStateTenantId())
-                        .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
-                        .taxHeadMasterCode(taxHeadCode)
-                        .build());
+        if ("EPOST".equalsIgnoreCase(deliveryChannel)) {
+            for (BreakDown breakDown : calculation.get(0).getBreakDown()) {
+                String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
+                if (taxHeadCode != null) {
+                    demandDetails.add(DemandDetail.builder()
+                            .tenantId(config.getEgovStateTenantId())
+                            .taxAmount(BigDecimal.valueOf(calculation.get(0).getBreakDown().stream().mapToDouble(BreakDown::getAmount).sum()))
+                            .taxHeadMasterCode(taxHeadCode)
+                            .build());
+                }
+            }
+        } else {
+            for (BreakDown breakDown : calculation.get(0).getBreakDown()) {
+                String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
+                if (taxHeadCode != null) {
+                    demandDetails.add(DemandDetail.builder()
+                            .tenantId(config.getEgovStateTenantId())
+                            .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
+                            .taxHeadMasterCode(taxHeadCode)
+                            .build());
+                }
             }
         }
         return demandDetails;

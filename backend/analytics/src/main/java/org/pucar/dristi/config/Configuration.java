@@ -152,6 +152,10 @@ public class Configuration {
 	private String taskBusinessServices;
 	private List<String> taskBusinessServiceList;
 
+    @Value("${egov.task.management.business.services}")
+    private String taskManagementBusinessServices;
+    private List<String> taskManagementBusinessServiceList;
+
 	@Value("${egov.application.business.services}")
 	private String applicationBusinessServices;
 	private List<String> applicationBusinessServiceList;
@@ -235,12 +239,20 @@ public class Configuration {
     @Value("${case.section.and.sub.section}")
     private String caseSectionAndSubSection;
 
+	// task management config
+	@Value("${dristi.task-management.host}")
+	private String taskManagementServiceHost;
+
+	@Value("${dristi.task-management.search.endpoint}")
+	private String taskManagementSearchEndpoint;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
 		caseBusinessServiceList = Arrays.asList(caseBusinessServices.split(","));
 		evidenceBusinessServiceList = Arrays.asList(evidenceBusinessServices.split(","));
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
+        taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));

@@ -27,6 +27,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const WitnessDepositionSignaturePage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionSignaturePage");
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
   const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
+  const PaymentLoginPage = Digit?.ComponentRegistryService?.getComponent("PaymentLoginPage");
+  const SmsPaymentPage = Digit?.ComponentRegistryService?.getComponent("SmsPaymentPage");
 
   const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
@@ -136,6 +138,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     "/registration/email",
     "/home/evidence-sign",
     "/home/evidence-login",
+    "/home/payment-login",
+    "/home/sms-payment",
   ];
 
   const whiteListedRoutes = [
@@ -160,8 +164,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/access-expired`,
     `${path}/home/evidence-sign`,
     `${path}/home/evidence-login`,
+    `${path}/home/payment-login`,
+    `${path}/home/sms-payment`,
   ];
-  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`];
+  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`, `${path}/home/sms-payment`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -305,6 +311,14 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/home/evidence-sign`}>
             <WitnessDepositionSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/payment-login`}>
+            <PaymentLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/sms-payment`}>
+            <SmsPaymentPage />
           </Route>
         </React.Fragment>
       </Switch>

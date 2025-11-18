@@ -30,6 +30,9 @@ public class OpenAPiHearingRequest {
     @Valid
     private Long fromDate;
 
+    @JsonProperty("isHearingSerialNumberSorting")
+    private Boolean isHearingSerialNumberSorting = false;
+
     @JsonProperty("toDate")
     @NotNull
     @Valid

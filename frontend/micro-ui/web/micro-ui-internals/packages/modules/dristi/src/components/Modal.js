@@ -22,6 +22,7 @@ const Modal = ({
   isCustomButtonDisabled,
   isBackButtonDisabled,
   hideSubmit,
+  hideCancel,
   style = {},
   textStyle = { margin: "0px" },
   popupModuleMianStyles,
@@ -58,7 +59,7 @@ const Modal = ({
   return (
     <PopUp popUpStyleMain={popUpStyleMain}>
       <div className={`popup-module ${className}`} style={popupStyles}>
-      {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={headerBarMainStyle ? headerBarMainStyle : {}} />}
+        {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={headerBarMainStyle ? headerBarMainStyle : {}} />}
         <div
           className={`popup-module-main ${popupModuleMianClassName ? popupModuleMianClassName : ""}`}
           style={popupModuleMianStyles ? popupModuleMianStyles : {}}
@@ -75,7 +76,7 @@ const Modal = ({
                   : popupModuleActionBarStyles
               }
             >
-              {actionCancelLabel ? (
+              {actionCancelLabel && !hideCancel ? (
                 <ButtonSelector
                   textStyles={{ margin: "0px", color: "#007E7E", ...(actionCancelTextStyle ? actionCancelTextStyle : {}) }}
                   theme="border"
