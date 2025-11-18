@@ -70,27 +70,18 @@ import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
-import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
-import _, { set } from "lodash";
+import _ from "lodash";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import {
-  getRespondantName,
-  getComplainantName,
-  constructFullName,
-  removeInvalidNameParts,
-  getFormattedName,
-  convertTaskResponseToPayload,
-} from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
-  CloseBtn,
   compositeOrderAllowedTypes,
   formatDate,
   generateAddress,
@@ -99,7 +90,6 @@ import {
   getOrderData,
   getParties,
   getUpdateDocuments,
-  Heading,
   prepareUpdatedOrderData,
 } from "../../utils/orderUtils";
 import { addOrderItem, createOrder, deleteOrderItem, getCourtFee } from "../../utils/orderApiCallUtils";
@@ -212,16 +202,14 @@ const GenerateOrdersV2 = () => {
   const [orderType, setOrderType] = useState({}); // not sure it needed
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
   const [orderTitle, setOrderTitle] = useState(null);
-  const submitButtonRefs = useRef([]);
   const setValueRef = useRef([]);
-  const formStateRef = useRef([]);
   const clearFormErrors = useRef([]);
   const setFormErrors = useRef([]);
   const [compositeOrderIndex, setCompositeOrderIndex] = useState(0);
   const [currentOrder, setCurrentOrder] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const { orderNumber, filingNumber, openEdit } = Digit.Hooks.useQueryParams();
+  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -2408,6 +2396,7 @@ const GenerateOrdersV2 = () => {
     const respondentName = result?.name || result;
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
+    const respondentUniqueId = orderFormData?.party?.data?.uniqueId || orderFormData?.party?.uniqueId || "";
     const complainantDetails = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
       (d) => d?.data?.complainantVerification?.individualDetails?.individualId === complainantIndividualId
     )?.data;
@@ -2540,6 +2529,7 @@ const GenerateOrdersV2 = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            uniqueId: respondentUniqueId,
             ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
@@ -2587,6 +2577,7 @@ const GenerateOrdersV2 = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            uniqueId: respondentUniqueId,
             ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
@@ -2637,6 +2628,7 @@ const GenerateOrdersV2 = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            uniqueId: respondentUniqueId,
             ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
