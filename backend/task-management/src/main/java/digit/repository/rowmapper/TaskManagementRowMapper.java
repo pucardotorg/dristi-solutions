@@ -82,7 +82,7 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
         return new ArrayList<>(taskMap.values());
     }
 
-    private Object getPartyType(ResultSet rs) throws SQLException {
+    private PartyType getPartyType(ResultSet rs) throws SQLException {
         String type = rs.getString("party_type");
         return type == null ? null : PartyType.valueOf(type);
     }

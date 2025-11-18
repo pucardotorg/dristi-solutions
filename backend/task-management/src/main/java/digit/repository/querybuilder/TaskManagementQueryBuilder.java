@@ -80,7 +80,7 @@ public class TaskManagementQueryBuilder {
             firstCriteria = addTaskCriteria(criteria.getStatus(), query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskListCriteria(criteria.getTaskType(), query, firstCriteria, "task.task_type", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(criteria.getFilingNumber(), query, firstCriteria, "task.filing_number = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskCriteria(criteria.getPartyType(), query, firstCriteria, "task.party_type = ?");
+            firstCriteria = addTaskCriteria(criteria.getPartyType(), query, firstCriteria, "task.party_type = ?", preparedStmtList, preparedStmtArgList);
             addTaskCriteria(criteria.getId(), query, firstCriteria, "task.id = ?", preparedStmtList, preparedStmtArgList);
 
             return query.toString();
