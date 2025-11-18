@@ -60,6 +60,34 @@ public class Consumer {
         }
     }
 
+    @KafkaListener(topics = {"${kafka.save.task-management.topic}", "${kafka.update.task-management.topic}"})
+    public void listenTaskManagementEvents(final Map<String, Object> data, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received task management event on topic: {}", topic);
+            TaskManagementRequest request = objectMapper.convertValue(data, TaskManagementRequest.class);
+            
+            if (request.getTaskManagement() != null
+                && request.getTaskManagement().getWorkflow() != null
+                && COMPLETE_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())
+                && COMPLETED_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getStatus())) {
+                
+                log.info("Processing complete without payment for task: {}", 
+                    request.getTaskManagement().getTaskManagementNumber());
+                
+                // Generate follow-up tasks
+                taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
+                
+                log.info("Successfully generated follow-up tasks for task: {}", 
+                    request.getTaskManagement().getTaskManagementNumber());
+            } else {
+                log.debug("Task management event does not match complete without payment criteria. Action: {}, Status: {}", 
+                    request.getTaskManagement().getWorkflow() != null ? request.getTaskManagement().getWorkflow().getAction() : "null",
+                    request.getTaskManagement().getStatus());
+            }
+        } catch (final Exception e) {
+            log.error("Error while processing task management event on topic: {}: ", topic, e);
+        }
+    }
     public void processUpfrontApplication(TaskManagement taskManagement, RequestInfo requestInfo) {
         try {
             log.info("Processing upfront application: {}", taskManagement.getTaskManagementNumber());
