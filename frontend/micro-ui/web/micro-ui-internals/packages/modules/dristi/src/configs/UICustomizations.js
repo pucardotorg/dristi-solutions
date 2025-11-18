@@ -2296,6 +2296,31 @@ export const UICustomizations = {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const caseId = row?.caseNumber || row?.filingNumber;
+      const getDaysDiff = (value) => {
+        const createdAt = new Date(value);
+        const formattedCreatedAt = new Date(
+          createdAt.getFullYear(),
+          createdAt.getMonth(),
+          createdAt.getDate()
+        );
+
+        const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+        return Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      };
+      const renderDaysDiff = (value) => {
+        const days = getDaysDiff(value);
+        return (
+          <span
+            style={{
+              color: days > 2 ? "#9E400A" : undefined,
+              fontWeight: days > 2 ? 500 : 400
+            }}
+          >
+            {days}
+          </span>
+        );
+      };
+
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2359,11 +2384,9 @@ export const UICustomizations = {
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_DAYS_FILING":
-          const createdAt = new Date(value);
-          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
-          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
-          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+          return renderDaysDiff(value);
+        case "CS_DAYS_REGISTRATION":
+          return renderDaysDiff(value);
         case "APPLICATION_TYPE":
           return t(value);
         default:
