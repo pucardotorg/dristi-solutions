@@ -183,6 +183,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                         .courtCaseNumber(courtCase.getCourtCaseNumber())
                         .cmpNumber(courtCase.getCmpNumber())
                         .shortenedUrl(createShortUrl(order, referenceId))
+                        .orderType(order.getOrderType())
                         .build();
 
                 callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
