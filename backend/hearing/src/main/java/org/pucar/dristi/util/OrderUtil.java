@@ -18,11 +18,9 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.demand.*;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
-import org.pucar.dristi.web.models.taskManagement.TaskManagement;
-import org.pucar.dristi.web.models.taskManagement.TaskManagementRequest;
-import org.pucar.dristi.web.models.taskManagement.TaskManagementResponse;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
+import org.pucar.dristi.web.models.taskManagement.*;
 import org.pucar.dristi.web.models.tasks.*;
+import org.pucar.dristi.web.models.tasks.TaskSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -295,23 +293,98 @@ public class OrderUtil {
         String caseId = textValueOrNull(caseDetails, CASE_ID);
         String caseTitle = textValueOrNull(caseDetails, CASE_TITLE);
 
-        // close manual pending task of schedule of hearing
-        log.info("close manual pending task of order with out action of id {}", order.getId());
-        pendingTaskUtil.closeManualPendingTask(MANUAL + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
-
+        log.info("Closing manual pending tasks for order without action | orderId: {} | orderNumber: {} | orderType: {} | filingNumber: {}",
+                order.getId(), order.getOrderNumber(), order.getOrderType(), filingNumber);
+        
+        closeOrderLevelTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle);
+        
         List<String> orderItemIds = extractOrderItemIds(order);
+        log.debug("Extracted order item IDs | count: {}", orderItemIds.size());
 
         if (orderItemIds.isEmpty()) {
-            log.info("No order item found for order id {}", order.getId());
+            log.info("No order items found for order | orderId: {} | orderNumber: {} - skipping item-level task closure", 
+                    order.getId(), order.getOrderNumber());
             return;
         }
 
-        log.info("close manual pending task of order item with out action of item id's {}", orderItemIds);
+        log.info("Closing manual pending tasks for order items | orderId: {} | itemCount: {} | itemIds: {}",
+                order.getId(), orderItemIds.size(), orderItemIds);
+        closeOrderItemTasks(orderItemIds, order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle);
 
-        for (String itemId : orderItemIds) {
-            pendingTaskUtil.closeManualPendingTask(MANUAL + itemId + "_" + order.getOrderNumber(), requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, order.getOrderType());
+    }
+
+    /**
+     * Closes order-level pending tasks based on order type
+     * For SUMMONS orders: closes tasks for COMPLAINANT, RESPONDENT, and COURT
+     * For other orders: closes general order task
+     */
+    private void closeOrderLevelTasks(Order order, RequestInfo requestInfo, String filingNumber, 
+                                    String caseCnrNumber, String caseId, String caseTitle) {
+        if (SUMMONS.equalsIgnoreCase(order.getOrderType())) {
+            // For SUMMONS orders, close tasks for all parties
+            log.debug("Processing SUMMONS order - closing tasks for all parties | orderNumber: {}", order.getOrderNumber());
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT);
+            
+            log.debug("Closing SUMMONS order tasks without party type | orderNumber: {}", order.getOrderNumber());
+            closeTaskWithoutPartyType(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle);
+        } else {
+            // For non-SUMMONS orders, close general order task
+            log.debug("Processing non-SUMMONS order - closing general order task | orderNumber: {}", order.getOrderNumber());
+            String generalTaskId = MANUAL + order.getOrderNumber();
+            log.debug("Closing general order task | taskId: {}", generalTaskId);
+            pendingTaskUtil.closeManualPendingTask(generalTaskId, requestInfo, filingNumber, 
+                    caseCnrNumber, caseId, caseTitle, order.getOrderType());
         }
+    }
 
+    /**
+     * Closes pending tasks for a specific party type
+     */
+    private void closePartySpecificTasks(Order order, RequestInfo requestInfo, String filingNumber, 
+                                       String caseCnrNumber, String caseId, String caseTitle, PartyType partyType) {
+        String taskId = MANUAL + partyType.toString() + "_" + order.getOrderNumber();
+        log.debug("Closing party-specific task | partyType: {} | taskId: {} | orderNumber: {}", 
+                partyType, taskId, order.getOrderNumber());
+        pendingTaskUtil.closeManualPendingTask(taskId, requestInfo, filingNumber, 
+                caseCnrNumber, caseId, caseTitle, order.getOrderType());
+    }
+
+    /**
+     * Closes pending tasks without party type to support already created pending tasks
+     * This handles legacy tasks that were created without party type prefixes
+     */
+    private void closeTaskWithoutPartyType(Order order, RequestInfo requestInfo, String filingNumber, 
+                                         String caseCnrNumber, String caseId, String caseTitle) {
+        String taskId = MANUAL + order.getOrderNumber();
+        log.debug("Closing task without party type | taskId: {} | orderNumber: {}", 
+                taskId, order.getOrderNumber());
+        pendingTaskUtil.closeManualPendingTask(taskId, requestInfo, filingNumber, 
+                caseCnrNumber, caseId, caseTitle, order.getOrderType());
+    }
+
+    /**
+     * Closes pending tasks for all order items
+     * For each item, closes tasks for COMPLAINANT, RESPONDENT, COURT, and the specific item
+     */
+    private void closeOrderItemTasks(List<String> orderItemIds, Order order, RequestInfo requestInfo, 
+                                   String filingNumber, String caseCnrNumber, String caseId, String caseTitle) {
+        for (String itemId : orderItemIds) {
+            log.debug("Processing order item | itemId: {} | orderNumber: {}", itemId, order.getOrderNumber());
+            
+            // Close tasks for all parties for this order item
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT);
+            
+            // Close task specific to this order item
+            String itemTaskId = MANUAL + itemId + "_" + order.getOrderNumber();
+            log.debug("Closing item-specific task | itemId: {} | taskId: {} | orderNumber: {}", 
+                    itemId, itemTaskId, order.getOrderNumber());
+            pendingTaskUtil.closeManualPendingTask(itemTaskId, requestInfo, filingNumber, 
+                    caseCnrNumber, caseId, caseTitle, order.getOrderType());
+        }
     }
 
     private List<String> extractOrderItemIds(Order order) {
@@ -364,11 +437,11 @@ public class OrderUtil {
 
         // close manual pending task of schedule of hearing
         log.info("close manual pending task of schedule of hearing");
-        pendingTaskUtil.closeManualPendingTask(MANUAL + taskManagement.getOrderNumber(), requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
+        pendingTaskUtil.closeManualPendingTask(MANUAL + taskManagement.getPartyType() + "_" +taskManagement.getOrderNumber(), requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
 
         if (taskManagement.getOrderItemId() != null) {
             String itemId = taskManagement.getOrderItemId();
-            String referenceId = MANUAL + itemId + "_" + taskManagement.getOrderNumber();
+            String referenceId = MANUAL + itemId + "_" + taskManagement.getPartyType() + "_" + taskManagement.getOrderNumber();
             pendingTaskUtil.closeManualPendingTask(referenceId, requestInfo, taskManagement.getFilingNumber(), caseCnrNumber, caseId, caseTitle, taskManagement.getTaskType());
         }
     }
