@@ -45,7 +45,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        return false;
     }
 
     @Override
@@ -76,7 +76,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
-        String hearingNumber = order.getHearingNumber();
+        String hearingNumber = order.getScheduledHearingNumber();
 
         // hearing update and application case search if required
         if (hearingNumber == null) {
@@ -91,16 +91,9 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
             hearingNumber = orderUtil.getHearingNumberFormApplicationAdditionalDetails(applications.get(0).getAdditionalDetails());
         }
         log.info("hearingNumber:{}", hearingNumber);
-        Hearing hearing = null ;
-        if(hearingNumber!=null){
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-            hearing = hearings.get(0);
-        }else{
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
-            hearing = hearings.get(0);
-        }
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
 
         order.setHearingNumber(hearing.getHearingId());
 

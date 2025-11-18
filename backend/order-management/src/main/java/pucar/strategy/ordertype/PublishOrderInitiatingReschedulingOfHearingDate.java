@@ -86,7 +86,7 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         String referenceId = orderUtil.getReferenceId(order);
-        String hearingNumber = order.getHearingNumber();
+        String hearingNumber = order.getScheduledHearingNumber();
 
         String changedHearingDate = null;
 
@@ -106,16 +106,9 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
 
         String originalHearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "originalHearingDate"), String.class);
 
-        Hearing hearing = null;
-        if(hearingNumber!=null) {
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-            hearing = hearings.get(0);
-        }else{
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
-            hearing = hearings.get(0);
-        }
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
 
         String dateValue = Optional.ofNullable(changedHearingDate)
                 .orElse(originalHearingDate);
