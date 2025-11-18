@@ -205,21 +205,21 @@ public class TreasuryEnrichment {
         List<FeeBreakDown> fees = new ArrayList<>();
         if (data.getCourtFee() > 0) {
             fees.add(FeeBreakDown.builder()
-                    .feeName("Court Fees:")
+                    .feeName("Court Fee:")
                     .feeAmount(data.getCourtFee())
                     .build());
         }
 
         if (data.getAdvocateWelfareFund() > 0) {
             fees.add(FeeBreakDown.builder()
-                    .feeName("Fee for advocate welfare fund:")
+                    .feeName("Fee for Advocate Welfare Fund:")
                     .feeAmount(data.getAdvocateWelfareFund())
                     .build());
         }
 
         if (data.getAdvocateClerkWelfareFund() > 0) {
             fees.add(FeeBreakDown.builder()
-                    .feeName("Fee for clerk welfare fund:")
+                    .feeName("Fee for Clerk Welfare Fund:")
                     .feeAmount(data.getAdvocateClerkWelfareFund())
                     .build());
         }
