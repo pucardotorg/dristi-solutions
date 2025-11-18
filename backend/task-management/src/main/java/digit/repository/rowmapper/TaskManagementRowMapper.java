@@ -3,6 +3,7 @@ package digit.repository.rowmapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.web.models.TaskManagement;
+import digit.web.models.enums.PartyType;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
@@ -54,6 +55,7 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
                             .tenantId(rs.getString("tenant_id"))
                             .partyDetails(getObjectListFromJson(rs.getString("party_details"), new TypeReference<>() {
                             }))
+                            .partyType(PartyType.valueOf(rs.getString("party_type")))
                             .taskType(rs.getString("task_type"))
                             .documents(getObjectListFromJson(rs.getString("documents"), new TypeReference<>() {
                             }))

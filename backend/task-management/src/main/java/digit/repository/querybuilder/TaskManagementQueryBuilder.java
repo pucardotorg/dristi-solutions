@@ -29,7 +29,8 @@ public class TaskManagementQueryBuilder {
             "task.created_by as created_by, " +
             "task.last_modified_by as last_modified_by, " +
             "task.created_time as created_time, " +
-            "task.last_modified_time as last_modified_time";
+            "task.last_modified_time as last_modified_time," +
+            "task.party_type as party_type ";
 
     private static final String FROM_TASK_TABLE = " FROM dristi_task_management task";
 
