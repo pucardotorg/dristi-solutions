@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { formatDate } from "../../utils";
-import { hearingService } from "../../hooks/services";
-import { Urls } from "../../hooks/services/Urls";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "72%",
@@ -24,22 +23,12 @@ const modalPopup = {
   // height: "calc(100% - 64px)"
 };
 
-const actionButtonStyle = {
-  position: "fixed",
-  marginBottom: "0px",
-  bottom: "0px",
-  right: "21px",
-  width: "calc(100% - 21px)",
-  backgroundColor: "white",
-  paddingBottom: "14px",
-};
-
-const headingStyle = {
-  fontFamily: "Roboto",
-  fontSize: "16px",
-  fontWeight: 700,
-  lineHeight: "18.75px",
-  textAlign: "center",
+const formDataKeyMap = {
+  NOTICE: "noticeOrder",
+  SUMMONS: "SummonsOrder",
+  WARRANT: "warrantFor",
+  PROCLAMATION: "proclamationFor",
+  ATTACHMENT: "attachmentFor",
 };
 
 const ModalHeading = ({ label }) => {
@@ -47,14 +36,6 @@ const ModalHeading = ({ label }) => {
     <h1 className="modal-heading" style={{ padding: 8 }}>
       <span className="heading-m">{label}</span>
     </h1>
-  );
-};
-
-const CloseButton = (props) => {
-  return (
-    <div onClick={props?.onClick} className="header-bar-end">
-      <CloseSvg />
-    </div>
   );
 };
 
@@ -66,14 +47,22 @@ function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
   filteredOrders?.forEach((order) => {
-    const parties = order?.orderDetails?.parties || [];
+    const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
+    const parties = Array.isArray(party) ? party : party ? [party] : [];
     if (!Array?.isArray(parties) || parties?.length === 0) return;
 
     parties.forEach((party) => {
-      if (!party?.partyName) return;
+      const partyName = getFormattedName(
+        party?.data?.firstName || party?.data?.respondentFirstName,
+        party?.data?.middleName || party?.data?.respondentMiddleName,
+        party?.data?.lastName || party?.data?.respondentLastName,
+        party?.data?.witnessDesignation,
+        null
+      );
 
-      const partyName = party?.partyName.trim();
-      let partyType = (party?.partyType || "").toLowerCase();
+      if (!partyName) return;
+
+      let partyType = (party?.data?.partyType || "").toLowerCase();
 
       if (partyType === "respondent") {
         partyType = "Accused";
@@ -111,7 +100,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
-  const partyIndex = state?.state?.params?.partyIndex;
   const taskCnrNumber = state?.state?.params?.taskCnrNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [orderNumber, setOrderNumber] = useState(null);
@@ -152,10 +140,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return [];
   }, [hearingsData, currentHearingId]);
 
-  const { caseId, cnrNumber, caseTitle } = useMemo(
-    () => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
-    [caseDetails]
-  );
+  const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
 
   const handleCloseModal = () => {
     if (handleClose) {
