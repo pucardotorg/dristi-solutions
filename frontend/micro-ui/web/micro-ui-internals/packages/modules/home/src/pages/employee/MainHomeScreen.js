@@ -863,6 +863,14 @@ const MainHomeScreen = () => {
       ];
     }
 
+    if (["REGISTRATION"].includes(activeTab)) {
+      updatedConfig.sections.searchResult.uiConfig.columns.push({
+        label: "CS_DAYS_REGISTRATION",
+        jsonPath: "createdTime",
+        additionalCustomization: true,
+      });
+    }
+
     if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
@@ -941,6 +949,9 @@ const MainHomeScreen = () => {
               })
               ?.filter((column) => {
                 if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
+                if(activeTab === "REGISTRATION") {
+                  if(column?.label === "STAGE") return false;
+                }
                 if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
                   if (column?.label === "STAGE") return false;
                   if (column?.label === "CS_PROCESS_TYPE") return true;
