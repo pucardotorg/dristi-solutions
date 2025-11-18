@@ -77,41 +77,36 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
     },
   };
 
-  const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
-  const [formdata, setFormData] = useState(formData);
-
   const inputName = inputs?.[0]?.name;
   const configKey = config?.key;
 
   const isLocalEditRef = useRef(false);
   const debounceTimerRef = useRef(null);
 
-  useEffect(() => {
-    const rawHtml = formData?.[configKey]?.[inputName] || "";
-    const sanitizedIncomingHtml = DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
-
-    const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
-
-    if (isLocalEditRef.current) return;
-    if (areHtmlContentsEqual(sanitizedIncomingHtml, currentHtml)) return;
-
+  const initialEditorState = useMemo(() => {
     try {
-      const isHtml = /<\/?[a-z][\s\S]*>/i?.test(sanitizedIncomingHtml);
+      const rawHtml = formData?.[configKey]?.[inputName] || "";
+      const sanitizedIncomingHtml = DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
+
+      const isHtml = /<\/?[a-z][\s\S]*>/i.test(sanitizedIncomingHtml);
       const safeHtml = isHtml ? sanitizedIncomingHtml : sanitizedIncomingHtml ? `<p>${sanitizedIncomingHtml}</p>` : "<p></p>";
 
       const contentBlock = htmlToDraft(safeHtml);
+
       if (contentBlock && Array.isArray(contentBlock.contentBlocks)) {
         const contentState = ContentState.createFromBlockArray(contentBlock.contentBlocks);
-        const newEditorState = EditorState.createWithContent(contentState);
-        setEditorState(newEditorState);
+        return EditorState.createWithContent(contentState);
       } else {
-        setEditorState(EditorState.createEmpty());
+        return EditorState.createEmpty();
       }
     } catch (err) {
-      console.error("Error parsing draft content:", err);
-      setEditorState(EditorState.createEmpty());
+      console.error("Error creating initial Draft.js state:", err);
+      return EditorState.createEmpty();
     }
   }, [configKey, formData, inputName]);
+
+  const [editorState, setEditorState] = useState(initialEditorState);
+  const [formdata, setFormData] = useState(formData);
 
   useEffect(() => {
     if (!isEqual(formdata, formData)) {
@@ -201,38 +196,40 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
             )}
           </div>
 
-          <Editor
-            key={`${configKey}-${inputName}`}
-            editorState={editorState}
-            onEditorStateChange={(state) => handleChange(state, input)}
-            handleKeyCommand={handleKeyCommand}
-            handleReturn={handleReturn}
-            wrapperClassName="custom-editor-wrapper"
-            editorClassName="custom-editor"
-            toolbar={{
-              options: ["inline", "list"],
-              inline: {
-                inDropdown: false,
-                options: ["bold", "italic"],
-              },
-              list: {
-                inDropdown: false,
-                options: ["unordered", "ordered"],
-                className: undefined,
-                component: undefined,
-                dropdownClassName: undefined,
-                unordered: {
-                  className: undefined,
-                },
-                ordered: {
-                  className: undefined,
-                },
-              },
-            }}
-            toolbarHidden={config?.disable}
-            readOnly={config?.disable}
-          />
-
+          <div className="demo-section-wrapper">
+            <div className="demo-editor-wrapper">
+              <Editor
+                key={`${configKey}-${inputName}`}
+                editorState={editorState}
+                onEditorStateChange={(state) => handleChange(state, input)}
+                wrapperClassName="demo-wrapper"
+                editorClassName="demo-editor"
+                toolbar={{
+                  options: ["inline", "list", "textAlign"],
+                  inline: {
+                    inDropdown: false,
+                    options: ["bold", "italic"],
+                  },
+                  list: {
+                    inDropdown: false,
+                    className: undefined,
+                    component: undefined,
+                    dropdownClassName: undefined,
+                    options: ["unordered", "ordered"],
+                  },
+                  textAlign: {
+                    inDropdown: false,
+                    className: undefined,
+                    component: undefined,
+                    dropdownClassName: undefined,
+                    options: ["left", "center", "right", "justify"],
+                  },
+                }}
+                toolbarHidden={config?.disable}
+                readOnly={config?.disable}
+              />
+            </div>
+          </div>
           {errors?.[configKey] && (
             <CardLabelError style={input?.errorStyle}>{t(errors[configKey].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
           )}
