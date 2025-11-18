@@ -87,7 +87,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
             return orderRequest;
         }
         //for these uniqueIds fetch respondent details and create map of partytype to uniqueId from order payload inside notice parties
-        Map<String, List<Map<String, String>>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeMappingForSummons(order, uniqueIdPendingTask);//todo: create method to return Map<PartyType(comp, res, court), List<Map<PartyType(witness/respondent, uniqueId>>>
+        Map<String, List<Map<String, String>>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeMappingForSummons(order, uniqueIdPendingTask);
         log.info("Created party type mapping for {} unique IDs requiring pending tasks", partyTypeToUniqueIdMap.size());
 
         // case search and update
@@ -271,6 +271,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                         .courtCaseNumber(courtCase.getCourtCaseNumber())
                         .cmpNumber(courtCase.getCmpNumber())
                         .shortenedUrl(createShortUrl(order, referenceId))
+                        .orderType(order.getOrderType())
                         .build();
 
                 callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
