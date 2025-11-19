@@ -57,7 +57,7 @@ const MainHomeScreen = () => {
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
-  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[1]));
+  const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
 
@@ -998,13 +998,13 @@ const MainHomeScreen = () => {
             },
           });
           const totalCount = response?.scrutinyCasesData?.count;
-          if (index === 1) {
+          if (index === 0) {
             setScrutinyDueCount(totalCount || 0);
           }
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
-            active: index === 1 ? true : false,
+            active: index === 0 ? true : false,
           };
         }) || []
       );
