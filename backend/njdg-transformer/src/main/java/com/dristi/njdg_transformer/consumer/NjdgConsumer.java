@@ -204,6 +204,8 @@ public class NjdgConsumer {
         existingHearingOpt.setJoCode(hearingDetails.getJoCode());
         existingHearingOpt.setDesgCode(hearingDetails.getDesgCode());
         existingHearingOpt.setDesgName(hearingDetails.getDesgName());
+        existingHearingOpt.setBusiness(hearingDetails.getBusiness());
+        existingHearingOpt.setCourtNo(hearingDetails.getCourtNo());
         return existingHearingOpt;
     }
 

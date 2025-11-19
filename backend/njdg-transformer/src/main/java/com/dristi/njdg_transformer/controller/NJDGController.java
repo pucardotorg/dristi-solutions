@@ -105,30 +105,36 @@ public class NJDGController {
     @PostMapping("_processorder")
     public ResponseEntity<InterimOrder> processAndUpdateOrder(@Valid @RequestBody OrderRequest orderRequest) {
         try {
-            String orderId = orderRequest.getOrder().getOrderNumber();
-            String status = orderRequest.getOrder().getStatus();
-            if(PUBLISHED_ORDER.equals(status)){
-                Order order = orderRequest.getOrder();
-                if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
-                    List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
-                    boolean result = itemListFormCompositeItem.stream()
-                            .map(Order::getOrderType)
-                            .anyMatch(JUDGEMENT::equalsIgnoreCase);
-                    if(result) {
-                        orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
-                    }
-                } else if(INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())){
-                    if(JUDGEMENT.equalsIgnoreCase(order.getOrderType())) {
-                        orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
-                    }
-                }
-                log.info("Successfully processed order | orderId: {} | status: {}", orderId, status);
-            } else {
+            Order order = orderRequest.getOrder();
+            String orderId = order.getOrderNumber();
+            String status = order.getStatus();
+
+            if (!PUBLISHED_ORDER.equals(status)) {
                 log.debug("Skipping order processing due to status | orderId: {} | status: {} | expectedStatus: {}",
                         orderId, status, PUBLISHED_ORDER);
+                return ResponseEntity.ok(new InterimOrder());
             }
-            InterimOrder order = orderService.processAndUpdateOrder(orderRequest.getOrder(), orderRequest.getRequestInfo());
-            return ResponseEntity.ok(order);
+            boolean shouldProcess = false;
+            if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+                List<Order> compositeItems = getItemListFormCompositeItem(order);
+                shouldProcess = compositeItems.stream()
+                        .map(Order::getOrderType)
+                        .anyMatch(orderTypes::contains);
+
+            }
+            else if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
+                shouldProcess = orderTypes.contains(order.getOrderType());
+            }
+            if (shouldProcess) {
+                log.info("Processing order | orderId: {} | category: {} | type: {}",
+                        orderId, order.getOrderCategory(), order.getOrderType());
+                InterimOrder updatedOrder = orderService.processAndUpdateOrder(order, orderRequest.getRequestInfo());
+                log.info("Successfully processed order | orderId: {} | status: {}", orderId, status);
+                return ResponseEntity.ok(updatedOrder);
+            } else {
+                log.info("Order skipped | orderId: {} | reason: OrderType not eligible", orderId);
+                return ResponseEntity.ok(new InterimOrder());
+            }
         } catch (Exception e) {
             log.error("Error processing order: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new InterimOrder());
