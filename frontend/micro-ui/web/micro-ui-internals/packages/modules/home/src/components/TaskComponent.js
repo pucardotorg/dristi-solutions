@@ -85,6 +85,8 @@ const TasksComponent = ({
   const courtId = localStorage.getItem("courtId");
   const [isLoader, setIsLoader] = useState(false);
   const [hideCancelButton, setHideCancelButton] = useState(false);
+  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -1105,10 +1107,19 @@ const TasksComponent = ({
   const courierServiceConfig = useMemo(() => {
     return {
       handleClose: () => {
-        setShowCourierServiceModal(false);
-        setHideCancelButton(false);
-        setCourierServicePendingTask(null);
-        setCourierOrderDetails({});
+        if(isPaymentCompleted) {
+          triggerSurvey("TASK_PAYMENT", () => {
+            setShowCourierServiceModal(false);
+            setHideCancelButton(false);
+            setCourierServicePendingTask(null);
+            setCourierOrderDetails({});
+          });
+        } else {
+          setShowCourierServiceModal(false);
+          setHideCancelButton(false);
+          setCourierServicePendingTask(null);
+          setCourierOrderDetails({});
+        }
       },
       isStepperModal: true,
       actionSaveLabel: t("CS_COURIER_NEXT"),
@@ -1135,6 +1146,7 @@ const TasksComponent = ({
                     refetchPendingTasks={refetch}
                     setShowCourierServiceModal={setShowCourierServiceModal}
                     setCourierServicePendingTask={setCourierServicePendingTask}
+                    setIsPaymentCompleted={setIsPaymentCompleted}
                   />
                 ),
               },
@@ -1305,6 +1317,7 @@ const TasksComponent = ({
       {showCourierServiceModal && courierServiceSteps?.length > 0 && <DocumentModal config={courierServiceConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
+      {SurveyUI}
     </div>
   ) : (
     <div className="tasks-component-table-view">
@@ -1342,6 +1355,7 @@ const TasksComponent = ({
           )}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
+          {SurveyUI}
         </React.Fragment>
       ) : (
         <React.Fragment></React.Fragment>
