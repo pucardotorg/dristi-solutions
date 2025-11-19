@@ -1,5 +1,6 @@
 package digit.repository;
 
+import digit.performance.TrackQuery;
 import digit.repository.querybuilder.DiaryEntryQueryBuilder;
 import digit.repository.rowmapper.DiaryEntryRowMapper;
 import digit.web.models.CaseDiaryEntry;
@@ -31,6 +32,7 @@ public class DiaryEntryRepository {
         this.diaryEntryRowMapper = diaryEntryRowMapper;
     }
 
+    @TrackQuery(dataSource = "postgres")
     public List<CaseDiaryEntry> getCaseDiaryEntries(CaseDiarySearchRequest searchRequest) {
 
         try {
@@ -69,6 +71,7 @@ public class DiaryEntryRepository {
 
     }
 
+    @TrackQuery(dataSource = "postgres")
     public Integer getTotalCount(String baseQuery, List<Object> preparedStmtList) {
         String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
