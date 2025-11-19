@@ -112,10 +112,7 @@ public class PaymentUpdateService {
     private void closePaymentPendingTask(RequestInfo requestInfo, TaskManagement taskManagement) {
         try {
             log.info("Closing payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
-            String partyTypeStr = taskManagement.getPartyType() != null
-                    ? taskManagement.getPartyType().toString() + "_"
-                    : "";
-            String referenceId = MANUAL + ((taskManagement.getOrderItemId() != null && !taskManagement.getOrderItemId().isEmpty())? taskManagement.getOrderItemId() + "_" : "") + partyTypeStr  + taskManagement.getOrderNumber();
+            String referenceId =getReferenceId(taskManagement);
             JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(referenceId);
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
             JsonNode hit = hitsNode.get(0);
@@ -128,6 +125,14 @@ public class PaymentUpdateService {
         } catch (CustomException e) {
             log.error("Error closing payment pending task: {}", e.getMessage(), e);
         }
+    }
+
+    private String getReferenceId(TaskManagement taskManagement) {
+        String partyTypeStr = taskManagement.getPartyType() != null
+                ? taskManagement.getPartyType().toString() + "_"
+                : "";
+        String orderItemId = (taskManagement.getOrderItemId() != null && !taskManagement.getOrderItemId().isEmpty()) ? taskManagement.getOrderItemId() + "_" : "";
+        return MANUAL + orderItemId + partyTypeStr + taskManagement.getOrderNumber();
     }
 
     private String extractTaskNumber(Bill bill) {

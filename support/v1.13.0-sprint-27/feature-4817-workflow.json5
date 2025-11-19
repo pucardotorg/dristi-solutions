@@ -180,7 +180,7 @@
     {
       "sla": null,
       "state": "TASK_CREATED",
-      "applicationStatus": "INACTIVE",
+      "applicationStatus": "ACTIVE",
       "isStateUpdatable": false,
       "docUploadRequired": false,
       "isStartState": false,
@@ -190,7 +190,7 @@
       "tenantId": "kl",
       "sla": null,
       "state": "COMPLETED_WITHOUT_PAYMENT",
-      "applicationStatus": "INACTIVE",
+      "applicationStatus": "ACTIVE",
       "docUploadRequired": false,
       "isStartState": false,
       "isTerminateState": true,
