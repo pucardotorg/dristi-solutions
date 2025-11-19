@@ -2231,6 +2231,8 @@ export const UICustomizations = {
                   }
                 } else if (key === "additionalDetails.orderItemId") {
                   acc.orderItemId = curr.value;
+                } else if (key === "additionalDetails.partyType") {
+                  acc.partyType = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
@@ -2250,6 +2252,7 @@ export const UICustomizations = {
                 referenceId: result?.referenceId,
                 partyUniqueIds: result?.uniqueIdsList,
                 orderItemId: result?.orderItemId,
+                partyType: result?.partyType,
                 processType: result?.name?.trim()?.split(" ")?.pop(),
               };
             };
@@ -2298,11 +2301,7 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       const getDaysDiff = (value) => {
         const createdAt = new Date(value);
-        const formattedCreatedAt = new Date(
-          createdAt.getFullYear(),
-          createdAt.getMonth(),
-          createdAt.getDate()
-        );
+        const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
 
         const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
         return Math.ceil(differenceInTime / (1000 * 3600 * 24));
@@ -2313,7 +2312,7 @@ export const UICustomizations = {
           <span
             style={{
               color: days > 2 ? "#9E400A" : undefined,
-              fontWeight: days > 2 ? 500 : 400
+              fontWeight: days > 2 ? 500 : 400,
             }}
           >
             {days}

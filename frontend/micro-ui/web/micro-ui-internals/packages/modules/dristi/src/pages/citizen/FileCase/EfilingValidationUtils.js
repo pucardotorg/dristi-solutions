@@ -3543,6 +3543,7 @@ export const createOrUpdateTask = async ({
         tenantId,
         taskType: type,
         partyDetails,
+        partyType: "RESPONDENT",
         workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
       };
 
