@@ -217,7 +217,7 @@ public class IndexerUtils {
 
             List<String> searchableFieldsList = new ArrayList<>();
             searchableFieldsList.add(filingNumber);
-            if (caseNumber != null) {
+            if (!filingNumber.equals(caseNumber)) {
                 searchableFieldsList.add(caseNumber);
             }
             searchableFieldsList.add(caseTitle);
