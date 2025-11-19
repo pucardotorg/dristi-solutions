@@ -3049,6 +3049,7 @@ const GenerateOrdersV2 = () => {
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
       setEditOrderModal(false);
+      sessionStorage.removeItem("currentOrderType")
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
@@ -3790,6 +3791,24 @@ const GenerateOrdersV2 = () => {
     history.goBack();
   };
 
+  useEffect(() => {
+    const currentOrderType = sessionStorage.getItem("currentOrderType");
+    if (currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
+      let currentOrderTypeIndex = 0;
+      if (currentOrder?.orderCategory !== "INTERMEDIATE") {
+        currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+      }
+      setAddOrderModal(true);
+      setCompositeOrderIndex(currentOrderTypeIndex);
+      setOrderType(
+        {
+          ...orderTypeData?.find((type) => type?.code === currentOrderType),
+          name: `ORDER_TYPE_${orderType}`,
+        } || {}
+      );
+    }
+  }, [currentOrder, openEdit, orderType, orderTypeData]);
+
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
   }
@@ -4249,6 +4268,7 @@ const GenerateOrdersV2 = () => {
           handleCancel={() => {
             setEditOrderModal(false);
             setAddOrderModal(false);
+            sessionStorage.removeItem("currentOrderType")
           }}
           headerLabel={
             showEditOrderModal

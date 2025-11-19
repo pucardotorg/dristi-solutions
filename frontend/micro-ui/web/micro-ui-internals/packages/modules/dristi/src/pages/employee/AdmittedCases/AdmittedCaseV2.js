@@ -859,13 +859,7 @@ const AdmittedCaseV2 = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            const isAcceptBail =
-              (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_BAIL") ||
-              (Array.isArray(order?.compositeItems) && order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
-            const suffix = isAcceptBail ? "&openEdit=1" : "";
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}${suffix}`
-            );
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
