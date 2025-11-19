@@ -239,6 +239,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         additionalDetails.put("litigants", complainantIndividualId);
         additionalDetails.put("orderItemId", getItemId(order));
         additionalDetails.put("uniqueIds", partyDetails);
+        additionalDetails.put("partyType", type.toUpperCase());
         try {
 
             String itemId = getItemId(order);
