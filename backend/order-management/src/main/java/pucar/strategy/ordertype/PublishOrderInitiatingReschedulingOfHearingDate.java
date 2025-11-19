@@ -116,8 +116,10 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         Long newHearingDate = dateValue == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(dateValue, "yyyy-MM-dd");
 
         log.info("new hearing time:{}", newHearingDate);
-        hearing.setStartTime(newHearingDate);
-        hearing.setEndTime(newHearingDate);
+        if (referenceId == null) {
+            hearing.setStartTime(newHearingDate);
+            hearing.setEndTime(newHearingDate);
+        }
 
 
         WorkflowObject workflow = new WorkflowObject();
