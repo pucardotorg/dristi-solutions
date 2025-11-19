@@ -15,6 +15,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,12 +142,50 @@ public class NjdgConsumer {
             }
             
             // Update case record with hearing information
+            List<HearingDetails> hearingDetailsList = hearingRepository.getHearingDetailsByCino(cino);
             NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
             if (existingRecord != null) {
                 existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
                 existingRecord.setDateNextList(hearingDetails.getHearingDate());
                 existingRecord.setDateLastList(hearingDetails.getHearingDate());
-                existingRecord.setPurposeCode(Integer.valueOf(hearingDetails.getPurposeOfListing()));
+                existingRecord.setPurposeCode(getPurposeValue(hearingDetails.getPurposeOfListing()));
+                
+                // Calculate purpose_next and purpose_previous from hearings
+                if (hearingDetailsList != null && !hearingDetailsList.isEmpty()) {
+                    // Sort hearings by srNo to get chronological order
+                    hearingDetailsList.sort(Comparator.comparingInt(HearingDetails::getSrNo));
+                    
+                    // Find current hearing position
+                    int currentIndex = -1;
+                    for (int i = 0; i < hearingDetailsList.size(); i++) {
+                        if (hearingDetailsList.get(i).getSrNo().equals(hearingDetails.getSrNo())) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    // Set purpose_previous (previous hearing's purpose)
+                    if (currentIndex > 0) {
+                        HearingDetails previousHearing = hearingDetailsList.get(currentIndex - 1);
+                        Integer purposePrevious = getPurposeValue(previousHearing.getPurposeOfListing());
+                        existingRecord.setPurposePrevious(purposePrevious);
+                        log.debug("Set purpose_previous: {} | CINO: {}", purposePrevious, cino);
+                    } else {
+                        existingRecord.setPurposePrevious(0); // Default value when no previous hearing
+                        log.debug("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
+                    }
+                    
+                    // Set purpose_next (next hearing's purpose)
+                    if (currentIndex >= 0 && currentIndex < hearingDetailsList.size() - 1) {
+                        HearingDetails nextHearing = hearingDetailsList.get(currentIndex + 1);
+                        Integer purposeNext = getPurposeValue(nextHearing.getPurposeOfListing());
+                        existingRecord.setPurposeNext(purposeNext);
+                        log.debug("Set purpose_next: {} | CINO: {}", purposeNext, cino);
+                    } else {
+                        existingRecord.setPurposeNext(getPurposeValue(hearingDetails.getPurposeOfListing())); // Default value when no next hearing
+                        log.debug("Set purpose_next to default (no next hearing) | CINO: {}", cino);
+                    }
+                }
                 caseRepository.updateRecord(existingRecord);
                 log.debug("Updated case record with hearing info | CINO: {}", cino);
             }
@@ -287,6 +326,26 @@ public class NjdgConsumer {
         } catch (Exception e) {
             log.error("Failed to process extra advocates | messageId: {} | totalAdvocates: {} | error: {}", 
                      messageId, totalAdvocates, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Converts purpose of listing string to Integer, handling null/empty/zero values
+     * @param purposeOfListing The purpose of listing as string
+     * @return Integer value or 0 as default for null/empty/"0" values
+     */
+    private Integer getPurposeValue(String purposeOfListing) {
+        if (purposeOfListing == null || purposeOfListing.trim().isEmpty()) {
+            return 0; // Default value for null or empty
+        }
+        
+        try {
+            Integer value = Integer.valueOf(purposeOfListing.trim());
+            // Return 0 if the parsed value is 0 (default/invalid purpose code)
+            return (value == null || value == 0) ? 0 : value;
+        } catch (NumberFormatException e) {
+            log.warn("Invalid purpose of listing value: '{}', using default 0", purposeOfListing);
+            return 0; // Default value for invalid format
         }
     }
 }

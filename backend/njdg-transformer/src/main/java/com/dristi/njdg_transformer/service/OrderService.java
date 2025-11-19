@@ -75,13 +75,13 @@ public class OrderService {
                 .orderDate(formatDate(order.getCreatedDate()))
                 .orderDetails(getOrderPdfByte(order, requestInfo))
                 .courtOrderNumber(orderNumber)
-                .orderType("1") //Judgement:1, Decree:2, Interim Order:3
-                .docType(16)//hard-coded for judgement
+                .orderType(properties.getJudgementOrderType()) //Judgement:1, Decree:2, Interim Order:3
+                .docType(properties.getJudgementOrderDocumentType())//hard-coded for judgement
                 .courtNo(properties.getCourtNumber())
                 .joCode(judgeDetails.getJocode())
                 .judgeCode(judgeDetails.getJudgeCode())
                 .desigCode(designationMaster.getDesgCode())
-                .dispNature(null)//todo: need to config this when start capturing in system
+                .dispNature(0)//todo: need to config this when start capturing in system
                 .build();
 
         producer.push("save-order-details", newOrder);

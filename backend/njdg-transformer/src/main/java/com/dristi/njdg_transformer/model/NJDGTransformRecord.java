@@ -75,6 +75,12 @@ public class NJDGTransformRecord {
     @JsonProperty("purpose_code")
     private Integer purposeCode;
 
+    @JsonProperty("purpose_next")
+    private Integer purposeNext;
+
+    @JsonProperty("purpose_previous")
+    private Integer purposePrevious;
+
     @JsonProperty("pet_name")
     private String petName = "";
 

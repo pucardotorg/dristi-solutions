@@ -55,6 +55,8 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         record.setStateCode(getInteger(rs, "state_code"));
         record.setDistCode(getInteger(rs, "dist_code"));
         record.setPurposeCode(getInteger(rs, "purpose_code"));
+        record.setPurposeNext(getInteger(rs, "purpose_next"));
+        record.setPurposePrevious(getInteger(rs, "purpose_previous"));
         record.setPetAdvCd(getInteger(rs, "pet_adv_cd"));
         record.setResAdvCd(getInteger(rs, "res_adv_cd"));
         record.setPoliceStCode(getInteger(rs, "police_st_code"));

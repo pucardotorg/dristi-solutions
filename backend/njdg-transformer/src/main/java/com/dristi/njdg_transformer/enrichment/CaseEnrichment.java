@@ -194,22 +194,22 @@ public class CaseEnrichment implements PartyEnricher {
     private void setRecordPartyDetails(NJDGTransformRecord record, String partyType, String fullName, int age, String address) {
         if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType)) {
             record.setPetName(fullName.isEmpty() ? null : fullName);
-            if (age > 0) record.setPetAge(age);
+            record.setPetAge(age);
             record.setPetAddress(address);
         } else {
             record.setResName(fullName.isEmpty() ? null : fullName);
-            if (age > 0) record.setResAge(age);
+            record.setResAge(age);
             record.setResAddress(address);
         }
     }
 
     private void setPrimaryAdvocate(NJDGTransformRecord record, String party, AdvocateDetails advocateDetails) {
         if (COMPLAINANT_PRIMARY.equalsIgnoreCase(party)) {
-            record.setPetAdvCd(advocateDetails.getAdvocateCode());
+            record.setPetAdvCd(advocateDetails.getAdvocateCode() != null ? advocateDetails.getAdvocateCode() : 0);
             record.setPetAdvBarReg(advocateDetails.getBarRegNo());
             record.setPetAdv(advocateDetails.getAdvocateName());
         } else if (RESPONDENT_PRIMARY.equalsIgnoreCase(party)) {
-            record.setResAdvCd(advocateDetails.getAdvocateCode());
+            record.setResAdvCd(advocateDetails.getAdvocateCode() != null ? advocateDetails.getAdvocateCode() : 0);
             record.setResAdvBarReg(advocateDetails.getBarRegNo());
             record.setResAdv(advocateDetails.getAdvocateName());
         }
@@ -314,11 +314,6 @@ public class CaseEnrichment implements PartyEnricher {
                      uniqueId, partyType, courtCase.getCnrNumber());
             return null;
         }
-        if(PartyType.RES.equals(partyTypeEnum) && primaryParty == null) {
-            log.info("No primary respondent joined the case CNR: {} - skipping respondent mapping",
-                    courtCase.getCnrNumber());
-            return null;
-        }
 //        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
 //        for (PartyDetails pd : existingParties) {
 //            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
@@ -369,7 +364,7 @@ public class CaseEnrichment implements PartyEnricher {
             partyDetails.setPartyId(individualId);
             AdvocateDetails advocateDetails = getAdvocateDetailsIfExists(courtCase, individualId);
             if (advocateDetails != null) {
-                partyDetails.setAdvCd(advocateDetails.getAdvocateCode());
+                partyDetails.setAdvCd(advocateDetails.getAdvocateCode() != null ? advocateDetails.getAdvocateCode() : 0);
                 partyDetails.setAdvName(advocateDetails.getAdvocateName());
             }
         }
@@ -446,6 +441,7 @@ public class CaseEnrichment implements PartyEnricher {
                     .partyType(partyType)
                     .cino(courtCase.getCnrNumber())
                     .partyNo(partyNo++)
+                    .advCd(0)
                     .build();
 
             witnessPartyDetails.add(newWitness);

@@ -51,12 +51,6 @@ public class HearingService {
            }
         }
 
-        // Determine the next max values for id and sr_no
-        int nextId = hearingDetails.stream()
-                .mapToInt(HearingDetails::getId)
-                .max()
-                .orElse(0) + 1;
-
         int nextSrNo = hearingDetails.stream()
                 .mapToInt(HearingDetails::getSrNo)
                 .max()
@@ -72,7 +66,7 @@ public class HearingService {
                 .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
                 .nextDate(null) // will be updated for previous hearing
-                .purposeOfListing(String.valueOf(hearingRepository.getHearingPurposeCode(hearing)))
+                .purposeOfListing(getPurposeOfListingValue(hearing))
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode().toString() : "")
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
                 .desgCode(designationMaster.getDesgCode().toString())
@@ -98,6 +92,26 @@ public class HearingService {
     }
 
 
+
+    /**
+     * Gets the purpose of listing value, handling the case where purpose code is 0 (default value)
+     * @param hearing The hearing object
+     * @return Purpose of listing as string, or null if purpose code is 0
+     */
+    private String getPurposeOfListingValue(Hearing hearing) {
+        try {
+            Integer purposeCode = hearingRepository.getHearingPurposeCode(hearing);
+            // Return null if purpose code is 0 (default value) or null
+            if (purposeCode == null || purposeCode == 0) {
+                log.debug("Purpose code is {} for hearing {}, returning null", purposeCode, hearing.getHearingId());
+                return null;
+            }
+            return String.valueOf(purposeCode);
+        } catch (Exception e) {
+            log.warn("Failed to get hearing purpose code for hearing {}: {}", hearing.getHearingId(), e.getMessage());
+            return null;
+        }
+    }
 
     private LocalDate formatDate(Long timestamp) {
         if (timestamp == null) {

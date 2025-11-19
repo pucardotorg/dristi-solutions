@@ -221,7 +221,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
 
         for (ExtraAdvocateDetails extraAdvocateDetails : existingAdvocates) {
             if (extraAdvocateDetails.getAdvCode().equals(advocateDetails.getAdvocateCode())) {
-                extraAdvocateDetails.setPartyNo(party.getSrNo());
+                extraAdvocateDetails.setPartyNo(party.getSrNo() != null ? party.getSrNo() : 0);
                 extraAdvocateDetails.setType(COMPLAINANT_PRIMARY.equals(partyType) ? 1 : 2);
                 extraAdvocateDetails.setAdvCode(advocateDetails.getAdvocateCode());
                 extraAdvocateDetails.setAdvName(advocateDetails.getAdvocateName());
@@ -245,7 +245,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                 .advName(advocateDetails.getAdvocateName())
                 .type(COMPLAINANT_PRIMARY.equals(partyType) ? 1 : 2)
                 .petResName(party.getPartyName())
-                .partyNo(party.getSrNo())
+                .partyNo(party.getSrNo() != null ? party.getSrNo() : 0)
                 .build();
 
         extraAdvocatesList.add(extraAdvocateDetails);

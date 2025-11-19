@@ -158,6 +158,8 @@ public class CaseQueryBuilder {
                     state_code = ?,
                     dist_code = ?,
                     purpose_code = ?,
+                    purpose_next = ?,
+                    purpose_previous = ?,
                     pet_name = ?,
                     pet_adv = ?,
                     pet_adv_cd = ?,
@@ -208,6 +210,8 @@ public class CaseQueryBuilder {
                     state_code,
                     dist_code,
                     purpose_code,
+                    purpose_next,
+                    purpose_previous,
                     pet_name,
                     pet_adv,
                     pet_adv_cd,
@@ -231,7 +235,7 @@ public class CaseQueryBuilder {
                     cicri_type,
                     judge_code,
                     desig_code
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
     }
 
