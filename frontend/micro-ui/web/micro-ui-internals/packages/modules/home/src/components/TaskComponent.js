@@ -404,7 +404,7 @@ const TasksComponent = ({
     fetchOrderDetails();
   }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
-  const handleProcessCourierOnSubmit = async (courierData, isLast) => {
+  const handleProcessCourierOnSubmit = async (courierData, isLast, hasProcessManagementEditorAccess) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -422,7 +422,7 @@ const TasksComponent = ({
         isLast,
       });
       await refetchTaskManagement();
-      if (isLast) {
+      if (isLast && hasProcessManagementEditorAccess) {
         setShowCourierServiceModal(false);
         setCourierServicePendingTask(null);
         setCourierOrderDetails({});
@@ -1098,7 +1098,7 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData, isLast);
+            return await handleProcessCourierOnSubmit(courierData, isLast, hasProcessManagementEditorAccess);
           },
           isDisabled:
             isTaskManagementLoading ||
