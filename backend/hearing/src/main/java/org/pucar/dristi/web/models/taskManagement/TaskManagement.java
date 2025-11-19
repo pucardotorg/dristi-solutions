@@ -71,4 +71,7 @@ public class TaskManagement {
     @JsonProperty("workflow")
     @Valid
     private WorkflowObject workflow;
+
+    @JsonProperty("partyType")
+    private PartyType partyType;
 }
