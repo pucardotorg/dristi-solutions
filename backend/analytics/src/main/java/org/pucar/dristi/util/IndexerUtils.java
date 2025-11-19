@@ -176,7 +176,7 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
-        String caseNumber = null;
+        String caseNumber = filingNumber;
         String actionCategory = pendingTask.getActionCategory();
         Long filingDate = pendingTask.getFilingDate();
         String sectionAndSubSection = pendingTask.getSectionAndSubSection();
@@ -374,7 +374,7 @@ public class IndexerUtils {
         String caseSubStage = null;
         String advocateDetails = "{}";
         String searchableFields = null;
-        String caseNumber = null;
+        String caseNumber = filingNumber;
 
         if (caseDetails == null && filingNumber != null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
