@@ -1608,6 +1608,7 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
   filingType,
+  isDelayCondonation,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -3372,6 +3373,25 @@ export const updateCaseDetails = async ({
       action: action,
     },
   });
+
+  if (data?.additionalDetails?.processCourierService) {
+    data.additionalDetails.processCourierService = {
+      ...data?.additionalDetails?.processCourierService,
+      formdata: data?.additionalDetails?.processCourierService?.formdata?.map((item) => {
+        const courier = item?.data?.multipleAccusedProcessCourier;
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            multipleAccusedProcessCourier: {
+              ...courier,
+              noticeCourierService: isDelayCondonation ? courier?.noticeCourierService : [],
+            },
+          },
+        };
+      }),
+    };
+  }
 
   if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
     return null;

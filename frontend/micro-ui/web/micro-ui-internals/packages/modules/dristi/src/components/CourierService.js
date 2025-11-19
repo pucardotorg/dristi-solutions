@@ -31,6 +31,7 @@ const CloseBtn = (props) => {
 
 function CourierService({
   t,
+  isDelayCondonation,
   isLoading = false,
   processCourierData,
   handleCourierServiceChange,
@@ -207,7 +208,7 @@ function CourierService({
           <div className="courier-section">{orderType ? t("CS_COURIER_SERVICE") : t("CS_COURIER_SERVICES")}</div>
         </div>
 
-        {(orderType === "NOTICE" || processCourierData?.isDelayCondonation) && (
+        {(orderType === "NOTICE" || isDelayCondonation) && (
           <div className="row">
             <div className="label-container">
               <div className="label">{t("CS_NOTICE_COURIER")}</div>
@@ -241,7 +242,7 @@ function CourierService({
           <div className="row">
             <div className="label-container">
               <div className="label">{t("CS_SUMMONS_COURIER")}</div>
-              {!orderType && processCourierData?.isDelayCondonation ? (
+              {!orderType && isDelayCondonation ? (
                 <div className="optional">{t("CS_IS_OPTIONAL")}</div>
               ) : (
                 <div className="info-icon">
@@ -257,7 +258,7 @@ function CourierService({
             <div
               className="dropdown-container"
               onClick={() => {
-                if (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                if (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
                   setShowConfirmationModal(true);
                 }
               }}
@@ -275,7 +276,7 @@ function CourierService({
                 disable={
                   isDisableAllFields ||
                   processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
-                  (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
+                  (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
                 }
                 active={summonsActive}
                 setActive={setSummonsActive}
