@@ -17,9 +17,7 @@ function NoticeSummonPaymentModal({
   taskManagementList,
   courierOrderDetails,
   refetchPendingTasks,
-  setShowCourierServiceModal,
-  setCourierServicePendingTask,
-  setIsPaymentCompleted
+  setIsPaymentCompleted,
 }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
