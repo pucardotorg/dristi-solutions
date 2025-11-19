@@ -326,9 +326,9 @@ public class OrderUtil {
         if (SUMMONS.equalsIgnoreCase(order.getOrderType())) {
             // For SUMMONS orders, close tasks for all parties
             log.debug("Processing SUMMONS order - closing tasks for all parties | orderNumber: {}", order.getOrderNumber());
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT);
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT);
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT, null);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT, null);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT, null);
             
             log.debug("Closing SUMMONS order tasks without party type | orderNumber: {}", order.getOrderNumber());
             closeTaskWithoutPartyType(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle);
@@ -345,12 +345,18 @@ public class OrderUtil {
     /**
      * Closes pending tasks for a specific party type
      */
-    private void closePartySpecificTasks(Order order, RequestInfo requestInfo, String filingNumber, 
-                                       String caseCnrNumber, String caseId, String caseTitle, PartyType partyType) {
-        String taskId = MANUAL + partyType.toString() + "_" + order.getOrderNumber();
-        log.debug("Closing party-specific task | partyType: {} | taskId: {} | orderNumber: {}", 
+    private void closePartySpecificTasks(Order order, RequestInfo requestInfo, String filingNumber,
+                                         String caseCnrNumber, String caseId, String caseTitle, PartyType partyType, String itemId) {
+        String taskId;
+        if(itemId != null) {
+            taskId = MANUAL + itemId + "_" + partyType.toString() + "_" + order.getOrderNumber();
+        }
+        else {
+            taskId = MANUAL + partyType.toString() + "_" + order.getOrderNumber();
+        }
+        log.debug("Closing party-specific task | partyType: {} | taskId: {} | orderNumber: {}",
                 partyType, taskId, order.getOrderNumber());
-        pendingTaskUtil.closeManualPendingTask(taskId, requestInfo, filingNumber, 
+        pendingTaskUtil.closeManualPendingTask(taskId, requestInfo, filingNumber,
                 caseCnrNumber, caseId, caseTitle, order.getOrderType());
     }
 
@@ -377,9 +383,9 @@ public class OrderUtil {
             log.debug("Processing order item | itemId: {} | orderNumber: {}", itemId, order.getOrderNumber());
             
             // Close tasks for all parties for this order item
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT);
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT);
-            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COMPLAINANT, itemId);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.RESPONDENT, itemId);
+            closePartySpecificTasks(order, requestInfo, filingNumber, caseCnrNumber, caseId, caseTitle, PartyType.COURT, itemId);
             
             // Close task specific to this order item
             String itemTaskId = MANUAL + itemId + "_" + order.getOrderNumber();
