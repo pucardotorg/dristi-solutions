@@ -194,7 +194,14 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
     updatedPartyDetails = [newParty];
   }
 
-  const witnessPartyType = courierData?.partyType === "Witness" ? (courierData?.ownerType === "-" ? "COURT" : courierData?.ownerType) : "RESPONDENT";
+  const witnessPartyType =
+    type === "SUMMONS"
+      ? courierData?.partyType === "Witness"
+        ? courierData?.ownerType === "-"
+          ? "COURT"
+          : courierData?.ownerType
+        : "RESPONDENT"
+      : null;
 
   const taskManagementPayload = existingTask
     ? {
