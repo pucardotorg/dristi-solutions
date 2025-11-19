@@ -720,6 +720,10 @@ function EFilingCases({ path }) {
                   middleName: accusedDetails.respondentMiddleName || "",
                   lastName: accusedDetails.respondentLastName || "",
                   addressDetails: mergedAddresses,
+                  noticeCourierService:
+                    caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO"
+                      ? existingItem?.data?.multipleAccusedProcessCourier?.noticeCourierService
+                      : [],
                   isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
                 },
               },

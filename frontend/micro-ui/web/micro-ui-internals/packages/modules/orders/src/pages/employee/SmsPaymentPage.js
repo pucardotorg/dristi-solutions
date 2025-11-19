@@ -194,7 +194,7 @@ const SmsPaymentPage = () => {
   const paymentCriteriaList = useMemo(() => {
     if (!liveCourierData?.addressDetails?.length) return [];
 
-    const channels = ["RPAD", "EPOST"];
+    const channels = ["RPAD"]; // add EPOST when needed
     const taskTypes = [liveCourierData?.orderType];
 
     return liveCourierData?.addressDetails?.flatMap((addr) =>

@@ -761,7 +761,7 @@ const GenerateBailBondV2 = () => {
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedIdentityProof = await combineMultipleFiles(surety.identityProof.document);
-              const file = await onDocumentUpload(combinedIdentityProof?.[0], "identityProof.pdf");
+              const file = await onDocumentUpload(combinedIdentityProof?.[0], "IdentityProof.pdf");
               updatedSurety.identityProof = {
                 document: [
                   {
@@ -782,7 +782,7 @@ const GenerateBailBondV2 = () => {
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedProof = await combineMultipleFiles(surety.proofOfSolvency.document);
-              const file = await onDocumentUpload(combinedProof?.[0], "proofOfSolvency.pdf");
+              const file = await onDocumentUpload(combinedProof?.[0], "ProofOfSolvency.pdf");
               updatedSurety.proofOfSolvency = {
                 document: [
                   {
@@ -803,7 +803,7 @@ const GenerateBailBondV2 = () => {
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedOtherDocs = await combineMultipleFiles(surety.otherDocuments.document);
-              const file = await onDocumentUpload(combinedOtherDocs?.[0], "otherDocuments.pdf");
+              const file = await onDocumentUpload(combinedOtherDocs?.[0], "OtherDocuments.pdf");
               updatedSurety.otherDocuments = {
                 document: [
                   {

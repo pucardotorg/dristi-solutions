@@ -6,6 +6,7 @@ import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import DOMPurify from "dompurify";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -236,7 +237,7 @@ const CustomReviewCardRow = ({
         }
         let title = "";
         if (Array.isArray(value)) {
-          title = value.map((key) => extractValue(data, key)).join(" ");
+          title = value.map((key) => extractValue(data, key)?.trim()).join(" ");
         } else {
           title = extractValue(data, value);
         }
@@ -324,9 +325,7 @@ const CustomReviewCardRow = ({
           const lastName = extractedValues.find((item) => item.lastName)?.lastName || "";
           const designation = extractedValues.find((item) => item.witnessDesignation)?.witnessDesignation || "";
 
-          const parts = [firstName, middleName, lastName]?.filter(Boolean);
-          witnessTitle = parts?.join(" ");
-
+          witnessTitle = getFullName(" ", firstName, middleName, lastName);
           if (designation) {
             witnessTitle += ` - ${designation}`;
           }
