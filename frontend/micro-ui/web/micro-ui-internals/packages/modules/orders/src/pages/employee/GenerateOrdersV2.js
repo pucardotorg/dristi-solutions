@@ -2425,11 +2425,12 @@ const GenerateOrdersV2 = () => {
 
     const respondentDetails = {
       name: respondentName,
-      address: respondentAddress?.[0],
+      address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
       phone: respondentPhoneNo[0] || "",
       email: respondentEmail[0] || "",
       age: "",
       gender: "",
+      uniqueId: respondentUniqueId,
       ...(ownerType && { ownerType: ownerType }),
     };
     const caseRespondent = {
@@ -2522,16 +2523,8 @@ const GenerateOrdersV2 = () => {
             templateType: orderFormValue?.warrantSubType?.templateType || "GENERIC",
             warrantText: orderFormValue?.warrantText?.warrantText || "",
           },
-          respondentDetails: {
-            name: respondentName,
-            address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
-            phone: respondentPhoneNo?.[0] || "",
-            email: respondentEmail?.[0] || "",
-            age: "",
-            gender: "",
-            uniqueId: respondentUniqueId,
-            ...(ownerType && { ownerType: ownerType }),
-          },
+          ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
+          respondentDetails: respondentDetails,
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
@@ -2570,16 +2563,8 @@ const GenerateOrdersV2 = () => {
             proclamationText: orderFormValue?.proclamationText?.proclamationText || "",
             partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
           },
-          respondentDetails: {
-            name: respondentName,
-            address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
-            phone: respondentPhoneNo?.[0] || "",
-            email: respondentEmail?.[0] || "",
-            age: "",
-            gender: "",
-            uniqueId: respondentUniqueId,
-            ...(ownerType && { ownerType: ownerType }),
-          },
+          ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
+          respondentDetails: respondentDetails,
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
@@ -2621,16 +2606,8 @@ const GenerateOrdersV2 = () => {
             chargeDays: orderFormValue?.chargeDays?.chargeDays || "",
             partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
           },
-          respondentDetails: {
-            name: respondentName,
-            address: { ...respondentAddress?.[0], coordinate: respondentAddress?.[0]?.coordinates },
-            phone: respondentPhoneNo?.[0] || "",
-            email: respondentEmail?.[0] || "",
-            age: "",
-            gender: "",
-            uniqueId: respondentUniqueId,
-            ...(ownerType && { ownerType: ownerType }),
-          },
+          ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
+          respondentDetails: respondentDetails,
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
@@ -3522,7 +3499,7 @@ const GenerateOrdersV2 = () => {
     sessionStorage.removeItem("fileStoreId");
     sessionStorage.removeItem("businessOfTheDay");
     setSignedDocumentUploadID("");
-    setFileStoreIds(prev => {
+    setFileStoreIds((prev) => {
       const updated = new Set(prev);
       updated.delete(signedDoucumentUploadedID);
       return updated;
