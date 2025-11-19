@@ -1319,12 +1319,13 @@ const GenerateOrdersV2 = () => {
   }, [currentOrder?.attendance]);
 
   const hideNextHearingButton = useMemo(() => {
+    if (currentScheduledHearing) return true;
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing,currentScheduledHearing]);
 
   const nextHearing = useCallback(
     async () => {
@@ -3827,7 +3828,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {(isJudge || isTypist) && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}
