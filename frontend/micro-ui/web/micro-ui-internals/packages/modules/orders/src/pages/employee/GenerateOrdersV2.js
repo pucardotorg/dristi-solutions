@@ -3807,7 +3807,7 @@ const GenerateOrdersV2 = () => {
         } || {}
       );
     }
-  }, [currentOrder, openEdit, orderType, orderTypeData]);
+  }, [currentOrder, orderType, orderTypeData]);
 
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
