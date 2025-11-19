@@ -614,7 +614,7 @@ const TasksComponent = ({
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
         return result;
       }, {});
-      if (actionName === "order for scheduling next hearing") {
+      if (actionName === "Schedule Next Hearing") {
         additionalDetails = {
           orderType: "SCHEDULE_OF_HEARING_DATE",
           caseTitle: caseTitle,
