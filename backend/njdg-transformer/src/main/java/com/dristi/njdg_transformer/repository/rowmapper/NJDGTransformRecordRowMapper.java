@@ -40,7 +40,7 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         record.setPendDisp(pendDisp != null && !pendDisp.isEmpty() ? pendDisp.charAt(0) : null);
         
         String dispNature = rs.getString("disp_nature");
-        record.setDispNature(dispNature != null && !dispNature.isEmpty() ? dispNature.charAt(0) : null);
+        record.setDispNature(dispNature != null && !dispNature.isEmpty() ? dispNature.charAt(0) : '0');
         
         String cicriType = rs.getString("cicri_type");
         record.setCicriType(cicriType != null && !cicriType.isEmpty() ? cicriType.charAt(0) : ' ');
