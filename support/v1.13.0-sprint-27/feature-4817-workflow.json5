@@ -31,6 +31,24 @@
             "SYSTEM",
             "SYSTEM_ADMIN"
           ]
+        },
+        {
+          "action": "CREATE_WITHOUT_PAYMENT",
+          "nextState": "TASK_WITHOUT_PAYMENT",
+          "roles": [
+            "PROCESS_MANAGEMENT_CREATOR"
+          ],
+          "active":true
+        },
+        {
+          "action": "COMPLETE_WITHOUT_PAYMENT",
+          "nextState": "COMPLETED_WITHOUT_PAYMENT",
+          "roles": [
+            "PROCESS_MANAGEMENT_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
         }
       ]
     },
@@ -111,6 +129,37 @@
       ]
     },
     {
+      "tenantId": "kl",
+      "businessServiceId": "aab74865-c79e-4654-b6b0-374ebc71be00",
+      "sla": null,
+      "state": "TASK_WITHOUT_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "UPDATE_WITHOUT_PAYMENT",
+          "nextState": "TASK_WITHOUT_PAYMENT",
+          "roles": [
+            "PROCESS_MANAGEMENT_EDITOR"
+          ],
+          "active":true
+        },
+        {
+          "action": "COMPLETE_WITHOUT_PAYMENT",
+          "nextState": "COMPLETED_WITHOUT_PAYMENT",
+          "roles": [
+            "PROCESS_MANAGEMENT_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
       "sla": null,
       "state": "COMPLETED",
       "applicationStatus": "ACTIVE",
@@ -131,11 +180,22 @@
     {
       "sla": null,
       "state": "TASK_CREATED",
-      "applicationStatus": "INACTIVE",
+      "applicationStatus": "ACTIVE",
       "isStateUpdatable": false,
       "docUploadRequired": false,
       "isStartState": false,
       "isTerminateState": true
+    },
+    {
+      "tenantId": "kl",
+      "sla": null,
+      "state": "COMPLETED_WITHOUT_PAYMENT",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
     }
   ]
 }
