@@ -849,7 +849,7 @@ const SubmissionsCreate = ({ path }) => {
         applicationDate: formatDate(new Date()),
         ...(applicationType === "REQUEST_FOR_BAIL"
           ? {
-              addSurety: { code: "NO", name: "No", showSurety: false },
+              addSurety: { code: "YES", name: "Yes", showSurety: true },
             }
           : {}),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
