@@ -267,6 +267,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
                         .tenantId(courtCase.getTenantId())
                         .courtCaseNumber(courtCase.getCourtCaseNumber())
                         .cmpNumber(courtCase.getCmpNumber())
+                        .orderType(order.getOrderType())
                         .shortenedUrl(createShortUrl(order, referenceId))
                         .build();
 
