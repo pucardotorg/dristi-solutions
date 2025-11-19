@@ -315,7 +315,7 @@ const GenerateBailBondV2 = () => {
       return false;
     }
 
-    if(bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
+    if (bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
       return false;
     }
 
@@ -1372,6 +1372,8 @@ const GenerateBailBondV2 = () => {
               fontWeight: 600,
               cursor: "pointer",
               zIndex: 1000,
+              visibility: "hidden",
+              display: "none",
             }}
           >
             {t("CLEAR_INFORMATION")}
