@@ -1104,10 +1104,14 @@ function EFilingCases({ path }) {
                             <div className="info-card-content">
                               <ul style={{ width: "100%" }}>
                                 <li>
-                                  <span>{t("FIRST_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("COURIER_DELAY_NOTICE")}</strong> {t("COURIER_DELAY_NOTICE_NOTE")}
+                                  </span>
                                 </li>
                                 <li>
-                                  <span>{t("SECOND_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
+                                  </span>
                                 </li>
                               </ul>
                             </div>
