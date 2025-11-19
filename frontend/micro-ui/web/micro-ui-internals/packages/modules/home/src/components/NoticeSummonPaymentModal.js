@@ -19,6 +19,7 @@ function NoticeSummonPaymentModal({
   refetchPendingTasks,
   setShowCourierServiceModal,
   setCourierServicePendingTask,
+  setIsPaymentCompleted
 }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -176,6 +177,7 @@ function NoticeSummonPaymentModal({
         const fileStoreId = response?.Document?.fileStore;
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
+          setIsPaymentCompleted(true);
           await refetchPendingTasks();
           setHideCancelButton(true);
         }
