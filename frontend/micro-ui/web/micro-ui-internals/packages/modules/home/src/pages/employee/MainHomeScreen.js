@@ -357,6 +357,12 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        ...(courierServicePendingTask?.partyType && {
+          partyType: courierServicePendingTask?.partyType,
+        }),
+        ...(courierServicePendingTask?.orderItemId && {
+          orderItemId: courierServicePendingTask?.orderItemId,
+        }),
         tenantId: tenantId,
       },
     },
@@ -582,11 +588,15 @@ const MainHomeScreen = () => {
           formData: formData,
           filingNumber: courierOrderDetails?.filingNumber,
           tenantId,
+          isLast,
         });
         await refetchTaskManagement();
         if (isLast) {
           setCourierServicePendingTask(null);
           setCourierOrderDetails({});
+          setTimeout(() => {
+            history.replace(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "NOTICE_SUMMONS_MANAGEMENT" });
+          }, 2000);
         }
         return { continue: true };
       } catch (error) {
@@ -597,7 +607,7 @@ const MainHomeScreen = () => {
         setIsProcessLoader(false);
       }
     },
-    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, t]
+    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, history, t]
   );
 
   const handleCourierServiceChange = useCallback((value, type, index) => {
@@ -718,6 +728,7 @@ const MainHomeScreen = () => {
           orderItemId: courierOrderDetails?.orderItemId,
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
+          ownerType: item?.data?.ownerType,
         };
 
         const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
@@ -950,8 +961,8 @@ const MainHomeScreen = () => {
               })
               ?.filter((column) => {
                 if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
-                if(activeTab === "REGISTRATION") {
-                  if(column?.label === "STAGE") return false;
+                if (activeTab === "REGISTRATION") {
+                  if (column?.label === "STAGE") return false;
                 }
                 if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
                   if (column?.label === "STAGE") return false;
