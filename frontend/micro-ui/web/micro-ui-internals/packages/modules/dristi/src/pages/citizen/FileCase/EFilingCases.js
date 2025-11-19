@@ -631,6 +631,23 @@ function EFilingCases({ path }) {
     return caseDetails?.additionalDetails?.respondentDetails?.formdata;
   }, [caseDetails]);
 
+  const isDelayCondonation = useMemo(() => {
+    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
+      const dateObj = new Date(data?.data?.dateOfAccrual);
+      const currentDate = new Date();
+      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
+      if (monthDifference > 1) {
+        return true;
+      } else if (monthDifference === 0) {
+        return false;
+      } else if (currentDate.getDate() > dateObj.getDate()) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+  }, [caseDetails]);
+
   useEffect(() => {
     const data =
       caseDetails?.additionalDetails?.[selected]?.formdata ||
@@ -720,11 +737,7 @@ function EFilingCases({ path }) {
                   middleName: accusedDetails.respondentMiddleName || "",
                   lastName: accusedDetails.respondentLastName || "",
                   addressDetails: mergedAddresses,
-                  noticeCourierService:
-                    caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO"
-                      ? existingItem?.data?.multipleAccusedProcessCourier?.noticeCourierService
-                      : [],
-                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
+                  noticeCourierService: isDelayCondonation ? existingItem?.data?.multipleAccusedProcessCourier?.noticeCourierService : [],
                 },
               },
             };
@@ -743,7 +756,6 @@ function EFilingCases({ path }) {
                   addressDetails: accusedDetails.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                   uniqueId: accused?.uniqueId || "",
                   filingNumber: caseDetails?.filingNumber,
-                  isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
                 },
               },
               displayindex: 0,
@@ -768,7 +780,6 @@ function EFilingCases({ path }) {
                 addressDetails: completedAccuseds?.[i]?.data?.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
                 uniqueId: completedAccuseds?.[i]?.uniqueId || "",
                 filingNumber: caseDetails?.filingNumber,
-                isDelayCondonation: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO",
               },
             },
             displayindex: 0,
@@ -787,7 +798,7 @@ function EFilingCases({ path }) {
     if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
       setShowReviewCorrectionModal(true);
     }
-  }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants]);
+  }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants, isDelayCondonation]);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -824,23 +835,6 @@ function EFilingCases({ path }) {
       }
     }
   }, [caseDetails, errorCaseDetails]);
-
-  const isDelayCondonation = useMemo(() => {
-    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
-      const dateObj = new Date(data?.data?.dateOfAccrual);
-      const currentDate = new Date();
-      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
-      if (monthDifference > 1) {
-        return true;
-      } else if (monthDifference === 0) {
-        return false;
-      } else if (currentDate.getDate() > dateObj.getDate()) {
-        return true;
-      } else {
-        return false;
-      }
-    });
-  }, [caseDetails]);
 
   const getDefaultValues = useCallback(
     (index) => {
@@ -1085,44 +1079,55 @@ function EFilingCases({ path }) {
             };
           });
         }
-        if (selected === "processCourierService" && index === 0) {
-          const isDelayCondonation = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO";
+        if (selected === "processCourierService") {
           return formConfig.map((config) => {
+            const updatedBody = config?.body?.map((item) => ({
+              ...item,
+              isDelayCondonation: isDelayCondonation,
+            }));
+
+            if (index === 0) {
+              return {
+                ...config,
+                body: [
+                  {
+                    type: "component",
+                    component: "SelectCustomNote",
+                    key: "processCourierServiceNote",
+                    styles: { padding: "15px" },
+                    populators: {
+                      inputs: [
+                        {
+                          infoHeader: "CS_COMMON_NOTE",
+                          showTooltip: true,
+                          children: isDelayCondonation ? (
+                            <div className="info-card-content">
+                              <ul style={{ width: "100%" }}>
+                                <li>
+                                  <span>{t("FIRST_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                </li>
+                                <li>
+                                  <span>{t("SECOND_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                </li>
+                              </ul>
+                            </div>
+                          ) : (
+                            <div className="info-card-content">
+                              <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                            </div>
+                          ),
+                        },
+                      ],
+                    },
+                  },
+                  ...updatedBody,
+                ],
+              };
+            }
+
             return {
               ...config,
-              body: [
-                {
-                  type: "component",
-                  component: "SelectCustomNote",
-                  key: "processCourierServiceNote",
-                  styles: { padding: "15px" },
-                  populators: {
-                    inputs: [
-                      {
-                        infoHeader: "CS_COMMON_NOTE",
-                        showTooltip: true,
-                        children: isDelayCondonation ? (
-                          <div className="info-card-content">
-                            <ul style={{ width: "100%" }}>
-                              <li>
-                                <span>{t("FIRST_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
-                              </li>
-                              <li>
-                                <span>{t("SECOND_POINT_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
-                              </li>
-                            </ul>
-                          </div>
-                        ) : (
-                          <div className="info-card-content">
-                            <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
-                          </div>
-                        ),
-                      },
-                    ],
-                  },
-                },
-                ...config.body,
-              ],
+              body: updatedBody,
             };
           });
         }
@@ -1694,6 +1699,7 @@ function EFilingCases({ path }) {
     scrutinyObj,
     isPendingESign,
     isPendingReESign,
+    isDelayCondonation,
   ]);
 
   const activeForms = useMemo(() => {
@@ -2422,6 +2428,7 @@ function EFilingCases({ path }) {
           scrutinyObj,
           filingType: filingType,
           setShouldShowConfirmDcaModal,
+          isDelayCondonation,
         });
 
         if (resetFormData.current) {
@@ -2495,6 +2502,7 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      isDelayCondonation,
       setShouldShowConfirmDcaModal,
     })
       .then(() => {
@@ -2575,6 +2583,7 @@ function EFilingCases({ path }) {
       scrutinyObj,
       filingType: filingType,
       setShouldShowConfirmDcaModal,
+      isDelayCondonation,
     })
       .then(() => {
         if (!isCaseReAssigned) {

@@ -97,6 +97,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     <React.Fragment>
       <CourierService
         t={t}
+        isDelayCondonation={config?.isDelayCondonation}
         errors={errors}
         processCourierData={processCourierData}
         handleCourierServiceChange={handleCourierServiceChange}
