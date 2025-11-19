@@ -6,6 +6,7 @@
     "index": "pending-tasks-index",
     "module": "Pending Tasks Service",
     "allowedSearchCriteria": [
+      // this needs to be added to the existing data
       {
         "name": "name",
         "path": "Data.name.keyword",
