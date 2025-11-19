@@ -901,7 +901,7 @@ const EvidenceModal = ({
       if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {
         try {
           let response;
-          if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+          if (compositeOrderObj?.orderCategory === "INTERMEDIATE" && compositeOrderObj?.orderType) {
             const compositeItems = [
               {
                 orderType: compositeOrderObj?.orderType,
@@ -962,6 +962,39 @@ const EvidenceModal = ({
             } else {
               response = await ordersService.createOrder(payload, { tenantId });
             }
+          } else if (compositeOrderObj?.orderCategory === "INTERMEDIATE" && !compositeOrderObj?.orderType) {
+            const reqbody = {
+              order: {
+                ...compositeOrderObj,
+                orderType: orderType,
+                applicationNumber: applicationNumber,
+                additionalDetails,
+                orderTitle: orderType,
+                workflow: {
+                  action: OrderWorkflowAction.SAVE_DRAFT,
+                  comments: "Updating order",
+                  assignes: null,
+                  rating: null,
+                  documents: [{}],
+                },
+                orderDetails: {
+                  ...(parties || {}),
+                  ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                  applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+                  applicationNumber: refApplicationId,
+                  applicationCMPNumber: applicationCMPNumber,
+                  caseNumber: caseNumber,
+                  ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
+                },
+                ...(linkedOrderNumber && { linkedOrderNumber }),
+              },
+            };
+
+            try {
+              response = await ordersService.updateOrder(reqbody, { tenantId });
+            } catch (error) {
+              toast.error(t("SOMETHING_WENT_WRONG"));
+            }
           } else {
             const compositeItems = [
               ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled && item?.orderType),
@@ -1010,7 +1043,9 @@ const EvidenceModal = ({
           }
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
-              name: `${compositeOrderObj?.orderTitle}`,
+              name: `${
+                compositeOrderObj?.orderCategory === "INTERMEDIATE" && !compositeOrderObj?.orderType ? orderType : compositeOrderObj?.orderTitle
+              }`,
               entityType: "order-default",
               referenceId: `MANUAL_${response?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
@@ -1026,13 +1061,9 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          const isAcceptBail =
-            (response?.order?.orderCategory === "INTERMEDIATE" && response?.order?.orderType === "ACCEPT_BAIL") ||
-            (Array.isArray(response?.order?.compositeItems) &&
-              response?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
-          const suffix = isAcceptBail ? "&openEdit=1" : "";
+          sessionStorage.setItem("currentOrderType", orderType);
           history.replace(
-            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}${suffix}`
+            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         } catch (error) {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -1103,13 +1134,8 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          const isAcceptBail2 =
-            (res?.order?.orderCategory === "INTERMEDIATE" && res?.order?.orderType === "ACCEPT_BAIL") ||
-            (Array.isArray(res?.order?.compositeItems) && res?.order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
-          const suffix2 = isAcceptBail2 ? "&openEdit=1" : "";
-          history.push(
-            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}${suffix2}`
-          );
+          sessionStorage.setItem("currentOrderType", orderType);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {}
       } else {
         if (showConfirmationModal.type === "reject") {
