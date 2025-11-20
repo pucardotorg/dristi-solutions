@@ -29,7 +29,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
@@ -124,19 +123,31 @@ public class BailService {
 
             RequestInfo requestInfo = bailRequest.getRequestInfo();
 
-            // Notify Sureties
-            if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
-                bail.getSureties().stream()
-                        .map(Surety::getMobileNumber)
-                        .filter(StringUtils::isNotBlank)
-                        .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
-            }
+            CaseCriteria criteria = CaseCriteria.builder()
+                    .filingNumber(bail.getFilingNumber())
+                    .defaultFields(true)
+                    .build();
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(bailRequest.getRequestInfo())
+                    .criteria(Collections.singletonList(criteria))
+                    .build();
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            String substage = caseUtil.getSubstage(caseDetails);
+            if(APPEARANCE.equalsIgnoreCase(substage)){
+                // Notify Sureties
+                if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
+                    bail.getSureties().stream()
+                            .map(Surety::getMobileNumber)
+                            .filter(StringUtils::isNotBlank)
+                            .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
+                }
 
-            // Notify Litigant
-            if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
-                String litigantMobile = bail.getLitigantMobileNumber();
-                if (StringUtils.isNotBlank(litigantMobile)) {
-                    notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
+                // Notify Litigant
+                if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
+                    String litigantMobile = bail.getLitigantMobileNumber();
+                    if (StringUtils.isNotBlank(litigantMobile)) {
+                        notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
+                    }
                 }
             }
 

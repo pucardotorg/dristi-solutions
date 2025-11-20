@@ -15,6 +15,7 @@ import { paymentType } from "../../utils/paymentType";
 import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { getPartyNameForInfos } from "../../utils";
 
 const modeOptions = [{ label: "E-Post (3-5 days)", value: "e-post" }];
 
@@ -220,6 +221,8 @@ const PaymentForSummonModal = ({ path }) => {
     filteredTasks?.[0]?.orderId,
     Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
+
+  const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
   const compositeItem = useMemo(
     () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === filteredTasks?.[0]?.additionalDetails?.itemId),
@@ -535,23 +538,22 @@ const PaymentForSummonModal = ({ path }) => {
   ]);
 
   const infos = useMemo(() => {
-    const name = filteredTasks?.[0]?.taskDetails?.respondentDetails?.name;
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
     const formattedAddress =
       typeof addressDetails === "object"
         ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
             addressDetails?.pincode || ""
           }`
-        : addressDetails;
+        : addressDetails; 
     return [
-      { key: "Issued to", value: name },
+      { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
       { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: `Post (${formattedAddress})`,
       },
     ];
-  }, [filteredTasks, hearingsData?.HearingList]);
+  }, [compositeItem, filteredTasks, hearingsData?.HearingList, orderDetails, orderType]);
 
   const orderDate = useMemo(() => {
     return hearingsData?.HearingList?.[0]?.startTime;

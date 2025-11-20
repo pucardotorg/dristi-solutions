@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { surveyConfig } from "../../configs/InPortalSurveyConfig";
 import InPortalSurveyModal from "../../components/InPortalSurvey/InPortalSurveyModal";
 import InPortalSurveyRes from "../../components/InPortalSurvey/InPortalSurveyRes";
@@ -11,8 +11,13 @@ export const useSurveyManager = (params) => {
   const [surveyResult, setSurveyResult] = useState(null);
   const [customOnClose, setCustomOnClose] = useState(() => () => {});
 
+  const userInfo = Digit.UserService.getUser()?.info;
+  const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
+  const hasAdvocateRole = useMemo(() => userInfo?.roles?.some(role => role.code === "ADVOCATE_ROLE"), [userInfo]);
+  const isLitigant = useMemo(() => userInfo?.type === "CITIZEN" && !hasAdvocateRole, [userInfo]);
+
   // Call backend to check eligibility
-  const checkEligibility = async () => {
+  const checkEligibility = useCallback(async () => {
     try {
       const data = await DRISTIService.getInportalEligibility(params);
       return data?.Eligibility?.isEligible;
@@ -20,11 +25,21 @@ export const useSurveyManager = (params) => {
       console.error("Survey eligibility check failed:", err);
       return false;
     }
-  };
+  }, [params]);
 
   // Entry function called by trigger points
   const triggerSurvey = useCallback(async (context, onClose) => {
     setCustomOnClose(() => onClose);
+
+    if (!isCitizen) {
+      onClose?.();
+      return;
+    }
+
+    if(isLitigant && context === "JOIN_CASE_PAYMENT") {
+      onClose?.();
+      return;
+    }
 
     try {
       const eligible = await checkEligibility();
@@ -46,7 +61,7 @@ export const useSurveyManager = (params) => {
       onClose?.();
       return;
     } 
-  }, []);
+  }, [checkEligibility]);
 
   // Handle survey submission
   const handleSurveySubmit = async ({context, rating, feedback}) => {

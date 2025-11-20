@@ -170,7 +170,7 @@ public class PaymentUpdateService {
             caseRequest.setRequestInfo(requestInfo);
             caseRequest.setCases(decryptedCourtCase);
             if(UNDER_SCRUTINY.equalsIgnoreCase(courtCase.getStatus())) {
-                caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
+                caseService.callNotificationService(caseRequest, CASE_FILED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
             Document paymentReceipt = null;

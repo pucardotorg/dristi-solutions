@@ -180,7 +180,7 @@
     },
     "pageWeight": 4,
     "weightUnit": "grams",
-    "businessFee": 2,
+    "businessFee": 2.9,
     "GSTPercentage": 0.18,
     "applicationFee": 5,
     "printingFeePerPage": 5,

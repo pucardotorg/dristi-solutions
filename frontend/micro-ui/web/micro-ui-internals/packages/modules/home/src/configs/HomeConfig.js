@@ -565,8 +565,8 @@ export const TabUnifiedEmployeeSearchConfig = {
                 name: "Closed:",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
-                ascText: "new first",
-                descText: "old first",
+                ascText: "New First",
+                descText: "Old First",
                 showAdditionalText: true,
                 showIcon: true,
                 icon: "UpDownArrowIcon",
@@ -711,8 +711,8 @@ export const TabUnifiedEmployeeSearchConfig = {
                 name: "Closed:",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
-                ascText: "new first",
-                descText: "old first",
+                ascText: "New First",
+                descText: "Old First",
                 showAdditionalText: true,
                 showIcon: true,
                 icon: "UpDownArrowIcon",
@@ -835,8 +835,8 @@ export const CaseReviewerAdditionalTab = {
             name: "Filed",
             key: "sortCaseListByDate",
             sortBy: "createdtime",
-            ascText: "(old first)",
-            descText: "(new first)",
+            ascText: "(Old First)",
+            descText: "(New First)",
             showAdditionalText: true,
             showIcon: true,
             icon: "UpDownArrowIcon",
@@ -945,15 +945,6 @@ export const getUnifiedEmployeeConfig = (roles) => {
   const baseConfig = { ...TabUnifiedEmployeeSearchConfig };
   const hasCaseReviewerRole = roles?.some((role) => role.code === "CASE_REVIEWER");
   const allTabs = [...baseConfig.TabSearchConfig];
-  // Add the 6th tab i.e. scrutiny only if user has CASE_REVIEWER role.
-  const sixthTab = {
-    ...CaseReviewerAdditionalTab,
-    showForRoles: ["CASE_REVIEWER"],
-    isConditional: true,
-  };
-  if (hasCaseReviewerRole) {
-    allTabs.push(sixthTab);
-  }
   baseConfig.TabSearchConfig = allTabs;
   return baseConfig;
 };
@@ -1740,6 +1731,16 @@ export const pendingTaskForBailBondActions = {
     redirectDetails: {
       url: "/dristi/home/bail-bond-sign",
       params: [{ key: "bailbondId", value: "referenceId" }],
+    },
+  },
+  PENDING_RAISE_BAIL_BOND: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Raise Bail Bond",
+    redirectDetails: {
+      url: "/submissions/bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+      ],
     },
   },
 };

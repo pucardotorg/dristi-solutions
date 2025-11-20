@@ -324,6 +324,8 @@ module.exports = {
       process.env.EGOV_FILESTORE_SERVICE_HOST || "http://localhost:8084",
     evidence: process.env.DRISTI_EVIDENCE_HOST || "http://localhost:8090",
     bailBond: process.env.DRISTI_BAIL_BOND_HOST || "http://localhost:8097",
+    taskMangement:
+      process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
   },
 
   paths: {
@@ -348,6 +350,7 @@ module.exports = {
     task_table_search: "/task/v1/table/search",
     evidence_search: "/evidence/v1/_search",
     bail_bond_search: "/bail-bond/v1/_search",
+    task_management_search: "/task-management/v1/_search",
   },
 
   constraints: {
