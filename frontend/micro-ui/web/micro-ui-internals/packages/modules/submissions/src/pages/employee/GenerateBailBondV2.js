@@ -315,7 +315,7 @@ const GenerateBailBondV2 = () => {
       return false;
     }
 
-    if(bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
+    if (bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
       return false;
     }
 
@@ -1166,12 +1166,6 @@ const GenerateBailBondV2 = () => {
     }
   };
 
-  const handleClearAutoPopulatedData = () => {
-    setDefaultFormValueData({});
-    // setFormdata({});
-    setClearAutoPopulatedData(true);
-  };
-
   const handleCloseSignatureModal = () => {
     setShowsignatureModal(false);
     setShowBailBondReview(true);
@@ -1357,25 +1351,6 @@ const GenerateBailBondV2 = () => {
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />
-          <button
-            type="button"
-            onClick={handleClearAutoPopulatedData}
-            className="tertiary-clear-btn"
-            style={{
-              position: "fixed",
-              bottom: 12,
-              left: 32,
-              background: "transparent",
-              border: "1px solid #007E7E",
-              color: "#007E7E",
-              padding: "8px 16px",
-              fontWeight: 600,
-              cursor: "pointer",
-              zIndex: 1000,
-            }}
-          >
-            {t("CLEAR_INFORMATION")}
-          </button>
         </div>
 
         {showBailBondReview && (
