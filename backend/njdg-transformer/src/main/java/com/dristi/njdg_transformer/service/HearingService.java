@@ -5,11 +5,15 @@ import com.dristi.njdg_transformer.model.HearingDetails;
 import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.DesignationMaster;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
+import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
+import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
+import com.dristi.njdg_transformer.utils.HearingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,6 +21,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.JUDGE_DESIGNATION;
 
@@ -29,27 +34,11 @@ public class HearingService {
     private final TransformerProperties properties;
     private final Producer producer;
     private final CaseRepository caseRepository;
+    private final HearingUtil hearingUtil;
 
-    public HearingDetails processAndUpdateHearings(Hearing hearing) {
+    public HearingDetails processAndUpdateHearings(Hearing hearing, RequestInfo requestInfo) {
         String cino = hearing.getCnrNumbers().get(0);
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
-
-        // ✅ Check if this hearing already exists
-        boolean alreadyExists = hearingDetails.stream()
-                .anyMatch(h -> h.getHearingId() != null && h.getHearingId().equals(hearing.getHearingId()));
-
-        if (alreadyExists) {
-            log.info("Hearing with ID {} already exists for CINO {}. Skipping insert.", hearing.getHearingId(), cino);
-           HearingDetails existingHearings = hearingDetails.stream()
-                    .filter(h -> h.getHearingId() != null && h.getHearingId().equals(hearing.getHearingId()))
-                    .findFirst()
-                    .orElse(null);
-           if(existingHearings != null) {
-               existingHearings.setBusiness(hearing.getHearingSummary());
-               producer.push("save-hearing-details", existingHearings);
-               return existingHearings;
-           }
-        }
 
         int nextSrNo = hearingDetails.stream()
                 .mapToInt(HearingDetails::getSrNo)
@@ -59,13 +48,16 @@ public class HearingService {
         JudgeDetails judgeDetails = caseRepository.getJudge(hearing.getPresidedBy().getJudgeID().get(0));
         DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
 
+        // Find next scheduled hearing for this filing number
+        LocalDate nextScheduledDate = findNextScheduledHearing(hearing, requestInfo);
+
         // Create new hearing detail
         HearingDetails newHearingDetail = HearingDetails.builder()
                 .cino(cino)
                 .srNo(nextSrNo)
                 .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
-                .nextDate(null) // will be updated for previous hearing
+                .nextDate(nextScheduledDate) // Set next date from scheduled hearing or null
                 .purposeOfListing(getPurposeOfListingValue(hearing))
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode().toString() : "")
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
@@ -75,14 +67,19 @@ public class HearingService {
                 .courtNo(properties.getCourtNumber())
                 .build();
 
-        // Update previous hearing's nextDate
+        // Update previous hearing's nextDate only if there's a next scheduled hearing
         hearingDetails.stream()
                 .max(Comparator.comparing(HearingDetails::getHearingDate)) // get the latest hearing before this one
                 .ifPresent(prevHearing -> {
-                    prevHearing.setNextDate(formatDate(hearing.getStartTime())); // set nextDate as new hearing date
-                    producer.push("save-hearing-details", prevHearing); // push updated previous hearing
-                    log.info("Updated previous hearing with ID {} for CINO {} with nextDate {}",
-                            prevHearing.getHearingId(), cino, prevHearing.getNextDate());
+                    // Only update if there's a next scheduled hearing
+                    if (prevHearing.getNextDate() == null) {
+                        prevHearing.setNextDate(formatDate(hearing.getStartTime())); // set nextDate as current hearing date
+                        producer.push("save-hearing-details", prevHearing); // push updated previous hearing
+                        log.info("Updated previous hearing with ID {} for CINO {} with nextDate {}",
+                                prevHearing.getHearingId(), cino, prevHearing.getNextDate());
+                    } else {
+                        log.debug("No next scheduled hearing found, keeping previous hearing's nextDate as null for CINO {}", cino);
+                    }
                 });
 
         // Push new hearing
@@ -92,6 +89,67 @@ public class HearingService {
     }
 
 
+
+    /**
+     * Finds the next scheduled hearing for the given filing number
+     * @param currentHearing The current completed hearing
+     * @param requestInfo The request info from consumer
+     * @return LocalDate of the next scheduled hearing, or null if none found
+     */
+    private LocalDate findNextScheduledHearing(Hearing currentHearing, RequestInfo requestInfo) {
+        try {
+            // Get filing number from current hearing
+            if (currentHearing.getFilingNumber() == null || currentHearing.getFilingNumber().isEmpty()) {
+                log.warn("No filing number found for hearing {}", currentHearing.getHearingId());
+                return null;
+            }
+            
+            String filingNumber = currentHearing.getFilingNumber().get(0);
+            log.debug("Searching for scheduled hearings with filing number: {}", filingNumber);
+            
+            // Create search criteria for scheduled hearings
+            HearingCriteria criteria = HearingCriteria.builder()
+                    .filingNumber(filingNumber)
+                    .tenantId(currentHearing.getTenantId())
+                    .fromDate(currentHearing.getStartTime()) // Search from current hearing time onwards
+                    .build();
+            
+            // Create search request
+            HearingSearchRequest searchRequest = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo) // Use passed request info
+                    .criteria(criteria)
+                    .build();
+            
+            // Fetch hearings using HearingUtil
+            List<Hearing> scheduledHearings = hearingUtil.fetchHearingDetails(searchRequest);
+            
+            if (scheduledHearings == null || scheduledHearings.isEmpty()) {
+                log.debug("No scheduled hearings found for filing number: {}", filingNumber);
+                return null;
+            }
+            
+            // Find the next scheduled hearing (status = SCHEDULED and startTime > current hearing startTime)
+            Optional<Hearing> nextScheduledHearing = scheduledHearings.stream()
+                    .filter(h -> "SCHEDULED".equalsIgnoreCase(h.getStatus()))
+                    .filter(h -> h.getStartTime() != null && h.getStartTime() > currentHearing.getStartTime())
+                    .min(Comparator.comparing(Hearing::getStartTime)); // Get the earliest scheduled hearing
+            
+            if (nextScheduledHearing.isPresent()) {
+                LocalDate nextDate = formatDate(nextScheduledHearing.get().getStartTime());
+                log.info("Found next scheduled hearing for filing number {} on date: {}", 
+                        filingNumber, nextDate);
+                return nextDate;
+            } else {
+                log.debug("No future scheduled hearings found for filing number: {}", filingNumber);
+                return null;
+            }
+            
+        } catch (Exception e) {
+            log.error("Error finding next scheduled hearing for hearing {}: {}", 
+                    currentHearing.getHearingId(), e.getMessage(), e);
+            return null;
+        }
+    }
 
     /**
      * Gets the purpose of listing value, handling the case where purpose code is 0 (default value)

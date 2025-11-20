@@ -13,7 +13,7 @@ import org.egov.common.contract.request.RequestInfo;
 @Builder
 public class HearingRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     private RequestInfo requestInfo;
 
     @JsonProperty("hearing")

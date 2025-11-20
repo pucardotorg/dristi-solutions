@@ -59,7 +59,7 @@ public class HearingConsumer {
             log.debug("Processing hearing update | hearingId: {}", hearingId);
 
             if(COMPLETED.equalsIgnoreCase(hearingRequest.getHearing().getStatus())){
-                hearingService.processAndUpdateHearings(hearingRequest.getHearing());
+                hearingService.processAndUpdateHearings(hearingRequest.getHearing(), hearingRequest.getRequestInfo());
             }
             log.info("Successfully processed hearing | hearingId: {}", hearingId);
         } catch (Exception e) {
@@ -103,9 +103,11 @@ public class HearingConsumer {
             // Process each hearing
             for (Hearing hearing : request.getHearings()) {
                 try {
-                    log.debug("Processing hearing in bulk | hearingId: {}", hearing.getHearingId());
-                    hearingService.processAndUpdateHearings(hearing);
-                    processedCount++;
+                    if(COMPLETED.equalsIgnoreCase(hearing.getStatus())){
+                        log.debug("Processing hearing in bulk | hearingId: {}", hearing.getHearingId());
+                        hearingService.processAndUpdateHearings(hearing, request.getRequestInfo());
+                        processedCount++;
+                    }
                 } catch (Exception e) {
                     failedCount++;
                     log.error("Failed to process hearing in bulk | hearingId: {} | error: {}", 
