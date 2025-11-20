@@ -217,6 +217,21 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
+  if (currentOrderType === "ACCEPT_BAIL") {
+    const bt = formData?.bailType;
+    const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
+    const isSurety = bailTypeCode === "SURETY";
+
+    if (isSurety) {
+      const suretiesNum = Number(formData?.noOfSureties);
+      const isInvalidSureties = !Number.isFinite(suretiesNum) || suretiesNum <= 0;
+      if (isInvalidSureties) {
+        setFormErrors?.current?.[index]?.("noOfSureties", { message: t?.("CORE_REQUIRED_FIELD_ERROR") });
+        hasError = true;
+      }
+    }
+  }
+
   // if (currentOrderType === "NOTICE") {
   //   if (formData?.noticeOrder?.selectedChannels?.length === 0) {
   //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
