@@ -864,7 +864,7 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   return allErrorData;
 };
 
-export const getProcessCourierRemainingFields = (formdata, t) => {
+export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation) => {
   const allErrorData = [];
   for (let i = 0; i < formdata?.length; i++) {
     const formData = formdata?.[i]?.data || {};
@@ -873,7 +873,6 @@ export const getProcessCourierRemainingFields = (formdata, t) => {
       NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
       SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
     };
-    const isDelayCondonation = formData?.multipleAccusedProcessCourier?.isDelayCondonation;
     if (isDelayCondonation) {
       if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
         errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
