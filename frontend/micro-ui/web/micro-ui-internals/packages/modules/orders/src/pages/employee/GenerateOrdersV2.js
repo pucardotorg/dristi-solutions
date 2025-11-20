@@ -2852,7 +2852,7 @@ const GenerateOrdersV2 = () => {
           ...(actionResponse && { action: actionResponse }),
         },
       };
-      const isInitiateRescheduleHearingOrder =
+      const isAssignDateRescheduleHearingOrder =
         order?.orderCategory === "INTERMEDIATE"
           ? order?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING"
           : newCompositeItems?.find((item) => item?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING");
@@ -2888,10 +2888,12 @@ const GenerateOrdersV2 = () => {
                 refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
               },
               ...(currentScheduledHearing && {
-                scheduledHearingNumber: isInitiateRescheduleHearingOrder
-                  ? currentOptOutHearing?.hearingId || currentScheduledHearing?.hearingId
-                  : currentScheduledHearing?.hearingId,
+                scheduledHearingNumber: currentScheduledHearing?.hearingId,
               }),
+              ...(currentOptOutHearing &&
+                isAssignDateRescheduleHearingOrder && {
+                  scheduledHearingNumber: currentOptOutHearing?.hearingId,
+                }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
