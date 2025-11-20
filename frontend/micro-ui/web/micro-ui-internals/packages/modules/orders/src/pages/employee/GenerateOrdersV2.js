@@ -3776,21 +3776,21 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
-    if (currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
+    if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
         currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
       }
-      setAddOrderModal(true);
-      setCompositeOrderIndex(currentOrderTypeIndex);
       setOrderType(
         {
           ...orderTypeData?.find((type) => type?.code === currentOrderType),
           name: `ORDER_TYPE_${orderType}`,
         } || {}
       );
+      setCompositeOrderIndex(currentOrderTypeIndex);
+      setAddOrderModal(true);
     }
-  }, [currentOrder, orderType, orderTypeData]);
+  }, [currentOrder, isOrderTypeLoading, isOrdersLoading, orderType, orderTypeData]);
 
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
@@ -3798,7 +3798,7 @@ const GenerateOrdersV2 = () => {
 
   return (
     <React.Fragment>
-      {(isApiCallLoading || addOrderTypeLoader) && (
+      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading) && (
         <div
           style={{
             width: "100vw",
