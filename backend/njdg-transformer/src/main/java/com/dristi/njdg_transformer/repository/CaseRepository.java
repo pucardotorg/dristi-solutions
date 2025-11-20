@@ -160,7 +160,7 @@ public class CaseRepository {
         List<Integer> ids = jdbcTemplate.queryForList(checkQuery, Integer.class,
                 extraAdvocate.getCino(),
                 extraAdvocate.getPartyNo(),
-                extraAdvocate.getAdvCode());
+                extraAdvocate.getSrNo());
 
         if (!ids.isEmpty()) {
             // Record exists → UPDATE
