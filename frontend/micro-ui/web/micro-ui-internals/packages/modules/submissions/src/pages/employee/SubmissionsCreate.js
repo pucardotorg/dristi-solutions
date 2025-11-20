@@ -1241,7 +1241,7 @@ const SubmissionsCreate = ({ path }) => {
                 additionalDetails: {
                   originalCount,
                   combined: originalCount > 1,
-                }
+                },
               });
             }
           };
@@ -1828,6 +1828,7 @@ const SubmissionsCreate = ({ path }) => {
       <div style={{ minHeight: "550px", overflowY: "auto" }}>
         <FormComposerV2
           label={t("REVIEW_SUBMISSION")}
+          className={"submission-create"}
           config={modifiedFormConfig}
           defaultValues={defaultFormValue}
           onFormValueChange={onFormValueChange}

@@ -315,7 +315,7 @@ const GenerateBailBondV2 = () => {
       return false;
     }
 
-    if(bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
+    if (bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
       return false;
     }
 
@@ -444,6 +444,7 @@ const GenerateBailBondV2 = () => {
             ) {
               return {
                 ...body,
+                disable: true,
                 formDisbalityCount:
                   bailBondDetails?.additionalDetails?.formDisableCount || applicationDetails?.applicationDetails?.sureties?.length || 0,
               };
@@ -1166,12 +1167,6 @@ const GenerateBailBondV2 = () => {
     }
   };
 
-  const handleClearAutoPopulatedData = () => {
-    setDefaultFormValueData({});
-    // setFormdata({});
-    setClearAutoPopulatedData(true);
-  };
-
   const handleCloseSignatureModal = () => {
     setShowsignatureModal(false);
     setShowBailBondReview(true);
@@ -1186,16 +1181,18 @@ const GenerateBailBondV2 = () => {
     try {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(bailBondFileStoreId, bailBondWorkflowAction.INITIATEESIGN);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setBailBondSignatureURL(res?.bails?.[0]?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -1210,23 +1207,23 @@ const GenerateBailBondV2 = () => {
       setLoader(false);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
     }
   };
 
@@ -1357,25 +1354,6 @@ const GenerateBailBondV2 = () => {
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />
-          <button
-            type="button"
-            onClick={handleClearAutoPopulatedData}
-            className="tertiary-clear-btn"
-            style={{
-              position: "fixed",
-              bottom: 12,
-              left: 32,
-              background: "transparent",
-              border: "1px solid #007E7E",
-              color: "#007E7E",
-              padding: "8px 16px",
-              fontWeight: 600,
-              cursor: "pointer",
-              zIndex: 1000,
-            }}
-          >
-            {t("CLEAR_INFORMATION")}
-          </button>
         </div>
 
         {showBailBondReview && (

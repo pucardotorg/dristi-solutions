@@ -219,7 +219,7 @@ const AddOrderTypeModal = ({
       if (isSurety) {
         const suretiesNum = Number(formData?.noOfSureties);
         const hasNoOfSuretiesError = Object.keys(formState?.errors).includes("noOfSureties");
-        if (!formData?.noOfSureties && !hasNoOfSuretiesError) {
+        if (formState?.submitCount && !formData?.noOfSureties && !hasNoOfSuretiesError) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
         } else if (Number.isFinite(suretiesNum) && suretiesNum <= 0 && !hasNoOfSuretiesError) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MINIMUM_SURETIES_ERROR") });

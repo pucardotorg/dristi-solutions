@@ -627,7 +627,12 @@ const GenerateOrdersV2 = () => {
     hearingsData?.HearingList,
   ]);
 
-  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
+  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["SCHEDULED"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
+  const currentOptOutHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["OPT_OUT"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
 
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
@@ -1319,12 +1324,13 @@ const GenerateOrdersV2 = () => {
   }, [currentOrder?.attendance]);
 
   const hideNextHearingButton = useMemo(() => {
+    if (currentScheduledHearing) return true;
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing,currentScheduledHearing]);
 
   const nextHearing = useCallback(
     async () => {
@@ -2852,6 +2858,10 @@ const GenerateOrdersV2 = () => {
           ...(actionResponse && { action: actionResponse }),
         },
       };
+      const isAssignDateRescheduleHearingOrder =
+        order?.orderCategory === "INTERMEDIATE"
+          ? order?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING"
+          : newCompositeItems?.find((item) => item?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING");
       return await ordersService
         .updateOrder(
           {
@@ -2886,6 +2896,10 @@ const GenerateOrdersV2 = () => {
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
               }),
+              ...(currentOptOutHearing &&
+                isAssignDateRescheduleHearingOrder && {
+                  scheduledHearingNumber: currentOptOutHearing?.hearingId,
+                }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
@@ -3031,7 +3045,7 @@ const GenerateOrdersV2 = () => {
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
       setEditOrderModal(false);
-      sessionStorage.removeItem("currentOrderType")
+      sessionStorage.removeItem("currentOrderType");
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
@@ -3775,21 +3789,21 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
-    if (currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
+    if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
         currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
       }
-      setAddOrderModal(true);
-      setCompositeOrderIndex(currentOrderTypeIndex);
       setOrderType(
         {
           ...orderTypeData?.find((type) => type?.code === currentOrderType),
           name: `ORDER_TYPE_${orderType}`,
         } || {}
       );
+      setCompositeOrderIndex(currentOrderTypeIndex);
+      setAddOrderModal(true);
     }
-  }, [currentOrder, orderType, orderTypeData]);
+  }, [currentOrder, isOrderTypeLoading, isOrdersLoading, orderType, orderTypeData]);
 
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
@@ -3797,7 +3811,7 @@ const GenerateOrdersV2 = () => {
 
   return (
     <React.Fragment>
-      {(isApiCallLoading || addOrderTypeLoader) && (
+      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading) && (
         <div
           style={{
             width: "100vw",
@@ -3819,7 +3833,7 @@ const GenerateOrdersV2 = () => {
       <div className="generate-orders-v2-content">
         <div className="generate-orders-v2-header">
           <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
-          {(isJudge || isTypist) && (
+          {(isJudge || isTypist) && !hideNextHearingButton && (
             <Button
               variation={"primary"}
               label={t("CS_CASE_NEXT_HEARING")}
@@ -4250,7 +4264,7 @@ const GenerateOrdersV2 = () => {
           handleCancel={() => {
             setEditOrderModal(false);
             setAddOrderModal(false);
-            sessionStorage.removeItem("currentOrderType")
+            sessionStorage.removeItem("currentOrderType");
           }}
           headerLabel={
             showEditOrderModal
