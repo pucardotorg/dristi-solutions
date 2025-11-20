@@ -165,14 +165,14 @@ public class CaseRepository {
         if (!ids.isEmpty()) {
             // Record exists → UPDATE
             String updateQuery = "UPDATE extra_advocates SET " +
-                    "pet_res_name = ?, type = ?, adv_name = ?, sr_no = ? " +
+                    "pet_res_name = ?, type = ?, adv_name = ?, adv_code = ? " +
                     "WHERE id = ?";
 
             jdbcTemplate.update(updateQuery,
                     extraAdvocate.getPetResName(),
                     extraAdvocate.getType(),
                     extraAdvocate.getAdvName(),
-                    extraAdvocate.getSrNo(),
+                    extraAdvocate.getAdvCode(),
                     ids.get(0));
         } else {
             // Record does not exist → INSERT
