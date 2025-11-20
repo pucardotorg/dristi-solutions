@@ -569,6 +569,8 @@ public class CaseService {
         if (updateCase == null || existingCase == null) {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
+        List<Document> deleteDocNotPartOfCaseData = updateCase.getDocuments().stream().filter(Document::getToDelete).toList();
+        updateCase.getDocuments().removeIf(Document::getToDelete);
 
         Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
         Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
@@ -590,6 +592,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
+        documentsToDelete.addAll(deleteDocNotPartOfCaseData);
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));

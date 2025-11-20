@@ -19,6 +19,9 @@ public class Document {
     @JsonProperty("fileStore")
     private String fileStore = null;
 
+    @JsonProperty("toDelete")
+    private Boolean toDelete = false;
+
     @JsonProperty("documentUid")
     private String documentUid = null;
 
