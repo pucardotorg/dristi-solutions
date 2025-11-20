@@ -33,4 +33,5 @@ public class ServiceConstants {
     public static final String JUDGEMENT = "JUDGEMENT";
     public static final String COMPOSITE = "COMPOSITE";
     public static final String INTERMEDIATE = "INTERMEDIATE";
+    public static final String COMPLETED = "COMPLETED";
 }

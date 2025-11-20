@@ -70,12 +70,12 @@ public class CaseService {
             
             // Enrich party details
             enrichPartyDetails(courtCase, record);
-            
-            // Process additional data
-            processAdditionalData(courtCase);
-            
+
             // Save the main record
             producer.push("save-case-details", record);
+
+            // Process additional data
+            processAdditionalData(courtCase);
             log.info("Successfully processed and saved case CNR: {}", courtCase.getCnrNumber());
             
             return record;

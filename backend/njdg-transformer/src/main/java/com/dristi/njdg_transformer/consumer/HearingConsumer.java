@@ -12,6 +12,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLETED;
+
 @Component
 @Slf4j
 public class HearingConsumer {
@@ -55,8 +57,10 @@ public class HearingConsumer {
             hearingId = hearingRequest.getHearing().getHearingId();
             
             log.debug("Processing hearing update | hearingId: {}", hearingId);
-            
-            hearingService.processAndUpdateHearings(hearingRequest.getHearing());
+
+            if(COMPLETED.equalsIgnoreCase(hearingRequest.getHearing().getStatus())){
+                hearingService.processAndUpdateHearings(hearingRequest.getHearing());
+            }
             log.info("Successfully processed hearing | hearingId: {}", hearingId);
         } catch (Exception e) {
             log.error("Failed to process hearing | hearingId: {} | error: {}", hearingId, e.getMessage(), e);
