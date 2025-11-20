@@ -1891,7 +1891,6 @@ function EFilingCases({ path }) {
       for (let i = 0; i < currentPageData?.length; i++) {
         const formData = currentPageData?.[i]?.data || {};
 
-        const isDelayCondonation = formData?.multipleAccusedProcessCourier?.isDelayCondonation;
         if (isDelayCondonation) {
           let isNoticeCourierMissing = false;
 
@@ -2174,7 +2173,7 @@ function EFilingCases({ path }) {
       !(scrutinyObj && Object?.keys(scrutinyObj)?.length > 0) &&
       !(judgeObj && Object?.keys(judgeObj)?.length > 0)
     ) {
-      const processCourierErrors = getProcessCourierRemainingFields(formdata, t);
+      const processCourierErrors = getProcessCourierRemainingFields(formdata, t, isDelayCondonation);
       if (processCourierErrors?.length > 0) {
         setShowErrorDataModal({ page: "processCourierService", show: true, errorData: processCourierErrors });
         return;
