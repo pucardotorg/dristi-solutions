@@ -627,7 +627,12 @@ const GenerateOrdersV2 = () => {
     hearingsData?.HearingList,
   ]);
 
-  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
+  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["SCHEDULED"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
+  const currentOptOutHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["OPT_OUT"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
 
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
@@ -2847,6 +2852,10 @@ const GenerateOrdersV2 = () => {
           ...(actionResponse && { action: actionResponse }),
         },
       };
+      const isInitiateRescheduleHearingOrder =
+        order?.orderCategory === "INTERMEDIATE"
+          ? order?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING"
+          : newCompositeItems?.find((item) => item?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING");
       return await ordersService
         .updateOrder(
           {
@@ -2879,7 +2888,9 @@ const GenerateOrdersV2 = () => {
                 refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
               },
               ...(currentScheduledHearing && {
-                scheduledHearingNumber: currentScheduledHearing?.hearingId,
+                scheduledHearingNumber: isInitiateRescheduleHearingOrder
+                  ? currentOptOutHearing?.hearingId || currentScheduledHearing?.hearingId
+                  : currentScheduledHearing?.hearingId,
               }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
@@ -3026,7 +3037,7 @@ const GenerateOrdersV2 = () => {
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
       setEditOrderModal(false);
-      sessionStorage.removeItem("currentOrderType")
+      sessionStorage.removeItem("currentOrderType");
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
@@ -4245,7 +4256,7 @@ const GenerateOrdersV2 = () => {
           handleCancel={() => {
             setEditOrderModal(false);
             setAddOrderModal(false);
-            sessionStorage.removeItem("currentOrderType")
+            sessionStorage.removeItem("currentOrderType");
           }}
           headerLabel={
             showEditOrderModal
