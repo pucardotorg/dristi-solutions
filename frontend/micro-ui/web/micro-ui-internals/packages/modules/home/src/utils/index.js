@@ -199,6 +199,8 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
       ? courierData?.partyType === "Witness"
         ? courierData?.ownerType === "-"
           ? "COURT"
+          : courierData?.ownerType === "ACCUSED"
+          ? "RESPONDENT"
           : courierData?.ownerType
         : "RESPONDENT"
       : null;
