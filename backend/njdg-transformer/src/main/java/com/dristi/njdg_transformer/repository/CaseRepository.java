@@ -155,7 +155,7 @@ public class CaseRepository {
 
     public void updateExtraAdvocates(ExtraAdvocateDetails extraAdvocate) {
         // Check if this advocate already exists for the same party
-        String checkQuery = "SELECT id FROM extra_advocates WHERE cino = ? AND party_no = ? AND adv_code = ?";
+        String checkQuery = "SELECT id FROM extra_advocates WHERE cino = ? AND party_no = ? AND sr_no = ?";
 
         List<Integer> ids = jdbcTemplate.queryForList(checkQuery, Integer.class,
                 extraAdvocate.getCino(),
