@@ -1186,16 +1186,18 @@ const GenerateBailBondV2 = () => {
     try {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(bailBondFileStoreId, bailBondWorkflowAction.INITIATEESIGN);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setBailBondSignatureURL(res?.bails?.[0]?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -1210,23 +1212,23 @@ const GenerateBailBondV2 = () => {
       setLoader(false);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
     }
   };
 
