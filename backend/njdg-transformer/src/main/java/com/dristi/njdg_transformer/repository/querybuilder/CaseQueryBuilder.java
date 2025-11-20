@@ -58,7 +58,9 @@ public class CaseQueryBuilder {
             "    jocode AS jocode,\n" +
             "    cicri_type AS cicri_type,\n" +
             "    judge_code AS judge_code,\n" +
-            "    desig_code AS desig_code\n";
+            "    desig_code AS desig_code,\n" +
+            "    purpose_next AS purpose_next,\n" +
+            "    purpose_previous AS purpose_previous\n";
 
     private final String FROM_QUERY = " FROM cases";
     public String insertQuery() {
@@ -79,7 +81,7 @@ public class CaseQueryBuilder {
     }
 
     private String addWhereClause(String baseCaseQuery) {
-        return baseCaseQuery += " WHERE cino = ?";
+        return baseCaseQuery + " WHERE cino = ?";
     }
 
     public String getCaseTypeQuery() {
