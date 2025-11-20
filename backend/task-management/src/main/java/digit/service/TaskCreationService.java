@@ -455,9 +455,9 @@ public class TaskCreationService {
             for (DeliveryChannel channel : defaultChannels) {
                 log.info("Adding default channel: {}", channel);
                 List<RespondentDetails> respondentDetailsList =
-                        getRespondentDetailsForDefaultChannel(party.getRespondentDetails(), channel);
+                        getRespondentDetailsForDefaultChannel(party.getRespondentDetails(), channel, party.getAddresses().get(0));
                 List<WitnessDetails> witnessDetailsList =
-                        getWitnessDetailsForDefaultChannel(party.getWitnessDetails(), channel);
+                        getWitnessDetailsForDefaultChannel(party.getWitnessDetails(), channel, party.getAddresses().get(0));
 
                 // Create a TaskDetails entry for each respondent
                 if (!respondentDetailsList.isEmpty()) {
@@ -494,7 +494,7 @@ public class TaskCreationService {
         return result;
     }
 
-    private List<WitnessDetails> getWitnessDetailsForDefaultChannel(digit.web.models.cases.WitnessDetails witnessDetails, DeliveryChannel channel) {
+    private List<WitnessDetails> getWitnessDetailsForDefaultChannel(digit.web.models.cases.WitnessDetails witnessDetails, DeliveryChannel channel, PartyAddress partyAddress) {
 
         List<WitnessDetails> witnessDetailsList = new ArrayList<>();
 
@@ -529,6 +529,7 @@ public class TaskCreationService {
             log.error("Error formatting age: {}", ex.getMessage());
         }
 
+        Address address = mapToAddress(partyAddress.getAddressDetails());
         // Add entries from phone list
         if (SMS.equalsIgnoreCase(channel.getChannelCode()) && witnessDetails.getPhoneNumbers() != null &&
                 witnessDetails.getPhoneNumbers().getMobileNumber() != null &&
@@ -540,6 +541,7 @@ public class TaskCreationService {
                                 .name(name)
                                 .age(age)
                                 .phone(phone)
+                                .address(address)
                                 .build()
                 );
             }
@@ -556,6 +558,7 @@ public class TaskCreationService {
                                 .name(name)
                                 .age(age)
                                 .email(email)
+                                .address(address)
                                 .build()
                 );
             }
@@ -565,7 +568,7 @@ public class TaskCreationService {
     }
 
 
-    private List<RespondentDetails> getRespondentDetailsForDefaultChannel(digit.web.models.cases.RespondentDetails respondentDetails, DeliveryChannel channel) {
+    private List<RespondentDetails> getRespondentDetailsForDefaultChannel(digit.web.models.cases.RespondentDetails respondentDetails, DeliveryChannel channel, PartyAddress partyAddress) {
         List<RespondentDetails> respondentDetailsList = new ArrayList<>();
         if (respondentDetails == null) {
             return respondentDetailsList;
@@ -583,6 +586,7 @@ public class TaskCreationService {
 
         Integer age = respondentDetails.getRespondentAge();
 
+        Address address = mapToAddress(partyAddress.getAddressDetails());
         // Add entries for phone numbers
         if (SMS.equalsIgnoreCase(channel.getChannelCode()) && respondentDetails.getPhoneNumbers() != null &&
                 !respondentDetails.getPhoneNumbers().isEmpty()) {
@@ -593,6 +597,7 @@ public class TaskCreationService {
                                 .name(name)
                                 .age(age)
                                 .phone(phone)
+                                .address(address)
                                 .build()
                 );
             }
@@ -607,6 +612,7 @@ public class TaskCreationService {
                                 .name(name)
                                 .age(age)
                                 .email(email)
+                                .address(address)
                                 .build()
                 );
             }
