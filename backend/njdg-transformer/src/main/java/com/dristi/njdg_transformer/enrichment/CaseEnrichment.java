@@ -285,8 +285,8 @@ public class CaseEnrichment implements PartyEnricher {
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
             int partyNo = 2;
-            boolean isRespondentType = isPrimaryRespondentPresent(courtCase);
-            int startIndex = isRespondentType ? 0 : 1;
+            boolean isRespondentType = primaryPartyType.equalsIgnoreCase(RESPONDENT_PRIMARY);
+            int startIndex = isRespondentType ? 1 : 0; // Skip first entry for respondent type
             
             for (int i = startIndex; i < formDataArray.size(); i++) {
                 JsonNode dataNode = formDataArray.get(i);
@@ -299,15 +299,6 @@ public class CaseEnrichment implements PartyEnricher {
             log.error("Error enriching extra parties: {}", e.getMessage());
         }
         return partyDetailsList;
-    }
-
-    private boolean isPrimaryRespondentPresent(CourtCase courtCase) {
-        for(Party litigant : courtCase.getLitigants()) {
-            if(RESPONDENT_PRIMARY.equalsIgnoreCase(litigant.getPartyType())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private PartyDetails mapExtraPartyDetails(CourtCase courtCase, JsonNode dataNode, String partyType, int partyNo, PartyType partyTypeEnum) {
