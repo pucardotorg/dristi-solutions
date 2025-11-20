@@ -2,6 +2,7 @@ import { Request } from "@egovernments/digit-ui-libraries";
 import isEmpty from "lodash/isEmpty";
 import axios from "axios";
 import { DocumentUploadError } from "./errorUtil";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
 export const ServiceRequest = async ({
   serviceName,
@@ -381,4 +382,102 @@ export const TaskManagementWorkflowState = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
   TASK_CREATION: "TASK_CREATION",
   COMPLETED: "COMPLETED",
+};
+
+export const getOrderTypes = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
+    case "TRANSFER":
+      return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
+    case "BAIL_BOND":
+      return "BAIL";
+    case "SURETY":
+      return "BAIL";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    default:
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
+  }
+};
+
+export const setApplicationStatus = (type, applicationType) => {
+  if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
+    return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  if (["DELAY_CONDONATION"].includes(applicationType)) {
+    return type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  return type === "accept" ? "APPROVED" : "REJECTED";
+};
+
+export const checkOrderTypeValidation = (a, b) => {
+  let errorObj = { isIncompatible: false, isDuplicate: false };
+  for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+    const currentObj = compositeOrderAllowedTypes?.[i];
+    if (currentObj?.orderTypes?.includes(a)) {
+      if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+        if (a === b) {
+          errorObj.isDuplicate = true;
+        } else {
+          errorObj.isIncompatible = true;
+        }
+        break;
+      }
+    }
+  }
+  return errorObj;
+};
+
+export const checkAcceptRejectOrderValidation = (orderType, compositeOrderObj) => {
+  if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+    const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  }
+  return compositeOrderObj?.compositeItems?.some((item) => {
+    if (!item?.isEnabled) return false;
+    const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  });
+};
+
+export const getOrderActionName = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
+    case "TRANSFER":
+      return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
+    case "BAIL_BOND":
+      return "ORDER_FOR_BAIL";
+    case "SURETY":
+      return "ORDER_FOR_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    default:
+      return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
+  }
 };
