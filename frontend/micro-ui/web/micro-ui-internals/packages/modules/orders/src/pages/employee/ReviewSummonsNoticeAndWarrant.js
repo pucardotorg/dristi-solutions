@@ -1566,35 +1566,36 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper">
-              <InboxSearchComposer
-                key={`inbox-composer-${reload}`}
-                configs={config}
-                defaultValues={defaultValues}
-                showTab={true}
-                tabData={tabData}
-                onTabChange={onTabChange}
-                onFormValueChange={onFormValueChange}
-                customStyle={sectionsParentStyle}
-              ></InboxSearchComposer>
-              {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
-              {showActionModal && (
-                <DocumentModal
-                  config={
-                    config?.label === "PENDING_SIGN" && actionModalType === "SIGN_PENDING"
-                      ? unsignedModalConfig
-                      : config?.label === "PENDING_SIGN" && actionModalType !== "SIGN_PENDING"
-                      ? signedModalConfig
-                      : config?.label === "SIGNED"
-                      ? signedModalConfig
-                      : config?.label === "SENT"
-                      ? sentModalConfig
-                      : signedModalConfig
-                  }
-                  currentStep={step}
-                />
-              )}
-              {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
+            <div className="review-process-page">
+              <div className="inbox-search-wrapper">
+                <InboxSearchComposer
+                  key={`inbox-composer-${reload}`}
+                  configs={config}
+                  defaultValues={defaultValues}
+                  showTab={true}
+                  tabData={tabData}
+                  onTabChange={onTabChange}
+                  onFormValueChange={onFormValueChange}
+                  customStyle={sectionsParentStyle}
+                ></InboxSearchComposer>
+                {showActionModal && (
+                  <DocumentModal
+                    config={
+                      config?.label === "PENDING_SIGN" && actionModalType === "SIGN_PENDING"
+                        ? unsignedModalConfig
+                        : config?.label === "PENDING_SIGN" && actionModalType !== "SIGN_PENDING"
+                        ? signedModalConfig
+                        : config?.label === "SIGNED"
+                        ? signedModalConfig
+                        : config?.label === "SENT"
+                        ? sentModalConfig
+                        : signedModalConfig
+                    }
+                    currentStep={step}
+                  />
+                )}
+                {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
+              </div>
             </div>
           </div>
           {config?.label === "PENDING_SIGN" && (
