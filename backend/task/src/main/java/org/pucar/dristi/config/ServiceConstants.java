@@ -208,4 +208,9 @@ public class ServiceConstants {
     public static final String TASKS_BULK_SIGN_EXCEPTION = "TASKS_BULK_SIGN_EXCEPTION";
 
     public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+
+    public static final String RESPONDENT = "respondent";
+    public static final String WITNESS = "witness";
+
+    public static final String msgId = "1730882648558|en_IN";
 }

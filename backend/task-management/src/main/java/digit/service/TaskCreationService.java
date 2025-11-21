@@ -714,6 +714,7 @@ public class TaskCreationService {
         Address address = mapToAddress(partyAddresses.getAddressDetails());
 
         return WitnessDetails.builder()
+                .uniqueId(witnessDetails.getUniqueId())
                 .name(name)
                 .age(age)
                 .phone(phone)
@@ -753,6 +754,7 @@ public class TaskCreationService {
         Integer age = respondentDetails.getRespondentAge();
 
         return RespondentDetails.builder()
+                .uniqueId(respondentDetails.getUniqueId())
                 .email(email)
                 .name(name)
                 .address(address)

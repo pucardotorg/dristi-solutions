@@ -164,4 +164,9 @@ public class CourtCase {
     @Valid
     private List<POAHolder> poaHolders = new ArrayList<>();
 
+    @JsonProperty("witnessDetails")
+    @Valid
+    @Builder.Default
+    private List<WitnessDetails> witnessDetails = new ArrayList<>();
+
 }

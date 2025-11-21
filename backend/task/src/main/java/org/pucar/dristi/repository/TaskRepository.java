@@ -1,7 +1,7 @@
 package org.pucar.dristi.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.pucar.dristi.web.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.querybuilder.TaskCaseQueryBuilder;
@@ -33,6 +33,7 @@ public class TaskRepository {
     private final DocumentRowMapper documentRowMapper;
     private final TaskCaseQueryBuilder taskCaseQueryBuilder;
     private final TaskCaseRowMapper taskCaseRowMapper;
+    private final ObjectMapper objectMapper;
 
 
     @Autowired
@@ -40,7 +41,7 @@ public class TaskRepository {
                           JdbcTemplate jdbcTemplate,
                           TaskRowMapper rowMapper,
                           AmountRowMapper amountRowMapper,
-                          DocumentRowMapper documentRowMapper, TaskCaseQueryBuilder taskCaseQueryBuilder, TaskCaseRowMapper taskCaseRowMapper) {
+                          DocumentRowMapper documentRowMapper, TaskCaseQueryBuilder taskCaseQueryBuilder, TaskCaseRowMapper taskCaseRowMapper, ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -48,6 +49,7 @@ public class TaskRepository {
         this.documentRowMapper = documentRowMapper;
         this.taskCaseQueryBuilder = taskCaseQueryBuilder;
         this.taskCaseRowMapper = taskCaseRowMapper;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -206,4 +208,17 @@ public class TaskRepository {
         return list;
 
     }
+
+    public List<String> getDistinctFilingNumbers() {
+        try {
+            String sql = "SELECT DISTINCT task.filingnumber FROM dristi_task task WHERE task.filingnumber IS NOT NULL";
+            return jdbcTemplate.queryForList(sql, String.class);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching distinct filing numbers :: {}", e.toString());
+            throw new CustomException(SEARCH_TASK_ERR, "Exception while fetching distinct filing numbers: " + e.getMessage());
+        }
+    }
+
 }
