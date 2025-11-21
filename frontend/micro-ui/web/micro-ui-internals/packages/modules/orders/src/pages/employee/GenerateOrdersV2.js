@@ -1358,7 +1358,7 @@ const GenerateOrdersV2 = () => {
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing,currentScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing, currentScheduledHearing]);
 
   const nextHearing = useCallback(async () => {
     try {
@@ -4036,6 +4036,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          await refetchOrdersData();
           history.replace(
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
@@ -4106,6 +4107,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {}
       }
