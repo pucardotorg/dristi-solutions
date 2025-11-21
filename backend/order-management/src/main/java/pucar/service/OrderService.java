@@ -97,7 +97,7 @@ public class OrderService {
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber()!=null){
             hearingUtil.updateOpenHearingIndex(request.getOrder());
         }
 
