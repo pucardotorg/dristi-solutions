@@ -4701,7 +4701,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId", hideInForm: true }, //, hideInForm: true
+        populators: { name: "refApplicationId" },
       },
       {
         isMandatory: true,
@@ -4711,6 +4711,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailParty",
         disable: true,
         populators: {
+          hideInForm: true,
           name: "bailParty",
           styles: { maxWidth: "100%" },
           error: "required ",
@@ -4764,6 +4765,7 @@ export const configsIssueBailReject = [
     ],
   },
 ];
+
 export const configsSetTermBail = [
   {
     body: [

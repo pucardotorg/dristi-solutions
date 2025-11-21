@@ -17,7 +17,7 @@ async function processComplaintSection(
     "complaint"
   );
 
-  const sectionPosition = indexCopy.sections.findIndex(
+  const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "complaint"
   );
 
@@ -29,7 +29,7 @@ async function processComplaintSection(
   if (complaintSection?.length !== 0) {
     const section = complaintSection[0];
 
-    const complaintFileStoreId = courtCase.documents.find(
+    const complaintFileStoreId = courtCase.documents?.find(
       (doc) => doc.documentType === "case.complaint.signed"
     )?.fileStore;
     if (!complaintFileStoreId) {
@@ -73,7 +73,7 @@ async function processComplaintSection(
 
     // update index
 
-    const complaintIndexSection = indexCopy.sections.find(
+    const complaintIndexSection = indexCopy.sections?.find(
       (section) => section.name === "complaint"
     );
     complaintIndexSection.lineItems = complaintIndexSection.lineItems || [];
