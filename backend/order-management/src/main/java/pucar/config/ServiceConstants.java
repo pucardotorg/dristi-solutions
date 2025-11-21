@@ -203,7 +203,7 @@ public class ServiceConstants {
 
     public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
 
-    public static final String ES_UPDATE_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":%s}}}}\n";
-
+    public static final String ES_UPDATE_DOCUMENT_FORMAT =
+            "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":\"%s\"}}}}\n";
 
 }
