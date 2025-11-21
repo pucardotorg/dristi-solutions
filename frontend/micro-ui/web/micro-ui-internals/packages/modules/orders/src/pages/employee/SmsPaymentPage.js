@@ -111,8 +111,7 @@ const SmsPaymentPage = () => {
         }
       });
 
-      const addressFromOrder =
-        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.address || [];
+      const addressFromOrder = party?.address || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
