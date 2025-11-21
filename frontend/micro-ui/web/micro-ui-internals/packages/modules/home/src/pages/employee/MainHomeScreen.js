@@ -21,7 +21,7 @@ import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/
 import HomeScheduleHearing from "./HomeScheduleHearing";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { createOrUpdateTask, getSuffixByBusinessCode } from "../../utils";
+import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
@@ -497,7 +497,7 @@ const MainHomeScreen = () => {
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: mergedFromCase?.map((addr) => ({
+                    addressDetails: filterValidAddresses(mergedFromCase)?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -555,7 +555,7 @@ const MainHomeScreen = () => {
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: mergedAddressDetails,
+                  addressDetails: filterValidAddresses(mergedAddressDetails),
                 },
                 summonsCourierService,
                 noticeCourierService,
