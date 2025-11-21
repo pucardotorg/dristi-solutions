@@ -636,7 +636,12 @@ const GenerateOrdersV2 = () => {
     hearingsData?.HearingList,
   ]);
 
-  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => list?.status === "SCHEDULED"), [hearingsData?.HearingList]);
+  const currentScheduledHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["SCHEDULED"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
+  const currentOptOutHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["OPT_OUT"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
 
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
@@ -2861,6 +2866,10 @@ const GenerateOrdersV2 = () => {
           ...(actionResponse && { action: actionResponse }),
         },
       };
+      const isAssignDateRescheduleHearingOrder =
+        order?.orderCategory === "INTERMEDIATE"
+          ? order?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING"
+          : newCompositeItems?.find((item) => item?.orderType === "ASSIGNING_DATE_RESCHEDULED_HEARING");
       return await ordersService
         .updateOrder(
           {
@@ -2895,6 +2904,10 @@ const GenerateOrdersV2 = () => {
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
               }),
+              ...(currentOptOutHearing &&
+                isAssignDateRescheduleHearingOrder && {
+                  scheduledHearingNumber: currentOptOutHearing?.hearingId,
+                }),
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
