@@ -350,7 +350,7 @@ const GenerateOrdersV2 = () => {
     }
   };
 
-  const createPendingTaskForEmployee = async (orderObj) => {
+  const createPendingTaskForEmployee = async (orderObj, isRejected = false) => {
     try {
       const getUserUUID = async (individualId) => {
         try {
@@ -395,117 +395,136 @@ const GenerateOrdersV2 = () => {
       const accusedKey = targetIndividualId || targetLitigant?.uniqueId || targetLitigant?.partyUuid || targetLitigant?.additionalDetails?.uuid || "";
       const referenceId = getRaiseBailBondReferenceId(accusedKey);
 
-      const poaUuids = (() => {
-        const poaList = caseDetails?.poaHolders || [];
-        if (!targetIndividualId) {
-          return poaList.map((poa) => poa?.additionalDetails?.uuid).filter(Boolean);
-        }
-        return poaList
-          ?.filter((poa) => poa?.representingLitigants?.some?.((rep) => rep?.individualId === targetIndividualId))
-          ?.map((poa) => poa?.additionalDetails?.uuid)
-          ?.filter(Boolean);
-      })();
+      let pendingTaskPayload = {};
+      if (!isRejected) {
+        const poaUuids = (() => {
+          const poaList = caseDetails?.poaHolders || [];
+          if (!targetIndividualId) {
+            return poaList.map((poa) => poa?.additionalDetails?.uuid).filter(Boolean);
+          }
+          return poaList
+            ?.filter((poa) => poa?.representingLitigants?.some?.((rep) => rep?.individualId === targetIndividualId))
+            ?.map((poa) => poa?.additionalDetails?.uuid)
+            ?.filter(Boolean);
+        })();
 
-      const advocateUuids = (() => {
-        const reps = caseDetails?.representatives || [];
-        if (!targetIndividualId) {
-          return reps.map((rep) => rep?.additionalDetails?.uuid).filter(Boolean);
-        }
-        return reps
-          ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
-          ?.map((rep) => rep?.additionalDetails?.uuid)
-          ?.filter(Boolean);
-      })();
+        const advocateUuids = (() => {
+          const reps = caseDetails?.representatives || [];
+          if (!targetIndividualId) {
+            return reps.map((rep) => rep?.additionalDetails?.uuid).filter(Boolean);
+          }
+          return reps
+            ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
+            ?.map((rep) => rep?.additionalDetails?.uuid)
+            ?.filter(Boolean);
+        })();
 
-      const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...(advocateUuids || [])].filter(Boolean))).map((uuid) => ({
-        uuid,
-      }));
+        const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...(advocateUuids || [])].filter(Boolean))).map((uuid) => ({
+          uuid,
+        }));
 
-      const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
-      const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
-      const additionalDetails = {
-        accusedIndividualId: targetIndividualId || null,
-        accusedKey: accusedKey || null,
-        litigantUuid: targetIndividualId || accusedKey || null,
-        individualId: targetIndividualId || null,
-        addSurety: bailTypeCode === "SURETY" ? "YES" : bailTypeCode ? "NO" : undefined,
-        refApplicationId:
-          orderObj?.additionalDetails?.formdata?.refApplicationId ||
-          orderObj?.additionalDetails?.refApplicationId ||
-          bailFormData?.refApplicationId ||
-          "",
-        bailType: bailTypeObj || bailTypeCode || bailType || null,
-        ...(bailTypeCode && { bailTypeCode }),
-        ...(targetIndividualId || accusedKey ? { litigants: [targetIndividualId || accusedKey] } : {}),
-        ...(bailAmount != null &&
-          (() => {
-            const amt = Number(bailAmount);
-            return {
-              bailAmount: amt,
-              chequeAmount: Number.isFinite(amt) ? amt : undefined,
-              amount: Number.isFinite(amt) ? amt : undefined,
-            };
-          })()),
-        ...(noOfSureties != null && { noOfSureties: Number(noOfSureties) }),
-      };
+        const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
+        const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
+        const additionalDetails = {
+          accusedIndividualId: targetIndividualId || null,
+          accusedKey: accusedKey || null,
+          litigantUuid: targetIndividualId || accusedKey || null,
+          individualId: targetIndividualId || null,
+          addSurety: bailTypeCode === "SURETY" ? "YES" : bailTypeCode ? "NO" : undefined,
+          refApplicationId:
+            orderObj?.additionalDetails?.formdata?.refApplicationId ||
+            orderObj?.additionalDetails?.refApplicationId ||
+            bailFormData?.refApplicationId ||
+            "",
+          bailType: bailTypeObj || bailTypeCode || bailType || null,
+          ...(bailTypeCode && { bailTypeCode }),
+          ...(targetIndividualId || accusedKey ? { litigants: [targetIndividualId || accusedKey] } : {}),
+          ...(bailAmount != null &&
+            (() => {
+              const amt = Number(bailAmount);
+              return {
+                bailAmount: amt,
+                chequeAmount: Number.isFinite(amt) ? amt : undefined,
+                amount: Number.isFinite(amt) ? amt : undefined,
+              };
+            })()),
+          ...(noOfSureties != null && { noOfSureties: Number(noOfSureties) }),
+        };
 
-      if (referenceId !== `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`) {
-        const res = await ordersService.getPendingTaskService({
-          SearchCriteria: {
-            tenantId,
-            moduleName: "Pending Tasks Service",
-            moduleSearchCriteria: {
-              isCompleted: false,
-              referenceId: `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`,
-              filingNumber: filingNumber,
-              courtId: courtId,
-              entityType: "bail bond",
-            },
-            limit: 10000,
-            offset: 0,
-          },
-        });
-
-        const list = Array.isArray(res?.data) ? res.data : [];
-
-        if (list?.length > 0) {
-          const pendingTaskPayload = {
-            pendingTask: {
-              name: t("CS_COMMON_RAISE_BAIL_BOND"),
-              entityType: "bail bond",
-              referenceId: `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`,
-              status: "PENDING_RAISE_BAIL_BOND",
-              isCompleted: true,
+        if (referenceId !== `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`) {
+          const res = await ordersService.getPendingTaskService({
+            SearchCriteria: {
               tenantId,
-              filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                referenceId: `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`,
+                filingNumber: filingNumber,
+                courtId: courtId,
+                entityType: "bail bond",
+              },
+              limit: 10000,
+              offset: 0,
             },
-          };
-          await DRISTIService.customApiService(Urls.dristi.pendingTask, pendingTaskPayload);
-        }
-      }
+          });
 
-      const pendingTaskPayload = {
-        pendingTask: {
-          name: t("CS_COMMON_RAISE_BAIL_BOND"),
-          entityType: "bail bond",
-          referenceId,
-          status: "PENDING_RAISE_BAIL_BOND",
-          assignedTo: assignedTo,
-          assignedRole: [],
-          actionCategory: "Bail Bond",
-          cnrNumber: caseDetails?.cnrNumber,
-          filingNumber,
-          caseId: caseDetails?.id,
-          caseTitle: caseDetails?.caseTitle,
-          isCompleted: bailFormData?.bailType?.code === "SURETY" ? false : true,
-          expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
-          stateSla: todayDate,
-          additionalDetails,
-          tenantId,
-        },
-      };
+          const list = Array.isArray(res?.data) ? res.data : [];
+
+          if (list?.length > 0) {
+            const pendingTaskPayload = {
+              pendingTask: {
+                name: t("CS_COMMON_RAISE_BAIL_BOND"),
+                entityType: "bail bond",
+                referenceId: `MANUAL_RAISE_BAIL_BOND_${filingNumber}_ACC_UNKNOWN`,
+                status: "PENDING_RAISE_BAIL_BOND",
+                isCompleted: true,
+                tenantId,
+                filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
+              },
+            };
+            await DRISTIService.customApiService(Urls.dristi.pendingTask, pendingTaskPayload);
+          }
+        }
+
+        pendingTaskPayload = {
+          pendingTask: {
+            name: t("CS_COMMON_RAISE_BAIL_BOND"),
+            entityType: "bail bond",
+            referenceId,
+            status: "PENDING_RAISE_BAIL_BOND",
+            assignedTo: assignedTo,
+            assignedRole: [],
+            actionCategory: "Bail Bond",
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: bailFormData?.bailType?.code === "SURETY" ? false : true,
+            expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+            stateSla: todayDate,
+            additionalDetails,
+            tenantId,
+          },
+        };
+      } else {
+        pendingTaskPayload = {
+          pendingTask: {
+            name: t("CS_COMMON_RAISE_BAIL_BOND"),
+            entityType: "bail bond",
+            referenceId,
+            status: "PENDING_RAISE_BAIL_BOND",
+            actionCategory: "Bail Bond",
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: true,
+            tenantId,
+          },
+        };
+      }
       try {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, pendingTaskPayload);
       } catch (apiErr) {
@@ -3034,7 +3053,7 @@ const GenerateOrdersV2 = () => {
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
-        await createPendingTaskForEmployee(updateOrderResponse?.order);
+        await createPendingTaskForEmployee(updateOrderResponse?.order, false);
       }
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
@@ -3491,6 +3510,13 @@ const GenerateOrdersV2 = () => {
         );
       }
 
+      const isBailRejected =
+        (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "REJECT_BAIL") ||
+        currentOrder?.compositeItems?.some?.((it) => it?.orderType === "REJECT_BAIL");
+
+      if (isBailRejected) {
+        await createPendingTaskForEmployee(currentOrder, true);
+      }
       await updateOrder(
         {
           ...currentOrder,
@@ -3783,6 +3809,7 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
+    debugger;
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
@@ -3791,7 +3818,7 @@ const GenerateOrdersV2 = () => {
       setOrderType(
         {
           ...orderTypeData?.find((type) => type?.code === currentOrderType),
-          name: `ORDER_TYPE_${orderType}`,
+          name: `ORDER_TYPE_${currentOrderType}`,
         } || {}
       );
       setCompositeOrderIndex(currentOrderTypeIndex);
