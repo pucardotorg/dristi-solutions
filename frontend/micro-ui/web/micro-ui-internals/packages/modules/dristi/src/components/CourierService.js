@@ -203,13 +203,47 @@ function CourierService({
         />
       )}
       <div className="process-courier-container">
-        <div className="header-row">
+        <div className="address-section">
+          <div className="address-header">
+            <div className="address-title">{t("CS_SELECT_ADDRESS_FOR_DELIVERY")}</div>
+            <div className="address-note">{t("CS_SELECT_ADDRESS_FOR_DELIVERY_NOTE")}</div>
+          </div>
+
+          <div className="address-list">
+            {processCourierData?.addressDetails?.map((address, idx) => (
+              <div key={address.id || idx} className="address-item">
+                <input
+                  type="checkbox"
+                  className="custom-checkbox"
+                  id={`address-${address.id || idx}`}
+                  checked={address?.checked}
+                  disabled={isDisableAllFields}
+                  onChange={(e) => handleAddressSelection(address?.id, e.target.checked)}
+                />
+                <label htmlFor={`address-${address.id || idx}`}>{formatAddress(address)}</label>
+              </div>
+            ))}
+            {(!processCourierData?.addressDetails || processCourierData?.addressDetails?.length === 0) && (
+              <div className="no-addresses">{t("CS_NO_ADDRESS_AVAILABLE")}</div>
+            )}
+          </div>
+          <Button
+            variation="secondary"
+            onButtonClick={() => setShowAddAddressModalLocal(true)}
+            className="add-address-btn"
+            icon={<CustomAddIcon />}
+            label={t("CS_ADD_MORE_ADDRESS")}
+            isDisabled={isDisableAllFields}
+          ></Button>
+        </div>
+
+        <div className="header-row" style={orderType ? {} : { marginTop: "12px" }}>
           <div className="process-section">{orderType ? t("CS_TAKE_STEPS") : t("CS_PROCESS")}</div>
           <div className="courier-section">{orderType ? t("CS_COURIER_SERVICE") : t("CS_COURIER_SERVICES")}</div>
         </div>
 
         {(orderType === "NOTICE" || isDelayCondonation) && (
-          <div className="row">
+          <div className="row" style={orderType ? { marginBottom: "24px" } : {}}>
             <div className="label-container">
               <div className="label">{t("CS_NOTICE_COURIER")}</div>
               {!orderType && (
@@ -241,7 +275,7 @@ function CourierService({
         )}
 
         {(orderType === "SUMMONS" || !orderType) && (
-          <div className="row">
+          <div className="row" style={orderType ? { marginBottom: "24px" } : {}}>
             <div className="label-container">
               <div className="label">{t("CS_SUMMONS_COURIER")}</div>
               {!orderType &&
@@ -287,40 +321,6 @@ function CourierService({
             </div>
           </div>
         )}
-
-        <div className="address-section">
-          <div className="address-header">
-            <div className="address-title">{t("CS_SELECT_ADDRESS_FOR_DELIVERY")}</div>
-            <div className="address-note">{t("CS_SELECT_ADDRESS_FOR_DELIVERY_NOTE")}</div>
-          </div>
-
-          <div className="address-list">
-            {processCourierData?.addressDetails?.map((address, idx) => (
-              <div key={address.id || idx} className="address-item">
-                <input
-                  type="checkbox"
-                  className="custom-checkbox"
-                  id={`address-${address.id || idx}`}
-                  checked={address?.checked}
-                  disabled={isDisableAllFields}
-                  onChange={(e) => handleAddressSelection(address?.id, e.target.checked)}
-                />
-                <label htmlFor={`address-${address.id || idx}`}>{formatAddress(address)}</label>
-              </div>
-            ))}
-            {(!processCourierData?.addressDetails || processCourierData?.addressDetails?.length === 0) && (
-              <div className="no-addresses">{t("CS_NO_ADDRESS_AVAILABLE")}</div>
-            )}
-          </div>
-          <Button
-            variation="secondary"
-            onButtonClick={() => setShowAddAddressModalLocal(true)}
-            className="add-address-btn"
-            icon={<CustomAddIcon />}
-            label={t("CS_ADD_MORE_ADDRESS")}
-            isDisabled={isDisableAllFields}
-          ></Button>
-        </div>
       </div>
 
       {showAddAddressModal && (

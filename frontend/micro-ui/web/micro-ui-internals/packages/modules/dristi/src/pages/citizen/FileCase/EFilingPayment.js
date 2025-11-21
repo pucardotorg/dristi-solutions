@@ -327,6 +327,9 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                       <li>
                         <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
                       </li>
+                      <li>
+                        <span>{t("COURIER_RPAD_NOTE")}</span>
+                      </li>
                     </ul>
                   </div>,
                 ]}
