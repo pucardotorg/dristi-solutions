@@ -450,7 +450,7 @@ public class HearingUtil {
         if (openHearingList != null && !openHearingList.isEmpty()) {
             openHearingList.get(0).setOrderStatus(OrderStatus.SIGNED);
         }
-        log.info("Update open hearing index with serialNumber");
+        log.info("Update open hearing index with orderStatus");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 }

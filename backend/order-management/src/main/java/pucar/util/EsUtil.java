@@ -54,12 +54,12 @@ public class EsUtil {
                     String uri = config.getEsHostUrl() + config.getBulkPath();
                     manualIndex(uri, bulkRequestPayload);
                 } catch (Exception e) {
-                    log.error("Error occurred while updating open hearing serialNumber in es");
+                    log.error("Error occurred while updating open hearing orderStatus in es");
                     log.error("ERROR_FROM_ES: {}", e.getMessage());
                 }
             }
         } catch (Exception e) {
-            log.error("Something went wrong while updating serialNumber of open hearing");
+            log.error("Something went wrong while updating orderStatus of open hearing");
             log.error("ERROR: {}", e.getMessage());
         }
 
