@@ -4006,6 +4006,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          await refetchOrdersData();
           history.replace(
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
@@ -4076,6 +4077,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {}
       }
