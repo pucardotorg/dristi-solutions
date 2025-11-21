@@ -16,7 +16,7 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
+import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -329,7 +329,7 @@ const TasksComponent = ({
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: mergedFromCase?.map((addr) => ({
+                    addressDetails: filterValidAddresses(mergedFromCase)?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -387,7 +387,7 @@ const TasksComponent = ({
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: mergedAddressDetails,
+                  addressDetails: filterValidAddresses(mergedAddressDetails),
                 },
                 summonsCourierService,
                 noticeCourierService,
@@ -440,7 +440,7 @@ const TasksComponent = ({
   };
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isView, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -493,11 +493,19 @@ const TasksComponent = ({
         const newTabUrl = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&applicationNumber=${applicationDetails?.applicationNumber}&tab=Submissions`;
         window.open(newTabUrl, "_blank", "noopener,noreferrer");
       } else if (isApplicationCompositeOrder) {
-        history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
-          applicationDocObj: docObj,
-          compositeOrderObj: compositeOrderObj,
-          isApplicationAccepted: isApplicationAccepted,
-        });
+        if (isView) {
+          history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
+            applicationDocObj: docObj,
+          });
+        } else {
+          history.replace(
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`,
+            {
+              applicationDocObj: docObj,
+              isApplicationAccepted: isApplicationAccepted,
+            }
+          );
+        }
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,

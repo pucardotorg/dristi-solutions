@@ -1566,7 +1566,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper">
+            <div className="review-process-page inbox-search-wrapper">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}
@@ -1577,7 +1577,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 onFormValueChange={onFormValueChange}
                 customStyle={sectionsParentStyle}
               ></InboxSearchComposer>
-              {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
               {showActionModal && (
                 <DocumentModal
                   config={

@@ -212,14 +212,16 @@ function CourierService({
           <div className="row">
             <div className="label-container">
               <div className="label">{t("CS_NOTICE_COURIER")}</div>
-              <div className="info-icon">
-                <span style={{ position: "relative" }} data-tip data-for="notice-tooltip">
-                  <InfoIcon />
-                </span>
-                <ReactTooltip id="notice-tooltip" place="bottom" content={t("CS_NOTICE_COURIER_TOOLTIP")}>
-                  {t("CS_NOTICE_COURIER_TOOLTIP")}
-                </ReactTooltip>
-              </div>
+              {!orderType && (
+                <div className="info-icon">
+                  <span style={{ position: "relative" }} data-tip data-for="notice-tooltip">
+                    <InfoIcon />
+                  </span>
+                  <ReactTooltip id="notice-tooltip" place="bottom" content={t("CS_NOTICE_COURIER_TOOLTIP")}>
+                    {t("CS_NOTICE_COURIER_TOOLTIP")}
+                  </ReactTooltip>
+                </div>
+              )}
             </div>
             <div className="dropdown-container">
               <CustomMultiSelectDropdown
@@ -242,18 +244,19 @@ function CourierService({
           <div className="row">
             <div className="label-container">
               <div className="label">{t("CS_SUMMONS_COURIER")}</div>
-              {!orderType && isDelayCondonation ? (
-                <div className="optional">{t("CS_IS_OPTIONAL")}</div>
-              ) : (
-                <div className="info-icon">
-                  <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
-                    <InfoIcon />
-                  </span>
-                  <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
-                    {t("CS_SUMMONS_COURIER_TOOLTIP")}
-                  </ReactTooltip>
-                </div>
-              )}
+              {!orderType &&
+                (isDelayCondonation ? (
+                  <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+                ) : (
+                  <div className="info-icon">
+                    <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
+                      <InfoIcon />
+                    </span>
+                    <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
+                      {t("CS_SUMMONS_COURIER_TOOLTIP")}
+                    </ReactTooltip>
+                  </div>
+                ))}
             </div>
             <div
               className="dropdown-container"

@@ -21,11 +21,11 @@ async function processPaymentReceipts(
     "paymentreceipts"
   );
 
-  const sectionPosition = indexCopy.sections.findIndex(
+  const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "paymentreceipts"
   );
 
-  const paymentReceiptsIndexSection = indexCopy.sections.find(
+  const paymentReceiptsIndexSection = indexCopy.sections?.find(
     (section) => section.name === "paymentreceipts"
   );
 
@@ -35,8 +35,8 @@ async function processPaymentReceipts(
   );
 
   const casePaymentReceipt = courtCase.documents
-    .filter((doc) => doc.documentType === "PAYMENT_RECEIPT")
-    .sort((a, b) =>
+    ?.filter((doc) => doc.documentType === "PAYMENT_RECEIPT")
+    ?.sort((a, b) =>
       (a?.additionalDetails?.consumerCode || "").localeCompare(
         b?.additionalDetails?.consumerCode || ""
       )
@@ -59,8 +59,8 @@ async function processPaymentReceipts(
   );
 
   const taskReceipts = genericTaskDocument.data.list
-    .filter((task) => task?.documents && task?.documents?.length > 0)
-    .map((task) => task?.documents?.[0]);
+    ?.filter((task) => task?.documents && task?.documents?.length > 0)
+    ?.map((task) => task?.documents?.[0]);
 
   const taskMangementData = await search_task_mangement(
     tenantId,
@@ -93,7 +93,7 @@ async function processPaymentReceipts(
   if (paymentReceiptSection?.length !== 0 && documentList?.length !== 0) {
     const section = paymentReceiptSection[0];
     const paymentReceiptLineItems = await Promise.all(
-      documentList.map(async (doc, index) => {
+      documentList?.map(async (doc, index) => {
         const paymentReceiptFileStoreId = doc.fileStore;
 
         if (!paymentReceiptFileStoreId) {
@@ -156,7 +156,7 @@ async function processPaymentReceipts(
       })
     );
     paymentReceiptsIndexSection.lineItems =
-      paymentReceiptLineItems.filter(Boolean);
+      paymentReceiptLineItems?.filter(Boolean);
   } else {
     paymentReceiptsIndexSection.lineItems = [];
   }
