@@ -1113,11 +1113,23 @@ function EFilingCases({ path }) {
                                     <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
                                   </span>
                                 </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD")}</strong> {t("COURIER_RPAD_NOTE")}
+                                  </span>
+                                </li>
                               </ul>
                             </div>
                           ) : (
                             <div className="info-card-content">
-                              <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                              <ul style={{ width: "100%" }}>
+                                <li>
+                                  <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                </li>
+                                <li>
+                                  <span>{t("COURIER_RPAD_NOTE")}</span>
+                                </li>
+                              </ul>
                             </div>
                           ),
                         },

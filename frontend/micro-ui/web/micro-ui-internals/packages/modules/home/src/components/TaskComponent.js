@@ -1070,7 +1070,7 @@ const TasksComponent = ({
           orderItemId: courierOrderDetails?.orderItemId,
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
-          ownerType: item?.data?.ownerType,
+          witnessPartyType: courierServicePendingTask?.partyType,
         };
 
         const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
