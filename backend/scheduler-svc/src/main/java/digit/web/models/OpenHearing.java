@@ -77,4 +77,7 @@ public class OpenHearing {
 
     @JsonProperty("serialNumber")
     private int serialNumber = 0;
+
+    @JsonProperty("orderStatus")
+    private OrderStatus orderStatus;
 }

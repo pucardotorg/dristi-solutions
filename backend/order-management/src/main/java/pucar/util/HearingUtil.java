@@ -21,6 +21,8 @@ import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
+import pucar.web.models.inbox.InboxRequest;
+import pucar.web.models.inbox.OpenHearing;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,8 +42,10 @@ public class HearingUtil {
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
     private final OrderUtil orderUtil;
+    private final InboxUtil inboxUtil;
+    private final EsUtil esUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil, InboxUtil inboxUtil, EsUtil esUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -51,6 +55,8 @@ public class HearingUtil {
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
         this.orderUtil = orderUtil;
+        this.inboxUtil = inboxUtil;
+        this.esUtil = esUtil;
     }
 
 
@@ -433,5 +439,14 @@ public class HearingUtil {
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+    }
+
+    public void updateOpenHearingIndex(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber() );
+        log.info("inboxRequest = {}", inboxRequest.toString());
+        List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
+
+        log.info("Update open hearing index with serialNumber");
+        esUtil.updateOpenHearingOrderStatus(openHearings);
     }
 }
