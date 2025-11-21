@@ -430,12 +430,20 @@ public class CaseEnrichment implements PartyEnricher {
 
             String fullName = buildFullName(w.getFirstName(), w.getMiddleName(), w.getLastName());
 
-            String address = extractAddress(
-                    objectMapper.convertValue(
-                            w.getAddressDetails().get(0).getAddressDetails(),
-                            JsonNode.class
-                    )
-            );
+            String address = null;
+            if (w.getAddressDetails() != null
+                    && !w.getAddressDetails().isEmpty()
+                    && w.getAddressDetails().get(0) != null
+                    && w.getAddressDetails().get(0).getAddressDetails() != null) {
+
+                JsonNode addressNode = objectMapper.convertValue(
+                        w.getAddressDetails().get(0).getAddressDetails(),
+                        JsonNode.class
+                );
+                address = extractAddress(addressNode);
+            } else {
+                log.warn("Witness has no address details. CNR: {}", courtCase.getCnrNumber());
+            }
 
             PartyDetails newWitness = PartyDetails.builder()
                     .partyId(uniqueId)
