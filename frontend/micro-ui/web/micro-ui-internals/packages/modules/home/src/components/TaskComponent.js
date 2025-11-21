@@ -16,7 +16,7 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
+import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -329,7 +329,7 @@ const TasksComponent = ({
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: mergedFromCase?.map((addr) => ({
+                    addressDetails: filterValidAddresses(mergedFromCase)?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -387,7 +387,7 @@ const TasksComponent = ({
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: mergedAddressDetails,
+                  addressDetails: filterValidAddresses(mergedAddressDetails),
                 },
                 summonsCourierService,
                 noticeCourierService,
