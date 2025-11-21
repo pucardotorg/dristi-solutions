@@ -15,6 +15,15 @@ public enum OrderStatus {
         return value;
     }
 
+    public static OrderStatus fromValue(String value) {
+        for (OrderStatus status : OrderStatus.values()) {
+            if (status.value.equalsIgnoreCase(value)) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("Unknown OrderStatus value: " + value);
+    }
+
     @Override
     public String toString() {
         return value;
