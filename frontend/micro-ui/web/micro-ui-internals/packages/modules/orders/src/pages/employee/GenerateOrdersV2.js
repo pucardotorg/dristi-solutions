@@ -4118,7 +4118,6 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
-    debugger;
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
