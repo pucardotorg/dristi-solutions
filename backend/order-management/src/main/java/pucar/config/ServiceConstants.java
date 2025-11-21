@@ -156,6 +156,7 @@ public class ServiceConstants {
     public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
     public static final String COURT_WITNESS = "-";
     public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
 
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION = "MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION";
 
