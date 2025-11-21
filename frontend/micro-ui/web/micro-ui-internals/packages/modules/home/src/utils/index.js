@@ -235,4 +235,12 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
   await serviceMethod({ taskManagement: taskManagementPayload });
 };
 
+export const filterValidAddresses = (addressDetails = []) => {
+  return addressDetails?.filter((addr) => {
+    const a = addr?.addressDetails || {};
+    const hasValidValue = (v) => v != null && String(v)?.trim() !== "";
+    return hasValidValue(a?.city) && hasValidValue(a?.district) && hasValidValue(a?.state) && hasValidValue(a?.pincode) && hasValidValue(a?.locality);
+  });
+};
+
 export default {};

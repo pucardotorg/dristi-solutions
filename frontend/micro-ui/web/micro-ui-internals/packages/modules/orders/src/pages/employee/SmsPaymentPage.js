@@ -14,6 +14,7 @@ import { openApiService } from "../../hooks/services";
 import { prepareTaskPayload, formDataKeyMap, formatAddress } from "../../utils/PaymentUtitls";
 import useOpenApiPaymentProcess from "../../hooks/SmsPayment/useOpenApiPaymentProcess";
 import { useOpenApiDownloadFile } from "../../hooks/SmsPayment/useOpenApiDownloadFile";
+import { filterValidAddresses } from "@egovernments/digit-ui-module-home/src/utils";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
@@ -110,8 +111,7 @@ const SmsPaymentPage = () => {
         }
       });
 
-      const addressFromOrder =
-        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.address || [];
+      const addressFromOrder = party?.address || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
@@ -160,7 +160,7 @@ const SmsPaymentPage = () => {
         subtitle: `${party?.partyType || "Party"} - ${name || ""}`,
         partyName: party?.partyName,
         orderType,
-        addresses: mergedAddresses,
+        addresses: filterValidAddresses(mergedAddresses),
         partyUniqueId: party?.uniqueId,
         partyType: party?.partyType,
       };
