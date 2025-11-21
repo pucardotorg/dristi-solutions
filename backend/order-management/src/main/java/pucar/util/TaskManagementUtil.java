@@ -338,14 +338,14 @@ public class TaskManagementUtil {
      */
     private static String determineTargetPartyType(String ownerType) {
         if (ownerType == null) {
-            return "respondent";
+            return "complainant";
         }
         
         return switch (ownerType) {
             case ACCUSED -> "respondent";
             case COMPLAINANT -> "complainant";
             case COURT_WITNESS -> "court";
-            default -> "respondent";
+            default -> "complainant";
         };
     }
 }
