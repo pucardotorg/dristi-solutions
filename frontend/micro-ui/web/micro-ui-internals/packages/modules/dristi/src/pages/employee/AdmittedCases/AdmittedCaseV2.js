@@ -512,11 +512,7 @@ const AdmittedCaseV2 = () => {
       caseDetails?.additionalDetails?.respondentDetails?.formdata
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
-          const fullName = constructFullName(
-            data?.data?.respondentFirstName,
-            data?.data?.respondentMiddleName,
-            data?.data?.respondentLastName
-          );
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
           return {
             ...data,
             name: `${fullName} (Accused)`,
@@ -711,7 +707,6 @@ const AdmittedCaseV2 = () => {
       ].includes(caseStatus)
     );
   }, [userRoles, caseStatus, isAdvocatePresent]);
-
 
   const openDraftModal = (orderList) => {
     setDraftOrderList(orderList);
@@ -3091,10 +3086,7 @@ const AdmittedCaseV2 = () => {
                 value: "NEXT_HEARING",
                 label: "NEXT_HEARING",
               },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
+
               {
                 value: "GENERATE_ORDER",
                 label: "GENERATE_ORDER",
@@ -3650,7 +3642,7 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                             {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
                               <Button
                                 variation={"outlined"}
                                 label={t("CS_CASE_GENERATE_ORDER")}
