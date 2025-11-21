@@ -2,8 +2,8 @@ package pucar.web.models;
 
 public enum OrderStatus {
 
-    PENDING_SIGN("pending_sign"),
-    SIGNED("signed");
+    PENDING_SIGN("PENDING_SIGN"),
+    SIGNED("SIGNED");
 
     private final String value;
 
