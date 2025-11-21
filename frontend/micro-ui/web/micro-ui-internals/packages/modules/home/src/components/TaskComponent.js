@@ -440,7 +440,7 @@ const TasksComponent = ({
   };
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isView, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -493,11 +493,19 @@ const TasksComponent = ({
         const newTabUrl = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&applicationNumber=${applicationDetails?.applicationNumber}&tab=Submissions`;
         window.open(newTabUrl, "_blank", "noopener,noreferrer");
       } else if (isApplicationCompositeOrder) {
-        history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
-          applicationDocObj: docObj,
-          compositeOrderObj: compositeOrderObj,
-          isApplicationAccepted: isApplicationAccepted,
-        });
+        if (isView) {
+          history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
+            applicationDocObj: docObj,
+          });
+        } else {
+          history.replace(
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`,
+            {
+              applicationDocObj: docObj,
+              isApplicationAccepted: isApplicationAccepted,
+            }
+          );
+        }
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
