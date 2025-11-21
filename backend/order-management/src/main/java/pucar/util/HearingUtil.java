@@ -15,12 +15,15 @@ import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.OrderStatus;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.AdvocateMapping;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
+import pucar.web.models.inbox.InboxRequest;
+import pucar.web.models.inbox.OpenHearing;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,8 +43,10 @@ public class HearingUtil {
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
     private final OrderUtil orderUtil;
+    private final InboxUtil inboxUtil;
+    private final EsUtil esUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil, InboxUtil inboxUtil, EsUtil esUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -51,6 +56,8 @@ public class HearingUtil {
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
         this.orderUtil = orderUtil;
+        this.inboxUtil = inboxUtil;
+        this.esUtil = esUtil;
     }
 
 
@@ -224,7 +231,7 @@ public class HearingUtil {
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(getHearingTypeFromAdditionalDetails(order.getAdditionalDetails()))
                 .status("true") // this is not confirmed ui is sending true
-                .attendees(getAttendees(requestInfo, courtCase, order , true))
+                .attendees(getAttendees(requestInfo, courtCase, order, true))
                 .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 //.hearingSummary(order.getHearingSummary())
@@ -259,10 +266,10 @@ public class HearingUtil {
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(order.getPurposeOfNextHearing())
                 .status("true") // this is not confirmed ui is sending true
-                .attendees(getAttendees(requestInfo, courtCase, order , true))
+                .attendees(getAttendees(requestInfo, courtCase, order, true))
                 .startTime(order.getNextHearingDate())
                 .endTime(order.getNextHearingDate())
-               //.hearingSummary(orderUtil.getHearingSummary(order,requestInfo))
+                //.hearingSummary(orderUtil.getHearingSummary(order,requestInfo))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -363,8 +370,8 @@ public class HearingUtil {
 
         Order order = orderRequest.getOrder();
 
-        hearing.setHearingSummary(orderUtil.getHearingSummary(order,orderRequest.getRequestInfo()));
-        List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
+        hearing.setHearingSummary(orderUtil.getHearingSummary(order, orderRequest.getRequestInfo()));
+        List<Attendee> attendeesPresent = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
         List<Attendee> attendees = hearing.getAttendees();
 
         attendees.forEach(attendee -> {
@@ -433,5 +440,17 @@ public class HearingUtil {
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+    }
+
+    public void updateOpenHearingIndex(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest = {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.SIGNED);
+        }
+        log.info("Update open hearing index with orderStatus");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 }

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
@@ -81,6 +83,13 @@ public class InboxUtil {
 
                 if (value == null) continue;
 
+                if (field.getType().isEnum()) {
+                    Method fromValue = field.getType().getMethod("fromValue", String.class);
+                    Object enumValue = fromValue.invoke(null, value.toString());
+                    field.set(openHearing, enumValue);
+                    continue;
+                }
+
                 // Handle lists
                 if (List.class.isAssignableFrom(field.getType())) {
                     ParameterizedType listType = (ParameterizedType) field.getGenericType();
@@ -109,6 +118,10 @@ public class InboxUtil {
                 log.error("Field not found:{} ", entry.getKey());
             } catch (IllegalAccessException e) {
                 log.error("Error accessing field: {}", entry.getKey());
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
             }
         }
     }
