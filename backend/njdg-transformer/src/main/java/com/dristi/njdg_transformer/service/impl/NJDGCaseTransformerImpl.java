@@ -3,6 +3,7 @@ package com.dristi.njdg_transformer.service.impl;
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
@@ -35,6 +36,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
     private final HearingRepository hearingRepository;
     private final DateUtil dateUtil;
     private final NumberExtractor numberExtractor;
+    private final Producer producer;
 
     @Override
     public NJDGTransformRecord transform(CourtCase courtCase, RequestInfo requestInfo) {
@@ -47,6 +49,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster);
             enrichPoliceStationDetails(courtCase, record);
             log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
+            producer.push("save-case-details", record);
             return record;
             
         } catch (Exception e) {

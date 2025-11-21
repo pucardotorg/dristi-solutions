@@ -12,7 +12,6 @@ import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
 import com.dristi.njdg_transformer.service.interfaces.DataProcessor;
 import com.dristi.njdg_transformer.service.interfaces.PartyEnricher;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -69,7 +68,7 @@ public class CaseService {
             log.debug("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             
             // Enrich party details
-            enrichPartyDetails(courtCase, record);
+            enrichPrimaryPartyDetails(courtCase, record);
 
             // Save the main record
             producer.push("save-case-details", record);
@@ -95,7 +94,7 @@ public class CaseService {
     /**
      * Enrich party details using the PartyEnricher service
      */
-    private void enrichPartyDetails(CourtCase courtCase, NJDGTransformRecord record) {
+    private void enrichPrimaryPartyDetails(CourtCase courtCase, NJDGTransformRecord record) {
         log.debug("Enriching party details for case CNR: {}", courtCase.getCnrNumber());
         
         try {
