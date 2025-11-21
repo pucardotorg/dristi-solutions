@@ -38,7 +38,7 @@ async function processOrders(
 
     if (orderList.length !== 0) {
       const ordersLineItems = await Promise.all(
-        orderList.map(async (order, index) => {
+        orderList?.map(async (order, index) => {
           if (order?.documents?.length !== 0) {
             const fileStoreId = order?.documents?.find(
               (doc) => doc?.documentType === "SIGNED"
@@ -59,10 +59,10 @@ async function processOrders(
           }
         })
       );
-      const ordersIndexSection = indexCopy.sections.find(
+      const ordersIndexSection = indexCopy.sections?.find(
         (section) => section.name === "orders"
       );
-      ordersIndexSection.lineItems = ordersLineItems.filter(Boolean);
+      ordersIndexSection.lineItems = ordersLineItems?.filter(Boolean);
     }
   }
 }
