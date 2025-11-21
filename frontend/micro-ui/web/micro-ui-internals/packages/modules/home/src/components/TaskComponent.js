@@ -159,6 +159,12 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        ...(courierServicePendingTask?.partyType && {
+          partyType: courierServicePendingTask?.partyType,
+        }),
+        ...(courierServicePendingTask?.orderItemId && {
+          orderItemId: courierServicePendingTask?.orderItemId,
+        }),
         tenantId: tenantId,
       },
     },
@@ -398,7 +404,7 @@ const TasksComponent = ({
     fetchOrderDetails();
   }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
-  const handleProcessCourierOnSubmit = async (courierData) => {
+  const handleProcessCourierOnSubmit = async (courierData, isLast, hasProcessManagementEditorAccess) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -413,8 +419,17 @@ const TasksComponent = ({
         formData: formData,
         filingNumber: courierOrderDetails?.filingNumber,
         tenantId,
+        isLast,
       });
       await refetchTaskManagement();
+      if (isLast && hasProcessManagementEditorAccess) {
+        setShowCourierServiceModal(false);
+        setCourierServicePendingTask(null);
+        setCourierOrderDetails({});
+        setTimeout(async () => {
+          await refetch();
+        }, 2000);
+      }
       return { continue: true };
     } catch (error) {
       console.error("Error creating or updating task:", error);
@@ -594,6 +609,7 @@ const TasksComponent = ({
         ...(applicationType && { applicationType }),
       };
       const orderItemId = data?.fields?.find((field) => field?.key === "additionalDetails.orderItemId")?.value;
+      const partyType = data?.fields?.find((field) => field?.key === "additionalDetails.partyType")?.value;
       const partyUniqueIdsMap = {};
 
       data?.fields?.forEach(({ key, value }) => {
@@ -652,6 +668,7 @@ const TasksComponent = ({
         dueDateColor: due === "Due today" ? "#9E400A" : "",
         redirectUrl,
         orderItemId,
+        partyType,
         bailBondId,
         ...(Object.keys(partyUniqueIdsMap).length > 0 ? { partyUniqueIds: Object.values(partyUniqueIdsMap) } : {}),
         params: {
@@ -1045,6 +1062,7 @@ const TasksComponent = ({
           orderItemId: courierOrderDetails?.orderItemId,
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
+          ownerType: item?.data?.ownerType,
         };
 
         const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
@@ -1080,7 +1098,7 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData);
+            return await handleProcessCourierOnSubmit(courierData, isLast, hasProcessManagementEditorAccess);
           },
           isDisabled:
             isTaskManagementLoading ||
@@ -1107,7 +1125,7 @@ const TasksComponent = ({
   const courierServiceConfig = useMemo(() => {
     return {
       handleClose: () => {
-        if(isPaymentCompleted) {
+        if (isPaymentCompleted) {
           triggerSurvey("TASK_PAYMENT", () => {
             setShowCourierServiceModal(false);
             setHideCancelButton(false);
@@ -1144,8 +1162,6 @@ const TasksComponent = ({
                     taskManagementList={taskManagementList}
                     courierOrderDetails={courierOrderDetails}
                     refetchPendingTasks={refetch}
-                    setShowCourierServiceModal={setShowCourierServiceModal}
-                    setCourierServicePendingTask={setCourierServicePendingTask}
                     setIsPaymentCompleted={setIsPaymentCompleted}
                   />
                 ),
