@@ -259,7 +259,7 @@ const SmsPaymentPage = () => {
   }, [breakupResponse?.Calculation, liveCourierData?.addressDetails, t]);
 
   useEffect(() => {
-    if (!liveCourierData?.notices?.length || !breakupResponse?.Calculation?.length) return;
+    if (!liveCourierData?.notices?.length) return;
 
     const updatedNotices = liveCourierData?.notices?.map((notice) => {
       const noticeAddressIds = notice?.addresses?.map((addr) => addr?.id);
@@ -324,9 +324,9 @@ const SmsPaymentPage = () => {
     const currentNotices = liveCourierData?.notices;
     let areOptionsTheSame = true;
 
-    if (updatedNotices.length === currentNotices.length) {
-      for (let i = 0; i < currentNotices.length; i++) {
-        if (JSON.stringify(currentNotices[i].courierOptions) !== JSON.stringify(updatedNotices[i].courierOptions)) {
+    if (updatedNotices?.length === currentNotices?.length) {
+      for (let i = 0; i < currentNotices?.length || 0; i++) {
+        if (JSON.stringify(currentNotices?.[i]?.courierOptions) !== JSON?.stringify(updatedNotices?.[i]?.courierOptions)) {
           areOptionsTheSame = false;
           break;
         }
@@ -340,7 +340,7 @@ const SmsPaymentPage = () => {
     }
 
     setNoticeData(updatedNotices);
-  }, [breakupResponse, liveCourierData, taskManagementList, t]);
+  }, [breakupResponse, liveCourierData, taskManagementList, t, courierBreakupOptions]);
 
   const handleProceedToPaymentPage = async () => {
     try {
