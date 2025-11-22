@@ -32,6 +32,7 @@ const useDownloadCasePdf = () => {
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Error downloading the PDF:", error);
+      throw error;
     }
   }, []);
 

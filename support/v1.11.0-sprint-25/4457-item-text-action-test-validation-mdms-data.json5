@@ -1,0 +1,772 @@
+[
+
+
+
+  // IMPORTANT : Updation of helm
+  // Order and ORder-Management- have this {"name":"EGOV_LOCALIZATION_SEARCH_ENDPOINT","value":"/localization/messages/v1/_search"}
+  //Task service-  - name: egov.user.search.path  value: /user/v1/_search ,  {"name":"egov.user.search.path","value":"/user/v1/_search"}
+
+// Restarting , order, encryption, accesscontrol, analytics
+
+  {
+    "id": "5c85437a-ef11-4665-b3b5-0834869bcc83",
+    "tenantId": "kl",
+    "code": "Order.ItemText",
+    "description": null,
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "orderType",
+        "itemText",
+        "id"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "action": {
+          "type": "string"
+        },
+        "itemText": {
+          "type": "string"
+        },
+        "orderType": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1756459046035,
+      "lastModifiedTime": 1756459046035
+    }
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "Order",
+    "moduleName": "ItemText",
+    "mdmsPayload": [
+      {
+        "id": "5fb2c32e-2da0-4a1b-873e-8ba562aa9d9e",
+        "tenantId": "kl",
+        "schemaCode": "Order.ItemText",
+        "uniqueIdentifier": "32",
+        "data": {
+          "id": 32,
+          "path": [
+            "$.orderDetails.action"
+          ],
+          "itemText": "Request for advocate replacement is [$.orderDetails.action]",
+          "orderType": "ADVOCATE_REPLACEMENT_APPROVAL"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1757487999957,
+          "lastModifiedTime": 1757487999957
+        }
+      },
+        {
+          "id": "1f098466-7858-4358-b030-4f8e86b41187",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "31",
+          "data": {
+            "id": 31,
+            "path": [],
+            "itemText": "Delay is condoned",
+            "orderType": "ACCEPTANCE_REJECTION_DCA"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756977414582,
+            "lastModifiedTime": 1756977414582
+          }
+        },
+        {
+          "id": "bc7dd0a3-c241-4798-9470-82ed5df98823",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "30",
+          "data": {
+            "id": 30,
+            "path": [
+              "CONCAT_STRING$.orderDetails.partyDetails.partyToMakeSubmission[*]",
+              "$.orderDetails.documentType.value",
+              "GET_LOCAL_DATE$.orderDetails.dates.submissionDeadlineDate",
+              "$.orderDetails.documentName",
+              "GET_LOCAL_DATE$.orderDetails.dates.responseDeadlineDate",
+              "CONCAT_STRING$.orderDetails.partyDetails.partiesToRespond[*]"
+            ],
+            "action": "RESPONSE_REQUIRED",
+            "itemText": "It is directed that [CONCAT_STRING$.orderDetails.partyDetails.partyToMakeSubmission[*]] files a [$.orderDetails.documentType.value] for [$.orderDetails.documentName] before the court by [GET_LOCAL_DATE$.orderDetails.dates.submissionDeadlineDate]. Additionally, [CONCAT_STRING$.orderDetails.partyDetails.partiesToRespond[*]] must submit a response to the application by [GET_LOCAL_DATE$.orderDetails.dates.responseDeadlineDate].",
+            "orderType": "MANDATORY_SUBMISSIONS_RESPONSES"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756973773033,
+            "lastModifiedTime": 1757055892200
+          }
+        },
+        {
+          "id": "738cc400-ef2b-4735-a5bf-38b40e844ee9",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "29",
+          "data": {
+            "id": 29,
+            "path": [
+              "GET_LOCAL_DATE$.orderDetails.hearingDate",
+              "LOCALIZATION$.orderDetails.purposeOfHearing"
+            ],
+            "itemText": "Next hearing is scheduled on [GET_LOCAL_DATE$.orderDetails.hearingDate] for [LOCALIZATION$.orderDetails.purposeOfHearing].",
+            "orderType": "SCHEDULE_OF_HEARING_DATE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756973065354,
+            "lastModifiedTime": 1757081608886
+          }
+        },
+        {
+          "id": "4324ae37-15c4-4a4b-9312-0f6e9f960a64",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "28",
+          "data": {
+            "id": 28,
+            "path": [
+              "GET_LOCAL_DATE$.orderDetails.originalHearingDate",
+              "LOCALIZATION$.orderDetails.purposeOfHearing",
+              "GET_LOCAL_DATE$.orderDetails.hearingDate"
+            ],
+            "itemText": "Next hearing scheduled on [GET_LOCAL_DATE$.orderDetails.originalHearingDate] for [LOCALIZATION$.orderDetails.purposeOfHearing] has been rescheduled to [GET_LOCAL_DATE$.orderDetails.hearingDate]",
+            "orderType": "RESCHEDULE_OF_HEARING_DATE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756972970531,
+            "lastModifiedTime": 1757081647299
+          }
+        },
+        {
+          "id": "69a46ea1-bde4-4b8a-b18f-52c23f8e91c9",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "27",
+          "data": {
+            "id": 27,
+            "itemText": "The settlement records have been accepted by the court. Case closed.",
+            "orderType": "SETTLEMENT_ACCEPT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756903759862,
+            "lastModifiedTime": 1756903759862
+          }
+        },
+        {
+          "id": "f098a466-b6e8-47c0-bd1b-11525bfd5714",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "25",
+          "data": {
+            "id": 25,
+            "path": [],
+            "itemText": "Accused is released on bail. Particulars of offences u/s.138 of Negotiable Instruments Act were read over and explained to the Accused.",
+            "orderType": "ACCEPT_BAIL"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756902884045,
+            "lastModifiedTime": 1757081994454
+          }
+        },
+        {
+          "id": "7d688d45-c88a-4630-b556-974f8d66761d",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "24",
+          "data": {
+            "id": 24,
+            "path": [
+              "$.orderDetails.caseNumber"
+            ],
+            "itemText": "Complaint [$.orderDetails.caseNumber] is dismissed.",
+            "orderType": "DISMISS_CASE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756902735543,
+            "lastModifiedTime": 1757061988667
+          }
+        },
+        {
+          "id": "71d68b45-2e12-4ae0-ad04-96444c381f41",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "23",
+          "data": {
+            "id": 23,
+            "path": [
+              "$.orderDetails.paymentToBeMadeBy",
+              "$.orderDetails.amount",
+              "$.orderDetails.paymentToBeMadeTo",
+              "GET_LOCAL_DATE$.orderDetails.deadline"
+            ],
+            "itemText": "[$.orderDetails.paymentToBeMadeBy] is directed to pay INR [$.orderDetails.amount] to the [$.orderDetails.paymentToBeMadeTo] as witness batta by [GET_LOCAL_DATE$.orderDetails.deadline]",
+            "orderType": "WITNESS_BATTA"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756902158507,
+            "lastModifiedTime": 1757083641402
+          }
+        },
+        {
+          "id": "811dc25b-06ac-4d03-8ece-783bf7a82c4c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "22",
+          "data": {
+            "id": 22,
+            "path": [
+              "$.orderDetails.parties[0].partyName"
+            ],
+            "itemText": "Issue proclamation to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+            "orderType": "PROCLAMATION"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756901322024,
+            "lastModifiedTime": 1756901682407
+          }
+        },
+        {
+          "id": "e1bcd141-2f3c-4ddf-80a2-568e60dd2c68",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "21",
+          "data": {
+            "id": 21,
+            "path": [
+              "$.orderDetails.parties[0].partyName"
+            ],
+            "itemText": "Issue proclamation to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+            "orderType": "ATTACHMENT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756901099303,
+            "lastModifiedTime": 1756901700359
+          }
+        },
+        {
+          "id": "8b54581f-5d58-447e-b7ab-df0add3479bb",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "20",
+          "data": {
+            "id": 20,
+            "itemText": "The case is moved out of the Long Pending Register and is to be considered and renumbered as a ST case",
+            "orderType": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756900628313,
+            "lastModifiedTime": 1756900628313
+          }
+        },
+        {
+          "id": "65320790-ae3b-4119-be9f-5c118649b885",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "19",
+          "data": {
+            "id": 19,
+            "itemText": "As per sanction given by Honourable CJM the case is moved to the Long Pending Register and is marked as LP",
+            "orderType": "MOVE_CASE_TO_LONG_PENDING_REGISTER"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756900587195,
+            "lastModifiedTime": 1756900587195
+          }
+        },
+        {
+          "id": "3d7be89e-c66f-4109-8a61-fc4da708526d",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "9",
+          "data": {
+            "id": 9,
+            "path": [
+              "CONCAT_STRING$.orderDetails.partyDetails.partyToMakeSubmission[*]",
+              "$.orderDetails.documentType.value",
+              "GET_LOCAL_DATE$.orderDetails.dates.submissionDeadlineDate",
+              "$.orderDetails.documentName"
+            ],
+            "action": "RESPONSE_NOT_REQUIRED",
+            "itemText": "It is directed that [CONCAT_STRING$.orderDetails.partyDetails.partyToMakeSubmission[*]] files a [$.orderDetails.documentType.value] for [$.orderDetails.documentName] before the court by [GET_LOCAL_DATE$.orderDetails.dates.submissionDeadlineDate]. ",
+            "orderType": "MANDATORY_SUBMISSIONS_RESPONSES"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459599182,
+            "lastModifiedTime": 1757055918384
+          }
+        },
+        {
+          "id": "1f2cdc54-d3aa-4362-91a3-2adc688748c4",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "5",
+          "data": {
+            "id": 5,
+            "path": [
+              "$.orderDetails.applicationCMPNumber",
+              "$.orderDetails.documentType",
+              "$.orderDetails.documentName"
+            ],
+            "action": "REJECT",
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] for extension of deadline of submission of [$.orderDetails.documentType] for [$.orderDetails.documentName] is rejected ",
+            "orderType": "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459579685,
+            "lastModifiedTime": 1757057365042
+          }
+        },
+        {
+          "id": "9a4957bc-8aed-4d4b-8495-f3c3ddc4747c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "16",
+          "data": {
+            "id": 16,
+            "path": [
+              "$.orderDetails.documentName",
+              "$.orderDetails.parties[0].partyName",
+              "GET_LOCAL_DATE$.orderDetails.newSubmissionDate",
+              "$.orderDetails.applicationCMPNumber",
+              "$.orderDetails.documentType"
+            ],
+            "action": "APPROVE",
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] for extension of deadline of submission of [$.orderDetails.documentType] for [$.orderDetails.documentName] is accepted  and the [$.orderDetails.parties[0].partyName] is required to submit the same by [GET_LOCAL_DATE$.orderDetails.newSubmissionDate].",
+            "orderType": "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459556323,
+            "lastModifiedTime": 1757057392573
+          }
+        },
+        {
+          "id": "20ab7289-408a-4247-8fdb-88f2b7c83354",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "6",
+          "data": {
+            "id": 6,
+            "path": [
+              "$.orderDetails.applicationCMPNumber",
+              "GET_LOCAL_DATE$.orderDetails.hearingDate",
+              "$.orderDetails.purposeOfNextHearing",
+              "LOCALIZATION$.additionalDetails.applicationStatus"
+            ],
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] for rescheduling of hearing scheduled on [GET_LOCAL_DATE$.orderDetails.hearingDate] for [$.orderDetails.purposeOfNextHearing] is [LOCALIZATION$.additionalDetails.applicationStatus]. ",
+            "orderType": "INITIATING_RESCHEDULING_OF_HEARING_DATE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459539370,
+            "lastModifiedTime": 1757083267210
+          }
+        },
+        {
+          "id": "2acb6643-091e-417a-a835-de6a444ad3ac",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "2",
+          "data": {
+            "id": 2,
+            "path": [
+              "LOCALIZATION$.orderDetails.adrMode",
+              "GET_LOCAL_DATE$.orderDetails.dateOfEndADR"
+            ],
+            "itemText": "Both the Parties have voluntarily agreed to seek resolution through [LOCALIZATION$.orderDetails.adrMode]. Accordingly, the parties are hereby referred to [LOCALIZATION$.orderDetails.adrMode]  to attempt to resolve their dispute by [GET_LOCAL_DATE$.orderDetails.dateOfEndADR]. ",
+            "orderType": "REFERRAL_CASE_TO_ADR"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459523165,
+            "lastModifiedTime": 1757056452397
+          }
+        },
+        {
+          "id": "3a6b4796-810f-4f8d-8d77-675c7168bb5c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "15",
+          "data": {
+            "id": 15,
+            "path": [
+              "$.orderDetails.applicationCMPNumber"
+            ],
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] is rejected.",
+            "orderType": "REJECT_VOLUNTARY_SUBMISSIONS"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459499045,
+            "lastModifiedTime": 1757057232676
+          }
+        },
+        {
+          "id": "0159fbe1-1655-43d3-8854-41c263399b5c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "14",
+          "data": {
+            "id": 14,
+            "path": [
+              "$.orderDetails.applicationCMPNumber"
+            ],
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] is accepted.",
+            "orderType": "APPROVE_VOLUNTARY_SUBMISSIONS"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459480916,
+            "lastModifiedTime": 1757057213638
+          }
+        },
+        {
+          "id": "a59e8a98-d8bf-4f9b-b71c-26f899ffc3f1",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "12",
+          "data": {
+            "id": 12,
+            "path": [
+              "$.orderDetails.caseNumber"
+            ],
+            "itemText": "The case [$.orderDetails.caseNumber] is transferred to another court for further proceedings",
+            "orderType": "CASE_TRANSFER_ACCEPT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459460625,
+            "lastModifiedTime": 1757083399984
+          }
+        },
+        {
+          "id": "baf5aba0-60ba-4b7a-b7bb-e6fe322cf4c6",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "13",
+          "data": {
+            "id": 13,
+            "itemText": "The settlement records have been accepted by the court. Case closed.",
+            "orderType": "SETTLEMENT_ACCEPT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "createdTime": 1756459439901,
+            "lastModifiedTime": 1756459439901
+          }
+        },
+        {
+          "id": "bc1099df-3267-42a0-bec6-3f6d3e1a0a4c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "8",
+          "data": {
+            "id": 8,
+            "path": [
+              "$.orderDetails.parties[0].partyName"
+            ],
+            "itemText": "Issue summons to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps to issue summons.",
+            "orderType": "SUMMONS"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459420445,
+            "lastModifiedTime": 1756903685146
+          }
+        },
+        {
+          "id": "bbbcf350-4ab0-4b10-8346-918be0823a64",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "11",
+          "data": {
+            "id": 11,
+            "path": [
+              "$.orderDetails.parties[0].partyName"
+            ],
+            "itemText": "Issue warrant to [$.orderDetails.parties[0].partyName]. Complainant is directed to take steps to issue warrant.",
+            "orderType": "WARRANT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459401758,
+            "lastModifiedTime": 1757056712904
+          }
+        },
+        {
+          "id": "eaaffd92-a888-43c3-92f1-153473ca72cd",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "3",
+          "data": {
+            "id": 3,
+            "path": [
+              "$.orderDetails.applicationCMPNumber"
+            ],
+            "itemText": "As per application [$.orderDetails.applicationCMPNumber] complainant has sought to withdraw the complaint. Permission under Section 280 of the BNSS is granted for Complainant to withdraw the complaint and the Accused is acquited.",
+            "orderType": "WITHDRAWAL_ACCEPT"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459382463,
+            "lastModifiedTime": 1757057451003
+          }
+        },
+        {
+          "id": "2e4989b4-5a8e-410e-bca8-c0754f625718",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "7",
+          "data": {
+            "id": 7,
+            "path": [
+              "$.orderDetails.noticeType",
+              "$.orderDetails.parties[0].partyName"
+            ],
+            "itemText": "Issue [$.orderDetails.noticeType] to [$.orderDetails.parties[0].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+            "orderType": "NOTICE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459364493,
+            "lastModifiedTime": 1756903156631
+          }
+        },
+        {
+          "id": "278ab838-b4ed-4135-ad45-e016c9b442db",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "4",
+          "data": {
+            "id": 4,
+            "path": [],
+            "itemText": "Considering the materials produced before the Court, I am prima facie satisfied that the offence punishable under S. 138 of NI Act is made out. Accordingly cognizance of the offence is taken and the case is taken on file.",
+            "orderType": "TAKE_COGNIZANCE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459345181,
+            "lastModifiedTime": 1756902814261
+          }
+        },
+        {
+          "id": "2ca4cb7c-3954-4dca-a10d-315e9ffe0341",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "1",
+          "data": {
+            "id": 1,
+            "path": [
+              "LOCALIZATION$.orderDetails.applicationStatus",
+              "$.orderDetails.applicationCMPNumber"
+            ],
+            "itemText": "Application [$.orderDetails.applicationCMPNumber] is [LOCALIZATION$.orderDetails.applicationStatus].",
+            "orderType": "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459317842,
+            "lastModifiedTime": 1757083546817
+          }
+        },
+        {
+          "id": "8fdb336b-66f5-4c12-98e0-a50e504ad80c",
+          "tenantId": "kl",
+          "schemaCode": "Order.ItemText",
+          "uniqueIdentifier": "18",
+          "data": {
+            "id": 18,
+            "path": [
+              "$.orderDetails.paymentToBeMadeBy",
+              "$.orderDetails.amount",
+              "$.orderDetails.paymentToBeMadeTo",
+              "GET_LOCAL_DATE$.orderDetails.deadline"
+            ],
+            "itemText": "[$.orderDetails.paymentToBeMadeBy] is directed to pay INR [$.orderDetails.amount] to the [$.orderDetails.paymentToBeMadeTo] as costs by [GET_LOCAL_DATE$.orderDetails.deadline]",
+            "orderType": "COST"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1756459142612,
+            "lastModifiedTime": 1757083604451
+          }
+        }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "ACCESSCONTROL-ACTIONS-TEST",
+    "moduleName": "actions-test",
+    "mdmsPayload": [
+      {
+        "id": "288446cb-1b92-458e-a588-ca651ee6123c",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2758",
+        "data": {
+          "id": 2758,
+          "url": "/order-management/v1/getDraftOrder",
+          "code": "2758",
+          "name": "Get Draft Order",
+          "displayName": "Get Draft Order",
+          "serviceCode": "hearing"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1756826682076,
+          "lastModifiedTime": 1756826781244
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "ACCESSCONTROL-ROLEACTIONS",
+    "moduleName": "roleactions",
+    "mdmsPayload": [
+      {
+        "id": "1034b7d1-c888-496f-ba9f-b3e3d36042c3",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "500",
+        "data": {
+          "id": 500,
+          "actionid": 2758,
+          "rolecode": "EMPLOYEE",
+          "tenantid": "kl",
+          "actioncode": "2758"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1756826734030,
+          "lastModifiedTime": 1756826734030
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "ACCESSCONTROL-ROLEACTIONS",
+    "moduleName": "roleactions",
+    "mdmsPayload": [
+      //Disabled
+      {
+        "id": "df540dac-09aa-4231-bad6-b2a67f7189c6",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonOverlappingCompositeOrders",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": "3",
+          "path": "$.applicationNumber[0]",
+          "orderTypeList": [
+            "ACCEPT_BAIL",
+            "REJECT_BAIL"
+          ]
+        },
+        "isActive": false,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1741185534136,
+          "lastModifiedTime": 1756880633754
+        }
+      }
+    ]
+  }
+]

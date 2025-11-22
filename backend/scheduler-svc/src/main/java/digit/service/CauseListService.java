@@ -3,6 +3,7 @@ package digit.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.kafka.producer.Producer;
@@ -13,6 +14,7 @@ import digit.web.models.*;
 import digit.web.models.cases.CaseCriteria;
 import digit.web.models.cases.SearchCaseRequest;
 import digit.web.models.hearing.*;
+import digit.web.models.inbox.InboxRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
@@ -22,8 +24,12 @@ import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -59,13 +65,17 @@ public class CauseListService {
 
     private SmsNotificationService notificationService;
 
+    private InboxUtil inboxUtil;
+
+    private EsUtil esUtil;
+
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
                             CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
                             FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService,
-                            CauseListEmailService causeListEmailService) {
+                            CauseListEmailService causeListEmailService, InboxUtil inboxUtil, EsUtil esUtil) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -83,6 +93,8 @@ public class CauseListService {
         this.individualService = individualService;
         this.notificationService = notificationService;
         this.causeListEmailService = causeListEmailService;
+        this.inboxUtil = inboxUtil;
+        this.esUtil = esUtil;
     }
 
     public void updateCauseListForTomorrow() {
@@ -135,36 +147,14 @@ public class CauseListService {
     public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate, String uuid) {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
-            HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
-                    .fromDate(getFromDate(hearingDate))
-                    .toDate(getToDate(hearingDate))
-                    .courtId(config.getCourtEnabled() ? courtId : null)
-                    .build();
-            List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
-            if(hearingList.isEmpty()){
-                log.info("No hearings found for court: {}", courtId);
-                return;
-            }
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, getFromDate(hearingDate),getToDate(hearingDate) );
+            log.info("inboxRequest = {}", inboxRequest.toString());
+            List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
 
-            List<CauseList> causeList  = getCauseListFromHearings(hearingList);
+            List<CauseList> causeList  = getCauseListFromHearings(openHearings);
+            setHearingTime(causeList);
+
             enrichCauseList(causeList);
-
-            Map<String, Integer> hearingTypeMap = getHearingTypeMap(causeList);
-            List<CaseType> caseTypePriority = getCaseTypeMap();
-
-            causeList.sort(Comparator
-                    .comparing((CauseList a) -> {
-                        Integer hearingTypeId = hearingTypeMap.get(a.getHearingType());
-                        return hearingTypeId != null ? hearingTypeId : Integer.MAX_VALUE;
-                    }, Comparator.nullsLast(Integer::compareTo))
-                    .thenComparing(a -> {
-                        CaseType caseType = caseTypePriority.stream()
-                                .filter(b -> b.getCaseType().equalsIgnoreCase(a.getCaseType()))
-                                .findFirst()
-                                .orElse(null);
-                        return caseType != null ? caseType.getPriority() : Integer.MAX_VALUE;
-                    }, Comparator.nullsLast(Integer::compareTo))
-                    .thenComparing(CauseList::getCaseRegistrationDate, Comparator.nullsLast(Comparable::compareTo)));
 
             generateCauseListFromHearings(causeList);
             ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
@@ -199,12 +189,16 @@ public class CauseListService {
             }
 
 
-            for (Hearing hearing : hearingList) {
-                if (!hearing.getFilingNumber().isEmpty()) {
-                    callNotificationService(hearing.getFilingNumber().get(0),requestInfo,hearingDate);
+            for (OpenHearing hearing : openHearings) {
+                if (hearing.getFilingNumber()!=null) {
+                    callNotificationService(hearing.getFilingNumber(),requestInfo,hearingDate);
                 }
             }
             causeLists.addAll(causeList);
+
+            log.info("Update open hearing index with serialNumber");
+            esUtil.updateOpenHearingSerialNumber(openHearings);
+
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
@@ -213,8 +207,8 @@ public class CauseListService {
 
     private Long getToDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
-                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay());
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atTime(LocalTime.MAX))
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atTime(LocalTime.MAX));
     }
 
     private Long getFromDate(String hearingDate) {
@@ -235,14 +229,10 @@ public class CauseListService {
         }
         return caseTypeList;
     }
-    private Map<String, Integer> getHearingTypeMap(List<CauseList> causeLists) {
+    private void setHearingTime(List<CauseList> causeLists) {
         log.info("operation = getHearingTypePriority, result = IN_PROGRESS");
-        Map<String, Integer> hearingTypePrioriyMap = new HashMap<>();
         try {
             List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
-            for (MdmsHearing mdmsHearing : mdmsHearings) {
-                hearingTypePrioriyMap.put(mdmsHearing.getHearingType(), mdmsHearing.getPriority());
-            }
 
             for(CauseList cause: causeLists){
                 Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
@@ -257,7 +247,6 @@ public class CauseListService {
         } catch (Exception e) {
             log.error("operation = getHearingTypePriority, result = FAILURE, error = {}", e.getMessage(), e);
         }
-        return hearingTypePrioriyMap;
     }
 
     private List<MdmsHearing> getHearingDataFromMdms() {
@@ -288,24 +277,34 @@ public class CauseListService {
             List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
             Collections.reverse(mdmsSlotList);int currentSlotIndex = 0; // Track the current slot index
             int accumulatedTime = 0; // Track accumulated hearing time within the slot
+            int causeListIndex = 0;
 
-            for(CauseList causeList1 : causeList){
-                while(currentSlotIndex < mdmsSlotList.size()){
-                    MdmsSlot mdmsSlot = mdmsSlotList.get(currentSlotIndex);
-                    int hearingTime = causeList1.getHearingTimeInMinutes();
+            while(currentSlotIndex<mdmsSlotList.size() && causeListIndex<causeList.size()) {
+                MdmsSlot currentSlot = mdmsSlotList.get(currentSlotIndex);
+                CauseList causeListItem = causeList.get(causeListIndex);
+                int hearingDuration = causeListItem.getHearingTimeInMinutes();
+                // If the hearing can be accommodated in the current slot, place it here
+                if(accumulatedTime + hearingDuration <= currentSlot.getSlotDuration()){
+                    getCauseListFromHearingAndSlot(causeListItem, currentSlot, accumulatedTime);
+                    accumulatedTime += hearingDuration;
+                    causeListIndex++;
+                }
+                // Hearing cannot be accommodated in this slot, so go to the next slot and reset the available time
+                else{
+                    currentSlotIndex++;
+                    accumulatedTime = 0;
+                }
+            }
 
-                    if(accumulatedTime + hearingTime <= mdmsSlot.getSlotDuration()){
-                        getCauseListFromHearingAndSlot(causeList1, mdmsSlot, accumulatedTime);
-                        accumulatedTime += hearingTime;
-                        break;
-                    } else {
-                        currentSlotIndex++;
-                        accumulatedTime = 0;
-                    }
-                    if (currentSlotIndex == mdmsSlotList.size()) {
-                        MdmsSlot lastMdmsSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
-                        getCauseListFromHearingAndSlot(causeList1, lastMdmsSlot, accumulatedTime);
-                    }
+            // If there are any hearings left after running out of slots, place them in the last slot
+            if(causeListIndex < causeList.size()){
+                log.warn("Placing {} overflown causeList items in the end of last available slot", causeList.size() - causeListIndex);
+                MdmsSlot lastSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
+                accumulatedTime = lastSlot.getSlotDuration();
+                while(causeListIndex<causeList.size()) {
+                    CauseList causeListItem = causeList.get(causeListIndex);
+                    getCauseListFromHearingAndSlot(causeListItem, lastSlot, accumulatedTime);
+                    causeListIndex++;
                 }
             }
             log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
@@ -483,37 +482,28 @@ public class CauseListService {
         return hearings;
     }
 
-    public List<CauseList> getCauseListFromHearings(List<Hearing> hearingList) {
+    public List<CauseList> getCauseListFromHearings(List<OpenHearing> hearingList) {
         List<CauseList> causeLists = new ArrayList<>();
-        for (Hearing hearing : hearingList) {
+        int serialNumber = 1;
+        for (OpenHearing hearing : hearingList) {
             CauseList causeList = CauseList.builder()
-                    .id(hearing.getId())
+                    .id(UUID.fromString(hearing.getHearingUuid()))
                     .tenantId(hearing.getTenantId())
-                    .hearingId(hearing.getHearingId())
-                    .filingNumber(hearing.getFilingNumber().get(0))
-                    .cnrNumbers(hearing.getCnrNumbers())
-                    .applicationNumbers(hearing.getApplicationNumbers())
+                    .hearingId(hearing.getHearingNumber())
+                    .filingNumber(hearing.getFilingNumber())
+                    .caseNumber(hearing.getCaseNumber())
                     .hearingType(hearing.getHearingType())
                     .status(hearing.getStatus())
-                    .startTime(hearing.getStartTime())
-                    .endTime(hearing.getEndTime())
-                    .presidedBy(hearing.getPresidedBy())
-                    .attendees(hearing.getAttendees())
-                    .transcript(hearing.getTranscript())
-                    .vcLink(hearing.getVcLink())
-                    .isActive(hearing.getIsActive())
-                    .documents(hearing.getDocuments())
-                    .additionalDetails(hearing.getAdditionalDetails())
-                    .auditDetails(hearing.getAuditDetails())
-                    .workflow(hearing.getWorkflow())
-                    .notes(hearing.getNotes())
+                    .startTime(hearing.getFromDate())
+                    .endTime(hearing.getToDate())
                     .courtId(config.getCourtId())
                     .judgeName(config.getJudgeName())
                     .judgeDesignation(config.getJudgeDesignation())
-                    .hearingDate(dateUtil.getLocalDateFromEpoch(hearing.getStartTime()).format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
+                    .hearingDate(dateUtil.getLocalDateFromEpoch(hearing.getFromDate()).format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
                     .build();
 
             causeLists.add(causeList);
+            hearing.setSerialNumber(serialNumber++);
         }
         return causeLists;
     }
@@ -545,8 +535,6 @@ public class CauseListService {
                 causeList.setCaseId(caseList.get(0).get("id").isNull() ? null : caseList.get(0).get("id").asText());
                 causeList.setCaseType(caseList.get(0).get("caseType").isNull() ? null : caseList.get(0).get("caseType").asText());
                 causeList.setCaseTitle(caseList.get(0).get("caseTitle").isNull() ? null : caseList.get(0).get("caseTitle").asText());
-                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").isNull() ? null : caseList.get(0).get("courtCaseNumber").asText());
-                causeList.setCmpNumber(caseList.get(0).get("cmpNumber").isNull() ? null : caseList.get(0).get("cmpNumber").asText());
 
                 long registrationDate = caseList.get(0).get("registrationDate").asLong();
                 causeList.setCaseRegistrationDate(registrationDate);

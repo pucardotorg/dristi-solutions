@@ -17,8 +17,14 @@ const styles = {
     boxSizing: "border-box",
   },
   text: {
-    fontSize: "24px",
+    fontSize: "1.2rem",
+    fontWeight: "500",
     color: "#333",
+  },
+  list: {
+    paddingLeft: "2rem",
+    marginTop: "1rem",
+    listStyleType: "decimal",
   },
 };
 
@@ -59,7 +65,6 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   }, [pathname]);
 
   useEffect(() => {
-
     // Track web vitals
     const reportWebVitals = ({ name, delta, id, value }) => {
       trackEvent(name, value, "Performance_Metrics");
@@ -113,9 +118,17 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     initData,
   };
 
-  const { t } = useTranslation()
-
-  if (isMobileView) {
+  const { t } = useTranslation();
+  const openMobileViewRoutes = [
+    `/home/bail-bond-sign`,
+    `/home/evidence-sign`,
+    `/home/bail-bond-login`,
+    `/home/evidence-login`,
+    `/home/payment-login`,
+    `/home/sms-payment`,
+  ];
+  const mobileResponsive = openMobileViewRoutes.some((path) => pathname.includes(path)) || pathname === "/ui/citizen/dristi";
+  if (isMobileView && !mobileResponsive) {
     return (
       <div style={styles.container}>
         <TopBarSideBar
@@ -128,7 +141,15 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
           logoUrl={logoUrl}
           showSidebar={true}
         />
-        <h1 style={styles.text}>{t("MOBILE_VIEW_ERROR")}</h1>
+        <div style={styles.text}>
+          <h2>{t("SITE_NOT_ACCESSIBLE")}</h2>
+          <p>{t("SWITCH_BROWSER_TEXT")}</p>
+          <ol style={styles.list}>
+            <li>{t("TAP_THREE_DOTS")}</li>
+            <li>{t("SELECT_DESKTOP_SITE")}</li>
+            <li>{t("CHECKBOX_TO_ENABLE")}</li>
+          </ol>
+        </div>
       </div>
     );
   }

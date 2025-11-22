@@ -1,0 +1,30 @@
+[
+  // TODO : can update this data through workbench
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2758",
+    "data": {
+      "id": 2758,
+      "url": "/epost-tracker/epost/v1/download/excel",
+      "code": "2758",
+      "name": "download excel sheet",
+      "displayName": "download excel sheet",
+      "serviceCode": "e-post"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "508",
+    "data": {
+      "id": 508,
+      "actionid": 2758, // /epost-tracker/epost/v1/download/excel give action appropriately,
+      "rolecode": "POST_MANAGER",
+      "tenantid": "kl",
+      "actioncode": "2758"
+    },
+    "isActive": true
+  }
+]

@@ -12,14 +12,17 @@ import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -101,6 +104,40 @@ public class CaseApiControllerTest {
         // Verify the response entity
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(caseRequest.getCriteria(), responseEntity.getBody().getCriteria());
+    }
+
+    @Test
+    public void addWitnessToCaseSuccess() {
+        // Create test data
+        WitnessDetailsRequest request = new WitnessDetailsRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        request.setRequestInfo(requestInfo);
+        
+        // Create mock response
+        WitnessDetailsResponse witnessDetailsResponse = new WitnessDetailsResponse();
+        WitnessDetails witnessDetails = new WitnessDetails();
+        witnessDetailsResponse.setWitnessDetails(Collections.singletonList(witnessDetails));
+        
+        // Mock the service call
+        when(caseService.addWitnessToCase(request)).thenReturn(witnessDetailsResponse);
+        
+        // Mock the response info factory
+        ResponseInfo responseInfo = new ResponseInfo();
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(any(), any())).thenReturn(responseInfo);
+        
+        // Call the method under test
+        ResponseEntity<?> response = caseApiController.addWitnessToCase(request);
+        
+        // Verify the response
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof WitnessDetailsResponse);
+        
+        // Verify the service method was called with the correct parameter
+        verify(caseService).addWitnessToCase(request);
+        
+        // Verify the response info was set correctly
+        assertEquals(responseInfo, ((WitnessDetailsResponse) response.getBody()).getResponseInfo());
     }
 
     @Test
@@ -275,4 +312,37 @@ public class CaseApiControllerTest {
     }
 
 
+    @Test
+    public void updateCaseWithoutWorkflowSuccess() {
+        // Mocking request body
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+
+        // Mocking caseService.updateCaseWithoutWorkflow method to return a CourtCase object
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCaseNumber("CASE-2024-001");
+        when(caseService.updateCaseWithoutWorkflow(caseRequest)).thenReturn(courtCase);
+
+        // Mocking responseInfoFactory.createResponseInfoFromRequestInfo method to return a ResponseInfo object
+        ResponseInfo responseInfo = new ResponseInfo();
+        responseInfo.setApiId("case-services");
+        responseInfo.setVer("1.0");
+        responseInfo.setTs(System.currentTimeMillis());
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+        // Call the method under test
+        ResponseEntity<CaseResponse> responseEntity = caseApiController.updateCaseWithoutWorkflow(caseRequest);
+
+        // Verify the response entity
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(courtCase, responseEntity.getBody().getCases().get(0));
+        assertEquals(responseInfo, responseEntity.getBody().getResponseInfo());
+        assertEquals(1, responseEntity.getBody().getCases().size());
+
+        // Verify service method was called
+        verify(caseService).updateCaseWithoutWorkflow(caseRequest);
+        verify(responseInfoFactory).createResponseInfoFromRequestInfo(requestInfo, true);
+    }
 }

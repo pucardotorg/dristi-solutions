@@ -176,8 +176,8 @@ function CaseType({ t }) {
                   {
                     tenantId,
                     statute: statuteData?.name,
-                    sections: ["Negotiable Instrument Act", "02."],
-                    subsections: ["138", "03."],
+                    sections: ["Negotiable Instrument Act"],
+                    subsections: ["138"],
                   },
                 ],
                 litigants: [],

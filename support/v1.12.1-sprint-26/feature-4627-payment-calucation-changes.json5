@@ -1,0 +1,190 @@
+// TODO :  can not be done through work bench need to use post man
+{
+  "tenantId": "kl",
+  "schemaCode": "summons.e-post",
+  "uniqueIdentifier": "1",
+  "data": {
+    "id": 1,
+    "courtFee": 10,
+    "speedPost": {
+      "weightRanges": [
+        {
+          "maxWeight": 50,
+          "minWeight": 0,
+          "weightUnit": "grams",
+          "distanceRanges": {
+            "0-50": {
+              "fee": 19,
+              "max": 50,
+              "min": 0,
+              "unit": "KM",
+              "classificationCode": "LTD"
+            },
+            "51-200": {
+              "fee": 47,
+              "max": 200,
+              "min": 51,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "201-1000": {
+              "fee": 47,
+              "max": 1000,
+              "min": 201,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "1001-2000": {
+              "fee": 35,
+              "max": 2000,
+              "min": 1001,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "2000-3500": {
+              "fee": 35,
+              "max": 3500,
+              "min": 2001,
+              "unit": "KM",
+              "classificationCode": ""
+            }
+          }
+        },
+        {
+          "maxWeight": 200,
+          "minWeight": 51,
+          "weightUnit": "grams",
+          "distanceRanges": {
+            "0-50": {
+              "fee": 25,
+              "max": 50,
+              "min": 0,
+              "unit": "KM",
+              "classificationCode": "LTD"
+            },
+            "51-200": {
+              "fee": 35,
+              "max": 200,
+              "min": 51,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "201-1000": {
+              "fee": 40,
+              "max": 1000,
+              "min": 201,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "1001-2000": {
+              "fee": 60,
+              "max": 2000,
+              "min": 1001,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "2000-3500": {
+              "fee": 70,
+              "max": 3500,
+              "min": 2001,
+              "unit": "KM",
+              "classificationCode": ""
+            }
+          }
+        },
+        {
+          "maxWeight": 500,
+          "minWeight": 201,
+          "weightUnit": "grams",
+          "distanceRanges": {
+            "0-50": {
+              "fee": 30,
+              "max": 50,
+              "min": 0,
+              "unit": "KM",
+              "classificationCode": "LTD"
+            },
+            "51-200": {
+              "fee": 50,
+              "max": 200,
+              "min": 51,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "201-1000": {
+              "fee": 60,
+              "max": 1000,
+              "min": 201,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "1001-2000": {
+              "fee": 80,
+              "max": 2000,
+              "min": 1001,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "2000-3500": {
+              "fee": 90,
+              "max": 3500,
+              "min": 2001,
+              "unit": "KM",
+              "classificationCode": ""
+            }
+          }
+        },
+        {
+          "maxWeight": 10000,
+          "minWeight": 501,
+          "weightUnit": "grams",
+          "distanceRanges": {
+            "0-50": {
+              "fee": 10,
+              "max": 50,
+              "min": 0,
+              "unit": "KM",
+              "classificationCode": "LTD"
+            },
+            "51-200": {
+              "fee": 15,
+              "max": 200,
+              "min": 51,
+              "unit": "KM",
+              "classificationCode": "ROC"
+            },
+            "201-1000": {
+              "fee": 30,
+              "max": 1000,
+              "min": 201,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "1001-2000": {
+              "fee": 40,
+              "max": 2000,
+              "min": 1001,
+              "unit": "KM",
+              "classificationCode": ""
+            },
+            "2000-3500": {
+              "fee": 50,
+              "max": 3500,
+              "min": 2001,
+              "unit": "KM",
+              "classificationCode": ""
+            }
+          }
+        }
+      ]
+    },
+    "pageWeight": 4,
+    "weightUnit": "grams",
+    "businessFee": 2.9,
+    "GSTPercentage": 0.18,
+    "applicationFee": 5,
+    "printingFeePerPage": 5,
+    "envelopeChargeIncludingGST": 10
+  },
+  "isActive": true
+}

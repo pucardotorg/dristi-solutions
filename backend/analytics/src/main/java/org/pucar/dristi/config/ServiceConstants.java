@@ -13,7 +13,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\"}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -87,6 +87,9 @@ public class ServiceConstants {
     public static final String CASE_COURTCASENUMBER_PATH = "$.courtCaseNumber";
     public static final String CASE_COURTID_PATH = "$.courtId";
     public static final String CASEID_PATH = "$.id";
+    public static final String CASE_FILING_DATE_PATH = "$.filingDate";
+
+    public static final String IS_LPR_CASE_PATH = "$.isLPRCase";
 
     public static final String CASE_STAGE_PATH = "$.stage";
     public static final String CASE_ID_PATH = "$.caseId";
@@ -96,6 +99,7 @@ public class ServiceConstants {
     public static final String ERRORS_PATH = "$.errors";
     public static final String ORDER_TYPE_PATH = "$.orderType";
     public static final String ORDER_FINDINGS_PATH = "$.additionalDetails.formdata.findings.code";
+    public static final String COMPOSITE_ORDER_FINDINGS_PATH = "$.orderSchema.additionalDetails.formdata.findings.code";
     public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
     public static final String APPLICATION_TYPE_PATH = "$.applicationType";
@@ -166,11 +170,13 @@ public class ServiceConstants {
 
     public static final String DEMAND_SERVICE_EXCEPTION = "DEMAND_SERVICE_EXCEPTION : {} ";
     public static final String DEMAND_SERVICE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service";
+    public static final String DEMAND_SERVICE_CONSUMER_CODE_EXCEPTION_MESSAGE = "Exception Occurred while calling the demand service for consumer code";
 
     public static final String REQUEST_INFO = "RequestInfo";
     public static final String FILING_NUMBER = "filingNumber";
     public static final String CNR_NUMBER_KEY = "cnrNumber";
     public static final String STRING_FORMAT = "%s?tenantId=%s&demandId=%s";
+    public static final String CONSUMER_CODE_FORMAT = "%s?tenantId=%s&consumerCode=%s&status=%s";
 
     public static final String PAYMENT_TYPE_PATH = "$.[*].paymentType";
 
@@ -259,5 +265,16 @@ public class ServiceConstants {
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
     public static final String msgId = "1730882648558|en_IN";
+
+    public static final String EXCLUDED_ASSIGNED_UUIDS = "excludedAssignedUuids";
+
+    public static final String POA_JOIN_CASE_TOPIC = "poa-join-case";
+
+    public static final String APPEARANCE = "APPEARANCE";
+    public static final String ARGUMENTS = "ARGUMENTS";
+    public static final String EVIDENCE = "EVIDENCE";
+    public static final String LONG_PENDING_REGISTER = "Long Pending Register";
+    public static final String REFER_TO_ADR = "REFER_TO_ADR";
+    public static final String ACTIVE = "ACTIVE";
 
 }

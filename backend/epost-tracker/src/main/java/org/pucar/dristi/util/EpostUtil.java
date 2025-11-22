@@ -14,13 +14,17 @@ import org.pucar.dristi.repository.EPostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.model.DeliveryStatus.BOOKED;
 
 @Slf4j
 @Component
@@ -48,25 +52,61 @@ public class EpostUtil {
     public EPostTracker createPostTrackerBody(TaskRequest request) throws JsonProcessingException {
         String processNumber = idgenUtil.getIdList(request.getRequestInfo(), config.getEgovStateTenantId(),
                 config.getIdName(),null,1).get(0);
-        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        long currentDate = System.currentTimeMillis();
+
+        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        long istMillis = Instant.ofEpochMilli(currentDate)
+                .atZone(istZone)
+                .toInstant()
+                .toEpochMilli();
+
+        Task task = request.getTask();
+        String docSubType = null;
+
+        if (NOTICE.equals(task.getTaskType())) {
+            docSubType = task.getTaskDetails().getNoticeDetails().getDocSubType();
+        } else if (SUMMON.equals(task.getTaskType())) {
+            docSubType = task.getTaskDetails().getSummonDetails().getDocSubType();
+        }
+
+        String respondentName = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
+        String respondentAddress = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
+        Address address = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
+        String phone = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getPhone() : task.getTaskDetails().getRespondentDetails().getPhone();
+        String pinCode = (docSubType != null && docSubType.equals(WITNESS)) ? task.getTaskDetails().getWitnessDetails().getAddress().getPinCode() : task.getTaskDetails().getRespondentDetails().getAddress().getPinCode();
+
 
         EPostTracker ePostTracker = EPostTracker.builder()
                 .processNumber(processNumber)
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
+                .totalAmount(getTotalAmount(request))
                 .fileStoreId(getFileStore(request))
-                .address(request.getTask().getTaskDetails().getRespondentDetails().getAddress().toString())
-                .pinCode(request.getTask().getTaskDetails().getRespondentDetails().getAddress().getPinCode())
+                .address(respondentAddress)
+                .addressObj(address)
+                .phone(phone)
+                .pinCode(pinCode)
                 .deliveryStatus(DeliveryStatus.NOT_UPDATED)
                 .additionalDetails(request.getTask().getAdditionalDetails())
                 .rowVersion(0)
-                .bookingDate(currentDate)
+                .receivedDate(istMillis)
+                .taskType(request.getTask().getTaskType())
+                .respondentName(respondentName)
                 .auditDetails(createAuditDetails(request.getRequestInfo()))
                 .build();
 
         enrichPostHub(ePostTracker);
 
         return ePostTracker;
+    }
+
+    private String getTotalAmount(TaskRequest request) {
+        return request.getTask() != null
+                && request.getTask().getTaskDetails() != null
+                && request.getTask().getTaskDetails().getDeliveryChannels() != null
+                && request.getTask().getTaskDetails().getDeliveryChannels().getFees() != null
+                ? String.valueOf(request.getTask().getTaskDetails().getDeliveryChannels().getFees())
+                : null;
     }
 
     private String getFileStore(TaskRequest request) {
@@ -104,7 +144,9 @@ public class EpostUtil {
         ePostTracker.setDeliveryStatus(ePostRequest.getEPostTracker().getDeliveryStatus());
         ePostTracker.setRemarks(ePostRequest.getEPostTracker().getRemarks());
         ePostTracker.setTaskNumber(ePostRequest.getEPostTracker().getTaskNumber());
-        ePostTracker.setReceivedDate(ePostRequest.getEPostTracker().getReceivedDate());
+        ePostTracker.setBookingDate(ePostRequest.getEPostTracker().getBookingDate());
+        ePostTracker.setStatusUpdateDate(ePostRequest.getEPostTracker().getStatusUpdateDate());
+        ePostTracker.setSpeedPostId(ePostRequest.getEPostTracker().getSpeedPostId());
 
         return ePostTracker;
 
@@ -141,12 +183,13 @@ public class EpostUtil {
             return postHubNames.get(0);
         }
         else if (postHubNames.isEmpty()) {
-            log.error("postal hub not found for pin code {}", pinCode);
+            String defaultPostalHub = config.getDefaultPostalHub();
+            log.error("postal hub not found for pin code {} setting default postal hub {}", pinCode, defaultPostalHub);
+            return defaultPostalHub;
         }
         else {
             return postHubNames.get(0);
         }
-        return null;
     }
 
 }
