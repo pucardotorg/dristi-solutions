@@ -54,7 +54,7 @@ public class ApplicationEnrichment {
                 application.setId(UUID.randomUUID());
                 application.setCreatedDate(System.currentTimeMillis());
                 application.setIsActive(true);
-                application.setCourtId(configuration.getCourtId());
+                application.setCourtId(getCourtId(applicationRequest));
 
                 if (application.getStatuteSection() != null) {
                     application.getStatuteSection().setId(UUID.randomUUID());
@@ -73,6 +73,19 @@ public class ApplicationEnrichment {
             log.error("Error occurred while enriching application: {}", e.getMessage());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private String getCourtId(ApplicationRequest applicationRequest) {
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(
+                applicationRequest.getRequestInfo(), applicationRequest.getApplication());
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        if (caseDetails == null || caseDetails.isEmpty()) {
+            throw new CustomException("CASE_DETAILS_NOT_FOUND", "Case details not found in case details");
+        }
+
+        return caseDetails.get("courtId").textValue();
     }
 
     public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {
@@ -107,6 +120,9 @@ public class ApplicationEnrichment {
         caseSearchRequest.setRequestInfo(requestInfo);
         CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
+        if(APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS.equalsIgnoreCase(application.getApplicationType())){
+            caseSearchRequest.setFlow(FLOW_JAC);
+        }
         return caseSearchRequest;
     }
 

@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -72,6 +74,19 @@ public class Configuration {
 
 
     // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.create.endpoint}")
+    private String taskManagementServiceCreateEndpoint;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
+
+    // Task Config
     @Value("${dristi.task.host}")
     private String taskServiceHost;
 
@@ -114,6 +129,11 @@ public class Configuration {
     @Value("${dristi.case.process.profile.endpoint}")
     private String processProfileEndPoint;
 
+    @Value("${dristi.case.add.witness.endpoint}")
+    private String addWitnessEndPoint;
+
+    @Value("${dristi.case.update.lpr.details.endpoint}")
+    private String updateLprDetailsEndPoint;
 
     //Hearing config
     @Value("${dristi.hearing.host}")
@@ -121,6 +141,9 @@ public class Configuration {
 
     @Value("${dristi.hearing.update.endpoint}")
     private String HearingUpdateEndPoint;
+
+        @Value("${dristi.hearing.summary.update.endpoint}")
+    private String updateHearingSummaryEndPoint;
 
     @Value("${dristi.hearing.create.endpoint}")
     private String HearingCreateEndPoint;
@@ -135,7 +158,6 @@ public class Configuration {
 
     @Value("${dristi.adiary.create.bulk}")
     private String aDiaryCreateBulkEndPoint;
-
 
     // Inbox Config
     @Value("${dristi.inbox.host}")
@@ -177,5 +199,78 @@ public class Configuration {
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
+
+    //HRMS
+    @Value("${egov.hrms.host}")
+    private String hrmsHost;
+
+    @Value("${egov.hrms.search.endpoint}")
+    private String hrmsEndPoint;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    // User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
+    @Value("${egov.sms.notification.process.fee.payment.template.id}")
+    private String smsNotificationProcessFeePaymentTemplateId;
+
+    @Value("${egov.sms.notification.rpad.submission.template.id}")
+    private String smsNotificationRpadSubmissionTemplateId;
+
+    @Value("${egov.sms.notification.process.fee.payment.pending.template.id}")
+    private String smsNotificationProcessFeePaymentPendingTemplateId;
+
+    @Value("${egov.sms.notification.rpad.submission.pending.template.id}")
+    private String smsNotificationRpadSubmissionPendingTemplateId;
+
+    @Value("${egov.sms.notification.payment.link.template.id}")
+    private String smsNotificationPaymentLinkTemplateId;
+
+    // Tenant Id
+    @Value("${egov.statelevel.tenantId}")
+    private  String stateLevelTenantId;
+
+
+    @Value("${task.upfront.create.topic}")
+    private String taskUpFrontCreateTopic;
+
+    // URLShortening
+    @Value("${egov.url.shortner.host}")
+    private String urlShortnerHost;
+
+    @Value("${egov.url.shortner.endpoint}")
+    private String urlShortnerEndpoint;
+
+    // long url
+    @Value("${domain.url}")
+    private String domainUrl;
+
+    @Value("${egov.base.url}")
+    private String baseUrl;
+
+    @Value("${task.management.action.category}")
+    private String taskManagementActionCategory;
+
+    @Value("${task.management.assigned.role}")
+    private List<String> taskManagementAssignedRole;
 
 }

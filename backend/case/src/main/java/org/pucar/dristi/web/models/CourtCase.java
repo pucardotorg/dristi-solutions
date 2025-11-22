@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -123,8 +124,14 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
+    @JsonProperty("stageBackup")
+    private String stageBackup = null;
+
     @JsonProperty("substage")
     private String substage = null;
+
+    @JsonProperty("substageBackup")
+    private String substageBackup = null;
 
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)
@@ -173,5 +180,19 @@ public class CourtCase {
     @JsonProperty("poaHolders")
     @Valid
     private List<POAHolder> poaHolders = new ArrayList<>();
+
+    @JsonProperty("witnessDetails")
+    @Valid
+    @Builder.Default
+    private List<WitnessDetails> witnessDetails = new ArrayList<>();
+
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = false;
+
+    @JsonProperty("courtCaseNumberBackup")
+    private String courtCaseNumberBackup = null;
 
 }

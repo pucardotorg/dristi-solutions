@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -55,12 +56,16 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
-        if(messageCode.equalsIgnoreCase(HEARING_ADJOURNED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingAdjournedTemplateId());
-        }
-        if (messageCode.equalsIgnoreCase(VARIABLE_HEARING_SCHEDULED)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationVariableHearingScheduled());
-        }
+        String templateId = switch (messageCode){
+            case HEARINGS_HELD_TODAY_SINGLE -> config.getSmsNotificationHearingsHeldTodaySingleTemplateId();
+            case HEARINGS_HELD_TODAY_MULTIPLE -> config.getSmsNotificationHearingsHeldTodayMultipleTemplateId();
+            case HEARINGS_SCHEDULED_TOMORROW_SINGLE -> config.getSmsNotificationHearingsScheduledTomorrowSingleTemplateId();
+            case HEARINGS_SCHEDULED_TOMORROW_MULTIPLE -> config.getSmsNotificationHearingsScheduledTomorrowMultipleTemplateId();
+            case HEARING_RESCHEDULED -> config.getSmsNotificationHearingReScheduledTemplateId();
+            default -> null;
+        };
+
+        pushNotification(templateData, message, mobileNumber, templateId);
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -93,6 +98,9 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("hearingType",smsTemplateData.getHearingType());
+        smsDetails.put("caseCount", String.valueOf(smsTemplateData.getCaseCount()));
+        smsDetails.put("link", smsTemplateData.getLink());
+        smsDetails.put("oldHearingDate", smsTemplateData.getOldHearingDate());
 
         return smsDetails;
     }
@@ -129,7 +137,10 @@ public class SmsNotificationService {
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
-                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""));
+                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""))
+                .replace("{{caseCount}}", Optional.ofNullable(userDetailsForSMS.get("caseCount")).orElse(""))
+                .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
+                .replace("{{oldHearingDate}}", Optional.ofNullable(userDetailsForSMS.get("oldHearingDate")).orElse(""));
         return message;
     }
 

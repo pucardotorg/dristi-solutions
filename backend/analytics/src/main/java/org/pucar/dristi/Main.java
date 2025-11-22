@@ -11,13 +11,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.client.RestTemplate;
+import org.egov.common.utils.MultiStateInstanceUtil;
 
 import javax.net.ssl.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.TimeZone;
 
-@Import({TracerConfiguration.class})
+@Import({TracerConfiguration.class, MultiStateInstanceUtil.class})
 @SpringBootApplication
 @PropertySource("classpath:application.properties")
 @Configuration

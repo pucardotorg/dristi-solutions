@@ -8,13 +8,25 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal, refreshInbox, successScreenData, isCaseViewDisabled }) => {
+const JoinCaseSuccess = ({
+  success,
+  messageHeader,
+  type,
+  caseDetails,
+  closeModal,
+  refreshInbox,
+  successScreenData,
+  isCaseViewDisabled,
+  isBailBondRequired,
+}) => {
   const { t } = useTranslation();
 
   const history = useHistory();
+  const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -33,7 +45,11 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
         },
         {
           key: "CASE_NUMBER",
-          value: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+          value:
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            caseDetails?.courtCaseNumber ||
+            caseDetails?.cmpNumber ||
+            caseDetails?.filingNumber,
         },
         {
           key: "CASE_CATEGORY",
@@ -113,22 +129,33 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
               className={"selector-button-border"}
               label={t("BACK_HOME")}
               onButtonClick={() => {
-                closeModal();
-                if (refreshInbox) refreshInbox();
+                triggerSurvey("JOIN_CASE_PAYMENT", () => {
+                  closeModal();
+                  if (refreshInbox) refreshInbox();
+                });
               }}
             />
             <Button
               className={"selector-button-primary"}
-              label={t("VIEW_CASE_FILE")}
+              label={isBailBondRequired ? t("FILE_BAIL_APPLICATION") : t("VIEW_CASE_FILE")}
               onButtonClick={() => {
-                if (type === "external") {
-                  closeModal();
-                  if (refreshInbox) refreshInbox();
-                  return;
+                if (isBailBondRequired) {
+                  // TODO : can add for lititgants and respondents like litigant=${}&&litigantIndId=${}`;
+                  history.push(
+                    `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
+                  );
+                } else {
+                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
+                    if (type === "external") {
+                      closeModal();
+                      if (refreshInbox) refreshInbox();
+                      return;
+                    }
+                    history.push(
+                      `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                    );
+                  });
                 }
-                history.push(
-                  `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
-                );
               }}
               isDisabled={isCaseViewDisabled}
             >
@@ -137,6 +164,7 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
           </div>
         </React.Fragment>
       )}
+      {SurveyUI}
     </div>
   );
 };

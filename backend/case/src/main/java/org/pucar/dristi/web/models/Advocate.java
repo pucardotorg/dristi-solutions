@@ -60,6 +60,15 @@ public class Advocate {
 	@JsonProperty("individualId")
 	private String individualId = null;
 
+	@JsonProperty("accused")
+	private List<String> accused = null;
+
+	@JsonProperty("complainant")
+	private List<String> complainant = null;
+
+	@JsonProperty("individualIds")
+	private List<String> individualIds = null;
+
 	@JsonProperty("isActive")
 	private Boolean isActive = true;
 
