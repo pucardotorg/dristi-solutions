@@ -194,17 +194,6 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
     updatedPartyDetails = [newParty];
   }
 
-  const witnessPartyType =
-    type === "SUMMONS"
-      ? courierData?.partyType === "Witness"
-        ? courierData?.ownerType === "-"
-          ? "COURT"
-          : courierData?.ownerType === "ACCUSED"
-          ? "RESPONDENT"
-          : courierData?.ownerType
-        : "RESPONDENT"
-      : null;
-
   const taskManagementPayload = existingTask
     ? {
         ...existingTask,
@@ -228,11 +217,11 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
         courtId: courierData?.courtId,
         orderNumber: courierData?.orderNumber,
         orderItemId: courierData?.orderItemId,
-        partyType: witnessPartyType,
+        partyType: courierData?.witnessPartyType,
         workflow: {
           action:
             type === "SUMMONS"
-              ? witnessPartyType === "COURT"
+              ? courierData?.witnessPartyType === "COURT"
                 ? isLast
                   ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
                   : TaskManagementWorkflowAction.CREATE_WITHOUT_PAYMENT

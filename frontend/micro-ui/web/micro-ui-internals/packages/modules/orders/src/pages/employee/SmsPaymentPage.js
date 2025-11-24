@@ -14,6 +14,7 @@ import { openApiService } from "../../hooks/services";
 import { prepareTaskPayload, formDataKeyMap, formatAddress } from "../../utils/PaymentUtitls";
 import useOpenApiPaymentProcess from "../../hooks/SmsPayment/useOpenApiPaymentProcess";
 import { useOpenApiDownloadFile } from "../../hooks/SmsPayment/useOpenApiDownloadFile";
+import { filterValidAddresses } from "@egovernments/digit-ui-module-home/src/utils";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
@@ -110,8 +111,7 @@ const SmsPaymentPage = () => {
         }
       });
 
-      const addressFromOrder =
-        partyDetails?.witnessDetails?.addressDetails || partyDetails?.respondentDetails?.addressDetails || party?.address || [];
+      const addressFromOrder = party?.address || [];
       const addressFromTask = partyDetails?.addresses || [];
 
       // Merge addresses safely
@@ -160,7 +160,7 @@ const SmsPaymentPage = () => {
         subtitle: `${party?.partyType || "Party"} - ${name || ""}`,
         partyName: party?.partyName,
         orderType,
-        addresses: mergedAddresses,
+        addresses: filterValidAddresses(mergedAddresses),
         partyUniqueId: party?.uniqueId,
         partyType: party?.partyType,
       };
@@ -259,7 +259,7 @@ const SmsPaymentPage = () => {
   }, [breakupResponse?.Calculation, liveCourierData?.addressDetails, t]);
 
   useEffect(() => {
-    if (!liveCourierData?.notices?.length || !breakupResponse?.Calculation?.length) return;
+    if (!liveCourierData?.notices?.length) return;
 
     const updatedNotices = liveCourierData?.notices?.map((notice) => {
       const noticeAddressIds = notice?.addresses?.map((addr) => addr?.id);
@@ -324,9 +324,9 @@ const SmsPaymentPage = () => {
     const currentNotices = liveCourierData?.notices;
     let areOptionsTheSame = true;
 
-    if (updatedNotices.length === currentNotices.length) {
-      for (let i = 0; i < currentNotices.length; i++) {
-        if (JSON.stringify(currentNotices[i].courierOptions) !== JSON.stringify(updatedNotices[i].courierOptions)) {
+    if (updatedNotices?.length === currentNotices?.length) {
+      for (let i = 0; i < currentNotices?.length || 0; i++) {
+        if (JSON.stringify(currentNotices?.[i]?.courierOptions) !== JSON?.stringify(updatedNotices?.[i]?.courierOptions)) {
           areOptionsTheSame = false;
           break;
         }
@@ -340,7 +340,7 @@ const SmsPaymentPage = () => {
     }
 
     setNoticeData(updatedNotices);
-  }, [breakupResponse, liveCourierData, taskManagementList, t]);
+  }, [breakupResponse, liveCourierData, taskManagementList, t, courierBreakupOptions]);
 
   const handleProceedToPaymentPage = async () => {
     try {

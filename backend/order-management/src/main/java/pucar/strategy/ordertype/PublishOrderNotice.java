@@ -236,10 +236,11 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("orderItemId", getItemId(order));
         List<Map<String, Object>> partyTypeToUniqueIdList = getMaps(partyTypeToUniqueIdMap);
         additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
+        additionalDetails.put("partyType", COMPLAINANT);
         try {
 
             String itemId = getItemId(order);
-            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") + COMPLAINANT + "_" + order.getOrderNumber();
 
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(referenceId)
