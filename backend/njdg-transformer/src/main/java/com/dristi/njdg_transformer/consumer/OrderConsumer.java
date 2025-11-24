@@ -2,6 +2,7 @@ package com.dristi.njdg_transformer.consumer;
 
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
+import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,10 +27,12 @@ public class OrderConsumer {
 
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
+    private final HearingService hearingService;
 
-    public OrderConsumer(OrderService orderService, ObjectMapper objectMapper) {
+    public OrderConsumer(OrderService orderService, ObjectMapper objectMapper, HearingService hearingService) {
         this.orderService = orderService;
         this.objectMapper = objectMapper;
+        this.hearingService = hearingService;
     }
 
     @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}", groupId = "transformer-order")
@@ -78,6 +81,9 @@ public class OrderConsumer {
             } else {
                 log.debug("Order does not meet processing criteria | orderId: {} | orderType: {}",
                         orderId, order.getOrderType());
+            }
+            if(order.getHearingNumber() != null && order.getItemText() != null) {
+                hearingService.processBusinessOrder(order, orderRequest.getRequestInfo());
             }
 
         } catch (Exception e) {

@@ -342,7 +342,7 @@ public class CaseEnrichment implements PartyEnricher {
                 buildFullName(data.path("firstName"), data.path("middleName"), data.path("lastName")) :
                 buildFullName(data.path("respondentFirstName"), data.path("respondentMiddleName"), data.path("respondentLastName"));
 
-        Integer age = null;
+        int age = 0;
         String ageField = isComplainant ? "complainantAge" : "respondentAge";
         if (data.has(ageField)) {
             try {
@@ -362,7 +362,7 @@ public class CaseEnrichment implements PartyEnricher {
         if (individualId == null || individualId.isEmpty()) individualId = dataNode.path("uniqueId").asText(null);
 
         if (!fullName.isEmpty()) partyDetails.setPartyName(fullName);
-        if (age != null) partyDetails.setPartyAge(age);
+        partyDetails.setPartyAge(age);
         if (address != null && !address.isEmpty()) partyDetails.setPartyAddress(address);
         if (individualId != null && !individualId.isEmpty()) {
             partyDetails.setPartyId(individualId);
@@ -429,6 +429,7 @@ public class CaseEnrichment implements PartyEnricher {
             }
 
             String fullName = buildFullName(w.getFirstName(), w.getMiddleName(), w.getLastName());
+            if (fullName.isEmpty()) fullName = w.getWitnessDesignation();
 
             String address = null;
             if (w.getAddressDetails() != null
@@ -448,7 +449,7 @@ public class CaseEnrichment implements PartyEnricher {
             PartyDetails newWitness = PartyDetails.builder()
                     .partyId(uniqueId)
                     .partyName(fullName)
-                    .partyAge(w.getWitnessAge() != null ? Integer.parseInt(w.getWitnessAge()) : null)
+                    .partyAge(w.getWitnessAge() != null ? Integer.parseInt(w.getWitnessAge()) : 0)
                     .partyAddress(address)
                     .partyType(partyType)
                     .cino(courtCase.getCnrNumber())

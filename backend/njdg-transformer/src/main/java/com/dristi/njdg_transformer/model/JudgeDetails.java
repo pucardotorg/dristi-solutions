@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,4 +25,16 @@ public class JudgeDetails {
 
         @JsonProperty("judge_username")
         private String judgeUsername;
+
+        @JsonProperty("court_no")
+        private Integer courtNo;
+
+        @JsonProperty("desg_code")
+        private Integer desgCode;
+
+        @JsonProperty("from_dt")
+        private LocalDate fromDt;
+
+        @JsonProperty("to_dt")
+        private LocalDate toDt;
 }

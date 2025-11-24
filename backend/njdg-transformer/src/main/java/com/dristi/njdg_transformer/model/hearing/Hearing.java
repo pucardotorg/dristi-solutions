@@ -131,6 +131,9 @@ public class Hearing {
     @JsonProperty("hearingDurationInMillis")
     private Long hearingDurationInMillis = null;
 
+    @JsonProperty("nextDate")
+    private Long nextHearingDate = null;
+
 
     public Hearing addFilingNumberItem(String filingNumberItem) {
         this.filingNumber.add(filingNumberItem);

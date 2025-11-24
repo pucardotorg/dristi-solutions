@@ -7,6 +7,7 @@ import com.dristi.njdg_transformer.model.DesignationMaster;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
 import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
+import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
@@ -19,9 +20,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.JUDGE_DESIGNATION;
 
@@ -45,11 +48,11 @@ public class HearingService {
                 .max()
                 .orElse(0) + 1;
 
-        JudgeDetails judgeDetails = caseRepository.getJudge(hearing.getPresidedBy().getJudgeID().get(0));
+        // Use hearing startTime (createdDate equivalent) for hearing processing
+        LocalDate searchDate = formatDate(hearing.getStartTime());
+        List<JudgeDetails> judgeDetailsList = caseRepository.getJudge(searchDate);
+        JudgeDetails judgeDetails = judgeDetailsList.isEmpty() ? null : judgeDetailsList.get(0);
         DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
-
-        // Find next scheduled hearing for this filing number
-        LocalDate nextScheduledDate = findNextScheduledHearing(hearing, requestInfo);
 
         // Create new hearing detail
         HearingDetails newHearingDetail = HearingDetails.builder()
@@ -57,14 +60,14 @@ public class HearingService {
                 .srNo(nextSrNo)
                 .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
-                .nextDate(nextScheduledDate) // Set next date from scheduled hearing or null
+                .nextDate(hearing.getNextHearingDate() != null ? formatDate(hearing.getNextHearingDate()) : null) // Set next date from scheduled hearing or null
                 .purposeOfListing(getPurposeOfListingValue(hearing))
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode().toString() : "")
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
                 .desgCode(designationMaster.getDesgCode().toString())
                 .hearingId(hearing.getHearingId())
                 .business(hearing.getHearingSummary())
-                .courtNo(properties.getCourtNumber())
+                .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : 0)
                 .build();
 
         // Update previous hearing's nextDate only if there's a next scheduled hearing
@@ -89,67 +92,6 @@ public class HearingService {
     }
 
 
-
-    /**
-     * Finds the next scheduled hearing for the given filing number
-     * @param currentHearing The current completed hearing
-     * @param requestInfo The request info from consumer
-     * @return LocalDate of the next scheduled hearing, or null if none found
-     */
-    private LocalDate findNextScheduledHearing(Hearing currentHearing, RequestInfo requestInfo) {
-        try {
-            // Get filing number from current hearing
-            if (currentHearing.getFilingNumber() == null || currentHearing.getFilingNumber().isEmpty()) {
-                log.warn("No filing number found for hearing {}", currentHearing.getHearingId());
-                return null;
-            }
-            
-            String filingNumber = currentHearing.getFilingNumber().get(0);
-            log.debug("Searching for scheduled hearings with filing number: {}", filingNumber);
-            
-            // Create search criteria for scheduled hearings
-            HearingCriteria criteria = HearingCriteria.builder()
-                    .filingNumber(filingNumber)
-                    .tenantId(currentHearing.getTenantId())
-                    .fromDate(currentHearing.getStartTime()) // Search from current hearing time onwards
-                    .build();
-            
-            // Create search request
-            HearingSearchRequest searchRequest = HearingSearchRequest.builder()
-                    .requestInfo(requestInfo) // Use passed request info
-                    .criteria(criteria)
-                    .build();
-            
-            // Fetch hearings using HearingUtil
-            List<Hearing> scheduledHearings = hearingUtil.fetchHearingDetails(searchRequest);
-            
-            if (scheduledHearings == null || scheduledHearings.isEmpty()) {
-                log.debug("No scheduled hearings found for filing number: {}", filingNumber);
-                return null;
-            }
-            
-            // Find the next scheduled hearing (status = SCHEDULED and startTime > current hearing startTime)
-            Optional<Hearing> nextScheduledHearing = scheduledHearings.stream()
-                    .filter(h -> "SCHEDULED".equalsIgnoreCase(h.getStatus()))
-                    .filter(h -> h.getStartTime() != null && h.getStartTime() > currentHearing.getStartTime())
-                    .min(Comparator.comparing(Hearing::getStartTime)); // Get the earliest scheduled hearing
-            
-            if (nextScheduledHearing.isPresent()) {
-                LocalDate nextDate = formatDate(nextScheduledHearing.get().getStartTime());
-                log.info("Found next scheduled hearing for filing number {} on date: {}", 
-                        filingNumber, nextDate);
-                return nextDate;
-            } else {
-                log.debug("No future scheduled hearings found for filing number: {}", filingNumber);
-                return null;
-            }
-            
-        } catch (Exception e) {
-            log.error("Error finding next scheduled hearing for hearing {}: {}", 
-                    currentHearing.getHearingId(), e.getMessage(), e);
-            return null;
-        }
-    }
 
     /**
      * Gets the purpose of listing value, handling the case where purpose code is 0 (default value)
@@ -178,6 +120,54 @@ public class HearingService {
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    public void processBusinessOrder(Order order, RequestInfo requestInfo){
+        try {
+            String hearingId = order.getHearingNumber();
+            // Create search criteria for scheduled hearings
+            HearingCriteria criteria = HearingCriteria.builder()
+                    .tenantId(order.getTenantId())
+                    .hearingId(hearingId)
+                    .build();
+
+            // Create search request
+            HearingSearchRequest searchRequest = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo) // Use passed request info
+                    .criteria(criteria)
+                    .build();
+
+            List<Hearing> hearings = hearingUtil.fetchHearingDetails(searchRequest);
+            if (hearings == null || hearings.isEmpty()) {
+                log.debug("No hearings found for hearingId: {}", hearingId);
+                return;
+            }
+            Hearing hearing = hearings.get(0);
+            hearing.setHearingSummary(compileOrderText(order.getItemText()));
+            hearing.setNextHearingDate(order.getNextHearingDate());
+            processAndUpdateHearings(hearing, requestInfo);
+        } catch (Exception e) {
+            log.error("Error processing business order for hearingId: {}", order.getHearingNumber(), e);
+        }
+    }
+
+    private String compileOrderText(String html) {
+        if (html == null) return null;
+
+        // 1) Normalize line breaks
+        String text = html
+                .replaceAll("(?i)<br\\s*/?>", "\n")
+                .replaceAll("(?i)</p>", "\n")
+                .replaceAll("(?i)<p[^>]*>", "")
+                .replaceAll("(?i)<[^>]+>", "")
+                .replace("&nbsp;", " ");
+
+        // 2) Clean and remove duplicates
+        return Arrays.stream(text.split("\n"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .collect(Collectors.joining("\n"));
     }
 
 }

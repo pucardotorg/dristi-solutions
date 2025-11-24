@@ -16,7 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
@@ -43,7 +45,10 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         log.info("Starting NJDG transformation for case CNR: {}", courtCase.getCnrNumber());
         
         try {
-            JudgeDetails judgeDetails = caseRepository.getJudge(courtCase.getJudgeId());
+            // Use registrationDate for case transformation
+            LocalDate searchDate = convertToLocalDate(courtCase.getRegistrationDate());
+            List<JudgeDetails> judgeDetailsList = caseRepository.getJudge(searchDate);
+            JudgeDetails judgeDetails = judgeDetailsList.isEmpty() ? null : judgeDetailsList.get(0);
             DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
             
             NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster);
@@ -81,17 +86,17 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                            getDisposalReason(courtCase.getOutcome()) : "")
                 .dispNature('0') // TODO: Configure for contested/uncontested when provided
                 .desgname(designationMaster.getDesgName())
-                .courtNo(properties.getCourtNumber() != null ? properties.getCourtNumber() : 0)
+                .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : (properties.getCourtNumber() != null ? properties.getCourtNumber() : 0))
                 .estCode(courtCase.getCourtId())
                 .stateCode(properties.getStateCode())
                 .distCode(getDistrictCode(courtCase))
                 .purposeCode(getPurposeCode(courtCase))
-                .jocode(judgeDetails.getJocode())
+                .jocode(judgeDetails != null ? judgeDetails.getJocode() : null)
                 .cicriType(properties.getCicriType() != null ? properties.getCicriType() : 0)
                 .dateFirstList(setDateFirstList(courtCase.getCnrNumber()))
                 .dateNextList(setNextListDate(courtCase.getCnrNumber()))
                 .dateLastList(setNextListDate(courtCase.getCnrNumber()))
-                .judgeCode(judgeDetails.getJudgeCode())
+                .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode() : null)
                 .desigCode(designationMaster.getDesgCode())
                 .build();
     }
@@ -198,7 +203,14 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
 
     private String getJoCodeForJudge(String judgeId) {
         try {
-            JudgeDetails judgeDetails = caseRepository.getJudge(judgeId);
+            // Note: This method needs a date parameter, but we don't have context for the date here
+            // Using current date as fallback - this may need to be revised based on business requirements
+            LocalDate searchDate = LocalDate.now();
+            List<JudgeDetails> judgeDetailsList = caseRepository.getJudge(searchDate);
+            JudgeDetails judgeDetails = judgeDetailsList.stream()
+                .filter(judge -> judgeId.equals(judge.getJudgeCode().toString()))
+                .findFirst()
+                .orElse(null);
             if (judgeDetails != null) {
                 log.debug("Retrieved JO code: {} for judge ID: {}", judgeDetails.getJocode(), judgeId);
                 return judgeDetails.getJocode();
@@ -302,5 +314,14 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                     courtCase.getCnrNumber(), e.getMessage(), e);
             throw new RuntimeException("Failed to enrich police station details", e);
         }
+    }
+    
+    private LocalDate convertToLocalDate(Long timestamp) {
+        if (timestamp == null) {
+            return LocalDate.now(); // fallback to current date
+        }
+        return Instant.ofEpochMilli(timestamp)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,18 +64,24 @@ public class CaseRepository {
         }
     }
 
-    public JudgeDetails getJudge(String judgeId) {
+    public List<JudgeDetails> getJudge(LocalDate searchDate) {
         String query = queryBuilder.getJudgeMasterQuery();
         try {
-            return jdbcTemplate.queryForObject(
+            return jdbcTemplate.query(
                     query,
-                    new Object[]{judgeId},
-                    new int[]{Types.VARCHAR},
+                    new Object[]{
+                            java.sql.Date.valueOf(searchDate),
+                            java.sql.Date.valueOf(searchDate)
+                    },
+                    new int[]{
+                            Types.DATE,
+                            Types.DATE
+                    },
                     new BeanPropertyRowMapper<>(JudgeDetails.class)
             );
         } catch (EmptyResultDataAccessException e) {
-            log.warn("No judge found for ID: {}", judgeId);
-            return new JudgeDetails();
+            log.warn("No judges active on date: {}", searchDate);
+            return List.of();
         }
     }
 
@@ -127,7 +134,7 @@ public class CaseRepository {
             jdbcTemplate.update(updateQuery,
                     partyDetails.getPartyName(),
                     partyDetails.getPartyAddress(),
-                    partyDetails.getPartyAge(),
+                    partyDetails.getPartyAge() != null ? partyDetails.getPartyAge() : 0,
                     partyDetails.getPartyId(),
                     partyDetails.getAdvCd() != null ? partyDetails.getAdvCd() : 0,
                     partyDetails.getAdvName(),
@@ -145,7 +152,7 @@ public class CaseRepository {
                     partyDetails.getPartyNo(),
                     partyDetails.getPartyName(),
                     partyDetails.getPartyAddress(),
-                    partyDetails.getPartyAge(),
+                    partyDetails.getPartyAge() != null ? partyDetails.getPartyAge() : 0,
                     partyDetails.getPartyId(),
                     partyDetails.getAdvCd() != null ? partyDetails.getAdvCd() : 0,
                     partyDetails.getAdvName(),
