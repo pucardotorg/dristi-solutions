@@ -22,7 +22,7 @@ public class HearingQueryBuilder {
             "FROM case_hearings ";
 
     public String getHearingQuery(){
-        return HEARING_QUERY + " WHERE cino = ? ORDER BY hearing_date ASC";
+        return HEARING_QUERY + " WHERE cino = ? ORDER BY hearing_id ASC";
     }
 
     public String getHearingInsertQuery() {

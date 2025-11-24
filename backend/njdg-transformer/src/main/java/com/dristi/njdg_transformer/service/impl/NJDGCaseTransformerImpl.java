@@ -3,17 +3,23 @@ package com.dristi.njdg_transformer.service.impl;
 import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
+import com.dristi.njdg_transformer.model.order.Order;
+import com.dristi.njdg_transformer.model.order.OrderCriteria;
+import com.dristi.njdg_transformer.model.order.OrderListResponse;
+import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
 import com.dristi.njdg_transformer.utils.DateUtil;
 import com.dristi.njdg_transformer.utils.NumberExtractor;
+import com.dristi.njdg_transformer.utils.OrderUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -39,6 +45,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
     private final DateUtil dateUtil;
     private final NumberExtractor numberExtractor;
     private final Producer producer;
+    private final OrderUtil orderUtil;
 
     @Override
     public NJDGTransformRecord transform(CourtCase courtCase, RequestInfo requestInfo) {
@@ -51,7 +58,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             JudgeDetails judgeDetails = judgeDetailsList.isEmpty() ? null : judgeDetailsList.get(0);
             DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
             
-            NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster);
+            NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster, requestInfo);
             enrichPoliceStationDetails(courtCase, record);
             log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             producer.push("save-case-details", record);
@@ -65,7 +72,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
     }
 
     private NJDGTransformRecord buildNJDGRecord(CourtCase courtCase, JudgeDetails judgeDetails, 
-                                               DesignationMaster designationMaster) {
+                                               DesignationMaster designationMaster, RequestInfo requestInfo) {
         log.info("Building NJDG record for case: {}", courtCase.getCnrNumber());
         
         return NJDGTransformRecord.builder()
@@ -80,8 +87,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                     courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
                 .regYear(dateUtil.extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
-                .dateOfDecision(courtCase.getJudgementDate() != null ? 
-                               dateUtil.formatDate(courtCase.getJudgementDate()) : null)
+                .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? 
                            getDisposalReasonAsInteger(courtCase.getOutcome()) : 0)
                 .dispNature(0) // TODO: Configure for contested/uncontested when provided
@@ -99,6 +105,33 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode() : null)
                 .desigCode(designationMaster.getDesgCode())
                 .build();
+    }
+
+    @Nullable
+    private LocalDate getDateOfDecision(CourtCase courtCase, RequestInfo requestInfo) {
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(OrderCriteria.builder().filingNumber(courtCase.getFilingNumber()).status(PUBLISHED_ORDER).build())
+                .build();
+        OrderListResponse orderListResponse = orderUtil.getOrders(orderSearchRequest);
+        if(orderListResponse == null || orderListResponse.getList()==null || orderListResponse.getList().isEmpty()){
+            log.info("Case hasn't disposed yet for cino: {}", courtCase.getCnrNumber());
+            return null;
+        }
+        for(Order order : orderListResponse.getList()){
+            if(INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory()) && JUDGEMENT.equalsIgnoreCase(order.getOrderType())) {
+                return dateUtil.formatDate(order.getCreatedDate());
+            } else if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+                JsonNode compositeItems = objectMapper.convertValue(order.getCompositeItems(), JsonNode.class);
+                for(JsonNode compositeItem : compositeItems){
+                    if(JUDGEMENT.equalsIgnoreCase(compositeItem.get("orderType").asText())) {
+                        return dateUtil.formatDate(order.getCreatedDate());
+                    }
+                }
+            }
+        }
+        return courtCase.getJudgementDate() != null ?
+                dateUtil.formatDate(courtCase.getJudgementDate()) : null;
     }
 
     private Integer getCaseTypeValue(String caseType) {
