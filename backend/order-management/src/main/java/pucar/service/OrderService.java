@@ -139,7 +139,7 @@ public class OrderService {
                 OrderResponse orderResponse;
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
-        if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+        if (response != null && !CollectionUtils.isEmpty(response.getList()) && !("DELETED".equalsIgnoreCase(response.getList().get(0).getStatus()))) {
             log.info("Found order associated with Hearing Number: {}", hearingNumber);
             if("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())){
                 throw new CustomException("ORDER_ALREADY_PUBLISHED","Order is already published for hearing number: " + hearingNumber);
