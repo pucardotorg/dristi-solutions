@@ -52,10 +52,10 @@ public class NJDGTransformRecord {
     private LocalDate dateOfDecision = null;
 
     @JsonProperty("disp_reason")
-    private String dispReason = "";
+    private Integer dispReason;
 
     @JsonProperty("disp_nature")
-    private Character dispNature;
+    private Integer dispNature;
 
     @JsonProperty("desgname")
     private String desgname = "";

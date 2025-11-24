@@ -66,7 +66,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
 
     private NJDGTransformRecord buildNJDGRecord(CourtCase courtCase, JudgeDetails judgeDetails, 
                                                DesignationMaster designationMaster) {
-        log.debug("Building NJDG record for case: {}", courtCase.getCnrNumber());
+        log.info("Building NJDG record for case: {}", courtCase.getCnrNumber());
         
         return NJDGTransformRecord.builder()
                 .cino(courtCase.getCnrNumber())
@@ -83,8 +83,8 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .dateOfDecision(courtCase.getJudgementDate() != null ? 
                                dateUtil.formatDate(courtCase.getJudgementDate()) : null)
                 .dispReason(courtCase.getOutcome() != null ? 
-                           getDisposalReason(courtCase.getOutcome()) : "")
-                .dispNature('0') // TODO: Configure for contested/uncontested when provided
+                           getDisposalReasonAsInteger(courtCase.getOutcome()) : 0)
+                .dispNature(0) // TODO: Configure for contested/uncontested when provided
                 .desgname(designationMaster.getDesgName())
                 .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : (properties.getCourtNumber() != null ? properties.getCourtNumber() : 0))
                 .estCode(courtCase.getCourtId())
@@ -108,22 +108,22 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         }
         
         Integer caseTypeCode = caseRepository.getCaseTypeCode(caseType);
-        log.debug("Retrieved case type code: {} for case type: {}", caseTypeCode, caseType);
+        log.info("Retrieved case type code: {} for case type: {}", caseTypeCode, caseType);
         return caseTypeCode;
     }
 
     private Character getDisposalStatus(String outcome) {
         if (outcome == null) {
-            log.debug("Outcome is null, returning pending status");
+            log.info("Outcome is null, returning pending status");
             return 'P';
         }
         
         Integer disposalTypeCode = caseRepository.getDisposalStatus(outcome);
         if (disposalTypeCode != null) {
-            log.debug("Case has disposal status for outcome: {}", outcome);
+            log.info("Case has disposal status for outcome: {}", outcome);
             return 'D';
         } else {
-            log.debug("Case is pending for outcome: {}", outcome);
+            log.info("Case is pending for outcome: {}", outcome);
             return 'P';
         }
     }
@@ -131,18 +131,28 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
     private String getDisposalReason(String outcome) {
         Integer disposalType = caseRepository.getDisposalStatus(outcome);
         if (disposalType != null) {
-            log.debug("Retrieved disposal reason: {} for outcome: {}", disposalType, outcome);
+            log.info("Retrieved disposal reason: {} for outcome: {}", disposalType, outcome);
             return disposalType.toString();
         }
-        log.debug("No disposal reason found for outcome: {}", outcome);
+        log.info("No disposal reason found for outcome: {}", outcome);
         return null;
+    }
+
+    private Integer getDisposalReasonAsInteger(String outcome) {
+        Integer disposalType = caseRepository.getDisposalStatus(outcome);
+        if (disposalType != null) {
+            log.info("Retrieved disposal reason: {} for outcome: {}", disposalType, outcome);
+            return disposalType;
+        }
+        log.info("No disposal reason found for outcome: {}", outcome);
+        return 0;
     }
 
     private Integer getDistrictCode(CourtCase courtCase) {
         try {
             JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
             if (caseDetails == null || caseDetails.path("chequeDetails").isMissingNode()) {
-                log.debug("No cheque details found in case additional details for CNR: {}", 
+                log.info("No cheque details found in case additional details for CNR: {}", 
                          courtCase.getCnrNumber());
                 return null;
             }
@@ -151,7 +161,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             if (chequeDetails.path("formdata").isMissingNode() || 
                 !chequeDetails.path("formdata").isArray() || 
                 chequeDetails.path("formdata").isEmpty()) {
-                log.debug("No formdata found in cheque details for CNR: {}", courtCase.getCnrNumber());
+                log.info("No formdata found in cheque details for CNR: {}", courtCase.getCnrNumber());
                 return null;
             }
 
@@ -160,14 +170,14 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                     .path("policeStationJurisDictionCheque");
 
             if (policeStationNode.isMissingNode()) {
-                log.debug("No police station details found in cheque details for CNR: {}", 
+                log.info("No police station details found in cheque details for CNR: {}", 
                          courtCase.getCnrNumber());
                 return null;
             }
 
             String districtName = policeStationNode.path("district").asText();
             Integer districtCode = caseRepository.getDistrictCode(districtName);
-            log.debug("Retrieved district code: {} for district: {} in case CNR: {}", 
+            log.info("Retrieved district code: {} for district: {} in case CNR: {}", 
                      districtCode, districtName, courtCase.getCnrNumber());
             return districtCode;
             
@@ -186,9 +196,9 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             if (hearingDetails != null && !hearingDetails.isEmpty()) {
                 int n = hearingDetails.size();
                 purposeCode = Integer.parseInt(hearingDetails.get(n - 1).getPurposeOfListing());
-                log.debug("Retrieved purpose code: {} for case CNR: {}", purposeCode, courtCase.getCnrNumber());
+                log.info("Retrieved purpose code: {} for case CNR: {}", purposeCode, courtCase.getCnrNumber());
             } else {
-                log.debug("No hearing details found for case CNR: {}, using default purpose code: {}", 
+                log.info("No hearing details found for case CNR: {}, using default purpose code: {}", 
                          courtCase.getCnrNumber(), purposeCode);
             }
             
@@ -212,7 +222,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .findFirst()
                 .orElse(null);
             if (judgeDetails != null) {
-                log.debug("Retrieved JO code: {} for judge ID: {}", judgeDetails.getJocode(), judgeId);
+                log.info("Retrieved JO code: {} for judge ID: {}", judgeDetails.getJocode(), judgeId);
                 return judgeDetails.getJocode();
             }
             log.warn("No judge details found for judge ID: {}", judgeId);
@@ -231,9 +241,9 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             
             if (hearingDetails != null && !hearingDetails.isEmpty()) {
                 dateFirstList = hearingDetails.get(0).getHearingDate();
-                log.debug("Retrieved first hearing date: {} for case CNR: {}", dateFirstList, cnrNumber);
+                log.info("Retrieved first hearing date: {} for case CNR: {}", dateFirstList, cnrNumber);
             } else {
-                log.debug("No hearing details found for case CNR: {}", cnrNumber);
+                log.info("No hearing details found for case CNR: {}", cnrNumber);
             }
             
             return dateFirstList;
@@ -252,9 +262,9 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             
             if (hearingDetails != null && !hearingDetails.isEmpty()) {
                 dateLastList = hearingDetails.get(hearingDetails.size() - 1).getHearingDate();
-                log.debug("Retrieved last hearing date: {} for case CNR: {}", dateLastList, cnrNumber);
+                log.info("Retrieved last hearing date: {} for case CNR: {}", dateLastList, cnrNumber);
             } else {
-                log.debug("No hearing details found for case CNR: {}", cnrNumber);
+                log.info("No hearing details found for case CNR: {}", cnrNumber);
             }
             
             return dateLastList;
@@ -270,12 +280,12 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
      * Enrich police station details in NJDG record
      */
     public void enrichPoliceStationDetails(CourtCase courtCase, NJDGTransformRecord record) {
-        log.debug("Enriching police station details for case CNR: {}", courtCase.getCnrNumber());
+        log.info("Enriching police station details for case CNR: {}", courtCase.getCnrNumber());
 
         try {
             JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
             if (caseDetails == null) {
-                log.debug("No case details found for police station enrichment in case CNR: {}",
+                log.info("No case details found for police station enrichment in case CNR: {}",
                         courtCase.getCnrNumber());
                 return;
             }
@@ -286,14 +296,14 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                     .path("policeStationJurisDictionCheque");
 
             if (policeStationNode.isMissingNode()) {
-                log.debug("No police station node found in case details for CNR: {}",
+                log.info("No police station node found in case details for CNR: {}",
                         courtCase.getCnrNumber());
                 return;
             }
 
             String policeStationCode = policeStationNode.path("code").asText();
             if (policeStationCode == null || policeStationCode.isEmpty()) {
-                log.debug("No police station code found for case CNR: {}", courtCase.getCnrNumber());
+                log.info("No police station code found for case CNR: {}", courtCase.getCnrNumber());
                 return;
             }
 
@@ -302,7 +312,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 record.setPoliceStCode(policeDetails.getPoliceStationCode());
                 record.setPoliceNcode(policeDetails.getNatCode());
                 record.setPoliceStation(policeDetails.getStName());
-                log.debug("Successfully enriched police station details for case CNR: {}",
+                log.info("Successfully enriched police station details for case CNR: {}",
                         courtCase.getCnrNumber());
             } else {
                 log.warn("No police station details found for code: {} in case CNR: {}",

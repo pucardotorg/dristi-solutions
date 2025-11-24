@@ -65,7 +65,7 @@ public class CaseService {
         try {
             // Transform case to NJDG format
             NJDGTransformRecord record = caseTransformer.transform(courtCase, requestInfo);
-            log.debug("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
+            log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             
             // Enrich party details
             enrichPrimaryPartyDetails(courtCase, record);
@@ -95,7 +95,7 @@ public class CaseService {
      * Enrich party details using the PartyEnricher service
      */
     private void enrichPrimaryPartyDetails(CourtCase courtCase, NJDGTransformRecord record) {
-        log.debug("Enriching party details for case CNR: {}", courtCase.getCnrNumber());
+        log.info("Enriching party details for case CNR: {}", courtCase.getCnrNumber());
         
         try {
             partyEnricher.enrichPrimaryPartyDetails(courtCase, record, COMPLAINANT_PRIMARY);
@@ -103,7 +103,7 @@ public class CaseService {
             partyEnricher.enrichAdvocateDetails(courtCase, record, COMPLAINANT_PRIMARY);
             partyEnricher.enrichAdvocateDetails(courtCase, record, RESPONDENT_PRIMARY);
             
-            log.debug("Successfully enriched party details for case CNR: {}", courtCase.getCnrNumber());
+            log.info("Successfully enriched party details for case CNR: {}", courtCase.getCnrNumber());
             
         } catch (Exception e) {
             log.error("Error enriching party details for case CNR: {}: {}", 
@@ -116,7 +116,7 @@ public class CaseService {
      * Process additional data using specialized processors
      */
     private void processAdditionalData(CourtCase courtCase) {
-        log.debug("Processing additional data for case CNR: {}", courtCase.getCnrNumber());
+        log.info("Processing additional data for case CNR: {}", courtCase.getCnrNumber());
         
         try {
             // Process extra parties
@@ -125,7 +125,7 @@ public class CaseService {
             // Process acts
             actsProcessor.processActs(courtCase);
             
-            log.debug("Successfully processed additional data for case CNR: {}", courtCase.getCnrNumber());
+            log.info("Successfully processed additional data for case CNR: {}", courtCase.getCnrNumber());
             
         } catch (Exception e) {
             log.error("Error processing additional data for case CNR: {}: {}", 
@@ -166,31 +166,31 @@ public class CaseService {
      * Enrich NJDG record with related data
      */
     private void enrichRecordWithRelatedData(NJDGTransformRecord record, String cino) {
-        log.debug("Enriching NJDG record with related data for CINO: {}", cino);
+        log.info("Enriching NJDG record with related data for CINO: {}", cino);
         
         try {
             // Fetch and set complainant parties
             List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);
             record.setPetExtraParty(complainantParty != null ? complainantParty : new ArrayList<>());
-            log.debug("Added {} complainant parties for CINO: {}", 
+            log.info("Added {} complainant parties for CINO: {}", 
                      record.getPetExtraParty().size(), cino);
             
             // Fetch and set respondent parties
             List<PartyDetails> respondentParty = caseRepository.getPartyDetails(cino, PartyType.RES);
             record.setResExtraParty(respondentParty != null ? respondentParty : new ArrayList<>());
-            log.debug("Added {} respondent parties for CINO: {}", 
+            log.info("Added {} respondent parties for CINO: {}", 
                      record.getResExtraParty().size(), cino);
             
             // Fetch and set hearing history
             List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
             record.setHistoryOfCaseHearing(hearingDetails != null ? hearingDetails : new ArrayList<>());
-            log.debug("Added {} hearing records for CINO: {}", 
+            log.info("Added {} hearing records for CINO: {}", 
                      record.getHistoryOfCaseHearing().size(), cino);
             
             // Fetch and set acts
             List<Act> actDetails = caseRepository.getActs(cino);
             record.setActs(actDetails != null ? actDetails : new ArrayList<>());
-            log.debug("Added {} acts for CINO: {}", record.getActs().size(), cino);
+            log.info("Added {} acts for CINO: {}", record.getActs().size(), cino);
             
         } catch (Exception e) {
             log.error("Error enriching NJDG record with related data for CINO: {}: {}", 

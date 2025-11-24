@@ -42,15 +42,15 @@ public class NjdgConsumer {
             NJDGTransformRecord record = objectMapper.readValue(payload.value().toString(), NJDGTransformRecord.class);
             cino = record.getCino();
             
-            log.debug("Processing case details | CINO: {}", cino);
+            log.info("Processing case details | CINO: {}", cino);
             
             boolean recordExists = checkIfRecordExists(cino);
             if (recordExists) {
-                log.debug("Updating existing case record | CINO: {}", cino);
+                log.info("Updating existing case record | CINO: {}", cino);
                 caseRepository.updateRecord(record);
                 log.info("Successfully updated case record | CINO: {}", cino);
             } else {
-                log.debug("Inserting new case record | CINO: {}", cino);
+                log.info("Inserting new case record | CINO: {}", cino);
                 caseRepository.insertRecord(record);
                 log.info("Successfully inserted case record | CINO: {}", cino);
             }
@@ -97,7 +97,7 @@ public class NjdgConsumer {
             InterimOrder interimOrder = objectMapper.readValue(payload.value().toString(), InterimOrder.class);
             orderNo = interimOrder.getCourtOrderNumber();
 
-            log.debug("Processing order details | orderNo: {}", orderNo);
+            log.info("Processing order details | orderNo: {}", orderNo);
 
             orderRepository.insertInterimOrder(interimOrder);
             log.info("Successfully processed order | orderNo: {}", orderNo);
@@ -122,7 +122,7 @@ public class NjdgConsumer {
             cino = hearingDetails.getCino();
             hearingId = hearingDetails.getHearingId();
 
-            log.debug("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
+            log.info("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
 
             String finalHearingId = hearingId;
             Optional<HearingDetails> existingHearingOpt = hearingRepository.getHearingDetailsByCino(cino)
@@ -169,10 +169,10 @@ public class NjdgConsumer {
                         HearingDetails previousHearing = hearingDetailsList.get(currentIndex - 1);
                         Integer purposePrevious = getPurposeValue(previousHearing.getPurposeOfListing());
                         existingRecord.setPurposePrevious(purposePrevious);
-                        log.debug("Set purpose_previous: {} | CINO: {}", purposePrevious, cino);
+                        log.info("Set purpose_previous: {} | CINO: {}", purposePrevious, cino);
                     } else {
                         existingRecord.setPurposePrevious(0); // Default value when no previous hearing
-                        log.debug("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
+                        log.info("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
                     }
                     
                     // Set purpose_next (next hearing's purpose)
@@ -180,14 +180,14 @@ public class NjdgConsumer {
                         HearingDetails nextHearing = hearingDetailsList.get(currentIndex + 1);
                         Integer purposeNext = getPurposeValue(nextHearing.getPurposeOfListing());
                         existingRecord.setPurposeNext(purposeNext);
-                        log.debug("Set purpose_next: {} | CINO: {}", purposeNext, cino);
+                        log.info("Set purpose_next: {} | CINO: {}", purposeNext, cino);
                     } else {
                         existingRecord.setPurposeNext(getPurposeValue(hearingDetails.getPurposeOfListing())); // Default value when no next hearing
-                        log.debug("Set purpose_next to default (no next hearing) | CINO: {}", cino);
+                        log.info("Set purpose_next to default (no next hearing) | CINO: {}", cino);
                     }
                 }
                 caseRepository.updateRecord(existingRecord);
-                log.debug("Updated case record with hearing info | CINO: {}", cino);
+                log.info("Updated case record with hearing info | CINO: {}", cino);
             }
         } catch (Exception e) {
             log.error("Failed to process hearing details | CINO: {} | hearingId: {} | messageId: {} | error: {}", 
@@ -230,7 +230,7 @@ public class NjdgConsumer {
             
             for (PartyDetails party : partyDetailsList) {
                 try {
-                    log.debug("Processing extra party | partyName: {} | CINO: {}", 
+                    log.info("Processing extra party | partyName: {} | CINO: {}", 
                              party.getPartyName(), party.getCino());
                     caseRepository.updateExtraParties(party);
                     processedCount++;
@@ -261,7 +261,7 @@ public class NjdgConsumer {
             AdvocateDetails advocateDetails = objectMapper.readValue(payload.value().toString(), AdvocateDetails.class);
             advocateCode = advocateDetails.getAdvocateCode();
             
-            log.debug("Processing advocate details | advocateCode: {}", advocateCode);
+            log.info("Processing advocate details | advocateCode: {}", advocateCode);
             
             advocateRepository.insertAdvocateDetails(advocateDetails);
             log.info("Successfully processed advocate | advocateCode: {}", advocateCode);
@@ -283,7 +283,7 @@ public class NjdgConsumer {
             Act act = objectMapper.readValue(payload.value().toString(), Act.class);
             actCode = act.getActCode();
             
-            log.debug("Processing act details | actCode: {} | CINO: {}", actCode, act.getCino());
+            log.info("Processing act details | actCode: {} | CINO: {}", actCode, act.getCino());
             
             caseRepository.upsertActDetails(act);
             log.info("Successfully processed act | actCode: {} | CINO: {}", actCode, act.getCino());
@@ -312,7 +312,7 @@ public class NjdgConsumer {
             
             for (ExtraAdvocateDetails extraAdvocateDetail : extraAdvocateDetails) {
                 try {
-                    log.debug("Processing extra advocate | advocateName: {} | CINO: {}", 
+                    log.info("Processing extra advocate | advocateName: {} | CINO: {}", 
                              extraAdvocateDetail.getAdvName(), extraAdvocateDetail.getCino());
                     caseRepository.updateExtraAdvocates(extraAdvocateDetail);
                     processedCount++;

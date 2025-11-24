@@ -23,7 +23,7 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         NJDGTransformRecord record = new NJDGTransformRecord();
         // String fields
         record.setCino(rs.getString("cino"));
-        record.setDispReason(rs.getString("disp_reason"));
+        record.setDispReason(getInteger(rs, "disp_reason"));
         record.setDesgname(rs.getString("desgname"));
         record.setEstCode(rs.getString("est_code"));
         record.setPoliceNcode(rs.getString("police_ncode"));
@@ -39,8 +39,7 @@ public class NJDGTransformRecordRowMapper implements RowMapper<NJDGTransformReco
         String pendDisp = rs.getString("pend_disp");
         record.setPendDisp(pendDisp != null && !pendDisp.isEmpty() ? pendDisp.charAt(0) : null);
         
-        String dispNature = rs.getString("disp_nature");
-        record.setDispNature(dispNature != null && !dispNature.isEmpty() ? dispNature.charAt(0) : '0');
+        record.setDispNature(getInteger(rs, "disp_nature"));
         
         String cicriType = rs.getString("cicri_type");
         record.setCicriType(cicriType != null && !cicriType.isEmpty() ? cicriType.charAt(0) : ' ');

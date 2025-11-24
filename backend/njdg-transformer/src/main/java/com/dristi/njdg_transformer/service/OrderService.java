@@ -6,7 +6,6 @@ import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.cases.CaseCriteria;
 import com.dristi.njdg_transformer.model.cases.CaseSearchRequest;
-import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
@@ -79,7 +78,7 @@ public class OrderService {
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : null)
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode() : null)
                 .desigCode(designationMaster.getDesgCode())
-                .dispNature(extractDisposalNature(order))//todo: need to config this when start capturing in system
+                .dispReason(getDisposalReason(order))
                 .build();
 
         producer.push("save-order-details", newOrder);
@@ -91,8 +90,8 @@ public class OrderService {
      * @param order The order to extract disposal nature from
      * @return Integer representing disposal status, 0 if not found or error occurs
      */
-    private Integer extractDisposalNature(Order order) {
-        log.debug("Extracting disposal nature for order category: {}", order.getOrderCategory());
+    private Integer getDisposalReason(Order order) {
+        log.info("Extracting disposal nature for order category: {}", order.getOrderCategory());
         
         try {
             if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
@@ -116,14 +115,14 @@ public class OrderService {
      * @return Integer representing disposal status
      */
     private Integer extractDisposalNatureFromIntermediate(Order order) {
-        log.debug("Processing intermediate order for disposal nature extraction");
+        log.info("Processing intermediate order for disposal nature extraction");
         
         JsonNode additionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
         String outcomeCode = extractOutcomeCodeFromFormData(additionalDetails);
         
         if (outcomeCode != null) {
             Integer disposalStatus = caseRepository.getDisposalStatus(outcomeCode);
-            log.debug("Found disposal status: {} for outcome code: {}", disposalStatus, outcomeCode);
+            log.info("Found disposal status: {} for outcome code: {}", disposalStatus, outcomeCode);
             return disposalStatus;
         }
         
@@ -137,7 +136,7 @@ public class OrderService {
      * @return Integer representing disposal status
      */
     private Integer extractDisposalNatureFromComposite(Order order) {
-        log.debug("Processing composite order for disposal nature extraction");
+        log.info("Processing composite order for disposal nature extraction");
         
         JsonNode compositeItems = objectMapper.convertValue(order.getCompositeItems(), JsonNode.class);
         
@@ -151,7 +150,7 @@ public class OrderService {
                 String outcomeCode = extractOutcomeCodeFromCompositeItem(compositeItem);
                 if (outcomeCode != null) {
                     Integer disposalStatus = caseRepository.getDisposalStatus(outcomeCode);
-                    log.debug("Found disposal status: {} for outcome code: {} in composite item", disposalStatus, outcomeCode);
+                    log.info("Found disposal status: {} for outcome code: {} in composite item", disposalStatus, outcomeCode);
                     return disposalStatus;
                 }
             }

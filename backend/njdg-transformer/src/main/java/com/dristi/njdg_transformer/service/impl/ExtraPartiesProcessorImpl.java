@@ -42,7 +42,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
         try {
             // Fetch all extra parties
             List<PartyDetails> extraParties = getAllExtraParties(courtCase);
-            log.debug("Found {} extra parties for case CNR: {}", 
+            log.info("Found {} extra parties for case CNR: {}", 
                      extraParties.size(), courtCase.getCnrNumber());
 
             // Push extra parties to Kafka if present
@@ -71,29 +71,29 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
     }
 
     private List<PartyDetails> getAllExtraParties(CourtCase courtCase) {
-        log.debug("Fetching all extra parties for case CNR: {}", courtCase.getCnrNumber());
+        log.info("Fetching all extra parties for case CNR: {}", courtCase.getCnrNumber());
 
         // Get complainant extra parties
         List<PartyDetails> extraComplainants = caseEnrichment.getComplainantExtraParties(courtCase);
         List<PartyDetails> extraParties = new ArrayList<>(extraComplainants);
-        log.debug("Added {} extra complainants for case CNR: {}", 
+        log.info("Added {} extra complainants for case CNR: {}", 
                  extraComplainants.size(), courtCase.getCnrNumber());
 
         // Get respondent extra parties
         List<PartyDetails> extraRespondents = caseEnrichment.getRespondentExtraParties(courtCase);
         extraParties.addAll(extraRespondents);
-        log.debug("Added {} extra respondents for case CNR: {}", 
+        log.info("Added {} extra respondents for case CNR: {}", 
                  extraRespondents.size(), courtCase.getCnrNumber());
 
         // Get witness details
         List<PartyDetails> petWitnessDetails = caseEnrichment.getWitnessDetails(courtCase, PartyType.PET);
         extraParties.addAll(petWitnessDetails);
-        log.debug("Added {} petitioner witnesses for case CNR: {}", 
+        log.info("Added {} petitioner witnesses for case CNR: {}", 
                  petWitnessDetails.size(), courtCase.getCnrNumber());
 
         List<PartyDetails> resWitnessDetails = caseEnrichment.getWitnessDetails(courtCase, PartyType.RES);
         extraParties.addAll(resWitnessDetails);
-        log.debug("Added {} respondent witnesses for case CNR: {}", 
+        log.info("Added {} respondent witnesses for case CNR: {}", 
                  resWitnessDetails.size(), courtCase.getCnrNumber());
 
         // Assign serial numbers only if there are extra parties
@@ -103,13 +103,13 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
             }
         }
 
-        log.debug("Total extra parties found: {} for case CNR: {}",
+        log.info("Total extra parties found: {} for case CNR: {}",
                  extraParties.size(), courtCase.getCnrNumber());
         return extraParties;
     }
 
     private void buildExtraAdvocates(CourtCase courtCase, List<PartyDetails> extraParties) {
-        log.debug("Building extra advocates for {} parties in case CNR: {}", 
+        log.info("Building extra advocates for {} parties in case CNR: {}", 
                  extraParties.size(), courtCase.getCnrNumber());
         
         List<ExtraAdvocateDetails> extraAdvocatesList = new ArrayList<>();
@@ -133,7 +133,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
             }
         }
 
-        log.debug("Built {} extra advocates for case CNR: {}", 
+        log.info("Built {} extra advocates for case CNR: {}", 
                  extraAdvocatesList.size(), courtCase.getCnrNumber());
     }
 
@@ -141,19 +141,19 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                                      List<ExtraAdvocateDetails> extraAdvocatesList) {
         String individualId = party.getPartyId();
         if (individualId == null) {
-            log.debug("Skipping party with null individual ID");
+            log.info("Skipping party with null individual ID");
             return;
         }
 
         String partyType = party.getPartyType() == PartyType.PET ? COMPLAINANT_PRIMARY : RESPONDENT_PRIMARY;
-        log.debug("Processing advocates for party {} of type {} in case CNR: {}", 
+        log.info("Processing advocates for party {} of type {} in case CNR: {}", 
                  individualId, partyType, courtCase.getCnrNumber());
 
         List<ExtraAdvocateDetails> existingAdvocates = getExistingAdvocates(courtCase, party, partyType);
         List<String> advocateIds = getAdvocateIdsForParty(courtCase, individualId);
 
         if (advocateIds.isEmpty()) {
-            log.debug("No advocates found for party: {} in case CNR: {}", 
+            log.info("No advocates found for party: {} in case CNR: {}", 
                      party.getPartyId(), courtCase.getCnrNumber());
             return;
         }
@@ -200,7 +200,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
         }
 
         if (advocateDetails.getAdvocateCode().equals(party.getAdvCd())) {
-            log.debug("Skipping advocate {} as it matches party advocate code in case CNR: {}",
+            log.info("Skipping advocate {} as it matches party advocate code in case CNR: {}",
                      advocateId, courtCase.getCnrNumber());
             return;
         }
@@ -228,7 +228,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                 extraAdvocateDetails.setPetResName(party.getPartyName());
                 extraAdvocatesList.add(extraAdvocateDetails);
 
-                log.debug("Updated existing advocate {} for party {} in case",
+                log.info("Updated existing advocate {} for party {} in case",
                          advocateDetails.getAdvocateCode(), party.getPartyId());
                 return true;
             }
@@ -249,7 +249,7 @@ public class ExtraPartiesProcessorImpl implements DataProcessor {
                 .build();
 
         extraAdvocatesList.add(extraAdvocateDetails);
-        log.debug("Created new extra advocate {} for party {} in case CNR: {}",
+        log.info("Created new extra advocate {} for party {} in case CNR: {}",
                  advocateDetails.getAdvocateCode(), party.getPartyId(), courtCase.getCnrNumber());
     }
 }

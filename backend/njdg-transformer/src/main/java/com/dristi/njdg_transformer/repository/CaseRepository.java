@@ -212,8 +212,8 @@ public class CaseRepository {
                 record.getDateNextList(),
                 record.getPendDisp() != null ? record.getPendDisp().toString() : null,
                 record.getDateOfDecision(),
-                record.getDispReason(),
-                record.getDispNature() != null ? record.getDispNature().toString() : null,
+                record.getDispReason() != null ? record.getDispReason() : 0,
+                record.getDispNature() != null ? record.getDispNature() : 0,
                 record.getDesgname(),
                 record.getCourtNo(),
                 record.getEstCode(),
@@ -248,7 +248,7 @@ public class CaseRepository {
                 record.getCino()
             );
             
-            log.debug("Updated {} record(s) with CINO: {}", updated, record.getCino());
+            log.info("Updated {} record(s) with CINO: {}", updated, record.getCino());
         } catch (Exception e) {
             log.error("Error updating record with CINO: {}. Error: {}", record.getCino(), e.getMessage(), e);
             throw new RuntimeException("Failed to update record", e);
@@ -271,8 +271,8 @@ public class CaseRepository {
                     record.getDateNextList(),
                     record.getPendDisp() != null ? record.getPendDisp().toString() : null,
                     record.getDateOfDecision(),
-                    record.getDispReason(),
-                    record.getDispNature() != null ? record.getDispNature().toString() : "0",
+                    record.getDispReason() != null ? record.getDispReason() : 0,
+                    record.getDispNature() != null ? record.getDispNature() : 0,
                     record.getDesgname(),
                     record.getCourtNo(),
                     record.getEstCode(),
@@ -306,7 +306,7 @@ public class CaseRepository {
                     record.getDesigCode()
             );
 
-            log.debug("Inserted {} record(s) with CINO: {}", inserted, record.getCino());
+            log.info("Inserted {} record(s) with CINO: {}", inserted, record.getCino());
         } catch (Exception e) {
             log.error("Error inserting record with CINO: {}. Error: {}", record.getCino(), e.getMessage(), e);
             throw new RuntimeException("Failed to insert record", e);
@@ -355,7 +355,7 @@ public class CaseRepository {
                         act.getActName(),
                         act.getActSection(),
                         act.getSrNo());
-                log.debug("Inserted {} record(s) for Act with ID: {}", inserted, act.getId());
+                log.info("Inserted {} record(s) for Act with ID: {}", inserted, act.getId());
             } else {
                 // UPDATE
                 String updateQuery = queryBuilder.getUpdateActQuery();
@@ -365,7 +365,7 @@ public class CaseRepository {
                         act.getActSection(),
                         act.getSrNo(),
                         act.getCino());
-                log.debug("Updated {} record(s) for Act with ID: {}", updated, act.getId());
+                log.info("Updated {} record(s) for Act with ID: {}", updated, act.getId());
             }
 
         } catch (DataAccessException e) {

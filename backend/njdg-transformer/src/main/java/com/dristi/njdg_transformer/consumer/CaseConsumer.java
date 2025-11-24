@@ -54,7 +54,7 @@ public class CaseConsumer {
             filingNumber = caseRequest.getCourtCase().getFilingNumber();
             status = caseRequest.getCourtCase().getStatus();
             
-            log.debug("Processing case update | filingNumber: {} | status: {}", filingNumber, status);
+            log.info("Processing case update | filingNumber: {} | status: {}", filingNumber, status);
             
             if(caseStatus.contains(status)){
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(caseRequest.getRequestInfo(), filingNumber);
@@ -62,14 +62,14 @@ public class CaseConsumer {
                 CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
                 
                 if(courtCase.getCnrNumber() != null){
-                    log.debug("Found case with CNR: {} for filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
+                    log.info("Found case with CNR: {} for filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                     caseService.processAndUpdateCase(courtCase, caseRequest.getRequestInfo());
                     log.info("Successfully updated case | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
                 } else {
                     log.warn("No CNR found for case | filingNumber: {}", filingNumber);
                 }
             } else {
-                log.debug("Skipping case processing due to status | filingNumber: {} | status: {} | allowedStatuses: {}", 
+                log.info("Skipping case processing due to status | filingNumber: {} | status: {} | allowedStatuses: {}", 
                          filingNumber, status, caseStatus);
             }
         } catch (Exception e) {
@@ -117,7 +117,7 @@ public class CaseConsumer {
             CourtCase courtCase = objectMapper.readValue(payload.value().toString(), CourtCase.class);
             filingNumber = courtCase.getFilingNumber();
             
-            log.debug("Processing join case | filingNumber: {}", filingNumber);
+            log.info("Processing join case | filingNumber: {}", filingNumber);
             
             RequestInfo requestInfo = RequestInfo.builder()
                     .apiId("Rainmaker")
@@ -143,7 +143,7 @@ public class CaseConsumer {
             CourtCase courtCases = objectMapper.convertValue(courtCaseNode, CourtCase.class);
             
             if(courtCases.getCnrNumber() != null){
-                log.debug("Found case with CNR: {} for join case | filingNumber: {}", courtCases.getCnrNumber(), filingNumber);
+                log.info("Found case with CNR: {} for join case | filingNumber: {}", courtCases.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCases, requestInfo);
                 log.info("Successfully processed join case | filingNumber: {} | CNR: {}", filingNumber, courtCases.getCnrNumber());
             } else {
@@ -167,7 +167,7 @@ public class CaseConsumer {
             CaseOutcome outcome = objectMapper.readValue(payload.value().toString(), CaseOutcome.class);
             filingNumber = outcome.getOutcome().getFilingNumber();
             
-            log.debug("Processing case outcome | filingNumber: {}", filingNumber);
+            log.info("Processing case outcome | filingNumber: {}", filingNumber);
             
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(outcome.getRequestInfo(), filingNumber);
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
@@ -175,7 +175,7 @@ public class CaseConsumer {
             courtCase.setJudgementDate(outcome.getOutcome().getAuditDetails().getLastModifiedTime());
             
             if(courtCase.getCnrNumber() != null) {
-                log.debug("Found case with CNR: {} for outcome | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
+                log.info("Found case with CNR: {} for outcome | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCase, outcome.getRequestInfo());
                 log.info("Successfully processed case outcome | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
             } else {
@@ -199,14 +199,14 @@ public class CaseConsumer {
             CaseStageSubStage overallStatus = objectMapper.readValue(payload.value().toString(), CaseStageSubStage.class);
             filingNumber = overallStatus.getCaseOverallStatus().getFilingNumber();
             
-            log.debug("Processing case status update | filingNumber: {}", filingNumber);
+            log.info("Processing case status update | filingNumber: {}", filingNumber);
             
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(overallStatus.getRequestInfo(), filingNumber);
             JsonNode cases = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(cases, CourtCase.class);
             
             if(courtCase.getCnrNumber() != null) {
-                log.debug("Found case with CNR: {} for status update | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
+                log.info("Found case with CNR: {} for status update | filingNumber: {}", courtCase.getCnrNumber(), filingNumber);
                 caseService.processAndUpdateCase(courtCase, overallStatus.getRequestInfo());
                 log.info("Successfully processed case status | filingNumber: {} | CNR: {}", filingNumber, courtCase.getCnrNumber());
             } else {

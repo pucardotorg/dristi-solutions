@@ -47,7 +47,7 @@ public class CaseEnrichment implements PartyEnricher {
 
     @Override
     public void enrichPrimaryPartyDetails(CourtCase courtCase, NJDGTransformRecord record, String partyType) {
-        log.debug("Enriching primary party details for party type: {} in case CNR: {}", 
+        log.info("Enriching primary party details for party type: {} in case CNR: {}", 
                  partyType, courtCase.getCnrNumber());
         
         try {
@@ -71,7 +71,7 @@ public class CaseEnrichment implements PartyEnricher {
             }
 
             enrichPartyFormData(additionalDetails, record, primaryParty.getIndividualId(), partyType);
-            log.debug("Successfully enriched primary party details for party type: {} in case CNR: {}", 
+            log.info("Successfully enriched primary party details for party type: {} in case CNR: {}", 
                      partyType, courtCase.getCnrNumber());
             
         } catch (Exception e) {
@@ -83,7 +83,7 @@ public class CaseEnrichment implements PartyEnricher {
 
     @Override
     public void enrichAdvocateDetails(CourtCase courtCase, NJDGTransformRecord record, String party) {
-        log.debug("Enriching advocate details for party: {} in case CNR: {}", 
+        log.info("Enriching advocate details for party: {} in case CNR: {}", 
                  party, courtCase.getCnrNumber());
         
         try {
@@ -103,7 +103,7 @@ public class CaseEnrichment implements PartyEnricher {
                     .ifPresentOrElse(advocateDetails -> {
                         setPrimaryAdvocate(record, party, advocateDetails);
                         addExtraAdvocates(courtCase, record, party, advocateIds, primaryAdvocateId);
-                        log.debug("Successfully enriched advocate details for party: {} in case CNR: {}", 
+                        log.info("Successfully enriched advocate details for party: {} in case CNR: {}", 
                                  party, courtCase.getCnrNumber());
                     }, () -> log.warn("No advocate details found for advocate ID: {} in case CNR: {}", 
                                      primaryAdvocateId, courtCase.getCnrNumber()));
@@ -314,7 +314,7 @@ public class CaseEnrichment implements PartyEnricher {
         }
         Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
         if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) {
-            log.debug("Skipping party mapping - uniqueId {} matches primary party {} for case CNR: {}", 
+            log.info("Skipping party mapping - uniqueId {} matches primary party {} for case CNR: {}", 
                      uniqueId, partyType, courtCase.getCnrNumber());
             return null;
         }

@@ -57,13 +57,13 @@ public class AdvocateConsumer {
             advocateId = advocateRequest.getAdvocate().getId().toString();
             status = advocateRequest.getAdvocate().getStatus();
             
-            log.debug("Processing advocate registration | advocateId: {} | status: {}", advocateId, status);
+            log.info("Processing advocate registration | advocateId: {} | status: {}", advocateId, status);
             
             if(ACTIVE.equalsIgnoreCase(status)){
                 advocateService.processAndUpdateAdvocates(advocateRequest);
                 log.info("Successfully processed advocate registration | advocateId: {} | status: {}", advocateId, status);
             } else {
-                log.debug("Skipping advocate processing due to status | advocateId: {} | status: {} | expectedStatus: {}", 
+                log.info("Skipping advocate processing due to status | advocateId: {} | status: {} | expectedStatus: {}", 
                          advocateId, status, ACTIVE);
             }
         } catch (Exception e) {

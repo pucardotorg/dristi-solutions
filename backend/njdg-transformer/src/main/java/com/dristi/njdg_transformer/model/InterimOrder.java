@@ -44,8 +44,8 @@ public class InterimOrder {
     @JsonProperty("jocode")
     private String joCode;
 
-    @JsonProperty("disp_nature")
-    private Integer dispNature;
+    @JsonProperty("disp_reason")
+    private Integer dispReason;
 
     @JsonProperty("court_no")
     private Integer courtNo;

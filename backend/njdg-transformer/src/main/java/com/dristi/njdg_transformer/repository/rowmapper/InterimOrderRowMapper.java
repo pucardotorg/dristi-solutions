@@ -26,7 +26,7 @@ public class InterimOrderRowMapper implements RowMapper<InterimOrder> {
         interimOrder.setOrderType(rs.getString("order_type"));
         interimOrder.setDocType(rs.getInt("doc_type"));
         interimOrder.setJoCode(rs.getString("jocode"));
-        interimOrder.setDispNature(rs.getInt("disp_nature"));
+        interimOrder.setDispReason(rs.getInt("disp_reason"));
         interimOrder.setCourtNo(rs.getInt("court_no"));
         interimOrder.setJudgeCode(rs.getInt("judge_code"));
         interimOrder.setDesigCode(rs.getInt("desig_code"));

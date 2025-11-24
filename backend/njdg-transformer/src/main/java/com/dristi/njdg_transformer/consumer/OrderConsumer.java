@@ -55,7 +55,7 @@ public class OrderConsumer {
     }
 
     private void processOrder(ConsumerRecord<String, Object> payload) {
-        log.debug("Starting order processing...");
+        log.info("Starting order processing...");
 
         String orderId = null;
         String status = null;
@@ -67,10 +67,10 @@ public class OrderConsumer {
             orderId = order.getOrderNumber();
             status = order.getStatus();
 
-            log.debug("Processing order | orderId: {} | status: {}", orderId, status);
+            log.info("Processing order | orderId: {} | status: {}", orderId, status);
 
             if (!PUBLISHED_ORDER.equals(status)) {
-                log.debug("Skipping order processing | orderId: {} | status: {} | expectedStatus: {}",
+                log.info("Skipping order processing | orderId: {} | status: {} | expectedStatus: {}",
                         orderId, status, PUBLISHED_ORDER);
                 return;
             }
@@ -79,7 +79,7 @@ public class OrderConsumer {
                 orderService.processAndUpdateOrder(order, orderRequest.getRequestInfo());
                 log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
             } else {
-                log.debug("Order does not meet processing criteria | orderId: {} | orderType: {}",
+                log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
                         orderId, order.getOrderType());
             }
             if(order.getHearingNumber() != null && order.getItemText() != null) {
@@ -112,7 +112,7 @@ public class OrderConsumer {
     }
 
     private List<Order> getCompositeItems(Order order) {
-        log.debug("Enriching composite items for order | orderNumber: {} | orderType: {}", order.getOrderNumber(), order.getOrderType());
+        log.info("Enriching composite items for order | orderNumber: {} | orderType: {}", order.getOrderNumber(), order.getOrderType());
 
         Object compositeItemsObj = order.getCompositeItems();
         ObjectNode orderNode = convertOrderToNode(order);
@@ -131,7 +131,7 @@ public class OrderConsumer {
                 compositeItemsList.add(objectMapper.convertValue(orderNode, Order.class));
             }
 
-            log.debug("Successfully enriched composite items | orderNumber: {}", order.getOrderNumber());
+            log.info("Successfully enriched composite items | orderNumber: {}", order.getOrderNumber());
         } catch (Exception e) {
             log.error("Error enriching composite items | orderNumber: {}", order.getOrderNumber(), e);
             throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error enriching composite items");

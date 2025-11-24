@@ -56,7 +56,7 @@ public class HearingConsumer {
             HearingRequest hearingRequest = objectMapper.readValue(payload.value().toString(), HearingRequest.class);
             hearingId = hearingRequest.getHearing().getHearingId();
             
-            log.debug("Processing hearing update | hearingId: {}", hearingId);
+            log.info("Processing hearing update | hearingId: {}", hearingId);
 
             if(COMPLETED.equalsIgnoreCase(hearingRequest.getHearing().getStatus())){
                 hearingService.processAndUpdateHearings(hearingRequest.getHearing(), hearingRequest.getRequestInfo());
@@ -104,7 +104,7 @@ public class HearingConsumer {
             for (Hearing hearing : request.getHearings()) {
                 try {
                     if(COMPLETED.equalsIgnoreCase(hearing.getStatus())){
-                        log.debug("Processing hearing in bulk | hearingId: {}", hearing.getHearingId());
+                        log.info("Processing hearing in bulk | hearingId: {}", hearing.getHearingId());
                         hearingService.processAndUpdateHearings(hearing, request.getRequestInfo());
                         processedCount++;
                     }

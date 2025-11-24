@@ -23,29 +23,29 @@ public class NumberExtractor {
      */
     public Integer extractFilingNumber(String filingNumber) {
         if (filingNumber == null || filingNumber.isEmpty()) {
-            log.debug("Filing number is null or empty");
-            return null;
+            log.info("Filing number is null or empty");
+            return 0;
         }
         
         try {
             String[] parts = filingNumber.split("-");
             if (parts.length < 2) {
                 log.warn("Invalid filing number format: {}", filingNumber);
-                return null;
+                return 0;
             }
             
             String numberPart = parts[1].replaceFirst("^0+(?!$)", "");
             Integer extractedNumber = Integer.valueOf(numberPart);
-            log.debug("Extracted filing number {} from: {}", extractedNumber, filingNumber);
+            log.info("Extracted filing number {} from: {}", extractedNumber, filingNumber);
             return extractedNumber;
             
         } catch (NumberFormatException e) {
             log.error("Error extracting filing number from: {}: {}", filingNumber, e.getMessage());
-            return null;
+            return 0;
         } catch (Exception e) {
             log.error("Unexpected error extracting filing number from: {}: {}", 
                      filingNumber, e.getMessage(), e);
-            return null;
+            return 0;
         }
     }
 
@@ -56,8 +56,8 @@ public class NumberExtractor {
      */
     public Integer extractCaseNumber(String caseNumber) {
         if (caseNumber == null || caseNumber.trim().isEmpty()) {
-            log.debug("Case number is null or empty");
-            return null;
+            log.info("Case number is null or empty");
+            return 0;
         }
         
         try {
@@ -65,20 +65,20 @@ public class NumberExtractor {
             if (matcher.matches()) {
                 String numberPart = matcher.group(1).replaceFirst("^0+(?!$)", "");
                 Integer extractedNumber = Integer.valueOf(numberPart);
-                log.debug("Extracted case number {} from: {}", extractedNumber, caseNumber);
+                log.info("Extracted case number {} from: {}", extractedNumber, caseNumber);
                 return extractedNumber;
             } else {
                 log.warn("Case number does not match expected pattern: {}", caseNumber);
-                return null;
+                return 0;
             }
             
         } catch (NumberFormatException e) {
             log.error("Error parsing case number from: {}: {}", caseNumber, e.getMessage());
-            return null;
+            return 0;
         } catch (Exception e) {
             log.error("Unexpected error extracting case number from: {}: {}", 
                      caseNumber, e.getMessage(), e);
-            return null;
+            return 0;
         }
     }
 }

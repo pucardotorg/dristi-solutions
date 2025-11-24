@@ -19,7 +19,7 @@ public class OrderQueryBuilder {
                     "order_type AS order_type, " +
                     "doc_type AS doc_type, " +
                     "jocode AS jocode, " +
-                    "disp_nature AS disp_nature, " +
+                    "disp_reason AS disp_reason, " +
                     "court_no AS court_no, " +
                     "judge_code AS judge_code, " +
                     "desig_code AS desig_code " +
@@ -40,7 +40,7 @@ public class OrderQueryBuilder {
                 "order_type, " +
                 "doc_type, " +
                 "jocode, " +
-                "disp_nature, " +
+                "disp_reason, " +
                 "court_no, " +
                 "judge_code, " +
                 "desig_code" +

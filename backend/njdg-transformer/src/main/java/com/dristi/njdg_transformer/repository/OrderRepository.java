@@ -44,7 +44,7 @@ public class OrderRepository {
         preparedStmtList.add(interimOrder.getOrderType());
         preparedStmtList.add(interimOrder.getDocType());
         preparedStmtList.add(interimOrder.getJoCode());
-        preparedStmtList.add(interimOrder.getDispNature());
+        preparedStmtList.add(interimOrder.getDispReason());
         preparedStmtList.add(interimOrder.getCourtNo());
         preparedStmtList.add(interimOrder.getJudgeCode());
         preparedStmtList.add(interimOrder.getDesigCode());
@@ -59,7 +59,7 @@ public class OrderRepository {
         preparedStmtArgsList.add(Types.VARCHAR); // order_type
         preparedStmtArgsList.add(Types.INTEGER); // doc_type
         preparedStmtArgsList.add(Types.VARCHAR); // jocode
-        preparedStmtArgsList.add(Types.INTEGER); // disp_nature
+        preparedStmtArgsList.add(Types.INTEGER); // disp_reason
         preparedStmtArgsList.add(Types.INTEGER); // court_no
         preparedStmtArgsList.add(Types.INTEGER); // judge_code
         preparedStmtArgsList.add(Types.INTEGER); // desg_code

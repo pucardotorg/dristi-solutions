@@ -23,7 +23,7 @@ public class DateUtil {
      */
     public LocalDate formatDate(Long timestamp) {
         if (timestamp == null) {
-            log.debug("Timestamp is null, returning null date");
+            log.info("Timestamp is null, returning null date");
             return null;
         }
         
@@ -31,7 +31,7 @@ public class DateUtil {
             LocalDate date = Instant.ofEpochMilli(timestamp)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate();
-            log.debug("Formatted timestamp {} to date: {}", timestamp, date);
+            log.info("Formatted timestamp {} to date: {}", timestamp, date);
             return date;
             
         } catch (Exception e) {
@@ -47,8 +47,8 @@ public class DateUtil {
      */
     public Integer extractYear(Long timestamp) {
         if (timestamp == null) {
-            log.debug("Timestamp is null, returning null year");
-            return null;
+            log.info("Timestamp is null, returning null year");
+            return 0;
         }
         
         try {
@@ -56,12 +56,12 @@ public class DateUtil {
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate()
                     .format(DateTimeFormatter.ofPattern("yyyy")));
-            log.debug("Extracted year {} from timestamp: {}", year, timestamp);
+            log.info("Extracted year {} from timestamp: {}", year, timestamp);
             return year;
             
         } catch (Exception e) {
             log.error("Error extracting year from timestamp {}: {}", timestamp, e.getMessage(), e);
-            return null;
+            return 0;
         }
     }
 }

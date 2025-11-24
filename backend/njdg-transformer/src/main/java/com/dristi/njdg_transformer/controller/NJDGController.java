@@ -110,7 +110,7 @@ public class NJDGController {
             String status = order.getStatus();
 
             if (!PUBLISHED_ORDER.equals(status)) {
-                log.debug("Skipping order processing due to status | orderId: {} | status: {} | expectedStatus: {}",
+                log.info("Skipping order processing due to status | orderId: {} | status: {} | expectedStatus: {}",
                         orderId, status, PUBLISHED_ORDER);
                 return ResponseEntity.ok(new InterimOrder());
             }

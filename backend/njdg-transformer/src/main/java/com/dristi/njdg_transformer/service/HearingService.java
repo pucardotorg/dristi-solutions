@@ -81,7 +81,7 @@ public class HearingService {
                         log.info("Updated previous hearing with ID {} for CINO {} with nextDate {}",
                                 prevHearing.getHearingId(), cino, prevHearing.getNextDate());
                     } else {
-                        log.debug("No next scheduled hearing found, keeping previous hearing's nextDate as null for CINO {}", cino);
+                        log.info("No next scheduled hearing found, keeping previous hearing's nextDate as null for CINO {}", cino);
                     }
                 });
 
@@ -103,7 +103,7 @@ public class HearingService {
             Integer purposeCode = hearingRepository.getHearingPurposeCode(hearing);
             // Return null if purpose code is 0 (default value) or null
             if (purposeCode == null || purposeCode == 0) {
-                log.debug("Purpose code is {} for hearing {}, returning null", purposeCode, hearing.getHearingId());
+                log.info("Purpose code is {} for hearing {}, returning null", purposeCode, hearing.getHearingId());
                 return null;
             }
             return String.valueOf(purposeCode);
@@ -139,7 +139,7 @@ public class HearingService {
 
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(searchRequest);
             if (hearings == null || hearings.isEmpty()) {
-                log.debug("No hearings found for hearingId: {}", hearingId);
+                log.info("No hearings found for hearingId: {}", hearingId);
                 return;
             }
             Hearing hearing = hearings.get(0);
