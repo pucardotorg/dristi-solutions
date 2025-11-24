@@ -100,9 +100,9 @@ public class CaseQueryBuilder {
     }
 
     public String getJudgeMasterQuery(){
-        return "SELECT judge_code as judge_code, judge_name as judge_name, jocode as jocode, judge_username as judge_username FROM judge_t\n" +
-                "WHERE from_dt <= :searchDate\n" +
-                "  AND (to_dt IS NULL OR to_dt >= :searchDate);";
+        return "SELECT judge_code as judgeCode, judge_name as judgeName, jocode as jocode, judge_username as judgeUsername, court_no as courtNo, desg_code as desgCode, from_dt as fromDt, to_dt as toDt FROM judge_t\n" +
+                "WHERE from_dt <= ?\n" +
+                "  AND (to_dt IS NULL OR to_dt >= ?);";
     }
 
     public String getPartyQuery() {
