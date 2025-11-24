@@ -249,8 +249,6 @@ const GenerateOrdersV2 = () => {
   const toast = useToast();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const [createdSummon, setCreatedSummon] = useState(null);
-  const [createdNotice, setCreatedNotice] = useState(null);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
@@ -3590,7 +3588,7 @@ const GenerateOrdersV2 = () => {
     let status = taskStatus;
 
     create &&
-      (await ordersService.customApiService(Urls.orders.pendingTask, {
+      (await ordersService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
           name,
           entityType,
@@ -3647,45 +3645,15 @@ const GenerateOrdersV2 = () => {
         },
       };
 
-      const summonsArray =
-        currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
-          : currentOrder?.additionalDetails?.isReIssueSummons
-          ? [{}]
-          : currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder.compositeItems
-              .map((item) =>
-                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
-              )
-              .flat()
-          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
-              },
-            },
-          },
-          { tenantId }
-        )
-      );
-      const resList = await Promise.all(promiseList);
-      setCreatedSummon(resList[0]?.order?.orderNumber);
-      await Promise.all(
-        resList.forEach((res) =>
-          createPendingTask({
-            order: res?.order,
-            createTask: true,
-            taskStatus: "DRAFT_IN_PROGRESS",
-            taskName: t("DRAFT_IN_PROGRESS_ISSUE_SUMMONS"),
-            orderEntityType: "order-default",
-          })
-        )
-      );
+      const res = await ordersService.createOrder({ order: orderbody }, { tenantId });
+      await createPendingTask({
+        order: res?.order,
+        createTask: true,
+        taskStatus: "DRAFT_IN_PROGRESS",
+        taskName: t("DRAFT_IN_PROGRESS_ISSUE_SUMMONS"),
+        orderEntityType: "order-default",
+      });
+      return res?.order?.orderNumber;
     } catch (error) {}
   };
 
@@ -3725,47 +3693,15 @@ const GenerateOrdersV2 = () => {
         },
       };
 
-      const summonsArray =
-        currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
-          : currentOrder?.additionalDetails?.isReIssueSummons
-          ? [{}]
-          : currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder.compositeItems
-              .map((item) =>
-                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
-              )
-              .flat()
-          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
-              },
-            },
-          },
-          { tenantId }
-        )
-      );
-
-      const resList = await Promise.all(promiseList);
-      setCreatedNotice(resList[0]?.order?.orderNumber);
-      await Promise.all(
-        resList.forEach((res) =>
-          createPendingTask({
-            order: res?.order,
-            createTask: true,
-            taskStatus: "DRAFT_IN_PROGRESS",
-            taskName: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
-            orderEntityType: "order-default",
-          })
-        )
-      );
+      const res = await ordersService.createOrder({ order: orderbody }, { tenantId });
+      await createPendingTask({
+        order: res?.order,
+        createTask: true,
+        taskStatus: "DRAFT_IN_PROGRESS",
+        taskName: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
+        orderEntityType: "order-default",
+      });
+      return res?.order?.orderNumber;
     } catch (error) {}
   };
 
@@ -3782,12 +3718,12 @@ const GenerateOrdersV2 = () => {
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
-      await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
-      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+      const summonOrderNumber = await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${summonOrderNumber}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
-      await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
-      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+      const noticeSummonOrder = await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${noticeSummonOrder}`);
     }
   };
 
@@ -4697,7 +4633,7 @@ const GenerateOrdersV2 = () => {
           handleDownloadOrders={handleDownloadOrders}
           handleClose={handleClose}
           handleCloseSuccessModal={handleCloseSuccessModal}
-          actionSaveLabel={successModalActionSaveLabel}
+          actionSaveLabel={t("ISSUE_NOTICE_BUTTON")}
         />
       )}
       {showOrderValidationModal?.showModal && (
