@@ -590,48 +590,49 @@ const HomeHearingsTab = ({
   return (
     <div className="full-height-container">
       <div className="header">{t("ALL_HEARINGS")}</div>
-      <div className="filter-bar">
-        <div className="filter-fields">
-          <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
-            {/* <CardLabel className="case-input-label"></CardLabel> */}
-            <Dropdown
-              t={t}
-              placeholder={`${t("STATUS")}`}
-              option={statusOptions ? statusOptions : []}
-              selected={filters?.status}
-              optionKey={"name"}
-              select={(e) => {
-                setFilters((prev) => ({ ...prev, status: e }));
-              }}
-              topbarOptionsClassName={"top-bar-option"}
-              style={{
-                marginBottom: "1px",
-                width: "220px",
-              }}
-            />
-          </LabelFieldPair>
-          <LabelFieldPair className={`case-label-field-pair `}>
-            {/* <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel> */}
-            <Dropdown
-              t={t}
-              placeholder={`${t("PURPOSE")}`}
-              option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
-              selected={filters?.purpose}
-              optionKey={"code"}
-              select={(e) => {
-                setFilters((prev) => ({ ...prev, purpose: e }));
-              }}
-              topbarOptionsClassName={"top-bar-option"}
-              style={{
-                marginBottom: "1px",
-                width: "220px",
-              }}
-            />
-          </LabelFieldPair>
-          <LabelFieldPair className={`case-label-field-pair `}>
-            {/* <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel> */}
-            <div className="date-arrow-group">
-              {/* <button
+      <div className="home-hearings-search">
+        <div className="filter-bar">
+          <div className="filter-fields">
+            <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
+              {/* <CardLabel className="case-input-label"></CardLabel> */}
+              <Dropdown
+                t={t}
+                placeholder={`${t("STATUS")}`}
+                option={statusOptions ? statusOptions : []}
+                selected={filters?.status}
+                optionKey={"name"}
+                select={(e) => {
+                  setFilters((prev) => ({ ...prev, status: e }));
+                }}
+                topbarOptionsClassName={"top-bar-option"}
+                style={{
+                  marginBottom: "1px",
+                  width: "220px",
+                }}
+              />
+            </LabelFieldPair>
+            <LabelFieldPair className={`case-label-field-pair `}>
+              {/* <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel> */}
+              <Dropdown
+                t={t}
+                placeholder={`${t("PURPOSE")}`}
+                option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
+                selected={filters?.purpose}
+                optionKey={"code"}
+                select={(e) => {
+                  setFilters((prev) => ({ ...prev, purpose: e }));
+                }}
+                topbarOptionsClassName={"top-bar-option"}
+                style={{
+                  marginBottom: "1px",
+                  width: "220px",
+                }}
+              />
+            </LabelFieldPair>
+            <LabelFieldPair className={`case-label-field-pair `}>
+              {/* <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel> */}
+              <div className="date-arrow-group">
+                {/* <button
                 type="button"
                 className="date-arrow-btn"
                 aria-label="Previous Day"
@@ -646,18 +647,18 @@ const HomeHearingsTab = ({
                   <path d="M15 19L8 12L15 5" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </button> */}
-              <TextInput
-                className="home-input"
-                key={"status"}
-                type={"date"}
-                value={filters?.date}
-                onChange={(e) => {
-                  setFilters((prev) => ({ ...prev, date: e.target.value }));
-                }}
-                style={{ minWidth: 120, textAlign: "center" }}
-                // disabled={loading}
-              />
-              {/* <button
+                <TextInput
+                  className="home-input"
+                  key={"status"}
+                  type={"date"}
+                  value={filters?.date}
+                  onChange={(e) => {
+                    setFilters((prev) => ({ ...prev, date: e.target.value }));
+                  }}
+                  style={{ minWidth: 100, textAlign: "center" }}
+                  // disabled={loading}
+                />
+                {/* <button
                 type="button"
                 className="date-arrow-btn"
                 aria-label="Next Day"
@@ -672,10 +673,10 @@ const HomeHearingsTab = ({
                   <path d="M9 5L16 12L9 19" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </button> */}
-            </div>
-          </LabelFieldPair>
-          <div className={`case-label-field-pair search-input`}>
-            {/* <span
+              </div>
+            </LabelFieldPair>
+            <div className={`case-label-field-pair search-input`}>
+              {/* <span
               className="search-icon-wrapper"
               onClick={() => {
                 if (!loading) {
@@ -687,62 +688,63 @@ const HomeHearingsTab = ({
             >
               <SmallSearchIcon />
             </span> */}
-            <input
-              className="home-input"
-              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")} 
-              type="text"
-              style={{ width: "280px" }}
-              value={filters?.caseQuery}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !loading) {
-                  setPage(0);
-                  setRowsPerPage(10);
-                  fetchInbox(filters, setHearingCount);
-                }
-              }}
-            />
-          </div>
-          <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
-            {t("ES_COMMON_SEARCH")}
-          </button>
-          <button className="home-clear-btn" onClick={handleClear} disabled={loading}>
-            {t("CLEAR")}
-          </button>
-        </div>
-        {
-          <div className="filter-actions">
-            <button
-              className="digit-button-tertiary large"
-              type="button"
-              onClick={() => {
-                window.open(hearingLink, "_blank");
-              }}
-              style={{
-                backgroundColor: "#007E7E",
-                height: "40px",
-                padding: "8px 24px",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <ConferenceIcon />
-                <span
-                  className="digit-button-label"
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    fontFamily: "Roboto",
-                    color: "#FFFFFF",
-                  }}
-                >
-                  {t("JOIN_VC")}
-                </span>
-              </span>
+              <input
+                className="home-input"
+                placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")}
+                type="text"
+                style={{ width: "100%" }}
+                value={filters?.caseQuery}
+                onChange={(e) => {
+                  setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    setPage(0);
+                    setRowsPerPage(10);
+                    fetchInbox(filters, setHearingCount);
+                  }
+                }}
+              />
+            </div>
+            <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
+              {t("ES_COMMON_SEARCH")}
+            </button>
+            <button className="home-clear-btn" onClick={handleClear} disabled={loading}>
+              {t("CLEAR")}
             </button>
           </div>
-        }
+          {
+            <div className="filter-actions">
+              <button
+                className="digit-button-tertiary large"
+                type="button"
+                onClick={() => {
+                  window.open(hearingLink, "_blank");
+                }}
+                style={{
+                  backgroundColor: "#007E7E",
+                  height: "40px",
+                  padding: "8px 24px",
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <ConferenceIcon />
+                  <span
+                    className="digit-button-label"
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      fontFamily: "Roboto",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    {t("JOIN_VC")}
+                  </span>
+                </span>
+              </button>
+            </div>
+          }
+        </div>
       </div>
       <div className="main-table-card">
         <div className="table-scroll">

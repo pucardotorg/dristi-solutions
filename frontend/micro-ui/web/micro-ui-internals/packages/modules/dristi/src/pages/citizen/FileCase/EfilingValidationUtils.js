@@ -1,7 +1,7 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue, TaskManagementWorkflowAction } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -864,6 +864,46 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   return allErrorData;
 };
 
+export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+
+    let errorObject = {
+      NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
+      SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
+    };
+    if (isDelayCondonation) {
+      if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
+        errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    } else {
+      if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
+        errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    }
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
+    }
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: formData?.multipleAccusedProcessCourier?.index,
+        type: "Accused",
+        complainant: formData?.multipleAccusedProcessCourier?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
+  }
+  return allErrorData;
+};
+
 export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
   if (selected === "advocateDetails") {
     const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
@@ -1567,6 +1607,7 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
   filingType,
+  isDelayCondonation,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -2355,6 +2396,9 @@ export const updateCaseDetails = async ({
             data: {
               ...data.data,
               ...documentData,
+              firstName: data?.data?.firstName?.trim(),
+              middleName: data?.data?.middleName?.trim(),
+              lastName: data?.data?.lastName?.trim(),
               complainantVerification: {
                 ...data?.data?.complainantVerification,
                 ...updatedComplainantVerification,
@@ -2535,6 +2579,9 @@ export const updateCaseDetails = async ({
             ...data,
             data: {
               ...data.data,
+              respondentFirstName: data?.data?.respondentFirstName?.trim(),
+              respondentMiddleName: data?.data?.respondentMiddleName?.trim(),
+              respondentLastName: data?.data?.respondentLastName?.trim(),
               ...documentData,
             },
             uniqueId: data?.uniqueId || generateUUID(),
@@ -2753,6 +2800,9 @@ export const updateCaseDetails = async ({
       if (!obj?.uniqueId) {
         obj.uniqueId = generateUUID();
       }
+      obj.data.firstName = obj?.data?.firstName?.trim();
+      obj.data.middleName = obj?.data?.middleName?.trim();
+      obj.data.lastName = obj?.data?.lastName?.trim();
       obj.data.ownerType = "COMPLAINANT";
     }
 
@@ -3275,6 +3325,15 @@ export const updateCaseDetails = async ({
       },
     };
   }
+  if (selected === "processCourierService") {
+    data.additionalDetails = {
+      ...caseDetails.additionalDetails,
+      processCourierService: {
+        formdata: updatedFormData,
+        isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+      },
+    };
+  }
   if (selected === "reviewCaseFile") {
     if (caseComplaintDocument) {
       tempDocList = updateComplaintDocInCaseDoc(tempDocList, caseComplaintDocument);
@@ -3313,6 +3372,25 @@ export const updateCaseDetails = async ({
       action: action,
     },
   });
+
+  if (data?.additionalDetails?.processCourierService) {
+    data.additionalDetails.processCourierService = {
+      ...data?.additionalDetails?.processCourierService,
+      formdata: data?.additionalDetails?.processCourierService?.formdata?.map((item) => {
+        const courier = item?.data?.multipleAccusedProcessCourier;
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            multipleAccusedProcessCourier: {
+              ...courier,
+              noticeCourierService: isDelayCondonation ? courier?.noticeCourierService : [],
+            },
+          },
+        };
+      }),
+    };
+  }
 
   if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
     return null;
@@ -3404,4 +3482,71 @@ export const transformCaseDataForUpdate = (caseDetails, key) => {
     }
   }
   return updatedCaseData;
+};
+
+export const mergeBreakdowns = (...breakdownArrays) => {
+  const map = {};
+  breakdownArrays?.flat()?.forEach((item) => {
+    const codeKey = item?.code;
+    if (!map[codeKey]) {
+      map[codeKey] = { ...item };
+    } else {
+      map[codeKey].amount += item?.amount;
+    }
+  });
+  return Object?.values(map);
+};
+
+export const createOrUpdateTask = async ({
+  type,
+  existingTask,
+  accusedDetails,
+  respondentFormData,
+  filingNumber,
+  tenantId,
+  isUpfrontPayment,
+  status,
+}) => {
+  if (existingTask && (!accusedDetails || accusedDetails?.length === 0)) {
+    const expirePayload = {
+      ...existingTask,
+      workflow: { action: TaskManagementWorkflowAction.EXPIRE },
+    };
+
+    await DRISTIService.updateTaskManagementService({
+      taskManagement: expirePayload,
+    });
+
+    return;
+  }
+  if (!accusedDetails || accusedDetails?.length === 0) return;
+
+  const partyDetails = accusedDetails?.map((accused) => ({
+    ...(status && { status }),
+    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
+    respondentDetails: {
+      ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      uniqueId: accused?.uniqueId,
+    },
+  }));
+
+  const taskManagementPayload = existingTask
+    ? {
+        ...existingTask,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+      }
+    : {
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails,
+        partyType: "RESPONDENT",
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+      };
+
+  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+  await serviceMethod({ taskManagement: taskManagementPayload });
 };

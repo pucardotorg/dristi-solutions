@@ -14,6 +14,7 @@ import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
 import org.pucar.dristi.util.EpostUtil;
 import org.pucar.dristi.validator.EPostUserValidator;
+import org.pucar.dristi.validator.EPostValidator;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,6 +36,9 @@ class EPostServiceTest {
 
     @Mock
     private EPostConfiguration configuration;
+
+    @Mock
+    private EPostValidator ePostValidator;
 
     @InjectMocks
     private EPostService ePostService;

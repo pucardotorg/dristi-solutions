@@ -185,15 +185,81 @@ public class TreasuryEnrichment {
                     case ADVOCATE_WELFARE_FUND -> data.setAdvocateWelfareFund(breakDown.getAmount());
                     case ADVOCATE_CLERK_WELFARE_FUND -> data.setAdvocateClerkWelfareFund(breakDown.getAmount());
                     case LEGAL_BENEFIT_FEE -> data.setLegalBenefitFee(breakDown.getAmount());
+                    case EPOST_FEE -> data.setEpostFee(breakDown.getAmount());
+                    case DELAY_CONDONATION_FEE -> data.setDelayCondonationFee(breakDown.getAmount());
+                    case COMPLAINT_FEE -> data.setComplaintFee(breakDown.getAmount());
+                    case APPLICATION_FEE -> data.setApplicationFee(breakDown.getAmount());
+                    case PETITION_FEE -> data.setPetitionFee(breakDown.getAmount());
                 }
             }
-            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee();
+            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getEpostFee() + data.getLegalBenefitFee() + data.getDelayCondonationFee() + data.getComplaintFee() + data.getApplicationFee() + data.getPetitionFee();
             data.setTotalAmount(totalAmount);
+            buildFeeBreakDown(data);
             log.info("operation=enrichTreasuryPaymentData, result=SUCCESS");
         } catch (Exception e) {
             log.error("operation=enrichTreasuryPaymentData, result=Failure");
             throw new CustomException("ERROR_ENRICH_PAYMENT", "Error enriching payment data.");
         }
+    }
+    private void buildFeeBreakDown(TreasuryPaymentData data) {
+        List<FeeBreakDown> fees = new ArrayList<>();
+        if (data.getCourtFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Court Fee:")
+                    .feeAmount(data.getCourtFee())
+                    .build());
+        }
+
+        if (data.getAdvocateWelfareFund() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Fee for Advocate Welfare Fund:")
+                    .feeAmount(data.getAdvocateWelfareFund())
+                    .build());
+        }
+
+        if (data.getAdvocateClerkWelfareFund() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Fee for Clerk Welfare Fund:")
+                    .feeAmount(data.getAdvocateClerkWelfareFund())
+                    .build());
+        }
+
+        if (data.getLegalBenefitFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Legal Benefit Fund:")
+                    .feeAmount(data.getLegalBenefitFee())
+                    .build());
+        }
+
+        if (data.getEpostFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Epost Fee:")
+                    .feeAmount( data.getEpostFee())
+                    .build());
+        }
+
+        if (data.getDelayCondonationFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Delay Condonation Fee:")
+                    .feeAmount(data.getDelayCondonationFee())
+                    .build());
+        }
+
+        if (data.getComplaintFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Complaint Fee:")
+                    .feeAmount(data.getComplaintFee())
+                    .build());
+        }
+
+        if (data.getApplicationFee() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Application Fee:")
+                    .feeAmount(data.getApplicationFee())
+                    .build());
+        }
+
+        data.setFeeBreakDown(fees);
     }
 
     public String enrichGrn(RequestInfo requestInfo) {

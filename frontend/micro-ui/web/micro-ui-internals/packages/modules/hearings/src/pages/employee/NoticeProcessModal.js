@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { formatDate } from "../../utils";
-import { hearingService } from "../../hooks/services";
-import { Urls } from "../../hooks/services/Urls";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "72%",
@@ -24,22 +23,12 @@ const modalPopup = {
   // height: "calc(100% - 64px)"
 };
 
-const actionButtonStyle = {
-  position: "fixed",
-  marginBottom: "0px",
-  bottom: "0px",
-  right: "21px",
-  width: "calc(100% - 21px)",
-  backgroundColor: "white",
-  paddingBottom: "14px",
-};
-
-const headingStyle = {
-  fontFamily: "Roboto",
-  fontSize: "16px",
-  fontWeight: 700,
-  lineHeight: "18.75px",
-  textAlign: "center",
+const formDataKeyMap = {
+  NOTICE: "noticeOrder",
+  SUMMONS: "SummonsOrder",
+  WARRANT: "warrantFor",
+  PROCLAMATION: "proclamationFor",
+  ATTACHMENT: "attachmentFor",
 };
 
 const ModalHeading = ({ label }) => {
@@ -50,35 +39,45 @@ const ModalHeading = ({ label }) => {
   );
 };
 
-const CloseButton = (props) => {
-  return (
-    <div onClick={props?.onClick} className="header-bar-end">
-      <CloseSvg />
-    </div>
-  );
-};
+function removeAccusedSuffix(partyName) {
+  return partyName?.replace(/\s*\((Accused|witness)\)$/, "");
+}
 
 function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
-  filteredOrders.forEach((order) => {
-    const party = order.orderDetails?.parties?.[0];
-    if (!party) return;
+  filteredOrders?.forEach((order) => {
+    const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
+    const parties = Array.isArray(party) ? party : party ? [party] : [];
+    if (!Array?.isArray(parties) || parties?.length === 0) return;
 
-    let partyName = party.partyName.trim();
-    let partyType = party.partyType.toLowerCase();
-    if (partyType === "respondent") {
-      partyType = "Accused";
-    }
-    if (partyType === "witness") {
-      partyType = "Witness";
-    }
+    parties.forEach((party) => {
+      const partyName = getFormattedName(
+        party?.data?.firstName || party?.data?.respondentFirstName,
+        party?.data?.middleName || party?.data?.respondentMiddleName,
+        party?.data?.lastName || party?.data?.respondentLastName,
+        party?.data?.witnessDesignation,
+        null
+      );
 
-    if (!accusedWiseOrdersMap.has(partyName)) {
-      accusedWiseOrdersMap.set(partyName, { partyType, partyName, ordersList: [] });
-    }
+      if (!partyName) return;
 
-    accusedWiseOrdersMap.get(partyName).ordersList.push(order);
+      let partyType = (party?.data?.partyType || "").toLowerCase();
+
+      if (partyType === "respondent") {
+        partyType = "Accused";
+      } else if (partyType === "witness") {
+        partyType = "Witness";
+      } else {
+        partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
+      }
+
+      if (!accusedWiseOrdersMap?.has(partyName)) {
+        accusedWiseOrdersMap?.set(partyName, { partyType, partyName, ordersList: [] });
+      }
+
+      accusedWiseOrdersMap?.get(partyName)?.ordersList?.push(order);
+    });
   });
 
   const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());
@@ -101,13 +100,14 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
-  const partyIndex = state?.state?.params?.partyIndex;
   const taskCnrNumber = state?.state?.params?.taskCnrNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [orderNumber, setOrderNumber] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
+  const [partyName, setPartyName] = useState(null);
+  const [partyType, setPartyType] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -140,22 +140,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return [];
   }, [hearingsData, currentHearingId]);
 
-  const { caseId, cnrNumber, caseTitle } = useMemo(
-    () => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
-    [caseDetails]
-  );
+  const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
 
   const handleCloseModal = () => {
     if (handleClose) {
       handleClose();
     } else history.goBack();
-  };
-
-  const handleNavigate = () => {
-    const contextPath = window?.contextPath || "";
-    history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${currentHearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
-    );
   };
 
   const { data: ordersData } = useSearchOrdersService(
@@ -227,6 +217,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
+    setPartyName(removeAccusedSuffix(orderListFiltered?.[0]?.partyName));
+    setPartyType(orderListFiltered?.[0]?.partyType);
   }, [orderListFiltered]);
 
   const config = useMemo(() => {
@@ -239,32 +231,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       orderType,
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
+      partyName,
+      partyType,
     });
-  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId]);
-
-  const getOrderPartyData = (orderType, orderList) => {
-    return orderList?.find((item) => orderType === item?.orderType)?.orderDetails?.parties;
-  };
-
-  const { data: tasksData, isLoading: isTaskLoading } = Digit.Hooks.hearings.useGetTaskList(
-    {
-      criteria: {
-        tenantId: tenantId,
-        cnrNumber: taskCnrNumber || cnrNumber,
-      },
-    },
-    {},
-    filingNumber,
-    Boolean(filingNumber)
-  );
-
-  const isButtonVisible = useMemo(() => {
-    if (!tasksData || !orderId) return false;
-
-    const filteredTasks = tasksData?.list?.filter((task) => task?.orderId === orderId);
-
-    return filteredTasks?.some((task) => task?.status === "UNDELIVERED" || task?.status === "NOT_EXECUTED");
-  }, [orderId, tasksData]);
+  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
 
   const CloseButton = (props) => {
     return (
@@ -306,10 +276,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     );
   }, [t, caseDetails?.caseTitle, filingNumber, currentHearingId, hearingDetails?.startTime, userType, caseId]);
 
-  function removeAccusedSuffix(partyName) {
-    return partyName.replace(/\s*\(Accused\)$/, "");
-  }
-
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
       {!showModal && (
@@ -329,6 +295,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
+              setPartyName(removeAccusedSuffix(item?.partyName));
+              setPartyType(item?.partyType);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);

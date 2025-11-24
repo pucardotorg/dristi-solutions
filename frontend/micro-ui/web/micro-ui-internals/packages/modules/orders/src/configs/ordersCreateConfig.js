@@ -2935,10 +2935,10 @@ export const configsIssueSummons = [
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "SummonsOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_SUMMON",
         populators: {
           inputs: [
@@ -2946,10 +2946,7 @@ export const configsIssueSummons = [
               name: "select party",
               type: "dropdown",
               addWitness: true,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },
@@ -3087,10 +3084,10 @@ export const configsIssueNotice = [
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "noticeOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_NOTICE",
         populators: {
           inputs: [
@@ -3098,10 +3095,7 @@ export const configsIssueNotice = [
               name: "select party",
               type: "dropdown",
               addWitness: false,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },
@@ -4548,6 +4542,15 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4576,15 +4579,17 @@ export const configsIssueBailAcceptance = [
         populators: {
           styles: { maxWidth: "100%" },
           name: "bailType",
-          optionsKey: "type",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
+          defaultValue: { code: "SURETY", name: "SURETY" },
           mdmsConfig: {
             masterName: "BailType",
             moduleName: "Order",
             localePrefix: "BAIL_TYPE",
-            select: "(data) => {return data['Order'].BailType?.map((item) => {return {...item, code: item.type};});}",
+            select:
+              "(data) => {return data['Order'].BailType?.map((item) => {if (item.type === 'BAIL_BOND') { return { ...item, code: item.type, name: 'PERSONAL' }; } return { ...item, code: item.type, name: item.type };});}",
           },
         },
       },
@@ -4604,7 +4609,7 @@ export const configsIssueBailAcceptance = [
       {
         type: "number",
         label: "NO_OF_SURETIES",
-        isMandatory: true,
+        isMandatory: false,
         key: "noOfSureties",
         schemaKeyPath: "orderDetails.noOfSureties",
         populators: {
@@ -4706,6 +4711,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailParty",
         disable: true,
         populators: {
+          hideInForm: true,
           name: "bailParty",
           styles: { maxWidth: "100%" },
           error: "required ",
@@ -4753,11 +4759,13 @@ export const configsIssueBailReject = [
               },
             },
           ],
+          hideInForm: true,
         },
       },
     ],
   },
 ];
+
 export const configsSetTermBail = [
   {
     body: [

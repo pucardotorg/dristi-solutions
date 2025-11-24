@@ -81,4 +81,62 @@ export const convertToDateInputFormat = (dateInput) => {
   return formatDate(date);
 };
 
+export function convertTaskResponseToPayload(responseArray, id = null) {
+  if (!Array.isArray(responseArray) || !responseArray.length) return null;
+
+  let data = [];
+  if (id) {
+    const matchedTask = responseArray?.find((task) =>
+      task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field?.value === id)
+    );
+    data = matchedTask?.fields || [];
+  } else {
+    data = responseArray?.[0]?.fields || [];
+  }
+  const flatData = data;
+  const structuredData = {};
+
+  function setDeepValue(obj, path, value) {
+    const parts = path?.replace(/\[(\w+)\]/g, ".$1")?.split(".");
+    let current = obj;
+    for (let i = 0; i < parts?.length; i++) {
+      const key = parts[i];
+      if (i === parts.length - 1) {
+        current[key] = value;
+      } else {
+        if (!current[key] || typeof current[key] !== "object") {
+          current[key] = isNaN(parts[i + 1]) ? {} : [];
+        }
+        current = current[key];
+      }
+    }
+  }
+
+  flatData?.forEach(({ key, value }) => {
+    const normalizedValue = value === "null" ? null : value === "true" ? true : value === "false" ? false : value;
+    setDeepValue(structuredData, key, normalizedValue);
+  });
+
+  const pendingTask = {
+    name: structuredData?.name,
+    entityType: structuredData?.entityType,
+    referenceId: structuredData?.referenceId,
+    status: structuredData?.status,
+    assignedTo: structuredData?.assignedTo,
+    assignedRole: structuredData?.assignedRole,
+    actionCategory: structuredData?.actionCategory,
+    cnrNumber: structuredData?.cnrNumber,
+    filingNumber: structuredData?.filingNumber,
+    caseId: structuredData?.caseId,
+    caseTitle: structuredData?.caseTitle,
+    isCompleted: structuredData?.isCompleted,
+    expiryDate: structuredData?.expiryDate,
+    stateSla: structuredData?.stateSla,
+    additionalDetails: structuredData?.additionalDetails,
+    courtId: structuredData?.courtId,
+  };
+
+  return pendingTask;
+}
+
 export default {};

@@ -58,7 +58,7 @@ async function processTitlePageSection(
     });
 
     // update index
-    const titlepageIndexSection = indexCopy.sections.find(
+    const titlepageIndexSection = indexCopy.sections?.find(
       (section) => section.name === "titlepage"
     );
 

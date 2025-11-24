@@ -206,4 +206,6 @@ public class ServiceConstants {
     public static final String TASK_PDF_NAME = "Task.pdf";
 
     public static final String TASKS_BULK_SIGN_EXCEPTION = "TASKS_BULK_SIGN_EXCEPTION";
+
+    public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
 }

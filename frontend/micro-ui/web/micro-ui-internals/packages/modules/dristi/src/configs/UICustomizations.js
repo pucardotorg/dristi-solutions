@@ -2167,6 +2167,15 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: activeTab === "NOTICE_SUMMONS_MANAGEMENT" ? false : true,
+              actionCategory: "Notice and Summons Management",
+              ...(activeTab === "NOTICE_SUMMONS_MANAGEMENT" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2183,6 +2192,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2191,6 +2201,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2209,6 +2220,19 @@ export const UICustomizations = {
                     if (!acc.advocateDetails) acc.advocateDetails = {};
                     acc.advocateDetails[subKey] = curr.value;
                   }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
+                } else if (key === "additionalDetails.partyType") {
+                  acc.partyType = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
@@ -2225,12 +2249,22 @@ export const UICustomizations = {
                 createdTime: result?.createdTime,
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                partyUniqueIds: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
+                partyType: result?.partyType,
+                processType: result?.name?.trim()?.split(" ")?.pop(),
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
+              return {
+                TotalCount: data?.noticeAndSummonsData?.count,
+                data: data?.noticeAndSummonsData?.data?.map((item) => processFields(item.fields)),
               };
             } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
@@ -2265,6 +2299,27 @@ export const UICustomizations = {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const caseId = row?.caseNumber || row?.filingNumber;
+      const getDaysDiff = (value) => {
+        const createdAt = new Date(value);
+        const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+
+        const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+        return Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      };
+      const renderDaysDiff = (value) => {
+        const days = getDaysDiff(value);
+        return (
+          <span
+            style={{
+              color: days > 2 ? "#9E400A" : undefined,
+              fontWeight: days > 2 ? 500 : 400,
+            }}
+          >
+            {days}
+          </span>
+        );
+      };
+
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2278,7 +2333,7 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link
@@ -2328,11 +2383,9 @@ export const UICustomizations = {
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_DAYS_FILING":
-          const createdAt = new Date(value);
-          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
-          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
-          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+          return renderDaysDiff(value);
+        case "CS_DAYS_REGISTRATION":
+          return renderDaysDiff(value);
         case "APPLICATION_TYPE":
           return t(value);
         default:
@@ -2365,6 +2418,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
               actionCategory: "Register cases",
+            },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Notice and Summons Management",
             },
             searchBailBonds: {
               date: currentDateInMs,
@@ -2420,6 +2478,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2428,6 +2487,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
