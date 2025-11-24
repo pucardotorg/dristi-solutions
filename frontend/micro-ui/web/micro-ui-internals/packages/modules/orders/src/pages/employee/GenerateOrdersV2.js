@@ -4629,7 +4629,7 @@ const GenerateOrdersV2 = () => {
           handleDownloadOrders={handleDownloadOrders}
           handleClose={handleClose}
           handleCloseSuccessModal={handleCloseSuccessModal}
-          actionSaveLabel={t("ISSUE_NOTICE_BUTTON")}
+          actionSaveLabel={successModalActionSaveLabel}
         />
       )}
       {showOrderValidationModal?.showModal && (
