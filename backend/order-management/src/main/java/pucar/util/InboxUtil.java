@@ -1,4 +1,4 @@
-package org.egov.transformer.util;
+package pucar.util;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,20 +6,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.ServiceCallException;
-import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.inbox.*;
-import org.egov.transformer.repository.ServiceRequestRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import pucar.config.Configuration;
+import pucar.repository.ServiceRequestRepository;
+import pucar.web.models.inbox.*;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
-import static org.egov.transformer.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static org.egov.transformer.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+
 
 @Component
 @Slf4j
@@ -27,43 +29,52 @@ public class InboxUtil {
 
     private final ObjectMapper objectMapper;
     private final ServiceRequestRepository serviceRequestRepository;
-    private final TransformerProperties configuration;
+    private final Configuration configuration;
+    private final DateUtil dateUtil;
 
-    public InboxUtil(ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, TransformerProperties configuration) {
+    public InboxUtil(ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, Configuration configuration, DateUtil dateUtil) {
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.configuration = configuration;
+        this.dateUtil = dateUtil;
     }
 
-    public <T> List<T> getInboxEntities(InboxRequest request, String businessObjectKey, Class<T> entityClass) {
+
+    public List<OpenHearing> getOpenHearings(InboxRequest request) {
+
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-        InboxResponse searchResponse;
-        List<T> entityList = new ArrayList<>();
+        InboxResponse openHearingSearchResponse ;
+        List<OpenHearing> openHearingList = new ArrayList<>();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            searchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
-            List<Inbox> items = searchResponse.getItems();
+            openHearingSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+            List<Inbox> items = openHearingSearchResponse.getItems();
 
             for (Inbox inbox : items) {
-                T entity = entityClass.getDeclaredConstructor().newInstance();
+                OpenHearing openHearing = new OpenHearing();
                 Map<String, Object> businessObject = inbox.getBusinessObject();
-                Map details = (Map) businessObject.get(businessObjectKey);
-                mapValuesToEntity(entity, details);
-                entityList.add(entity);
+                Map hearingDetails = (Map) businessObject.get("hearingDetails");
+                mapValuesToOpenHearing(openHearing,hearingDetails );
+                openHearingList.add(openHearing);
             }
+
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
         }
-        return entityList;
+
+        return openHearingList;
+
     }
 
-    private <T> void mapValuesToEntity(T entity, Map<String, Object> keyValueMap) {
-        Class<?> clazz = entity.getClass();
+    private void mapValuesToOpenHearing(OpenHearing openHearing, Map<String, Object> keyValueMap) {
+
+
+        Class<?> clazz = openHearing.getClass();
 
         for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
             try {
@@ -72,13 +83,6 @@ public class InboxUtil {
                 Object value = entry.getValue();
 
                 if (value == null) continue;
-
-                if (field.getType().isEnum()) {
-                    Method fromValue = field.getType().getMethod("fromValue", String.class);
-                    Object enumValue = fromValue.invoke(null, value.toString());
-                    field.set(entity, enumValue);
-                    continue;
-                }
 
                 // Handle lists
                 if (List.class.isAssignableFrom(field.getType())) {
@@ -91,27 +95,23 @@ public class InboxUtil {
                         for (Object v : listValue) {
                             convertedList.add(convertValue(v, listGenericType));
                         }
-                        field.set(entity, convertedList);
+                        field.set(openHearing, convertedList);
                     }
                 }
                 // Handle nested objects
                 else if (!field.getType().isPrimitive() && !field.getType().equals(String.class) &&
                         !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType())) {
                     Object convertedObject = objectMapper.convertValue(value, field.getType());
-                    field.set(entity, convertedObject);
+                    field.set(openHearing, convertedObject);
                 }
                 // Handle primitives and other types
                 else {
-                    field.set(entity, convertValue(value, field.getType()));
+                    field.set(openHearing, convertValue(value, field.getType()));
                 }
             } catch (NoSuchFieldException e) {
                 log.error("Field not found:{} ", entry.getKey());
             } catch (IllegalAccessException e) {
                 log.error("Error accessing field: {}", entry.getKey());
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
             }
         }
     }
@@ -139,22 +139,22 @@ public class InboxUtil {
     }
 
 
-    public InboxRequest getInboxRequestForOpenHearing(String courtId,String hearingUuid) {
+    public InboxRequest getInboxRequestForOpenHearing(String courtId,String hearingNumber) {
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
 
         moduleSearchCriteria.put("courtId", courtId);
-        moduleSearchCriteria.put("hearingUuid", hearingUuid);
+        moduleSearchCriteria.put("hearingNumber", hearingNumber);
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Hearing Service")
-                .tenantId(configuration.getEgovStateTenantId())
+                .tenantId(configuration.getStateLevelTenantId())
                 .businessService(Collections.singletonList("hearing-default"))
                 .build();
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
-                .tenantId(configuration.getEgovStateTenantId())
-                .limit(1)
+                .tenantId(configuration.getStateLevelTenantId())
+                .limit(300)
                 .offset(0)
                 .build();
 
@@ -163,23 +163,27 @@ public class InboxUtil {
                 .build();
     }
 
-    public InboxRequest getInboxRequestForArtifacts(String courtId, String filingNumber) {
-
+    public InboxRequest getOpenPendingTasks() {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        ZoneId zoneId = ZoneId.of(configuration.getZoneId());
 
-        moduleSearchCriteria.put("courtId", courtId);
-        moduleSearchCriteria.put("filingNumber", filingNumber);
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId);
+
+        long millis = zonedDateTime.toInstant().toEpochMilli();
+
+        moduleSearchCriteria.put("expiryDate", millis);
+        moduleSearchCriteria.put("isCompleted", false);
+        moduleSearchCriteria.put("entityType", "bail bond");
+
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
-                .moduleName("Evidence Service")
-                .tenantId(configuration.getEgovStateTenantId())
-                .businessService(Collections.singletonList("evidence-default"))
+                .moduleName("Pending Tasks Service")
+                .businessService(Collections.singletonList(""))
                 .build();
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
-                .tenantId(configuration.getEgovStateTenantId())
-                //Todo: Remove hard coded limit once inbox search limit is updated
-                .limit(Integer.valueOf(configuration.getInboxSearchLimit()))
+                .tenantId(configuration.getStateLevelTenantId())
+                .limit(300)
                 .offset(0)
                 .build();
 
@@ -187,4 +191,26 @@ public class InboxUtil {
                 .inbox(inboxSearchCriteria)
                 .build();
     }
+
+    public List<Inbox> getPendingTasksForExpiry(InboxRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        InboxResponse pendingTaskSearchResponse ;
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            pendingTaskSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+
+            return pendingTaskSearchResponse.getItems();
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+        return new ArrayList<>();
+    }
+
 }
