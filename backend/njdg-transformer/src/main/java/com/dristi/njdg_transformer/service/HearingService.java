@@ -124,7 +124,7 @@ public class HearingService {
 
     public void processBusinessOrder(Order order, RequestInfo requestInfo){
         try {
-            String hearingId = order.getScheduledHearingNumber();
+            String hearingId = order.getHearingNumber();
             // Create search criteria for scheduled hearings
             HearingCriteria criteria = HearingCriteria.builder()
                     .tenantId(order.getTenantId())
