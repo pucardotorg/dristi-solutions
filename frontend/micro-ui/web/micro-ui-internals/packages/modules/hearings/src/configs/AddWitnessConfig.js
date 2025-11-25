@@ -210,6 +210,7 @@ const createWitnessConfig = (index) => [
         type: "component",
         label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
         component: "SelectCustomTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
