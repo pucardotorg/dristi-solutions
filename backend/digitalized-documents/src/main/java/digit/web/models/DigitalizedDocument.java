@@ -3,6 +3,7 @@ package digit.web.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +31,7 @@ public class DigitalizedDocument {
     private String id = null;
 
     @JsonProperty("type")
+    @NotNull
     private TypeEnum type = null;
 
     @JsonProperty("documentNumber")
