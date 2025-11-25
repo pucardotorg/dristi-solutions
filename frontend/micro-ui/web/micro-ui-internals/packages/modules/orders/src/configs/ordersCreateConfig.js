@@ -5750,6 +5750,9 @@ export const configsCost = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
           prefix: "",
+          validation: {
+            pattern: "^[0-9]+(\\.[0-9]{0,2})?$",
+          },
         },
       },
       {
