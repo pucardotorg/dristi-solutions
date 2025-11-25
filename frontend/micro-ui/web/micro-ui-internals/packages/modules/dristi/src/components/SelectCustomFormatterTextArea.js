@@ -119,7 +119,6 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
   }
 
   const handleChange = (value, input) => {
-    debugger
     const sanitized = DOMPurify.sanitize(value, defaultSanitizeOptions);
     setEditorHtml(sanitized);
     setValue(sanitized, input.name);
