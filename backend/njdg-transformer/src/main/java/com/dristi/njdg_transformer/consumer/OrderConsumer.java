@@ -109,7 +109,7 @@ public class OrderConsumer {
             String outcome = getOutcomeValue(order.getOrderType(), order.getTenantId(), requestInfo);
             if(outcome != null) {
                 order.setOutcome(outcome);
-                log.debug("Set outcome for intermediate order | orderNumber: {} | orderType: {} | outcome: {}", 
+                log.info("Set outcome for intermediate order | orderNumber: {} | orderType: {} | outcome: {}",
                          order.getOrderNumber(), order.getOrderType(), outcome);
                 return true;
             }
@@ -119,7 +119,7 @@ public class OrderConsumer {
                 String outcome = getOutcomeValue(compositeItem.get("orderType").asText(), order.getTenantId(), requestInfo);
                 if(outcome != null) {
                     order.setOutcome(outcome);
-                    log.debug("Set outcome for composite order | orderNumber: {} | orderType: {} | outcome: {}", 
+                    log.info("Set outcome for composite order | orderNumber: {} | orderType: {} | outcome: {}",
                              order.getOrderNumber(), compositeItem.get("orderType").asText(), outcome);
                     return true;
                 }
@@ -181,12 +181,12 @@ public class OrderConsumer {
                 String outcomeOrderType = jsonUtil.getNestedValue(outcomeObject, List.of("orderType"), String.class);
                 if(orderType.equalsIgnoreCase(outcomeOrderType)){
                     String outcomeValue = jsonUtil.getNestedValue(outcomeObject, List.of("outcome"), String.class);
-                    log.debug("Found outcome for orderType | orderType: {} | outcome: {}", orderType, outcomeValue);
+                    log.info("Found outcome for orderType | orderType: {} | outcome: {}", orderType, outcomeValue);
                     return outcomeValue;
                 }
             }
             
-            log.debug("No outcome found for orderType | orderType: {}", orderType);
+            log.info("No outcome found for orderType | orderType: {}", orderType);
             return null;
         } catch (Exception e) {
             log.error("Error fetching outcome value for orderType | orderType: {} | error: {}", orderType, e.getMessage(), e);
