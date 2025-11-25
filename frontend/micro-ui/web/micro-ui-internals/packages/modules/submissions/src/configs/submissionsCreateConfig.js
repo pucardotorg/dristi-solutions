@@ -1473,7 +1473,7 @@ export const configsCaseTransfer = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinte: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
