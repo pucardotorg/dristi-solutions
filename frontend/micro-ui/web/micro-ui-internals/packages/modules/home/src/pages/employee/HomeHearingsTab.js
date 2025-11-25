@@ -10,7 +10,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import useInboxSearch from "../../hooks/useInboxSearch";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { SmallSearchIcon, ConferenceIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { ConferenceIcon, DocumentSignedIcon, DocumentNotSignedIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -520,9 +520,53 @@ const HomeHearingsTab = ({
           </td>
           <td style={{ maxWidth: "150px" }}>{t(hearingDetails?.hearingType) || "-"}</td>
           <td>
-            <span className={`status-badge ${statusClass(hearingDetails?.status)}`}>
-              {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
-            </span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+              }}
+            >
+              <span
+                className={`status-badge ${statusClass(hearingDetails?.status)}`}
+                style={{
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
+              </span>
+
+              {hearingDetails?.status === "IN_PROGRESS" &&
+                (hearingDetails?.orderStatus === "SIGNED" ? (
+                  <span
+                    style={{
+                      borderRadius: "50%",
+                      padding: "10px",
+                      background: "#F0FDF4",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <DocumentSignedIcon />
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      borderRadius: "50%",
+                      padding: "10px",
+                      background: "#FEE2E2",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <DocumentNotSignedIcon />
+                  </span>
+                ))}
+            </div>
           </td>
           <td
             style={{
