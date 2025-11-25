@@ -524,7 +524,8 @@ const HomeHearingsTab = ({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "14px",
+                justifyContent: "space-between",
+                ...(!isJudge && { width: "170px" }),
               }}
             >
               <span
@@ -538,7 +539,7 @@ const HomeHearingsTab = ({
                 {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
               </span>
 
-              {hearingDetails?.status === "IN_PROGRESS" && (
+              {!isJudge && (
                 <span
                   title={hearingDetails?.orderStatus === "SIGNED" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
                   style={{
