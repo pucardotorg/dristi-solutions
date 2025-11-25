@@ -408,7 +408,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -471,7 +471,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-           // removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -570,6 +570,19 @@ public class CaseService {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
 
+        // Safely get the document list using Optional
+        List<Document> documents = Optional.ofNullable(updateCase.getDocuments())
+                .orElse(Collections.emptyList());
+
+        // Collect docs with getToDelete() == true
+        List<Document> docsToDelete = documents.stream()
+                .filter(doc -> Boolean.TRUE.equals(doc.getToDelete()))
+                .toList();
+
+        // Remove documents marked for delete (only if list is modifiable)
+        Optional.ofNullable(updateCase.getDocuments())
+                .ifPresent(list -> list.removeIf(doc -> Boolean.TRUE.equals(doc.getToDelete())));
+
         Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
         Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
         // Collect documents from existingCase that are not present in updateCase
@@ -590,6 +603,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
+        documentsToDelete.addAll(docsToDelete);
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));

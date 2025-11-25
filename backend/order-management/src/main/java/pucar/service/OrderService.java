@@ -112,8 +112,9 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && order.getHearingNumber() != null) {
             updateHearingSummary(request);
+            hearingUtil.updateOpenHearingIndex(request.getOrder());
         }
 
         return orderResponse.getOrder();
