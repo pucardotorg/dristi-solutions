@@ -44,8 +44,8 @@ public class NjdgConsumer {
             
             log.info("Processing case details | CINO: {}", cino);
             
-            boolean recordExists = checkIfRecordExists(cino);
-            if (recordExists) {
+            NJDGTransformRecord existingRecord = checkIfRecordExists(cino);
+            if (existingRecord != null) {
                 log.info("Updating existing case record | CINO: {}", cino);
                 caseRepository.updateRecord(record);
                 log.info("Successfully updated case record | CINO: {}", cino);
@@ -74,14 +74,13 @@ public class NjdgConsumer {
      * @param cino The Case Identification Number to check
      * @return true if record exists, false otherwise
      */
-    private boolean checkIfRecordExists(String cino) {
+    private NJDGTransformRecord checkIfRecordExists(String cino) {
         try {
             // Try to find the record by CINO
-            NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
-            return existingRecord != null;
+            return caseRepository.findByCino(cino);
         } catch (Exception e) {
             log.warn("Error checking if record exists | CINO: {} | error: {}", cino, e.getMessage());
-            return false; // Assume record doesn't exist if there's an error checking
+            return null; // Assume record doesn't exist if there's an error checking
         }
     }
 
@@ -138,60 +137,64 @@ public class NjdgConsumer {
             } else {
                 // Insert new hearing
                 hearingRepository.insertHearingDetails(hearingDetails);
+                updateCasePurpose(cino, hearingDetails);
                 log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
             }
-            
-            // Update case record with hearing information
-            List<HearingDetails> hearingDetailsList = hearingRepository.getHearingDetailsByCino(cino);
-            NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
-            if (existingRecord != null) {
-                existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
-                existingRecord.setDateNextList(hearingDetails.getHearingDate());
-                existingRecord.setDateLastList(hearingDetails.getHearingDate());
-                existingRecord.setPurposeCode(getPurposeValue(hearingDetails.getPurposeOfListing()));
-                
-                // Calculate purpose_next and purpose_previous from hearings
-                if (hearingDetailsList != null && !hearingDetailsList.isEmpty()) {
-                    // Sort hearings by srNo to get chronological order
-                    hearingDetailsList.sort(Comparator.comparingInt(HearingDetails::getSrNo));
-                    
-                    // Find current hearing position
-                    int currentIndex = -1;
-                    for (int i = 0; i < hearingDetailsList.size(); i++) {
-                        if (hearingDetailsList.get(i).getSrNo().equals(hearingDetails.getSrNo())) {
-                            currentIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // Set purpose_previous (previous hearing's purpose)
-                    if (currentIndex > 0) {
-                        HearingDetails previousHearing = hearingDetailsList.get(currentIndex - 1);
-                        Integer purposePrevious = getPurposeValue(previousHearing.getPurposeOfListing());
-                        existingRecord.setPurposePrevious(purposePrevious);
-                        log.info("Set purpose_previous: {} | CINO: {}", purposePrevious, cino);
-                    } else {
-                        existingRecord.setPurposePrevious(0); // Default value when no previous hearing
-                        log.info("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
-                    }
-                    
-                    // Set purpose_next (next hearing's purpose)
-                    if (currentIndex >= 0 && currentIndex < hearingDetailsList.size() - 1) {
-                        HearingDetails nextHearing = hearingDetailsList.get(currentIndex + 1);
-                        Integer purposeNext = getPurposeValue(nextHearing.getPurposeOfListing());
-                        existingRecord.setPurposeNext(purposeNext);
-                        log.info("Set purpose_next: {} | CINO: {}", purposeNext, cino);
-                    } else {
-                        existingRecord.setPurposeNext(getPurposeValue(hearingDetails.getPurposeOfListing())); // Default value when no next hearing
-                        log.info("Set purpose_next to default (no next hearing) | CINO: {}", cino);
-                    }
-                }
-                caseRepository.updateRecord(existingRecord);
-                log.info("Updated case record with hearing info | CINO: {}", cino);
-            }
+
         } catch (Exception e) {
             log.error("Failed to process hearing details | CINO: {} | hearingId: {} | messageId: {} | error: {}", 
                      cino, hearingId, messageId, e.getMessage(), e);
+        }
+    }
+
+    private void updateCasePurpose(String cino, HearingDetails hearingDetails) {
+        // Update case record with hearing information
+        List<HearingDetails> hearingDetailsList = hearingRepository.getHearingDetailsByCino(cino);
+        NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
+        if (existingRecord != null) {
+            existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
+            existingRecord.setDateNextList(hearingDetails.getHearingDate());
+            existingRecord.setDateLastList(hearingDetails.getHearingDate());
+            existingRecord.setPurposeCode(getPurposeValue(hearingDetails.getPurposeOfListing()));
+
+            // Calculate purpose_next and purpose_previous from hearings
+            if (hearingDetailsList != null && !hearingDetailsList.isEmpty()) {
+                // Sort hearings by srNo to get chronological order
+                hearingDetailsList.sort(Comparator.comparingInt(HearingDetails::getSrNo));
+
+                // Find current hearing position
+                int currentIndex = -1;
+                for (int i = 0; i < hearingDetailsList.size(); i++) {
+                    if (hearingDetailsList.get(i).getSrNo().equals(hearingDetails.getSrNo())) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+
+                // Set purpose_previous (previous hearing's purpose)
+                if (currentIndex > 0) {
+                    HearingDetails previousHearing = hearingDetailsList.get(currentIndex - 1);
+                    Integer purposePrevious = getPurposeValue(previousHearing.getPurposeOfListing());
+                    existingRecord.setPurposePrevious(purposePrevious);
+                    log.info("Set purpose_previous: {} | CINO: {}", purposePrevious, cino);
+                } else {
+                    existingRecord.setPurposePrevious(0); // Default value when no previous hearing
+                    log.info("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
+                }
+
+                // Set purpose_next (next hearing's purpose)
+                if (currentIndex >= 0 && currentIndex < hearingDetailsList.size() - 1) {
+                    HearingDetails nextHearing = hearingDetailsList.get(currentIndex + 1);
+                    Integer purposeNext = getPurposeValue(nextHearing.getPurposeOfListing());
+                    existingRecord.setPurposeNext(purposeNext);
+                    log.info("Set purpose_next: {} | CINO: {}", purposeNext, cino);
+                } else {
+                    existingRecord.setPurposeNext(getPurposeValue(hearingDetails.getPurposeOfListing())); // Default value when no next hearing
+                    log.info("Set purpose_next to default (no next hearing) | CINO: {}", cino);
+                }
+            }
+            caseRepository.updateRecord(existingRecord);
+            log.info("Updated case record with hearing info | CINO: {}", cino);
         }
     }
 

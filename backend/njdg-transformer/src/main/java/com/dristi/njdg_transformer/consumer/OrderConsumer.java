@@ -82,7 +82,7 @@ public class OrderConsumer {
                 log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
                         orderId, order.getOrderType());
             }
-            if(order.getHearingNumber() != null && order.getItemText() != null) {
+            if(order.getScheduledHearingNumber()!= null && order.getHearingNumber() != null && order.getItemText() != null) {
                 hearingService.processBusinessOrder(order, orderRequest.getRequestInfo());
             }
 
