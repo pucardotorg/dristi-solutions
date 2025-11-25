@@ -77,7 +77,7 @@ public class InPortalSurveyService {
             SurveyTrackerRequest trackerRequest = buildSurveyTrackerRequest(request.getRequestInfo(), existingTracker);
 
             // Step 4: Validate eligibility
-            boolean isEligible = validations.validateEligibility(existingTracker);
+            boolean isEligible = validations.validateEligibility(existingTracker, request.getRequestInfo());
 
             producer.push(config.getUpdateSurveyTrackerTopic(), trackerRequest);
 

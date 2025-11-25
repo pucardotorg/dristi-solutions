@@ -129,20 +129,21 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const currentBillDetails = useMemo(() => BillResponse?.Bill?.[0], [BillResponse]);
 
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    {
-      tenantId,
-      consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
-      service: businessService,
-    },
-    `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
-    Boolean(consumerCodeWithoutSuffix && businessService)
-  );
+  // Now Epost aslo have only one delivery partner bill so using the same code ( removed sbi payment then  no need to check for delivery partner bill )
+  // const { data: ePostBillResponse, isLoading: isEPOSTBillLoading, refetch: epostBillRefetch } = Digit.Hooks.dristi.useBillSearch(
+  //   {},
+  //   {
+  //     tenantId,
+  //     consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
+  //     service: businessService,
+  //   },
+  //   `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
+  //   Boolean(consumerCodeWithoutSuffix && businessService)
+  // );
 
-  const isDeliveryPartnerPaid = useMemo(() => (ePostBillResponse?.Bill?.[0]?.status ? ePostBillResponse?.Bill?.[0]?.status === "PAID" : true), [
-    ePostBillResponse,
-  ]);
+  // const isDeliveryPartnerPaid = useMemo(() => (ePostBillResponse?.Bill?.[0]?.status ? ePostBillResponse?.Bill?.[0]?.status === "PAID" : true), [
+  //   ePostBillResponse,
+  // ]);
 
   // const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
   //   {
@@ -176,9 +177,10 @@ const ViewPaymentDetails = ({ location, match }) => {
       setIsLoading(true);
       if (
         consumerCode &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-        demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
-        paymentType?.toLowerCase()?.includes("case")
+        ((demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+          demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
+          paymentType?.toLowerCase()?.includes("case")) ||
+          (paymentType?.toLowerCase()?.includes("task") && businessService === "task-management-payment"))
       ) {
         try {
           const response = await DRISTIService.getTreasuryPaymentBreakup(
@@ -284,13 +286,13 @@ const ViewPaymentDetails = ({ location, match }) => {
       taskHearingNumber = orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber || "";
       const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
       taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
-      if (taskOrderType === "NOTICE") {
-        const noticeOrder =
-          orderDetails?.orderCategory === "COMPOSITE"
-            ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
-            : orderDetails?.additionalDetails?.formdata?.noticeOrder;
-        taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
-      }
+      // if (taskOrderType === "NOTICE") {
+      //   const noticeOrder =
+      //     orderDetails?.orderCategory === "COMPOSITE"
+      //       ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
+      //       : orderDetails?.additionalDetails?.formdata?.noticeOrder;
+      //   taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
+      // }
       taskFilingNumber = tasksData?.filingNumber || demandBill?.additionalDetails?.filingNumber;
     }
 
@@ -323,7 +325,9 @@ const ViewPaymentDetails = ({ location, match }) => {
           instrumentDate: new Date().getTime(),
         },
       });
-      if (isDeliveryPartnerPaid && businessService !== "task-generic") {
+
+      // remove additional condition (isDeliveryPartnerPaid && businessService !== "task-generic" ) as now epost also have only one delivery partner bill
+      if (businessService !== "task-generic") {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Pending Payment",
@@ -342,7 +346,8 @@ const ViewPaymentDetails = ({ location, match }) => {
         });
       }
 
-      if (["task-notice", "task-summons", "task-warrant"].includes(businessService) && isDeliveryPartnerPaid) {
+      // removal of additional condition (["task-notice", "task-summons", "task-warrant"].includes(businessService) && isDeliveryPartnerPaid ) as now epost also have only one delivery partner bill
+      if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: taskOrderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
@@ -432,7 +437,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     history.push(homePath);
   }
 
-  if (isFetchBillLoading || isPaymentLoading || isBillLoading || isEPOSTBillLoading || isSummonsBreakUpLoading) {
+  if (isFetchBillLoading || isPaymentLoading || isBillLoading || isSummonsBreakUpLoading) {
     return <Loader />;
   }
   return (

@@ -121,11 +121,19 @@ export const removeInvalidNameParts = (name) => {
 };
 
 export const constructFullName = (firstName, middleName, lastName) => {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+  return [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
 
   const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
@@ -153,7 +161,11 @@ export const getRespondantName = (respondentNameData) => {
 };
 
 export const getComplainantName = (complainantDetails) => {
-  const partyName = complainantDetails?.firstName && `${complainantDetails?.firstName || ""} ${complainantDetails?.lastName || ""}`.trim();
+  const partyName =
+    complainantDetails?.firstName &&
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
+      complainantDetails?.lastName?.trim() || ""
+    }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }
@@ -306,3 +318,91 @@ export const downloadFile = (responseBlob, fileName) => {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 };
+
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+  const formDataKeyMap = {
+    NOTICE: "noticeOrder",
+    SUMMONS: "SummonsOrder",
+    WARRANT: "warrantFor",
+    PROCLAMATION: "proclamationFor",
+    ATTACHMENT: "attachmentFor", // same formdata key as WARRANT
+    // Add more types here easily in future
+  };
+
+  const formdata =
+    orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderSchema?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
+
+  const key = formDataKeyMap[orderType];
+  const partyData = formdata?.[key]?.party?.data;
+
+  const name =
+    [partyData?.firstName?.trim(), partyData?.middleName?.trim(), partyData?.lastName?.trim()]?.filter(Boolean)?.join(" ") ||
+    (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
+    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
+    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    formdata?.warrantFor ||
+    formdata?.proclamationFor ||
+    formdata?.attachmentFor ||
+    "";
+
+  return name;
+};
+
+export function convertTaskResponseToPayload(responseArray, id = null) {
+  if (!Array.isArray(responseArray) || !responseArray.length) return null;
+
+  let data = [];
+  if (id) {
+    const matchedTask = responseArray?.find((task) =>
+      task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field?.value === id)
+    );
+    data = matchedTask?.fields || [];
+  } else {
+    data = responseArray?.[0]?.fields || [];
+  }
+  const flatData = data;
+  const structuredData = {};
+
+  function setDeepValue(obj, path, value) {
+    const parts = path?.replace(/\[(\w+)\]/g, ".$1")?.split(".");
+    let current = obj;
+    for (let i = 0; i < parts?.length; i++) {
+      const key = parts[i];
+      if (i === parts.length - 1) {
+        current[key] = value;
+      } else {
+        if (!current[key] || typeof current[key] !== "object") {
+          current[key] = isNaN(parts[i + 1]) ? {} : [];
+        }
+        current = current[key];
+      }
+    }
+  }
+
+  flatData?.forEach(({ key, value }) => {
+    const normalizedValue = value === "null" ? null : value === "true" ? true : value === "false" ? false : value;
+    setDeepValue(structuredData, key, normalizedValue);
+  });
+
+  const pendingTask = {
+    name: structuredData?.name,
+    entityType: structuredData?.entityType,
+    referenceId: structuredData?.referenceId,
+    status: structuredData?.status,
+    assignedTo: structuredData?.assignedTo,
+    assignedRole: structuredData?.assignedRole,
+    actionCategory: structuredData?.actionCategory,
+    cnrNumber: structuredData?.cnrNumber,
+    filingNumber: structuredData?.filingNumber,
+    caseId: structuredData?.caseId,
+    caseTitle: structuredData?.caseTitle,
+    isCompleted: structuredData?.isCompleted,
+    expiryDate: structuredData?.expiryDate,
+    stateSla: structuredData?.stateSla,
+    additionalDetails: structuredData?.additionalDetails,
+    courtId: structuredData?.courtId,
+  };
+
+  return pendingTask;
+}

@@ -53,11 +53,11 @@ const processSureties = (bailData) => {
     return formattedAddress;
   };
 
-  return sureties.map((surety, index) => ({
+  return sureties?.map((surety) => ({
     suretyName: surety?.name || "",
     suretyParentName: surety?.fatherName || "",
     suretyAddress: formatAddress(surety?.address) || "",
-    index: `${index + 1}`,
+    index: surety?.index,
   }));
 };
 
@@ -177,8 +177,8 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
           litigantName: bailBond?.litigantName || "",
           litigantFatherName: bailBond?.litigantFatherName || "",
           litigantAddress: extractPermanentAddress(individual) || "",
-          courtName: mdmsCourtRoom.name,
-          caseType: "Negotiable Instruments Act 138 A",
+          courtName: mdmsCourtRoom.courtName,
+          caseType: "Negotiable Instruments Act 138A",
           bailAmount: bailBond?.bailAmount || "",
           sureties: processSureties(bailBond),
           accusedSignature: "Accused Signature",

@@ -240,7 +240,7 @@ const DocumentsV2 = ({
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
                 criteria: {
-                  ...tabConfig.apiDetails?.criteria,
+                  ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
                 },
               },

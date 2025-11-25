@@ -35,4 +35,7 @@ public class OpenAPiHearingRequest {
     @Valid
     private Long toDate;
 
+    @JsonProperty("isHearingSerialNumberSorting")
+    private Boolean isHearingSerialNumberSorting = false;
+
 }

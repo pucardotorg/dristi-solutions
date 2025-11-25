@@ -5,7 +5,6 @@ import { Banner } from "@egovernments/digit-ui-react-components";
 import { Button, InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
-import { useSurveyManager } from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSurveyManager";
 
 const PaymentStatus = ({ path }) => {
   const location = useLocation();
@@ -20,7 +19,7 @@ const PaymentStatus = ({ path }) => {
   const orderType = receiptData?.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const { triggerSurvey, SurveyUI } = useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
 
   const commonProps = {
     whichSvg: "tick",

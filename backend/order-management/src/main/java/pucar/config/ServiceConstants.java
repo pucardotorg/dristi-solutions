@@ -156,6 +156,7 @@ public class ServiceConstants {
     public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
     public static final String COURT_WITNESS = "-";
     public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
 
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION = "MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION";
 
@@ -169,4 +170,40 @@ public class ServiceConstants {
     public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
     public static final String DOT = ". ";
+
+    public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+    public static final String PAYMENT_LINK_SMS = "PAYMENT_LINK_SMS";
+    public static final String RPAD_SUBMISSION = "RPAD_SUBMISSION";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String PROCESS_FEE_PAYMENT_PENDING = "PROCESS_FEE_PAYMENT_PENDING";
+    public static final String RPAD_SUBMISSION_PENDING = "RPAD_SUBMISSION_PENDING";
+    public static final String MANDATORY_SUBMISSION_PENDING = "MANDATORY_SUBMISSION_PENDING";
+
+    public static final String RPAD = "RPAD";
+
+    public static final String msgId = "1730882648558|en_IN";
+    public static final String SYSTEM = "SYSTEM";
+
+    public static final String DCA = "DCA Notice";
+    public static final String TASK_CREATION = "TASK_CREATION";
+
+    public static final String URL = "url";
+    public static final String REFERENCE_ID = "referenceId";
+    public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
+    public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
+    public static final String ERRORS_PATH = "$.errors";
+
+    public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+
+    public static final String ES_UPDATE_DOCUMENT_FORMAT =
+            "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":\"%s\"}}}}\n";
+
 }

@@ -624,6 +624,7 @@ const WitnessDrawerV2 = ({
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
+  const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails]);
 
   const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
@@ -781,12 +782,21 @@ const WitnessDrawerV2 = ({
   };
 
   const isWitnessTypeDisabled = useMemo(() => {
-    const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
-    if (party?.tag) {
-      return true;
-    }
-    return false;
+    const party = allParties?.find(
+      (p) =>
+        p?.uuid === selectedWitness?.value ||
+        p?.uniqueId === selectedWitness?.value
+    );
+
+    // Check if tag ends with a number
+    const hasNumberSuffix = (tag) => {
+      if (!tag || !tag.trim()) return false;
+      return /\d+$/.test(tag);   // same as Java's ".*\\d+$"
+    };
+
+    return hasNumberSuffix(party?.tag);
   }, [selectedWitness, allParties]);
+
 
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
@@ -1417,6 +1427,7 @@ const WitnessDrawerV2 = ({
             currentEvidence={currentEvidence}
             courtId={caseCourtId}
             cnrNumber={cnrNumber}
+            filingNumber={filingNumber}
             setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
             tag={obtainedTag || selectedWitnessType?.value}
           />
@@ -1492,6 +1503,7 @@ const WitnessDrawerV2 = ({
               setShowSuccessModal(false);
               evidenceRefetch();
               setCurrentEvidence(null);
+              setWitnessDepositionUploadLoader(false);
             }}
             message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
           />

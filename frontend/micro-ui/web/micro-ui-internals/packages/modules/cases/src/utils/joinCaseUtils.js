@@ -283,8 +283,12 @@ export const searchIndividualUserWithUuid = async (uuid, tenantId) => {
   return individualData;
 };
 
-export const getFullName = (seperator, ...strings) => {
-  return strings.filter(Boolean).join(seperator);
+export const getFullName = (separator, ...strings) => {
+  return strings
+    ?.map((s) => s?.trim())
+    ?.filter(Boolean)
+    ?.join(separator)
+    ?.trim();
 };
 
 export const createShorthand = (fullname) => {
