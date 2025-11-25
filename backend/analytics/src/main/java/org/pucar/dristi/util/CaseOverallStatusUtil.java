@@ -283,7 +283,7 @@ public class CaseOverallStatusUtil {
 			if (caseOutcomeType.getIsJudgement()) {
 				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome());
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome(), null);
 			}
 		} catch (Exception e) {
 			log.error("Error determining case outcome for filingNumber: {} and orderType: {}", filingNumber, orderType, e);
@@ -295,7 +295,7 @@ public class CaseOverallStatusUtil {
 		try {
 			String outcome = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_FINDINGS_PATH) : JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
 			if (caseOutcomeType.getJudgementList().contains(outcome)) {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome);
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome, null);
 			} else {
 				log.info("Outcome not in judgement list for orderType: {}", caseOutcomeType.getOrderType());
 				return null;

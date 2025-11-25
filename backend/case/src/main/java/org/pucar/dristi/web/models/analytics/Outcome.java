@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.springframework.validation.annotation.Validated;
 
 
@@ -27,6 +28,9 @@ public class Outcome {
 
     @JsonProperty("outcome")
     private String outcome = null;
+
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal = null;
 
     @JsonProperty("auditDetails")
     @Valid

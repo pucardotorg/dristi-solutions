@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.v2.CaseSummaryList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -27,6 +28,16 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
         this.objectMapper = objectMapper;
     }
 
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Override
     public List<CaseSummaryList> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
@@ -45,6 +56,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .createdTime(rs.getLong("createdtime"))
                         .outcome(rs.getString("outcome"))
                         .status(rs.getString("status"))
+                        .natureOfDisposal(getNatureOfDisposal(rs))
                         .substage(rs.getString("substage"))
                         .courtCaseNumber(rs.getString("courtcasenumber"))
                         .cnrNumber(rs.getString("cnrnumber"))
