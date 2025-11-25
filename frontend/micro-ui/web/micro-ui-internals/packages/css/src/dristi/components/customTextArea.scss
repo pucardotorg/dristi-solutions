@@ -19,68 +19,51 @@
   padding: 12px;
 }
 
-
-.demo-wrapper {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-
-  .rdw-editor-toolbar {
-    border: none;
-    border-bottom: 1px solid #ccc;
-    margin: 0;
-    padding: 8px;
+.custom-quill-wrapper {
+  .ql-toolbar.ql-snow {
+    background: #f8f8f8;
+    border: 1px solid #d6d6d6;
+    border-radius: 6px 6px 0 0;
+    padding: 6px 10px !important;
   }
 
-  .rdw-editor-main {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    height: 300px !important;
-    overflow: hidden !important;
-    border: none;
-    padding: 12px;
-    box-sizing: border-box;
+  .ql-toolbar .ql-formats {
+    margin-right: 12px;
   }
 
-  .DraftEditor-root {
-    height: 100% !important;
-    overflow-y: auto !important;
-    scrollbar-width: thin;
-    scrollbar-color: #ccc transparent;
-    scroll-behavior: smooth;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(204, 204, 204, 0.8);
-      border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background: #999;
-    }
+  .ql-toolbar button {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: #ffffff !important;
   }
 
-  .public-DraftStyleDefault-block {
-    margin: 0 !important;
-    max-width: 100%;
-    white-space: normal;
-  }
-  
-  .DraftEditor-editorContainer {
-    height: 100% !important;
+  .ql-toolbar button svg * {
+    stroke: #444 !important;
+    fill: none !important;
   }
 
-  .public-DraftEditor-content {
-    min-height: 100% !important;
-    max-width: 100%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+  .ql-container.ql-snow {
+    background: #ffffff;
+    border: 1px solid #d6d6d6;
+    border-radius: 0 0 6px 6px;
+    min-height: 260px;
+    font-size: 14px;
+  }
+
+  .ql-editor {
+    min-height: 240px !important;
+    padding: 14px;
+    line-height: 1.55;
+    height: 300px;
+  }
+
+  /* Disabled */
+  .ql-container.ql-disabled .ql-editor {
+    background: #f5f5f5;
+    cursor: not-allowed;
   }
 }

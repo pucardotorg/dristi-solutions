@@ -14,6 +14,70 @@ function stripFontStyles(styleString = "") {
   return styleString.replace(/font-family:[^;]+;?/gi, "").trim();
 }
 
+function preprocessQuillHtml(html) {
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+
+  document.querySelectorAll("*").forEach((el) => {
+    const classes = el.className?.split?.(/\s+/) || [];
+
+    classes.forEach((cls) => {
+      if (cls === "ql-align-center") el.style.textAlign = "center";
+      if (cls === "ql-align-right") el.style.textAlign = "right";
+      if (cls === "ql-align-justify") el.style.textAlign = "justify";
+
+      if (cls.startsWith("ql-indent-")) {
+        const level = Number(cls.replace("ql-indent-", ""));
+        el.setAttribute("data-indent", level);
+      }
+
+      if (cls === "ql-list-bullet") el.setAttribute("data-list", "bullet");
+      if (cls === "ql-list-ordered") el.setAttribute("data-list", "ordered");
+    });
+  });
+
+  const listItems = [...document.querySelectorAll("li")];
+
+  listItems.forEach((li) => {
+    const indClass = [...li.classList].find((c) => c.startsWith("ql-indent-"));
+    if (!indClass) return;
+
+    const parentList = li.parentElement;
+    
+    if (!parentList || (parentList.tagName !== "OL" && parentList.tagName !== "UL")) {
+        return;
+    }
+
+    let prevLi = li.previousElementSibling;
+    while (prevLi && prevLi.tagName !== "LI") {
+        prevLi = prevLi.previousElementSibling;
+    }
+
+    if (prevLi) {
+        let nestedList = prevLi.lastElementChild;
+        const listTag = parentList.tagName;
+
+        if (!nestedList || (nestedList.tagName !== "OL" && nestedList.tagName !== "UL")) {
+            nestedList = document.createElement(listTag);
+            prevLi.appendChild(nestedList);
+        } else if (nestedList.tagName !== listTag) {
+            const newList = document.createElement(listTag);
+            nestedList.parentElement.appendChild(newList);
+            nestedList = newList;
+        }
+
+        if (li.parentElement !== nestedList) {
+            nestedList.appendChild(li);
+        }
+    }
+    
+    li.classList.remove(indClass);
+    li.removeAttribute("data-indent");
+  });
+
+  return document.body.innerHTML;
+}
+
 function cleanUnsupportedChars(str) {
   return str
     .replace(/\uFFFC/g, "")
@@ -23,24 +87,38 @@ function cleanUnsupportedChars(str) {
     .replace(/[^\S\n]+/g, " ");
 }
 
+function applyIndentation(node) {
+  if (!node) return node;
+
+  if (Array.isArray(node)) {
+    return node.map((item) => applyIndentation(item));
+  }
+
+  if (typeof node === "object") {
+    if (node["data-indent"] !== undefined) {
+      const level = Number(node["data-indent"]);
+      node.margin = node.margin || [0, 0, 0, 0];
+      node.margin[0] = level * 20;
+    }
+
+    Object.keys(node).forEach((key) => {
+      node[key] = applyIndentation(node[key]);
+    });
+  }
+
+  return node;
+}
+
+
 function removeHtmlDefaultMargins(node) {
   if (node && typeof node === "object") {
     if (node.nodeName) {
-      switch (node.nodeName) {
-        case "P":
-          node.margin = [0, 0, 0, 8];
-          break;
-        case "UL":
-        case "OL":
-          node.margin = [20, 8, 0, 8];
-          break;
-        case "LI":
-          node.margin = [0, 4, 0, 4];
-          break;
-      }
+      if (node.nodeName === "P") node.margin = [0, 0, 0, 8];
+      if (node.nodeName === "UL" || node.nodeName === "OL")
+        node.margin = [20, 8, 0, 8];
+      if (node.nodeName === "LI") node.margin = [0, 4, 0, 4];
     }
-
-    for (const key in node) {
+        for (const key in node) {
       node[key] = removeHtmlDefaultMargins(node[key]);
     }
   }
@@ -53,40 +131,39 @@ function htmlToFormattedText(input) {
 
   let cleanHtml = DOMPurify.sanitize(input);
 
-  cleanHtml = cleanHtml.replace(/style="([^"]*)"/gi, (match, p1) => {
+  cleanHtml = cleanHtml.replace(/style="([^"]*)"/gi, (m, p1) => {
     const filtered = stripFontStyles(p1);
     return filtered ? `style="${filtered}"` : "";
   });
 
-  let pdfmakeContent = htmlToPdfmake(cleanHtml, { window });
+  cleanHtml = preprocessQuillHtml(cleanHtml);
 
-  if (Array.isArray(pdfmakeContent)) {
-    pdfmakeContent = pdfmakeContent.map((c) =>
+  let pdf = htmlToPdfmake(cleanHtml, { window });
+
+  if (Array.isArray(pdf)) {
+    pdf = pdf.map((c) =>
       typeof c.text === "string"
         ? { ...c, text: cleanUnsupportedChars(c.text) }
         : c
     );
-  } else if (pdfmakeContent?.text) {
-    pdfmakeContent.text = cleanUnsupportedChars(pdfmakeContent.text);
+  } else if (pdf?.text) {
+    pdf.text = cleanUnsupportedChars(pdf.text);
   }
 
-  pdfmakeContent = removeHtmlDefaultMargins(pdfmakeContent);
+  pdf = applyIndentation(pdf);
+  pdf = removeHtmlDefaultMargins(pdf);
 
-  if (Array.isArray(pdfmakeContent)) {
-    pdfmakeContent = pdfmakeContent.filter((item) => {
+  if (Array.isArray(pdf)) {
+    pdf = pdf.filter((item) => {
       if (typeof item === "string") return true;
-      if (item && typeof item === "object") return item.nodeName;
+      if (item && typeof item === "object") {
+        return item.nodeName || item.ul || item.ol || item.text;
+      }
       return false;
     });
   }
 
-  return [
-    ...pdfmakeContent,
-    {
-      text: "",
-      margin: [0, 0, 0, 20],
-    },
-  ];
+  return [...pdf, { text: "", margin: [0, 0, 0, 20] }];
 }
 
 module.exports = { htmlToFormattedText };
