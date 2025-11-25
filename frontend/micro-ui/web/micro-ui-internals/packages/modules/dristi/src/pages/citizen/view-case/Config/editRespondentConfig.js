@@ -517,6 +517,7 @@ const editRespondentFormconfig = [
         key: "prayer",
         withoutLabel: true,
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -539,6 +540,7 @@ const editRespondentFormconfig = [
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
