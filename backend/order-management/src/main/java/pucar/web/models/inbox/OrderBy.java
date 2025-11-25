@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.pucar.dristi.web.models.Order;
 
 @Data
 @AllArgsConstructor
