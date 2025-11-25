@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -61,6 +62,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .courtCaseNumber(rs.getString("courtcaseNumber"))
                             .accessCode(rs.getString("accesscode"))
                             .outcome(rs.getString("outcome"))
+                            .natureOfDisposal(getNatureOfDisposal(rs))
                             .caseType(rs.getString("casetype"))
                             .courtId(rs.getString("courtid"))
                             .benchId(rs.getString("benchid"))
@@ -105,6 +107,17 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(caseMap.values());
+    }
+
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (Exception e) {
+            log.error("Error occurred while processing NatureOfDisposal :: {}", e.toString());
+            return null;
+        }
     }
 
     public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {

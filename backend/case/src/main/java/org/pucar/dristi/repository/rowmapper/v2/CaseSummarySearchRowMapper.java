@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.v2.CaseSummarySearch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -49,6 +50,7 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
                             .cnrNumber(rs.getString("cnrnumber"))
                             .courtCaseNumber(rs.getString("courtcasenumber"))
                             .outcome(rs.getString("outcome"))
+                            .natureOfDisposal(getNatureOfDisposal(rs))
                             .caseType(rs.getString("casetype"))
                             .courtId(rs.getString("courtid"))
                             .benchId(rs.getString("benchid"))
@@ -80,6 +82,16 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
         } catch (Exception e) {
             log.error("Error occurred while processing Case ResultSet :: {}", e.toString());
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
+        }
+    }
+
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (Exception e) {
+            return null;
         }
     }
 
