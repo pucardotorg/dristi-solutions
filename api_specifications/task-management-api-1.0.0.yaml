@@ -238,6 +238,12 @@ components:
           description: Tenant ID for which task management records are being searched
         status:
           type: string
+        partyType:
+          type: string
+          enum:
+            - COMPLAINANT
+            - RESPONDENT
+            - COURT
         partyDetails:
           type: array
           items:
