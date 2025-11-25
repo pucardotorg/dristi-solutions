@@ -222,6 +222,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
 
   const [currentHearingNumber, setCurrentHearingNumber] = useState(hearingDetails?.hearingId);
 
+  useEffect(() => {
+    if (hearingDetails?.hearingId && !currentHearingNumber) {
+      setCurrentHearingNumber(hearingDetails.hearingId);
+    }
+  }, [hearingDetails?.hearingId]);
+
   const hearingCriteria = useMemo(
     () => ({
       tenantId,

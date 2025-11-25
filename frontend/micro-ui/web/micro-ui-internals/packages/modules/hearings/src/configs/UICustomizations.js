@@ -344,7 +344,7 @@ export const UICustomizations = {
                   feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
-            additionalDetails?.setHasTasks(Boolean(taskData.length > 0) ? true : false);
+            additionalDetails?.setHasTasks(taskData.length > 0);
             return { list: taskData };
           },
         },
