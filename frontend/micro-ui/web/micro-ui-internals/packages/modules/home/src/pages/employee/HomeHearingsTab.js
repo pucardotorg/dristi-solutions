@@ -541,18 +541,18 @@ const HomeHearingsTab = ({
 
               {!isJudge && (
                 <span
-                  title={hearingDetails?.orderStatus === "SIGNED" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
+                  title={hearingDetails?.orderStatus?.toLowerCase() === "signed" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
                   style={{
                     borderRadius: "50%",
                     padding: "10px",
-                    background: hearingDetails?.orderStatus === "SIGNED" ? "#F0FDF4" : "#FEE2E2",
+                    background: hearingDetails?.orderStatus?.toLowerCase() === "signed" ? "#F0FDF4" : "#FEE2E2",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     cursor: "pointer",
                   }}
                 >
-                  {hearingDetails?.orderStatus === "SIGNED" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
+                  {hearingDetails?.orderStatus?.toLowerCase() === "signed" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
                 </span>
               )}
             </div>
