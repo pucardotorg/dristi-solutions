@@ -538,34 +538,22 @@ const HomeHearingsTab = ({
                 {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
               </span>
 
-              {hearingDetails?.status === "IN_PROGRESS" &&
-                (hearingDetails?.orderStatus === "SIGNED" ? (
-                  <span
-                    style={{
-                      borderRadius: "50%",
-                      padding: "10px",
-                      background: "#F0FDF4",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <DocumentSignedIcon />
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      borderRadius: "50%",
-                      padding: "10px",
-                      background: "#FEE2E2",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <DocumentNotSignedIcon />
-                  </span>
-                ))}
+              {hearingDetails?.status === "IN_PROGRESS" && (
+                <span
+                  title={hearingDetails?.orderStatus === "SIGNED" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
+                  style={{
+                    borderRadius: "50%",
+                    padding: "10px",
+                    background: hearingDetails?.orderStatus === "SIGNED" ? "#F0FDF4" : "#FEE2E2",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  {hearingDetails?.orderStatus === "SIGNED" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
+                </span>
+              )}
             </div>
           </td>
           <td
