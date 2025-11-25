@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import {
   applicationTypeConfig,
   configsBailBond,
@@ -38,6 +38,7 @@ import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-modu
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { validateAdvocateSuretyContactNumber, validateSuretyContactNumber } from "../../utils/bailBondUtils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -138,6 +139,7 @@ const SubmissionsCreate = ({ path }) => {
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [showErrorToast, setShowErrorToast] = useState(null);
 
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
@@ -223,20 +225,6 @@ const SubmissionsCreate = ({ path }) => {
     },
   });
 
-  // const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-  //   {
-  //     criteria: [
-  //       {
-  //         filingNumber: filingNumber,
-  //       },
-  //     ],
-  //     tenantId,
-  //   },
-  //   {},
-  //   `case-details-${filingNumber}`,
-  //   filingNumber,
-  //   Boolean(filingNumber)
-  // );
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
   const [caseApiError, setCaseApiError] = useState(undefined);
@@ -849,7 +837,7 @@ const SubmissionsCreate = ({ path }) => {
         applicationDate: formatDate(new Date()),
         ...(applicationType === "REQUEST_FOR_BAIL"
           ? {
-              addSurety: { code: "NO", name: "No", showSurety: false },
+              addSurety: { code: "YES", name: "Yes", showSurety: true },
             }
           : {}),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
@@ -1241,7 +1229,7 @@ const SubmissionsCreate = ({ path }) => {
                 additionalDetails: {
                   originalCount,
                   combined: originalCount > 1,
-                }
+                },
               });
             }
           };
@@ -1253,9 +1241,9 @@ const SubmissionsCreate = ({ path }) => {
               const otherDocs = s?.otherDocuments?.uploadedDocs || s?.otherDocuments?.document || [];
 
               // Pass suretyIndex for linkage
-              await processDocs(identityDocs, "IDENTITY_PROOF", "identityProof", index);
-              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "proofOfSolvency", index);
-              await processDocs(otherDocs, "OTHER_DOCUMENTS", "otherDocuments", index);
+              await processDocs(identityDocs, "IDENTITY_PROOF", "IdentityProof", index);
+              await processDocs(solvencyDocs, "PROOF_OF_SOLVENCY", "ProofOfSolvency", index);
+              await processDocs(otherDocs, "OTHER_DOCUMENTS", "OtherDocuments", index);
             }
           }
 
@@ -1538,6 +1526,10 @@ const SubmissionsCreate = ({ path }) => {
           }
         });
       }
+
+      if (validateAdvocateSuretyContactNumber(t, formData?.sureties, userInfo, setShowErrorToast)) {
+        return true;
+      }
     }
     if (applicationType === "PRODUCTION_DOCUMENTS") {
       formdata?.submissionDocuments?.submissionDocuments?.forEach((docs, index) => {
@@ -1557,8 +1549,31 @@ const SubmissionsCreate = ({ path }) => {
     return documentErrorFlag;
   };
 
+  const getUserUUID = useCallback(
+    async (uuid) => {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            userUuid: [uuid],
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    },
+    [tenantId]
+  );
+
   const handleOpenReview = async (formData) => {
     if (handleDocumentUploadValidation(formData)) return;
+    if (applicationType === "REQUEST_FOR_BAIL") {
+      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formData, setShowErrorToast, t);
+
+      if (!validateSuretyContactNumbers) {
+        return;
+      }
+    }
     setLoader(true);
 
     if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
@@ -1806,6 +1821,20 @@ const SubmissionsCreate = ({ path }) => {
     downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
     // history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
   };
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
   if (!filingNumber) {
     handleBack();
   }
@@ -1828,6 +1857,7 @@ const SubmissionsCreate = ({ path }) => {
       <div style={{ minHeight: "550px", overflowY: "auto" }}>
         <FormComposerV2
           label={t("REVIEW_SUBMISSION")}
+          className={"submission-create"}
           config={modifiedFormConfig}
           defaultValues={defaultFormValue}
           onFormValueChange={onFormValueChange}
@@ -1893,6 +1923,7 @@ const SubmissionsCreate = ({ path }) => {
         />
       )}
       {SurveyUI}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

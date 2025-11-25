@@ -152,7 +152,7 @@ export const formatDateDDMMYYYY = (date) => {
   return `${day}-${month}-${year}`;
 };
 
-export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId }) => {
+export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId, isLast }) => {
   if (!courierData) return;
 
   const uniqueId = courierData?.uniqueId || courierData?.data?.uniqueId;
@@ -199,7 +199,14 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
         ...existingTask,
         partyDetails: updatedPartyDetails,
         workflow: {
-          action: TaskManagementWorkflowAction.UPDATE,
+          action:
+            type === "SUMMONS"
+              ? existingTask?.partyType === "COURT"
+                ? isLast
+                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
+                  : TaskManagementWorkflowAction.UPDATE_WITHOUT_PAYMENT
+                : TaskManagementWorkflowAction.UPDATE
+              : TaskManagementWorkflowAction.UPDATE,
         },
       }
     : {
@@ -210,14 +217,30 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
         courtId: courierData?.courtId,
         orderNumber: courierData?.orderNumber,
         orderItemId: courierData?.orderItemId,
+        partyType: courierData?.witnessPartyType,
         workflow: {
-          action: TaskManagementWorkflowAction.CREATE,
+          action:
+            type === "SUMMONS"
+              ? courierData?.witnessPartyType === "COURT"
+                ? isLast
+                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
+                  : TaskManagementWorkflowAction.CREATE_WITHOUT_PAYMENT
+                : TaskManagementWorkflowAction.CREATE
+              : TaskManagementWorkflowAction.CREATE,
         },
       };
 
   const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
 
   await serviceMethod({ taskManagement: taskManagementPayload });
+};
+
+export const filterValidAddresses = (addressDetails = []) => {
+  return addressDetails?.filter((addr) => {
+    const a = addr?.addressDetails || {};
+    const hasValidValue = (v) => v != null && String(v)?.trim() !== "";
+    return hasValidValue(a?.city) && hasValidValue(a?.district) && hasValidValue(a?.state) && hasValidValue(a?.pincode) && hasValidValue(a?.locality);
+  });
 };
 
 export default {};

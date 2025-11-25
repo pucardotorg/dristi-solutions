@@ -21,7 +21,7 @@ import ReviewSummonsNoticeAndWarrant from "@egovernments/digit-ui-module-orders/
 import HomeScheduleHearing from "./HomeScheduleHearing";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { createOrUpdateTask, getSuffixByBusinessCode } from "../../utils";
+import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
@@ -59,6 +59,7 @@ const MainHomeScreen = () => {
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
+  const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -288,7 +289,7 @@ const MainHomeScreen = () => {
             date: null,
             isOnlyCountRequired: true,
             actionCategory: "Scrutinise cases",
-            status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
+            status: ["UNDER_SCRUTINY"],
           },
           searchRescheduleHearingsApplication: {
             date: null,
@@ -319,7 +320,7 @@ const MainHomeScreen = () => {
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
-      const scrutinyCasesCount = res?.scrutinyCasesData?.totalCount || 0;
+      const scrutinyCasesCount = res?.scrutinyCasesData?.count || 0;
       const rescheduleHearingsApplicationCount = res?.rescheduleHearingsData?.totalCount || 0;
       const delayCondonationApplicationCount = res?.delayCondonationApplicationData?.totalCount || 0;
       const otherApplicationsCount = res?.otherApplicationsData?.totalCount || 0;
@@ -356,6 +357,12 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        ...(courierServicePendingTask?.partyType && {
+          partyType: courierServicePendingTask?.partyType,
+        }),
+        ...(courierServicePendingTask?.orderItemId && {
+          orderItemId: courierServicePendingTask?.orderItemId,
+        }),
         tenantId: tenantId,
       },
     },
@@ -490,7 +497,7 @@ const MainHomeScreen = () => {
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: mergedFromCase?.map((addr) => ({
+                    addressDetails: filterValidAddresses(mergedFromCase)?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -548,7 +555,7 @@ const MainHomeScreen = () => {
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: mergedAddressDetails,
+                  addressDetails: filterValidAddresses(mergedAddressDetails),
                 },
                 summonsCourierService,
                 noticeCourierService,
@@ -581,11 +588,15 @@ const MainHomeScreen = () => {
           formData: formData,
           filingNumber: courierOrderDetails?.filingNumber,
           tenantId,
+          isLast,
         });
         await refetchTaskManagement();
         if (isLast) {
           setCourierServicePendingTask(null);
           setCourierOrderDetails({});
+          setTimeout(() => {
+            history.replace(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "NOTICE_SUMMONS_MANAGEMENT" });
+          }, 2000);
         }
         return { continue: true };
       } catch (error) {
@@ -596,7 +607,7 @@ const MainHomeScreen = () => {
         setIsProcessLoader(false);
       }
     },
-    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, t]
+    [courierOrderDetails, taskManagementList, tenantId, refetchTaskManagement, history, t]
   );
 
   const handleCourierServiceChange = useCallback((value, type, index) => {
@@ -717,6 +728,7 @@ const MainHomeScreen = () => {
           orderItemId: courierOrderDetails?.orderItemId,
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
+          witnessPartyType: courierServicePendingTask?.partyType,
         };
 
         const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
@@ -863,6 +875,14 @@ const MainHomeScreen = () => {
       ];
     }
 
+    if (["REGISTRATION"].includes(activeTab)) {
+      updatedConfig.sections.searchResult.uiConfig.columns.push({
+        label: "CS_DAYS_REGISTRATION",
+        jsonPath: "createdTime",
+        additionalCustomization: true,
+      });
+    }
+
     if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
@@ -941,6 +961,9 @@ const MainHomeScreen = () => {
               })
               ?.filter((column) => {
                 if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
+                if (activeTab === "REGISTRATION") {
+                  if (column?.label === "STAGE") return false;
+                }
                 if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
                   if (column?.label === "STAGE") return false;
                   if (column?.label === "CS_PROCESS_TYPE") return true;
@@ -986,6 +1009,9 @@ const MainHomeScreen = () => {
             },
           });
           const totalCount = response?.scrutinyCasesData?.count;
+          if (index === 0) {
+            setScrutinyDueCount(totalCount || 0);
+          }
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -1084,7 +1110,7 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={pendingTaskCount}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
           showToast={showToast}
         />
         {activeTab === "TOTAL_HEARINGS_TAB" ? (

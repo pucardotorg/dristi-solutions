@@ -31,6 +31,7 @@ const CloseBtn = (props) => {
 
 function CourierService({
   t,
+  isDelayCondonation,
   isLoading = false,
   processCourierData,
   handleCourierServiceChange,
@@ -79,7 +80,8 @@ function CourierService({
   const paymentCriteriaList = useMemo(() => {
     if (!processCourierData?.addressDetails?.length) return [];
 
-    const channels = ["RPAD", "EPOST"];
+    // add "EPOST" when it is needed
+    const channels = ["RPAD"];
     const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS"];
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
@@ -201,88 +203,6 @@ function CourierService({
         />
       )}
       <div className="process-courier-container">
-        <div className="header-row">
-          <div className="process-section">{orderType ? t("CS_TAKE_STEPS") : t("CS_PROCESS")}</div>
-          <div className="courier-section">{orderType ? t("CS_COURIER_SERVICE") : t("CS_COURIER_SERVICES")}</div>
-        </div>
-
-        {(orderType === "NOTICE" || processCourierData?.isDelayCondonation) && (
-          <div className="row">
-            <div className="label-container">
-              <div className="label">{t("CS_NOTICE_COURIER")}</div>
-              <div className="info-icon">
-                <span style={{ position: "relative" }} data-tip data-for="notice-tooltip">
-                  <InfoIcon />
-                </span>
-                <ReactTooltip id="notice-tooltip" place="bottom" content={t("CS_NOTICE_COURIER_TOOLTIP")}>
-                  {t("CS_NOTICE_COURIER_TOOLTIP")}
-                </ReactTooltip>
-              </div>
-            </div>
-            <div className="dropdown-container">
-              <CustomMultiSelectDropdown
-                t={t}
-                defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
-                selected={processCourierData?.noticeCourierService}
-                onSelect={(value) => handleCourierServiceChange(value, "notice")}
-                optionsKey="deliveryChannelName"
-                displayKey="channelCode"
-                disable={isDisableAllFields || processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
-                active={noticeActive}
-                setActive={setNoticeActive}
-              />
-            </div>
-          </div>
-        )}
-
-        {(orderType === "SUMMONS" || !orderType) && (
-          <div className="row">
-            <div className="label-container">
-              <div className="label">{t("CS_SUMMONS_COURIER")}</div>
-              {!orderType && processCourierData?.isDelayCondonation ? (
-                <div className="optional">{t("CS_IS_OPTIONAL")}</div>
-              ) : (
-                <div className="info-icon">
-                  <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
-                    <InfoIcon />
-                  </span>
-                  <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
-                    {t("CS_SUMMONS_COURIER_TOOLTIP")}
-                  </ReactTooltip>
-                </div>
-              )}
-            </div>
-            <div
-              className="dropdown-container"
-              onClick={() => {
-                if (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
-                  setShowConfirmationModal(true);
-                }
-              }}
-            >
-              <CustomMultiSelectDropdown
-                t={t}
-                defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions?.filter((option) => option?.taskType === "SUMMONS")}
-                selected={processCourierData?.summonsCourierService}
-                onSelect={(value) => {
-                  handleCourierServiceChange(value, "summons");
-                }}
-                optionsKey="deliveryChannelName"
-                displayKey="channelCode"
-                disable={
-                  isDisableAllFields ||
-                  processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
-                  (!summonsActive && processCourierData?.isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
-                }
-                active={summonsActive}
-                setActive={setSummonsActive}
-              />
-            </div>
-          </div>
-        )}
-
         <div className="address-section">
           <div className="address-header">
             <div className="address-title">{t("CS_SELECT_ADDRESS_FOR_DELIVERY")}</div>
@@ -316,6 +236,91 @@ function CourierService({
             isDisabled={isDisableAllFields}
           ></Button>
         </div>
+
+        <div className="header-row" style={orderType ? {} : { marginTop: "12px" }}>
+          <div className="process-section">{orderType ? t("CS_TAKE_STEPS") : t("CS_PROCESS")}</div>
+          <div className="courier-section">{orderType ? t("CS_COURIER_SERVICE") : t("CS_COURIER_SERVICES")}</div>
+        </div>
+
+        {(orderType === "NOTICE" || isDelayCondonation) && (
+          <div className="row" style={orderType ? { marginBottom: "24px" } : {}}>
+            <div className="label-container">
+              <div className="label">{t("CS_NOTICE_COURIER")}</div>
+              {!orderType && (
+                <div className="info-icon">
+                  <span style={{ position: "relative" }} data-tip data-for="notice-tooltip">
+                    <InfoIcon />
+                  </span>
+                  <ReactTooltip id="notice-tooltip" place="bottom" content={t("CS_NOTICE_COURIER_TOOLTIP")}>
+                    {t("CS_NOTICE_COURIER_TOOLTIP")}
+                  </ReactTooltip>
+                </div>
+              )}
+            </div>
+            <div className="dropdown-container">
+              <CustomMultiSelectDropdown
+                t={t}
+                defaultLabel={t("SELECT_COURIER_SERVICES")}
+                options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
+                selected={processCourierData?.noticeCourierService}
+                onSelect={(value) => handleCourierServiceChange(value, "notice")}
+                optionsKey="deliveryChannelName"
+                displayKey="channelCode"
+                disable={isDisableAllFields || processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
+                active={noticeActive}
+                setActive={setNoticeActive}
+              />
+            </div>
+          </div>
+        )}
+
+        {(orderType === "SUMMONS" || !orderType) && (
+          <div className="row" style={orderType ? { marginBottom: "24px" } : {}}>
+            <div className="label-container">
+              <div className="label">{t("CS_SUMMONS_COURIER")}</div>
+              {!orderType &&
+                (isDelayCondonation ? (
+                  <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+                ) : (
+                  <div className="info-icon">
+                    <span style={{ position: "relative" }} data-tip data-for="summons-tooltip">
+                      <InfoIcon />
+                    </span>
+                    <ReactTooltip id="summons-tooltip" place="bottom" content={t("CS_SUMMONS_COURIER_TOOLTIP")}>
+                      {t("CS_SUMMONS_COURIER_TOOLTIP")}
+                    </ReactTooltip>
+                  </div>
+                ))}
+            </div>
+            <div
+              className="dropdown-container"
+              onClick={() => {
+                if (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                  setShowConfirmationModal(true);
+                }
+              }}
+            >
+              <CustomMultiSelectDropdown
+                t={t}
+                defaultLabel={t("SELECT_COURIER_SERVICES")}
+                options={courierOptions?.filter((option) => option?.taskType === "SUMMONS")}
+                selected={processCourierData?.summonsCourierService}
+                onSelect={(value) => {
+                  handleCourierServiceChange(value, "summons");
+                }}
+                optionsKey="deliveryChannelName"
+                displayKey="channelCode"
+                disable={
+                  isDisableAllFields ||
+                  processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||
+                  (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0)
+                }
+                active={summonsActive}
+                setActive={setSummonsActive}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {showAddAddressModal && (

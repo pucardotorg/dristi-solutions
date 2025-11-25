@@ -864,7 +864,7 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   return allErrorData;
 };
 
-export const getProcessCourierRemainingFields = (formdata, t) => {
+export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation) => {
   const allErrorData = [];
   for (let i = 0; i < formdata?.length; i++) {
     const formData = formdata?.[i]?.data || {};
@@ -873,7 +873,6 @@ export const getProcessCourierRemainingFields = (formdata, t) => {
       NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
       SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
     };
-    const isDelayCondonation = formData?.multipleAccusedProcessCourier?.isDelayCondonation;
     if (isDelayCondonation) {
       if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
         errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
@@ -1608,6 +1607,7 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
   filingType,
+  isDelayCondonation,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -2396,6 +2396,9 @@ export const updateCaseDetails = async ({
             data: {
               ...data.data,
               ...documentData,
+              firstName: data?.data?.firstName?.trim(),
+              middleName: data?.data?.middleName?.trim(),
+              lastName: data?.data?.lastName?.trim(),
               complainantVerification: {
                 ...data?.data?.complainantVerification,
                 ...updatedComplainantVerification,
@@ -2576,6 +2579,9 @@ export const updateCaseDetails = async ({
             ...data,
             data: {
               ...data.data,
+              respondentFirstName: data?.data?.respondentFirstName?.trim(),
+              respondentMiddleName: data?.data?.respondentMiddleName?.trim(),
+              respondentLastName: data?.data?.respondentLastName?.trim(),
               ...documentData,
             },
             uniqueId: data?.uniqueId || generateUUID(),
@@ -2794,6 +2800,9 @@ export const updateCaseDetails = async ({
       if (!obj?.uniqueId) {
         obj.uniqueId = generateUUID();
       }
+      obj.data.firstName = obj?.data?.firstName?.trim();
+      obj.data.middleName = obj?.data?.middleName?.trim();
+      obj.data.lastName = obj?.data?.lastName?.trim();
       obj.data.ownerType = "COMPLAINANT";
     }
 
@@ -3364,6 +3373,25 @@ export const updateCaseDetails = async ({
     },
   });
 
+  if (data?.additionalDetails?.processCourierService) {
+    data.additionalDetails.processCourierService = {
+      ...data?.additionalDetails?.processCourierService,
+      formdata: data?.additionalDetails?.processCourierService?.formdata?.map((item) => {
+        const courier = item?.data?.multipleAccusedProcessCourier;
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            multipleAccusedProcessCourier: {
+              ...courier,
+              noticeCourierService: isDelayCondonation ? courier?.noticeCourierService : [],
+            },
+          },
+        };
+      }),
+    };
+  }
+
   if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
     return null;
   }
@@ -3479,7 +3507,19 @@ export const createOrUpdateTask = async ({
   isUpfrontPayment,
   status,
 }) => {
-  if (!accusedDetails?.length) return;
+  if (existingTask && (!accusedDetails || accusedDetails?.length === 0)) {
+    const expirePayload = {
+      ...existingTask,
+      workflow: { action: TaskManagementWorkflowAction.EXPIRE },
+    };
+
+    await DRISTIService.updateTaskManagementService({
+      taskManagement: expirePayload,
+    });
+
+    return;
+  }
+  if (!accusedDetails || accusedDetails?.length === 0) return;
 
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
@@ -3502,6 +3542,7 @@ export const createOrUpdateTask = async ({
         tenantId,
         taskType: type,
         partyDetails,
+        partyType: "RESPONDENT",
         workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
       };
 

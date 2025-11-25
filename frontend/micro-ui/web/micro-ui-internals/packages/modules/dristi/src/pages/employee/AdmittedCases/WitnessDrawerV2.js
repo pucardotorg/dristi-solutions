@@ -1503,6 +1503,7 @@ const WitnessDrawerV2 = ({
               setShowSuccessModal(false);
               evidenceRefetch();
               setCurrentEvidence(null);
+              setWitnessDepositionUploadLoader(false);
             }}
             message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
           />

@@ -279,7 +279,16 @@ function PendingTaskAccordion({
                 <span>{`${t("PENDING")} - ${t(task?.actionName)}`}</span>
               </div>
               <div className="order-task-actions">
-                <button className="btn-view" onClick={() => redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, task?.params)}>
+                <button
+                  className="btn-view"
+                  onClick={() => {
+                    const params = {
+                      ...task?.params,
+                      isView: true,
+                    };
+                    redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, params);
+                  }}
+                >
                   {t("VIEW")}
                 </button>
                 <button
