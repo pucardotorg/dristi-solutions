@@ -707,6 +707,7 @@ const editComplainantDetailsFormConfig = [
         key: "prayer",
         withoutLabel: true,
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -729,6 +730,7 @@ const editComplainantDetailsFormConfig = [
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {

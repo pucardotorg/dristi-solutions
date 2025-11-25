@@ -425,7 +425,12 @@ const MainHomeScreen = () => {
   // Fetch order details when courier service pending task is set
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
+      if (
+        Object?.keys(courierOrderDetails)?.length === 0 &&
+        courierServicePendingTask &&
+        Object?.keys(courierServicePendingTask)?.length > 0 &&
+        Array?.isArray(taskManagementList)
+      ) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
           const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
@@ -570,7 +575,7 @@ const MainHomeScreen = () => {
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
+  }, [courierOrderDetails, courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
   const handleProcessCourierOnSubmit = useCallback(
     async (courierData, isLast) => {

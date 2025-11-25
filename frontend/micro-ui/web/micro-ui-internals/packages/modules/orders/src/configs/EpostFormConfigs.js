@@ -200,6 +200,7 @@ export const updateEpostStatusPendingConfig = [
         isMandatory: false,
         withoutLabel: true,
         // label: "ADDITIONAL_REMARKS",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -260,6 +261,7 @@ export const updateEpostStatusConfig = [
         isMandatory: false,
         withoutLabel: true,
         // label: "ADDITIONAL_REMARKS",
+        isInfinite: true,
         populators: {
           inputs: [
             {
