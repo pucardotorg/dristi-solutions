@@ -78,7 +78,7 @@ public class OrderService {
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : null)
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode() : null)
                 .desigCode(designationMaster.getDesgCode())
-                .dispReason(getDisposalReason(order))
+                .dispReason(determineDisposalReason(order))
                 .build();
 
         producer.push("save-order-details", newOrder);
@@ -86,78 +86,120 @@ public class OrderService {
     }
 
     /**
-     * Extracts disposal nature from order based on order category
-     * @param order The order to extract disposal nature from
-     * @return Integer representing disposal status, 0 if not found or error occurs
+     * Determines disposal reason based on outcome value
+     * Uses single unified method for all disposal status retrieval
+     * @param order The order to determine disposal reason for
+     * @return Integer representing disposal status
      */
-    private Integer getDisposalReason(Order order) {
-        log.info("Extracting disposal nature for order category: {}", order.getOrderCategory());
+    private Integer determineDisposalReason(Order order) {
+        String outcome = order.getOutcome();
+        log.info("Determining disposal reason for order | orderNumber: {} | outcome: {}", 
+                order.getOrderNumber(), outcome);
+        
+        try {
+            String outcomeCode = null;
+            
+            // If outcome is provided and not 'judgement', use it directly
+            if (outcome != null && !JUDGEMENT.equalsIgnoreCase(outcome)) {
+                outcomeCode = outcome;
+                log.info("Using direct outcome value: {}", outcome);
+            } else {
+                // Extract outcome code from order structure for judgement or null outcomes
+                outcomeCode = extractOutcomeCodeFromOrder(order);
+                log.info("Extracted outcome code from order structure: {}", outcomeCode);
+            }
+            
+            // Use single method to get disposal status
+            return getDisposalStatus(outcomeCode, order.getOrderNumber());
+            
+        } catch (Exception e) {
+            log.error("Error determining disposal reason | orderNumber: {} | outcome: {} | error: {}", 
+                     order.getOrderNumber(), outcome, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Single unified method to get disposal status from outcome code
+     * @param outcomeCode The outcome code to query
+     * @param orderNumber The order number for logging context
+     * @return Integer representing disposal status, 0 if not found
+     */
+    private Integer getDisposalStatus(String outcomeCode, String orderNumber) {
+        if (outcomeCode == null || outcomeCode.trim().isEmpty()) {
+            log.warn("Outcome code is null or empty for order: {}, returning default disposal status: 0", orderNumber);
+            return 0;
+        }
+        
+        try {
+            Integer disposalStatus = caseRepository.getDisposalStatus(outcomeCode);
+            if (disposalStatus != null) {
+                log.info("Found disposal status: {} for outcome code: {} | order: {}", 
+                        disposalStatus, outcomeCode, orderNumber);
+                return disposalStatus;
+            } else {
+                log.warn("No disposal status found for outcome code: {} | order: {}, returning default: 0", 
+                        outcomeCode, orderNumber);
+                return 0;
+            }
+        } catch (Exception e) {
+            log.error("Error querying disposal status for outcome code: {} | order: {} | error: {}", 
+                     outcomeCode, orderNumber, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Extracts outcome code from order structure based on order category
+     * @param order The order to extract outcome code from
+     * @return String outcome code or null if not found
+     */
+    private String extractOutcomeCodeFromOrder(Order order) {
+        log.info("Extracting outcome code from order structure | orderCategory: {}", order.getOrderCategory());
         
         try {
             if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
-                return extractDisposalNatureFromIntermediate(order);
+                JsonNode additionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+                return extractOutcomeCodeFromFormData(additionalDetails);
             } else if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
-                return extractDisposalNatureFromComposite(order);
+                return extractOutcomeCodeFromCompositeOrder(order);
             }
             
-            log.warn("Unknown order category: {}, returning default disposal nature: 0", order.getOrderCategory());
-            return 0;
+            log.warn("Unknown order category: {}, cannot extract outcome code", order.getOrderCategory());
+            return null;
             
         } catch (Exception e) {
-            log.error("Error extracting disposal nature from order category: {}", order.getOrderCategory(), e);
-            return 0;
+            log.error("Error extracting outcome code from order structure | orderCategory: {} | error: {}", 
+                     order.getOrderCategory(), e.getMessage(), e);
+            return null;
         }
     }
 
     /**
-     * Extracts disposal nature from intermediate order
-     * @param order The intermediate order
-     * @return Integer representing disposal status
-     */
-    private Integer extractDisposalNatureFromIntermediate(Order order) {
-        log.info("Processing intermediate order for disposal nature extraction");
-        
-        JsonNode additionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
-        String outcomeCode = extractOutcomeCodeFromFormData(additionalDetails);
-        
-        if (outcomeCode != null) {
-            Integer disposalStatus = caseRepository.getDisposalStatus(outcomeCode);
-            log.info("Found disposal status: {} for outcome code: {}", disposalStatus, outcomeCode);
-            return disposalStatus;
-        }
-        
-        log.warn("No outcome code found in intermediate order, returning default: 0");
-        return 0;
-    }
-
-    /**
-     * Extracts disposal nature from composite order
+     * Extracts outcome code from composite order
      * @param order The composite order
-     * @return Integer representing disposal status
+     * @return String outcome code or null if not found
      */
-    private Integer extractDisposalNatureFromComposite(Order order) {
-        log.info("Processing composite order for disposal nature extraction");
-        
+    private String extractOutcomeCodeFromCompositeOrder(Order order) {
         JsonNode compositeItems = objectMapper.convertValue(order.getCompositeItems(), JsonNode.class);
         
         if (compositeItems == null || !compositeItems.isArray()) {
             log.warn("Composite items is null or not an array");
-            return 0;
+            return null;
         }
         
         for (JsonNode compositeItem : compositeItems) {
             if (isJudgementOrderType(compositeItem)) {
                 String outcomeCode = extractOutcomeCodeFromCompositeItem(compositeItem);
                 if (outcomeCode != null) {
-                    Integer disposalStatus = caseRepository.getDisposalStatus(outcomeCode);
-                    log.info("Found disposal status: {} for outcome code: {} in composite item", disposalStatus, outcomeCode);
-                    return disposalStatus;
+                    log.info("Found outcome code: {} in composite item", outcomeCode);
+                    return outcomeCode;
                 }
             }
         }
         
-        log.warn("No judgement order type found in composite order, returning default: 0");
-        return 0;
+        log.warn("No judgement order type found in composite order");
+        return null;
     }
 
     /**
@@ -185,25 +227,25 @@ public class OrderService {
      */
     private String extractOutcomeCodeFromFormData(JsonNode additionalDetails) {
         if (additionalDetails == null) {
-            log.warn("Additional details is null");
+            log.info("Additional details is null");
             return null;
         }
         
         JsonNode formDataNode = additionalDetails.get("formdata");
         if (formDataNode == null) {
-            log.warn("Form data node is null");
+            log.info("Form data node is null");
             return null;
         }
         
         JsonNode findings = formDataNode.get("findings");
         if (findings == null) {
-            log.warn("Findings node is null");
+            log.info("Findings node is null");
             return null;
         }
         
         JsonNode outcome = findings.get("code");
         if (outcome == null) {
-            log.warn("Outcome code node is null");
+            log.info("Outcome code node is null");
             return null;
         }
         
@@ -222,7 +264,7 @@ public class OrderService {
         
         JsonNode orderSchema = compositeItem.get("orderSchema");
         if (orderSchema == null) {
-            log.warn("Order schema is null in composite item");
+            log.info("Order schema is null in composite item");
             return null;
         }
         

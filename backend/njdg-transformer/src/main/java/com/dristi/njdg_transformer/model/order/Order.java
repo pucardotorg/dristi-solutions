@@ -131,4 +131,7 @@ public class Order {
     @Valid
     private Workflow workflow = null;
 
+    @JsonProperty("outcome")
+    private String outcome;
+
 }

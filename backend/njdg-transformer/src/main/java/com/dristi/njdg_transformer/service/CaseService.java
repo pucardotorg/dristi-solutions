@@ -63,14 +63,11 @@ public class CaseService {
         log.info("Starting case processing for CNR: {}", courtCase.getCnrNumber());
         
         try {
-            // Transform case to NJDG format
             NJDGTransformRecord record = caseTransformer.transform(courtCase, requestInfo);
             log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             
-            // Enrich party details
             enrichPrimaryPartyDetails(courtCase, record);
 
-            // Save the main record
             producer.push("save-case-details", record);
 
             // Process additional data
@@ -119,10 +116,8 @@ public class CaseService {
         log.info("Processing additional data for case CNR: {}", courtCase.getCnrNumber());
         
         try {
-            // Process extra parties
             extraPartiesProcessor.processExtraParties(courtCase);
             
-            // Process acts
             actsProcessor.processActs(courtCase);
             
             log.info("Successfully processed additional data for case CNR: {}", courtCase.getCnrNumber());
@@ -149,7 +144,6 @@ public class CaseService {
                 return null;
             }
             
-            // Enrich record with related data
             enrichRecordWithRelatedData(record, cino);
             
             log.info("Successfully retrieved NJDG transform record for CINO: {}", cino);
@@ -169,25 +163,21 @@ public class CaseService {
         log.info("Enriching NJDG record with related data for CINO: {}", cino);
         
         try {
-            // Fetch and set complainant parties
             List<PartyDetails> complainantParty = caseRepository.getPartyDetails(cino, PartyType.PET);
             record.setPetExtraParty(complainantParty != null ? complainantParty : new ArrayList<>());
             log.info("Added {} complainant parties for CINO: {}", 
                      record.getPetExtraParty().size(), cino);
             
-            // Fetch and set respondent parties
             List<PartyDetails> respondentParty = caseRepository.getPartyDetails(cino, PartyType.RES);
             record.setResExtraParty(respondentParty != null ? respondentParty : new ArrayList<>());
             log.info("Added {} respondent parties for CINO: {}", 
                      record.getResExtraParty().size(), cino);
             
-            // Fetch and set hearing history
             List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
             record.setHistoryOfCaseHearing(hearingDetails != null ? hearingDetails : new ArrayList<>());
             log.info("Added {} hearing records for CINO: {}", 
                      record.getHistoryOfCaseHearing().size(), cino);
             
-            // Fetch and set acts
             List<Act> actDetails = caseRepository.getActs(cino);
             record.setActs(actDetails != null ? actDetails : new ArrayList<>());
             log.info("Added {} acts for CINO: {}", record.getActs().size(), cino);

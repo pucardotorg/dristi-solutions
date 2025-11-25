@@ -30,12 +30,28 @@ public class CaseRepository {
 
     public Integer getCaseTypeCode(String caseType) {
         String query = queryBuilder.getCaseTypeQuery();
-        return jdbcTemplate.queryForObject(query, new Object[]{caseType}, new int[]{Types.VARCHAR}, Integer.class);
+        try {
+            return jdbcTemplate.queryForObject(query, new Object[]{caseType}, new int[]{Types.VARCHAR}, Integer.class);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No case type found for: {}", caseType);
+            return 0;
+        } catch (Exception e) {
+            log.error("Error retrieving case type code for: {} | error: {}", caseType, e.getMessage(), e);
+            return 0;
+        }
     }
 
     public Integer getDisposalStatus(String outcome) {
         String query = queryBuilder.getDisposalTypeQuery();
-        return jdbcTemplate.queryForObject(query, new Object[]{outcome}, new int[]{Types.VARCHAR}, Integer.class);
+        try {
+            return jdbcTemplate.queryForObject(query, new Object[]{outcome}, new int[]{Types.VARCHAR}, Integer.class);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No disposal status found for outcome: {}", outcome);
+            return 0;
+        } catch (Exception e) {
+            log.error("Error retrieving disposal status for outcome: {} | error: {}", outcome, e.getMessage(), e);
+            return 0;
+        }
     }
 
     public Integer getDistrictCode(String districtName) {

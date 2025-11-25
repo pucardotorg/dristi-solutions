@@ -87,11 +87,13 @@ public class CaseEnrichment implements PartyEnricher {
                  party, courtCase.getCnrNumber());
         
         try {
-            List<String> advocateIds = courtCase.getRepresentatives().stream()
-                    .filter(mapping -> findPrimaryParty(mapping.getRepresenting(), party) != null)
-                    .map(AdvocateMapping::getAdvocateId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            List<String> advocateIds = courtCase.getRepresentatives() != null ? 
+                    courtCase.getRepresentatives().stream()
+                            .filter(mapping -> findPrimaryParty(mapping.getRepresenting(), party) != null)
+                            .map(AdvocateMapping::getAdvocateId)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList()) : 
+                    Collections.emptyList();
 
             if (advocateIds.isEmpty()) {
                 log.warn("No advocate found for party: {} in case CNR: {}", party, courtCase.getCnrNumber());
@@ -423,11 +425,6 @@ public class CaseEnrichment implements PartyEnricher {
             String uniqueId = w.getUniqueId();
             PartyDetails existing = findExistingParty(existingParties, uniqueId);
 
-            if (existing != null) {
-                witnessPartyDetails.add(existing);
-                continue;
-            }
-
             String fullName = buildFullName(w.getFirstName(), w.getMiddleName(), w.getLastName());
             if (fullName.isEmpty()) fullName = w.getWitnessDesignation();
 
@@ -446,6 +443,13 @@ public class CaseEnrichment implements PartyEnricher {
                 log.warn("Witness has no address details. CNR: {}", courtCase.getCnrNumber());
             }
 
+            if (existing != null) {
+                existing.setPartyName(fullName);
+                existing.setPartyAddress(address);
+                existing.setPartyAge(w.getWitnessAge() != null ? Integer.parseInt(w.getWitnessAge()) : 0);
+                witnessPartyDetails.add(existing);
+                continue;
+            }
             PartyDetails newWitness = PartyDetails.builder()
                     .partyId(uniqueId)
                     .partyName(fullName)

@@ -201,7 +201,7 @@ public class NjdgConsumer {
     @NotNull
     private static HearingDetails getHearingDetails(HearingDetails existingHearingOpt, HearingDetails hearingDetails) {
         existingHearingOpt.setHearingDate(hearingDetails.getHearingDate());
-        existingHearingOpt.setNextDate(hearingDetails.getNextDate());
+        existingHearingOpt.setNextDate(existingHearingOpt.getNextDate() == null ? hearingDetails.getNextDate() : existingHearingOpt.getNextDate());
         existingHearingOpt.setPurposeOfListing(hearingDetails.getPurposeOfListing());
         existingHearingOpt.setJudgeCode(hearingDetails.getJudgeCode());
         existingHearingOpt.setJoCode(hearingDetails.getJoCode());

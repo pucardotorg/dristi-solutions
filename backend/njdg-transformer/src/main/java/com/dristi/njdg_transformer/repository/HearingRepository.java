@@ -5,6 +5,8 @@ import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.repository.querybuilder.HearingQueryBuilder;
 import com.dristi.njdg_transformer.repository.rowmapper.HearingDetailsRowMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class HearingRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -62,7 +65,15 @@ public class HearingRepository {
     public Integer getHearingPurposeCode(Hearing hearing) {
         String hearingQuery = hearingQueryBuilder.getHearingPurposeQuery();
         String purpose = hearing.getHearingType();
-        return jdbcTemplate.queryForObject(hearingQuery, new Object[]{purpose}, new int[]{Types.VARCHAR}, Integer.class);
+        try {
+            return jdbcTemplate.queryForObject(hearingQuery, new Object[]{purpose}, new int[]{Types.VARCHAR}, Integer.class);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No hearing purpose code found for hearing type: {}", purpose);
+            return 0;
+        } catch (Exception e) {
+            log.error("Error retrieving hearing purpose code for hearing type: {} | error: {}", purpose, e.getMessage(), e);
+            return 0;
+        }
     }
 
     public void updateHearingDetails(HearingDetails hearingDetails) {

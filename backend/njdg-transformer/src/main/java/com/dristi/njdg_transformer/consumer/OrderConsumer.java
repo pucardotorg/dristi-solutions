@@ -4,12 +4,17 @@ import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
+import com.dristi.njdg_transformer.utils.JsonUtil;
+import com.dristi.njdg_transformer.utils.MdmsUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -18,22 +23,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class OrderConsumer {
 
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
     private final HearingService hearingService;
-
-    public OrderConsumer(OrderService orderService, ObjectMapper objectMapper, HearingService hearingService) {
-        this.orderService = orderService;
-        this.objectMapper = objectMapper;
-        this.hearingService = hearingService;
-    }
+    private final MdmsUtil mdmsUtil;
+    private final JsonUtil jsonUtil;
 
     @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}", groupId = "transformer-order")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -75,14 +78,14 @@ public class OrderConsumer {
                 return;
             }
 
-            if (shouldProcessOrder(order)) {
+            if (shouldProcessOrder(order, orderRequest.getRequestInfo())) {
                 orderService.processAndUpdateOrder(order, orderRequest.getRequestInfo());
                 log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
             } else {
                 log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
                         orderId, order.getOrderType());
             }
-            if(order.getScheduledHearingNumber()!= null && order.getHearingNumber() != null && order.getItemText() != null) {
+            if(order.getHearingNumber() != null && order.getItemText() != null) {
                 hearingService.processBusinessOrder(order, orderRequest.getRequestInfo());
             }
 
@@ -101,14 +104,28 @@ public class OrderConsumer {
         }
     }
 
-    private boolean shouldProcessOrder(Order order) {
-        if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
-            return getCompositeItems(order).stream()
-                    .anyMatch(item -> orderTypes.contains(item.getOrderType()));
+    private boolean shouldProcessOrder(Order order, RequestInfo requestInfo) {
+        if(INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
+            String outcome = getOutcomeValue(order.getOrderType(), order.getTenantId(), requestInfo);
+            if(outcome != null) {
+                order.setOutcome(outcome);
+                log.debug("Set outcome for intermediate order | orderNumber: {} | orderType: {} | outcome: {}", 
+                         order.getOrderNumber(), order.getOrderType(), outcome);
+                return true;
+            }
+        } else if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+            JsonNode compositeItems = objectMapper.convertValue(order.getCompositeItems(), JsonNode.class);
+            for(JsonNode compositeItem : compositeItems){
+                String outcome = getOutcomeValue(compositeItem.get("orderType").asText(), order.getTenantId(), requestInfo);
+                if(outcome != null) {
+                    order.setOutcome(outcome);
+                    log.debug("Set outcome for composite order | orderNumber: {} | orderType: {} | outcome: {}", 
+                             order.getOrderNumber(), compositeItem.get("orderType").asText(), outcome);
+                    return true;
+                }
+            }
         }
-
-        return INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory()) &&
-                orderTypes.contains(order.getOrderType());
+        return false;
     }
 
     private List<Order> getCompositeItems(Order order) {
@@ -152,6 +169,28 @@ public class OrderConsumer {
         } catch (JsonProcessingException e) {
             log.error("Error converting order to JSON", e);
             throw new CustomException("ORDER_CONVERSION_ERROR", "Error converting order to JSON");
+        }
+    }
+
+    private String getOutcomeValue(String orderType, String tenantId, RequestInfo requestInfo) {
+        try {
+            Map<String, Map<String, JSONArray>> caseOutcomes = mdmsUtil.fetchMdmsData(requestInfo, tenantId, "case", List.of("OutcomeType"));
+            JSONArray outcomeData = caseOutcomes.get("case").get("OutcomeType");
+            
+            for (Object outcomeObject : outcomeData) {
+                String outcomeOrderType = jsonUtil.getNestedValue(outcomeObject, List.of("orderType"), String.class);
+                if(orderType.equalsIgnoreCase(outcomeOrderType)){
+                    String outcomeValue = jsonUtil.getNestedValue(outcomeObject, List.of("outcome"), String.class);
+                    log.debug("Found outcome for orderType | orderType: {} | outcome: {}", orderType, outcomeValue);
+                    return outcomeValue;
+                }
+            }
+            
+            log.debug("No outcome found for orderType | orderType: {}", orderType);
+            return null;
+        } catch (Exception e) {
+            log.error("Error fetching outcome value for orderType | orderType: {} | error: {}", orderType, e.getMessage(), e);
+            return null;
         }
     }
 }
