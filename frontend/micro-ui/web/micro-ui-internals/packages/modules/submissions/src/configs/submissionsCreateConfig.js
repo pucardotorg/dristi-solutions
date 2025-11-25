@@ -231,6 +231,7 @@ export const configsRescheduleRequest = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -267,6 +268,7 @@ export const configsRescheduleRequest = [
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -458,6 +460,7 @@ export const configsCheckoutRequest = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -489,6 +492,7 @@ export const configsCheckoutRequest = [
         transformer: "customTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -691,6 +695,7 @@ export const configsExtensionSubmissionDeadline = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -727,6 +732,7 @@ export const configsExtensionSubmissionDeadline = [
         schemaKeyPath: "applicationDetails.benefitOfExtension",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -751,6 +757,7 @@ export const configsExtensionSubmissionDeadline = [
         transformer: "customTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -830,6 +837,7 @@ export const configsDocumentSubmission = [
         component: "SelectCustomTextArea",
         key: "extensionBenefit",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1052,6 +1060,7 @@ export const configsProductionOfDocuments = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1265,6 +1274,7 @@ export const configsCaseWithdrawal = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1463,6 +1473,7 @@ export const configsCaseTransfer = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinte: true,
         populators: {
           inputs: [
             {
@@ -1637,6 +1648,7 @@ export const configsSettlement = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1724,6 +1736,7 @@ export const configsSurety = [
         component: "SelectCustomTextArea",
         schemaKeyPath: "applicationDetails.reasonForApplication",
         transformer: "customTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1849,6 +1862,7 @@ export const configsBailBond = [
         component: "SelectCustomTextArea",
         schemaKeyPath: "applicationDetails.reasonForApplication",
         transformer: "customTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2005,6 +2019,7 @@ export const configsOthers = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2495,6 +2510,7 @@ export const submitDocsForBail = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2527,6 +2543,7 @@ export const submitDocsForBail = [
         schemaKeyPath: "applicationDetails.additionalInformation",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2709,6 +2726,7 @@ export const submitDelayCondonation = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2844,6 +2862,7 @@ export const poaClaimingConfig = [
         key: "comments",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2863,6 +2882,7 @@ export const poaClaimingConfig = [
         key: "prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
