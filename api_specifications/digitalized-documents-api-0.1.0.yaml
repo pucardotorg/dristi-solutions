@@ -208,6 +208,9 @@ components:
           type: string
         partyIndex:
           type: integer
+        hasSigned:
+          type: boolean
+          description: Indicates whether this party has signed the mediation document.
     PleaDetails:
       type: object
       description: Details captured for recording plea of the accused.
