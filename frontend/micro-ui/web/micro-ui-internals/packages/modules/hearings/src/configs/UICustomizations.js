@@ -344,6 +344,7 @@ export const UICustomizations = {
                   feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
+            additionalDetails?.setHasTasks(Boolean(taskData.length > 0) ? true : false);
             return { list: taskData };
           },
         },
@@ -367,7 +368,15 @@ export const UICustomizations = {
           return (
             <CustomChip
               text={t(value)}
-              shade={value === "DELIVERED" ? "green" : value === "UNDELIVERED" ? "red" : value === "pending" ? "grey" : "orange"}
+              shade={
+                value === "DELIVERED"
+                  ? "green"
+                  : value === "UNDELIVERED" || value === "PAYMENT_EXPIRED"
+                  ? "red"
+                  : value === "pending" || value === "PAYMENT_PENDING"
+                  ? "grey"
+                  : "orange"
+              }
             />
           );
         // return t(value);
