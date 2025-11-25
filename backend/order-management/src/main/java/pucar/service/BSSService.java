@@ -220,8 +220,11 @@ public class BSSService {
                     if (order.getNextHearingDate() != null) {
                         hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
                     }
-                    updateHearingSummary(orderUpdateRequest);
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    if (order.getHearingNumber() != null) {
+                        updateHearingSummary(orderUpdateRequest);
+                        hearingUtil.updateOpenHearingIndex(order);
+                    }
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);
                     orderProcessor.postProcessOrder(orderUpdateRequest);
@@ -253,13 +256,11 @@ public class BSSService {
         RequestInfo requestInfo = request.getRequestInfo();
 
         //If attendance is present then attendance and item text will go in hearing summary
-        if (order.getAttendance() != null) {
-            String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-            Hearing hearing = hearings.get(0);
-            hearingUtil.updateHearingSummary(request, hearing);
-        }
+        String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
+        hearingUtil.updateHearingSummary(request, hearing);
     }
 
     private Map<String, Object> createAttribute(String name, String value) {

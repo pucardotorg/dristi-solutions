@@ -1,8 +1,9 @@
-package digit.web.models;
+package pucar.web.models.inbox;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
+import pucar.web.models.OrderStatus;
 
 import java.util.List;
 

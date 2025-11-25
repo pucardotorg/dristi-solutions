@@ -27,4 +27,7 @@ public class Document {
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
+
+    @JsonProperty("toDelete")
+    private Boolean toDelete = false;
 }
