@@ -148,6 +148,10 @@ components:
         documentNumber:
           type: string
           description: Filter by generated document number
+        orderNumber:
+          type: string
+        orderItemId:
+          type: string
         type:
           type: string
           enum: [plea, examination_of_accused, mediation]
@@ -202,6 +206,7 @@ components:
             - RESPONDENT
         uniqueId:
           type: string
+          description: user uuid of the party
         mobileNumber:
           type: string
         partyName:
