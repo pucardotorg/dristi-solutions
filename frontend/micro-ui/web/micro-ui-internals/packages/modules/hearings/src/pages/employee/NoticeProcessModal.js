@@ -422,7 +422,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
+                  <span>{formatDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
                 </div>
               </div>
               <div style={{ marginLeft: "10px" }}>
