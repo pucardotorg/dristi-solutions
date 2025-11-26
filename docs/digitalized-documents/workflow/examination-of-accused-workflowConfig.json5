@@ -74,17 +74,9 @@
           "actions": [
             {
               "action": "E-SIGN",
-              "nextState": "PENDING_E-SIGN",
-              "roles": [
-                "EXAMINATION_CREATOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "E-SIGN_COMPLETE",
               "nextState": "PENDING_REVIEW",
               "roles": [
+                "EXAMINATION_SIGNER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]

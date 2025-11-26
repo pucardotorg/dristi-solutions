@@ -60,13 +60,6 @@
               "roles": [
                 "PLEA_CREATOR"
               ]
-            },
-            {
-              "action": "SUBMIT",
-              "nextState": "DRAFT_IN_PROGRESS",
-              "roles": [
-                "PLEA_CREATOR"
-              ]
             }
           ]
         },
@@ -81,17 +74,9 @@
           "actions": [
             {
               "action": "E-SIGN",
-              "nextState": "PENDING_E-SIGN",
-              "roles": [
-                "PLEA_CREATOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "E-SIGN_COMPLETE",
               "nextState": "PENDING_REVIEW",
               "roles": [
+                "PLEA_SIGNER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
