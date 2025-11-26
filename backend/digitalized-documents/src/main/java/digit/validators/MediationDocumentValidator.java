@@ -15,10 +15,6 @@ public class MediationDocumentValidator {
 
     public void validateCreateMediationDocument(DigitalizedDocument document) {
 
-        if (document == null) {
-            throw new CustomException(INVALID_MEDIATION_DETAILS, "Document cannot be null");
-        }
-
         validateNotNull(document.getOrderNumber(), INVALID_ORDER_NUMBER, "Order number cannot be null");
 
         MediationDetails details = document.getMediationDetails();
@@ -39,6 +35,17 @@ public class MediationDocumentValidator {
 
         validateNotNull(details.getPartyDetails(),
                 INVALID_MEDIATION_DETAILS, "Party details cannot be null");
+    }
+
+    public void validateUpdateMediationDocument(DigitalizedDocument document) {
+
+        validateNotNull(document.getId(), INVALID_MEDIATION_DETAILS, "Id cannot be null");
+
+        validateNotNull(document.getDocumentNumber(), INVALID_MEDIATION_DETAILS, "Document number cannot be null");
+
+        validateNotNull(document.getOrderNumber(), INVALID_ORDER_NUMBER, "Order number cannot be null");
+
+        validateNotNull(document, INVALID_MEDIATION_DETAILS, "Document cannot be null");
     }
 
     private void validateNotNull(Object field, String errorCode, String message) {
