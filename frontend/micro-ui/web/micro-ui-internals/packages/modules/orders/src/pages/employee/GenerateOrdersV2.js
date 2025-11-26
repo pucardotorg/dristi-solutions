@@ -1357,65 +1357,59 @@ const GenerateOrdersV2 = () => {
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing,currentScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing, currentScheduledHearing]);
 
-  const nextHearing = useCallback(
-     async () => {
-      try {
-        const validData = (data || []).filter((item) =>
-          ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
-        );
+  const nextHearing = useCallback(async () => {
+    try {
+      const validData = (data || []).filter((item) =>
+        ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
+      );
 
-        if (!validData?.length) {
-          setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-          return;
-        }
-
-        const currentIndex = validData?.findIndex(
-          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
-        );
-        for (let step = 1; step < validData.length; step++) {
-          const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
-          const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
-          const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
-          const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
-          const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
-          if (!nextFiling) continue;
-
-          try {
-            const response = await ordersService.searchOrder(
-              {
-                tenantId: nextTenantId,
-                criteria: {
-                  tenantId: nextTenantId,
-                  filingNumber: nextFiling,
-                  hearingNumber: nextHearingNumber,
-                  applicationNumber: "",
-                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                  ...(nextCourtId && { courtId: nextCourtId }),
-                },
-                pagination: { limit: 1, offset: 0 },
-              },
-              { tenantId: nextTenantId }
-            );
-
-            const orderDraft = response?.list?.[0];
-             if (orderDraft?.orderNumber) {
-              history.push(
-                `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
-              );
-              return;
-            } 
-            } catch (e) {
-          }
-        }
+      if (!validData?.length) {
         setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-      } catch (e) {
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+        return;
       }
-    },
-    [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]
-  );
+
+      const currentIndex = validData?.findIndex(
+        (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+      );
+      for (let step = 1; step < validData.length; step++) {
+        const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
+        const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
+        const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
+        const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
+        const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
+        if (!nextFiling) continue;
+
+        try {
+          const response = await ordersService.searchOrder(
+            {
+              tenantId: nextTenantId,
+              criteria: {
+                tenantId: nextTenantId,
+                filingNumber: nextFiling,
+                hearingNumber: nextHearingNumber,
+                applicationNumber: "",
+                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                ...(nextCourtId && { courtId: nextCourtId }),
+              },
+              pagination: { limit: 1, offset: 0 },
+            },
+            { tenantId: nextTenantId }
+          );
+
+          const orderDraft = response?.list?.[0];
+          if (orderDraft?.orderNumber) {
+            history.push(`/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`);
+            return;
+          }
+        } catch (e) {}
+      }
+      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+    } catch (e) {
+      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+    }
+  }, [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]);
 
   // TODO: temporary Form Config, need to be replaced with the actual config
   const getModifiedFormConfig = useCallback(
@@ -4057,7 +4051,6 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
-    debugger;
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
