@@ -1355,7 +1355,7 @@ const WitnessDrawerV2 = ({
 
               <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
 
-              <div style={{ gap: "16px", border: "1px solid" }}>
+              <div style={{ gap: "16px", border: "1px solid" }} className="witness-editor">
                 <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
                 {IsSelectedWitness && (
                   <TranscriptComponent
