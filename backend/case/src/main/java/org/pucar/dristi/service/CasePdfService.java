@@ -98,9 +98,9 @@ public class CasePdfService {
                 courtCase.getDocuments().add(document);
             }
 
+            caseRegistrationEnrichment.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             log.info("Encrypting: {}", caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
-            caseRegistrationEnrichment.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
