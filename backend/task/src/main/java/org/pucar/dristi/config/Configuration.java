@@ -342,4 +342,7 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    @Value("${task.party.uuid.enrichment.topic}")
+    private String taskPartyUuidEnrichmentTopic;
 }

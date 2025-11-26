@@ -99,7 +99,9 @@ public class TaskQueryBuilder {
             // adding this filter for process summary filtering
             String partyType = criteria.getPartyType();
             String partyName = criteria.getPartyName();
+            String partyUniqueId = criteria.getPartyUniqueId();
             String partyCondition = getPartyCondition(partyType, partyName);
+            String uniqueIdCondition = getUniqueIdCondition(partyType, partyUniqueId);
 
             String condition = """
                         EXISTS (
@@ -130,7 +132,8 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
-            addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
+            addTaskCriteria(uniqueIdCondition != null ? partyUniqueId : null, query, firstCriteria, uniqueIdCondition, preparedStmtList, preparedStmtArgList);
 
             return query.toString();
         } catch (Exception e) {
@@ -143,15 +146,30 @@ public class TaskQueryBuilder {
         String partyCondition = null;
 
         if (partyType != null && !partyType.trim().isEmpty() && partyName != null && !partyName.trim().isEmpty()) {
-            if ("respondent".equalsIgnoreCase(partyType)) {
+            if (RESPONDENT.equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
-            } else if ("witness".equalsIgnoreCase(partyType)) {
+            } else if (WITNESS.equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
             }  else {
-                log.warn("Unrecognized partyType value: {}. Filter will be ignored.", partyType);
+                log.warn("Unrecognized partyType value: {}. Filter will be ignored for name.", partyType);
             }
         }
         return partyCondition;
+    }
+
+    private String getUniqueIdCondition(String partyType, String partyUniqueId) {
+        String uniqueIdCondition = null;
+
+        if (partyType != null && !partyType.trim().isEmpty() && partyUniqueId != null && !partyUniqueId.trim().isEmpty()) {
+            if (RESPONDENT.equalsIgnoreCase(partyType)) {
+                uniqueIdCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'uniqueId' = ?";
+            } else if (WITNESS.equalsIgnoreCase(partyType)) {
+                uniqueIdCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
+            }  else {
+                log.warn("Unrecognized partyType value: {}. Filter will be ignored for uniqueId.", partyType);
+            }
+        }
+        return uniqueIdCondition;
     }
 
     private boolean addTaskCriteriaExist(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList) {
