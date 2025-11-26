@@ -274,6 +274,17 @@ public class CaseOverallStatusUtil {
 		if (!"published".equalsIgnoreCase(status)) return null;
 
 		org.pucar.dristi.web.models.CaseOutcomeType caseOutcomeType = mdmsDataConfig.getCaseOutcomeTypeMap().get(orderType);
+        String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
+        NatureOfDisposal natureOfDisposal = null;
+        if (natureOfDisposalStr != null) {
+            try {
+                natureOfDisposal = NatureOfDisposal.valueOf(natureOfDisposalStr.toUpperCase());
+            } catch (IllegalArgumentException ex) {
+                // Optional: log error for invalid nature string
+                log.error("Invalid natureOfDisposal value: {}", natureOfDisposalStr);
+            }
+        }
+
 		if (caseOutcomeType == null) {
 			log.info("CaseOutcomeType not found for orderType: {}", orderType);
 			return null;
@@ -283,7 +294,7 @@ public class CaseOverallStatusUtil {
 			if (caseOutcomeType.getIsJudgement()) {
 				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome(), null);
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome(), natureOfDisposal);
 			}
 		} catch (Exception e) {
 			log.error("Error determining case outcome for filingNumber: {} and orderType: {}", filingNumber, orderType, e);
@@ -294,8 +305,19 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject, String orderCategory) {
 		try {
 			String outcome = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_FINDINGS_PATH) : JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
+            String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
+
+            NatureOfDisposal natureOfDisposal = null;
+            if (natureOfDisposalStr != null) {
+                try {
+                    natureOfDisposal = NatureOfDisposal.valueOf(natureOfDisposalStr.toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                    // Optional: log error for invalid nature string
+                    log.error("Invalid natureOfDisposal value: {}", natureOfDisposalStr);
+                }
+            }
 			if (caseOutcomeType.getJudgementList().contains(outcome)) {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome, null);
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome, natureOfDisposal);
 			} else {
 				log.info("Outcome not in judgement list for orderType: {}", caseOutcomeType.getOrderType());
 				return null;
@@ -339,6 +361,6 @@ public class CaseOverallStatusUtil {
     private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
         publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject, orderCategory), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
     }
 }
