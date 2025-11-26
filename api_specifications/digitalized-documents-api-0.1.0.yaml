@@ -277,6 +277,12 @@ components:
         caseFilingNumber:
           type: string
           description: Filing number of the case associated with this document
+        orderNumber:
+          type: string
+          description: Order number associated with this document. Applicable only in Mediation
+        orderItemId:
+          type: string
+          description: Order item identifier associated with this document. Applicable only in Mediation
         pleaDetails:
           $ref: '#/components/schemas/PleaDetails'
         examinationOfAccusedDetails:
