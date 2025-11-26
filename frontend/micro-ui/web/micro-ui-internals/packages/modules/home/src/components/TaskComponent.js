@@ -289,7 +289,7 @@ const TasksComponent = ({
 
           const formDataKey = formDataKeyMap[orderDetails?.orderType];
           const orderType = orderDetails?.orderType;
-          debugger;
+
           let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
           if (Array.isArray(uniqueIdsList) && uniqueIdsList.length > 0) {
             parties = parties?.filter((party) => {
