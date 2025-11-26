@@ -1084,15 +1084,13 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
   const TRIPLE_MUSTACHE_REGEX = /^\{\{\{([^{}]+)\}\}\}$/;
 
   let extractedRichTextFields = [];
+  let tokenCounter = 0;
 
   const findAndReplaceRichTextBlock = (value, path = []) => {
     if (Array.isArray(value)) {
-      const processedArray = value
-        .map((item, index) =>
-          findAndReplaceRichTextBlock(item, [...path, index])
-        )
-        .filter((item) => item !== null);
-      return processedArray;
+      return value.map((item, index) =>
+        findAndReplaceRichTextBlock(item, [...path, index])
+      );
     }
 
     if (typeof value === "object" && value !== null) {
@@ -1101,18 +1099,14 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
 
         if (match) {
           const variableName = match[1].trim();
-          const variableValue = variableTovalueMap[variableName];
-          if (
-            variableValue &&
-            typeof variableValue === "object" &&
-            !Array.isArray(variableValue)
-          ) {
-            variableTovalueMap[variableName] = JSON.stringify(variableValue);
-          }
-          extractedRichTextFields.push({ path, variableName });
-          return null;
+          const uniqueKey = `__RICHTEXT_TOKEN_${tokenCounter++}__`;
+
+          extractedRichTextFields.push({ variableName, uniqueKey });
+
+          return { __RICH_TEXT_TOKEN__: uniqueKey };
         }
       }
+
       const newObj = {};
       for (const [key, propValue] of Object.entries(value)) {
         newObj[key] = findAndReplaceRichTextBlock(propValue, [...path, key]);
@@ -1123,7 +1117,10 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
     return value;
   };
 
-  const preProcessedConfig = findAndReplaceRichTextBlock(formatconfig, []);
+  const preProcessedConfig = findAndReplaceRichTextBlock(
+    formatconfig,
+    []
+  );
 
   let input = JSON.stringify(preProcessedConfig).replace(/\\/g, "");
 
@@ -1151,31 +1148,42 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
   );
 
   if (extractedRichTextFields.length > 0) {
-    extractedRichTextFields.forEach(({ path, variableName }) => {
+    const tokenMap = {};
+    extractedRichTextFields.forEach(({ variableName, uniqueKey }) => {
       let richValue = variableTovalueMap[variableName];
 
       try {
-        if (typeof richValue === "string") {
-          richValue = JSON.parse(richValue);
-        }
+        richValue =
+          typeof richValue === "string" ? JSON.parse(richValue) : richValue;
       } catch (e) {
-        console.error("Failed to parse rich text:", e);
-        richValue = { text: richValue };
+        console.error(
+          `Failed to parse rich text for ${variableName}. Falling back to text node.`,
+          e
+        );
+        richValue = { text: richValue || "" };
       }
-
-      let target = output;
-      for (let i = 0; i < path.length - 1; i++) {
-        target = target[path[i]];
-      }
-
-      const indexToInsert = path[path.length - 1];
-
-      if (Array.isArray(target)) {
-        target.splice(indexToInsert, 1, richValue);
-      } else {
-        console.error("Insert failed — target is not an array:", target);
-      }
+      tokenMap[uniqueKey] = richValue;
     });
+
+    const replaceTokens = (obj) => {
+      if (Array.isArray(obj)) {
+        return obj.map((item) => replaceTokens(item));
+      }
+      if (typeof obj === "object" && obj !== null) {
+        if (obj.__RICH_TEXT_TOKEN__ && tokenMap[obj.__RICH_TEXT_TOKEN__]) {
+          return tokenMap[obj.__RICH_TEXT_TOKEN__];
+        }
+
+        const newObj = {};
+        for (const key in obj) {
+          newObj[key] = replaceTokens(obj[key]);
+        }
+        return newObj;
+      }
+      return obj;
+    };
+
+    output.content = replaceTokens(output.content);
   }
 
   return output;
