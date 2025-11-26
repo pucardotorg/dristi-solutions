@@ -2,6 +2,7 @@ package digit.validators;
 
 import digit.web.models.DigitalizedDocument;
 import digit.web.models.MediationDetails;
+import digit.web.models.MediationPartyDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,21 @@ public class MediationDocumentValidator {
 
         validateNotNull(details.getPartyDetails(),
                 INVALID_MEDIATION_DETAILS, "Party details cannot be null");
+
+        for (MediationPartyDetails partyDetails : details.getPartyDetails()) {
+            validateNotNull(partyDetails.getPartyType(),
+                    INVALID_MEDIATION_DETAILS, "Party type cannot be null");
+            validateNotNull(partyDetails.getUniqueId(),
+                    INVALID_MEDIATION_DETAILS, "Unique id cannot be null");
+            validateNotNull(partyDetails.getMobileNumber(),
+                    INVALID_MEDIATION_DETAILS, "Mobile number cannot be null");
+            validateNotNull(partyDetails.getPartyName(),
+                    INVALID_MEDIATION_DETAILS, "Party name cannot be null");
+            validateNotNull(partyDetails.getPartyIndex(),
+                    INVALID_MEDIATION_DETAILS, "Party index cannot be null");
+            validateNotNull(partyDetails.getHasSigned(),
+                    INVALID_MEDIATION_DETAILS, "Has signed cannot be null");
+        }
     }
 
     public void validateUpdateMediationDocument(DigitalizedDocument document) {

@@ -31,9 +31,9 @@ public class DigitalizedDocumentEnrichment {
 
         String idName = configuration.getDigitalizedDocumentIdGenConfig();
         String idFormat = configuration.getDigitalizedDocumentIdGenFormat();
-        String tenantId = digitalizedDocument.getTenantId();
+        String tenantId = digitalizedDocumentRequest.getDigitalizedDocument().getCaseFilingNumber().replace("-","");
 
-        List<String> idList = idgenUtil.getIdList(digitalizedDocumentRequest.getRequestInfo(), tenantId, idName, idFormat, 1);
+        List<String> idList = idgenUtil.getIdList(digitalizedDocumentRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
         log.info("Digitalized Document ID List: {}", idList);
 
         String documentNumber = digitalizedDocument.getCaseFilingNumber() + "-" + idList.get(0);

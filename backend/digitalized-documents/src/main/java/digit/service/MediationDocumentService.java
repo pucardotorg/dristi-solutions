@@ -70,9 +70,11 @@ public class MediationDocumentService implements DocumentTypeService {
         log.info("operation = updateDocument, result = IN_PROGRESS");
 
         DigitalizedDocument document = request.getDigitalizedDocument();
+
         WorkflowObject workflow = document.getWorkflow();
 
         validator.validateUpdateMediationDocument(document);
+
         enrichment.enrichUpdateMediationDocument(request);
 
         handleEditAction(document);
