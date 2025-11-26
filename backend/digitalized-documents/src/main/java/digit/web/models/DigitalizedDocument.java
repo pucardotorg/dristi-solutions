@@ -43,6 +43,12 @@ public class DigitalizedDocument {
     @JsonProperty("caseFilingNumber")
     private String caseFilingNumber = null;
 
+    @JsonProperty("orderNumber")
+    private String orderNumber = null;
+
+    @JsonProperty("orderItemId")
+    private String orderItemId = null;
+
     @JsonProperty("pleaDetails")
     @Valid
     private PleaDetails pleaDetails = null;

@@ -36,14 +36,14 @@ public class DigitalizedDocumentsApiController {
 
     @RequestMapping(value = "/v1/_create", method = RequestMethod.POST)
     public ResponseEntity<DigitalizedDocumentResponse> digitalizedDocumentsV1CreatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new digitalized document + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody DigitalizedDocumentRequest body) {
-        log.info("api = /feedback, result = IN_PROGRESS");
+        log.info("api = /v1/_create, result = IN_PROGRESS, {}", body);
         DigitalizedDocument digitalizedDocument = digitalizedDocumentService.createDigitalizedDocument(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         DigitalizedDocumentResponse digitalizedDocumentResponse = DigitalizedDocumentResponse.builder()
                 .digitalizedDocument(digitalizedDocument)
                 .responseInfo(responseInfo)
                 .build();
-        log.info("api = /feedback, result = SUCCESS");
+        log.info("api = /v1/_create, result = SUCCESS, {}", digitalizedDocumentResponse);
         return new ResponseEntity<>(digitalizedDocumentResponse, HttpStatus.OK);
     }
 
@@ -54,7 +54,15 @@ public class DigitalizedDocumentsApiController {
 
     @RequestMapping(value = "/v1/_update", method = RequestMethod.POST)
     public ResponseEntity<DigitalizedDocumentResponse> digitalizedDocumentsV1UpdatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for updating the digitalized document + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody DigitalizedDocumentRequest body) {
-        return null;
+        log.info("api = /v1/_update, result = IN_PROGRESS, {}", body);
+        DigitalizedDocument digitalizedDocument = digitalizedDocumentService.updateDigitalizedDocument(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        DigitalizedDocumentResponse digitalizedDocumentResponse = DigitalizedDocumentResponse.builder()
+                .digitalizedDocument(digitalizedDocument)
+                .responseInfo(responseInfo)
+                .build();
+        log.info("api = /v1/_update, result = SUCCESS, {}", digitalizedDocumentResponse);
+        return new ResponseEntity<>(digitalizedDocumentResponse, HttpStatus.OK);
     }
 
 }
