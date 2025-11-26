@@ -123,7 +123,7 @@ var fontDescriptors = {
 };
 
 var defaultFontMapping = {
-  en_IN: 'MalayalamSangamMn',
+  en_IN: 'Roboto',
   ml_IN: 'MalayalamSangamMn',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
@@ -1074,6 +1074,22 @@ const updateBorderlayout = (formatconfig) => {
   return formatconfig;
 };
 
+function deepFindValue(obj, key) {
+  if (!obj || typeof obj !== "object") return undefined;
+
+  if (obj.hasOwnProperty(key)) return obj[key];
+
+  for (const k of Object.keys(obj)) {
+    const val = obj[k];
+    if (typeof val === "object") {
+      const found = deepFindValue(val, key);
+      if (found !== undefined) return found;
+    }
+  }
+
+  return undefined;
+}
+
 /**
  *
  * @param {*} variableTovalueMap - key, value map. Keys are variable defined in data config
@@ -1081,33 +1097,110 @@ const updateBorderlayout = (formatconfig) => {
  * @param {*} formatconfig -format config read from formatconfig file
  */
 export const fillValues = (variableTovalueMap, formatconfig) => {
-  let input = JSON.stringify(formatconfig).replace(/\\/g, "");
-  
-  //console.log(variableTovalueMap);
-  //console.log(mustache.render(input, variableTovalueMap).replace(/""/g,"\"").replace(/"\[/g,"\[").replace(/\]"/g,"\]").replace(/\]\[/g,"\],\[").replace(/"\{/g,"\{").replace(/\}"/g,"\}"));
+  const TRIPLE_MUSTACHE_REGEX = /^\{\{\{([^{}]+)\}\}\}$/;
+
+  let extractedRichTextFields = [];
+  let tokenCounter = 0;
+
+  const findAndReplaceRichTextBlock = (value) => {
+    if (typeof value === "string") {
+      const match = value.trim().match(TRIPLE_MUSTACHE_REGEX);
+      if (match) {
+        const variableName = match[1].trim();
+        const uniqueKey = `__RICHTEXT_TOKEN_${tokenCounter++}__`;
+        extractedRichTextFields.push({ variableName, uniqueKey });
+        return { __RICH_TEXT_TOKEN__: uniqueKey };
+      }
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(findAndReplaceRichTextBlock);
+    }
+
+    if (value && typeof value === "object") {
+      const newObj = {};
+      for (const [key, val] of Object.entries(value)) {
+        newObj[key] = findAndReplaceRichTextBlock(val);
+      }
+      return newObj;
+    }
+
+    return value;
+  };
+
+  const preProcessedConfig = findAndReplaceRichTextBlock(formatconfig);
+
+  let input = JSON.stringify(preProcessedConfig).replace(/\\/g, "");
+
   let output = JSON.parse(
     mustache
       .render(input, variableTovalueMap)
-      .replace(/""/g, '\""')
-      //.replace(/\\/g, "")
+      .replace(/""/g, '""')
       .replace(/"\[/g, "[")
       .replace(/\]"/g, "]")
       .replace(/\]\[/g, "],[")
       .replace(/"\{/g, "{")
       .replace(/\n/g, "\\n")
-      .replace(/\t/g, "\\t")      
-      .replace(/],""]/g, ']]')
-      .replace(/},""}/g, '}}')
-      .replace(/},""]/g, '}]')
-      .replace(/],""}/g, ']}')
-      .replace(/],""]/g, ']]')
-      .replace(/\["",\{/g, '[{')
-      .replace(/\["",\[/g, '[[')
-      .replace(/\{"",\{/g, '{{')
-      .replace(/\{"",\[/g, '{[')
-      .replace(/],"",\[/g, '],[')
-      .replace(/},"",\{/g, '},{')
+      .replace(/\t/g, "\\t")
+      .replace(/],""]/g, "]]")
+      .replace(/},""}/g, "}}")
+      .replace(/},""]/g, "}]")
+      .replace(/],""}/g, "]}")
+      .replace(/],""]/g, "]]")
+      .replace(/\["",\{/g, "[{")
+      .replace(/\["",\[/g, "[[")
+      .replace(/\{"",\{/g, "{{")
+      .replace(/\{"",\[/g, "{[")
+      .replace(/],"",\[/g, "],[")
+      .replace(/},"",\{/g, "},{")
   );
+
+  if (extractedRichTextFields.length > 0) {
+    const tokenMap = {};
+    extractedRichTextFields.forEach(({ variableName, uniqueKey }) => {
+      let richValue = deepFindValue(variableTovalueMap, variableName);
+
+      try {
+        richValue =
+          typeof richValue === "string" ? JSON.parse(richValue) : richValue;
+      } catch (e) {
+        richValue = { text: richValue || "" };
+      }
+
+      tokenMap[uniqueKey] = richValue;
+    });
+
+    const replaceTokens = (obj, parentKey = "") => {
+      if (Array.isArray(obj)) {
+        return obj.map((item) => replaceTokens(item, parentKey));
+      }
+
+      if (typeof obj === "object" && obj !== null) {
+        if (obj.__RICH_TEXT_TOKEN__) {
+          const rich = tokenMap[obj.__RICH_TEXT_TOKEN__];
+
+          // must be array for stack
+          if (parentKey === "stack" && !Array.isArray(rich)) {
+            return [rich];
+          }
+
+          return rich;
+        }
+
+        const newObj = {};
+        for (const key in obj) {
+          newObj[key] = replaceTokens(obj[key], key);
+        }
+        return newObj;
+      }
+
+      return obj;
+    };
+
+    output = replaceTokens(output);
+  }
+
   return output;
 };
 
