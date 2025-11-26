@@ -138,6 +138,13 @@
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
+            },
+            {
+              "action": "EDIT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
             }
           ]
         },
