@@ -100,4 +100,12 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    // topic
+    @Value("${egov.mediation.digitalized.document.create.topic}")
+    private String mediationDigitalizedDocumentCreateTopic;
+
+    @Value("${egov.mediation.digitalized.document.update.topic}")
+    private String mediationDigitalizedDocumentUpdateTopic;
+
 }

@@ -4,14 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Type of the document
+ * Party Type Enum
  */
-public enum TypeEnum {
+public enum PartyTypeEnum {
 
-    PLEA,
+    COMPLAINANT,
 
-    EXAMINATION_OF_ACCUSED,
-
-    MEDIATION
+    RESPONDENT
 
 }
