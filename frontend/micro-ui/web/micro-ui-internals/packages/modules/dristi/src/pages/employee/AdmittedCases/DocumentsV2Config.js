@@ -243,5 +243,125 @@ export const DocumentSearchConfig = {
         },
       },
     },
+    {
+      label: "Pending Forms",
+      displayLabel: "PENDING_FORMS_TAB",
+      type: "search",
+      customHookName: "dristi.useEvidenceDetails",
+      apiDetails: {
+        serviceName: "/evidence/v1/_search",
+        requestParam: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+        },
+        requestBody: {
+          apiOperation: "SEARCH",
+          Individual: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+          },
+          criteria: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "FilingsConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestParam",
+        filterFormJsonPath: "requestBody.Individual",
+        searchFormJsonPath: "requestBody.Individual",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: defaultSearchValues,
+            fields: [
+              {
+                label: "TYPE",
+                isMandatory: false,
+                key: "artifactType",
+                type: "dropdown",
+                populators: {
+                  name: "artifactType",
+                  optionsKey: "name",
+                  mdmsConfig: {
+                    masterName: "EvidenceType",
+                    moduleName: "Evidence",
+                    localePrefix: "EVIDENCE_TYPE",
+                    select:
+                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
+                    // localePrefix: "SUBMISSION_TYPE",
+                  },
+                },
+              },
+              {
+                label: "SEARCH_ARTIFACT_NUMBER",
+                isMandatory: false,
+                key: "artifactNumber",
+                type: "text",
+                populators: {
+                  name: "artifactNumber",
+                },
+              },
+            ],
+          },
+
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "FILING_NAME",
+                jsonPath: "artifactType",
+                additionalCustomization: true,
+              },
+              {
+                label: "FILING_ID",
+                jsonPath: "artifactNumber",
+              },
+              {
+                label: "EVIDENCE_NUMBER",
+                jsonPath: "evidenceNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "TYPE",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                additionalCustomization: true,
+              },
+              {
+                label: "EVIDENCE_STATUS",
+                additionalCustomization: true,
+              },
+              {
+                label: "REPRESENTATIVES",
+                jsonPath: "sourceType",
+                additionalCustomization: true,
+              },
+              // {
+              //   label: "FILE",
+              //   jsonPath: "file",
+              //   additionalCustomization: true,
+              // },
+              {
+                label: "CS_ACTIONS",
+                additionalCustomization: true,
+              },
+            ],
+
+            enableColumnSort: true,
+            resultsJsonPath: "artifacts",
+          },
+          show: true,
+        },
+      },
+    },
   ],
 };
