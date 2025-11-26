@@ -249,7 +249,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
 
   const paymentStatusText = useMemo(() => {
     const status = hearingByNumber?.HearingList?.[0]?.status;
-    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED" : "PAYMENT_PENDING";
+    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_TEXT" : "PAYMENT_PENDING_TEXT";
+  }, [hearingByNumber]);
+
+  const paymentStatusSubText = useMemo(() => {
+    const status = hearingByNumber?.HearingList?.[0]?.status;
+    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_SUB_TEXT" : "PAYMENT_PENDING_SUB_TEXT";
   }, [hearingByNumber]);
 
   const config = useMemo(() => {
@@ -432,8 +437,18 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             </div>
           )}
           {hasPendingTasks === false ? (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "24px 0" }}>
-              <span className="heading-m">{t(paymentStatusText)}</span>
+            <div
+              style={{
+                background: "#F9E6E6",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "24px 0",
+              }}
+            >
+              <span style={{ fontSize: "20px", fontWeight: "700", marginBottom: "6px" }}>{t(paymentStatusText)}</span>
+              <span style={{ fontSize: "16px", fontWeight: "400" }}>{t(paymentStatusSubText)}</span>
             </div>
           ) : (
             orderNumber &&
