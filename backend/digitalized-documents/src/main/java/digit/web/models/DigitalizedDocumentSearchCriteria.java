@@ -33,4 +33,10 @@ public class DigitalizedDocumentSearchCriteria {
     @JsonProperty("tenantId")
     private String tenantId = null;
 
+    @JsonProperty("orderNumber")
+    private String orderNumber = null;
+
+    @JsonProperty("orderItemId")
+    private String orderItemId = null;
+
 }

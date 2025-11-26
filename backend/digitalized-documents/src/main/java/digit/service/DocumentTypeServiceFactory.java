@@ -36,6 +36,7 @@ public class DocumentTypeServiceFactory {
 
     /**
      * Get the appropriate service for the given document type
+     *
      * @param type The document type
      * @return The service for the given type
      * @throws CustomException if no service found for the type

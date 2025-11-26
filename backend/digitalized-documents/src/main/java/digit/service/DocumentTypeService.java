@@ -1,6 +1,7 @@
 package digit.service;
 
 import digit.web.models.DigitalizedDocument;
+import digit.web.models.DigitalizedDocumentRequest;
 import org.egov.tracer.model.CustomException;
 
 /**
@@ -11,19 +12,19 @@ public interface DocumentTypeService {
     /**
      * Processes and validates a digitalized document based on its type
      *
-     * @param document The document to process
+     * @param request The document to process
      * @return Processed document
      * @throws CustomException if validation or processing fails
      */
-    DigitalizedDocument createDocument(DigitalizedDocument document);
+    DigitalizedDocument createDocument(DigitalizedDocumentRequest request);
 
     /**
      * Updates and validates a digitalized document based on its type
      *
-     * @param document The document to update
+     * @param request The document to update
      * @return Updated document
      * @throws CustomException if validation or updating fails
      */
-    DigitalizedDocument updateDocument(DigitalizedDocument document);
+    DigitalizedDocument updateDocument(DigitalizedDocumentRequest request);
 
 }

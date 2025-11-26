@@ -13,8 +13,6 @@ public class ServiceConstants {
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
 
-    public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
-
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
     public static final String FAILED = "failed";
@@ -37,5 +35,9 @@ public class ServiceConstants {
 
     public static final String CREATE_DIGITALIZED_DOCUMENT_FAILED = "CREATE_DIGITALIZED_DOCUMENT_FAILED";
 
+    // mediation
+    public static final String INVALID_ORDER_NUMBER = "INVALID_ORDER_NUMBER";
+
+    public static final String INVALID_MEDIATION_DETAILS = "INVALID_MEDIATION_DETAILS";
 
 }

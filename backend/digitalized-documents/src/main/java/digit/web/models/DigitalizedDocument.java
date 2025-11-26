@@ -31,16 +31,18 @@ public class DigitalizedDocument {
     private String id = null;
 
     @JsonProperty("type")
-    @NotNull
+    @NotNull(message = "type cannot be null")
     private TypeEnum type = null;
 
     @JsonProperty("documentNumber")
     private String documentNumber = null;
 
     @JsonProperty("caseId")
+    @NotNull(message = "case id cannot be null")
     private String caseId = null;
 
     @JsonProperty("caseFilingNumber")
+    @NotNull(message = "filing number cannot be null")
     private String caseFilingNumber = null;
 
     @JsonProperty("orderNumber")
@@ -80,6 +82,8 @@ public class DigitalizedDocument {
     private List<Document> documents = null;
 
     @JsonProperty("tenantId")
+    @Valid
+    @NotNull(message = "tenant id cannot be null")
     private String tenantId = null;
 
 
