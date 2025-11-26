@@ -3,6 +3,7 @@ package digit.enrichment;
 import digit.config.Configuration;
 import digit.util.IdgenUtil;
 import digit.web.models.DigitalizedDocument;
+import digit.web.models.DigitalizedDocumentRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,14 +23,17 @@ public class DigitalizedDocumentEnrichment {
         this.idgenUtil = idgenUtil;
     }
 
-    public void enrichDigitalizedDocument(DigitalizedDocument digitalizedDocument) {
+    public void enrichDigitalizedDocument(DigitalizedDocumentRequest digitalizedDocumentRequest) {
+
+        DigitalizedDocument digitalizedDocument = digitalizedDocumentRequest.getDigitalizedDocument();
+
         digitalizedDocument.setId(String.valueOf(UUID.randomUUID()));
 
         String idName = configuration.getDigitalizedDocumentIdGenConfig();
         String idFormat = configuration.getDigitalizedDocumentIdGenFormat();
         String tenantId = digitalizedDocument.getTenantId();
 
-        List<String> idList = idgenUtil.getIdList(null, tenantId, idName, idFormat, 1);
+        List<String> idList = idgenUtil.getIdList(digitalizedDocumentRequest.getRequestInfo(), tenantId, idName, idFormat, 1);
         log.info("Digitalized Document ID List: {}", idList);
 
         String documentNumber = digitalizedDocument.getCaseFilingNumber() + "-" + idList.get(0);

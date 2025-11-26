@@ -24,6 +24,7 @@ public class DigitalizedDocumentService {
         try {
 
             log.info("operation = createDigitalizedDocument ,  result = IN_PROGRESS");
+
             DigitalizedDocument document = digitalizedDocumentRequest.getDigitalizedDocument();
 
             // Process document using appropriate service based on type
@@ -32,6 +33,7 @@ public class DigitalizedDocumentService {
             DocumentTypeService documentTypeService = serviceFactory.getService(document.getType());
 
             log.info("operation = createDigitalizedDocument ,  result = SUCCESS");
+
             return documentTypeService.createDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
             log.error("Error processing digitalized document: {}", e.getMessage());
@@ -41,10 +43,15 @@ public class DigitalizedDocumentService {
 
     public DigitalizedDocument updateDigitalizedDocument(DigitalizedDocumentRequest digitalizedDocumentRequest) {
         try {
+
             log.info("operation = updateDigitalizedDocument ,  result = IN_PROGRESS");
+
             DigitalizedDocument document = digitalizedDocumentRequest.getDigitalizedDocument();
+
             DocumentTypeService documentTypeService = serviceFactory.getService(document.getType());
+
             log.info("operation = updateDigitalizedDocument ,  result = SUCCESS");
+
             return documentTypeService.updateDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
             throw new CustomException("DIGITALIZED_DOCUMENT_PROCESSING_FAILED", "Error processing digitalized document");
