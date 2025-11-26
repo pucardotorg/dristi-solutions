@@ -214,6 +214,8 @@ const editComplainantDetailsFormConfig = [
           error: "AGE_VALIDATION",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -705,6 +707,7 @@ const editComplainantDetailsFormConfig = [
         key: "prayer",
         withoutLabel: true,
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -727,6 +730,7 @@ const editComplainantDetailsFormConfig = [
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
