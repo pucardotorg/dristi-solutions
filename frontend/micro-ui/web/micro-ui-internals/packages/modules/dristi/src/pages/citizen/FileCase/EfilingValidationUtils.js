@@ -3480,6 +3480,7 @@ export const transformCaseDataForUpdate = (caseDetails, key) => {
       delete updatedCaseData.additionalDetails[key];
       updatedCaseData.witnessDetails = witnessDetails;
     }
+    else updatedCaseData.witnessDetails = [];
   }
   return updatedCaseData;
 };
