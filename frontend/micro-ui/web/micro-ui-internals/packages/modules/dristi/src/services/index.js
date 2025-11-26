@@ -275,14 +275,6 @@ export const DRISTIService = {
       data,
       params,
     }),
-  addAddress: (data, params) =>
-    Request({
-      url: Urls.case.addAddress,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
   addNewWitness: (data, params) =>
     Request({
       url: Urls.case.addNewWitness,
@@ -522,73 +514,6 @@ export const DRISTIService = {
     Request({
       url: Urls.dristi.taskSearch,
       useCache: true,
-      userService: true,
-      data,
-      params,
-    }),
-  getInportalEligibility: (params) =>
-    Request({
-      url: Urls.dristi.eligibility,
-      useCache: false,
-      userService: true,
-      params,
-      method: "POST",
-    }),
-  postInportalFeedback: (data, params) =>
-    Request({
-      url: Urls.dristi.feedback,
-      useCache: false,
-      userService: true,
-      params,
-      data,
-    }),
-  postInportalRemindMeLater: (params) =>
-    Request({
-      url: Urls.dristi.remindMeLater,
-      useCache: false,
-      userService: true,
-      params,
-      method: "POST",
-    }),
-  createTaskManagementService: (data, params) => {
-    return Request({
-      url: Urls.taskManagement.taskManagementCreate,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    });
-  },
-  updateTaskManagementService: (data, params) => {
-    return Request({
-      url: Urls.taskManagement.taskManagementUpdate,
-      useCache: false,
-      userService: true,
-      data: data,
-      params,
-    });
-  },
-  searchTaskManagementService: (data, params) =>
-    Request({
-      url: Urls.taskManagement.taskManagementSearch,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
-  createOfflinePaymentService: (data, params) => {
-    return Request({
-      url: Urls.taskManagement.createOfflinePayment,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    });
-  },
-  searchBailBonds: (data, params) =>
-    Request({
-      url: Urls.dristi.searchBailBonds,
-      useCache: false,
       userService: true,
       data,
       params,

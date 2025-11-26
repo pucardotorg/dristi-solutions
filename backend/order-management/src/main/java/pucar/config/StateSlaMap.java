@@ -40,10 +40,7 @@ public class StateSlaMap {
                 Map.entry("JUDGEMENT", 3),
                 Map.entry("CHECKOUT_ACCEPTANCE", 1),
                 Map.entry("CHECKOUT_REJECT", 1),
-                Map.entry("SCHEDULE_HEARING", 3),
-                Map.entry("ATTACHMENT", 3),
-                Map.entry("PROCLAMATION", 3)
-        );
+                Map.entry("SCHEDULE_HEARING", 3));
     }
 
     public static Map<String, Integer> getStateSlaMap() {

@@ -545,7 +545,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: () => onPayOnline("SMS"),
         },
       ],
-      // not sure it is using here
       EPOST: [
         {
           label: "Fee Type",
@@ -698,7 +697,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
-      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}

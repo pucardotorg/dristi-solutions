@@ -76,7 +76,6 @@ public class ServiceConstants {
 
     public static final String ACCUSED = "ACCUSED";
     public static final String COMPLAINANT = "COMPLAINANT";
-    public static final String CASE_DISMISSED = "CASE_DISMISSED";
     public static final String COMPLETED = "COMPLETED";
     public static final String SCHEDULED = "SCHEDULED";
     public static final String HEARING_ADJOURNED = "HEARING_ADJOURNED";
@@ -90,7 +89,6 @@ public class ServiceConstants {
     public static final String ABANDON = "ABANDON";
     public static final String HEARING_MODULE_NAME = "Hearing";
     public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
-    public static final String HEARING_LINK_MASTER_NAME = "HearingLink";
     public static final String ERRORS_PATH = "$.errors";
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
     public static final String ES_INDEX_DOCUMENT_FORMAT = "{"
@@ -118,8 +116,7 @@ public class ServiceConstants {
             + "\"caseFilingDate\": %d,"
             + "\"statusOrder\": %d,"
             + "\"hearingTypeOrder\": %d,"
-            + "\"serialNumber\": %d,"
-            + "\"orderStatus\": \"%s\""
+            + "\"serialNumber\": %d"
             + "}"
             + "}"
             + "}\n";
@@ -181,14 +178,4 @@ public class ServiceConstants {
 
     public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
 
-    public static final String HEARINGS_HELD_TODAY_SINGLE = "HEARINGS_HELD_TODAY_SINGLE";
-    public static final String HEARINGS_HELD_TODAY_MULTIPLE = "HEARINGS_HELD_TODAY_MULTIPLE";
-    public static final String HEARINGS_SCHEDULED_TOMORROW_SINGLE = "HEARINGS_SCHEDULED_TOMORROW_SINGLE";
-    public static final String HEARINGS_SCHEDULED_TOMORROW_MULTIPLE = "HEARINGS_SCHEDULED_TOMORROW_MULTIPLE";
-    public static final String msgId = "1730882648558|en_IN";
-    public static final String SYSTEM = "SYSTEM";
-
-    public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
-
-    public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
 }

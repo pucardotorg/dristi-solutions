@@ -303,6 +303,7 @@ export const SummonsTabsConfig = {
             columns: [
               {
                 label: "SELECT",
+                jsonPath: "",
                 columnType: "checkbox",
                 additionalCustomization: true,
               },
@@ -554,6 +555,7 @@ export const SummonsTabsConfig = {
             columns: [
               {
                 label: "SELECT",
+                jsonPath: "",
                 columnType: "checkbox",
                 additionalCustomization: true,
               },

@@ -153,9 +153,6 @@ public class Configuration {
 	@Value("${witness.kafka.update.topic}")
 	private String witnessUpdateTopic;
 
-	@Value("${case.kafka.add.address.topic}")
-	private String addAddressTopic;
-
 	@Value("${egov.workflow.case.business.name}")
 	private String caseBusinessName;
 
@@ -288,12 +285,6 @@ public class Configuration {
 
 	@Value("${egov.sms.notification.reject.profile.request.template.id}")
 	private String smsNotificationRejectProfileRequestTemplateId;
-
-	@Value("${egov.sms.notification.errors.pending.template.id}")
-	private String smsNotificationErrorsPendingTemplateId;
-
-	@Value("${egov.sms.notification.vakalatnama.filed.template.id}")
-	private String smsNotificationVakalatnamaFiledTemplateId;
 
 	//Localization
 	@Value("${egov.localization.host}")
@@ -440,30 +431,4 @@ public class Configuration {
     @Value("${lpr.sub.stage}")
     private String lprSubStage;
 
-	// Time config for async SMS
-	@Value("${egov.sms.case.filed.time}")
-	private String smsCaseFiledTime;
-
-	@Value("${egov.sms.vakalatnama.filed.time}")
-	private String smsVakalatnamaFiledTime;
-
-	// Order
-	@Value("${egov.order.host}")
-	private String orderHost;
-
-	@Value("${egov.order.search.endpoint}")
-	private String orderSearchEndpoint;
-
-	@Value("${app.zone.id}")
-	private String zoneId;
-
-	// inbox config
-	@Value("${egov.inbox.host}")
-	private String inboxHost;
-
-	@Value("${egov.inbox.search.endpoint}")
-	private String indexSearchEndPoint;
-
-	@Value("${open.hearing.topic}")
-	private String openHearingTopic;
 }

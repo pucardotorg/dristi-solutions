@@ -16,7 +16,6 @@ const NewBulkRescheduleTable = ({
   loading,
   handleBulkHearingSearch,
   hasBulkRescheduleAccess,
-  bulkAllHearingsData,
 }) => {
   const handleSelectChange = (checked, row) => {
     const rowId = row?.hearingBookingId;
@@ -69,30 +68,26 @@ const NewBulkRescheduleTable = ({
   };
 
   useEffect(() => {
-    if (!bulkAllHearingsData) handleBulkHearingSearch(bulkFormData);
+    handleBulkHearingSearch(bulkFormData);
   }, []);
 
   const handleSearch = async () => {
     await handleBulkHearingSearch(bulkFormData);
   };
 
-  const handleChange = (date, hearingBookingId, key) => {
+  const handleChange = (date, index, key) => {
     const selectedDate = new Date(date);
     const startTime = new Date(selectedDate);
     startTime.setHours(11, 0, 0, 0);
     const endTime = new Date(selectedDate);
     endTime.setHours(17, 0, 0, 0);
-    const updatedTableData = newHearingData?.map((item) =>
-      item?.hearingBookingId === hearingBookingId
-        ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() }
-        : item
+    const updatedTableData = newHearingData?.map((item, i) =>
+      i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
     );
     setNewHearingData(updatedTableData);
     setAllHearings((prev) =>
-      prev.map((item) =>
-        item?.hearingBookingId === hearingBookingId
-          ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() }
-          : item
+      prev.map((item, i) =>
+        i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
       )
     );
   };
@@ -135,7 +130,7 @@ const NewBulkRescheduleTable = ({
           <div className={`case-label-field-pair search-input`}>
             <input
               className="home-input"
-              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")}
+              placeholder="Search Case name or number"
               style={{ width: "280px" }}
               type="text"
               value={bulkFormData?.searchableFields || ""}
@@ -198,12 +193,11 @@ const NewBulkRescheduleTable = ({
                           t={t}
                           config={config}
                           formData={row}
-                          onDateChange={(date) => handleChange(date, row?.hearingBookingId, config?.key)}
+                          onDateChange={(date) => handleChange(date, index, config?.key)}
                           //   disable={skipScheduling}
                           disableColor="#D6D5D4"
                           disableBorderColor="#D6D5D4"
                           disableBackgroundColor="white"
-                          styles={{ marginBottom: 0 }}
                         />
                       </td>
                     </tr>

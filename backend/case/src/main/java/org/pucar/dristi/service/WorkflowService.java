@@ -101,12 +101,12 @@ public class WorkflowService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
         }
     }
-    public org.pucar.dristi.web.models.ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
+    public ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
         try {
             RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
             StringBuilder url = getSearchURLForProcessInstanceWithParams(tenantId, businessId);
             Object res = repository.fetchResult(url, requestInfoWrapper);
-            org.pucar.dristi.web.models.ProcessInstanceResponse response = mapper.convertValue(res, org.pucar.dristi.web.models.ProcessInstanceResponse.class);
+            ProcessInstanceResponse response = mapper.convertValue(res, ProcessInstanceResponse.class);
             if (response != null && !CollectionUtils.isEmpty(response.getProcessInstances()) && response.getProcessInstances().get(0) != null)
                 return response.getProcessInstances().get(0);
             return null;
@@ -153,6 +153,7 @@ public class WorkflowService {
         ProcessInstance process = ProcessInstance.builder()
                 .businessService(config.getCaseBusinessServiceName())
                 .businessId(caseCriteria.getFilingNumber())
+                .comment("Payment for Case processed")
                 .moduleName(config.getCaseBusinessName())
                 .tenantId(tenantId)
                 .action(MAKE_PAYMENT)
@@ -172,3 +173,4 @@ public class WorkflowService {
         return Workflow.builder().action(processInstance.getState().getState()).comments(processInstance.getComment()).build();
     }
 }
+ 

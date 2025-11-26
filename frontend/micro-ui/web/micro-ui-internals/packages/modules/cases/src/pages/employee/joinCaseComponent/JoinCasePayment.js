@@ -10,7 +10,6 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
 
-  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
@@ -142,17 +141,15 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
                 const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
                 const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
                 if (paymentStatus) {
-                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
-                    setPendingTaskActionModals((pendingTaskActionModals) => {
-                      const data = pendingTaskActionModals?.data;
-                      delete data.filingNumber;
-                      delete data.taskNumber;
-                      return {
-                        ...pendingTaskActionModals,
-                        joinCasePaymentModal: false,
-                        data: data,
-                      };
-                    });
+                  setPendingTaskActionModals((pendingTaskActionModals) => {
+                    const data = pendingTaskActionModals?.data;
+                    delete data.filingNumber;
+                    delete data.taskNumber;
+                    return {
+                      ...pendingTaskActionModals,
+                      joinCasePaymentModal: false,
+                      data: data,
+                    };
                   });
                 }
                 refetch();
@@ -166,7 +163,6 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           />
         </div>
       )}
-      {SurveyUI}
     </div>
   );
 };

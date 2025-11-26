@@ -19,9 +19,6 @@ import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.taskManagement.TaskManagement;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -75,11 +72,9 @@ public class IndexerUtils {
 
     private final JsonUtil jsonUtil;
 
-    private final TaskManagementUtil taskManagementUtil;
-
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -95,7 +90,6 @@ public class IndexerUtils {
         this.clock = clock;
         this.userService = userService;
         this.jsonUtil = jsonUtil;
-        this.taskManagementUtil = taskManagementUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -216,10 +210,7 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            searchableFieldsList.add(filingNumber);
-            if (!filingNumber.equals(caseNumber)) {
-                searchableFieldsList.add(caseNumber);
-            }
+            searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
@@ -408,10 +399,7 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            if (caseNumber != null && !Objects.equals(caseNumber, filingNumber)) {
-                searchableFieldsList.add(caseNumber);
-            }
-            searchableFieldsList.add(filingNumber);
+            searchableFieldsList.add(caseNumber);
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
@@ -651,8 +639,6 @@ public class IndexerUtils {
                 return processADiaryEntity(request, referenceId);
             else if (config.getBailBondBusinessServiceList().contains(entityType))
                 return processBailBondEntity(request, referenceId);
-            else if (config.getTaskManagementBusinessServiceList().contains(entityType))
-                return processTaskManagementEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -761,44 +747,6 @@ public class IndexerUtils {
 
         return caseDetails;
     }
-
-    private Map<String, String> processTaskManagementEntity(JSONObject request, String referenceId) throws InterruptedException {
-        Map<String, String> caseDetails = new HashMap<>();
-        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
-
-        TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
-                .tenantId(config.getStateLevelTenantId())
-                .taskManagementNumber(referenceId)
-                .build();
-
-        RequestInfo requestInfo = mapper.convertValue(request.get("RequestInfo"), RequestInfo.class);
-
-        TaskSearchRequest searchRequest = TaskSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(searchCriteria)
-                .build();
-        List<TaskManagement> taskManagementList = taskManagementUtil.searchTaskManagement(searchRequest);
-        if (taskManagementList.isEmpty()) {
-            log.error("Task management not found for reference id: " + referenceId);
-            return caseDetails;
-        }
-        TaskManagement taskManagement = taskManagementList.get(0);
-        String filingNumber = taskManagement.getFilingNumber();
-
-        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
-
-        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
-        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
-
-        caseDetails.put("cnrNumber", cnrNumber);
-        caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("caseId", caseId);
-        caseDetails.put("caseTitle", caseTitle);
-
-        return caseDetails;
-    }
-
 
     private Map<String, String> processADiaryEntity(JSONObject request, String referenceId) throws InterruptedException {
         Map<String, String> caseDetails = new HashMap<>();

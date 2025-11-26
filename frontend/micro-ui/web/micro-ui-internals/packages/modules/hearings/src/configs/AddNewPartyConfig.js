@@ -85,7 +85,6 @@ const createPartyConfig = (index) => ({
       inline: true,
       isMandatory: false,
       component: "SelectCustomTextArea",
-      isInfinite: true,
       populators: {
         inputs: [
           {

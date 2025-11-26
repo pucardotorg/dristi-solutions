@@ -69,12 +69,7 @@ const applicationBailBond = async (
   try {
     const resMessage = await handleApiCall(
       () =>
-        search_message(
-          tenantId,
-          "rainmaker-submissions,rainmaker-common",
-          "en_IN",
-          requestInfo
-        ),
+        search_message(tenantId, "rainmaker-submissions", "en_IN", requestInfo),
       "Failed to query Localized messages"
     );
     const messages = resMessage?.data?.messages || [];
@@ -126,36 +121,21 @@ const applicationBailBond = async (
 
     const applicationDocuments =
       application?.applicationDetails?.applicationDocuments || [];
-
     const documentList =
       applicationDocuments?.length > 0
-        ? applicationDocuments.map((item) => {
-            const isOtherDoc = item?.documentType === "OTHER_DOCUMENTS";
-            const count = item?.additionalDetails?.originalCount || 1;
-
-            let typeLabel = "";
-
-            if (isOtherDoc) {
-              typeLabel = `${count} other document${count > 1 ? "s" : ""}`;
-            } else {
-              typeLabel =
-                messagesMap?.[item?.documentType] || item?.documentType;
-            }
-
-            return {
-              ...item,
-              documentType: `Surety${item?.suretyIndex + 1} - ${typeLabel}`,
-            };
-          })
+        ? applicationDocuments.map((item) => ({
+            ...item,
+            documentType:
+              messagesMap?.[item?.documentType] || item?.documentType,
+          }))
         : [{ documentType: "" }];
-
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalInformation || ""
     );
     const reasonForApplication = htmlToFormattedText(
       application?.applicationDetails?.reasonForApplicationOfBail || ""
     );
-    const prayer = htmlToFormattedText(application?.applicationDetails?.prayer);
+    const prayer = application?.applicationDetails?.prayer;
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {

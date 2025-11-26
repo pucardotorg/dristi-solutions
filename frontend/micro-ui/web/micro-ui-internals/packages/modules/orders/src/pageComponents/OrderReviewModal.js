@@ -33,7 +33,6 @@ function OrderReviewModal({
   updateOrder,
   setShowBulkModal,
   courtId,
-  saveSignLater,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -218,7 +217,7 @@ function OrderReviewModal({
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("BULK_EDIT")}
         actionCustomLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={saveSignLater && t("SAVE_FINALISE_AND_SIGN_LATER")}
+        actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
         isBackButtonDisabled={isLoading || isUpdateLoading}
         isCustomButtonDisabled={isLoading || isUpdateLoading}
         isDisabled={isLoading || isUpdateLoading}

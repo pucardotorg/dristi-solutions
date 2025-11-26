@@ -50,13 +50,6 @@ public class Configuration {
     @Value("${egov.case.search.path}")
     private String caseSearchPath;
 
-    // Hearing Config
-    @Value("${egov.hearing.host}")
-    private String hearingHost;
-
-    @Value("${egov.hearing.search.path}")
-    private String hearingSearchPath;
-
     //Workflow Config
     @Value("${egov.workflow.host}")
     private String wfHost;
@@ -215,9 +208,6 @@ public class Configuration {
     @Value("${egov.sms.notification.additional.information.template.id}")
     private String smsNotificationAdditionalDetails;
 
-    @Value("${egov.sms.notification.hearing.scheduled.template.id}")
-    private String smsNotificationHearingScheduledTemplateId;
-
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
@@ -234,15 +224,4 @@ public class Configuration {
 
     @Value("${egov.tenantId}")
     private String tenantId;
-
-    // Time config for async SMS
-    @Value("${egov.sms.order.issued.time}")
-    private String smsOrderIssuedTime;
-
-    @Value("${egov.sms.hearing.scheduled.time}")
-    private String smsHearingScheduledTime;
-
-    // Zone ID
-    @Value("${app.zone.id}")
-    private String zoneId;
 }

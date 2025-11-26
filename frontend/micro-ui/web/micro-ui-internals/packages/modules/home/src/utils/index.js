@@ -2,8 +2,6 @@ import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
-import { TaskManagementWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const formatWithSuffix = (day) => {
   if (day > 3 && day < 21) return `${day}th`;
@@ -150,97 +148,6 @@ export const formatDateDDMMYYYY = (date) => {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}-${month}-${year}`;
-};
-
-export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId, isLast }) => {
-  if (!courierData) return;
-
-  const uniqueId = courierData?.uniqueId || courierData?.data?.uniqueId;
-  const matchedFormData = formData?.find((item) => (item?.data?.uniqueId || item?.uniqueId) === uniqueId)?.data;
-
-  // Build new party object
-  const baseParty = {
-    addresses: courierData?.addressDetails?.filter((addr) => addr?.checked) || [],
-    deliveryChannels: courierData?.[`${type?.toLowerCase()}CourierService`],
-  };
-
-  const newParty =
-    courierData?.partyType === "Respondent"
-      ? { ...baseParty, respondentDetails: { ...matchedFormData, uniqueId } }
-      : courierData?.partyType === "Witness"
-      ? { ...baseParty, witnessDetails: { ...matchedFormData, uniqueId } }
-      : baseParty;
-
-  // Merge with existing task if present
-  let updatedPartyDetails = [];
-
-  if (existingTask) {
-    const existingParties = existingTask?.partyDetails || [];
-
-    const existingIndex = existingParties.findIndex((party) => {
-      const partyUniqueId = party?.respondentDetails?.uniqueId || party?.witnessDetails?.uniqueId;
-      return partyUniqueId === uniqueId;
-    });
-
-    if (existingIndex !== -1) {
-      // Update existing
-      existingParties[existingIndex] = newParty;
-      updatedPartyDetails = existingParties;
-    } else {
-      // Add new
-      updatedPartyDetails = [...existingParties, newParty];
-    }
-  } else {
-    updatedPartyDetails = [newParty];
-  }
-
-  const taskManagementPayload = existingTask
-    ? {
-        ...existingTask,
-        partyDetails: updatedPartyDetails,
-        workflow: {
-          action:
-            type === "SUMMONS"
-              ? existingTask?.partyType === "COURT"
-                ? isLast
-                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
-                  : TaskManagementWorkflowAction.UPDATE_WITHOUT_PAYMENT
-                : TaskManagementWorkflowAction.UPDATE
-              : TaskManagementWorkflowAction.UPDATE,
-        },
-      }
-    : {
-        filingNumber,
-        tenantId,
-        taskType: type,
-        partyDetails: updatedPartyDetails,
-        courtId: courierData?.courtId,
-        orderNumber: courierData?.orderNumber,
-        orderItemId: courierData?.orderItemId,
-        partyType: courierData?.witnessPartyType,
-        workflow: {
-          action:
-            type === "SUMMONS"
-              ? courierData?.witnessPartyType === "COURT"
-                ? isLast
-                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
-                  : TaskManagementWorkflowAction.CREATE_WITHOUT_PAYMENT
-                : TaskManagementWorkflowAction.CREATE
-              : TaskManagementWorkflowAction.CREATE,
-        },
-      };
-
-  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
-
-  await serviceMethod({ taskManagement: taskManagementPayload });
-};
-
-export const filterValidAddresses = (addressDetails = []) => {
-  return addressDetails?.filter((addr) => {
-    const a = addr?.addressDetails || {};
-    const hasValidValue = (v) => v != null && String(v)?.trim() !== "";
-    return hasValidValue(a?.city) && hasValidValue(a?.district) && hasValidValue(a?.state) && hasValidValue(a?.pincode) && hasValidValue(a?.locality);
-  });
 };
 
 export default {};

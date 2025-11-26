@@ -23,7 +23,7 @@ public class PostalHubQueryBuilder {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" ph.hub_id IN ( ").append(createQuery(criteria.getHubId())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getHubId());
-            criteria.getHubId().forEach(id -> preparedStmtArgsList.add(Types.VARCHAR));
+            preparedStmtArgsList.add(Types.VARCHAR);
         }
 
         if (!ObjectUtils.isEmpty(criteria.getName())) {
@@ -37,7 +37,7 @@ public class PostalHubQueryBuilder {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" ph.pincode IN ( ").append(createQuery(criteria.getPincode())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getPincode());
-            criteria.getPincode().forEach(pincode -> preparedStmtArgsList.add(Types.VARCHAR));
+            preparedStmtArgsList.add(Types.VARCHAR);
         }
         return query.toString();
 

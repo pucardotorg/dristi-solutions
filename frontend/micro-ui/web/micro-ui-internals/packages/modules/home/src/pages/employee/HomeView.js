@@ -7,13 +7,15 @@ import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { HomeService } from "../../hooks/services";
+import { HomeService, Urls } from "../../hooks/services";
 import LitigantHomePage from "./LitigantHomePage";
+import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
-import { InboxIcon } from "../../../homeIcon";
+import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
+import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
@@ -80,6 +82,11 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
 
+  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
+  const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
+    show: false,
+    bulkSignOrderListLength: null,
+  });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
@@ -213,7 +220,10 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-  }, [state]);
+    if (bulkSignSuccess) {
+      setIssueBulkSuccessData(bulkSignSuccess);
+    }
+  }, [state, bulkSignSuccess]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -582,6 +592,14 @@ const HomeView = () => {
               pendingSignOrderList={ordersNotificationData}
             />
           </div>
+        )}
+        {issueBulkSuccessData.show && (
+          <OrderIssueBulkSuccesModal
+            t={t}
+            history={history}
+            bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
+            setIssueBulkSuccessData={setIssueBulkSuccessData}
+          />
         )}
         {toastMsg && (
           <Toast

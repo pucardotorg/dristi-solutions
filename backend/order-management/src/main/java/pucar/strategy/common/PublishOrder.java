@@ -139,7 +139,7 @@ public class PublishOrder implements OrderUpdateStrategy {
         return CaseDiaryEntry.builder()
                 .tenantId(order.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
-                .caseNumber(courtCase.getCourtCaseNumber() != null? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber())
+                .caseNumber(courtCase.getCmpNumber())
                 .caseId(courtCase.getId().toString())
                 .courtId(courtCase.getCourtId())
                 .businessOfDay(orderUtil.getBusinessOfTheDay(order,requestInfo))

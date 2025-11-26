@@ -1,2 +1,0 @@
-ALTER TABLE dristi_epost_tracker
-ADD COLUMN status_update_date int8

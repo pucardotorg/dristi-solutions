@@ -9,12 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.service.EPostService;
-import org.pucar.dristi.service.ExcelService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -27,14 +24,11 @@ public class EPostController {
 
     private final EPostService ePostService;
 
-    private final ExcelService excelService;
-
     private final ResponseInfoFactory responseInfoFactory;
 
     @Autowired
-    public EPostController(EPostService ePostService, ExcelService excelService, ResponseInfoFactory responseInfoFactory) {
+    public EPostController(EPostService ePostService, ResponseInfoFactory responseInfoFactory) {
         this.ePostService = ePostService;
-        this.excelService = excelService;
         this.responseInfoFactory = responseInfoFactory;
     }
 
@@ -61,17 +55,5 @@ public class EPostController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         EPostResponse ePostResponse = EPostResponse.builder().ePostTrackers(Collections.singletonList(ePostTracker)).responseInfo(responseInfo).build();
         return new ResponseEntity<>(ePostResponse, HttpStatus.OK);
-    }
-
-    @PostMapping("/epost/v1/download/excel")
-    public ResponseEntity<byte[]> downloadExcel(@Parameter(in = ParameterIn.DEFAULT, description = "Epost Excel Download", required = true, schema = @Schema()) @Valid @RequestBody EPostTrackerSearchRequest request) throws Exception {
-        log.info("Downloading Excel for request: {}", request);
-        byte[] excelBytes = excelService.generateExcel(request);
-        log.info("Downloaded Excel for request: {}", request);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=users.xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(excelBytes);
-
     }
 }

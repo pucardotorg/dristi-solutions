@@ -12,23 +12,20 @@ const submitButtonTextStyle = {
 
 const CloseBtn = (props) => {
   return (
-    <div
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer", ...props?.style }}
-    >
+    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
       <CloseSvg />
     </div>
   );
 };
-const Heading = ({ heading, isStatus = true }) => {
+const Heading = ({ heading }) => {
   return (
     <div className="evidence-title">
       <h1 className="heading-m">{heading.label}</h1>
-      {isStatus && <h3 className={heading.isStatusRed ? "status-false" : "status"}>{heading?.status}</h3>}
+      <h3 className={heading.isStatusRed ? "status-false" : "status"}>{heading?.status}</h3>
     </div>
   );
 };
-const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disableCancel = false }) => {
+const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => {
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const [step, setStep] = useState(currentStep || 0);
   // const [isDisabled, setIsDisabled] = useState(false);
@@ -53,7 +50,6 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
   };
 
   const actionCancelOnSubmit = () => {
-    if (disableCancel) return;
     if (config?.isStepperModal) {
       const { actionCancelType, actionCancelOnSubmit, jumpValue } = config?.steps[step] || {};
 
@@ -77,38 +73,22 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
     }
   };
 
-  const modalClassName =
-    config?.className ||
-    (config?.isStepperModal
-      ? config.steps[step]?.type === "document"
-        ? "custom-modal-stepper"
-        : config.steps[step]?.type === "modal" || config.steps[step]?.type === "payment"
-        ? config.steps[step]?.className
-        : "custom-modal-stepper-non-doc"
-      : config?.type === "document"
-      ? "custom-modal-stepper"
-      : "custom-modal-stepper-non-doc");
-
   return (
     <Modal
       headerBarEnd={
         (config?.isStepperModal && (config?.steps[step]?.handleClose || config?.handleClose)) || (!config?.isStepperModal && config?.handleClose) ? (
-          <CloseBtn
-            onClick={!disableCancel && (config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose)}
-            style={config?.isStepperModal ? config?.steps[step]?.closeBtnStyle || config?.closeBtnStyle : config?.closeBtnStyle}
-          />
+          <CloseBtn onClick={config?.isStepperModal ? config?.steps[step]?.handleClose || config?.handleClose : config?.handleClose} />
         ) : undefined
       }
       actionSaveLabel={config?.isStepperModal ? config?.steps[step]?.actionSaveLabel || config?.actionSaveLabel : config?.actionSaveLabel}
       actionSaveOnSubmit={actionSaveOnSubmit}
       hideSubmit={config?.isStepperModal ? config?.steps[step]?.hideSubmit || config?.hideSubmit : config?.hideSubmit}
-      hideCancel={config?.isStepperModal ? config?.steps[step]?.hideCancel || config?.hideCancel : config?.hideCancel}
       actionCancelLabel={config?.isStepperModal ? config?.steps[step]?.actionCancelLabel || config?.actionCancelLabel : config?.actionCancelLabel}
       actionCancelOnSubmit={actionCancelOnSubmit}
       formId="modal-action"
       headerBarMain={
         config?.isStepperModal && config?.steps[step]?.type !== "success" ? (
-          <Heading heading={config?.steps[step]?.heading || config?.heading} isStatus={config?.steps[step]?.isStatus} />
+          <Heading heading={config?.steps[step]?.heading || config?.heading} />
         ) : !config?.isStepperModal ? (
           <Heading heading={config?.heading} />
         ) : (
@@ -116,7 +96,15 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
         )
       }
       hideModalActionbar={config?.isStepperModal ? config?.steps[step]?.hideModalActionbar || false : config?.hideModalActionbar || false}
-      className={modalClassName}
+      className={
+        config?.isStepperModal
+          ? config.steps[step]?.type === "document"
+            ? "custom-modal-stepper"
+            : "custom-modal-stepper-non-doc"
+          : config?.type === "document"
+          ? "custom-modal-stepper"
+          : "custom-modal-stepper-non-doc"
+      }
       popUpStyleMain={documentStyle}
       isDisabled={isDisabled}
       textStyle={submitButtonTextStyle}

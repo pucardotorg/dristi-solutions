@@ -7,7 +7,6 @@ import drishti.payment.calculator.util.SpeedPostUtil;
 import drishti.payment.calculator.util.TaskUtil;
 import drishti.payment.calculator.web.models.*;
 import drishti.payment.calculator.web.models.enums.Classification;
-import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,6 @@ import static drishti.payment.calculator.config.ServiceConstants.POSTAL_HUB_NOT_
 import static drishti.payment.calculator.config.ServiceConstants.POSTAL_HUB_NOT_FOUND_MSG;
 
 @Service
-@Slf4j
 public class EPostFeeService implements Payment {
 
     private final TaskUtil taskUtil;
@@ -77,8 +75,7 @@ public class EPostFeeService implements Payment {
         HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
         List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
         if (postalHub.isEmpty()) {
-            log.info("postal hub not found with the given pin code redirecting to default hub considering the pin code as outside the kerala : {}", criteria.getReceiverPincode());
-            postalHub.add(PostalHub.builder().classification(Classification.ROC).build());
+            throw new CustomException(POSTAL_HUB_NOT_FOUND, POSTAL_HUB_NOT_FOUND_MSG);
         }
         Classification classification = postalHub.get(0).getClassification();
 
@@ -89,10 +86,8 @@ public class EPostFeeService implements Payment {
                 .filter(element -> taskType.equals(element.getType()))
                 .toList();
 
-        Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0)) + speedPostConfigParams.getEnvelopeChargeIncludingGst();
+        Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0));
         Double postFee = speedPostUtil.calculateEPostFee(config.getNumberOfPgOfSummon(), classification, speedPostConfigParams);
-
-        postFee = Math.ceil(postFee);
 
         List<BreakDown> breakDowns = taskUtil.getFeeBreakdown(courtFees, postFee);
 

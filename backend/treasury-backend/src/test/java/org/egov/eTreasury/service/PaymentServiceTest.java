@@ -61,8 +61,6 @@ class PaymentServiceTest {
     private TransactionDetails transactionDetails;
     @Mock
     private TreasuryEnrichment enrichment;
-    @Mock
-    private CaseUtil caseUtil;
 
     @Test
     void verifyConnection_success() {

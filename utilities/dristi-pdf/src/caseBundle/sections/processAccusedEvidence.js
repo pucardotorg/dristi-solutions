@@ -30,7 +30,7 @@ async function processAccusedEvidence(
     "accusedevidence"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "accusedevidence"
   );
 
@@ -153,7 +153,7 @@ async function processAccusedEvidence(
             } else if (sourceRepresentative) {
               const docketNameOfComplainants = sourceRepresentative.representing
                 ?.map((lit) => lit.additionalDetails.fullName)
-                ?.filter(Boolean)
+                .filter(Boolean)
                 .join(", ");
               docketNameOfFiling =
                 sourceRepresentative.additionalDetails?.advocateName || "";
@@ -234,11 +234,11 @@ async function processAccusedEvidence(
   }
 
   if (accusedEvidenceLineItems.length > 0) {
-    const accusedEvidenceIndexSection = indexCopy.sections?.find(
+    const accusedEvidenceIndexSection = indexCopy.sections.find(
       (section) => section.name === "accusedevidence"
     );
     accusedEvidenceIndexSection.lineItems =
-      accusedEvidenceLineItems?.filter(Boolean);
+      accusedEvidenceLineItems.filter(Boolean);
   }
 }
 

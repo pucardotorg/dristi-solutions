@@ -214,8 +214,6 @@ const editComplainantDetailsFormConfig = [
           error: "AGE_VALIDATION",
           validation: {
             maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -449,121 +447,6 @@ const editComplainantDetailsFormConfig = [
         },
         withoutLabel: true,
       },
-      {
-        key: "currentAddressDetails",
-        type: "component",
-        label: "CURRENT_RESIDENTIAL_ADDRESS",
-        addUUID: true,
-        component: "SelectComponents",
-        populators: {
-          inputs: [
-            {
-              name: "isCurrAddrSame",
-              type: "Radio",
-              label: "IS_CURRENT_ADDRESS_SAME",
-              options: [
-                {
-                  code: "YES",
-                  name: "YES"
-                },
-                {
-                  code: "NO",
-                  name: "NO"
-                }
-              ],
-              required: true,
-              optionsKey: "code",
-              isMandatory: true
-            },
-            {
-              name: "pincode",
-              type: "text",
-              label: "PINCODE",
-              validation: {
-                max: "999999",
-                title: "",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "[0-9]+",
-                maxlength: 6,
-                minlength: 6,
-                isRequired: true,
-                patternType: "Pincode"
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
-            },
-            {
-              name: "state",
-              type: "text",
-              label: "STATE",
-              validation: {
-                title: "",
-                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "name"
-                },
-                isRequired: true,
-                patternType: "Name"
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
-            },
-            {
-              name: "district",
-              type: "text",
-              label: "DISTRICT",
-              validation: {
-                title: "",
-                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "name"
-                },
-                isRequired: true,
-                patternType: "Name"
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
-            },
-            {
-              name: "city",
-              type: "text",
-              label: "CITY/TOWN",
-              validation: {
-                errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
-                isRequired: true,
-                patternType: "Name"
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
-            },
-            {
-              name: "locality",
-              type: "text",
-              label: "ADDRESS",
-              validation: {
-                errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "address"
-                },
-                maxlength: 256,
-                minlength: 2,
-                isRequired: true
-              },
-              isMandatory: true,
-              isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style"
-            }
-          ],
-          validation: {}
-        },
-        withoutLabel: true
-      }
     ],
     head: "CS_COMPLAINANT_LOCATION",
     dependentKey: {
@@ -707,7 +590,6 @@ const editComplainantDetailsFormConfig = [
         key: "prayer",
         withoutLabel: true,
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -730,7 +612,6 @@ const editComplainantDetailsFormConfig = [
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
