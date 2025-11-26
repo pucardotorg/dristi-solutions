@@ -263,6 +263,8 @@ const TasksComponent = ({
         Object?.keys(courierOrderDetails)?.length === 0 &&
         courierServicePendingTask &&
         Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
         Array?.isArray(taskManagementList)
       ) {
         try {

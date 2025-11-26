@@ -2708,6 +2708,10 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
         return;
       }
+      if (option === t("RECORD_PLEA")) {
+        history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
+        return;
+      }
       if (option === t("SCHEDULE_HEARING")) {
         openHearingModule();
         return;
@@ -3073,6 +3077,10 @@ const AdmittedCaseV2 = () => {
         label: "VIEW_CALENDAR",
         requiredRoles: [],
       },
+      {
+        label: "RECORD_PLEA",
+        requiredRoles: [],
+      },
     ],
     []
   );
@@ -3208,7 +3216,10 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
+  const takeActionOptions = useMemo(
+    () => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }, { label: "RECORD_PLEA" }],
+    [t]
+  );
 
   const allowedTakeActionOptions = useMemo(() => {
     return takeActionOptions
