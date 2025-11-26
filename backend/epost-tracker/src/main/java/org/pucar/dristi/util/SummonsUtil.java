@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.model.ChannelReport;
-import org.pucar.dristi.model.DeliveryStatus;
 import org.pucar.dristi.model.EPostRequest;
 import org.pucar.dristi.model.UpdateSummonsRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,7 @@ public class SummonsUtil {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         ChannelReport channelReport =ChannelReport.builder()
-                .deliveryStatus(enrichDeliveryStatus(request.getEPostTracker().getDeliveryStatus()))
+                .deliveryStatus(request.getEPostTracker().getDeliveryStatus())
                 .processNumber(request.getEPostTracker().getProcessNumber())
                 .taskNumber(request.getEPostTracker().getTaskNumber())
                 .remarks(request.getEPostTracker().getRemarks())
@@ -61,19 +60,6 @@ public class SummonsUtil {
         } catch (RestClientException e) {
             log.error("Error occurred when sending Process Request ", e);
             throw new CustomException(SUMMONS_UPDATE_ERROR,ERROR_WHILE_UPDATING_SUMMONS);
-        }
-    }
-
-    private DeliveryStatus enrichDeliveryStatus(DeliveryStatus deliveryStatus) {
-        if (deliveryStatus.equals(DeliveryStatus.DELIVERED) || deliveryStatus.equals(DeliveryStatus.DELIVERED_TO_REDIRECT_ADDRESS)) {
-            return DeliveryStatus.DELIVERED;
-        } else if (deliveryStatus.equals(DeliveryStatus.REFUSED) || deliveryStatus.equals(DeliveryStatus.ADDRESS_MOVED) || deliveryStatus.equals(DeliveryStatus.ADDRESS_LEFT_WITHOUT_INSTRUCTION)
-                || deliveryStatus.equals(DeliveryStatus.INSUFFICIENT_ADDRESS) || deliveryStatus.equals(DeliveryStatus.WRONG_ADDRESS) || deliveryStatus.equals(DeliveryStatus.NO_SUCH_PERSON_IN_ADDRESS)
-                || deliveryStatus.equals(DeliveryStatus.DECEASED) || deliveryStatus.equals(DeliveryStatus.ADDRESS_MISSING) || deliveryStatus.equals(DeliveryStatus.UNCLAIMED) || deliveryStatus.equals(DeliveryStatus.MISSENT)
-        ) {
-            return DeliveryStatus.NOT_DELIVERED;
-        } else {
-            return DeliveryStatus.INTERMEDIATE;
         }
     }
 }

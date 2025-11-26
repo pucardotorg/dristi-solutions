@@ -43,7 +43,4 @@ public class HearingCriteria {
     @JsonProperty("courtId")
     private String courtId;
 
-    @JsonProperty("status")
-    private String status;
-
 }

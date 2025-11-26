@@ -180,15 +180,4 @@ public class CaseUtil {
 		log.error("court case number not found");
 		return null;
 	}
-
-	public String getCmpNumber(JsonNode caseList) {
-		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-			JsonNode courtCaseNode = caseList.get(0).get("cmpNumber");
-			if (courtCaseNode != null && !courtCaseNode.isNull()) {
-				return courtCaseNode.textValue();
-			}
-		}
-		log.error("cmp number not found");
-		return null;
-	}
 }

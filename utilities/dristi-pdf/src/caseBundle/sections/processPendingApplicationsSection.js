@@ -35,11 +35,11 @@ async function processPendingApplicationsSection(
     "pendingapplicationobjections"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "pendingapplications"
   );
 
-  const pendingApplicationsIndexSection = indexCopy.sections?.find(
+  const pendingApplicationsIndexSection = indexCopy.sections.find(
     (section) => section.name === "pendingapplications"
   );
 
@@ -165,8 +165,8 @@ async function processPendingApplicationsSection(
             } else if (sourceRepresentative) {
               const docketNameOfComplainants = sourceRepresentative.representing
                 ?.map((lit) => lit.additionalDetails.fullName)
-                ?.filter(Boolean)
-                ?.join(", ");
+                .filter(Boolean)
+                .join(", ");
               const partyType =
                 sourceRepresentative.representing[0].partyType.includes(
                   "complainant"
@@ -273,8 +273,8 @@ async function processPendingApplicationsSection(
                     const docketNameOfComplainants =
                       sourceRepresentative.representing
                         ?.map((lit) => lit.additionalDetails.fullName)
-                        ?.filter(Boolean)
-                        ?.join(", ");
+                        .filter(Boolean)
+                        .join(", ");
                     docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
                   } else {
                     docketCounselFor = "";
@@ -338,7 +338,7 @@ async function processPendingApplicationsSection(
         })
       );
       pendingApplicationsIndexSection.lineItems =
-        pendingApplicationLineItems?.filter(Boolean);
+        pendingApplicationLineItems.filter(Boolean);
     } else {
       pendingApplicationsIndexSection.lineItems = [];
     }

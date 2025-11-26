@@ -19,13 +19,6 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-function addParamToUrl(url, key, value) {
-  const [baseUrl, queryString] = url.split("?");
-  const params = new URLSearchParams(queryString);
-  params.set(key, value);
-  return `${baseUrl}?${params.toString()}`;
-}
-
 function PendingTaskAccordion({
   pendingTasks,
   t,
@@ -39,8 +32,6 @@ function PendingTaskAccordion({
   setPendingTaskActionModals,
   tableView = false,
   isApplicationCompositeOrder = false,
-  setShowCourierServiceModal,
-  setCourierServicePendingTask,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -166,11 +157,6 @@ function PendingTaskAccordion({
                       if (modalView) {
                         setShowAllPendingTasksModal(false);
                       }
-                      if (item?.bailBondId && item?.status === "PENDING_RAISE_BAIL_BOND") {
-                        const updatedUrl = addParamToUrl(item?.redirectUrl, "bailBondId", item?.bailBondId);
-                        redirectPendingTaskUrl(updatedUrl, item?.isCustomFunction, item?.params);
-                        return;
-                      }
                       if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                         setShowOfflineStampEnvelopeModal(true);
                         return;
@@ -226,9 +212,6 @@ function PendingTaskAccordion({
                           setResponsePendingTask(item);
                           setShowSubmitResponseModal(true);
                         }
-                      } else if (item?.entityType === "task-management-payment" && item?.status === "PENDING_PAYMENT") {
-                        setCourierServicePendingTask(item);
-                        setShowCourierServiceModal(true);
                       } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                     }}
                   >
@@ -255,18 +238,7 @@ function PendingTaskAccordion({
         </div>
       );
     },
-    [
-      history,
-      isJudge,
-      redirectPendingTaskUrl,
-      setPendingTaskActionModals,
-      setResponsePendingTask,
-      setShowCourierServiceModal,
-      t,
-      sortedPendingTasks,
-      setShowSubmitResponseModal,
-      setCourierServicePendingTask,
-    ]
+    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
   );
 
   const orderPageTaskView = useCallback(() => {
@@ -279,16 +251,7 @@ function PendingTaskAccordion({
                 <span>{`${t("PENDING")} - ${t(task?.actionName)}`}</span>
               </div>
               <div className="order-task-actions">
-                <button
-                  className="btn-view"
-                  onClick={() => {
-                    const params = {
-                      ...task?.params,
-                      isView: true,
-                    };
-                    redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, params);
-                  }}
-                >
+                <button className="btn-view" onClick={() => redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, task?.params)}>
                   {t("VIEW")}
                 </button>
                 <button
@@ -381,11 +344,6 @@ function PendingTaskAccordion({
                   key={`${item?.filingNumber}-${item?.referenceId}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
-                    if (item?.bailBondId && item?.status === "PENDING_RAISE_BAIL_BOND") {
-                      const updatedUrl = addParamToUrl(item?.redirectUrl, "bailBondId", item?.bailBondId);
-                      redirectPendingTaskUrl(updatedUrl, item?.isCustomFunction, item?.params);
-                      return;
-                    }
                     if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
                       setShowOfflineStampEnvelopeModal(true);
                       return;
@@ -441,9 +399,6 @@ function PendingTaskAccordion({
                         setResponsePendingTask(item);
                         setShowSubmitResponseModal(true);
                       }
-                    } else if (item?.entityType === "task-management-payment" && item?.status === "PENDING_PAYMENT") {
-                      setCourierServicePendingTask(item);
-                      setShowCourierServiceModal(true);
                     } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                   }}
                 >

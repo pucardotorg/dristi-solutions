@@ -1,1 +1,0 @@
-ALTER TABLE dristi_surety ALTER COLUMN surety_email SET DATA TYPE varchar(256);

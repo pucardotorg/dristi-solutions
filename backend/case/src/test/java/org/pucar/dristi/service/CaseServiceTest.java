@@ -114,12 +114,6 @@ public class CaseServiceTest {
     @Mock
     private FileStoreUtil fileStoreUtil;
 
-    @Mock
-    private DateUtil dateUtil;
-
-    @Mock
-    private InboxUtil inboxUtil;
-
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -181,8 +175,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        OrderUtil orderUtil = new OrderUtil(null, null, null);
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil);
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
@@ -1640,7 +1633,7 @@ public class CaseServiceTest {
         witnessDetails.setLastName("Doe");
         witnessDetails.setMiddleName("Smith");
         witnessDetails.setUniqueId("witness-001");
-
+        
         return WitnessDetailsRequest.builder()
                 .requestInfo(requestInfo)
                 .caseFilingNumber("CASE-2024-001")

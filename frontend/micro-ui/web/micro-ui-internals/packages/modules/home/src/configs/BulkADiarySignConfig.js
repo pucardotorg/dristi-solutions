@@ -1,3 +1,13 @@
+const today = new Date();
+const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
+const sessionStoredEpoch = sessionStorage.getItem("diaryDate");
+
+const defaultSearchValues = {
+  // date: sessionStoredEpoch ? new Date(sessionStoredEpoch - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0] : todayStr,
+  date: todayStr
+};
+
 const courtId = localStorage.getItem("courtId");
 
 export const bulkADiarySignConfig = {
@@ -11,6 +21,7 @@ export const bulkADiarySignConfig = {
     requestBody: {
       criteria: {
         courtId: courtId || "",
+        date: todayStr,
         tenantId: Digit.ULBService.getCurrentTenantId(),
       },
       pagination: {
@@ -31,6 +42,7 @@ export const bulkADiarySignConfig = {
         primaryLabel: "ES_COMMON_SEARCH",
         secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
         minReqFields: 0,
+        defaultValues: defaultSearchValues,
         fields: [
           {
             label: "CS_ADIARY_DATED",

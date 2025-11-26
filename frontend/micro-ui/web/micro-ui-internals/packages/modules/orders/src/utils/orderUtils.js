@@ -162,14 +162,12 @@ export const getParties = (type, orderSchema, allParties) => {
       ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
       ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
     ];
-  } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
+  } else if (["WARRANT", "SUMMONS", "NOTICE", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
     parties = orderSchema?.orderDetails?.respondentName?.name
       ? [orderSchema?.orderDetails?.respondentName?.name]
       : orderSchema?.orderDetails?.respondentName
       ? [orderSchema?.orderDetails?.respondentName]
       : [];
-  } else if (["SUMMONS", "NOTICE"].includes(type)) {
-    parties = orderSchema?.orderDetails?.respondentName;
   } else if (type === "SECTION_202_CRPC") {
     parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
   } else if (
@@ -217,41 +215,26 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  if (currentOrderType === "ACCEPT_BAIL") {
-    const bt = formData?.bailType;
-    const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
-    const isSurety = bailTypeCode === "SURETY";
-
-    if (isSurety) {
-      const suretiesNum = Number(formData?.noOfSureties);
-      const isInvalidSureties = !Number.isFinite(suretiesNum) || suretiesNum <= 0;
-      if (isInvalidSureties) {
-        setFormErrors?.current?.[index]?.("noOfSureties", { message: t?.("CORE_REQUIRED_FIELD_ERROR") });
-        hasError = true;
-      }
+  if (currentOrderType === "NOTICE") {
+    if (formData?.noticeOrder?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
+      hasError = true;
     }
   }
 
-  // if (currentOrderType === "NOTICE") {
-  //   if (formData?.noticeOrder?.selectedChannels?.length === 0) {
-  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
-  //     hasError = true;
-  //   }
-  // }
-
-  // if (currentOrderType === "SUMMONS") {
-  //   if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
-  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
-  //     hasError = true;
-  //   } else if (
-  //     formData?.SummonsOrder?.selectedChannels?.some(
-  //       (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
-  //     )
-  //   ) {
-  //     setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
-  //     hasError = true;
-  //   }
-  // }
+  if (currentOrderType === "SUMMONS") {
+    if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
+      hasError = true;
+    } else if (
+      formData?.SummonsOrder?.selectedChannels?.some(
+        (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+      )
+    ) {
+      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      hasError = true;
+    }
+  }
 
   if (currentOrderType === "WARRANT") {
     if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
@@ -423,11 +406,6 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
   },
   {
-    key: "accept_bail_singleton",
-    orderTypes: ["ACCEPT_BAIL"],
-    unAllowedOrderTypes: ["ACCEPT_BAIL"],
-  },
-  {
     key: "no_restriction",
     orderTypes: [
       "NOTICE",
@@ -436,7 +414,7 @@ export const compositeOrderAllowedTypes = [
       "SUMMONS",
       "MANDATORY_SUBMISSIONS_RESPONSES",
       "SECTION_202_CRPC",
-      // "ACCEPT_BAIL",
+      "ACCEPT_BAIL",
       "PROCLAMATION",
       "ATTACHMENT",
       "COST",

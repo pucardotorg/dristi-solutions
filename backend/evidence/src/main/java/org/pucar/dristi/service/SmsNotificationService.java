@@ -57,12 +57,21 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
-        String templateId = switch (messageCode) {
-            case DOCUMENT_SUBMITTED -> config.getSmsNotificationDocumentSubmittedTemplateId();
-            default -> null;
-        };
-
-        pushNotification(templateData, message, mobileNumber, templateId);
+        if(messageCode.equalsIgnoreCase(DOCUMENT_MARKED_EXHIBIT)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationDocumentMarkedExhibitTemplateId());
+        }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationEvidenceSubmitted());
+        }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_FILING)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionByParty());
+        }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionToOppositeParty());
+        }
+        if (messageCode.equalsIgnoreCase(WITNESS_DEPOSITION_MESSAGE)) {
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationWitnessDeposition());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {

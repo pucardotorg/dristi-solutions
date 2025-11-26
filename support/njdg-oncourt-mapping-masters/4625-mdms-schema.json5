@@ -1,0 +1,327 @@
+[
+  //CaseType
+  {
+    "moduleName": "NJDG",
+    "masterName": "CaseType",
+    "tenantId": "kl",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.CaseType",
+      "description": "Case Type mapping with NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["id"],
+        "x-unique": ["id"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "caseType",
+            "schemaCode": "case.casetype"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "caseType": {
+            "type": "string"
+          },
+          "caseTypeCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+  //Purpose of listing
+  { //todo: need to add reference schema for it
+    "moduleName": "NJDG",
+    "masterName": "HearingPurpose",
+    "tenantId": "kl",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.HearingPurpose",
+      "description": "Hearing Purpose mapping with NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["id"],
+        "x-unique": ["id"],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "purposeCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          },
+          "purposeDetails": {
+            "type": "string"
+          },
+          "purposeName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+  //Disposal Types
+  {
+    "moduleName": "NJDG",
+    "masterName": "DisposalTypes",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.DisposalTypes",
+      "description": "Disposal Type mapping with NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["id"],
+        "x-unique": ["id"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "disposalType",
+            "schemaCode": "case.OutcomeType"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "disposalType": {
+            "type": "string"
+          },
+          "disposalTypeCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+  //Districts
+  {
+    "moduleName": "NJDG",
+    "masterName": "District",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.District",
+      "description": "District mapping with NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["code"],
+        "x-unique": ["code"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "code",
+            "schemaCode": "common-masters.District"
+          }
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "districtCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+
+  //Act Type
+  {
+    "moduleName": "NJDG",
+    "masterName": "Act",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.Act",
+      "description": "Statute mapping to NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["id", "code"],
+        "x-unique": ["id","code"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "code",
+            "schemaCode": "case.Statute"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "actCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+
+  //Police Station
+  {
+    "moduleName": "NJDG",
+    "masterName": "PoliceStation",
+    "tenantId": "kl",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.PoliceStation",
+      "description": "Police station mapping with NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["code"],
+        "x-unique": ["code"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "code",
+            "schemaCode": "case.PoliceStation"
+          }
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "policeStationCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+  //Document Type
+  {
+    "moduleName": "NJDG",
+    "masterName": "DocumentType",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.DocumentType",
+      "description": "Document type mapping to NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["id","type"],
+        "x-unique": ["id","type"],
+        "x-ref-schema": [
+          {
+            "fieldPath": "type",
+            "schemaCode": "common-masters.DocumentType"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "documentTypeCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  },
+
+  //judge master
+  {
+    "moduleName": "NJDG",
+    "masterName": "Judge",
+    "schemaDefinition": {
+      "tenantId": "kl",
+      "code": "NJDG.Judge",
+      "description": "Document type mapping to NJDG",
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": [
+          "id",
+          "type"
+        ],
+        "x-unique": [
+          "id",
+          "type"
+        ],
+        "x-ref-schema": [
+          {
+            "fieldPath": "type",
+            "schemaCode": "common-masters.DocumentType"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "documentTypeCode": {
+            "type": "string"
+          },
+          "nationalCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    },
+  }
+]

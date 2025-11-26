@@ -60,11 +60,18 @@ public class NotificationService {
     }
 
     private void pushNotificationBasedOnNotificationStatus(CourtCase courtCase, String notificationStatus, String message, Individual individual) {
-
-        if(ERRORS_PENDING.equalsIgnoreCase(notificationStatus)){
-            pushNotification(courtCase, message, individual, config.getSmsNotificationErrorsPendingTemplateId());
+        if(notificationStatus.equalsIgnoreCase(PAYMENT_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationPaymentPendingTemplateId());
         }
-
+        else if(notificationStatus.equalsIgnoreCase(ESIGN_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationEsignPendingTemplateId());
+        }
+        else if(notificationStatus.equalsIgnoreCase(ADVOCATE_ESIGN_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationAdvocateEsignPendingTemplateId());
+        }
+        else {
+            pushNotification(courtCase, message, individual, config.getSmsNotificationTemplateId());
+        }
     }
 
     private void pushNotification(CourtCase courtCase, String message, Individual individual, String templateId) {

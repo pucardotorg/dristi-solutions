@@ -120,7 +120,4 @@ public class Order {
     @Valid
     private WorkflowObject workflow = null;
 
-    @JsonProperty("nextHearingDate")
-    private Long nextHearingDate = null;
-
 }

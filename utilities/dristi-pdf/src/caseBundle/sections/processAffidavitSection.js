@@ -18,7 +18,7 @@ async function processAffidavitSection(
     "affidavit"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "affidavit"
   );
 
@@ -33,15 +33,15 @@ async function processAffidavitSection(
 
   const affidavitsLineItems = (
     await Promise.all(
-      sortedAffidavitsSection?.map(async (section, ind) => {
+      sortedAffidavitsSection.map(async (section, ind) => {
         const matchingDocs = courtCase.documents
-          ?.filter((doc) => doc.documentType === section.doctype)
+          .filter((doc) => doc.documentType === section.doctype)
           ?.map((doc) => doc.fileStore);
 
         if (!matchingDocs.length) return null;
 
         const innerItems = await Promise.all(
-          matchingDocs?.map(async (documentFileStoreId, i) => {
+          matchingDocs.map(async (documentFileStoreId, i) => {
             const index = ind + i;
             if (section.docketpagerequired === "yes") {
               const complainant = courtCase.litigants?.find((litigant) =>
@@ -117,10 +117,10 @@ async function processAffidavitSection(
 
   // update index
 
-  const affidavitsIndexSection = indexCopy.sections?.find(
+  const affidavitsIndexSection = indexCopy.sections.find(
     (section) => section.name === "affidavit"
   );
-  affidavitsIndexSection.lineItems = affidavitsLineItems?.filter(Boolean);
+  affidavitsIndexSection.lineItems = affidavitsLineItems.filter(Boolean);
 }
 
 module.exports = {

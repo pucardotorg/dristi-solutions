@@ -22,11 +22,11 @@ async function processAdditionalFilings(
     "additionalfilings"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "additionalfilings"
   );
 
-  const additionalFilingsIndexSection = indexCopy.sections?.find(
+  const additionalFilingsIndexSection = indexCopy.sections.find(
     (section) => section.name === "additionalfilings"
   );
 
@@ -112,7 +112,7 @@ async function processAdditionalFilings(
             } else if (sourceRepresentative) {
               const docketNameOfComplainants = sourceRepresentative.representing
                 ?.map((lit) => lit.additionalDetails.fullName)
-                ?.filter(Boolean)
+                .filter(Boolean)
                 .join(", ");
               docketNameOfFiling =
                 sourceRepresentative.additionalDetails?.advocateName || "";
@@ -183,7 +183,7 @@ async function processAdditionalFilings(
         })
       );
       additionalFilingsIndexSection.lineItems =
-        additionalFilingsLineItems?.filter(Boolean);
+        additionalFilingsLineItems.filter(Boolean);
     } else {
       additionalFilingsIndexSection.lineItems = [];
     }

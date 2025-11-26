@@ -35,9 +35,7 @@ const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
             {count}
           </span>
         )}
-        <span style={{ marginLeft: 8 }}>
-          {open ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />}
-        </span>
+        {/* {open ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />} */}
       </div>
       {open && children}
     </div>

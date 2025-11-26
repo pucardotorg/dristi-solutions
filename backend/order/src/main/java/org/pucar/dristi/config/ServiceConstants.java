@@ -114,15 +114,4 @@ public class ServiceConstants {
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String COMPOSITE = "COMPOSITE";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
-    public static final String PROCLAMATION = "PROCLAMATION";
-    public static final String ATTACHMENT = "ATTACHMENT";
-
-    public static final String SCHEDULED = "SCHEDULED";
-    public static final String OPT_OUT = "OPT_OUT";
-
-    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
-    public static final String HEARING_SCHEDULED = "HEARING_SCHEDULED";
-    public static final String ERROR_WHILE_FETCHING_FROM_HEARING_SERVICE = "ERROR_WHILE_FETCHING_FROM_HEARING_SERVICE";
-    
-    public static final String YYYY_MM_DD = "yyyy-MM-dd";
 }

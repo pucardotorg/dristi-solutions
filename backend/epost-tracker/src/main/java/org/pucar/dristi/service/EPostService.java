@@ -1,28 +1,23 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
 import org.pucar.dristi.util.EpostUtil;
 import org.pucar.dristi.validator.EPostUserValidator;
-import org.pucar.dristi.validator.EPostValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
-@Slf4j
 @Service
 public class EPostService {
 
     private final EPostRepository ePostRepository;
 
     private final EpostUtil epostUtil;
-
-    private final EPostValidator ePostValidator;
 
     private final Producer producer;
 
@@ -31,10 +26,9 @@ public class EPostService {
     private final EPostConfiguration configuration;
 
     @Autowired
-    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, EPostValidator ePostValidator, Producer producer, EPostUserValidator ePostUserValidator, EPostConfiguration configuration) {
+    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, Producer producer, EPostUserValidator ePostUserValidator, EPostConfiguration configuration) {
         this.ePostRepository = ePostRepository;
         this.epostUtil = epostUtil;
-        this.ePostValidator = ePostValidator;
         this.producer = producer;
         this.ePostUserValidator = ePostUserValidator;
         this.configuration = configuration;
@@ -68,13 +62,7 @@ public class EPostService {
         return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(),limit,offset);
     }
 
-    public EPostResponse getAllEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
-        return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
-    }
-
     public EPostTracker updateEPost(EPostRequest ePostRequest) {
-
-        ePostValidator.validateUpdateRequest(ePostRequest);
 
         EPostTracker ePostTracker = epostUtil.updateEPostTracker(ePostRequest);
 

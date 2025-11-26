@@ -1,1 +1,0 @@
-ALTER TABLE dristi_task_management ADD COLUMN party_type VARCHAR(256);

@@ -2,7 +2,6 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -15,9 +14,6 @@ import pucar.util.*;
 import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.hearing.Hearing;
-import pucar.web.models.hearing.HearingCriteria;
-import pucar.web.models.hearing.HearingSearchRequest;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -221,10 +217,6 @@ public class BSSService {
                         hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
                     }
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
-                    if (order.getHearingNumber() != null) {
-                        updateHearingSummary(orderUpdateRequest);
-                        hearingUtil.updateOpenHearingIndex(order);
-                    }
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);
                     orderProcessor.postProcessOrder(orderUpdateRequest);
@@ -248,21 +240,6 @@ public class BSSService {
 
         return updatedOrder;
 
-    }
-
-    private void updateHearingSummary(OrderRequest request) {
-
-        Order order = request.getOrder();
-        RequestInfo requestInfo = request.getRequestInfo();
-
-        //If attendance is present then attendance and item text will go in hearing summary
-        if (order.getAttendance() != null) {
-            String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-            Hearing hearing = hearings.get(0);
-            hearingUtil.updateHearingSummary(request, hearing);
-        }
     }
 
     private Map<String, Object> createAttribute(String name, String value) {

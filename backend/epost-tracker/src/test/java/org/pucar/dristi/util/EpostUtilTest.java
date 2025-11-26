@@ -94,6 +94,7 @@ class EpostUtilTest {
 //        assertEquals("fileStoreId", ePostTrackerResult.getFileStoreId());
         //assertEquals("123456", ePostTrackerResult.getPinCode());
         assertEquals(DeliveryStatus.NOT_UPDATED, ePostTrackerResult.getDeliveryStatus());
+        assertEquals(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), ePostTrackerResult.getBookingDate()); // Current date comparison
     }
 
     @Test
@@ -119,6 +120,7 @@ class EpostUtilTest {
         when(ePostRequest.getEPostTracker().getDeliveryStatus()).thenReturn(DeliveryStatus.DELIVERED);
         when(ePostRequest.getEPostTracker().getRemarks()).thenReturn("Remarks");
         when(ePostRequest.getEPostTracker().getTaskNumber()).thenReturn("TaskNumber");
+        when(ePostRequest.getEPostTracker().getReceivedDate()).thenReturn("2024-08-07");
         when(ePostRequest.getRequestInfo().getUserInfo().getUuid()).thenReturn("hdjs");
 
         // Act
@@ -130,6 +132,7 @@ class EpostUtilTest {
         assertEquals(DeliveryStatus.DELIVERED, result.getDeliveryStatus());
         assertEquals("Remarks", result.getRemarks());
         assertEquals("TaskNumber", result.getTaskNumber());
+        assertEquals("2024-08-07", result.getReceivedDate());
         assertEquals(1, result.getRowVersion());  // Expecting incremented row version
     }
 }

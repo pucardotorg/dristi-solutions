@@ -79,6 +79,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const roles = userInfo?.roles;
   const [hearingCaseList, setHearingCaseList] = useState([]);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
@@ -305,15 +306,13 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
 
               {hearingCount > 0 && (
                 <div className="time-hearing-type">
-                  <div className="timeText">{formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)}</div>
+                  <div className="timeText">
+                    {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
+                  </div>
                   <div style={{ display: "flex", gap: "8px" }}>
                     <Link
                       className="hearingType"
-                      to={{
-                        pathname: `/${window.contextPath}/${userType}/hearings`,
-                        search: hearingSearchParams.toString(),
-                        state: { fromHome: true },
-                      }}
+                      to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString(), state: { fromHome: true } }}
                     >
                       {userInfoType === "citizen"
                         ? hearingCaseList

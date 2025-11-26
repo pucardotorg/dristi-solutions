@@ -258,9 +258,6 @@ public class Configuration {
     @Value("${egov.sms.notification.witness.deposition.template.id}")
     private String smsNotificationWitnessDeposition;
 
-	@Value("${egov.sms.notification.document.submitted.template.id}")
-	private String smsNotificationDocumentSubmittedTemplateId;
-
 	// zone id
 	@Value("${app.zone.id}")
 	private String zoneId;

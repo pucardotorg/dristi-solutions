@@ -190,17 +190,17 @@ public class WorkflowServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         String tenantId = "tenant1";
         String businessId = "business1";
-        org.pucar.dristi.web.models.ProcessInstanceResponse processInstanceResponse = new org.pucar.dristi.web.models.ProcessInstanceResponse();
-        org.pucar.dristi.web.models.ProcessInstance processInstance = new org.pucar.dristi.web.models.ProcessInstance();
+        ProcessInstanceResponse processInstanceResponse = new ProcessInstanceResponse();
+        ProcessInstance processInstance = new ProcessInstance();
         processInstanceResponse.setProcessInstances(Collections.singletonList(processInstance));
         when(config.getWfHost()).thenReturn("http://localhost:8080");
         when(config.getWfProcessInstanceSearchPath()).thenReturn("/workflow/transition");
 
         when(repository.fetchResult(any(), any())).thenReturn(processInstanceResponse);
-        when(mapper.convertValue(processInstanceResponse, org.pucar.dristi.web.models.ProcessInstanceResponse.class)).thenReturn(processInstanceResponse);
+        when(mapper.convertValue(processInstanceResponse, ProcessInstanceResponse.class)).thenReturn(processInstanceResponse);
 
         // Act
-        org.pucar.dristi.web.models.ProcessInstance result = workflowService.getCurrentWorkflow(requestInfo, tenantId, businessId);
+        ProcessInstance result = workflowService.getCurrentWorkflow(requestInfo, tenantId, businessId);
 
         // Assert
         assertNotNull(result);
@@ -270,6 +270,7 @@ public class WorkflowServiceTest {
         assertEquals("caseBusinessServiceName", result.getProcessInstances().get(0).getBusinessService());
         assertEquals("caseBusinessName", result.getProcessInstances().get(0).getModuleName());
         assertEquals("filingNumber", result.getProcessInstances().get(0).getBusinessId());
+        assertEquals("Payment for Case processed", result.getProcessInstances().get(0).getComment());
         assertEquals(tenantId, result.getProcessInstances().get(0).getTenantId());
     }
 

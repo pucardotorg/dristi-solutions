@@ -26,6 +26,8 @@ class EPostQueryBuilderTest {
         searchCriteria.setDeliveryStatus("DELIVERED");
         searchCriteria.setProcessNumber("PN123");
         searchCriteria.setTrackingNumber("TN123");
+        searchCriteria.setBookingDate("2024-01-01");
+        searchCriteria.setReceivedDate("2024-01-02");
 
         List<Object> preparedStmtList = new ArrayList<>();
 
@@ -37,7 +39,9 @@ class EPostQueryBuilderTest {
         assertTrue(query.contains(" delivery_status = ? "));
         assertTrue(query.contains(" process_number = ? "));
         assertTrue(query.contains(" tracking_number = ? "));
-        assertEquals(3, preparedStmtList.size());  // 1 for deliveryStatus, 2 for deliveryStatusList, 1 for processNumber, 1 for trackingNumber, 1 for bookingDate, 1 for receivedDate
+        assertTrue(query.contains(" booking_date = ? "));
+        assertTrue(query.contains(" received_date = ? "));
+        assertEquals(5, preparedStmtList.size());  // 1 for deliveryStatus, 2 for deliveryStatusList, 1 for processNumber, 1 for trackingNumber, 1 for bookingDate, 1 for receivedDate
     }
 
     @Test
@@ -68,7 +72,7 @@ class EPostQueryBuilderTest {
         String actualQuery = queryBuilder.getEPostTrackerSearchQuery(searchCriteria, preparedStmtList);
 
         // Define expected query
-        String expectedQuery = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, task_type, respondent_name, phone, address_obj, createdBy, lastModifiedBy, createdTime, lastModifiedTime FROM dristi_epost_tracker ";
+        String expectedQuery = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, createdBy, lastModifiedBy, createdTime, lastModifiedTime FROM dristi_epost_tracker ";
 
         // Normalize whitespace before assertion
         String normalizedExpected = expectedQuery.trim().replaceAll("\\s+", " ");

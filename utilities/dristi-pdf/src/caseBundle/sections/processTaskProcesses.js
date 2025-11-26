@@ -61,17 +61,17 @@ async function processTaskProcesses(
     const taskList = resTask?.data?.list;
 
     // Group while preserving createdDate order
-    const noticeTasks = taskList?.filter((task) => task.orderType === "NOTICE");
-    const summonsTasks = taskList?.filter(
+    const noticeTasks = taskList.filter((task) => task.orderType === "NOTICE");
+    const summonsTasks = taskList.filter(
       (task) => task.orderType === "SUMMONS"
     );
-    const warrantsTasks = taskList?.filter(
+    const warrantsTasks = taskList.filter(
       (task) => task.orderType === "WARRANT"
     );
-    const proclamationTasks = taskList?.filter(
+    const proclamationTasks = taskList.filter(
       (task) => task.orderType === "PROCLAMATION"
     );
-    const attachmentTasks = taskList?.filter(
+    const attachmentTasks = taskList.filter(
       (task) => task.orderType === "ATTACHMENT"
     );
 
@@ -86,14 +86,14 @@ async function processTaskProcesses(
 
     if (orderedTaskList.length !== 0) {
       const processesLineItems = await Promise.all(
-        taskList?.map(async (task, ind) => {
+        taskList.map(async (task, ind) => {
           if (task?.documents?.length !== 0) {
             const expectedDocumentType =
               task.documentStatus === "SIGN_PENDING"
                 ? "GENERATE_TASK_DOCUMENT"
                 : "SIGNED_TASK_DOCUMENT";
 
-            const fileStoreId = task.documents?.find(
+            const fileStoreId = task.documents.find(
               (doc) => doc.documentType === expectedDocumentType
             )?.fileStore;
 
@@ -119,10 +119,10 @@ async function processTaskProcesses(
           }
         })
       );
-      const processesIndexSection = indexCopy.sections?.find(
+      const processesIndexSection = indexCopy.sections.find(
         (section) => section.name === "processes"
       );
-      processesIndexSection.lineItems = processesLineItems?.filter(Boolean);
+      processesIndexSection.lineItems = processesLineItems.filter(Boolean);
     }
   }
 }

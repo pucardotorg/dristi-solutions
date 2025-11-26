@@ -13,22 +13,6 @@ const { handleApiCall } = require("../utils/handleApiCall");
 const { getStringAddressDetails } = require("../utils/addressUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
-const _getBailOrderData = (order) => {
-  let orderDetails = {};
-  if (order?.orderCategory === "COMPOSITE") {
-    orderDetails = order?.compositeItems?.find(
-      (item) => item?.orderType === "ACCEPT_BAIL"
-    )?.orderSchema?.orderDetails;
-  } else {
-    orderDetails = order?.orderDetails;
-  }
-
-  return {
-    bailAmount: orderDetails?.chequeAmount || "",
-    noOfSureties: orderDetails?.noOfSureties || "",
-  };
-};
-
 async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
   const cnrNumber = req.query.cnrNumber;
   const entityId = req.query.entityId;
@@ -259,7 +243,6 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       hearingScheduled
     );
     const itemText = htmlToFormattedText(order?.itemText || "");
-    const bailOrderData = _getBailOrderData(order);
 
     const data = {
       Data: [
@@ -282,8 +265,6 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           judgeSignature: judgeDetails.judgeSignature,
           courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
-          bailAmount: bailOrderData?.bailAmount || "",
-          noOfSureties: bailOrderData?.noOfSureties || "",
         },
       ],
     };

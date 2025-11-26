@@ -104,7 +104,6 @@ export const configs = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "orderAdditionalNotes",
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -298,7 +297,6 @@ export const configsOrderSection202CRPC = [
         key: "lawSections",
         schemaKeyPath: "orderDetails.sectionOfLaw",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -368,7 +366,6 @@ export const configsOrderSection202CRPC = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -803,7 +800,6 @@ export const configsOrderSubmissionExtension = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -928,7 +924,6 @@ export const configsOrderTranferToADR = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1094,7 +1089,6 @@ export const configsScheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1300,7 +1294,6 @@ export const configsScheduleNextHearingDate = [
         component: "SelectCustomTextArea",
         key: "hearingSummary",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1321,7 +1314,6 @@ export const configsScheduleNextHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1370,7 +1362,6 @@ export const configsRejectRescheduleHeadingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1419,7 +1410,6 @@ export const configsRejectCheckout = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1579,7 +1569,6 @@ export const configsRescheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1718,7 +1707,6 @@ export const configCheckout = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1839,7 +1827,6 @@ export const configsInitiateRescheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1934,7 +1921,6 @@ export const configsAssignDateToRescheduledHearing = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2029,7 +2015,6 @@ export const configsAssignNewHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2101,7 +2086,6 @@ export const configRejectSubmission = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           hideInForm: true,
           inputs: [
@@ -2201,7 +2185,6 @@ export const configsVoluntarySubmissionStatus = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2329,7 +2312,6 @@ export const configsCaseTransfer = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2379,7 +2361,6 @@ export const configsCaseTransfer = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2506,7 +2487,6 @@ export const configsCaseTransferAccept = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2556,7 +2536,6 @@ export const configsCaseTransferAccept = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2684,7 +2663,6 @@ export const configsCaseTransferReject = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2734,7 +2712,6 @@ export const configsCaseTransferReject = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2897,7 +2874,6 @@ export const configsCaseSettlement = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2959,10 +2935,10 @@ export const configsIssueSummons = [
       {
         isMandatory: true,
         type: "component",
-        component: "NoticeSummonPartyComponent",
+        component: "SummonsOrderComponent",
         key: "SummonsOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "noticeOrderPartyName",
+        transformer: "summonsOrderPartyName",
         label: "PARTY_TO_SUMMON",
         populators: {
           inputs: [
@@ -2970,7 +2946,10 @@ export const configsIssueSummons = [
               name: "select party",
               type: "dropdown",
               addWitness: true,
-              allowMultiSelect: true,
+            },
+            {
+              name: "select deleivery channels",
+              type: "checkbox",
             },
           ],
         },
@@ -3026,7 +3005,6 @@ export const configsIssueSummons = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3109,10 +3087,10 @@ export const configsIssueNotice = [
       {
         isMandatory: true,
         type: "component",
-        component: "NoticeSummonPartyComponent",
+        component: "SummonsOrderComponent",
         key: "noticeOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "noticeOrderPartyName",
+        transformer: "summonsOrderPartyName",
         label: "PARTY_TO_NOTICE",
         populators: {
           inputs: [
@@ -3120,7 +3098,10 @@ export const configsIssueNotice = [
               name: "select party",
               type: "dropdown",
               addWitness: false,
-              allowMultiSelect: true,
+            },
+            {
+              name: "select deleivery channels",
+              type: "checkbox",
             },
           ],
         },
@@ -3176,7 +3157,6 @@ export const configsIssueNotice = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3290,7 +3270,6 @@ export const configsIssueOfWarrants = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3453,7 +3432,6 @@ export const configsCaseWithdrawalAccept = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3522,7 +3500,6 @@ export const configsCaseWithdrawalReject = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3568,7 +3545,6 @@ export const configsOthers = [
         component: "SelectCustomTextArea",
         key: "otherDetails",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3945,7 +3921,6 @@ export const configsCreateOrderWarrant = [
         component: "SelectCustomTextArea",
         key: "warrantText",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4573,15 +4548,6 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4610,17 +4576,15 @@ export const configsIssueBailAcceptance = [
         populators: {
           styles: { maxWidth: "100%" },
           name: "bailType",
-          optionsKey: "name",
+          optionsKey: "type",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
-          defaultValue: { code: "SURETY", name: "SURETY" },
           mdmsConfig: {
             masterName: "BailType",
             moduleName: "Order",
             localePrefix: "BAIL_TYPE",
-            select:
-              "(data) => {return data['Order'].BailType?.map((item) => {if (item.type === 'BAIL_BOND') { return { ...item, code: item.type, name: 'PERSONAL' }; } return { ...item, code: item.type, name: item.type };});}",
+            select: "(data) => {return data['Order'].BailType?.map((item) => {return {...item, code: item.type};});}",
           },
         },
       },
@@ -4640,7 +4604,7 @@ export const configsIssueBailAcceptance = [
       {
         type: "number",
         label: "NO_OF_SURETIES",
-        isMandatory: false,
+        isMandatory: true,
         key: "noOfSureties",
         schemaKeyPath: "orderDetails.noOfSureties",
         populators: {
@@ -4685,7 +4649,6 @@ export const configsIssueBailAcceptance = [
         // schemaKeyPath: "orderDetails.bailSummary",
         // transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4706,7 +4669,6 @@ export const configsIssueBailAcceptance = [
         isMandatory: false,
         // schemaKeyPath: "orderDetails.otherConditions",
         // transformer: "customTextArea",
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4744,7 +4706,6 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailParty",
         disable: true,
         populators: {
-          hideInForm: true,
           name: "bailParty",
           styles: { maxWidth: "100%" },
           error: "required ",
@@ -4757,7 +4718,6 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailSummaryCircumstancesReject",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4793,13 +4753,11 @@ export const configsIssueBailReject = [
               },
             },
           ],
-          hideInForm: true,
         },
       },
     ],
   },
 ];
-
 export const configsSetTermBail = [
   {
     body: [
@@ -4826,7 +4784,6 @@ export const configsSetTermBail = [
         isMandatory: true,
         schemaKeyPath: "orderDetails.bailSummaryCircumstancesTerms",
         transformer: "customTextArea",
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4846,7 +4803,6 @@ export const configsSetTermBail = [
         isMandatory: true,
         schemaKeyPath: "orderDetails.additionalCommentsTermsOfBail",
         transformer: "customTextArea",
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4908,7 +4864,6 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.reasonForSeekingDca",
         // transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4928,7 +4883,6 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
         // transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4948,7 +4902,6 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.additionalCommentsDca",
         // transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5027,7 +4980,6 @@ export const configsAdmitDismissCase = [
         schemaKeyPath: "orderDetails.reasonForAdmitDismissCase",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5046,7 +4998,6 @@ export const configsAdmitDismissCase = [
         schemaKeyPath: "orderDetails.additionalCommentsAdmitDismissCase",
         transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5099,7 +5050,6 @@ export const replaceAdvocateConfig = [
         schemaKeyPath: "orderDetails.reasonForWithdrawal",
         transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5119,7 +5069,6 @@ export const replaceAdvocateConfig = [
         // schemaKeyPath: "orderDetails.additionalComments",
         // transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5173,7 +5122,6 @@ export const configsAdmitCase = [
         // schemaKeyPath: "orderDetails.reasonForAdmitCase",
         // transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5193,7 +5141,6 @@ export const configsAdmitCase = [
         // schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
         // transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5247,7 +5194,6 @@ export const configsDismissCase = [
         // schemaKeyPath: "orderDetails.reasonForDismissCase",
         // transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5267,7 +5213,6 @@ export const configsDismissCase = [
         // schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
         // transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5328,7 +5273,6 @@ export const configsApproveRejectLitigantDetailsChange = [
         schemaKeyPath: "orderDetails.reasonForLitigantDetailsChange",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5347,7 +5291,6 @@ export const configsApproveRejectLitigantDetailsChange = [
         // schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
         // transformer: "customTextArea",
         isMandatory: false,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5432,7 +5375,6 @@ export const configsCreateOrderProclamation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "proclamationText",
-        isInfinite: true,
         // isMandatory: true,
         populators: {
           inputs: [
@@ -5518,7 +5460,6 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "chargeDays",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5535,7 +5476,6 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "district",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5552,7 +5492,6 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "village",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5569,7 +5508,6 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "attachmentText",
         // isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5596,7 +5534,6 @@ export const configsMoveCaseToLongPendingRegister = [
         schemaKeyPath: "orderDetails.comments",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5648,7 +5585,6 @@ export const configsMoveCaseOutOfLongPendingRegister = [
         schemaKeyPath: "orderDetails.comments",
         transformer: "customTextArea",
         isMandatory: true,
-        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5806,9 +5742,6 @@ export const configsCost = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
           prefix: "",
-          validation: {
-            pattern: "^[0-9]+(\\.[0-9]{0,2})?$",
-          },
         },
       },
       {

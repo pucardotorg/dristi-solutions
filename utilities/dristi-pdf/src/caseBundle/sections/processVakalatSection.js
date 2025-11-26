@@ -24,7 +24,7 @@ async function processVakalatSection(
 
   const section = vakalatnamaSection[0];
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "vakalat"
   );
 
@@ -47,7 +47,7 @@ async function processVakalatSection(
 
   if (vakalatnamaSection && Array.isArray(litigants)) {
     litigants
-      ?.map((litigant) => {
+      .map((litigant) => {
         // const representation = representative.representing[0];
         if (litigant.representatives.length === 0) {
           const fileStoreId = litigant?.documents?.[0]?.fileStore;
@@ -99,14 +99,14 @@ async function processVakalatSection(
           }
         }
       })
-      ?.filter(Boolean);
+      .filter(Boolean);
 
     const vakalats = Array.from(vakalatMap.values());
 
     vakalats.sort((a, b) => a.dateOfAddition - b.dateOfAddition);
 
     const vakalatLineItems = await Promise.all(
-      vakalats?.map(async (vakalat, index) => {
+      vakalats.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
           const documentPath = `${dynamicSectionNumber}.${index + 1} ${
             vakalat.heading
@@ -154,10 +154,10 @@ async function processVakalatSection(
 
     // update index
 
-    const vakalatsIndexSection = indexCopy.sections?.find(
+    const vakalatsIndexSection = indexCopy.sections.find(
       (section) => section.name === "vakalat"
     );
-    vakalatsIndexSection.lineItems = vakalatLineItems?.filter(Boolean);
+    vakalatsIndexSection.lineItems = vakalatLineItems.filter(Boolean);
   }
 }
 

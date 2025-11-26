@@ -22,10 +22,4 @@ public class SmsTemplateData {
     private String cmpNumber;
 
     private String hearingType;
-
-    private int caseCount;
-
-    private String link;
-
-    private String oldHearingDate;
 }

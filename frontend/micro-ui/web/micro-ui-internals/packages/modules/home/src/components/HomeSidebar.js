@@ -19,7 +19,6 @@ const HomeSidebar = ({
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasViewTodaysHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_TODAYS_HEARINGS"), [assignedRoles]);
-  const hasViewScheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_SCHEDULE_HEARING_HOME"), [assignedRoles]);
   const hasViewBulkRescheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_BULK_RESCHEDULE_HEARINGS"), [assignedRoles]);
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
   const hasViewSignProcessAccess = useMemo(
@@ -37,7 +36,7 @@ const HomeSidebar = ({
   return (
     <div className="home-sidebar">
       <HomeHeader t={t} userInfo={userInfo} roles={roles} />
-      {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess || hasViewScheduleHearingsAccess) && (
+      {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess) && (
         <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
           {hasViewTodaysHearingsAccess && (
             <SidebarItem
@@ -46,14 +45,6 @@ const HomeSidebar = ({
               // count={hearingCount}
               active={activeTab === "TOTAL_HEARINGS_TAB"}
               onClick={() => onTabChange("TOTAL_HEARINGS_TAB")}
-            />
-          )}
-          {hasViewScheduleHearingsAccess && (
-            <SidebarItem
-              t={t}
-              label={"CS_HOME_SCHEDULE_HEARING"}
-              active={activeTab === "CS_HOME_SCHEDULE_HEARING"}
-              onClick={() => onTabChange("CS_HOME_SCHEDULE_HEARING")}
             />
           )}
           {hasViewBulkRescheduleHearingsAccess && (

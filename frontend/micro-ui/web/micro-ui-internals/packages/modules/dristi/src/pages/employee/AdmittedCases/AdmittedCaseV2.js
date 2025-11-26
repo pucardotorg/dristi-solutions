@@ -23,7 +23,6 @@ import HearingTranscriptModal from "./HearingTranscriptModal";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
-import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import {
   admitCaseSubmitConfig,
   scheduleCaseAdmissionConfig,
@@ -38,7 +37,6 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
-import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
@@ -57,7 +55,6 @@ import MarkAsEvidence from "./MarkAsEvidence";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
-import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -494,36 +491,6 @@ const AdmittedCaseV2 = () => {
     [reps]
   );
 
-  const witnesses = useMemo(() => {
-    return (
-      caseDetails?.witnessDetails?.map((data) => {
-        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
-        return {
-          ...data,
-          name: fullName,
-          partyType: "witness",
-        };
-      }) || []
-    );
-  }, [caseDetails]);
-
-  const unJoinedLitigant = useMemo(() => {
-    return (
-      caseDetails?.additionalDetails?.respondentDetails?.formdata
-        ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
-        ?.map((data) => {
-          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return {
-            ...data,
-            name: `${fullName} (Accused)`,
-            code: fullName,
-            partyType: "respondent",
-            uniqueId: data?.uniqueId,
-          };
-        }) || []
-    );
-  }, [caseDetails]);
-
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
   const complainants = useMemo(() => {
@@ -686,11 +653,11 @@ const AdmittedCaseV2 = () => {
       cnrNumber,
       title: caseDetails?.caseTitle || "",
       stage: caseDetails?.stage,
-      parties: [...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses],
+      parties: [...finalLitigantsData, ...finalRepresentativesData],
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, unJoinedLitigant, witnesses, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -2394,6 +2361,135 @@ const AdmittedCaseV2 = () => {
     }
   };
 
+  const onSubmit = async () => {
+    switch (primaryAction.action) {
+      case "REGISTER":
+        break;
+      case "ADMIT":
+        if ((isDelayApplicationPending || isDelayCondonationApplicable) && !isDelayApplicationCompleted) {
+          setIsOpenDCA(true);
+        } else {
+          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+          setModalInfo({ type: "admitCase", page: 0 });
+          setShowModal(true);
+        }
+        break;
+      case "ISSUE_ORDER":
+        const { hearingDate, hearingNumber } = await getHearingData();
+        if (hearingNumber) {
+          const {
+            list: [orderData],
+          } = await Digit.ordersService.searchOrder({
+            tenantId,
+            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+            pagination: { limit: 1, offset: 0 },
+          });
+          if (
+            (orderData?.orderCategory === "COMPOSITE" && orderData?.compositeItems?.some((item) => item?.orderType === "NOTICE")) ||
+            orderData?.orderType === "NOTICE"
+          ) {
+            history.push(
+              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
+              {
+                caseId: caseId,
+                tab: "Orders",
+              }
+            );
+          } else {
+            handleIssueNotice(hearingDate, hearingNumber);
+          }
+        }
+        break;
+      case "SCHEDULE_ADMISSION_HEARING":
+        setShowScheduleHearingModal(true);
+        setCreateAdmissionOrder(true);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  const onSaveDraft = async () => {
+    if ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status)) {
+      const { hearingDate, hearingNumber } = await getHearingData();
+      if (hearingNumber) {
+        const date = new Date(hearingDate);
+        const requestBody = {
+          order: {
+            createdDate: null,
+            tenantId: tenantId,
+            hearingNumber: hearingNumber,
+            filingNumber: filingNumber,
+            cnrNumber: cnrNumber,
+            statuteSection: {
+              tenantId: tenantId,
+            },
+            orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+            orderCategory: "INTERMEDIATE",
+            orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+            status: "",
+            isActive: true,
+            workflow: {
+              action: OrderWorkflowAction.SAVE_DRAFT,
+              comments: "Creating order",
+              assignes: null,
+              rating: null,
+              documents: [{}],
+            },
+            documents: [],
+            additionalDetails: {
+              formdata: {
+                orderType: {
+                  type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  isactive: true,
+                  code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                },
+                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                  date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                }`,
+              },
+            },
+          },
+        };
+        ordersService
+          .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+          .then((res) => {
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
+              caseId: caseDetails?.id,
+              tab: "Orders",
+            });
+          })
+          .catch((err) => {
+            console.error("Error while creating order", err);
+            showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+          });
+      }
+    } else {
+      setShowModal(true);
+      setSubmitModalInfo({
+        ...scheduleCaseSubmitConfig,
+        caseInfo: [...caseInfo],
+        shortCaseInfo: [
+          {
+            key: "CASE_NUMBER",
+            value: caseDetails?.caseNumber,
+          },
+          {
+            key: "COURT_NAME",
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
+          },
+          {
+            key: "CASE_TYPE",
+            value: "NIA S138",
+          },
+        ],
+      });
+      setModalInfo({ type: "schedule", page: 0 });
+    }
+  };
+
   const handleMakeSubmission = useCallback(() => {
     history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
@@ -2444,121 +2540,17 @@ const AdmittedCaseV2 = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
-  const pipComplainants = useMemo(() => {
-    return caseDetails?.litigants
-      ?.filter((litigant) => litigant.partyType.includes("complainant"))
-      ?.filter(
-        (litigant) =>
-          !caseDetails?.representatives?.some((representative) =>
-            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
-          )
-      );
-  }, [caseDetails]);
-
-  const pipAccuseds = useMemo(() => {
-    return caseDetails?.litigants
-      ?.filter((litigant) => litigant.partyType.includes("respondent"))
-      ?.filter(
-        (litigant) =>
-          !caseDetails?.representatives?.some((representative) =>
-            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
-          )
-      );
-  }, [caseDetails]);
-
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
-
   const handleCitizenAction = useCallback(
-    async (option) => {
-      try {
-        if (option.value === "RAISE_APPLICATION") {
-          history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
-        } else if (option.value === "SUBMIT_DOCUMENTS") {
-          history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
-        } else if (option.value === "GENERATE_BAIL_BOND") {
-          if (complainantsList?.length === 1) {
-            setApiCalled(true);
-            const res = await DRISTIService?.getPendingTaskService(
-              {
-                SearchCriteria: {
-                  tenantId,
-                  moduleName: "Pending Tasks Service",
-                  moduleSearchCriteria: {
-                    isCompleted: false,
-                    ...(isCitizen && { assignedTo: userInfo?.uuid }),
-                    ...(courtId && { courtId }),
-                    filingNumber,
-                    entityType: "bail bond",
-                  },
-                  limit: 1000,
-                  offset: 0,
-                },
-              },
-              { tenantId }
-            );
-            const pendingTaskResponse = res?.data || [];
-            const pendingTaskDetails = convertTaskResponseToPayload(pendingTaskResponse);
-
-            if (pendingTaskResponse?.length > 0 && pendingTaskDetails?.additionalDetails?.bailbondId) {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/bail-bond/view?filingNumber=${filingNumber}&bailBondId=${pendingTaskDetails?.additionalDetails?.bailbondId}`
-              );
-            } else if (pendingTaskResponse?.length > 0) {
-              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`, {
-                state: {
-                  params: {
-                    actualReferenceId: pendingTaskDetails?.referenceId,
-                  },
-                },
-              });
-            } else {
-              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
-            }
-          } else {
-            history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
-          }
-        }
-      } catch (error) {
-        console.error("Error handling citizen action:", error);
-        showToast({ isError: true, message: "BAIL_BOND_SEARCH_FAILED" });
-      } finally {
-        setApiCalled(false);
+    (option) => {
+      if (option.value === "RAISE_APPLICATION") {
+        history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+      } else if (option.value === "SUBMIT_DOCUMENTS") {
+        history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+      } else if (option.value === "GENERATE_BAIL_BOND") {
+        history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
       }
     },
-    [history, filingNumber]
+    [filingNumber, history]
   );
 
   const handleCourtAction = useCallback(() => {
@@ -3086,7 +3078,10 @@ const AdmittedCaseV2 = () => {
                 value: "NEXT_HEARING",
                 label: "NEXT_HEARING",
               },
-
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
+              },
               {
                 value: "GENERATE_ORDER",
                 label: "GENERATE_ORDER",
@@ -3141,6 +3136,10 @@ const AdmittedCaseV2 = () => {
                 {
                   value: "END_HEARING",
                   label: "END_HEARING",
+                },
+                {
+                  value: "GENERATE_ORDER",
+                  label: "GENERATE_ORDER",
                 },
                 {
                   value: "SUBMIT_DOCUMENTS",
@@ -3642,14 +3641,6 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
-                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
-                              <Button
-                                variation={"outlined"}
-                                label={t("CS_CASE_GENERATE_ORDER")}
-                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
-                                style={{ boxShadow: "none" }}
-                              ></Button>
-                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
@@ -3749,25 +3740,10 @@ const AdmittedCaseV2 = () => {
         </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {caseDetails?.cmpNumber && (
-              <React.Fragment>
-                <div className="sub-details-text">{caseDetails?.cmpNumber}</div>
-                <hr className="vertical-line" />
-              </React.Fragment>
-            )}
-            {caseDetails?.isLPRCase ? (
-              <React.Fragment>
-                <div className="sub-details-text">{caseDetails?.lprNumber}</div>
-                <hr className="vertical-line" />
-              </React.Fragment>
-            ) : (
-              caseDetails?.courtCaseNumber && (
-                <React.Fragment>
-                  <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
-                  <hr className="vertical-line" />
-                </React.Fragment>
-              )
-            )}
+            <div className="sub-details-text">
+              {caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}
+            </div>
+            <hr className="vertical-line" />
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
                 {" "}
@@ -3785,10 +3761,12 @@ const AdmittedCaseV2 = () => {
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
             <hr className="vertical-line" />
             {advocateName && <div className="sub-details-text">{advocateName}</div>}
-            {delayCondonationData?.delayCondonationType?.code === "NO" && !isDelayApplicationCompleted && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
-                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) || isDelayApplicationPending
+                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                  isDelayApplicationPending ||
+                  isDelayApplicationCompleted
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>
@@ -3859,7 +3837,7 @@ const AdmittedCaseV2 = () => {
             )} */}
           {(showMakeSubmission || userRoles?.includes("ALLOW_ADD_WITNESS")) && config?.label === "Parties" && (
             <Button
-              label={userRoles.includes("CITIZEN") ? t("ADD_NEW_WITNESS") : t("CS_CASE_ADD_WITNESS")}
+              label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
               onButtonClick={() => setShowAddWitnessModal(true)}
               style={{ marginRight: "30px" }}

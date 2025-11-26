@@ -1,32 +1,25 @@
 package org.pucar.dristi.scheduling;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.NotificationService;
-import org.pucar.dristi.service.WorkflowService;
 import org.pucar.dristi.util.RequestInfoGenerator;
 import org.pucar.dristi.web.models.AdvocateMapping;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Pagination;
-import org.pucar.dristi.web.models.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,9 +27,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.pucar.dristi.config.ServiceConstants.CASE_REASSIGNED;
-import static org.pucar.dristi.config.ServiceConstants.ERRORS_PENDING;
 
 @Component
 @Slf4j
@@ -48,28 +38,35 @@ public class CronJobScheduler {
     private final NotificationService notificationService;
     private final Configuration config;
     private final ExecutorService executorService;
-    private final WorkflowService workflowService;
-    private final ObjectMapper objectMapper;
-
-    @Value("${egov.sms.errors.pending.duration}")
-    private int smsErrorsPendingDuration;
 
     @Autowired
     public CronJobScheduler(CaseRepository caseRepository, RequestInfoGenerator requestInfoGenerator,
-                            NotificationService notificationService, Configuration config, WorkflowService workflowService, ObjectMapper objectMapper) {
+                            NotificationService notificationService, Configuration config) {
         this.caseRepository = caseRepository;
         this.requestInfoGenerator = requestInfoGenerator;
         this.notificationService = notificationService;
         this.config = config;
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        this.workflowService = workflowService;
-        this.objectMapper = objectMapper;
     }
 
-    public void sendNotificationToCaseReassigned() {
+    @Async
+    @Scheduled(cron = "${config.case.esign.pending}", zone = "Asia/Kolkata")
+    public void sendNotificationToESignPending() {
         if (config.getIsSMSEnabled()) {
-            log.info("Starting Cron Job For Sending Notification To Case Reassigned");
-            processNotifications(CASE_REASSIGNED, ERRORS_PENDING);
+            log.info("Starting Cron Job For Sending Notification To Litigant ESign Pending");
+            processNotifications("DRAFT_IN_PROGRESS", ServiceConstants.ESIGN_PENDING);
+
+            log.info("Starting Cron Job For Sending Notification To Advocate ESign Pending");
+            processNotifications("DRAFT_IN_PROGRESS", ServiceConstants.ADVOCATE_ESIGN_PENDING);
+        }
+    }
+
+    @Async
+    @Scheduled(cron = "${config.application.payment.pending}", zone = "Asia/Kolkata")
+    public void sendNotificationToPaymentPending() {
+        if (config.getIsSMSEnabled()) {
+            log.info("Starting Cron Job For Sending Notification To Payment Pending");
+            processNotifications("PENDING_PAYMENT", ServiceConstants.PAYMENT_PENDING);
         }
     }
 
@@ -119,6 +116,9 @@ public class CronJobScheduler {
         Pagination pagination = Pagination.builder().limit( limit).offSet( offset).build();
         CaseCriteria criteria = CaseCriteria.builder()
                 .status(Collections.singletonList(status))
+                .filingToDate(LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+                .filingFromDate(LocalDate.now().minusDays(Integer.parseInt(config.getUserNotificationPeriod()))
+                        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
                 .pagination(pagination)
                 .build();
 
@@ -139,60 +139,12 @@ public class CronJobScheduler {
             } else {
                 notificationService.sendNotification(requestInfo, courtCase, notificationType, courtCase.getAuditdetails().getCreatedBy());
             }
-
-            if(ERRORS_PENDING.equalsIgnoreCase(notificationType)){
-                ProcessInstance processInstance = workflowService.getCurrentWorkflow(requestInfo, config.getTenantId(), courtCase.getFilingNumber());
-                Long createdTime = processInstance.getAuditDetails().getCreatedTime();
-                if(shouldTriggerSmsForErrorsPending(createdTime)){
-                    courtCase.getRepresentatives().forEach(representative -> {
-                        JsonNode advocateNode = objectMapper.convertValue(representative, JsonNode.class);
-                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                        notificationService.sendNotification(requestInfo, courtCase, ERRORS_PENDING, uuid);
-                    });
-
-                    courtCase.getLitigants().forEach(litigant -> {
-                        JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
-                        String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
-                        notificationService.sendNotification(requestInfo, courtCase, ERRORS_PENDING, uuid);
-                    });
-                }
-
-            }
-
             return true;
         } catch (Exception e) {
             log.error("Error processing case: {}", courtCase.getId(), e);
             return false;
         }
     }
-
-    public boolean shouldTriggerSmsForErrorsPending(long createdTime) {
-
-        Instant currentTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant();
-        Instant createdInstant = Instant.ofEpochMilli(createdTime);
-        long threeDaysInMillis = Duration.ofDays(3).toMillis();
-        long twentyDaysInMillis = Duration.ofDays(smsErrorsPendingDuration).toMillis();
-
-        // Get the time difference in milliseconds from createdTime
-        long timeSinceCreation = Duration.between(createdInstant, currentTime).toMillis();
-
-        // If more than 20 days have passed since creation, do not trigger
-        if (timeSinceCreation > twentyDaysInMillis) {
-            return false;
-        }
-
-        // Find the closest multiple of 3 days (72 hours)
-        long nextTriggerTimeMillis = (timeSinceCreation / threeDaysInMillis) * threeDaysInMillis + threeDaysInMillis;
-
-        // Calculate the ±6 hours window around the next trigger time
-        long toleranceMillis = Duration.ofHours(6).toMillis();
-        long windowStartMillis = nextTriggerTimeMillis - toleranceMillis;
-        long windowEndMillis = nextTriggerTimeMillis + toleranceMillis;
-
-        // Check if the current time is within the tolerance window around the next trigger time
-        return currentTime.toEpochMilli() >= windowStartMillis && currentTime.toEpochMilli() <= windowEndMillis;
-    }
-
 
     /**
      * Handles future results and logs warnings for failed tasks.

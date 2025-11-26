@@ -32,7 +32,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
   );
 };
 
-function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors, formDisbalityCount = false }) {
+function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors }) {
   const toast = useToast();
   const inputs = useMemo(
     () =>
@@ -151,13 +151,13 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 t={t}
                 uploadErrorInfo={fileErrors[index]}
                 input={input}
-                disableUploadDelete={config?.disable || formDisbalityCount}
+                disableUploadDelete={config?.disable}
               />
             ))}
 
             <div className={`file-uploader-div-main ${showFileUploader ? "show-file-uploader" : ""}`}>
               <FileUploader
-                disabled={config?.disable || formDisbalityCount}
+                disabled={config?.disable}
                 handleChange={(data) => {
                   handleChange(data, input);
                 }}

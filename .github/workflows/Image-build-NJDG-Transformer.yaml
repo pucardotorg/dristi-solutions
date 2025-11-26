@@ -51,11 +51,11 @@ jobs:
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
-      - name: Build and analyze for njdg-transformer
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/njdg-transformer/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_njdg_transformer -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+      # - name: Build and analyze for njdg-transformer
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: mvn -B -f backend/njdg-transformer/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_njdg_transformer -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
 
       # Login to Docker Registry
@@ -85,6 +85,12 @@ jobs:
           docker build --build-arg WORK_DIR="backend/njdg-transformer" -t docker.io/venkatramireddyb/njdg-transformer:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push docker.io/venkatramireddyb/njdg-transformer:${{ env.VERSION }}-${{ env.commit_hash }}
 
+      - name: Build and Push Docker image for njdg-transformer DB
+        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
+        run: |
+          docker build  -t docker.io/venkatramireddyb/njdg-transformer-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/njdg-transformer-db:${{ env.VERSION }}-${{ env.commit_hash }}
+        working-directory: backend/njdg-transformer/src/main/resources/db
 
   Workflow_Trigger:
     if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'

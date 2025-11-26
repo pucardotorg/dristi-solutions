@@ -7,12 +7,10 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import pucar.scheduler.CronJobScheduler;
 import pucar.service.OrderService;
 import pucar.util.ResponseInfoFactory;
 import pucar.web.models.*;
@@ -23,12 +21,10 @@ import pucar.web.models.*;
 public class OrderApiController {
 
     private final OrderService orderService;
-    private final CronJobScheduler cronJobScheduler;
 
     @Autowired
-    public OrderApiController(OrderService orderService, CronJobScheduler cronJobScheduler) {
+    public OrderApiController(OrderService orderService) {
         this.orderService = orderService;
-        this.cronJobScheduler = cronJobScheduler;
     }
 
     @RequestMapping(value = "/v1/_updateOrder", method = RequestMethod.POST)
@@ -60,18 +56,6 @@ public class OrderApiController {
                 .order(order)
                 .build();
         return ResponseEntity.accepted().body(response);
-    }
-
-    @PostMapping(value = "/v1/_runCronJob")
-    public ResponseEntity<?> runCronJob() {
-        cronJobScheduler.sendNotificationForMandatorySubmissionPending();
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/v1/_runCronJob/third-day")
-    public ResponseEntity<?> runCronJobEveryThirdDay() {
-        cronJobScheduler.sendNotificationForProcessPaymentPending();
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 

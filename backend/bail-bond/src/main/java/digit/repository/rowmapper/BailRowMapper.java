@@ -123,7 +123,6 @@ public class BailRowMapper implements ResultSetExtractor<List<Bail>> {
                         surety = Surety.builder()
                                 .id(suretyId)
                                 .tenantId(rs.getString("suretyTenantId"))
-                                .index(rs.getInt("index"))
                                 .name(rs.getString("suretyName"))
                                 .fatherName(rs.getString("suretyFatherName"))
                                 .mobileNumber(rs.getString("suretyMobile"))

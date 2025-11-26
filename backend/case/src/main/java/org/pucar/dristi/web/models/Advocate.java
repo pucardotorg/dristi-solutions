@@ -67,15 +67,6 @@ public class Advocate {
 	@Valid
 	private Workflow workflow = null;
 
-	@JsonProperty("accused")
-	private List<String> accused = null;
-
-	@JsonProperty("complainant")
-	private List<String> complainant = null;
-
-	@JsonProperty("individualIds")
-	private List<String> individualIds = null;
-
 	@JsonProperty("documents")
 	@Valid
 	private List<Document> documents = new ArrayList<>();

@@ -145,7 +145,6 @@ public class ServiceConstants {
 
 
     public static final String CASE_REGISTERED = "CASE_REGISTERED";
-    public static final String HEARING_SCHEDULED = "HEARING_SCHEDULED";
 
 
     public static final String ADVOCATE_ESIGN_PENDING = "ADVOCATE_ESIGN_PENDING";
@@ -208,8 +207,6 @@ public class ServiceConstants {
     public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
     public static final String EVIDENCE_CREATE_ERROR = "EVIDENCE_CREATE_ERROR";
     public static final String VAKALATNAMA_DOC = "VAKALATNAMA_DOC";
-    public static final String VAKALATNAMA = "VAKALATNAMA";
-    public static final String VAKALATNAMA_FILED = "VAKALATNAMA_FILED";
     public static final String COMPLETED = "COMPLETED";
 
     public static final String REASON_DOCUMENT = "REASON_DOCUMENT";
@@ -252,9 +249,6 @@ public class ServiceConstants {
     public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
 
     public static final String REGEX_TO_EXTRACT_YEAR = "ST/\\d+/(\\d{4})";
-
-    public static final String ERRORS_PENDING = "ERRORS_PENDING";
-    public static final String SCHEDULED = "SCHEDULED";
     private ServiceConstants() {
     }
 }

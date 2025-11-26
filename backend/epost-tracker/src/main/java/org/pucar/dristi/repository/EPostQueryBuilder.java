@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 public class EPostQueryBuilder {
 
-    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, total_amount, speed_post_id, status_update_date, task_type, respondent_name, phone, address_obj, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
+    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
 
     private static final String FROM_TABLES = " FROM dristi_epost_tracker ";
 
@@ -55,26 +55,6 @@ public class EPostQueryBuilder {
             query.append(" booking_date = ? ");
             preparedStmtList.add(searchCriteria.getTrackingNumber());
         }
-        if (!ObjectUtils.isEmpty(searchCriteria.getBookingDateStartTime())) {
-            addClauseIfRequired(query,preparedStmtList);
-            query.append(" booking_date >= ? ");
-            preparedStmtList.add(searchCriteria.getBookingDateStartTime());
-        }
-        if (!ObjectUtils.isEmpty(searchCriteria.getBookingDateEndTime())) {
-            addClauseIfRequired(query,preparedStmtList);
-            query.append(" booking_date <= ? ");
-            preparedStmtList.add(searchCriteria.getBookingDateEndTime());
-        }
-        if (!ObjectUtils.isEmpty(searchCriteria.getReceivedDateStartTime())) {
-            addClauseIfRequired(query,preparedStmtList);
-            query.append(" received_date >= ? ");
-            preparedStmtList.add(searchCriteria.getReceivedDateStartTime());
-        }
-        if (!ObjectUtils.isEmpty(searchCriteria.getReceivedDateEndTime())) {
-            addClauseIfRequired(query,preparedStmtList);
-            query.append(" received_date <= ? ");
-            preparedStmtList.add(searchCriteria.getReceivedDateEndTime());
-        }
         if(!ObjectUtils.isEmpty(searchCriteria.getReceivedDate())){
             addClauseIfRequired(query,preparedStmtList);
             query.append(" received_date = ? ");
@@ -84,11 +64,6 @@ public class EPostQueryBuilder {
             addClauseIfRequired(query,preparedStmtList);
             query.append(" postal_hub = ? ");
             preparedStmtList.add(searchCriteria.getPostalHub());
-        }
-        if(!ObjectUtils.isEmpty(searchCriteria.getSpeedPostId())){
-            addClauseIfRequired(query,preparedStmtList);
-            query.append(" speed_post_id = ? ");
-            preparedStmtList.add(searchCriteria.getSpeedPostId());
         }
         return query.toString();
     }

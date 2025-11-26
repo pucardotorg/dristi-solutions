@@ -15,7 +15,7 @@ async function processFilingsSection(
 ) {
   // move to filings section of case complaint
   logger.info(caseBundleMaster);
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "filings"
   );
 
@@ -32,7 +32,7 @@ async function processFilingsSection(
   const filingsLineItems = [];
 
   for (const section of sortedFilingSection) {
-    const documentFileStoreId = courtCase.documents?.find(
+    const documentFileStoreId = courtCase.documents.find(
       (doc) => doc.documentType === section.doctype
     )?.fileStore;
 
@@ -90,10 +90,10 @@ async function processFilingsSection(
 
   // update index
 
-  const filingsIndexSection = indexCopy.sections?.find(
+  const filingsIndexSection = indexCopy.sections.find(
     (section) => section.name === "filings"
   );
-  filingsIndexSection.lineItems = filingsLineItems?.filter(Boolean);
+  filingsIndexSection.lineItems = filingsLineItems.filter(Boolean);
 }
 
 module.exports = {

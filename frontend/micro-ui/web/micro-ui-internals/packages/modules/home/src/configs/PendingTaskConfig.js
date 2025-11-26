@@ -117,10 +117,6 @@ export const pendingTaskConfig = {
             additionalCustomization: true,
           },
           {
-            label: "CS_PROCESS_TYPE",
-            jsonPath: "processType",
-          },
-          {
             label: "ADVOCATES",
             labelChildren: "OutlinedInfoIcon",
             tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",

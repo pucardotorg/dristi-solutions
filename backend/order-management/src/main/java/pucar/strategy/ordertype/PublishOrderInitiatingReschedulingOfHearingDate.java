@@ -86,7 +86,7 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         String referenceId = orderUtil.getReferenceId(order);
-        String hearingNumber = order.getScheduledHearingNumber();
+        String hearingNumber = order.getHearingNumber();
 
         String changedHearingDate = null;
 
@@ -107,7 +107,7 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         String originalHearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "originalHearingDate"), String.class);
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
         String dateValue = Optional.ofNullable(changedHearingDate)
@@ -116,10 +116,8 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         Long newHearingDate = dateValue == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(dateValue, "yyyy-MM-dd");
 
         log.info("new hearing time:{}", newHearingDate);
-        if (referenceId == null) {
-            hearing.setStartTime(newHearingDate);
-            hearing.setEndTime(newHearingDate);
-        }
+        hearing.setStartTime(newHearingDate);
+        hearing.setEndTime(newHearingDate);
 
 
         WorkflowObject workflow = new WorkflowObject();

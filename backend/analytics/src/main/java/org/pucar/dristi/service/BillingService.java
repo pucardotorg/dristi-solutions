@@ -13,8 +13,6 @@ import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.Util;
-import org.pucar.dristi.web.models.OfflinePaymentTaskRequest;
-import org.pucar.dristi.web.models.billingservice.Demand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,36 +41,6 @@ public class BillingService {
         this.config = config;
         this.indexerUtils = indexerUtils;
         this.mdmsUtil = mdmsUtil;
-    }
-
-    public void processOfflinePayment(OfflinePaymentTaskRequest offlinePaymentTaskRequest) {
-
-        String consumerCode = offlinePaymentTaskRequest.getOfflinePaymentTask().getConsumerCode();
-
-        String tenantId = offlinePaymentTaskRequest.getOfflinePaymentTask().getTenantId();
-
-        RequestInfo requestInfo = offlinePaymentTaskRequest.getRequestInfo();
-
-        List<Demand> demands = billingUtil.getDemandByConsumerCode(consumerCode, ACTIVE,  tenantId , requestInfo);
-
-        if (demands == null || demands.isEmpty()) {
-            log.warn("No active demands found for consumer code: {}", consumerCode);
-            return;
-        }
-
-        Demand demand = demands.get(0);
-
-        String payload = billingUtil.buildPayload(demand, requestInfo, offlinePaymentTaskRequest.getOfflinePaymentTask());
-
-        if (payload != null) {
-            String uri = config.getEsHostUrl() + config.getBulkPath();
-            try {
-                indexerUtils.esPostManual(uri, payload);
-            } catch (Exception e) {
-                log.error("Error indexing document", e);
-                throw new CustomException("INDEXING_ERROR", "Error indexing document");
-            }
-        }
     }
 
     public void process(String topic, String kafkaJson) {

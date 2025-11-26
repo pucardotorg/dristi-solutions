@@ -28,9 +28,6 @@ function Accordion({
         return "10m";
       }
       case 3: {
-        return "06m";
-      }
-      case 4: {
         return "05m";
       }
       default:

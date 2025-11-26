@@ -50,8 +50,6 @@ public class CompositeOrderService implements OrderProcessor {
             // todo : need to find permanent solution for this
             if (compositeOrderItem.getHearingNumber() != null && !compositeOrderItem.getHearingNumber().equals(oldHearingNumber))
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
-            if (compositeOrderItem.getScheduledHearingNumber() != null)
-                order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 
         }
 

@@ -110,17 +110,9 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
         }, {}),
       });
     } else {
-      // Sanitize specific address fields before saving
-      if (input === "state" || input === "district" || input === "city") {
-        value = value.replace(/[^A-Za-z\s]/g, "");
-      } else if (input === "pincode") {
-        value = value.replace(/[^0-9]/g, "");
-      }
-
-      if (typeof value === "string" && value.startsWith(" ")) {
+      if (value.startsWith(" ")) {
         value = "";
       }
-
       onSelect(config.key, { ...formData[config.key], [input]: value });
     }
   }

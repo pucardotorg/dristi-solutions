@@ -115,6 +115,9 @@ public class DemandService {
                 iterator.remove();
             }
         }
+        if(!demands.isEmpty()){
+            consumerCodes.addAll(callBillServiceAndCreateDemand(requestInfo, demands, task));
+        }
         return consumerCodes;
     }
 
@@ -143,7 +146,7 @@ public class DemandService {
 
     private static List<Calculation> getCalculations(List<Calculation> calculations) {
         calculations.forEach(calculation -> {
-            calculation.setBreakDown(calculation.getBreakDown());
+            calculation.setBreakDown(calculation.getBreakDown().stream().filter(breakDown -> breakDown.getCode().equals("COURT_FEE")).toList());
             calculation.setTotalAmount(calculation.getBreakDown().stream().mapToDouble(BreakDown::getAmount).sum());
         });
         return calculations;
@@ -174,16 +177,13 @@ public class DemandService {
         String deliveryChannel = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
-        if (E_POST.equalsIgnoreCase(deliveryChannel)) {
-            log.info("creating single demand for e post");
-            DemandDetail demandDetail = createDemandDetailForEPost(calculation.getTenantId(), calculation.getBreakDown(), masterCodes);
-            demandDetailList.add(demandDetail);
-            log.info("created single demand detail for e post");
-        } else {
+        //if (config.isTest()) {
+        //    demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task, businessService));
+        //} else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
             }
-        }
+        //}
         return demandDetailList;
     }
 
@@ -255,14 +255,6 @@ public class DemandService {
                 .build();
     }
 
-    private DemandDetail createDemandDetailForEPost(String tenantId, List<BreakDown> breakDowns, Map<String, String> masterCodes) {
-        return DemandDetail.builder()
-                .tenantId(tenantId)
-                .taxAmount(BigDecimal.valueOf(breakDowns.stream().mapToDouble(BreakDown::getAmount).sum()))
-                .taxHeadMasterCode(masterCodes.getOrDefault(config.getEPostTaxHeadMasterCode(), ""))
-                .build();
-    }
-
     private Set<String> callBillServiceAndCreateDemand(RequestInfo requestInfo, List<Demand> demands, Task task) {
         StringBuilder url = new StringBuilder().append(config.getBillingServiceHost())
                 .append(config.getDemandCreateEndpoint());
@@ -295,11 +287,9 @@ public class DemandService {
         for (DemandDetail detail : demandDetailList) {
             String taxHeadMasterCode = detail.getTaxHeadMasterCode();
             String paymentType = masterCodePayemntTypeMap.get(taxHeadMasterCode);
-            if (paymentType != null) {
-                String paymentTypeSuffix = paymentTypeData.get(paymentType);
-                String consumerCode = taskNumber + "_" + paymentTypeSuffix;
-                demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode, businessService, additionalDetails));
-            }
+            String paymentTypeSuffix = paymentTypeData.get(paymentType);
+            String consumerCode = taskNumber + "_" + paymentTypeSuffix;
+            demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode, businessService, additionalDetails));
         }
 
         return demandList;

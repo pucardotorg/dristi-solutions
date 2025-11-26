@@ -217,7 +217,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           fileTypes: ["JPG", "PDF", "PNG"],
           isMultipleUpload: true,
           downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-          downloadTemplateLink: "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
+          downloadTemplateLink: "https://www.jsscacs.edu.in/sites/default/files/Department%20Files/Number%20System%20.pdf",
         },
         {
           fileKey: "pipAffidavitFileUpload",
