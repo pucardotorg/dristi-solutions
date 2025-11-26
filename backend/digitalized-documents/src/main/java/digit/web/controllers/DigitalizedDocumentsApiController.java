@@ -34,7 +34,7 @@ public class DigitalizedDocumentsApiController {
         this.responseInfoFactory = responseInfoFactory;
     }
 
-    @RequestMapping(value = "/digitalized-documents/v1/_create", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_create", method = RequestMethod.POST)
     public ResponseEntity<DigitalizedDocumentResponse> digitalizedDocumentsV1CreatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new digitalized document + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody DigitalizedDocumentRequest body) {
         log.info("api = /feedback, result = IN_PROGRESS");
         DigitalizedDocument digitalizedDocument = digitalizedDocumentService.createDigitalizedDocument(body);
@@ -47,12 +47,12 @@ public class DigitalizedDocumentsApiController {
         return new ResponseEntity<>(digitalizedDocumentResponse, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/digitalized-documents/v1/_search", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_search", method = RequestMethod.POST)
     public ResponseEntity<DigitalizedDocumentSearchResponse> digitalizedDocumentsV1SearchPost(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody DigitalizedDocumentSearchRequest body) {
         return null;
     }
 
-    @RequestMapping(value = "/digitalized-documents/v1/_update", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_update", method = RequestMethod.POST)
     public ResponseEntity<DigitalizedDocumentResponse> digitalizedDocumentsV1UpdatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for updating the digitalized document + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody DigitalizedDocumentRequest body) {
         return null;
     }
