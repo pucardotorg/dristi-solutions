@@ -40,6 +40,12 @@ public class Configuration {
     @Value("${egov.idgen.path}")
     private String idGenPath;
 
+    @Value("${egov.idgen.digitalized.document.config}")
+    private String digitalizedDocumentIdGenConfig;
+
+    @Value("${egov.idgen.digitalized.document.format}")
+    private String digitalizedDocumentIdGenFormat;
+
 
     //Workflow Config
     @Value("${egov.workflow.host}")
