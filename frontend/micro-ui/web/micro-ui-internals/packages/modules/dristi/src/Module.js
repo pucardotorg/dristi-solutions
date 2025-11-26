@@ -79,6 +79,7 @@ import DownloadButton from "./components/DownloadButton";
 import PencilIconEdit from "./components/PencilIconEdit";
 import ProcessCourierService from "./components/ProcessCourierService";
 import CourierService from "./components/CourierService";
+import CustomText from "./components/CustomText";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -218,6 +219,7 @@ const componentsToRegister = {
   PencilIconEdit,
   ProcessCourierService,
   CourierService,
+  CustomText,
 };
 
 const overrideHooks = () => {

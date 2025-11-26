@@ -340,18 +340,39 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
             <div className="view-order order-type-form-modal">
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
+                const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
-                let effectiveConfig = isAcceptBail
-                  ? (modifiedFormConfig || []).map((cfg) => ({
-                      ...cfg,
-                      body: cfg.body.filter((field) => {
-                        if (field.key === "noOfSureties") return showSuretyFields;
-                        return true;
-                      }),
-                    }))
-                  : modifiedFormConfig;
+                const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+                let effectiveConfig = modifiedFormConfig;
+
+                if (isAcceptBail) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.filter((field) => {
+                      if (field?.key === "noOfSureties") return showSuretyFields;
+                      return true;
+                    }),
+                  }));
+                } else if (isReferralToADR) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.map((field) => {
+                      if (["mediationCentre", "dateOfMediation", "mediationNote", "modeOfSigning"]?.includes(field?.key)) {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            hideInForm: !isMediation,
+                          },
+                        };
+                      }
+                      return field;
+                    }),
+                  }));
+                }
 
                 if (isAcceptBail && bailTypeCode === "SURETY") {
                   const CheckboxRow = () => (

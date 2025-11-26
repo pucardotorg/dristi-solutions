@@ -110,6 +110,14 @@ const HomeSidebar = ({
           {hasViewSignOrdersAccess && (
             <SidebarItem
               t={t}
+              label="CS_HOME_SIGN_FORMS"
+              active={activeTab === "CS_HOME_SIGN_FORMS"}
+              onClick={() => onTabChange("CS_HOME_SIGN_FORMS")}
+            />
+          )}
+          {hasViewSignOrdersAccess && (
+            <SidebarItem
+              t={t}
               label="CS_HOME_ORDERS"
               active={activeTab === "CS_HOME_ORDERS"}
               onClick={async (e) => {

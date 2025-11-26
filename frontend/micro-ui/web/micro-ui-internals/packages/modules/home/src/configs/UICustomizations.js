@@ -693,6 +693,77 @@ export const UICustomizations = {
     },
   },
 
+  bulkSignFormsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const status = requestCriteria?.state?.searchForm?.status;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: status?.type,
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+        ...(courtId && { courtId }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
+        case "DATE_ADDED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "CS_ACTIONS":
+          return <OverlayDropdown position="relative" column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
+        default:
+          break;
+      }
+    },
+    dropDownItems: (row, column, t) => {
+      return [
+        {
+          label: t("DELETE_BULK_ORDER"),
+          id: "delete_order",
+          hide: false,
+          disabled: false,
+          action: (history, column, row, item) => {
+            column?.clickFunc(row);
+          },
+        },
+      ];
+    },
+  },
+
   bulkADiarySignConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const date = new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime();
