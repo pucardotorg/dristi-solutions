@@ -263,6 +263,8 @@ const TasksComponent = ({
         Object?.keys(courierOrderDetails)?.length === 0 &&
         courierServicePendingTask &&
         Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
         Array?.isArray(taskManagementList)
       ) {
         try {
@@ -287,7 +289,7 @@ const TasksComponent = ({
 
           const formDataKey = formDataKeyMap[orderDetails?.orderType];
           const orderType = orderDetails?.orderType;
-
+          debugger;
           let parties = orderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
           if (Array.isArray(uniqueIdsList) && uniqueIdsList.length > 0) {
             parties = parties?.filter((party) => {
