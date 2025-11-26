@@ -989,6 +989,7 @@ public class CaseService {
             log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
@@ -4234,6 +4235,7 @@ public class CaseService {
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(courtCase, courtCase.getAuditdetails());
             cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(request.getRequestInfo())
@@ -5978,6 +5980,7 @@ public class CaseService {
             validator.validateWitnessRequest(body, courtCase);
             updateWitnessDetailsInCase(body.getWitnessDetails(), courtCase);
             CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(caseObj, caseObj.getAuditdetails());
             updateCourtCaseInRedis(body.getTenantId(), caseObj);
             producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
             log.info("operation=addWitnessToCase, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
@@ -6176,6 +6179,7 @@ public class CaseService {
             }
 
             // Update case in Redis cache
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(encryptedCourtCase, encryptedCourtCase.getAuditdetails());
             updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(body.getRequestInfo())
