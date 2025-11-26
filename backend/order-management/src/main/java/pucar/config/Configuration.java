@@ -273,4 +273,20 @@ public class Configuration {
     @Value("${task.management.assigned.role}")
     private List<String> taskManagementAssignedRole;
 
+    //Elastic search
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.bulk.index}")
+    private String index;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
 }

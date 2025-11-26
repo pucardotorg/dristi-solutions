@@ -72,13 +72,11 @@ public class OrderService {
         RequestInfo requestInfo = request.getRequestInfo();
 
         //If attendance is present then attendance and item text will go in hearing summary
-        if (order.getAttendance() != null) {
-            String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-            Hearing hearing = hearings.get(0);
-            hearingUtil.updateHearingSummary(request, hearing);
-        }
+        String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
+        hearingUtil.updateHearingSummary(request, hearing);
 
     }
 
@@ -112,8 +110,9 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())){
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && order.getHearingNumber() != null){
             updateHearingSummary(request);
+            hearingUtil.updateOpenHearingIndex(request.getOrder());
         }
 
         return orderResponse.getOrder();

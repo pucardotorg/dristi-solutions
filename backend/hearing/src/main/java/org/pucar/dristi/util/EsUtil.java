@@ -60,10 +60,11 @@ public class EsUtil {
         Integer statusOrder = openHearing.getStatusOrder();
         Integer hearingTypeOrder = openHearing.getHearingTypeOrder();
         int serialNumber = openHearing.getSerialNumber();
+        String orderStatus = openHearing.getOrderStatus().toString();
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), hearingUuid, hearingUuid, tenantId, filingNumber, caseTitle, caseUuid, hearingNumber, caseNumber, stage, status, fromDate, toDate, subStage, courtId, accusedString, complainantString, searchableFieldsString, hearingType, caseFilingDate, statusOrder, hearingTypeOrder,serialNumber
+                config.getIndex(), hearingUuid, hearingUuid, tenantId, filingNumber, caseTitle, caseUuid, hearingNumber, caseNumber, stage, status, fromDate, toDate, subStage, courtId, accusedString, complainantString, searchableFieldsString, hearingType, caseFilingDate, statusOrder, hearingTypeOrder,serialNumber, orderStatus
 
         );
     }

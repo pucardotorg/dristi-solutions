@@ -1,10 +1,12 @@
-package org.egov.transformer.models;
+package pucar.web.models.inbox;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
+import pucar.web.models.OrderStatus;
 
 import java.util.List;
+
 
 @Validated
 @Getter
@@ -54,7 +56,7 @@ public class OpenHearing {
     private Long toDate = null;
 
     @JsonProperty("advocate")
-    private Advocate advocate = null;
+    private AdvocateDetails advocate = null;
 
     @JsonProperty("searchableFields")
     private List<String> searchableFields = null;
@@ -79,5 +81,4 @@ public class OpenHearing {
 
     @JsonProperty("orderStatus")
     private OrderStatus orderStatus;
-
 }

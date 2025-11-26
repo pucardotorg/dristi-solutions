@@ -249,8 +249,6 @@ const GenerateOrdersV2 = () => {
   const toast = useToast();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const [createdSummon, setCreatedSummon] = useState(null);
-  const [createdNotice, setCreatedNotice] = useState(null);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
@@ -1359,65 +1357,59 @@ const GenerateOrdersV2 = () => {
       (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing, todayScheduledHearing,currentScheduledHearing]);
+  }, [data, currentInProgressHearing, todayScheduledHearing, currentScheduledHearing]);
 
-  const nextHearing = useCallback(
-     async () => {
-      try {
-        const validData = (data || []).filter((item) =>
-          ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
-        );
+  const nextHearing = useCallback(async () => {
+    try {
+      const validData = (data || []).filter((item) =>
+        ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"].includes(item?.businessObject?.hearingDetails?.status)
+      );
 
-        if (!validData?.length) {
-          setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-          return;
-        }
-
-        const currentIndex = validData?.findIndex(
-          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
-        );
-        for (let step = 1; step < validData.length; step++) {
-          const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
-          const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
-          const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
-          const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
-          const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
-          if (!nextFiling) continue;
-
-          try {
-            const response = await ordersService.searchOrder(
-              {
-                tenantId: nextTenantId,
-                criteria: {
-                  tenantId: nextTenantId,
-                  filingNumber: nextFiling,
-                  hearingNumber: nextHearingNumber,
-                  applicationNumber: "",
-                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                  ...(nextCourtId && { courtId: nextCourtId }),
-                },
-                pagination: { limit: 1, offset: 0 },
-              },
-              { tenantId: nextTenantId }
-            );
-
-            const orderDraft = response?.list?.[0];
-             if (orderDraft?.orderNumber) {
-              history.push(
-                `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`
-              );
-              return;
-            } 
-            } catch (e) {
-          }
-        }
+      if (!validData?.length) {
         setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
-      } catch (e) {
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+        return;
       }
-    },
-    [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]
-  );
+
+      const currentIndex = validData?.findIndex(
+        (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+      );
+      for (let step = 1; step < validData.length; step++) {
+        const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
+        const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
+        const nextTenantId = row?.businessObject?.hearingDetails?.tenantId || tenantId;
+        const nextCourtId = row?.businessObject?.hearingDetails?.courtId;
+        const nextHearingNumber = row?.businessObject?.hearingDetails?.hearingNumber;
+        if (!nextFiling) continue;
+
+        try {
+          const response = await ordersService.searchOrder(
+            {
+              tenantId: nextTenantId,
+              criteria: {
+                tenantId: nextTenantId,
+                filingNumber: nextFiling,
+                hearingNumber: nextHearingNumber,
+                applicationNumber: "",
+                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                ...(nextCourtId && { courtId: nextCourtId }),
+              },
+              pagination: { limit: 1, offset: 0 },
+            },
+            { tenantId: nextTenantId }
+          );
+
+          const orderDraft = response?.list?.[0];
+          if (orderDraft?.orderNumber) {
+            history.push(`/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${nextFiling}&orderNumber=${orderDraft.orderNumber}`);
+            return;
+          }
+        } catch (e) {}
+      }
+      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+    } catch (e) {
+      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+    }
+  }, [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]);
 
   // TODO: temporary Form Config, need to be replaced with the actual config
   const getModifiedFormConfig = useCallback(
@@ -3590,7 +3582,7 @@ const GenerateOrdersV2 = () => {
     let status = taskStatus;
 
     create &&
-      (await ordersService.customApiService(Urls.orders.pendingTask, {
+      (await ordersService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
           name,
           entityType,
@@ -3647,45 +3639,15 @@ const GenerateOrdersV2 = () => {
         },
       };
 
-      const summonsArray =
-        currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
-          : currentOrder?.additionalDetails?.isReIssueSummons
-          ? [{}]
-          : currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder.compositeItems
-              .map((item) =>
-                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
-              )
-              .flat()
-          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
-              },
-            },
-          },
-          { tenantId }
-        )
-      );
-      const resList = await Promise.all(promiseList);
-      setCreatedSummon(resList[0]?.order?.orderNumber);
-      await Promise.all(
-        resList.forEach((res) =>
-          createPendingTask({
-            order: res?.order,
-            createTask: true,
-            taskStatus: "DRAFT_IN_PROGRESS",
-            taskName: t("DRAFT_IN_PROGRESS_ISSUE_SUMMONS"),
-            orderEntityType: "order-default",
-          })
-        )
-      );
+      const res = await ordersService.createOrder({ order: orderbody }, { tenantId });
+      await createPendingTask({
+        order: res?.order,
+        createTask: true,
+        taskStatus: "DRAFT_IN_PROGRESS",
+        taskName: t("DRAFT_IN_PROGRESS_ISSUE_SUMMONS"),
+        orderEntityType: "order-default",
+      });
+      return res?.order?.orderNumber;
     } catch (error) {}
   };
 
@@ -3725,47 +3687,15 @@ const GenerateOrdersV2 = () => {
         },
       };
 
-      const summonsArray =
-        currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
-          : currentOrder?.additionalDetails?.isReIssueSummons
-          ? [{}]
-          : currentOrder?.orderCategory === "COMPOSITE"
-          ? currentOrder.compositeItems
-              .map((item) =>
-                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
-              )
-              .flat()
-          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
-              },
-            },
-          },
-          { tenantId }
-        )
-      );
-
-      const resList = await Promise.all(promiseList);
-      setCreatedNotice(resList[0]?.order?.orderNumber);
-      await Promise.all(
-        resList.forEach((res) =>
-          createPendingTask({
-            order: res?.order,
-            createTask: true,
-            taskStatus: "DRAFT_IN_PROGRESS",
-            taskName: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
-            orderEntityType: "order-default",
-          })
-        )
-      );
+      const res = await ordersService.createOrder({ order: orderbody }, { tenantId });
+      await createPendingTask({
+        order: res?.order,
+        createTask: true,
+        taskStatus: "DRAFT_IN_PROGRESS",
+        taskName: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
+        orderEntityType: "order-default",
+      });
+      return res?.order?.orderNumber;
     } catch (error) {}
   };
 
@@ -3782,12 +3712,12 @@ const GenerateOrdersV2 = () => {
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
-      await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
-      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+      const summonOrderNumber = await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${summonOrderNumber}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
-      await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
-      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+      const noticeSummonOrder = await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
+      history.replace(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${noticeSummonOrder}`);
     }
   };
 
@@ -4121,7 +4051,6 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
-    debugger;
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
