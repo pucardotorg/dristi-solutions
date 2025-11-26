@@ -36,7 +36,8 @@ public class DigitalizedDocumentService {
 
             return documentTypeService.createDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
-            log.error("Error processing digitalized document: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
             throw new CustomException(CREATE_DIGITALIZED_DOCUMENT_FAILED, "Error while creating digitalized document : " + e.getMessage());
         }
     }
@@ -54,8 +55,10 @@ public class DigitalizedDocumentService {
 
             return documentTypeService.updateDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
             log.error("Error processing update digitalized document: {}", e.getMessage());
-            throw new CustomException("DIGITALIZED_DOCUMENT_PROCESSING_FAILED", "Error while updating digitalized document : " + e.getMessage());
+            throw new CustomException("DIGITALIZED_DOCUMENT_PROCESSING_FAILED", "Error while updating digitalized document : " + e);
         }
     }
 }
