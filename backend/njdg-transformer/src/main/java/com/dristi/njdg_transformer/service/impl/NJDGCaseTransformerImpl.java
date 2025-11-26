@@ -196,9 +196,38 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         return 0;
     }
 
+    /**
+     * @param courtCase The court case containing case details with cheque information
+     * @return Integer district code from the database lookup, or 2 (Kollam district default) 
+     *         if district name is not found or any parsing error occurs
+     */
     private Integer getDistrictCode(CourtCase courtCase) {
         try {
-            String districtName = KOLLAM;
+            JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+            if (caseDetails == null || caseDetails.path("chequeDetails").isMissingNode()) {
+                log.info("No cheque details found in case additional details for CNR: {}",
+                        courtCase.getCnrNumber());
+                return 2;
+            }
+
+            JsonNode chequeDetails = caseDetails.path("chequeDetails");
+            if (chequeDetails.path("formdata").isMissingNode() ||
+                    !chequeDetails.path("formdata").isArray() ||
+                    chequeDetails.path("formdata").isEmpty()) {
+                log.info("No formdata found in cheque details for CNR: {}", courtCase.getCnrNumber());
+                return 2;
+            }
+
+            JsonNode policeStationNode = chequeDetails.path("formdata").get(0)
+                    .path("data")
+                    .path("policeStationJurisDictionCheque");
+
+            if (policeStationNode.isMissingNode()) {
+                log.info("No police station details found in cheque details for CNR: {}",
+                        courtCase.getCnrNumber());
+                return 2;
+            }
+            String districtName = policeStationNode.path("district").asText();
             Integer districtCode = caseRepository.getDistrictCode(districtName);
             log.info("Retrieved district code: {} for district: {} in case CNR: {}", 
                      districtCode, districtName, courtCase.getCnrNumber());
@@ -207,7 +236,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         } catch (Exception e) {
             log.error("Error extracting district code for case CNR: {}: {}", 
                      courtCase.getCnrNumber(), e.getMessage(), e);
-            return 0;
+            return 2;
         }
     }
 

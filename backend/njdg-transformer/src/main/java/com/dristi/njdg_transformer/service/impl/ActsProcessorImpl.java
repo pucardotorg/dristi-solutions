@@ -96,7 +96,7 @@ public class ActsProcessorImpl implements DataProcessor {
                 .cino(courtCase.getCnrNumber())
                 .actCode(actMaster.getActCode())
                 .actName(actMaster.getActName())
-                .actSection(actSection)
+                .actSection(actSection != null ? actSection : "138")
                 .build();
         
         log.info("Built new act: code={}, name={}, section={} for case CNR: {}",
