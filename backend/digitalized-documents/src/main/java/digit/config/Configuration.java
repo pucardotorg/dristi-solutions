@@ -60,6 +60,18 @@ public class Configuration {
     @Value("${egov.workflow.processinstance.search.path}")
     private String wfProcessInstanceSearchPath;
 
+    @Value("${egov.workflow.digitalized.document.module.name}")
+    private String digitalizedDocumentModuleName;
+
+    @Value("${egov.workflow.mediation.digitalized.document.business.service}")
+    private String mediationDigitalizedDocumentBusinessService;
+
+    @Value("${egov.workflow.please.digitalized.document.business.service}")
+    private String pleaDigitalizedDocumentBusinessService;
+
+    @Value("${egov.workflow.examination.of.accused.digitalized.document.business.service}")
+    private String examinationOfAccusedDigitalizedDocumentBusinessService;
+
 
     //MDMS
     @Value("${egov.mdms.host}")
