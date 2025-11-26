@@ -165,7 +165,7 @@
           "isStartState": false,
           "isTerminateState": true,
           "isStateUpdatable": false
-        },
+        }
       ]
     }
   ]
