@@ -118,12 +118,14 @@ var fontDescriptors = {
   },
   MalayalamSangamMn:{
     normal: "src/fonts/malayalam-sangam-mn.ttf",
-    bold: "src/fonts/malayalam-sangam-mn-bold.ttf"
+    bold: "src/fonts/malayalam-sangam-mn-bold.ttf",
+    italics: "src/fonts/Roboto-Italic.ttf",
+    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   }
 };
 
 var defaultFontMapping = {
-  en_IN: 'Roboto',
+  en_IN: 'MalayalamSangamMn',
   ml_IN: 'MalayalamSangamMn',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
