@@ -1074,6 +1074,22 @@ const updateBorderlayout = (formatconfig) => {
   return formatconfig;
 };
 
+function deepFindValue(obj, key) {
+  if (!obj || typeof obj !== "object") return undefined;
+
+  if (obj.hasOwnProperty(key)) return obj[key];
+
+  for (const k of Object.keys(obj)) {
+    const val = obj[k];
+    if (typeof val === "object") {
+      const found = deepFindValue(val, key);
+      if (found !== undefined) return found;
+    }
+  }
+
+  return undefined;
+}
+
 /**
  *
  * @param {*} variableTovalueMap - key, value map. Keys are variable defined in data config
@@ -1086,30 +1102,26 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
   let extractedRichTextFields = [];
   let tokenCounter = 0;
 
-  const findAndReplaceRichTextBlock = (value, path = []) => {
-    if (Array.isArray(value)) {
-      return value.map((item, index) =>
-        findAndReplaceRichTextBlock(item, [...path, index])
-      );
+  const findAndReplaceRichTextBlock = (value) => {
+    if (typeof value === "string") {
+      const match = value.trim().match(TRIPLE_MUSTACHE_REGEX);
+      if (match) {
+        const variableName = match[1].trim();
+        const uniqueKey = `__RICHTEXT_TOKEN_${tokenCounter++}__`;
+        extractedRichTextFields.push({ variableName, uniqueKey });
+        return { __RICH_TEXT_TOKEN__: uniqueKey };
+      }
+      return value;
     }
 
-    if (typeof value === "object" && value !== null) {
-      if (typeof value.stack === "string") {
-        const match = value.stack.trim().match(TRIPLE_MUSTACHE_REGEX);
+    if (Array.isArray(value)) {
+      return value.map(findAndReplaceRichTextBlock);
+    }
 
-        if (match) {
-          const variableName = match[1].trim();
-          const uniqueKey = `__RICHTEXT_TOKEN_${tokenCounter++}__`;
-
-          extractedRichTextFields.push({ variableName, uniqueKey });
-
-          return { __RICH_TEXT_TOKEN__: uniqueKey };
-        }
-      }
-
+    if (value && typeof value === "object") {
       const newObj = {};
-      for (const [key, propValue] of Object.entries(value)) {
-        newObj[key] = findAndReplaceRichTextBlock(propValue, [...path, key]);
+      for (const [key, val] of Object.entries(value)) {
+        newObj[key] = findAndReplaceRichTextBlock(val);
       }
       return newObj;
     }
@@ -1117,10 +1129,7 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
     return value;
   };
 
-  const preProcessedConfig = findAndReplaceRichTextBlock(
-    formatconfig,
-    []
-  );
+  const preProcessedConfig = findAndReplaceRichTextBlock(formatconfig);
 
   let input = JSON.stringify(preProcessedConfig).replace(/\\/g, "");
 
@@ -1150,40 +1159,46 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
   if (extractedRichTextFields.length > 0) {
     const tokenMap = {};
     extractedRichTextFields.forEach(({ variableName, uniqueKey }) => {
-      let richValue = variableTovalueMap[variableName];
+      let richValue = deepFindValue(variableTovalueMap, variableName);
 
       try {
         richValue =
           typeof richValue === "string" ? JSON.parse(richValue) : richValue;
       } catch (e) {
-        console.error(
-          `Failed to parse rich text for ${variableName}. Falling back to text node.`,
-          e
-        );
         richValue = { text: richValue || "" };
       }
+
       tokenMap[uniqueKey] = richValue;
     });
 
-    const replaceTokens = (obj) => {
+    const replaceTokens = (obj, parentKey = "") => {
       if (Array.isArray(obj)) {
-        return obj.map((item) => replaceTokens(item));
+        return obj.map((item) => replaceTokens(item, parentKey));
       }
+
       if (typeof obj === "object" && obj !== null) {
-        if (obj.__RICH_TEXT_TOKEN__ && tokenMap[obj.__RICH_TEXT_TOKEN__]) {
-          return tokenMap[obj.__RICH_TEXT_TOKEN__];
+        if (obj.__RICH_TEXT_TOKEN__) {
+          const rich = tokenMap[obj.__RICH_TEXT_TOKEN__];
+
+          // must be array for stack
+          if (parentKey === "stack" && !Array.isArray(rich)) {
+            return [rich];
+          }
+
+          return rich;
         }
 
         const newObj = {};
         for (const key in obj) {
-          newObj[key] = replaceTokens(obj[key]);
+          newObj[key] = replaceTokens(obj[key], key);
         }
         return newObj;
       }
+
       return obj;
     };
 
-    output.content = replaceTokens(output.content);
+    output = replaceTokens(output);
   }
 
   return output;
