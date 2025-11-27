@@ -4056,6 +4056,7 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setOutcome(outcome.getOutcome());
+            courtCaseRedis.setNatureOfDisposal(outcome.getNatureOfDisposal());
         }
         updateCourtCaseInRedis(outcome.getTenantId(), courtCaseRedis);
 
