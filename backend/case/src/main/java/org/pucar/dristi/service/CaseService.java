@@ -407,7 +407,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -470,7 +470,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-           // removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -569,6 +569,19 @@ public class CaseService {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
 
+        // Safely get the document list using Optional
+        List<Document> documents = Optional.ofNullable(updateCase.getDocuments())
+                .orElse(Collections.emptyList());
+
+        // Collect docs with getToDelete() == true
+        List<Document> docsToDelete = documents.stream()
+                .filter(doc -> Boolean.TRUE.equals(doc.getToDelete()))
+                .toList();
+
+        // Remove documents marked for delete (only if list is modifiable)
+        Optional.ofNullable(updateCase.getDocuments())
+                .ifPresent(list -> list.removeIf(doc -> Boolean.TRUE.equals(doc.getToDelete())));
+
         Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
         Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
         // Collect documents from existingCase that are not present in updateCase
@@ -589,6 +602,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
+        documentsToDelete.addAll(docsToDelete);
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));
@@ -972,6 +986,7 @@ public class CaseService {
 
             caseRequest.setCases(decryptedCourtCase);
 
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
@@ -4218,6 +4233,7 @@ public class CaseService {
             }
             sendProfileProcessNotification(request, courtCase, editorUuid);
 
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(courtCase, courtCase.getAuditdetails());
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
@@ -5963,6 +5979,7 @@ public class CaseService {
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
             updateWitnessDetailsInCase(body.getWitnessDetails(), courtCase);
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(courtCase, courtCase.getAuditdetails());
             CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(body.getTenantId(), caseObj);
             producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
@@ -6154,6 +6171,7 @@ public class CaseService {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CaseId is null or empty");
                 throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Case ID cannot be null or empty");
             }
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(body.getCases(), body.getCases().getAuditdetails());
             // Encrypt the case object
             CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
             if (encryptedCourtCase == null) {
