@@ -123,23 +123,10 @@ public class NjdgConsumer {
 
             log.info("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
 
-            String finalHearingId = hearingId;
-            Optional<HearingDetails> existingHearingOpt = hearingRepository.getHearingDetailsByCino(cino)
-                    .stream()
-                    .filter(h -> h.getHearingId() != null && h.getHearingId().equals(finalHearingId))
-                    .findFirst();
-
-            if (existingHearingOpt.isPresent()) {
-                // Update existing hearing
-                HearingDetails existingHearing = getHearingDetails(existingHearingOpt.get(), hearingDetails);
-                hearingRepository.updateHearingDetails(existingHearing);
-                log.info("Successfully updated hearing | CINO: {} | hearingId: {}", cino, hearingId);
-            } else {
-                // Insert new hearing
-                hearingRepository.insertHearingDetails(hearingDetails);
-                updateCasePurpose(cino, hearingDetails);
-                log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
-            }
+            // Insert new hearing
+            hearingRepository.insertHearingDetails(hearingDetails);
+            updateCasePurpose(cino, hearingDetails);
+            log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
 
         } catch (Exception e) {
             log.error("Failed to process hearing details | CINO: {} | hearingId: {} | messageId: {} | error: {}", 
@@ -147,6 +134,31 @@ public class NjdgConsumer {
         }
     }
 
+    @KafkaListener(topics = "update-hearing-details")
+    public void updateHearingDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        String cino = null;
+        String hearingId = null;
+
+        log.info("Received update hearing details message on topic: {} | messageId: {} | partition: {} | offset: {}",
+                topic, messageId, payload.partition(), payload.offset());
+        try {
+            // Deserialize payload
+            HearingDetails hearingDetails = objectMapper.readValue(payload.value().toString(), HearingDetails.class);
+            cino = hearingDetails.getCino();
+            hearingId = hearingDetails.getHearingId();
+
+            log.info("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
+
+            // Insert new hearing
+            hearingRepository.updateHearingDetails(hearingDetails);
+            log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
+
+        } catch (Exception e) {
+            log.error("Failed to process hearing details | CINO: {} | hearingId: {} | messageId: {} | error: {}",
+                    cino, hearingId, messageId, e.getMessage(), e);
+        }
+    }
     private void updateCasePurpose(String cino, HearingDetails hearingDetails) {
         // Update case record with hearing information
         List<HearingDetails> hearingDetailsList = hearingRepository.getHearingDetailsByCino(cino);

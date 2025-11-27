@@ -34,6 +34,6 @@ public class HearingQueryBuilder {
     }
 
     public String getHearingUpdateQuery() {
-        return "UPDATE case_hearings SET sr_no = ?, desg_name = ?, hearing_date = ?, next_date = ?, purpose_of_listing = ?, judge_code = ?, jocode = ?, desg_code = ?, business = ?, court_no = ? WHERE cino = ? AND hearing_id = ?";
+        return "UPDATE case_hearings SET desg_name = ?, hearing_date = ?, next_date = ?, purpose_of_listing = ?, judge_code = ?, jocode = ?, desg_code = ?, business = ?, court_no = ? WHERE cino = ? AND sr_no = ? ";
     }
 }

@@ -369,7 +369,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         JSONArray outcomeData = caseOutcomes.get("case").get("OutcomeType");
         for (Object hearingStatusObject : outcomeData) {
             String outcomeOrderType = jsonUtil.getNestedValue(hearingStatusObject, List.of("orderType"), String.class);
-            if(orderType.equalsIgnoreCase(outcomeOrderType)){
+            if(orderType != null && orderType.equalsIgnoreCase(outcomeOrderType)){
                 return true;
             }
         }

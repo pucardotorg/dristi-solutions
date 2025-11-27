@@ -81,7 +81,6 @@ public class HearingRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgsList = new ArrayList<>();
 
-        preparedStmtList.add(hearingDetails.getSrNo());
         preparedStmtList.add(hearingDetails.getDesgName());
         preparedStmtList.add(hearingDetails.getHearingDate());
         preparedStmtList.add(hearingDetails.getNextDate());
@@ -94,10 +93,9 @@ public class HearingRepository {
 
         // WHERE clause parameters
         preparedStmtList.add(hearingDetails.getCino());
-        preparedStmtList.add(hearingDetails.getHearingId());
+        preparedStmtList.add(hearingDetails.getSrNo());
 
         // Set types
-        preparedStmtArgsList.add(Types.INTEGER);  // sr_no
         preparedStmtArgsList.add(Types.VARCHAR);  // desg_name
         preparedStmtArgsList.add(Types.DATE);     // hearing_date
         preparedStmtArgsList.add(Types.DATE);     // next_date
@@ -109,7 +107,7 @@ public class HearingRepository {
         preparedStmtArgsList.add(Types.INTEGER);  // court_no
 
         preparedStmtArgsList.add(Types.VARCHAR);  // cino
-        preparedStmtArgsList.add(Types.VARCHAR);  // hearing_id
+        preparedStmtArgsList.add(Types.INTEGER);  // sr_no
 
         jdbcTemplate.update(updateQuery, preparedStmtList.toArray(),
                 preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());

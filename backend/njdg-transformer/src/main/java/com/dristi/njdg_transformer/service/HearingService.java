@@ -20,12 +20,10 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLETED;
 import static com.dristi.njdg_transformer.config.ServiceConstants.JUDGE_DESIGNATION;
 
 @Service
@@ -70,27 +68,27 @@ public class HearingService {
                 .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : 0)
                 .build();
 
-        // Update previous hearing's nextDate only if there's a next scheduled hearing
-        hearingDetails.stream()
-                .max(Comparator.comparing(HearingDetails::getHearingDate)) // get the latest hearing before this one
-                .ifPresent(prevHearing -> {
-                    // Only update if there's a next scheduled hearing
-                    if (prevHearing.getNextDate() == null) {
-                        prevHearing.setNextDate(formatDate(hearing.getStartTime())); // set nextDate as current hearing date
-                        producer.push("save-hearing-details", prevHearing); // push updated previous hearing
-                        log.info("Updated previous hearing with ID {} for CINO {} with nextDate {}",
-                                prevHearing.getHearingId(), cino, prevHearing.getNextDate());
-                    } else {
-                        log.info("No next scheduled hearing found, keeping previous hearing's nextDate as null for CINO {}", cino);
-                    }
-                });
-
+        updatePreviousHearingDetails(newHearingDetail);
         // Push new hearing
         producer.push("save-hearing-details", newHearingDetail);
         log.info("Added new hearing detail with hearingId {} for CINO {}", hearing.getHearingId(), cino);
         return newHearingDetail;
     }
 
+    private void updatePreviousHearingDetails(HearingDetails newHearingDetail) {
+        List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(newHearingDetail.getCino());
+        int size = hearingDetails.size();
+        for(int i=0; i<size; i++) {
+            HearingDetails temp = hearingDetails.get(i);
+            if(temp.getNextDate() == null && i == size-1) {
+                temp.setNextDate(newHearingDetail.getHearingDate());
+                producer.push("update-hearing-details", temp);
+            } else if(temp.getNextDate() == null && i < size-1) {
+                temp.setNextDate(hearingDetails.get(i+1).getHearingDate());
+                producer.push("update-hearing-details", temp);
+            }
+        }
+    }
 
 
     /**

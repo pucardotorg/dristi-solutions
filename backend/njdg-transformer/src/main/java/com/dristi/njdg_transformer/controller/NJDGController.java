@@ -204,7 +204,10 @@ public class NJDGController {
     @PostMapping("_processhearing")
     public ResponseEntity<HearingDetails> processAndUpdateHearing(@Valid @RequestBody HearingRequest request) {
         try {
-            HearingDetails hearingDetail = hearingService.processAndUpdateHearings(request.getHearing(), request.getRequestInfo());
+            HearingDetails hearingDetail = new HearingDetails();
+            if(request.getHearing().getStatus().equalsIgnoreCase(COMPLETED)){
+                hearingDetail = hearingService.processAndUpdateHearings(request.getHearing(), request.getRequestInfo());
+            }
             return ResponseEntity.ok(hearingDetail);
         } catch (Exception e) {
             log.error("Error processing hearing: {}", e.getMessage(), e);
