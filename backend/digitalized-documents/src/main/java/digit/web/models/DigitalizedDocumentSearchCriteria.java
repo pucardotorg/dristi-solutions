@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class DigitalizedDocumentSearchCriteria {
     private String status = null;
 
     @JsonProperty("tenantId")
+    @NotNull
     private String tenantId = null;
 
     @JsonProperty("orderNumber")

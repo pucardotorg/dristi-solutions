@@ -1,11 +1,18 @@
 package digit.service;
 
-import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
+import digit.web.models.*;
+import digit.util.*;
+import digit.repository.DigitalizedDocumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 
@@ -14,10 +21,25 @@ import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 public class DigitalizedDocumentService {
 
     private final DocumentTypeServiceFactory serviceFactory;
+    private final EsignUtil eSignUtil;
+    private final FileStoreUtil fileStoreUtil;
+    private final CipherUtil cipherUtil;
+    private final XMLRequestGenerator xmlRequestGenerator;
+    private final DigitalizedDocumentRepository repository;
 
     @Autowired
-    public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory) {
+    public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory, 
+                                     EsignUtil eSignUtil,
+                                     FileStoreUtil fileStoreUtil,
+                                     CipherUtil cipherUtil,
+                                     XMLRequestGenerator xmlRequestGenerator,
+                                     DigitalizedDocumentRepository repository) {
         this.serviceFactory = serviceFactory;
+        this.eSignUtil = eSignUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.cipherUtil = cipherUtil;
+        this.xmlRequestGenerator = xmlRequestGenerator;
+        this.repository = repository;
     }
 
     public DigitalizedDocument createDigitalizedDocument(DigitalizedDocumentRequest digitalizedDocumentRequest) {
@@ -57,5 +79,185 @@ public class DigitalizedDocumentService {
             log.error("Error processing update digitalized document: {}", e.getMessage());
             throw new CustomException("DIGITALIZED_DOCUMENT_PROCESSING_FAILED", "Error while updating digitalized document : " + e.getMessage());
         }
+    }
+
+    public List<DigitalizedDocument> searchDigitalizedDocument(DigitalizedDocumentSearchRequest digitalizedDocumentSearchRequest) {
+        try {
+            log.info("operation = searchDigitalizedDocument , result = IN_PROGRESS, request: {}", digitalizedDocumentSearchRequest);
+            
+            DigitalizedDocumentSearchCriteria criteria = digitalizedDocumentSearchRequest.getCriteria();
+            Pagination pagination = digitalizedDocumentSearchRequest.getPagination();
+            
+            List<DigitalizedDocument> documents = repository.getDigitalizedDocuments(criteria, pagination);
+            
+            log.info("operation = searchDigitalizedDocument , result = SUCCESS, documents found: {}", documents.size());
+            return documents;
+            
+        } catch (Exception e) {
+            log.error("Error searching digitalized documents: {}", e.getMessage());
+            throw new CustomException("DIGITALIZED_DOCUMENT_SEARCH_FAILED", "Error searching digitalized documents: " + e.getMessage());
+        }
+    }
+
+    public List<DigitalizedDocumentToSign> getDigitalizedDocumentsToSign(DigitalizedDocumentsToSignRequest request) {
+        log.info("Method=getDigitalizedDocumentsToSign, result= IN_PROGRESS, criteria:{}", request.getCriteria().size());
+
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, DigitalizedDocumentsCriteria> criteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+            CoordinateCriteria criteria = new CoordinateCriteria();
+            criteria.setFileStoreId(criterion.getFileStoreId());
+            criteria.setPlaceholder(criterion.getPlaceholder());
+            criteria.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(criteria);
+            criteriaMap.put(criterion.getFileStoreId(), criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
+            throw new CustomException("COORDINATES_ERROR", "CoordinateResponse does not contain coordinates for some criteria");
+        }
+
+        List<DigitalizedDocumentToSign> documentsToSign = new ArrayList<>();
+        for (Coordinate coordinate : coordinateForSign) {
+            DigitalizedDocumentToSign documentToSign = new DigitalizedDocumentToSign();
+            Resource resource;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", e.getMessage());
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                DigitalizedDocumentsCriteria mapped = criteriaMap.get(coordinate.getFileStoreId());
+                if (mapped == null) {
+                    throw new CustomException("COORDINATES_ERROR", "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
+                }
+                String documentNumber = mapped.getDocumentNumber();
+                documentToSign.setDocumentNumber(documentNumber);
+                documentToSign.setRequest(xmlRequest);
+
+                documentsToSign.add(documentToSign);
+            } catch (Exception e) {
+                log.error("Error while creating digitalized documents to sign: ", e);
+                throw new CustomException("DOCUMENT_SIGN_ERROR", "Something went wrong while signing: " + e.getMessage());
+            }
+        }
+        log.info("Method=getDigitalizedDocumentsToSign, result= SUCCESS, criteria:{}", request.getCriteria().size());
+        return documentsToSign;
+    }
+
+    public List<DigitalizedDocument> updateSignedDigitalizedDocuments(UpdateSignedDigitalizedDocumentRequest request) {
+        log.info("Method=updateSignedDigitalizedDocuments, result= IN_PROGRESS, signedDocuments:{}", request.getSignedDocuments().size());
+        List<DigitalizedDocument> updatedDocuments = new ArrayList<>();
+
+        for (SignedDigitalizedDocument signedDocument : request.getSignedDocuments()) {
+            String documentNumber = signedDocument.getDocumentNumber();
+            String signedDocumentData = signedDocument.getSignedDocumentData();
+            Boolean isSigned = signedDocument.getSigned();
+            String tenantId = signedDocument.getTenantId();
+
+            if (isSigned) {
+                try {
+                    DigitalizedDocument document = repository.getDigitalizedDocumentByDocumentNumber(documentNumber, tenantId);
+
+                    // Update document with signed PDF
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocumentData, "signed_digitalized_document.pdf");
+                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+                    // Create signed document
+                    Document signedDoc = Document.builder()
+                            .documentType("SIGNED_DIGITALIZED_DOCUMENT")
+                            .fileStore(fileStoreId)
+                            .isActive(true)
+                            .additionalDetails(Map.of("name", "signed_digitalized_document.pdf"))
+                            .build();
+
+                    // Update document's documents list
+                    List<Document> documents = document.getDocuments() != null ? new ArrayList<>(document.getDocuments()) : new ArrayList<>();
+                    documents.add(signedDoc);
+                    document.setDocuments(documents);
+
+                    // Update audit details
+                    Long currentTime = System.currentTimeMillis();
+                    document.getAuditDetails().setLastModifiedTime(currentTime);
+                    document.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+
+                    // Save the updated document to database
+
+                    DigitalizedDocumentRequest digitalizedDocumentRequest = DigitalizedDocumentRequest.builder()
+                            .requestInfo(request.getRequestInfo())
+                            .digitalizedDocument(document)
+                            .build();
+                    DigitalizedDocument updatedDoc = updateDigitalizedDocument(digitalizedDocumentRequest);
+                    updatedDocuments.add(updatedDoc);
+
+                    log.info("Method=updateSignedDigitalizedDocuments, result= SUCCESS, documentNumber:{}", documentNumber);
+
+                } catch (Exception e) {
+                    log.error("Error while updating signed digitalized document {}", documentNumber, e);
+                    throw new CustomException("DOCUMENT_UPDATE_ERROR", "Error while updating signed document: " + e.getMessage());
+                }
+            }
+        }
+        return updatedDocuments;
+    }
+
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put("command", "PKI_NETWORK_SIGN");
+        requestData.put("timeStamp", timeStamp);
+        requestData.put("txn", txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put("certificate", certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put("attribute", Map.of("name", "type", "value", "PDF"));
+        requestData.put("file", file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put("page", pageNumber);
+        pdf.put("coordinates", coordination);
+        pdf.put("size", "150,100");
+        requestData.put("pdf", pdf);
+
+        requestData.put("data", base64Doc);
+
+        String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+
+        return xmlRequest;
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put("name", name);
+        attrData.put("value", value);
+        attribute.put("attribute", attrData);
+        return attribute;
     }
 }
