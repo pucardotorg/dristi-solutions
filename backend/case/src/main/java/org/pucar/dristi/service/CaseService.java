@@ -4390,14 +4390,14 @@ public class CaseService {
     private String getFullName(JsonNode data, String detailsKey) {
         String fullName = null;
         if (detailsKey.equals("complainantDetails")) {
-            String firstName = data.get("data").get("firstName").asText("");
-            String middleName = data.get("data").get("middleName").asText("");
-            String lastName = data.get("data").get("lastName").asText("");
+            String firstName = data.get("data").path("firstName").asText("");
+            String middleName = data.get("data").path("middleName").asText("");
+            String lastName = data.get("data").path("lastName").asText("");
             fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
         } else if (detailsKey.equals("respondentDetails")) {
-            String firstName = data.get("data").get("respondentFirstName").asText("");
-            String middleName = data.get("data").get("respondentMiddleName").asText("");
-            String lastName = data.get("data").get("respondentLastName").asText("");
+            String firstName = data.get("data").path("respondentFirstName").asText("");
+            String middleName = data.get("data").path("respondentMiddleName").asText("");
+            String lastName = data.get("data").path("respondentLastName").asText("");
             fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
         }
         return fullName;
