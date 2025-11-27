@@ -24,7 +24,7 @@ public class AdvocateRepository {
 
     public AdvocateDetails getAdvocateDetails(String advocateId) {
         String sql = "SELECT advocate_name AS advocateName, advocate_code AS advocateCode, " +
-                "bar_reg_no AS barRegNo, advocate_id AS advocateId " +
+                "bar_reg_no AS barRegNo, advocate_id AS advocateId, email, phone, address, dob " +
                 "FROM advocate_master WHERE advocate_id = ?";
         try {
             return jdbcTemplate.queryForObject(
@@ -41,12 +41,38 @@ public class AdvocateRepository {
 
 
     public List<AdvocateDetails> getAllAdvocates() {
-        String sql = "SELECT advocate_name as advocateName, advocate_code as advocateCode, bar_reg_no as barRegNo, advocate_id as advocateId FROM advocate_master ORDER BY advocate_code ASC";
+        String sql = "SELECT advocate_name as advocateName, advocate_code as advocateCode, bar_reg_no as barRegNo, advocate_id as advocateId, email, phone, address, dob FROM advocate_master ORDER BY advocate_code ASC";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(AdvocateDetails.class));
     }
 
     public void insertAdvocateDetails(AdvocateDetails advocateDetails) {
-        String sql = "INSERT INTO advocate_master (advocate_name, advocate_code, bar_reg_no, advocate_id) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, advocateDetails.getAdvocateName(), advocateDetails.getAdvocateCode(), advocateDetails.getBarRegNo(), advocateDetails.getAdvocateId());
+        String sql = "INSERT INTO advocate_master (advocate_name, advocate_code, bar_reg_no, advocate_id, email, phone, address, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, 
+            advocateDetails.getAdvocateName(), 
+            advocateDetails.getAdvocateCode(), 
+            advocateDetails.getBarRegNo(), 
+            advocateDetails.getAdvocateId(),
+            advocateDetails.getEmail(),
+            advocateDetails.getPhone(),
+            advocateDetails.getAddress(),
+            advocateDetails.getDob());
+    }
+
+    public void updateAdvocateDetails(AdvocateDetails advocateDetails) {
+        String sql = "UPDATE advocate_master SET advocate_name = ?, bar_reg_no = ?, email = ?, phone = ?, address = ?, dob = ? WHERE advocate_id = ?";
+        int rowsUpdated = jdbcTemplate.update(sql, 
+            advocateDetails.getAdvocateName(), 
+            advocateDetails.getBarRegNo(),
+            advocateDetails.getEmail(),
+            advocateDetails.getPhone(),
+            advocateDetails.getAddress(),
+            advocateDetails.getDob(),
+            advocateDetails.getAdvocateId());
+        
+        if (rowsUpdated > 0) {
+            log.info("Successfully updated advocate with ID: {}", advocateDetails.getAdvocateId());
+        } else {
+            log.warn("No advocate found to update with ID: {}", advocateDetails.getAdvocateId());
+        }
     }
 }

@@ -274,6 +274,30 @@ public class NjdgConsumer {
         }
     }
 
+    @KafkaListener(topics = "update-advocate-details")
+    public void listenAdvocateUpdates(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        Integer advocateCode = null;
+        String advocateId = null;
+        
+        log.info("Received advocate update message on topic: {} | messageId: {} | partition: {} | offset: {}", 
+                topic, messageId, payload.partition(), payload.offset());
+        
+        try {
+            AdvocateDetails advocateDetails = objectMapper.readValue(payload.value().toString(), AdvocateDetails.class);
+            advocateCode = advocateDetails.getAdvocateCode();
+            advocateId = advocateDetails.getAdvocateId();
+            
+            log.info("Processing advocate update | advocateId: {} | advocateCode: {}", advocateId, advocateCode);
+            
+            advocateRepository.updateAdvocateDetails(advocateDetails);
+            log.info("Successfully updated advocate | advocateId: {} | advocateCode: {}", advocateId, advocateCode);
+        } catch (Exception e) {
+            log.error("Failed to update advocate | advocateId: {} | advocateCode: {} | messageId: {} | error: {}", 
+                     advocateId, advocateCode, messageId, e.getMessage(), e);
+        }
+    }
+
     @KafkaListener(topics = "save-act-details")
     public void listenActDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);

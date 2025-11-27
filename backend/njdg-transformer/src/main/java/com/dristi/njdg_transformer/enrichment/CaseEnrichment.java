@@ -160,13 +160,28 @@ public class CaseEnrichment implements PartyEnricher {
             String address = null;
 
             if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType)) {
-                fullName = buildFullName(dataNode.path("firstName"), dataNode.path("lastName"));
+                fullName = buildFullName(dataNode.path("firstName"), dataNode.path("middleName"), dataNode.path("lastName"));
                 ageStr = dataNode.path(ageKey).asText(null);
                 address = extractAddress(dataNode.path("addressDetails"));
             } else  {
+                String firstName = dataNode.path("respondentFirstName").asText("NULL");
+                String middleName = dataNode.path("respondentMiddleName").asText("NULL");
+                String lastName = dataNode.path("respondentLastName").asText("NULL");
+                
+                log.debug("Respondent name fields - firstName: {}, middleName: {}, lastName: {}", 
+                    firstName, middleName, lastName);
+                
+                // Check if data is encrypted (contains | separator)
+                if (firstName != null && firstName.contains("|")) {
+                    log.error("ENCRYPTED DATA DETECTED: Respondent firstName is encrypted: {}. " +
+                        "Data should be decrypted before reaching NJDG transformer!", firstName);
+                }
+                
                 fullName = buildFullName(dataNode.path("respondentFirstName"),
                         dataNode.path("respondentMiddleName"),
                         dataNode.path("respondentLastName"));
+                        
+                log.debug("Respondent fullName result: '{}'", fullName);
                 ageStr = dataNode.path("respondentAge").asText(null);
                 JsonNode addressArray = dataNode.path("addressDetails");
                 if (addressArray.isArray() && !addressArray.isEmpty()) {
@@ -187,10 +202,19 @@ public class CaseEnrichment implements PartyEnricher {
     }
 
     private String buildFullName(JsonNode... names) {
-        return Stream.of(names)
-                .map(JsonNode::asText)
+        String result = Stream.of(names)
+                .map(node -> {
+                    if (node.isMissingNode() || node.isNull()) {
+                        return null;
+                    }
+                    String text = node.asText();
+                    return "null".equals(text) ? null : text;
+                })
                 .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.joining(" "));
+        
+        log.debug("buildFullName result: '{}'", result);
+        return result;
     }
 
     private void setRecordPartyDetails(NJDGTransformRecord record, String partyType, String fullName, int age, String address) {

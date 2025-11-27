@@ -79,4 +79,11 @@ public class TransformerProperties {
     @Value("${judgement.order.document.type}")
     private Integer judgementOrderDocumentType;
 
+    //Individual
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchPath;
+
 }
