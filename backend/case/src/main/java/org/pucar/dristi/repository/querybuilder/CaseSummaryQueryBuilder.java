@@ -24,7 +24,7 @@ public class CaseSummaryQueryBuilder {
     private static final String FROM_CASES_TABLE = " FROM  dristi_cases cases";
 
     private static final String BASE_CASE_SUMMARY_QUERY = "SELECT uc.id as id, uc.tenantid as tenantid, uc.casenumber as casenumber, uc.casetitle as casetitle, " +
-            "       uc.filingnumber as filingnumber, uc.cnrNumber as cnrNumber, uc.outcome as outcome, " +
+            "       uc.filingnumber as filingnumber, uc.cnrNumber as cnrNumber, uc.outcome as outcome, uc.natureofdisposal as natureofdisposal, " +
             "       uc.cmpnumber, uc.courtid as courtid, uc.benchid as benchid, uc.casetype, " +
             "       uc.judgeid as judgeid, uc.stage as stage, uc.substage as substage, uc.filingdate as filingdate, " +
             "       uc.registrationdate as registrationdate, uc.status as status, uc.isactive as isactive, " +
