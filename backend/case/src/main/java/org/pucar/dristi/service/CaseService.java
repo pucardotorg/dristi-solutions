@@ -973,6 +973,7 @@ public class CaseService {
 
             caseRequest.setCases(decryptedCourtCase);
 
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
@@ -4041,6 +4042,7 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setOutcome(outcome.getOutcome());
+            courtCaseRedis.setNatureOfDisposal(outcome.getNatureOfDisposal());
         }
         updateCourtCaseInRedis(outcome.getTenantId(), courtCaseRedis);
 
@@ -4218,6 +4220,7 @@ public class CaseService {
             }
             sendProfileProcessNotification(request, courtCase, editorUuid);
 
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(courtCase, courtCase.getAuditdetails());
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
@@ -5962,6 +5965,7 @@ public class CaseService {
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
             updateWitnessDetailsInCase(body.getWitnessDetails(), courtCase);
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(courtCase, courtCase.getAuditdetails());
             CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(body.getTenantId(), caseObj);
             producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
@@ -6153,6 +6157,7 @@ public class CaseService {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CaseId is null or empty");
                 throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Case ID cannot be null or empty");
             }
+            enrichmentUtil.enrichStatuteAndSectionsOnCreateAndUpdate(body.getCases(), body.getCases().getAuditdetails());
             // Encrypt the case object
             CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
             if (encryptedCourtCase == null) {
