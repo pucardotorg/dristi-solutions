@@ -69,7 +69,7 @@ public class WorkflowService {
             throw e;
         } catch (Exception e) {
             log.error("Error calling workflow: {}", e.getMessage());
-            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }
 
