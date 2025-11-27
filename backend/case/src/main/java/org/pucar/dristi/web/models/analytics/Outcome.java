@@ -36,10 +36,11 @@ public class Outcome {
     @Valid
     private AuditDetails auditDetails = null;
 
-    public Outcome(String filingNumber, String tenantId, String outcome) {
+    public Outcome(String filingNumber, String tenantId, String outcome, NatureOfDisposal natureOfDisposal) {
         this.filingNumber = filingNumber;
         this.tenantId = tenantId;
         this.outcome = outcome;
+        this.natureOfDisposal = natureOfDisposal;
     }
 
 }

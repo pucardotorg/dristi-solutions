@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -109,13 +110,16 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
         return new ArrayList<>(caseMap.values());
     }
 
-    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
         try {
             String str = rs.getString("natureofdisposal");
             if (str == null || str.isEmpty()) return null;
             return NatureOfDisposal.valueOf(str);
-        } catch (Exception e) {
-            log.error("Error occurred while processing NatureOfDisposal :: {}", e.toString());
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
             return null;
         }
     }

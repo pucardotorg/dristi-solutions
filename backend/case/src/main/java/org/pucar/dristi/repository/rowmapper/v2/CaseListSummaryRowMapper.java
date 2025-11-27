@@ -28,12 +28,16 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
         this.objectMapper = objectMapper;
     }
 
-    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
         try {
             String str = rs.getString("natureofdisposal");
             if (str == null || str.isEmpty()) return null;
             return NatureOfDisposal.valueOf(str);
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
             return null;
         }
     }

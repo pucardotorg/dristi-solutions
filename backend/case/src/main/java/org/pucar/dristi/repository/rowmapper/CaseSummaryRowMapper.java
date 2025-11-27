@@ -134,12 +134,16 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
         return Judge.builder().build();
     }
 
-    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) {
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
         try {
             String str = rs.getString("natureofdisposal");
             if (str == null || str.isEmpty()) return null;
             return NatureOfDisposal.valueOf(str);
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
             return null;
         }
     }
