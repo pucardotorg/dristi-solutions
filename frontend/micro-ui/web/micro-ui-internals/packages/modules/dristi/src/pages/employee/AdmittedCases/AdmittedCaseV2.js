@@ -2677,6 +2677,9 @@ const AdmittedCaseV2 = () => {
         setShowAddWitnessModal(true);
       } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
         handleCaseTransition(option.value);
+      } else if (option.value === "RECORD_PLEA") {
+        history.push(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}`);
+        return;
       }
     },
     [
@@ -2705,10 +2708,6 @@ const AdmittedCaseV2 = () => {
         return;
       }
       if (option === t("SUBMIT_DOCUMENTS")) {
-        history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
-        return;
-      }
-      if (option === t("RECORD_PLEA")) {
         history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
         return;
       }
@@ -3123,6 +3122,7 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
             ]
           : [
               {
@@ -3141,6 +3141,7 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
             ];
       } else
         return [
@@ -3181,6 +3182,7 @@ const AdmittedCaseV2 = () => {
             value: "TAKE_WITNESS_DEPOSITION",
             label: "TAKE_WITNESS_DEPOSITION",
           },
+          { value: "RECORD_PLEA", label: "RECORD_PLEA" },
         ];
     } else return [];
   }, [currentInProgressHearing, hasHearingPriorityView, isEmployee]);
@@ -3216,10 +3218,7 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(
-    () => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }, { label: "RECORD_PLEA" }],
-    [t]
-  );
+  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
 
   const allowedTakeActionOptions = useMemo(() => {
     return takeActionOptions
