@@ -10,9 +10,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.models.individual.Address;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -91,7 +94,7 @@ public class AdvocateService {
                     
                     if (individual.getAddress() != null && !individual.getAddress().isEmpty()
                         && individual.getAddress().get(0) != null) {
-                        address = individual.getAddress().get(0).toString();
+                        address = extractAddress(individual.getAddress().get(0));
                     }
                     
                     log.info("Successfully extracted data from Individual service for advocate: {}", advocate.getId());
@@ -109,13 +112,42 @@ public class AdvocateService {
         return AdvocateDetails.builder()
                 .advocateId(advocateId)
                 .barRegNo(advocate.getBarRegistrationNumber())
-                .advocateName(advocateName)
+                .advocateName(advocateName != null ? advocateName : "")
                 .email(email)
                 .phone(phone)
                 .dob(dob)
                 .address(address)
                 .build();
     }
+
+    private String extractAddress(Address address) {
+        if (address == null) return "";
+
+        List<String> parts = new ArrayList<>();
+
+        addIfPresent(parts, address.getDoorNo());
+        addIfPresent(parts, address.getBuildingName());
+        addIfPresent(parts, address.getStreet());
+        addIfPresent(parts, address.getAddressLine1());
+        addIfPresent(parts, address.getAddressLine2());
+        addIfPresent(parts, address.getCity());
+        addIfPresent(parts, address.getLandmark());
+
+        String base = String.join(", ", parts);
+
+        if (address.getPincode() != null && !address.getPincode().trim().isEmpty()) {
+            base = base + " - " + address.getPincode();
+        }
+
+        return base;
+    }
+
+    private void addIfPresent(List<String> parts, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            parts.add(value.trim());
+        }
+    }
+
 
     private IndividualSearchRequest buildIndividualSearchRequest(String individualId) {
         return IndividualSearchRequest.builder()
