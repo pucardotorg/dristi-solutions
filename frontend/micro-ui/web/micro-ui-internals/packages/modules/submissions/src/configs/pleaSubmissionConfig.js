@@ -13,12 +13,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           name: "accusedDetails",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
+          options: [],
         },
       },
       {
@@ -31,12 +26,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -52,12 +42,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -73,12 +58,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -94,12 +74,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -115,12 +90,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -136,12 +106,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
             minLength: 1,
             patternType: "Name",
           },

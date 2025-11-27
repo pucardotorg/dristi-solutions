@@ -34,5 +34,6 @@ export const Urls = {
     create: "/digitalized-documents/v1/_create",
     update: "/digitalized-documents/v1/_update",
     search: "/digitalized-documents/v1/_search",
+    pleaPreviewPdf: "/egov-pdf/digitisation" // TODO: need to check
   },
 };
