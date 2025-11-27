@@ -118,7 +118,9 @@ var fontDescriptors = {
   },
   MalayalamSangamMn:{
     normal: "src/fonts/malayalam-sangam-mn.ttf",
-    bold: "src/fonts/malayalam-sangam-mn-bold.ttf"
+    bold: "src/fonts/malayalam-sangam-mn-bold.ttf",
+    italics: "src/fonts/Roboto-Italic.ttf",
+    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   }
 };
 
