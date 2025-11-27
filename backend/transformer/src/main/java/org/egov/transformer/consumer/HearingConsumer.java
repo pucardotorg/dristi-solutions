@@ -44,19 +44,19 @@ public class HearingConsumer {
     @KafkaListener(topics = {"${transformer.consumer.create.hearing.topic}"})
     public void saveHearing(ConsumerRecord<String, Object> payload,
                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getSaveHearingTopic());
+        publishHearing(payload, transformerProperties.getSaveHearingTopic(),true);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.update.hearing.topic}"})
     public void updateHearing(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic(),false);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.update.start.end.time.topic}"})
     public void updateStartEndTime(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic(),false);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.bulk.reschedule.hearing}"})
@@ -66,14 +66,14 @@ public class HearingConsumer {
     }
 
     private void publishHearing(ConsumerRecord<String, Object> payload,
-                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,boolean isCreateHearing) {
         try {
             Hearing hearing = (objectMapper.readValue((String) payload.value(), new TypeReference<HearingRequest>() {
             })).getHearing();
             HearingRequest hearingRequest = objectMapper.readValue(payload.value().toString(), HearingRequest.class);
             logger.info(objectMapper.writeValueAsString(hearing));
             hearingService.addCaseDetailsToHearing(hearing, topic);
-            hearingService.enrichOpenHearings(hearingRequest);
+            hearingService.enrichOpenHearings(hearingRequest,isCreateHearing);
 
             publishCaseSearchFromHearing(hearing, hearingRequest.getRequestInfo());
         } catch (Exception exception) {
@@ -92,7 +92,7 @@ public class HearingConsumer {
                         .requestInfo(bulkRequest.getRequestInfo())
                         .hearing(hearing).build();
                 hearingService.addCaseDetailsToHearing(hearing, topic);
-                hearingService.enrichOpenHearings(request);
+                hearingService.enrichOpenHearings(request,false);
 
                 publishCaseSearchFromHearing(hearing, request.getRequestInfo());
             }

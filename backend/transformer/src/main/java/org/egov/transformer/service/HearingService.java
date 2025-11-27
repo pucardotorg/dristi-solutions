@@ -65,17 +65,17 @@ public class HearingService {
         pushHearingToLegacy(hearingRequest);
     }
 
-    public void enrichOpenHearings(HearingRequest hearingRequest) {
+    public void enrichOpenHearings(HearingRequest hearingRequest,boolean isCreateHearing) {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
         CourtCase courtCase = caseService.getCase(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
         log.info("Enriching Hearing for caseReferenceNumber: {}", hearing.getCaseReferenceNumber());
-        OpenHearing openHearing = getOpenHearing(requestInfo,hearing, courtCase);
+        OpenHearing openHearing = getOpenHearing(requestInfo,hearing, courtCase,isCreateHearing);
         producer.push(properties.getOpenHearingTopic(), openHearing);
     }
 
     @NotNull
-    private OpenHearing getOpenHearing(RequestInfo requestInfo, Hearing hearing, CourtCase courtCase) {
+    private OpenHearing getOpenHearing(RequestInfo requestInfo, Hearing hearing, CourtCase courtCase,boolean isCreateHearing) {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
@@ -100,6 +100,9 @@ public class HearingService {
         openHearing.setHearingType(hearing.getHearingType());
         openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
+        if(isCreateHearing){
+            openHearing.setOrderStatus(OrderStatus.PENDING_SIGN);
+        }
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
         List<OpenHearing> openHearingList = null;
