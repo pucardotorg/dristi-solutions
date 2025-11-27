@@ -3093,27 +3093,6 @@ export const configsCaseSettlementReject = [
           ],
         },
       },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
-          },
-        },
-      },
     ],
   },
   {
