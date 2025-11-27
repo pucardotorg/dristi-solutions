@@ -282,6 +282,10 @@ components:
         caseFilingNumber:
           type: string
           description: Filing number of the case associated with this document
+        shortenedUrl:
+          type: string
+          description: shortened url used to send in sms as a link
+          example: https://dristi-kerala-dev.pucar.org/eus/shorturl?code=BZ90r
         orderNumber:
           type: string
           description: Order number associated with this document. Applicable only in Mediation
