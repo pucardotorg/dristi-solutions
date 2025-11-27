@@ -188,6 +188,18 @@ public class Configuration {
     @Value("${dristi.individual.search.endpoint}")
     private String individualSearchEndPoint;
 
+    // Digitalized Documents Config
+    @Value("${dristi.digitalized-documents.host}")
+    private String digitalizedDocumentsHost;
+
+    @Value("${dristi.digitalized-documents.create.endpoint}")
+    private String digitalizedDocumentsCreateEndPoint;
+
+    @Value("${dristi.digitalized-documents.search.endpoint}")
+    private String digitalizedDocumentsSearchEndPoint;
+
+    @Value("${dristi.digitalized-documents.update.endpoint}")
+    private String digitalizedDocumentsUpdateEndPoint;
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
