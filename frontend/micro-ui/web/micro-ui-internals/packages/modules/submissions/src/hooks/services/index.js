@@ -138,4 +138,28 @@ export const submissionService = {
       data,
       params,
     }),
+  createDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.create,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.update,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.search,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

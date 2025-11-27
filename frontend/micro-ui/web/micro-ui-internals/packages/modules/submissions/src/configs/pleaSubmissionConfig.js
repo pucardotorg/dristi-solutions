@@ -164,12 +164,12 @@ const pleaSubmissionConfig = [
         isMandatory: true,
       },
       {
-        label: "Has the accused understood the charges as read out to them?",
+        label: "ACCUSED_CHARGED_UNDERSTOOD",
         isMandatory: true,
-        key: "chargesUnderstood",
+        key: "isChargesUnderstood",
         type: "radio",
         populators: {
-          name: "chargesUnderstood",
+          name: "isChargesUnderstood",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
@@ -188,7 +188,7 @@ const pleaSubmissionConfig = [
         },
       },
       {
-        label: "Does the accused plead guilty to the charges?",
+        label: "PLEA_GUILTY_CHARGES",
         isMandatory: true,
         key: "pleadGuilty",
         type: "radio",
@@ -214,7 +214,7 @@ const pleaSubmissionConfig = [
       {
         type: "component",
         component: "SelectCustomTextArea",
-        key: "remarks",
+        key: "magistrateRemarks",
         isMandatory: true,
         isInfinite: true,
         withoutLabel: true,
@@ -222,7 +222,7 @@ const pleaSubmissionConfig = [
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "Magistrate’s Remarks",
+              textAreaSubHeader: "MEGISTRATE_REMARKS",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               isOptional: false,
               type: "TextAreaComponent",

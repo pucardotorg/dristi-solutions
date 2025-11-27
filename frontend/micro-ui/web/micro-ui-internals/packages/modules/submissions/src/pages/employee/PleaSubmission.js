@@ -35,9 +35,9 @@ const PleaSubmission = () => {
   // TODO: change
   const defaultFormValue = useMemo(() => {
     return {
-      remarks: { text: "Taken down by/before me in open court, interpreted/read over to the accused and admitted by him/her label" },
+      magistrateRemarks: { text: "Taken down by/before me in open court, interpreted/read over to the accused and admitted by him/her label" },
       pleadGuilty: { code: "NO", name: "NO" },
-      chargesUnderstood: { code: "YES", name: "YES" },
+      isChargesUnderstood: { code: "YES", name: "YES" },
     };
   }, []);
 
