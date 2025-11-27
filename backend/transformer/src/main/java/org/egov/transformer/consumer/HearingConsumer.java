@@ -56,7 +56,7 @@ public class HearingConsumer {
     @KafkaListener(topics = {"${transformer.consumer.update.start.end.time.topic}"})
     public void updateStartEndTime(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getUpdateHearingTopic(),false);
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic(),true);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.bulk.reschedule.hearing}"})
