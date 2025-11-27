@@ -62,7 +62,7 @@ const AddOrderTypeModal = ({
 
     if (currentOrderType && ["COST", "WITNESS_BATTA"].includes(currentOrderType)) {
       if (typeof formData?.amount === "string") {
-let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
+        let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
         if (cleanedAmount === "-") cleanedAmount = "";
         if (cleanedAmount !== formData.amount) {
           setValue("amount", cleanedAmount);
@@ -79,7 +79,6 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
         clearFormErrors?.current?.[index]?.("amount");
       }
     }
-
 
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
@@ -360,12 +359,20 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,
                     body: conf?.body?.map((field) => {
-                      if (["mediationCentre", "dateOfMediation", "mediationNote", "modeOfSigning"]?.includes(field?.key)) {
+                      if (["mediationCentre", "mediationNote", "modeOfSigning"]?.includes(field?.key)) {
                         return {
                           ...field,
                           populators: {
                             ...field.populators,
                             hideInForm: !isMediation,
+                          },
+                        };
+                      } else if (["dateOfEndADR"]?.includes(field?.key)) {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            hideInForm: isMediation,
                           },
                         };
                       }

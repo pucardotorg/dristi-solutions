@@ -87,6 +87,7 @@ import {
   generateAddress,
   getFormData,
   getMandatoryFieldsErrors,
+  getMediationChangedFlag,
   getOrderData,
   getParties,
   getUpdateDocuments,
@@ -263,6 +264,7 @@ const GenerateOrdersV2 = () => {
   const documentSubmission = history.location?.state?.applicationDocObj;
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
+  const [respondents, setRespondents] = useState([]);
 
   const fetchCaseDetails = async () => {
     try {
@@ -756,12 +758,16 @@ const GenerateOrdersV2 = () => {
         ?.filter((item) => item?.partyType?.includes("complainant"))
         ?.map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const mobileNumber = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+            (obj) => obj?.data?.complainantVerification?.individualDetails?.individualId === item?.individualId
+          )?.data?.complainantVerification?.mobileNumber;
           const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
           if (poaHolder) {
             return {
               code: fullName,
               name: `${fullName} (Complainant, PoA Holder)`,
               uuid: allAdvocates[item?.additionalDetails?.uuid],
+              mobileNumber,
               partyUuid: item?.additionalDetails?.uuid,
               individualId: item?.individualId,
               isJoined: true,
@@ -773,6 +779,7 @@ const GenerateOrdersV2 = () => {
             code: fullName,
             name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            mobileNumber,
             partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
@@ -801,28 +808,42 @@ const GenerateOrdersV2 = () => {
     );
   }, [caseDetails, complainants]);
 
-  const respondents = useMemo(() => {
-    return (
-      caseDetails?.litigants
-        ?.filter((item) => item?.partyType?.includes("respondent"))
-        .map((item) => {
+  useEffect(() => {
+    if (!caseDetails?.litigants?.length) return;
+
+    const fetchRespondents = async () => {
+      const litigants = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("respondent")) || [];
+
+      const results = await Promise?.all(
+        litigants?.map(async (item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+
           const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
             (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
           )?.uniqueId;
+
+          const userResult = await Digit.UserService.userSearch(tenantId, { uuid: [item?.additionalDetails?.uuid] }, {});
+          const userData = userResult?.user?.[0];
+
           return {
             code: fullName,
             name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            mobileNumber: userData?.mobileNumber,
             partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
             uniqueId,
           };
-        }) || []
-    );
-  }, [caseDetails, allAdvocates]);
+        })
+      );
+
+      setRespondents(results);
+    };
+
+    fetchRespondents();
+  }, [allAdvocates, caseDetails, tenantId]);
 
   const unJoinedLitigant = useMemo(() => {
     return (
@@ -2868,6 +2889,14 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
+      let hearingDate = null;
+      if (isHearingScheduled || isHearingInPassedOver) {
+        hearingDate = formatDate(new Date(hearingDetails?.startTime));
+      } else if (order?.nextHearingDate && !skipScheduling) {
+        hearingDate = formatDate(new Date(order?.nextHearingDate));
+      }
+      const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties, hearingDate });
+
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
@@ -2881,6 +2910,13 @@ const GenerateOrdersV2 = () => {
           parties: parties,
           caseNumber: caseNumber,
           ...(actionResponse && { action: actionResponse }),
+          ...(order?.orderType === "REFERRAL_CASE_TO_ADR" && {
+            filingDate: caseDetails?.filingDate,
+            stage: caseDetails?.stage,
+            hearingDate: hearingDate,
+            caseId: caseDetails?.id,
+            isMediationChanged: isMediationChanged,
+          }),
         },
       };
       const isAssignDateRescheduleHearingOrder =
@@ -2975,7 +3011,11 @@ const GenerateOrdersV2 = () => {
             applicationTypeConfigUpdated,
             configKeys,
             caseDetails,
-            allParties
+            allParties,
+            isHearingScheduled || isHearingInPassedOver,
+            hearingDetails,
+            skipScheduling,
+            currentOrder
           );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
@@ -3000,7 +3040,11 @@ const GenerateOrdersV2 = () => {
               applicationTypeConfigUpdated,
               configKeys,
               caseDetails,
-              allParties
+              allParties,
+              isHearingScheduled || isHearingInPassedOver,
+              hearingDetails,
+              skipScheduling,
+              currentOrder
             );
           }
         }

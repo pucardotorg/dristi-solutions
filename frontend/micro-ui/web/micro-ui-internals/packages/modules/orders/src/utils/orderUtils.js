@@ -153,6 +153,34 @@ export const channelTypeEnum = {
   "E-mail": { code: "EMAIL", type: "Email" },
 };
 
+export const getMediationChangedFlag = (orderDetails, newOrderDetails) => {
+  const keysToCheck = ["adrMode", "parties", "hearingDate", "modeOfSigning", "mediationCentre"];
+
+  let isMediationChanged = false;
+
+  for (const key of keysToCheck) {
+    const oldValue = orderDetails[key];
+    const newValue = newOrderDetails[key];
+
+    if (key === "parties") {
+      const oldLen = Array?.isArray(oldValue) ? oldValue?.length : 0;
+      const newLen = Array?.isArray(newValue) ? newValue?.length : 0;
+
+      if (oldLen !== newLen) {
+        isMediationChanged = true;
+        break;
+      }
+    } else {
+      if (JSON?.stringify(oldValue) !== JSON?.stringify(newValue)) {
+        isMediationChanged = true;
+        break;
+      }
+    }
+  }
+
+  return isMediationChanged;
+};
+
 export const getParties = (type, orderSchema, allParties) => {
   let parties = [];
   if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
@@ -179,6 +207,18 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
   } else if (["COST", "WITNESS_BATTA"]?.includes(type)) {
     parties = [orderSchema?.orderDetails?.paymentToBeMadeBy, orderSchema?.orderDetails.paymentToBeMadeTo];
+  } else if (type === "REFERRAL_CASE_TO_ADR") {
+    const complainants = allParties?.filter((party) => party?.partyType === "complainant");
+    const respondents = allParties?.filter((party) => party?.partyType === "respondent" && party?.isJoined === true);
+
+    parties = [...complainants, ...respondents]?.map((party, index) => ({
+      partyName: party.name,
+      partyType: party?.partyType,
+      partyIndex: index,
+      userUuid: party?.partyUuid,
+      mobileNumber: party?.mobileNumber,
+    }));
+    return parties;
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;

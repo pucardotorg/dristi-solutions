@@ -867,28 +867,22 @@ export const configsOrderTranferToADR = [
         label: "MEDIATION_CENTRE",
         isMandatory: true,
         key: "mediationCentre",
-        type: "text",
+        schemaKeyPath: "orderDetails.mediationCentre",
+        transformer: "customDropdown",
+        type: "dropdown",
         populators: {
           name: "mediationCentre",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
-        },
-      },
-      {
-        label: "DATE_TIME_OF_MEDIATION",
-        isMandatory: true,
-        key: "dateOfMediation",
-        schemaKeyPath: "orderDetails.dateOfMediation",
-        transformer: "date",
-        type: "date",
-        populators: {
-          name: "dateOfMediation",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "KOLLAM_MEDIATION_CENTRE",
+              name: "KOLLAM_MEDIATION_CENTRE",
             },
-          },
+          ],
         },
       },
       {
@@ -900,18 +894,18 @@ export const configsOrderTranferToADR = [
         type: "radio",
         populators: {
           name: "modeOfSigning",
-          optionsKey: "name",
+          optionsKey: "code",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
           options: [
             {
-              code: "ESIGN",
-              name: "E_SIGN",
+              code: "E_SIGN",
+              name: "INITIATE_E-SIGN",
             },
             {
-              code: "UPLOAD",
-              name: "UPLOAD_SIGNED_COPY",
+              code: "UPLOAD_SIGNED_COPY",
+              name: "INITIATE_UPLOAD",
             },
           ],
         },

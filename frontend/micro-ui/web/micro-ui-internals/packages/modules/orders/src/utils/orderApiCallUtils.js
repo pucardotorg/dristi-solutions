@@ -1,6 +1,6 @@
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../hooks/services";
-import { getParties } from "./orderUtils";
+import { formatDate, getMediationChangedFlag, getParties } from "./orderUtils";
 
 export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
   try {
@@ -24,8 +24,38 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (t, order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
+export const addOrderItem = async (
+  t,
+  order,
+  action,
+  tenantId,
+  applicationTypeConfigUpdated,
+  configKeys,
+  caseDetails,
+  allParties,
+  isHearingPresent,
+  hearingDetails,
+  skipScheduling,
+  currentOrder
+) => {
   const compositeItems = [];
+  let hearingDate;
+  const scheduleHearingOrderItem = order?.compositeItems?.find(
+    (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
+  );
+  const rescheduleHearingItem = order?.compositeItems?.find(
+    (item) =>
+      item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(item?.orderType)
+  );
+  if (scheduleHearingOrderItem) {
+    hearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+  } else if (rescheduleHearingItem) {
+    hearingDate = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+  } else if (isHearingPresent) {
+    hearingDate = formatDate(new Date(hearingDetails?.startTime));
+  } else if (order?.nextHearingDate && !skipScheduling) {
+    hearingDate = formatDate(new Date(order?.nextHearingDate));
+  }
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
     try {
@@ -64,9 +94,24 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;
+
+    const oldItem = currentOrder?.compositeItems?.find((compItem) => compItem?.id === item?.id);
+    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, { ...orderSchema?.orderDetails, parties, hearingDate });
     const orderSchemaUpdated = {
       ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber, ...(actionResponse && { action: actionResponse }) },
+      orderDetails: {
+        ...orderSchema?.orderDetails,
+        parties: parties,
+        caseNumber: caseNumber,
+        ...(actionResponse && { action: actionResponse }),
+        ...(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code === "REFERRAL_CASE_TO_ADR" && {
+          filingDate: caseDetails?.filingDate,
+          stage: caseDetails?.stage,
+          hearingDate: hearingDate,
+          caseId: caseDetails?.id,
+          isMediationChanged: isMediationChanged,
+        }),
+      },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {
         applicationNumber: [orderSchema.orderDetails.refApplicationId],
