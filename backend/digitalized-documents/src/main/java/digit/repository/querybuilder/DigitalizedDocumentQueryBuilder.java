@@ -17,8 +17,8 @@ public class DigitalizedDocumentQueryBuilder {
     private static final String BASE_QUERY = "SELECT dd.id as id, dd.type as type, dd.document_number as document_number," +
             " dd.case_id as case_id, dd.case_filing_number as case_filing_number, dd.plea_details as plea_details," +
             " dd.examination_of_accused_details as examination_of_accused_details, dd.mediation_details as mediation_details," +
-            " dd.additional_details as additional_details, dd.status as status, dd.documents as documents," +
-            " dd.tenant_id as tenant_id, dd.created_by as created_by, dd.created_time as created_time," +
+            " dd.additional_details as additional_details, dd.status as status, dd.documents as documents, dd.order_number as order_number, dd.order_item_id as order_item_id," +
+            " dd.tenant_id as tenant_id, dd.court_id as court_id, dd.created_by as created_by, dd.created_time as created_time," +
             " dd.last_modified_by as last_modified_by, dd.last_modified_time as last_modified_time" +
             " FROM digitalized_document dd";
 
