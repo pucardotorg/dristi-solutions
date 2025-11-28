@@ -46,11 +46,10 @@ public class AdvocateRepository {
     }
 
     public void insertAdvocateDetails(AdvocateDetails advocateDetails) {
-        String sql = "INSERT INTO advocate_master (advocate_name, advocate_code, bar_reg_no, advocate_id, email, phone, address, dob) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO advocate_master (advocate_name, bar_reg_no, advocate_id, email, phone, address, dob) VALUES (?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, 
             advocateDetails.getAdvocateName(), 
-            advocateDetails.getAdvocateCode(), 
-            advocateDetails.getBarRegNo(), 
+            advocateDetails.getBarRegNo(),
             advocateDetails.getAdvocateId(),
             advocateDetails.getEmail(),
             advocateDetails.getPhone(),
@@ -59,20 +58,33 @@ public class AdvocateRepository {
     }
 
     public void updateAdvocateDetails(AdvocateDetails advocateDetails) {
-        String sql = "UPDATE advocate_master SET advocate_name = ?, bar_reg_no = ?, email = ?, phone = ?, address = ?, dob = ? WHERE advocate_id = ?";
-        int rowsUpdated = jdbcTemplate.update(sql, 
-            advocateDetails.getAdvocateName(), 
-            advocateDetails.getBarRegNo(),
-            advocateDetails.getEmail(),
-            advocateDetails.getPhone(),
-            advocateDetails.getAddress(),
-            advocateDetails.getDob(),
-            advocateDetails.getAdvocateId());
-        
+        String sql = """
+        UPDATE advocate_master
+        SET advocate_name = ?,
+            bar_reg_no = ?,
+            email = ?,
+            phone = ?,
+            address = ?,
+            dob = ?
+        WHERE advocate_code = ? AND advocate_id = ?
+        """;
+
+        int rowsUpdated = jdbcTemplate.update(sql,
+                advocateDetails.getAdvocateName(),
+                advocateDetails.getBarRegNo(),
+                advocateDetails.getEmail(),
+                advocateDetails.getPhone(),
+                advocateDetails.getAddress(),
+                advocateDetails.getDob(),
+                advocateDetails.getAdvocateCode(),
+                advocateDetails.getAdvocateId()
+        );
         if (rowsUpdated > 0) {
-            log.info("Successfully updated advocate with ID: {}", advocateDetails.getAdvocateId());
+            log.info("Successfully updated advocate with Code: {}, ID: {}",
+                    advocateDetails.getAdvocateCode(), advocateDetails.getAdvocateId());
         } else {
-            log.warn("No advocate found to update with ID: {}", advocateDetails.getAdvocateId());
+            log.warn("No advocate found to update with Code: {}, ID: {}",
+                    advocateDetails.getAdvocateCode(), advocateDetails.getAdvocateId());
         }
     }
 }

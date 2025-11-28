@@ -42,7 +42,7 @@ public class AdvocateService {
             if (existingAdvocate != null) {
                 return updateExistingAdvocate(advocateDetails, existingAdvocate);
             } else {
-                return createNewAdvocate(advocateDetails, existingAdvocates);
+                return createNewAdvocate(advocateDetails);
             }
             
         } catch (Exception e) {
@@ -176,31 +176,16 @@ public class AdvocateService {
         }
     }
 
-    private AdvocateDetails createNewAdvocate(AdvocateDetails advocateDetails, List<AdvocateDetails> existingAdvocates) {
-        int advocateCode = generateAdvocateCode(existingAdvocates);
-        advocateDetails.setAdvocateCode(advocateCode);
-        
+    private AdvocateDetails createNewAdvocate(AdvocateDetails advocateDetails) {
         try {
             producer.push("save-advocate-details", advocateDetails);
-            log.info("Successfully created new advocate - ID: {}, Code: {}", 
-                    advocateDetails.getAdvocateId(), advocateDetails.getAdvocateCode());
+            log.info("Successfully created new advocate - ID: {}", advocateDetails.getAdvocateId());
             return advocateDetails;
         } catch (Exception e) {
-            log.error("Failed to create new advocate - ID: {}, Code: {}, error: {}", 
-                    advocateDetails.getAdvocateId(), advocateDetails.getAdvocateCode(), e.getMessage());
+            log.error("Failed to create new advocate - ID: {}, error: {}",
+                    advocateDetails.getAdvocateId(), e.getMessage());
             throw e;
         }
-    }
-
-    private int generateAdvocateCode(List<AdvocateDetails> existingAdvocates) {
-        if (existingAdvocates.isEmpty()) {
-            return 1;
-        }
-        
-        return existingAdvocates.stream()
-                .mapToInt(AdvocateDetails::getAdvocateCode)
-                .max()
-                .orElse(0) + 1;
     }
 
 }
