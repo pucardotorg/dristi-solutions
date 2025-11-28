@@ -94,7 +94,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
   // race conditions where a stale parent update overwrites a user's recent clear.
   useEffect(() => {
     const nextFromProps = initialHtml;
-    if (nextFromProps !== editorHtml && nextFromProps !== lastEmittedValueRef.current) {
+    if (nextFromProps !== editorHtml) {
       setEditorHtml(nextFromProps);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
