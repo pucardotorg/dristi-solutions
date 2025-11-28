@@ -39,6 +39,7 @@ const DocumentsV2 = ({
   const isCitizen = userRoles?.includes("CITIZEN");
   const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
+
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       if (docObj?.[0]?.isBail) {
@@ -272,6 +273,44 @@ const DocumentsV2 = ({
               },
             },
           };
+          case "Digitalization Forms":
+            return {
+              ...tabConfig,
+              apiDetails: {
+                ...tabConfig.apiDetails,
+                requestBody: {
+                  ...tabConfig.apiDetails.requestBody,
+                  criteria: {
+                    ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
+                    filingNumber: filingNumber,
+                  },
+                },
+              },
+              sections: {
+                ...tabConfig.sections,
+                search: {
+                  ...tabConfig.sections.search,
+                  uiConfig: {
+                    ...tabConfig.sections.search.uiConfig,
+                    fields: [...tabConfig.sections.search.uiConfig.fields],
+                  },
+                },
+                searchResult: {
+                  ...tabConfig.sections.searchResult,
+                  uiConfig: {
+                    ...tabConfig.sections.searchResult.uiConfig,
+                    columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                      switch (column.label) {
+                        case "DOCUMENT_TYPE":
+                          return { ...column, clickFunc: docSetFunc };
+                        default:
+                          return column;
+                      }
+                    }),
+                  },
+                },
+              },
+            };
         default:
           return {
             ...tabConfig,

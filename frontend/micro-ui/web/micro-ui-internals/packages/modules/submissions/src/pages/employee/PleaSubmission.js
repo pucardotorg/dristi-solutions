@@ -11,7 +11,6 @@ import {
   _getCreatePleaPayload,
   _getPdfConfig,
   _getUpdatePleaPayload,
-  _getUploadPleaPayload,
   BooleanToCode,
   pleaWorkflowActions,
   validateMobileNumber,
@@ -124,10 +123,11 @@ const PleaSubmission = () => {
   const { data: pleaSearchResponse, isLoading: isPleaSearchResponseLoading } = useSearchDigitalization(
     {
       criteria: {
+        filingNumber: filingNumber,
         documentNumber: documentNumber,
         ...(courtId && { courtId: courtId }),
+        tenantId,
       },
-      tenantId,
     },
     {},
     `digitilization-${documentNumber}`,

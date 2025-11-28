@@ -244,30 +244,32 @@ export const DocumentSearchConfig = {
       },
     },
     {
-      label: "Pending Forms",
-      displayLabel: "PENDING_FORMS_TAB",
+      label: "Digitalization Forms",
+      displayLabel: "DIGITTALIZATION_TAB",
       type: "search",
-      customHookName: "dristi.useEvidenceDetails",
       apiDetails: {
-        serviceName: "/evidence/v1/_search",
+        serviceName: "/bail-bond/v1/_search", // todo: need to work
         requestParam: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         requestBody: {
           apiOperation: "SEARCH",
-          Individual: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-          },
           criteria: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
+            fuzzySearch: true,
+          },
+          pagination: {
+            limit: 10,
+            offSet: 0,
+            sortBy: "bailCreatedTime",
+            order: "desc",
           },
         },
         masterName: "commonUiConfig",
-        moduleName: "FilingsConfig",
+        moduleName: "DigitalizationConfig",
         minParametersForSearchForm: 0,
-        tableFormJsonPath: "requestParam",
-        filterFormJsonPath: "requestBody.Individual",
-        searchFormJsonPath: "requestBody.Individual",
+        tableFormJsonPath: "requestBody.pagination",
+        filterFormJsonPath: "requestBody.criteria",
+        searchFormJsonPath: "requestBody.criteria",
       },
       sections: {
         search: {
@@ -281,28 +283,34 @@ export const DocumentSearchConfig = {
               {
                 label: "TYPE",
                 isMandatory: false,
-                key: "artifactType",
+                key: "type",
                 type: "dropdown",
                 populators: {
                   name: "artifactType",
                   optionsKey: "name",
-                  mdmsConfig: {
-                    masterName: "EvidenceType",
-                    moduleName: "Evidence",
-                    localePrefix: "EVIDENCE_TYPE",
-                    select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [
+                    {
+                      code: "PLEA",
+                      name: "PLEA",
+                    },
+                    {
+                      code: "EXAMINATION_OF_ACCUSED",
+                      name: "EXAMINATION_OF_ACCUSED",
+                    },
+                    {
+                      code: "MEDIATION",
+                      name: "MEDIATION",
+                    },
+                  ],
                 },
               },
               {
-                label: "SEARCH_ARTIFACT_NUMBER",
+                label: "SEARCH_DOCUMENT_NUMBER",
                 isMandatory: false,
-                key: "artifactNumber",
+                key: "documentNumber",
                 type: "text",
                 populators: {
-                  name: "artifactNumber",
+                  name: "documentNumber",
                 },
               },
             ],
@@ -315,49 +323,28 @@ export const DocumentSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "FILING_NAME",
-                jsonPath: "artifactType",
+                label: "DOCUMENT_TYPE",
+                jsonPath: "bailType",
                 additionalCustomization: true,
               },
               {
-                label: "FILING_ID",
-                jsonPath: "artifactNumber",
+                label: "DOCUMENT_ID",
+                jsonPath: "bailId",
               },
               {
-                label: "EVIDENCE_NUMBER",
-                jsonPath: "evidenceNumber",
-                additionalCustomization: true,
-              },
-              {
-                label: "TYPE",
-                additionalCustomization: true,
+                label: "PARTIES",
+                jsonpath: "litigantName",
+                // additionalCustomization: true,
               },
               {
                 label: "STATUS",
+                jsonPath: "status",
                 additionalCustomization: true,
-              },
-              {
-                label: "EVIDENCE_STATUS",
-                additionalCustomization: true,
-              },
-              {
-                label: "REPRESENTATIVES",
-                jsonPath: "sourceType",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "FILE",
-              //   jsonPath: "file",
-              //   additionalCustomization: true,
-              // },
-              {
-                label: "CS_ACTIONS",
-                additionalCustomization: true,
-              },
+              }
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "artifacts",
+            resultsJsonPath: "bails",
           },
           show: true,
         },

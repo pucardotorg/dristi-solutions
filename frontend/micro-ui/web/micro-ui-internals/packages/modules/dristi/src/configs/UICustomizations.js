@@ -2621,6 +2621,21 @@ export const UICustomizations = {
       }
     },
   },
+
+  DigitalizationConfig: {
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isDigitilization={true} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return value; // TODO: need to work
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
   patternValidation: (key) => {
     switch (key) {
       case "contact":
