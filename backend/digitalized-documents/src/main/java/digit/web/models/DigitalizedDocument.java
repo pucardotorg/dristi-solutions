@@ -86,6 +86,9 @@ public class DigitalizedDocument {
     @NotNull(message = "tenant id cannot be null")
     private String tenantId = null;
 
+    @JsonProperty("shortenedUrl")
+    private String shortenedUrl = null;
+
 
     public DigitalizedDocument putAdditionalDetailsItem(String key, Object additionalDetailsItem) {
         if (this.additionalDetails == null) {

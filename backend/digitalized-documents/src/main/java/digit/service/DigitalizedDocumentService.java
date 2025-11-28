@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
+import static digit.config.ServiceConstants.UPDATE_DIGITALIZED_DOCUMENT_FAILED;
 
 @Service
 @Slf4j
@@ -58,7 +59,9 @@ public class DigitalizedDocumentService {
 
             return documentTypeService.createDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
-            log.error("Error processing digitalized document: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing create digitalized document: {}", e.getMessage());
             throw new CustomException(CREATE_DIGITALIZED_DOCUMENT_FAILED, "Error while creating digitalized document : " + e.getMessage());
         }
     }
@@ -76,8 +79,10 @@ public class DigitalizedDocumentService {
 
             return documentTypeService.updateDocument(digitalizedDocumentRequest);
         } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
             log.error("Error processing update digitalized document: {}", e.getMessage());
-            throw new CustomException("DIGITALIZED_DOCUMENT_PROCESSING_FAILED", "Error while updating digitalized document : " + e.getMessage());
+            throw new CustomException(UPDATE_DIGITALIZED_DOCUMENT_FAILED, "Error while updating digitalized document : " + e.getMessage());
         }
     }
 

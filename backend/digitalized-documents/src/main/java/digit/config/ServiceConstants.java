@@ -36,6 +36,8 @@ public class ServiceConstants {
 
     public static final String CREATE_DIGITALIZED_DOCUMENT_FAILED = "CREATE_DIGITALIZED_DOCUMENT_FAILED";
 
+    public static final String UPDATE_DIGITALIZED_DOCUMENT_FAILED = "UPDATE_DIGITALIZED_DOCUMENT_FAILED";
+
     // mediation
     public static final String INVALID_ORDER_NUMBER = "INVALID_ORDER_NUMBER";
 
