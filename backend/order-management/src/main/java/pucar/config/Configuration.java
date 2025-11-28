@@ -289,4 +289,19 @@ public class Configuration {
     @Value("${egov.bulk.index.path}")
     private String bulkPath;
 
+    @Value("${dristi.nature.of.complainant}")
+    private String natureOfComplainant;
+
+    //Digitalized Documents
+    @Value("${dristi.digitalized-documents.host}")
+    private String digitalizedDocumentsHost;
+
+    @Value("${dristi.digitalized-documents.create.endpoint}")
+    private String digitalizedDocumentsCreateEndPoint;
+
+    @Value("${dristi.digitalized-documents.search.endpoint}")
+    private String digitalizedDocumentsSearchEndPoint;
+
+    @Value("${dristi.digitalized-documents.update.endpoint}")
+    private String digitalizedDocumentsUpdateEndPoint;
 }

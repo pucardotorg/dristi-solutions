@@ -1,16 +1,12 @@
-package digit.validator;
+package digit.validators;
 
 import digit.repository.DigitalizedDocumentRepository;
 import digit.web.models.DigitalizedDocument;
 import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.DigitalizedDocumentSearchCriteria;
-import digit.web.models.DigitalizedDocumentSearchRequest;
 import digit.web.models.ExaminationOfAccusedDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static digit.config.ServiceConstants.VALIDATION_ERROR;
 

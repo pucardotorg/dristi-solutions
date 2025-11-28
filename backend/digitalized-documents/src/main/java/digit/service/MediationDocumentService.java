@@ -4,10 +4,8 @@ import digit.config.Configuration;
 import digit.enrichment.MediationEnrichment;
 import digit.kafka.Producer;
 import digit.validators.MediationDocumentValidator;
-import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.MediationPartyDetails;
-import digit.web.models.WorkflowObject;
+import digit.web.models.*;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
@@ -15,7 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 
@@ -84,6 +86,9 @@ public class MediationDocumentService implements DocumentTypeService {
         boolean isLastSign = isLastSignature(document);
 
         if (!ObjectUtils.isEmpty(workflow)) {
+            if (!isLastSign) {
+                List<String> assignees = computeAssignees(document.getMediationDetails());
+            }
             workflowService.updateWorkflowStatus(request);
         }
 
@@ -101,6 +106,23 @@ public class MediationDocumentService implements DocumentTypeService {
         log.info("operation = updateDocument, result = SUCCESS");
 
         return document;
+    }
+
+    private List<String> computeAssignees(@Valid MediationDetails mediationDetails) {
+
+        List<String> assignees = new ArrayList<>();
+
+        if (ObjectUtils.isEmpty(mediationDetails.getPartyDetails())) {
+            return assignees;
+        }
+
+        assignees = mediationDetails.getPartyDetails().stream()
+                .filter(party -> Boolean.FALSE.equals(party.getHasSigned()))
+                .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
+                .filter(Objects::nonNull)  // Remove null values
+                .collect(Collectors.toList());
+
+        return assignees;
     }
 
     private void handleEditAction(DigitalizedDocument document) {
