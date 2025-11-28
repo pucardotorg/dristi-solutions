@@ -101,6 +101,31 @@ public class Configuration {
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
 
+    @Value("${examination.of.accused.kakfa.create.topic}")
+    private String examinationOfAccusedCreateTopic;
+
+    @Value("${examination.of.accused.kafka.update.topic}")
+    private String examinationOfAccusedUpdateTopic;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
     // topic
     @Value("${egov.mediation.digitalized.document.create.topic}")
     private String mediationDigitalizedDocumentCreateTopic;

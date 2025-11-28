@@ -50,4 +50,11 @@ public class ServiceConstants {
     public static final String E_SIGN_COMPLETE = "E_SIGN_COMPLETE";
     public static final String SYSTEM = "SYSTEM";
 
+    public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
+    public static final String INVALID_INPUT = "INVALID_INPUT";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
+    public static final String FILE = "file";
+
+
+
 }
