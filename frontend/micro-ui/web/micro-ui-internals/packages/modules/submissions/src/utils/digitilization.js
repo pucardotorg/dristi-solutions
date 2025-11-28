@@ -54,15 +54,40 @@ export const _getCreatePleaPayload = (caseDetails, formData, tenantId) => {
   return payload;
 };
 
-export const _getUploadPleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId) => {
+export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId, pleaMobileNumber) => {
   let payload = {};
-  if (action !== pleaWorkflowActions.SAVEDRAFT) {
+
+  if (action === pleaWorkflowActions.ESIGN) {
     const documents = Array.isArray(pleaDetails?.documents) ? pleaDetails.documents : [];
     const documentsFile = fileStoreId
       ? [
           {
             fileStore: fileStoreId,
-            documentType: action === pleaWorkflowActions.UPLOAD ? "SIGNED" : "UNSIGNED",
+            documentType: "UNSIGNED",
+            additionalDetails: { name: `${t(`Plea (${pleaDetails?.pleaDetails?.accusedName})`)}.pdf` },
+            tenantId,
+          },
+        ]
+      : null;
+
+    payload = {
+      bail: {
+        ...pleaDetails,
+        pleaDetails: {
+          ...pleaDetails.pleaDetails,
+          pleaMobileNumber: pleaMobileNumber, // TODO: need to change
+        },
+        documents: documentsFile ? [...documentsFile] : documents,
+        workflow: { ...pleaDetails.workflow, action, documents: [{}] },
+      },
+    };
+  } else if (action === pleaWorkflowActions.UPLOAD) {
+    const documents = Array.isArray(pleaDetails?.documents) ? pleaDetails.documents : [];
+    const documentsFile = fileStoreId
+      ? [
+          {
+            fileStore: fileStoreId,
+            documentType: "SIGNED",
             additionalDetails: { name: `${t(`Plea (${pleaDetails?.pleaDetails?.accusedName})`)}.pdf` },
             tenantId,
           },
@@ -122,4 +147,23 @@ export const _getPdfConfig = (pleaResponseDetails, caseDetails, courtId, tenantI
     },
     enabled: !!pleaResponseDetails?.documentNumber && !!caseDetails?.cnrNumber,
   };
+};
+
+export const validateMobileNumber = (number) => {
+  // Check if the number contains only digits
+  const isNumeric = /^[0-9]+$/.test(number);
+
+  if (!number) {
+    return "Mobile number is required";
+  }
+
+  if (!isNumeric) {
+    return "Mobile number should contain only digits";
+  }
+
+  if (number.length !== 10) {
+    return "Mobile number should be exactly 10 digits";
+  }
+
+  return "";
 };

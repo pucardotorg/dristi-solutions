@@ -51,8 +51,6 @@ const PreviewPdfModal = ({ t, handleBack, documents = [], setPreviewModal, setFi
     },
     enabled: pdfConfig?.enabled,
   });
-
-  console.log(pdfConfig);
   
   const showDocument = useMemo(() => {
     return (

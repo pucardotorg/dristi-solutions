@@ -7,9 +7,21 @@ import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchDigitalization from "../../hooks/submissions/useSearchDigitalization";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
-import { _getCreatePleaPayload, _getPdfConfig, _getUploadPleaPayload, BooleanToCode, pleaWorkflowActions } from "../../utils/digitilization";
+import {
+  _getCreatePleaPayload,
+  _getPdfConfig,
+  _getUpdatePleaPayload,
+  _getUploadPleaPayload,
+  BooleanToCode,
+  pleaWorkflowActions,
+  validateMobileNumber,
+} from "../../utils/digitilization";
 import { submissionService } from "../../hooks/services";
 import PreviewPdfModal from "../../components/PreviewPdfModal";
+import GenericUploadSignatureModal from "../../components/GenericUploadSignatureModal";
+import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
+import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const convertToFormData = (obj) => {
@@ -58,6 +70,15 @@ const PleaSubmission = () => {
   const [previewPleaModal, setPreviewPleModal] = useState(false);
   const [showSignatureModal, setShowsignatureModal] = useState(false);
   const [pleaFileStoreId, setPleaFileStoreId] = useState("");
+  const [pleUploadLoader, setPleaUploadLoader] = useState(false);
+  const { downloadPdf } = useDownloadCasePdf();
+  const [showUploadSignature, setShowUploadSignature] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPleaEsign, setShowPleaEsign] = useState(false);
+  const [pleaSignatureURL, setPleaSignatureURL] = useState("");
+  const [showAddPleaMobileNumber, setShowAddPleaMobileNumber] = useState(false);
+  const [pleaMobileNumber, setPleaMobileNumber] = useState("");
+  const [pleaMobileNumberError, setPleaMobileNumberError] = useState("");
 
   const fetchCaseDetails = async () => {
     try {
@@ -150,7 +171,6 @@ const PleaSubmission = () => {
           const customValidations =
             Digit.Customizations[body.populators.validation.customValidationFn.moduleName][body.populators.validation.customValidationFn.masterName];
 
-          debugger;
           body.populators.validation = {
             ...body.populators.validation,
             ...customValidations(),
@@ -198,14 +218,13 @@ const PleaSubmission = () => {
       let pleaSubmissionUpdateResponse = null;
       if (!documentNumber) {
         const payload = _getCreatePleaPayload(caseDetails, formdata, tenantId);
-        debugger;
         pleaSubmissionUpdateResponse = await submissionService.createDigitalization(payload, tenantId);
         setDefaultFormValueData(pleaSubmissionUpdateResponse?.digitalizedDocument || {});
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${pleaSubmissionUpdateResponse?.digitalizedDocument?.documentNumber}&showModal=true`
         );
       } else {
-        const payload = _getUploadPleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.SAVEDRAFT, null);
+        const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.SAVEDRAFT, null);
         pleaSubmissionUpdateResponse = await submissionService.updateDigitalization(payload, tenantId);
         setDefaultFormValueData(pleaSubmissionUpdateResponse?.digitalizedDocument || {});
         setPreviewPleModal(true);
@@ -216,6 +235,69 @@ const PleaSubmission = () => {
     } finally {
       setLoader(false);
     }
+  };
+
+  const handleSubmitSignature = async (fileStoreId) => {
+    try {
+      setLoader(true);
+      const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.UPLOAD, fileStoreId, null);
+      const res = await submissionService.updateDigitalization(payload, tenantId);
+      setShowsignatureModal(false);
+      setShowUploadSignature(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const handleEsgin = () => {
+    // TODO : extract current selected plea number and setPleaNumber
+    setPleaMobileNumber("9898989898");
+    setShowsignatureModal(false);
+    setShowAddPleaMobileNumber(true);
+  };
+
+  const handleCloseSignatureModal = () => {
+    setShowsignatureModal(false);
+    setPreviewPleModal(true);
+  };
+
+  const handleDownload = () => {
+    downloadPdf(tenantId, pleaFileStoreId);
+  };
+
+  const handleCloseMobileModal = () => {
+    setShowAddPleaMobileNumber(false);
+    setShowsignatureModal(true);
+  };
+
+  const handlePleaMobileSubmit = async () => {
+    try {
+      const validationError = validateMobileNumber(pleaMobileNumber);
+      if (validationError) {
+        setPleaMobileNumberError(validationError);
+        return;
+      }
+      setLoader(true);
+      const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.ESIGN, pleaFileStoreId, pleaMobileNumber);
+      const res = await submissionService.updateDigitalization(payload, tenantId);
+      setPleaSignatureURL(res?.digitalizedDocument?.shortenedURL);
+      setShowAddPleaMobileNumber(false);
+      setShowPleaEsign(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setShowAddPleaMobileNumber(false);
+      setLoader(false);
+    }
+  };
+
+  const handleCloseSuccessModal = () => {
+    history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
   };
 
   const closeToast = () => {
@@ -307,6 +389,42 @@ const PleaSubmission = () => {
             pdfConfig={_getPdfConfig(pleaResponseDetails, caseDetails, courtId, tenantId)}
             setShowsignatureModal={setShowsignatureModal}
             setFileStoreId={setPleaFileStoreId}
+          />
+        )}
+        {showSignatureModal && (
+          <GenericUploadSignatureModal
+            t={t}
+            handleCloseSignatureModal={handleCloseSignatureModal}
+            handleDownload={handleDownload}
+            handleESign={handleEsgin}
+            setShowUploadSignature={setShowUploadSignature}
+            showUploadSignature={showUploadSignature}
+            handleSubmit={handleSubmitSignature}
+            setLoader={setPleaUploadLoader}
+            loader={pleUploadLoader}
+            fileStoreId={pleaFileStoreId}
+          />
+        )}
+        {showAddPleaMobileNumber && (
+          <GenericNumberInputModal
+            t={t}
+            handleClose={handleCloseMobileModal}
+            handleSubmit={handlePleaMobileSubmit}
+            mobileNumber={pleaMobileNumber}
+            setMobileNumber={setPleaMobileNumber}
+            error={pleaMobileNumberError}
+            setError={setPleaMobileNumberError}
+            header={"ADD_PLEA_MOBILE_NUMBER"}
+          />
+        )}
+        {showPleaEsign && (
+          <GenericSuccessLinkModal
+            t={t}
+            userType={userType}
+            filingNumber={filingNumber}
+            handleSaveOnSubmit={handleCloseSuccessModal}
+            signatureUrl={pleaSignatureURL}
+            header={"PLEA_ESIGN_MODAL_HEADER"}
           />
         )}
       </div>
