@@ -41,6 +41,13 @@ public class HearingService {
         String cino = hearing.getCnrNumbers().get(0);
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(cino);
 
+        for(HearingDetails hearingDetail: hearingDetails) {
+            if(hearingDetail.getHearingId().equalsIgnoreCase(hearing.getHearingId())) {
+                hearingDetail.setBusiness(hearing.getHearingSummary() != null ? hearing.getHearingSummary() : hearingDetail.getBusiness());
+                producer.push("update-hearing-details", hearingDetail);
+                return hearingDetail;
+            }
+        }
         int nextSrNo = hearingDetails.stream()
                 .mapToInt(HearingDetails::getSrNo)
                 .max()
