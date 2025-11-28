@@ -92,22 +92,22 @@ jobs:
           commit_hash=$(git log -1 --pretty=format:%H -- backend/ab-diary)
           echo "commit_hash=$commit_hash" >> $GITHUB_ENV
 
-      - name: Build and Push Docker image for ab-diary
-        run: |
-          docker build --build-arg WORK_DIR="backend/ab-diary" -t docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }}
+      # - name: Build and Push Docker image for ab-diary
+      #   run: |
+      #     docker build --build-arg WORK_DIR="backend/ab-diary" -t docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+      #     docker push docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }}
 
-      - name: Build and Push Docker image for ab-diary DB
-        run: |
-          docker build  -t docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }}
-        working-directory: backend/ab-diary/src/main/resources/db
+      # - name: Build and Push Docker image for ab-diary DB
+      #   run: |
+      #     docker build  -t docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+      #     docker push docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }}
+      #   working-directory: backend/ab-diary/src/main/resources/db
 
       - name: Deployment to Kubernetes Cluster
         uses: pucardotorg/pucar-DevOps/.github/actions/Deploy@Solutions-Pipeline
         with:
           image_name: "ab_diary"
-          image_tag: ${{ env.VERSION }}-${{ env.commit_hash }}
+          image_tag: "develop-31d93196cb6d4dc6826640ac88efdec4dd0e6a20"
           sops_key: ${{ secrets.SOPS_KEY }}
           kubeconfig: ${{ secrets.KUBECONFIG }}
           helmfile_env: ${{ vars.HELMFILE_ENV }}
