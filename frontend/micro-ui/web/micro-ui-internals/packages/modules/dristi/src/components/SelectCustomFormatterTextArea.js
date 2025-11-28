@@ -55,29 +55,31 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       "span",
       "img",
     ],
-  
+
     ALLOWED_ATTR: {
       "*": ["style", "class", "href", "src", "alt", "title", "width", "height", "name", "target"],
     },
-  
+
     ALLOWED_STYLES: {
       "*": {
         "text-align": [/^left$/, /^right$/, /^center$/, /^justify$/],
       },
     },
-  
+
     KEEP_CONTENT: true,
     ALLOW_ARBITRARY_ATTRIBUTES: true,
-  
+
     // ⭐ Added "class" here as requested
     ADD_ATTR: ["style", "class"],
   };
-  
 
   const inputName = inputs?.[0]?.name;
   const configKey = config?.key;
 
   const debounceTimerRef = useRef(null);
+  // Track the last value we emitted upward to avoid clobbering local edits with stale prop updates
+  const lastEmittedValueRef = useRef("");
+  const ignorePropSyncRef = useRef(false);
 
   const initialHtml = useMemo(() => {
     const rawHtml = formData?.[configKey]?.[inputName] || "";
@@ -86,36 +88,50 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
   }, [formData, configKey, inputName]);
 
   const [editorHtml, setEditorHtml] = useState(initialHtml);
-  const [formdata, setFormData] = useState(formData);
 
+  // Sync from props only when incoming value is meaningfully different from both
+  // the current editor state and the last value we emitted upward. This prevents
+  // race conditions where a stale parent update overwrites a user's recent clear.
   useEffect(() => {
-    if (!isEqual(formdata, formData)) {
-      setFormData(formData);
-      setEditorHtml(initialHtml);
+    const nextFromProps = initialHtml;
+    if (nextFromProps !== editorHtml) {
+      setEditorHtml(nextFromProps);
     }
-  }, [formData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialHtml]);
+
+  const normalizeEmptyHtml = (v) => {
+    if (v === null || v === undefined) return "";
+    // Remove non-breaking spaces and zero-width spaces before checking emptiness
+    const cleaned = String(v)
+      .replace(/\u00A0/g, " ")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .trim();
+    const trimmed = cleaned.replace(/\s+/g, "").toLowerCase();
+    if (trimmed === "<p><br></p>" || trimmed === "<p></p>" || trimmed === "<br/>" || trimmed === "<br>" || trimmed === "") return "";
+    return cleaned;
+  };
 
   function setValue(value, input) {
-    let updatedValue = { ...formData[config.key] };
+    const normalized = normalizeEmptyHtml(value);
+    let updatedValue = { ...(formData?.[config.key] || {}) };
 
-    updatedValue[input] = value;
+    updatedValue[input] = normalized;
 
-    if (!value || value === "<p><br></p>" || value === "<p></p>") {
-      updatedValue = null;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [config.key]: {
-        ...prev[config.key],
-        [input]: value,
-      },
-    }));
+    // Remember the last value we emitted upwards to avoid rehydrating stale props
+    lastEmittedValueRef.current = normalized;
+    // Enter ignore window until parent reflects the same value
+    ignorePropSyncRef.current = true;
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      onSelect(config.key, isEmptyObject(updatedValue) ? null : updatedValue, { shouldValidate: true });
-    }, 150);
+    // If cleared, emit immediately to parent to avoid flashing old content back
+    if (normalized === "") {
+      onSelect(config.key, updatedValue, { shouldValidate: true });
+    } else {
+      debounceTimerRef.current = setTimeout(() => {
+        onSelect(config.key, updatedValue, { shouldValidate: true });
+      }, 100);
+    }
   }
 
   const handleChange = (value, input) => {
