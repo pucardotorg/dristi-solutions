@@ -338,7 +338,7 @@ const SubmissionDocuments = ({ path }) => {
             },
           },
         };
-        const updateIdForDownload = signedDocumentUploadedID !== "" ? signedDocumentUploadedID : localStorageID;
+        const updateIdForDownload = Boolean(signedDocumentUploadedID) ? signedDocumentUploadedID : localStorageID;
         setSignedDocumentUploadID(updateIdForDownload);
         sessionStorage.removeItem("fileStoreId");
         evidence = await DRISTIService.updateEvidence(evidenceReqBody);
