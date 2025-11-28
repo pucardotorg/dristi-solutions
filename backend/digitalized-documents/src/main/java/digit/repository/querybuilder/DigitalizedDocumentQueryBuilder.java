@@ -1,15 +1,14 @@
 package digit.repository.querybuilder;
 
+import digit.web.models.DigitalizedDocumentSearchCriteria;
+import digit.web.models.Pagination;
 import digit.web.models.TypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
-import digit.web.models.Pagination;
-import digit.web.models.DigitalizedDocumentSearchCriteria;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -51,6 +50,7 @@ public class DigitalizedDocumentQueryBuilder {
             TypeEnum type = criteria.getType();
             String status = criteria.getStatus();
             String tenantId = criteria.getTenantId();
+            String courtId = criteria.getCourtId();
             String orderNumber = criteria.getOrderNumber();
             String orderItemId = criteria.getOrderItemId();
 
@@ -64,6 +64,7 @@ public class DigitalizedDocumentQueryBuilder {
             firstCriteria = addDigitalizedDocumentCriteria(tenantId, query, firstCriteria, "dd.tenant_id = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderNumber, query, firstCriteria, "dd.order_number = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderItemId, query, firstCriteria, "dd.order_item_id = ?", preparedStatementList, preparedStatementArgList);
+            addDigitalizedDocumentCriteria(courtId, query, firstCriteria, "dd.court_id = ?", preparedStatementList, preparedStatementArgList);
 
             log.info("Final query: {}", query);
             log.info("Prepared statement list: {}", preparedStatementList);

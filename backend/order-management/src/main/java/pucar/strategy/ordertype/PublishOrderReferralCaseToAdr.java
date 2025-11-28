@@ -1,0 +1,234 @@
+package pucar.strategy.ordertype;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
+import pucar.util.DigitalizedDocumentUtil;
+import pucar.web.models.Order;
+import pucar.web.models.OrderRequest;
+import pucar.web.models.WorkflowObject;
+import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.digitalizeddocument.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static pucar.config.ServiceConstants.*;
+
+@Component
+@Slf4j
+public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
+
+    private final DigitalizedDocumentUtil digitalizedDocumentUtil;
+    private final ObjectMapper objectMapper;
+    private final Configuration configuration;
+
+    @Autowired
+    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration) {
+        this.digitalizedDocumentUtil = digitalizedDocumentUtil;
+        this.objectMapper = objectMapper;
+        this.configuration = configuration;
+    }
+
+    @Override
+    public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && SAVE_DRAFT.equalsIgnoreCase(action) && REFERRAL_CASE_TO_ADR.equalsIgnoreCase(order.getOrderType());
+    }
+
+    @Override
+    public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        return false;
+    }
+
+    @Override
+    public boolean supportsCommon(OrderRequest orderRequest) {
+        return false;
+    }
+
+    @Override
+    public CaseDiaryEntry execute(OrderRequest request) {
+        return null;
+    }
+
+    @Override
+    public OrderRequest preProcess(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        Object orderDetails = order.getOrderDetails();
+
+        log.info("Pre-processing ADR order, orderNumber: {}", order.getOrderNumber());
+
+        try {
+            JsonNode adrDetails = objectMapper.convertValue(orderDetails, JsonNode.class);
+
+            // Check if isRequired is true
+            JsonNode isMediationChanged = adrDetails.get("isMediationChanged");
+            if (isMediationChanged == null || !isMediationChanged.asBoolean()) {
+                log.info("isRequired is false or null, skipping digitalized document processing");
+                return null;
+            }
+
+            log.info("isRequired is true, processing digitalized document");
+
+            // Search for existing digitalized document by orderNumber
+            DigitalizedDocumentSearchCriteria criteria = DigitalizedDocumentSearchCriteria.builder()
+                    .orderNumber(order.getOrderNumber())
+                    .tenantId(order.getTenantId())
+                    .courtId(order.getCourtId())
+                    .type(TypeEnum.MEDIATION)
+                    .build();
+
+            DigitalizedDocumentSearchRequest searchRequest = DigitalizedDocumentSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(criteria)
+                    .build();
+
+            List<DigitalizedDocument> existingDocuments = digitalizedDocumentUtil.searchDigitalizedDocuments(searchRequest);
+
+            String action = adrDetails.has("modeOfSigning") ? adrDetails.get("modeOfSigning").textValue() : null;
+
+            MediationDetails mediationDetails = buildMediationDetails(adrDetails);
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction(action);
+            if (INITIATE_E_SIGN.equalsIgnoreCase(action)) {
+                List<String> assignees = mediationDetails.getPartyDetails().stream()
+                        .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
+                        .filter(Objects::nonNull)  // Remove null values
+                        .collect(Collectors.toList());
+
+                workflowObject.setAssignes(assignees);
+            }
+
+            if (existingDocuments != null && !existingDocuments.isEmpty()) {
+                // Update existing document
+                log.info("Found existing digitalized document with id: {}, updating...", existingDocuments.get(0).getDocumentNumber());
+                DigitalizedDocument existingDoc = existingDocuments.get(0);
+                existingDoc.setMediationDetails(mediationDetails);
+                existingDoc.setWorkflow(workflowObject);
+
+                DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
+                        .requestInfo(requestInfo)
+                        .digitalizedDocument(existingDoc)
+                        .build();
+
+                DigitalizedDocument digitalizedDocument = digitalizedDocumentUtil.updateDigitalizedDocument(updateRequest);
+                log.info("Updated digitalized document successfully {} : ", digitalizedDocument.getDocumentNumber());
+            } else {
+                // Create new document
+                log.info("No existing digitalized document found, creating new...");
+
+                // Extract caseNumber from adrDetails
+                String caseId = adrDetails.has("caseId") ? adrDetails.get("caseId").textValue() : null;
+
+                DigitalizedDocument newDocument = DigitalizedDocument.builder()
+                        .type(TypeEnum.MEDIATION)
+                        .caseId(caseId)
+                        .caseFilingNumber(order.getFilingNumber())
+                        .orderNumber(order.getOrderNumber())
+                        .tenantId(order.getTenantId())
+                        .courtId(order.getCourtId())
+                        .mediationDetails(mediationDetails)
+                        .workflow(workflowObject)
+                        .build();
+
+                DigitalizedDocumentRequest createRequest = DigitalizedDocumentRequest.builder()
+                        .requestInfo(requestInfo)
+                        .digitalizedDocument(newDocument)
+                        .build();
+
+                DigitalizedDocument digitalizedDocument = digitalizedDocumentUtil.createDigitalizedDocument(createRequest);
+                log.info("Created digitalized document successfully {} : ", digitalizedDocument.getDocumentNumber());
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing digitalized document for ADR order", e);
+            throw new RuntimeException("Error processing digitalized document: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds MediationDetails from orderDetails JsonNode
+     */
+    private MediationDetails buildMediationDetails(JsonNode adrDetails) {
+        List<MediationPartyDetails> partyDetailsList = new ArrayList<>();
+
+        JsonNode partiesNode = adrDetails.path("parties");
+        if (partiesNode.isArray()) {
+            for (JsonNode party : partiesNode) {
+                MediationPartyDetails partyDetail = MediationPartyDetails.builder()
+                        .partyType(parsePartyType(party))
+                        .uniqueId(getTextValue(party, "userUuid"))
+                        .poaUuid(getTextValue(party, "poaUuid"))
+                        .mobileNumber(getTextValue(party, "mobileNumber"))
+                        .partyName(getTextValue(party, "partyName"))
+                        .partyIndex(getIntValue(party))
+                        .hasSigned(party.path("hasSigned").asBoolean(false))
+                        .build();
+                partyDetailsList.add(partyDetail);
+            }
+        }
+
+        Long hearingDate = adrDetails.hasNonNull("hearingDate")
+                ? adrDetails.get("hearingDate").asLong()
+                : null;
+
+        String mediationCentre = adrDetails.hasNonNull("mediationCentre")
+                ? adrDetails.get("mediationCentre").asText()
+                : null;
+
+        Long dateOfInstitution = adrDetails.hasNonNull("dateOfInstitution")
+                ? adrDetails.get("dateOfInstitution").asLong()
+                : null;
+
+        String caseStage = adrDetails.hasNonNull("caseStage")
+                ? adrDetails.get("caseStage").asText()
+                : null;
+
+        return MediationDetails.builder()
+                .hearingDate(hearingDate)
+                .mediationCentre(mediationCentre)
+                .dateOfInstitution(dateOfInstitution)
+                .natureOfComplainant(configuration.getNatureOfComplainant())
+                .caseStage(caseStage)
+                .partyDetails(partyDetailsList.isEmpty() ? null : partyDetailsList)
+                .build();
+    }
+
+    private String getTextValue(JsonNode node, String field) {
+        return node.hasNonNull(field) ? node.get(field).asText() : null;
+    }
+
+    private Integer getIntValue(JsonNode node) {
+        return node.hasNonNull("partyIndex") ? node.get("partyIndex").asInt() : null;
+    }
+
+    private PartyTypeEnum parsePartyType(JsonNode node) {
+        if (!node.hasNonNull("partyType")) {
+            return null;
+        }
+        try {
+            return PartyTypeEnum.valueOf(node.get("partyType").asText().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid partyType value: {}", node.get("partyType").asText());
+            return null;
+        }
+    }
+
+    @Override
+    public OrderRequest postProcess(OrderRequest orderRequest) {
+        return null;
+    }
+}

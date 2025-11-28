@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS digitalized_document (
     order_number VARCHAR(64),
     order_item_id VARCHAR(64),
     shortened_url VARCHAR(64),
+    court_id VARCHAR(64),
     plea_details JSONB,
     examination_of_accused_details JSONB,
     mediation_details JSONB,
