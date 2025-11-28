@@ -4,9 +4,7 @@ import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.advocate.*;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.AdvocateRepository;
-import com.dristi.njdg_transformer.utils.DateUtil;
 import com.dristi.njdg_transformer.utils.IndividualUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
