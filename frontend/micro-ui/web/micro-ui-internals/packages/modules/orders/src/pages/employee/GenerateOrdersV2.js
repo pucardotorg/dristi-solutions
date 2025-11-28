@@ -3089,6 +3089,61 @@ const GenerateOrdersV2 = () => {
   const handleReviewOrderClick = async () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false;
+    if (skipScheduling && (currentInProgressHearing || currentOrder?.hearingNumber)) {
+      const hearingDateKeys = new Set(["nextHearingDate", "dateForHearing", "dateOfHearing"]);
+      const dynamicDateErrors = [];
+
+      const getIsEnabled = (item) => (currentOrder?.orderCategory === "INTERMEDIATE" ? true : item?.isEnabled);
+
+      const getFormIndex = (idx) => (currentOrder?.orderCategory === "INTERMEDIATE" ? 0 : idx);
+
+      items?.forEach((item, idx) => {
+        if (!item || !getIsEnabled(item)) return;
+
+        const formIndex = getFormIndex(idx);
+        const cfg = getModifiedFormConfig(formIndex) || [];
+        const mandatoryDateFields = [];
+
+        cfg?.forEach((section) => {
+          section?.body?.forEach((field) => {
+            if (!field?.populators?.hideInForm && field?.isMandatory && hearingDateKeys.has(field?.key)) {
+              mandatoryDateFields.push(field);
+            }
+          });
+        });
+
+        if (mandatoryDateFields.length > 0) {
+          dynamicDateErrors.push({
+            index: formIndex,
+            orderType: item?.orderType,
+            errors: mandatoryDateFields.map((field) => ({
+              key: field?.label || field?.key || "NEXT_DATE_OF_HEARING",
+              errorMessage: "THIS_IS_MANDATORY_FIELD",
+            })),
+          });
+        }
+      });
+
+      if (dynamicDateErrors.length > 0) {
+        const baseErrors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling) || [];
+
+        const mergedErrorsMap = new Map();
+
+        baseErrors.forEach((e) => mergedErrorsMap.set(e.index, { ...e, errors: [...(e?.errors || [])] }));
+
+        dynamicDateErrors.forEach((e) => {
+          const existing = mergedErrorsMap.get(e.index);
+          existing ? existing.errors.push(...e.errors) : mergedErrorsMap.set(e.index, e);
+        });
+
+        const mergedErrors = Array.from(mergedErrorsMap.values());
+        if (mergedErrors.some((obj) => obj?.errors?.length > 0)) {
+          setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: mergedErrors });
+          return;
+        }
+      }
+    }
+
     for (let index = 0; index < items?.length; index++) {
       const item = items[index];
 
