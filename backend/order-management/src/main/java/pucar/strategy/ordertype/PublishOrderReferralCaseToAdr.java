@@ -115,6 +115,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 log.info("Found existing digitalized document with id: {}, updating...", existingDocuments.get(0).getDocumentNumber());
                 DigitalizedDocument existingDoc = existingDocuments.get(0);
                 existingDoc.setMediationDetails(mediationDetails);
+                existingDoc.setWorkflow(workflowObject);
 
                 DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
                         .requestInfo(requestInfo)

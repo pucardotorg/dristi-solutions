@@ -88,6 +88,7 @@ public class MediationDocumentService implements DocumentTypeService {
         if (!ObjectUtils.isEmpty(workflow)) {
             if (!isLastSign) {
                 List<String> assignees = computeAssignees(document.getMediationDetails());
+                request.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
             }
             workflowService.updateWorkflowStatus(request);
         }
