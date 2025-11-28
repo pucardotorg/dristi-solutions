@@ -126,10 +126,6 @@ public class NJDGController {
                 InterimOrder updatedOrder = orderService.processAndUpdateOrder(order, orderRequest.getRequestInfo());
                 log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
                 
-                // Process hearing if hearing number and item text are present
-                if(order.getHearingNumber() != null && order.getItemText() != null) {
-                    hearingService.processBusinessOrder(order, orderRequest.getRequestInfo());
-                }
                 return ResponseEntity.ok(updatedOrder);
             } else {
                 log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
