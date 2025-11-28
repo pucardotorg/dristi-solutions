@@ -156,6 +156,10 @@ public class Configuration {
     private String taskManagementBusinessServices;
     private List<String> taskManagementBusinessServiceList;
 
+    @Value("${egov.digitalized.documents.business.services}")
+    private String digitalizedDocumentsBusinessServices;
+    private List<String> digitalizedDocumentsBusinessServiceList;
+
 	@Value("${egov.application.business.services}")
 	private String applicationBusinessServices;
 	private List<String> applicationBusinessServiceList;
