@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-public class PleaService implements DocumentTypeService {
+public class PleaDocumentService implements DocumentTypeService {
 
     private final PleaValidator validator;
     private final DigitalizedDocumentEnrichment enrichment;
@@ -24,7 +24,7 @@ public class PleaService implements DocumentTypeService {
     private final Producer producer;
     private final Configuration config;
 
-    public PleaService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config) {
+    public PleaDocumentService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.pleaEnrichment = pleaEnrichment;
