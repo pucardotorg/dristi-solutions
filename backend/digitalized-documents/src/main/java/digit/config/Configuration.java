@@ -133,4 +133,11 @@ public class Configuration {
     @Value("${egov.mediation.digitalized.document.update.topic}")
     private String mediationDigitalizedDocumentUpdateTopic;
 
+    // topic
+    @Value("${egov.plea.digitalized.document.create.topic}")
+    private String pleaDigitalizedDocumentCreateTopic;
+
+    @Value("${egov.plea.digitalized.document.update.topic}")
+    private String pleaDigitalizedDocumentUpdateTopic;
+
 }
