@@ -43,7 +43,7 @@ public class HearingService {
 
         for(HearingDetails hearingDetail: hearingDetails) {
             if(hearingDetail.getHearingId().equalsIgnoreCase(hearing.getHearingId())) {
-                hearingDetail.setBusiness(hearing.getHearingSummary() != null ? hearing.getHearingSummary() : hearingDetail.getBusiness());
+                hearingDetail.setBusiness(hearingDetail.getBusiness() == null ? hearing.getHearingSummary() : hearingDetail.getBusiness());
                 producer.push("update-hearing-details", hearingDetail);
                 return hearingDetail;
             }
@@ -123,7 +123,7 @@ public class HearingService {
             return null;
         }
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                 .toLocalDate();
     }
 
@@ -148,7 +148,7 @@ public class HearingService {
                 return;
             }
             Hearing hearing = hearings.get(0);
-            hearing.setHearingSummary(compileOrderText(order.getItemText()));
+            hearing.setHearingSummary(hearing.getHearingSummary() == null ? compileOrderText(order.getItemText()) : hearing.getHearingSummary());
             hearing.setNextHearingDate(order.getNextHearingDate());
             processAndUpdateHearings(hearing, requestInfo);
         } catch (Exception e) {

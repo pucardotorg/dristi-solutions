@@ -86,4 +86,7 @@ public class TransformerProperties {
     @Value("${egov.individual.search.path}")
     private String individualSearchPath;
 
+    @Value("${app.zone.id}")
+    private String applicationZoneId;
+
 }
