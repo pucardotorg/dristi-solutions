@@ -613,6 +613,7 @@ const TasksComponent = ({
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
+      const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = {
@@ -622,6 +623,7 @@ const TasksComponent = ({
         filingNumber,
         caseTitle,
         ...(applicationType && { applicationType }),
+        courtId,
       };
       const orderItemId = data?.fields?.find((field) => field?.key === "additionalDetails.orderItemId")?.value;
       const partyType = data?.fields?.find((field) => field?.key === "additionalDetails.partyType")?.value;

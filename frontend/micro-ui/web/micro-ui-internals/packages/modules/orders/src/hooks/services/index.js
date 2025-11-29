@@ -217,6 +217,25 @@ export const orderManagementService = {
     }),
 };
 
+export const digitalizationService = {
+  getDigitalizedDocumentsToSign: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.getDigitalizedDocumentsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedDigitalizedDocuments: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.updateSignedDigitalizedDocuments,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};
+
 export const processManagementService = {
   getProcessToSign: (data, params) =>
     Request({

@@ -2,9 +2,9 @@ import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egover
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { bulkESignOrderConfig } from "../../configs/BulkSignConfig";
+import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { orderManagementService, ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import { digitalizationService, ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
@@ -30,7 +30,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkSignFormView() {
+function BulkSignDigitalizationView() {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
@@ -173,27 +173,27 @@ function BulkSignFormView() {
     };
 
     return {
-      ...bulkESignOrderConfig,
+      ...bulkSignFormsConfig,
       apiDetails: {
-        ...bulkESignOrderConfig.apiDetails,
+        ...bulkSignFormsConfig.apiDetails,
         requestBody: {
-          ...bulkESignOrderConfig.apiDetails.requestBody,
+          ...bulkSignFormsConfig.apiDetails.requestBody,
           inbox: {
-            ...bulkESignOrderConfig.apiDetails.requestBody.inbox,
+            ...bulkSignFormsConfig.apiDetails.requestBody.inbox,
             moduleSearchCriteria: {
-              ...bulkESignOrderConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+              ...bulkSignFormsConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
               ...(courtId && { courtId }),
             },
           },
         },
       },
       sections: {
-        ...bulkESignOrderConfig.sections,
+        ...bulkSignFormsConfig.sections,
         searchResult: {
-          ...bulkESignOrderConfig.sections.searchResult,
+          ...bulkSignFormsConfig.sections.searchResult,
           uiConfig: {
-            ...bulkESignOrderConfig.sections.searchResult.uiConfig,
-            columns: bulkESignOrderConfig.sections.searchResult.uiConfig.columns.map((column) => {
+            ...bulkSignFormsConfig.sections.searchResult.uiConfig,
+            columns: bulkSignFormsConfig.sections.searchResult.uiConfig.columns.map((column) => {
               return column.label === "SELECT"
                 ? {
                     ...column,
@@ -235,7 +235,7 @@ function BulkSignFormView() {
         }),
         ...(courtId && { courtId }),
       };
-      await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
+      await HomeService.customApiService(bulkSignFormsConfig?.apiDetails?.serviceName, {
         inbox: {
           limit: form?.tableForm?.limit,
           offset: form?.tableForm?.offset,
@@ -342,14 +342,14 @@ function BulkSignFormView() {
         };
       });
     try {
-      const response = await orderManagementService.getOrdersToSign(
+      const response = await digitalizationService.getDigitalizedDocumentsToSign(
         {
           criteria: criteriaList,
         },
         {}
       );
       await fetchResponseFromXmlRequest(response?.orderList).then(async (responseArray) => {
-        const updateOrderResponse = await orderManagementService.updateSignedOrders(
+        const updateOrderResponse = await digitalizationService.updateSignedDigitalizedDocuments(
           {
             signedOrders: responseArray,
           },
@@ -392,7 +392,7 @@ function BulkSignFormView() {
           {hasOrderEsignAccess && (
             <div className="bulk-submit-bar">
               <SubmitBar
-                label={t("SIGN_SELECTED_FORMS")}
+                label={t("SIGN_SELECTED_DIGITALIZATION_FORMS")}
                 submit="submit"
                 disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
                 onSubmit={() => setShowBulkSignConfirmModal(true)}
@@ -450,4 +450,4 @@ function BulkSignFormView() {
   );
 }
 
-export default BulkSignFormView;
+export default BulkSignDigitalizationView;

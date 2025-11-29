@@ -864,6 +864,20 @@ export const configsOrderTranferToADR = [
         },
       },
       {
+        type: "date",
+        label: "DATE_OF_HEARING",
+        key: "hearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "customDate",
+        labelChildren: "OutlinedInfoIcon",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "hearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
         label: "MEDIATION_CENTRE",
         isMandatory: true,
         key: "mediationCentre",

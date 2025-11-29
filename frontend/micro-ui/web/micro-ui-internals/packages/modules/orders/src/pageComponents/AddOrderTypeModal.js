@@ -359,7 +359,7 @@ const AddOrderTypeModal = ({
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,
                     body: conf?.body?.map((field) => {
-                      if (["mediationCentre", "mediationNote", "modeOfSigning"]?.includes(field?.key)) {
+                      if (["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"]?.includes(field?.key)) {
                         return {
                           ...field,
                           populators: {

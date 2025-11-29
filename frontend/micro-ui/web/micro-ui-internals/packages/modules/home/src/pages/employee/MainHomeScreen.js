@@ -24,7 +24,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
-import BulkSignFormView from "./BulkSignFormView";
+import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -1177,7 +1177,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
-            <BulkSignFormView />
+            <BulkSignDigitalizationView />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

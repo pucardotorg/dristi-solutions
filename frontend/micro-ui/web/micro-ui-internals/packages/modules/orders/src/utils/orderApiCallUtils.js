@@ -24,38 +24,8 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (
-  t,
-  order,
-  action,
-  tenantId,
-  applicationTypeConfigUpdated,
-  configKeys,
-  caseDetails,
-  allParties,
-  isHearingPresent,
-  hearingDetails,
-  skipScheduling,
-  currentOrder
-) => {
+export const addOrderItem = async (t, order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties, currentOrder) => {
   const compositeItems = [];
-  let hearingDate;
-  const scheduleHearingOrderItem = order?.compositeItems?.find(
-    (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
-  );
-  const rescheduleHearingItem = order?.compositeItems?.find(
-    (item) =>
-      item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(item?.orderType)
-  );
-  if (scheduleHearingOrderItem) {
-    hearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
-  } else if (rescheduleHearingItem) {
-    hearingDate = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-  } else if (isHearingPresent) {
-    hearingDate = formatDate(new Date(hearingDetails?.startTime));
-  } else if (order?.nextHearingDate && !skipScheduling) {
-    hearingDate = formatDate(new Date(order?.nextHearingDate));
-  }
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
     try {
@@ -96,7 +66,7 @@ export const addOrderItem = async (
       caseDetails?.filingNumber;
 
     const oldItem = currentOrder?.compositeItems?.find((compItem) => compItem?.id === item?.id);
-    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, { ...orderSchema?.orderDetails, parties, hearingDate });
+    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, { ...orderSchema?.orderDetails, parties });
     const orderSchemaUpdated = {
       ...orderSchema,
       orderDetails: {
@@ -105,9 +75,8 @@ export const addOrderItem = async (
         caseNumber: caseNumber,
         ...(actionResponse && { action: actionResponse }),
         ...(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code === "REFERRAL_CASE_TO_ADR" && {
-          filingDate: caseDetails?.filingDate,
-          stage: caseDetails?.stage,
-          hearingDate: hearingDate,
+          dateOfInstitution: caseDetails?.filingDate,
+          caseStage: caseDetails?.stage,
           caseId: caseDetails?.id,
           isMediationChanged: isMediationChanged,
         }),

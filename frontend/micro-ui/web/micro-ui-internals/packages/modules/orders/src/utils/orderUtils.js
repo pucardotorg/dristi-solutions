@@ -154,6 +154,8 @@ export const channelTypeEnum = {
 };
 
 export const getMediationChangedFlag = (orderDetails, newOrderDetails) => {
+  if (!orderDetails) return true;
+
   const keysToCheck = ["adrMode", "parties", "hearingDate", "modeOfSigning", "mediationCentre"];
 
   let isMediationChanged = false;
@@ -215,6 +217,7 @@ export const getParties = (type, orderSchema, allParties) => {
       partyName: party.name,
       partyType: party?.partyType,
       partyIndex: index,
+      poaUuid: party?.poaUuid,
       userUuid: party?.partyUuid,
       mobileNumber: party?.mobileNumber,
     }));

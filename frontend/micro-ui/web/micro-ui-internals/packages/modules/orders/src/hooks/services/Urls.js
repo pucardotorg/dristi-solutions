@@ -37,6 +37,10 @@ export const Urls = {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
+  digitalizationService: {
+    getDigitalizedDocumentsToSign: "/digitalization/v1/_getDigitalizedDocumentsToSign",
+    updateSignedDigitalizedDocuments: "/digitalization/v1/_updateSignedDigitalizedDocuments",
+  },
   processManagement: {
     getProcessToSign: "/task/v1/_getTasksToSign",
     updateSignedProcess: "/task/v1/_updateSignedTasks",

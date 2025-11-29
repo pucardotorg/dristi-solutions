@@ -762,6 +762,9 @@ const GenerateOrdersV2 = () => {
             (obj) => obj?.data?.complainantVerification?.individualDetails?.individualId === item?.individualId
           )?.data?.complainantVerification?.mobileNumber;
           const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          const complainantPoaHolder = caseDetails?.poaHolders?.find((poa) =>
+            poa?.representingLitigants?.some((lit) => lit?.individualId === item?.individualId)
+          );
           if (poaHolder) {
             return {
               code: fullName,
@@ -780,6 +783,7 @@ const GenerateOrdersV2 = () => {
             name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             mobileNumber,
+            poaUuid: complainantPoaHolder?.additionalDetails?.uuid,
             partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
@@ -825,11 +829,15 @@ const GenerateOrdersV2 = () => {
           const userResult = await Digit.UserService.userSearch(tenantId, { uuid: [item?.additionalDetails?.uuid] }, {});
           const userData = userResult?.user?.[0];
 
+          const respondentPoaHolder = caseDetails?.poaHolders?.find((poa) =>
+            poa?.representingLitigants?.some((lit) => lit?.individualId === item?.individualId)
+          );
           return {
             code: fullName,
             name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             mobileNumber: userData?.mobileNumber,
+            poaUuid: respondentPoaHolder?.additionalDetails?.uuid,
             partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
@@ -2187,6 +2195,28 @@ const GenerateOrdersV2 = () => {
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
+      if (currentOrderType === "REFERRAL_CASE_TO_ADR") {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) =>
+            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.hearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.hearingDate = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+        } else if (isHearingScheduled || isHearingInPassedOver) {
+          updatedFormdata.hearingDate = formatDate(new Date(hearingDetails?.startTime));
+        } else if (currentOrder?.nextHearingDate && !skipScheduling) {
+          updatedFormdata.hearingDate = formatDate(new Date(currentOrder?.nextHearingDate));
+        } else if (!currentOrder?.nextHearingDate && skipScheduling) {
+          // make sure to clear the previously set next hearing date in case of skipScheduling
+          updatedFormdata.hearingDate = "";
+        }
+        setValueRef?.current?.[index]?.("hearingDate", updatedFormdata.hearingDate);
+      }
       if (
         [
           "RESCHEDULE_OF_HEARING_DATE",
@@ -2889,13 +2919,7 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
-      let hearingDate = null;
-      if (isHearingScheduled || isHearingInPassedOver) {
-        hearingDate = formatDate(new Date(hearingDetails?.startTime));
-      } else if (order?.nextHearingDate && !skipScheduling) {
-        hearingDate = formatDate(new Date(order?.nextHearingDate));
-      }
-      const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties, hearingDate });
+      const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties });
 
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
@@ -2911,9 +2935,8 @@ const GenerateOrdersV2 = () => {
           caseNumber: caseNumber,
           ...(actionResponse && { action: actionResponse }),
           ...(order?.orderType === "REFERRAL_CASE_TO_ADR" && {
-            filingDate: caseDetails?.filingDate,
-            stage: caseDetails?.stage,
-            hearingDate: hearingDate,
+            dateOfInstitution: caseDetails?.filingDate,
+            caseStage: caseDetails?.stage,
             caseId: caseDetails?.id,
             isMediationChanged: isMediationChanged,
           }),
@@ -3012,9 +3035,6 @@ const GenerateOrdersV2 = () => {
             configKeys,
             caseDetails,
             allParties,
-            isHearingScheduled || isHearingInPassedOver,
-            hearingDetails,
-            skipScheduling,
             currentOrder
           );
         } else {
@@ -3041,9 +3061,6 @@ const GenerateOrdersV2 = () => {
               configKeys,
               caseDetails,
               allParties,
-              isHearingScheduled || isHearingInPassedOver,
-              hearingDetails,
-              skipScheduling,
               currentOrder
             );
           }
@@ -3135,7 +3152,7 @@ const GenerateOrdersV2 = () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false;
     if (skipScheduling && (currentInProgressHearing || currentOrder?.hearingNumber)) {
-      const hearingDateKeys = new Set(["nextHearingDate", "dateForHearing", "dateOfHearing"]);
+      const hearingDateKeys = new Set(["nextHearingDate", "dateForHearing", "dateOfHearing", "hearingDate"]);
       const dynamicDateErrors = [];
 
       const getIsEnabled = (item) => (currentOrder?.orderCategory === "INTERMEDIATE" ? true : item?.isEnabled);
@@ -3348,6 +3365,21 @@ const GenerateOrdersV2 = () => {
           setShowsignatureModal(false);
           hasError = true;
           break;
+        }
+
+        if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
+          const hearingDate = formData?.dateOfHearing || formData?.dateForHearing || formData?.hearingDate;
+          if (currentOrder?.nextHearingDate && hearingDate) {
+            const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+            if (dateChanged) {
+              setShowErrorToast({
+                label: t("DATE_MISTATCHED_FOR_HEARING_IN_ORDER"),
+                error: true,
+              });
+              hasError = true;
+              break;
+            }
+          }
         }
       }
     }
