@@ -52,6 +52,9 @@ function groupOrdersByParty(filteredOrders) {
     if (!Array?.isArray(parties) || parties?.length === 0) return;
 
     parties.forEach((party) => {
+      const uniqueId = party?.data?.uniqueId;
+      if (!uniqueId) return;
+
       const partyName = getFormattedName(
         party?.data?.firstName || party?.data?.respondentFirstName,
         party?.data?.middleName || party?.data?.respondentMiddleName,
@@ -59,8 +62,6 @@ function groupOrdersByParty(filteredOrders) {
         party?.data?.witnessDesignation,
         null
       );
-
-      if (!partyName) return;
 
       let partyType = (party?.data?.partyType || "").toLowerCase();
 
@@ -72,11 +73,11 @@ function groupOrdersByParty(filteredOrders) {
         partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
       }
 
-      if (!accusedWiseOrdersMap?.has(partyName)) {
-        accusedWiseOrdersMap?.set(partyName, { partyType, partyName, ordersList: [] });
+      if (!accusedWiseOrdersMap?.has(uniqueId)) {
+        accusedWiseOrdersMap?.set(uniqueId, { partyType, partyName, uniqueId, ordersList: [], order });
       }
 
-      accusedWiseOrdersMap?.get(partyName)?.ordersList?.push(order);
+      accusedWiseOrdersMap?.get(uniqueId)?.ordersList?.push(order);
     });
   });
 
@@ -106,8 +107,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
-  const [partyName, setPartyName] = useState(null);
-  const [partyType, setPartyType] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -115,6 +114,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [orderList, setOrderList] = useState([]);
   const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
   const [hasPendingTasks, setHasPendingTasks] = useState(true);
+  const [partyUniqueId, setPartyUniqueId] = useState("");
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -216,8 +216,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
-    setPartyName(removeAccusedSuffix(orderListFiltered?.[0]?.partyName));
-    setPartyType(orderListFiltered?.[0]?.partyType);
+    setPartyUniqueId(orderListFiltered?.[0]?.uniqueId);
   }, [orderListFiltered]);
 
   const [currentHearingNumber, setCurrentHearingNumber] = useState(hearingDetails?.hearingId);
@@ -267,10 +266,9 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       orderType,
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
-      partyName,
-      partyType,
+      partyUniqueId,
     });
-  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
+  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyUniqueId]);
 
   const CloseButton = (props) => {
     return (
@@ -331,8 +329,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
-              setPartyName(removeAccusedSuffix(item?.partyName));
-              setPartyType(item?.partyType);
+              setPartyUniqueId(item?.uniqueId);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);
