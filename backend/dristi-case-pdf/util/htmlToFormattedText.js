@@ -591,6 +591,7 @@ function htmlToFormattedText(input) {
   if (!isHtml) return cleanUnsupportedChars(input);
 
   let cleanHtml = DOMPurify.sanitize(input);
+  cleanHtml = cleanHtml.replace(/&nbsp;/g, " ").replace(/\u00A0/g, " ");
 
   cleanHtml = cleanHtml.replace(/style="([^"]*)"/gi, (m, p1) => {
     const filtered = stripFontStyles(p1);
