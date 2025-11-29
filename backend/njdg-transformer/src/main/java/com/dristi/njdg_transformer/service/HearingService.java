@@ -8,10 +8,14 @@ import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
 import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
 import com.dristi.njdg_transformer.model.order.Order;
+import com.dristi.njdg_transformer.model.order.OrderCriteria;
+import com.dristi.njdg_transformer.model.order.OrderListResponse;
+import com.dristi.njdg_transformer.model.order.OrderSearchRequest;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.utils.HearingUtil;
+import com.dristi.njdg_transformer.utils.OrderUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -23,8 +27,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLETED;
-import static com.dristi.njdg_transformer.config.ServiceConstants.JUDGE_DESIGNATION;
+import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -36,6 +39,7 @@ public class HearingService {
     private final Producer producer;
     private final CaseRepository caseRepository;
     private final HearingUtil hearingUtil;
+    private final OrderUtil orderUtil;
 
     public HearingDetails processAndUpdateHearings(Hearing hearing, RequestInfo requestInfo) {
         String cino = hearing.getCnrNumbers().get(0);
@@ -65,7 +69,7 @@ public class HearingService {
                 .srNo(nextSrNo)
                 .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
-                .nextDate(hearing.getNextHearingDate() != null ? formatDate(hearing.getNextHearingDate()) : null) // Set next date from scheduled hearing or null
+                .nextDate(hearing.getNextHearingDate() != null ? formatDate(hearing.getNextHearingDate()) : getNextDateFromOrder(hearing, requestInfo)) // Set next date from scheduled hearing or null
                 .purposeOfListing(getPurposeOfListingValue(hearing))
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode().toString() : "")
                 .joCode(judgeDetails != null ? judgeDetails.getJocode() : "")
@@ -73,7 +77,7 @@ public class HearingService {
                 .hearingId(hearing.getHearingId())
                 .business(hearing.getHearingSummary())
                 .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : 0)
-                .nextPurpose(hearing.getNextPurpose() != null ? getPurposeOfListingValue(Hearing.builder().hearingType(hearing.getNextPurpose()).build()) : null)
+                .nextPurpose(hearing.getNextPurpose() != null ? getPurposeOfListingValue(Hearing.builder().hearingType(hearing.getNextPurpose()).build()) : getNextPurposeFromOrder(hearing, requestInfo))
                 .build();
 
         updatePreviousHearingDetails(newHearingDetail);
@@ -82,6 +86,76 @@ public class HearingService {
         log.info("Added new hearing detail with hearingId {} for CINO {}", hearing.getHearingId(), cino);
         return newHearingDetail;
     }
+
+    private LocalDate getNextDateFromOrder(Hearing hearing, RequestInfo requestInfo) {
+
+        if (hearing == null || hearing.getHearingId() == null) {
+            return null;
+        }
+        if (requestInfo == null) {
+            return null;
+        }
+
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .criteria(
+                        OrderCriteria.builder()
+                                .hearingNumber(hearing.getHearingId())
+                                .status(PUBLISHED_ORDER)
+                                .build()
+                )
+                .requestInfo(requestInfo)
+                .build();
+
+        OrderListResponse orderListResponse = orderUtil.getOrders(orderSearchRequest);
+        if (orderListResponse == null || orderListResponse.getList() == null || orderListResponse.getList().isEmpty()) {
+            return null;
+        }
+        Order firstOrder = orderListResponse.getList().get(0);
+        if (firstOrder == null || firstOrder.getNextHearingDate() == null) {
+            return null;
+        }
+        try {
+            return formatDate(firstOrder.getNextHearingDate());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getNextPurposeFromOrder(Hearing hearing, RequestInfo requestInfo) {
+
+        if (hearing == null || hearing.getHearingId() == null) {
+            return null;
+        }
+        if (requestInfo == null) {
+            return null;
+        }
+
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .criteria(
+                        OrderCriteria.builder()
+                                .hearingNumber(hearing.getHearingId())
+                                .status(PUBLISHED_ORDER)
+                                .build()
+                )
+                .requestInfo(requestInfo)
+                .build();
+
+        OrderListResponse orderListResponse = orderUtil.getOrders(orderSearchRequest);
+        if (orderListResponse == null || orderListResponse.getList() == null || orderListResponse.getList().isEmpty()) {
+            return null;
+        }
+        Order firstOrder = orderListResponse.getList().get(0);
+        if (firstOrder == null || firstOrder.getPurposeOfNextHearing() == null) {
+            return null;
+        }
+        try {
+            return getPurposeOfListingValue(Hearing.builder().hearingType(firstOrder.getPurposeOfNextHearing()).build());
+        } catch (Exception e) {
+            log.warn("Error getting next purpose from order for hearingId: {} | error: {}", hearing.getHearingId(), e.getMessage());
+            return null;
+        }
+    }
+
 
     private void updatePreviousHearingDetails(HearingDetails newHearingDetail) {
         List<HearingDetails> hearingDetails = hearingRepository.getHearingDetailsByCino(newHearingDetail.getCino());

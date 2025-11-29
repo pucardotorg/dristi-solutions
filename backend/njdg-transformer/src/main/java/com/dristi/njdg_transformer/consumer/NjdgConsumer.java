@@ -379,4 +379,5 @@ public class NjdgConsumer {
             return 0; // Default value for invalid format
         }
     }
+    //todo: add consumer to persist case type details
 }
