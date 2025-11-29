@@ -144,10 +144,14 @@ public class TaskQueryBuilder {
 
         if (partyType != null && !partyType.trim().isEmpty() && partyName != null && !partyName.trim().isEmpty()) {
             if ("respondent".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
+                partyCondition =
+                        "task.taskdetails->>'respondentDetails' IS NOT NULL AND " +
+                                "trim(regexp_replace(task.taskdetails->'respondentDetails'->>'name', '\\s+', ' ', 'g')) = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
-            }  else {
+                partyCondition =
+                        "task.taskdetails->>'witnessDetails' IS NOT NULL AND " +
+                                "trim(regexp_replace(task.taskdetails->'witnessDetails'->>'name', '\\s+', ' ', 'g')) = ?";
+            } else {
                 log.warn("Unrecognized partyType value: {}. Filter will be ignored.", partyType);
             }
         }
