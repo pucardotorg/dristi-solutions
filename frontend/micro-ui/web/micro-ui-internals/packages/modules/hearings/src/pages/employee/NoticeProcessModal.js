@@ -115,6 +115,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
   const [hasPendingTasks, setHasPendingTasks] = useState(true);
   const [partyUniqueId, setPartyUniqueId] = useState("");
+  const [partyType, setPartyType] = useState(null);
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -217,6 +218,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
     setPartyUniqueId(orderListFiltered?.[0]?.uniqueId);
+    setPartyType(orderListFiltered?.[0]?.partyType);
   }, [orderListFiltered]);
 
   const [currentHearingNumber, setCurrentHearingNumber] = useState(hearingDetails?.hearingId);
@@ -267,6 +269,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
       partyUniqueId,
+      partyType,
     });
   }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyUniqueId]);
 
@@ -329,6 +332,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
+              setPartyType(item?.partyType);
               setPartyUniqueId(item?.uniqueId);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);

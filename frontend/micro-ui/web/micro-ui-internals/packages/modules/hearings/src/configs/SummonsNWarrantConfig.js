@@ -12,7 +12,7 @@ const _getPartyType = (orderType, partyType) => {
   return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
 };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId }) => {
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId, partyType }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -29,7 +29,8 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           tenantId: Digit.ULBService.getCurrentTenantId(),
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
-          uniqueId: partyUniqueId,
+          partyType: _getPartyType(orderType, partyType),
+          partyUniqueId: partyUniqueId,
         },
       },
       masterName: "commonUiConfig",
