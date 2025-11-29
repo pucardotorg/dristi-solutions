@@ -134,6 +134,9 @@ public class Hearing {
     @JsonProperty("nextDate")
     private Long nextHearingDate = null;
 
+    @JsonProperty("nextPurpose")
+    private String nextPurpose = null;
+
 
     public Hearing addFilingNumberItem(String filingNumberItem) {
         this.filingNumber.add(filingNumberItem);

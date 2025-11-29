@@ -52,4 +52,7 @@ public class HearingDetails {
 
     @JsonProperty("court_no")
     private Integer courtNo;
+
+    @JsonProperty("nextPurpose")
+    private String nextPurpose;
 }

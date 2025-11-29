@@ -73,6 +73,7 @@ public class HearingService {
                 .hearingId(hearing.getHearingId())
                 .business(hearing.getHearingSummary())
                 .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : 0)
+                .nextPurpose(hearing.getNextPurpose() != null ? getPurposeOfListingValue(Hearing.builder().hearingType(hearing.getNextPurpose()).build()) : null)
                 .build();
 
         updatePreviousHearingDetails(newHearingDetail);
@@ -150,6 +151,7 @@ public class HearingService {
             Hearing hearing = hearings.get(0);
             hearing.setHearingSummary(hearing.getHearingSummary() == null ? compileOrderText(order.getItemText()) : hearing.getHearingSummary());
             hearing.setNextHearingDate(order.getNextHearingDate());
+            hearing.setNextPurpose(order.getPurposeOfNextHearing());
             processAndUpdateHearings(hearing, requestInfo);
         } catch (Exception e) {
             log.error("Error processing business order for hearingId: {}", order.getHearingNumber(), e);

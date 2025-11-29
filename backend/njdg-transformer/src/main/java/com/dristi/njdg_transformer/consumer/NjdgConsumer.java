@@ -165,7 +165,7 @@ public class NjdgConsumer {
         NJDGTransformRecord existingRecord = caseRepository.findByCino(cino);
         if (existingRecord != null) {
             existingRecord.setDateFirstList(hearingDetails.getSrNo() == 1 ? hearingDetails.getHearingDate() : existingRecord.getDateFirstList());
-            existingRecord.setDateNextList(hearingDetails.getHearingDate());
+            existingRecord.setDateNextList(hearingDetails.getNextDate() != null ? hearingDetails.getNextDate() : hearingDetails.getHearingDate());
             existingRecord.setDateLastList(hearingDetails.getHearingDate());
             existingRecord.setPurposeCode(getPurposeValue(hearingDetails.getPurposeOfListing()));
 
@@ -193,17 +193,7 @@ public class NjdgConsumer {
                     existingRecord.setPurposePrevious(0); // Default value when no previous hearing
                     log.info("Set purpose_previous to default 0 (no previous hearing) | CINO: {}", cino);
                 }
-
-                // Set purpose_next (next hearing's purpose)
-                if (currentIndex >= 0 && currentIndex < hearingDetailsList.size() - 1) {
-                    HearingDetails nextHearing = hearingDetailsList.get(currentIndex + 1);
-                    Integer purposeNext = getPurposeValue(nextHearing.getPurposeOfListing());
-                    existingRecord.setPurposeNext(purposeNext);
-                    log.info("Set purpose_next: {} | CINO: {}", purposeNext, cino);
-                } else {
-                    existingRecord.setPurposeNext(getPurposeValue(hearingDetails.getPurposeOfListing())); // Default value when no next hearing
-                    log.info("Set purpose_next to default (no next hearing) | CINO: {}", cino);
-                }
+                existingRecord.setPurposeNext(hearingDetails.getNextPurpose() != null ? getPurposeValue(hearingDetails.getNextPurpose()) : getPurposeValue(hearingDetails.getPurposeOfListing()));
             }
             caseRepository.updateRecord(existingRecord);
             log.info("Updated case record with hearing info | CINO: {}", cino);
