@@ -146,11 +146,11 @@ public class TaskQueryBuilder {
             if ("respondent".equalsIgnoreCase(partyType)) {
                 partyCondition =
                         "task.taskdetails->>'respondentDetails' IS NOT NULL " +
-                                "AND regexp_replace(task.taskdetails->'respondentDetails'->>'name', '\\s+', '', 'g') = ?";
+                                "AND LOWER(regexp_replace(task.taskdetails->'respondentDetails'->>'name', '\\s+', '', 'g')) = LOWER(?)";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition =
                         "task.taskdetails->>'witnessDetails' IS NOT NULL " +
-                                "AND regexp_replace(task.taskdetails->'witnessDetails'->>'name', '\\s+', '', 'g') = ?";
+                                "AND LOWER(regexp_replace(task.taskdetails->'witnessDetails'->>'name', '\\s+', '', 'g')) = LOWER(?)";
             } else {
                 log.warn("Unrecognized partyType value: {}. Filter will be ignored.", partyType);
             }
