@@ -130,14 +130,20 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())){
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()) || (COMPLETED.equalsIgnoreCase(application.getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(application.getApplicationType()))) {
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
                 String applicationType = application.getApplicationType();
 
-                getSmsAfterPayment(applicationRequest,applicationType);
-                smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
+                try{
+                    log.info("Sending SMS for application [{}]", application.getApplicationNumber());
+                    getSmsAfterPayment(applicationRequest, applicationType);
+                    smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType, false);
+                    log.info("SMS sent for application [{}]", application.getApplicationNumber());
+                } catch (Exception e) {
+                    log.error("Error while sending SMS for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);
+                }
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {
@@ -146,7 +152,7 @@ public class PaymentUpdateService {
     }
 
     private void getSmsAfterPayment(ApplicationRequest applicationRequest,String applicationType) throws JsonProcessingException {
-        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication().getFilingNumber());
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
         Object additionalDetailsObject = applicationRequest.getApplication().getAdditionalDetails();
@@ -178,11 +184,14 @@ public class PaymentUpdateService {
         }
     }
 
-    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Application application) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
-        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
+        if(APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS.equalsIgnoreCase(application.getApplicationType())) {
+            caseSearchRequest.setFlow(FLOW_JAC);
+        }
         return caseSearchRequest;
     }
 

@@ -1,0 +1,352 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Order",
+  "masterName": "warrantSubType",
+  "mdmsPayload": [
+    {
+      "id": "4eafbc5c-cb13-4444-9a84-aa990513529d",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000035",
+      "data": {
+        "code": "2000035",
+        "subType": "Warrant or commitment of the surety of an accused person admitted to bail",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "0d0ec4f0-5353-494c-9bed-2b90c6db53d3",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000034",
+      "data": {
+        "code": "2000034",
+        "subType": "Warrant of attachment against a surety",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "a9c5762e-2487-4625-ab2f-67832d77a414",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000031",
+      "data": {
+        "code": "2000031",
+        "subType": "Warrant of attachment to enforce bond",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "38085b19-4362-476b-9f2f-f766ffd86cdb",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000030",
+      "data": {
+        "code": "2000030",
+        "subType": "Warrant to discharge a person imprisoned on failure to give security",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "b9b16a28-d8a9-4489-91ca-273b66233740",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000029",
+      "data": {
+        "code": "2000029",
+        "subType": "Warrant for recovery of fine",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "8db49146-6e52-4c60-bbef-9d8babd4e16e",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000028",
+      "data": {
+        "code": "2000028",
+        "subType": "Warrant to levy a fine by attachment and sale",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "c4dd6fca-0d6b-4040-8847-09b7f5db0cd1",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000026",
+      "data": {
+        "code": "2000026",
+        "subType": "Magistrate's or judge's warrant of commitment of witness refusing to answer or to produce document",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "ba4bb437-c6fb-486f-b2c7-79413fc99a37",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000025",
+      "data": {
+        "code": "2000025",
+        "subType": "Warrant of commitment in certain cases of contempt when a fine is imposed",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "781ed119-01ff-49e7-8773-dcfa184050b3",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000023",
+      "data": {
+        "code": "2000023",
+        "subType": "Order requiring production in court of person in prison for answering to charge of offence",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "5313a6b4-c4b7-44bf-9e3e-746d179bd2d9",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000022",
+      "data": {
+        "code": "2000022",
+        "subType": "Warrant of imprisonment on failure to pay compensation",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "8bb5cb0c-0487-4138-9349-e25ca6c5f8dd",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000021",
+      "data": {
+        "code": "2000021",
+        "subType": "Warrant of commitment on a sentence of imprisonment or fine if passed by a court",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "aeb314f2-4ff1-4263-86f9-aa0b77e69912",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000014",
+      "data": {
+        "code": "2000014",
+        "subType": "Warrant to discharge a person imprisoned on failure to give security",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "318fa78f-da37-4c10-84ea-33f42b28e4fc",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000013",
+      "data": {
+        "code": "2000013",
+        "subType": "Warrant of commitment on failure to find security for good behavior",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "60f60801-3cd3-4975-9605-1246044aa89c",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000010",
+      "data": {
+        "code": "2000010",
+        "subType": "Warrant to search suspected place of deposit",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "d1d2ffa9-50bc-4e36-92c2-d69b2cead426",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200009",
+      "data": {
+        "code": "200009",
+        "subType": "Warrant to search after information of a particular offence",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "49adf2c9-1aa0-4dd0-8045-9c7d64034ad6",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200007",
+      "data": {
+        "code": "200007",
+        "subType": "Order authorising an attachment by the district magistrate or collector",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "ec5cf587-6cc5-42e6-878e-5d556ac57cf8",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200006",
+      "data": {
+        "code": "200006",
+        "subType": "Order of attachment to compel the appearance of a person accused",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "99bed0b0-83c1-4e5e-b658-b4f8eed53b70",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200005",
+      "data": {
+        "code": "200005",
+        "subType": "Order of attachment to compel the attendance of a witness",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "42f8d44a-9823-4e8c-80dd-c80500906ca1",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200004",
+      "data": {
+        "code": "200004",
+        "subType": "Proclamation requiring the attendance of a witness",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "debc02ed-8bda-40ad-bf46-b33a899368e4",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200003",
+      "data": {
+        "code": "200003",
+        "subType": "Proclamation requiring the apperance of a person accused",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "f1e33994-8abb-40bf-b25e-6e52f648df52",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000024",
+      "data": {
+        "code": "2000024",
+        "subType": "Other",
+        "belowOthers": "OTHER",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "e166473a-8e4a-49e5-9f0e-e7f78da1ce30",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "200008",
+      "data": {
+        "code": "200008",
+        "subType": "Warrant in the first instance to bring up a witness",
+        "belowOthers": "YES",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "GENERIC"
+      },
+      "isActive": true
+    },
+    {
+      "id": "a3fc1c1a-da46-416b-8631-3f99cac5dbd5",
+      "tenantId": "kl",
+      "schemaCode": "Order.warrantSubType",
+      "uniqueIdentifier": "2000042",
+      "data": {
+        "code": "2000042",
+        "subType": "Warrent of arrest of accused 138",
+        "belowOthers": "NO",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "templateType": "SPECIFIC"
+      },
+      "isActive": true
+    }
+  ]
+}

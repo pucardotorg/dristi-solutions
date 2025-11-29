@@ -61,6 +61,7 @@ class CaseRowMapperTest {
         when(rs.getString("status")).thenReturn("status1");
         when(rs.getString("remarks")).thenReturn("remarks");
         when(rs.getString("outcome")).thenReturn("outcome");
+        when(rs.getString("natureofdisposal")).thenReturn("DISMISSED");
 
         when(rs.getLong("lastmodifiedtime")).thenReturn(123456789L);
         when(rs.getString("createdby")).thenReturn("user1");

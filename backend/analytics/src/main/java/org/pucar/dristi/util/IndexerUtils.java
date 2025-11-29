@@ -17,7 +17,11 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
+import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.taskManagement.TaskManagement;
+import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
+import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -67,9 +71,15 @@ public class IndexerUtils {
 
     private final Clock clock;
 
+    private final UserService userService;
+
+    private final JsonUtil jsonUtil;
+
+    private final TaskManagementUtil taskManagementUtil;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -83,6 +93,9 @@ public class IndexerUtils {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.clock = clock;
+        this.userService = userService;
+        this.jsonUtil = jsonUtil;
+        this.taskManagementUtil = taskManagementUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -163,6 +176,61 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
+        String caseNumber = filingNumber;
+        String actionCategory = pendingTask.getActionCategory();
+        Long filingDate = pendingTask.getFilingDate();
+        String sectionAndSubSection = pendingTask.getSectionAndSubSection();
+        String referenceEntityType = pendingTask.getReferenceEntityType();
+
+
+        String courtId = null;
+        String caseSubStage = null;
+        String advocateDetails = "{}";
+        String searchableFields = null;
+        if (filingNumber != null) {
+            JsonNode caseDetails = getCaseDetails(filingNumber);
+
+            courtId = caseDetails.get(0).path("courtId").textValue();
+
+            String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
+            String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+            caseSubStage = caseDetails.get(0).path("substage").textValue();
+
+            if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+                caseNumber = courtCaseNumber;
+            } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+                caseNumber = cmpNumber;
+            }
+
+            JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
+            List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+            });
+
+            AdvocateDetail advocate = getAdvocates(representatives);
+
+            try {
+                advocateDetails = mapper.writeValueAsString(advocate);
+            } catch (Exception e) {
+                log.error("Error while building advocate details json", e);
+                throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            }
+
+            List<String> searchableFieldsList = new ArrayList<>();
+            searchableFieldsList.add(filingNumber);
+            if (!filingNumber.equals(caseNumber)) {
+                searchableFieldsList.add(caseNumber);
+            }
+            searchableFieldsList.add(caseTitle);
+            searchableFieldsList.addAll(advocate.getAccused());
+            searchableFieldsList.addAll(advocate.getComplainant());
+
+            searchableFields = new JSONArray(searchableFieldsList).toString();
+
+        }
+
+        Long createdTime = clock.millis();
+
+        Long expiryTime = pendingTask.getExpiryDate();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -173,8 +241,28 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType
         );
+    }
+
+    private JsonNode getCaseDetails(String filingNumber) {
+        try {
+            RequestInfo requestInfo = createInternalRequestInfo();
+            requestInfo.getUserInfo().setType("EMPLOYEE");
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+            return caseUtil.searchCaseDetails(caseSearchRequest);
+        } catch (Exception e) {
+            log.error("Error occurred while getting case details for filingNumber :: {}", filingNumber);
+        }
+        return null;
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(config.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
     public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
@@ -189,9 +277,8 @@ public class IndexerUtils {
         Long businessServiceSla = businessServiceSlaObj != null ? ((Number) businessServiceSlaObj).longValue() : null;
         List<Object> assignedToList = JsonPath.read(jsonItem, ASSIGNES_PATH);
         List<String> assignedRoleList = JsonPath.read(jsonItem, ASSIGNED_ROLE_PATH);
-        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        List<Object> defaultRoles = null;
         String assignedTo = new JSONArray(assignedToList).toString();
-        String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
         boolean isCompleted;
@@ -213,6 +300,33 @@ public class IndexerUtils {
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
+        String actionCategory = details.get("actionCategory");
+        String referenceEntityType = details.get("referenceEntityType");
+        Long stateSlaFromMdms = details.get("stateSla") != null ? Long.parseLong(details.get("stateSla")) : null;
+        if (stateSlaFromMdms != null) {
+            stateSla = stateSlaFromMdms + clock.millis();
+        }
+
+        if (details.get("defaultRoles") != null && !details.get("defaultRoles").isEmpty()) {
+            String defaultRolesString = details.get("defaultRoles");
+            defaultRoles = new JSONArray(defaultRolesString).toList();
+
+            if (defaultRoles != null) {
+                for (Object roleObj : defaultRoles) {
+                    String role = String.valueOf(roleObj);
+                    assignedRoleList.add(role);
+                }
+            }
+        }
+        Set<String> assignedRoleSet = new HashSet<>(assignedRoleList);
+        String assignedRole = new JSONArray(assignedRoleSet).toString();
+
+        RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
+        Long createdTime = clock.millis();
+        Long filingDate = details.get("filingDate") != null ? Long.parseLong(details.get("filingDate")) : null;
+        String sectionAndSubSection = details.get("sectionAndSubSection");
+
+        JsonNode caseDetails = null;
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -221,15 +335,15 @@ public class IndexerUtils {
             assignedTo = assignToList.toString();
             Object dueDate = JsonPath.read(task.toString(), DUE_DATE_PATH);
             stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
-            assignedRole =  new JSONArray().toString();
+            assignedRole = new JSONArray().toString();
         }
-        if(!isCompleted) {
+        if (!isCompleted) {
             try {
                 if (actors.toLowerCase().contains(ADVOCATE) || actors.toLowerCase().contains(LITIGANT)) {
                     String jsonString = requestInfo.toString();
                     RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
-                    org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
-                    JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                    CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+                    caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                     JsonNode litigants = caseUtil.getLitigants(caseDetails);
                     Set<String> individualIds = caseUtil.getIndividualIds(litigants);
                     JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
@@ -243,7 +357,7 @@ public class IndexerUtils {
                         representativeIds = advocateUtil.getAdvocate(request, representativeIds.stream().toList());
                     }
                     individualIds.addAll(representativeIds);
-                    org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
+                    SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
                     List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                     for (String number : phonenumbers) {
                         notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
@@ -254,13 +368,66 @@ public class IndexerUtils {
                 log.error("Error occurred while sending notification: {}", e.toString());
             }
         }
+
+        log.info("case details :: {}, for filingNumber: {}", caseDetails, filingNumber);
+        String courtId = null;
+        String caseSubStage = null;
+        String advocateDetails = "{}";
+        String searchableFields = null;
+        String caseNumber = filingNumber;
+
+        if (caseDetails == null && filingNumber != null) {
+            requestInfo1.getUserInfo().setType("EMPLOYEE");
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber);
+            caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        }
+        if (caseDetails != null) {
+            courtId = caseDetails.get(0).path("courtId").textValue();
+
+            String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
+            String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+            caseSubStage = caseDetails.get(0).path("substage").textValue();
+
+            if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+                caseNumber = courtCaseNumber;
+            } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+                caseNumber = cmpNumber;
+            }
+
+            JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
+            List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+            });
+
+            AdvocateDetail advocate = getAdvocates(representatives);
+
+            try {
+                advocateDetails = mapper.writeValueAsString(advocate);
+            } catch (Exception e) {
+                log.error("Error while building advocate details json", e);
+                throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            }
+
+            List<String> searchableFieldsList = new ArrayList<>();
+            if (caseNumber != null && !Objects.equals(caseNumber, filingNumber)) {
+                searchableFieldsList.add(caseNumber);
+            }
+            searchableFieldsList.add(filingNumber);
+            searchableFieldsList.add(caseTitle);
+            searchableFieldsList.addAll(advocate.getAccused());
+            searchableFieldsList.addAll(advocate.getComplainant());
+
+             searchableFields = new JSONArray(searchableFieldsList).toString();
+            log.info("searchableFields: {}", searchableFields);
+
+        }
+
         Object additionalDetails;
         try {
             additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
-            if(additionalDetails!=null){
+            if (additionalDetails != null) {
                 additionalDetails = mapper.writeValueAsString(additionalDetails);
-            }else {
-                additionalDetails="{}";
+            } else {
+                additionalDetails = "{}";
             }
             JsonNode additonalDetailsJsonNode = mapper.readTree(additionalDetails.toString());
             if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
@@ -278,6 +445,29 @@ public class IndexerUtils {
                     assignedRole = new JSONArray(assignedRoleSet).toString();
                 }
             }
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has(EXCLUDED_ASSIGNED_UUIDS)) {
+                log.info("additional details contains uuid's to exclude");
+                JsonNode excludedAssignedUuids = additonalDetailsJsonNode.path(EXCLUDED_ASSIGNED_UUIDS);
+                if (excludedAssignedUuids.isArray()) {
+                    List<String> excludedAssignedUuidsList = new ArrayList<>();
+                    for (JsonNode node : excludedAssignedUuids) {
+                        excludedAssignedUuidsList.add(node.asText());
+                    }
+                    log.info("removing roles from assignedUuidList : {} ", excludedAssignedUuidsList);
+                    assignedToList = new ArrayList<>(assignedToList);
+                    assignedToList.removeIf(userObj -> {
+                        if (userObj instanceof Map) {
+                            Object uuidObj = ((Map<?, ?>) userObj).get("uuid");
+                            return excludedAssignedUuidsList.contains(String.valueOf(uuidObj));
+                        }
+                        return false; // If not a map, do not remove
+                    });
+                    assignedTo = new JSONArray(assignedToList).toString();
+                }
+            }
+            if(additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("dueDate")) {
+                stateSla = additonalDetailsJsonNode.get("dueDate").asLong();
+            }
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
@@ -285,76 +475,85 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType
         );
     }
 
-	public static List<String> extractIndividualIds(JsonNode rootNode) {
-		List<String> individualIds = new ArrayList<>();
 
-		JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-				.path("formdata");
-		if (complainantDetailsNode.isArray()) {
-			for (JsonNode complainantNode : complainantDetailsNode) {
-				JsonNode complainantVerificationNode = complainantNode.path("data")
-						.path("complainantVerification")
-						.path("individualDetails");
-				if (!complainantVerificationNode.isMissingNode()) {
-					String individualId = complainantVerificationNode.path("individualId").asText();
-					if (!individualId.isEmpty()) {
-						individualIds.add(individualId);
-					}
-				}
-			}
-		}
+    private AdvocateDetail getAdvocates(List<AdvocateMapping> representatives) {
 
-		JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-				.path("formdata");
-		if (advocateDetailsNode.isArray()) {
-			for (JsonNode advocateNode : advocateDetailsNode) {
-				JsonNode advocateListNode = advocateNode.path("data")
-						.path("advocateBarRegNumberWithName");
-				if (advocateListNode.isArray()) {
-					for (JsonNode advocateInfoNode : advocateListNode) {
-						String individualId = advocateInfoNode.path("individualId").asText();
-						if (!individualId.isEmpty()) {
-							individualIds.add(individualId);
-						}
-					}
-				}
-			}
-		}
+        List<String> complainantNames = new ArrayList<>();
+        List<String> accusedNames = new ArrayList<>();
 
-		return individualIds;
-	}
+        AdvocateDetail advocate = AdvocateDetail.builder().build();
+        advocate.setComplainant(complainantNames);
+        advocate.setAccused(accusedNames);
 
-	private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+        if (representatives != null) {
+            for (AdvocateMapping representative : representatives) {
+                if (representative != null && representative.getAdditionalDetails() != null) {
+                    Object additionalDetails = representative.getAdditionalDetails();
+                    String advocateName = jsonUtil.getNestedValue(additionalDetails, List.of("advocateName"), String.class);
+                    if (advocateName != null && !advocateName.isEmpty()) {
+                        List<Party> representingList = Optional.ofNullable(representative.getRepresenting())
+                                .orElse(Collections.emptyList());
+                        if (!representingList.isEmpty()) {
+                            Party first = representingList.get(0);
+                            if (first.getPartyType() != null && first.getPartyType().contains("complainant")) {
+                                complainantNames.add(advocateName);
+                            } else {
+                                accusedNames.add(advocateName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-		List<String> mobileNumber = new ArrayList<>();
-		for(String id : individualIds){
-			List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
-			if(individuals.get(0).getMobileNumber() != null){
-				mobileNumber.add(individuals.get(0).getMobileNumber());
-			}
-		}
-		return mobileNumber;
-	}
 
-	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
-		return SmsTemplateData.builder()
-				.cmpNumber(details.get("cmpNumber"))
+        return advocate;
+
+    }
+
+    private String getCourtId(String filingNumber, RequestInfo request) {
+        try {
+            request.getUserInfo().setType("EMPLOYEE");
+            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            return caseDetails.get(0).path("courtId").textValue();
+        } catch (Exception e) {
+            log.error("Error occurred while getting court id: {}", e.toString());
+        }
+        return null;
+
+    }
+
+    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+
+        List<String> mobileNumber = new ArrayList<>();
+        for (String id : individualIds) {
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if (individuals.get(0).getMobileNumber() != null) {
+                mobileNumber.add(individuals.get(0).getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
+
+    private SmsTemplateData enrichSmsTemplateData(Map<String, String> details, String tenantId) {
+        return SmsTemplateData.builder()
+                .cmpNumber(details.get("cmpNumber"))
                 .efilingNumber(details.get("filingNumber"))
                 .tenantId(tenantId).build();
-	}
+    }
 
-	public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
-		CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
-		caseSearchRequest.setRequestInfo(requestInfo);
-		CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
-		caseSearchRequest.addCriteriaItem(caseCriteria);
-		return caseSearchRequest;
-	}
-
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
 
 
     public Map<String, String> processEntity(String entityType, String referenceId, String status, String action, Object object, JSONObject requestInfo) {
@@ -364,9 +563,12 @@ public class IndexerUtils {
         boolean isCompleted = true;
         boolean isGeneric = false;
         String actors = null;
+        String actionCategory = null;
+        Long stateSla = null;
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
+        List<String> defaultRoles = null;
 
-        List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
+        List<PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
 
         // Determine name and isCompleted based on status and action
@@ -374,10 +576,13 @@ public class IndexerUtils {
             if (pendingTaskType.getState().equals(status) && pendingTaskType.getTriggerAction().contains(action)) {
                 name = pendingTaskType.getPendingTask();
                 screenType = pendingTaskType.getScreenType();
+                actionCategory = pendingTaskType.getActionCategory();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
                 referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
+                defaultRoles = pendingTaskType.getDefaultRoles();
+                stateSla = extractSlaFromMdms(pendingTaskType.getStateSla());
                 break;
             }
         }
@@ -393,16 +598,39 @@ public class IndexerUtils {
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
         // Update name based on referenceEntityType and referenceEntityTypeNameMapping
-        name = getUpdatedTaskName(entityDetails, referenceEntityTypeMappings, name);
+
+        Map<String, String> updatedTaskNameAndActionCategory = getUpdatedTaskNameAndActionCategory(entityDetails, referenceEntityTypeMappings);
+
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("name") != null) {
+            name = updatedTaskNameAndActionCategory.get("name");
+        }
+        if (updatedTaskNameAndActionCategory != null && updatedTaskNameAndActionCategory.get("actionCategory") != null) {
+            actionCategory = updatedTaskNameAndActionCategory.get("actionCategory");
+        }
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
+        caseDetails.put("actionCategory", actionCategory);
+        if (defaultRoles != null) {
+            caseDetails.put("defaultRoles", defaultRoles.toString());
+        }
         caseDetails.put("actors", actors);
+        if (stateSla != null) {
+            caseDetails.put("stateSla", String.valueOf(stateSla));
+        }
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
+    }
+
+    private Long extractSlaFromMdms(String stateSla) {
+        try {
+            return Long.parseLong(stateSla);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public Map<String, String> processEntityByType(String entityType, JSONObject request, String referenceId, Object object) {
@@ -421,6 +649,10 @@ public class IndexerUtils {
                 return processTaskEntity(request, referenceId);
             else if (config.getADiaryBusinessServiceList().contains(entityType))
                 return processADiaryEntity(request, referenceId);
+            else if (config.getBailBondBusinessServiceList().contains(entityType))
+                return processBailBondEntity(request, referenceId);
+            else if (config.getTaskManagementBusinessServiceList().contains(entityType))
+                return processTaskManagementEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -476,12 +708,17 @@ public class IndexerUtils {
 
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        Long caseFilingDate = JsonPath.read(caseObject.toString(), CASE_FILING_DATE_PATH);
+        // TODO: Get section and sub-section from case object
+        String sectionAndSubSection = config.getCaseSectionAndSubSection();
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
+        caseDetails.put("filingDate", String.valueOf(caseFilingDate));
+        caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
     }
@@ -525,6 +762,44 @@ public class IndexerUtils {
         return caseDetails;
     }
 
+    private Map<String, String> processTaskManagementEntity(JSONObject request, String referenceId) throws InterruptedException {
+        Map<String, String> caseDetails = new HashMap<>();
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+
+        TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
+                .tenantId(config.getStateLevelTenantId())
+                .taskManagementNumber(referenceId)
+                .build();
+
+        RequestInfo requestInfo = mapper.convertValue(request.get("RequestInfo"), RequestInfo.class);
+
+        TaskSearchRequest searchRequest = TaskSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(searchCriteria)
+                .build();
+        List<TaskManagement> taskManagementList = taskManagementUtil.searchTaskManagement(searchRequest);
+        if (taskManagementList.isEmpty()) {
+            log.error("Task management not found for reference id: " + referenceId);
+            return caseDetails;
+        }
+        TaskManagement taskManagement = taskManagementList.get(0);
+        String filingNumber = taskManagement.getFilingNumber();
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
+        caseDetails.put("cnrNumber", cnrNumber);
+        caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
+
+        return caseDetails;
+    }
+
+
     private Map<String, String> processADiaryEntity(JSONObject request, String referenceId) throws InterruptedException {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
@@ -546,12 +821,12 @@ public class IndexerUtils {
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+        caseDetails.put("referenceEntityType", applicationType);
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("referenceEntityType", applicationType);
 
         return caseDetails;
     }
@@ -571,6 +846,31 @@ public class IndexerUtils {
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
         return caseDetails;
+    }
+
+    private Map<String, String> processBailBondEntity(JSONObject request, String referenceId) throws InterruptedException {
+        Map<String, String> caseDetails = new HashMap<>();
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+        String filingNumber = extractFilingNumberFromReferenceId(referenceId);
+        log.info(filingNumber);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
+        caseDetails.put("cnrNumber", cnrNumber);
+        caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
+
+        return caseDetails;
+    }
+
+    private String extractFilingNumberFromReferenceId(String referenceId) {
+        String[] parts = referenceId.split("-");
+        return String.join("-", parts[0], parts[1], parts[2]);
     }
 
     public void esPost(String uri, String request) {
@@ -626,27 +926,31 @@ public class IndexerUtils {
         return stateSla;
     }
 
-    private String getUpdatedTaskName(Map<String, String> entityDetails,
-                                      List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings,
-                                      String currentName) {
+    private Map<String, String> getUpdatedTaskNameAndActionCategory(Map<String, String> entityDetails,
+                                                                    List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings) {
 
         if (referenceEntityTypeMappings == null || referenceEntityTypeMappings.isEmpty()
                 || entityDetails.isEmpty()
                 || entityDetails.get("referenceEntityType") == null
                 || !entityDetails.containsKey("referenceEntityType")) {
-            return currentName;
+            return null;
         }
 
         String applicationType = entityDetails.get("referenceEntityType");
 
+        Map<String, String> updatedTaskNameAndActionCategory = new HashMap<>();
+
         // Check if referenceEntityTypeMappings has any mappings
         for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
-            if (applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
-                return mapping.getPendingTaskName();
+            if (mapping.getPendingTaskName() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("name", mapping.getPendingTaskName());
+            }
+            if (mapping.getActionCategory() != null && applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                updatedTaskNameAndActionCategory.put("actionCategory", mapping.getActionCategory());
             }
         }
 
-        return currentName;
+        return updatedTaskNameAndActionCategory;
     }
 
 }

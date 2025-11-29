@@ -112,7 +112,7 @@ class ADiaryEnrichmentTest {
     @Test
     void testEnrichGenerateRequestForDiaryWithExistingDiary() {
         CaseDiary diary = new CaseDiary();
-        diary.setCourtId("judge-1");
+        diary.setCourtId("court-1");
         diary.setDiaryDate(1L);
         diary.setDiaryType("A");
         diary.setTenantId("tenant-1");
@@ -138,7 +138,7 @@ class ADiaryEnrichmentTest {
     @Test
     void testEnrichGenerateRequestForDiaryWithNewDiary() {
         CaseDiary diary = new CaseDiary();
-        diary.setCourtId("judge-2");
+        diary.setCourtId("court-2");
         UUID uuid = UUID.randomUUID();
         diary.setDiaryDate(1L);
         diary.setDiaryType("B");

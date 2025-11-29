@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
 
 import java.util.List;
@@ -42,6 +43,9 @@ public class CaseSummaryList {
     @JsonProperty("outcome")
     private String outcome;
 
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal;
+
     @JsonProperty("substage")
     private String substage;
 
@@ -68,4 +72,10 @@ public class CaseSummaryList {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus;
+
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = false;
 }

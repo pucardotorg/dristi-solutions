@@ -1,3 +1,5 @@
+import { processDeliveryCourierServiceConfig } from "./processDeliveryCourierServiceConfig";
+
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -343,6 +345,26 @@ export const sideMenuConfig = [
         dependentMandatoryFields: [],
         optionalFields: [],
         dependentOptionalFields: [],
+        initialOptionalFieldCount: 0,
+      },
+    ],
+  },
+  {
+    isOpen: false,
+    isDisabled: false,
+    title: "CS_PAYMENT_CONFIRMATION",
+    key: "paymentConfirmation",
+    children: [
+      {
+        key: "processCourierService",
+        label: "PROCESS_DELIVERY_COURIER_SERVICE",
+        checked: false,
+        isCompleted: false,
+        isDisabled: false,
+        pageConfig: processDeliveryCourierServiceConfig,
+        mandatoryFields: [],
+        initialMandatoryFieldCount: 1,
+        optionalFields: [],
         initialOptionalFieldCount: 0,
       },
     ],

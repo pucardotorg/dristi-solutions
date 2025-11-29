@@ -105,8 +105,10 @@ public class EvidenceValidator {
         evidenceSearchCriteria.setFilingNumber(evidenceRequest.getArtifact().getFilingNumber());
         evidenceSearchCriteria.setHearing(evidenceRequest.getArtifact().getHearing());
         evidenceSearchCriteria.setOrder(evidenceRequest.getArtifact().getOrder());
-        evidenceSearchCriteria.setSourceId(evidenceRequest.getArtifact().getSourceID());
-        evidenceSearchCriteria.setSourceName(evidenceRequest.getArtifact().getSourceName());
+        if (!(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType()) && DRAFT_IN_PROGRESS.equalsIgnoreCase(evidenceRequest.getArtifact().getStatus()))) {
+            evidenceSearchCriteria.setSourceId(evidenceRequest.getArtifact().getSourceID());
+            evidenceSearchCriteria.setSourceName(evidenceRequest.getArtifact().getSourceName());
+        }
         return evidenceSearchCriteria;
     }
     public CaseExistsRequest createCaseExistsRequest(RequestInfo requestInfo, Artifact artifact) {

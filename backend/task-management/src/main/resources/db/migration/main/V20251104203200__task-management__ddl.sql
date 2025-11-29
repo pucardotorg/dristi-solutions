@@ -1,0 +1,1 @@
+ALTER TABLE dristi_task_management ADD COLUMN documents JSONB;

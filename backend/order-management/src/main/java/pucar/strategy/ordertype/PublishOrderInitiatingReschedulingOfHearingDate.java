@@ -86,7 +86,7 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         String referenceId = orderUtil.getReferenceId(order);
-        String hearingNumber = order.getHearingNumber();
+        String hearingNumber = order.getScheduledHearingNumber();
 
         String changedHearingDate = null;
 
@@ -107,7 +107,7 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         String originalHearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "originalHearingDate"), String.class);
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+                .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
         String dateValue = Optional.ofNullable(changedHearingDate)
@@ -116,8 +116,10 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
         Long newHearingDate = dateValue == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(dateValue, "yyyy-MM-dd");
 
         log.info("new hearing time:{}", newHearingDate);
-        hearing.setStartTime(newHearingDate);
-        hearing.setEndTime(newHearingDate);
+        if (referenceId == null) {
+            hearing.setStartTime(newHearingDate);
+            hearing.setEndTime(newHearingDate);
+        }
 
 
         WorkflowObject workflow = new WorkflowObject();
@@ -136,18 +138,6 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
 
         Long scheduleAfter = availableAfter == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(availableAfter, "yyyy-MM-dd");
         log.info("creating reschedule entry with scheduleAfter:{}", scheduleAfter);
-        schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
-                .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
-
-                        .rescheduledRequestId(order.getOrderNumber())
-                        .hearingBookingId(order.getHearingNumber())
-                        .tenantId(order.getTenantId())
-                        .judgeId("JUDGE_ID")  ///  this need to come from order
-                        .caseId(order.getFilingNumber())
-                        .reason(order.getComments())
-                        .availableAfter(scheduleAfter)
-                        .build()))
-                .requestInfo(requestInfo).build());
 
         // call case here
         log.info("case search for filingNumber:{}", order.getFilingNumber());
@@ -157,6 +147,19 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
 
         // add validation here
         CourtCase courtCase = cases.get(0);
+
+        schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
+                .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
+
+                        .rescheduledRequestId(order.getOrderNumber())
+                        .hearingBookingId(order.getHearingNumber())
+                        .tenantId(order.getTenantId())
+                        .judgeId(courtCase.getJudgeId())  ///  this need to come from order
+                        .caseId(order.getFilingNumber())
+                        .reason(order.getComments())
+                        .availableAfter(scheduleAfter)
+                        .build()))
+                .requestInfo(requestInfo).build());
 
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
 
