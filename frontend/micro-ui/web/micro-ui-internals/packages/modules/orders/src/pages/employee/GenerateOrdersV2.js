@@ -64,6 +64,8 @@ import {
   configsCost,
   configsWitnessBatta,
   itemTextConfig,
+  configsCaseSettlementAccept,
+  configsCaseSettlementReject,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -124,8 +126,8 @@ const configKeys = {
   ASSIGNING_NEW_HEARING_DATE: configsAssignNewHearingDate,
   CASE_TRANSFER_ACCEPT: configsCaseTransferAccept,
   CASE_TRANSFER_REJECT: configsCaseTransferReject,
-  SETTLEMENT_ACCEPT: configsCaseSettlement,
-  SETTLEMENT_REJECT: configsCaseSettlement,
+  SETTLEMENT_ACCEPT: configsCaseSettlementAccept,
+  SETTLEMENT_REJECT: configsCaseSettlementReject,
   SUMMONS: configsIssueSummons,
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
