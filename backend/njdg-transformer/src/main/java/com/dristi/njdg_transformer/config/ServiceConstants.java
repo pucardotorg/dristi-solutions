@@ -26,6 +26,6 @@ public class ServiceConstants {
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String COMPLETED = "COMPLETED";
     public static final String KOLLAM = "KOLLAM";
-    public static final String CMP = "cmp";
-    public static final String ST = "st";
+    public static final String CMP = "CMP";
+    public static final String ST = "ST";
 }
