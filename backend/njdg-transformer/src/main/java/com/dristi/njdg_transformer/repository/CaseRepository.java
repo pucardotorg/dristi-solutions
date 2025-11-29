@@ -410,4 +410,123 @@ public class CaseRepository {
         int[] types = new int[]{Types.VARCHAR};
         return jdbcTemplate.queryForObject(getDisposalNatureQuery, params, types, String.class);
     }
+
+    public CaseTypeDetails getExistingCaseConversionDetails(String cino) {
+        try {
+            log.debug("Fetching existing case conversion details for CINO: {}", cino);
+            
+            String selectQuery = queryBuilder.getCaseConversionSelectQuery();
+            Object[] params = new Object[]{cino};
+            int[] types = new int[]{Types.VARCHAR};
+            
+            List<CaseTypeDetails> results = jdbcTemplate.query(selectQuery, params, types, 
+                (rs, rowNum) -> CaseTypeDetails.builder()
+                    .oldRegCaseType(rs.getObject("oldregcase_type", Integer.class))
+                    .oldRegNo(rs.getObject("oldreg_no", Integer.class))
+                    .oldRegYear(rs.getObject("oldreg_year", Integer.class))
+                    .newRegCaseType(rs.getObject("newregcase_type", Integer.class))
+                    .newRegNo(rs.getObject("newreg_no", Integer.class))
+                    .newRegYear(rs.getObject("newreg_year", Integer.class))
+                    .oldFilCaseType(rs.getObject("oldfilcase_type", Integer.class))
+                    .oldFilNo(rs.getObject("oldfil_no", Integer.class))
+                    .oldFilYear(rs.getObject("oldfil_year", Integer.class))
+                    .newFilCaseType(rs.getObject("newfilcase_type", Integer.class))
+                    .newFilNo(rs.getObject("newfil_no", Integer.class))
+                    .newFilYear(rs.getObject("newfil_year", Integer.class))
+                    .srNo(rs.getObject("sr_no", Integer.class))
+                    .build());
+            
+            if (!results.isEmpty()) {
+                log.debug("Found existing case conversion details for CINO: {}", cino);
+                return results.get(0);
+            } else {
+                log.debug("No existing case conversion details found for CINO: {}", cino);
+                return null;
+            }
+            
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("No case conversion details found for CINO: {}", cino);
+            return null;
+        } catch (DataAccessException e) {
+            log.error("Failed to fetch case conversion details for CINO: {} | error: {}", cino, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public Integer getNextSrNoForCaseConversion(String cino) {
+        try {
+            log.debug("Getting next sr_no for case conversion CINO: {}", cino);
+            
+            String maxSrNoQuery = queryBuilder.getMaxSrNoCaseConversionQuery();
+            Object[] params = new Object[]{cino};
+            int[] types = new int[]{Types.VARCHAR};
+            
+            Integer maxSrNo = jdbcTemplate.queryForObject(maxSrNoQuery, params, types, Integer.class);
+            Integer nextSrNo = (maxSrNo != null ? maxSrNo : 0) + 1;
+            
+            log.debug("Next sr_no for CINO: {} is {}", cino, nextSrNo);
+            return nextSrNo;
+            
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("No existing records found for CINO: {}, starting with sr_no = 1", cino);
+            return 1;
+        } catch (DataAccessException e) {
+            log.error("Failed to get next sr_no for CINO: {} | error: {}", cino, e.getMessage(), e);
+            return 1; // Default fallback
+        }
+    }
+
+    public void insertCaseConversionDetails(CaseTypeDetails caseTypeDetails, String cino, String jocode, Integer srNo) {
+        try {
+            log.info("Inserting case conversion details for CINO: {}", cino);
+            
+            String insertQuery = queryBuilder.getCaseConversionInsertQuery();
+            
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgsList = new ArrayList<>();
+            
+            // Add parameters in the order they appear in the query
+            preparedStmtList.add(cino);
+            preparedStmtList.add(caseTypeDetails.getOldRegCaseType());
+            preparedStmtList.add(caseTypeDetails.getOldRegNo());
+            preparedStmtList.add(caseTypeDetails.getOldRegYear());
+            preparedStmtList.add(caseTypeDetails.getNewRegCaseType());
+            preparedStmtList.add(caseTypeDetails.getNewRegNo());
+            preparedStmtList.add(caseTypeDetails.getNewRegYear());
+            preparedStmtList.add(srNo);
+            preparedStmtList.add(caseTypeDetails.getOldFilCaseType());
+            preparedStmtList.add(caseTypeDetails.getOldFilNo());
+            preparedStmtList.add(caseTypeDetails.getOldFilYear());
+            preparedStmtList.add(caseTypeDetails.getNewFilCaseType());
+            preparedStmtList.add(caseTypeDetails.getNewFilNo());
+            preparedStmtList.add(caseTypeDetails.getNewFilYear());
+            preparedStmtList.add(jocode);
+            
+            // Set parameter types
+            preparedStmtArgsList.add(Types.VARCHAR);    // cino
+            preparedStmtArgsList.add(Types.SMALLINT);   // oldregcase_type
+            preparedStmtArgsList.add(Types.INTEGER);    // oldreg_no
+            preparedStmtArgsList.add(Types.SMALLINT);   // oldreg_year
+            preparedStmtArgsList.add(Types.SMALLINT);   // newregcase_type
+            preparedStmtArgsList.add(Types.INTEGER);    // newreg_no
+            preparedStmtArgsList.add(Types.SMALLINT);   // newreg_year
+            preparedStmtArgsList.add(Types.INTEGER);    // sr_no
+            preparedStmtArgsList.add(Types.SMALLINT);   // oldfilcase_type
+            preparedStmtArgsList.add(Types.INTEGER);    // oldfil_no
+            preparedStmtArgsList.add(Types.SMALLINT);   // oldfil_year
+            preparedStmtArgsList.add(Types.SMALLINT);   // newfilcase_type
+            preparedStmtArgsList.add(Types.INTEGER);    // newfil_no
+            preparedStmtArgsList.add(Types.SMALLINT);   // newfil_year
+            preparedStmtArgsList.add(Types.VARCHAR);    // jocode
+            
+            jdbcTemplate.update(insertQuery, preparedStmtList.toArray(),
+                    preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
+            
+            log.info("Successfully inserted case conversion details for CINO: {}", cino);
+            
+        } catch (DataAccessException e) {
+            log.error("Failed to insert case conversion details for CINO: {} | error: {}", cino, e.getMessage(), e);
+            throw e;
+        }
+    }
 }

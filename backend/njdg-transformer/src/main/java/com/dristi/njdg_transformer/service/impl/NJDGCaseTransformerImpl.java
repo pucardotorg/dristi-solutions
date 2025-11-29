@@ -61,9 +61,24 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
             
             NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster, requestInfo);
+            CaseTypeDetails caseTypeDetails = getCaseTypeDetails(courtCase, record);
+
+            if(caseTypeDetails.getNewRegCaseType() != null && caseTypeDetails.getNewRegNo() != null && caseTypeDetails.getNewRegYear() != null) {
+                record.setCaseType(caseTypeDetails.getNewRegCaseType());
+                record.setRegNo(caseTypeDetails.getNewRegNo());
+                record.setRegYear(caseTypeDetails.getNewRegYear());
+            } else {
+                record.setCaseType(caseTypeDetails.getOldRegCaseType());
+                record.setRegNo(caseTypeDetails.getOldRegNo());
+                record.setRegYear(caseTypeDetails.getOldRegYear());
+            }
             enrichPoliceStationDetails(courtCase, record);
             log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             producer.push("save-case-details", record);
+            
+            // Insert case conversion details after pushing to case table
+            insertCaseConversionDetails(courtCase, caseTypeDetails, judgeDetails);
+            
             return record;
             
         } catch (Exception e) {
@@ -71,6 +86,40 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                      courtCase.getCnrNumber(), e.getMessage(), e);
             throw new RuntimeException("Failed to transform case to NJDG format", e);
         }
+    }
+
+    private CaseTypeDetails getCaseTypeDetails(CourtCase courtCase, NJDGTransformRecord record) {
+        String caseType = courtCase.getCaseType();
+        Integer caseTypeValue = record.getCaseType();
+        
+        CaseTypeDetails.CaseTypeDetailsBuilder builder = CaseTypeDetails.builder();
+        
+        if (CMP.equalsIgnoreCase(caseType)) {
+            // For CMP cases: assign only old values using courtCaseNumber or cmpNumber
+            String caseNumber = courtCase.getCourtCaseNumber() != null ? 
+                               courtCase.getCourtCaseNumber() : courtCase.getCmpNumber();
+            
+            builder.oldRegCaseType(caseTypeValue)
+                   .oldRegNo(numberExtractor.extractCaseNumber(caseNumber))
+                   .oldRegYear(extractRegYear(caseNumber));
+
+            log.debug("Populated old case type details for CMP case: {}", courtCase.getCnrNumber());
+            
+        } else if (ST.equalsIgnoreCase(caseType)) {
+            // For ST cases: use courtCaseNumber and set new values
+            String caseNumber = courtCase.getCourtCaseNumber();
+            
+            builder.newRegCaseType(caseTypeValue)
+                   .newRegNo(numberExtractor.extractCaseNumber(caseNumber))
+                   .newRegYear(extractRegYear(caseNumber));
+            log.debug("Populated new case type details for ST case: {}", courtCase.getCnrNumber());
+            
+        } else {
+            log.warn("Unknown case type: {} for case: {}, no case type details populated", 
+                    caseType, courtCase.getCnrNumber());
+        }
+        
+        return builder.build();
     }
 
     private NJDGTransformRecord buildNJDGRecord(CourtCase courtCase, JudgeDetails judgeDetails, 
@@ -84,15 +133,11 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .caseType(getCaseTypeValue(courtCase.getCaseType()))
                 .filNo(numberExtractor.extractFilingNumber(courtCase.getFilingNumber()))
                 .filYear(dateUtil.extractYear(courtCase.getFilingDate()))
-                .regNo(numberExtractor.extractCaseNumber(
-                    courtCase.getCourtCaseNumber() != null ? 
-                    courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
-                .regYear(dateUtil.extractYear(courtCase.getRegistrationDate()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? 
                            getDisposalReason(courtCase.getOutcome()) : 0)
-                .dispNature(0) // TODO: Configure for contested/uncontested when provided
+                .dispNature(getDisposalNature(courtCase))
                 .desgname(designationMaster.getDesgName())
                 .courtNo(judgeDetails != null ? judgeDetails.getCourtNo() : (properties.getCourtNumber() != null ? properties.getCourtNumber() : 0))
                 .estCode(courtCase.getCourtId())
@@ -109,6 +154,33 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .judgeCode(judgeDetails != null ? judgeDetails.getJudgeCode() : null)
                 .desigCode(designationMaster.getDesgCode())
                 .build();
+    }
+
+    private Integer extractRegYear(String caseNumber) {
+        try {
+            if (caseNumber == null || caseNumber.trim().isEmpty()) {
+                log.warn("Case number is null or empty, returning default year 0");
+                return 0;
+            }
+            
+            String[] parts = caseNumber.trim().split("/");
+            if (parts.length >= 3) {
+                String yearPart = parts[parts.length - 1];
+                Integer year = Integer.parseInt(yearPart);
+                log.debug("Extracted year {} from case number: {}", year, caseNumber);
+                return year;
+            } else {
+                log.warn("Case number format invalid, expected format: type/number/year, got: {}", caseNumber);
+                return 0;
+            }
+            
+        } catch (NumberFormatException e) {
+            log.error("Failed to parse year from case number: {} | error: {}", caseNumber, e.getMessage());
+            return 0;
+        } catch (Exception e) {
+            log.error("Unexpected error extracting year from case number: {} | error: {}", caseNumber, e.getMessage());
+            return 0;
+        }
     }
 
     private Integer getPurposePrevious(CourtCase courtCase) {
@@ -362,6 +434,69 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    private void insertCaseConversionDetails(CourtCase courtCase, CaseTypeDetails caseTypeDetails, JudgeDetails judgeDetails) {
+        try {
+            String cino = courtCase.getCnrNumber();
+            
+            CaseTypeDetails existingDetails = caseRepository.getExistingCaseConversionDetails(cino);
+
+            if (existingDetails != null) {
+                log.debug("Existing case conversion details found for CINO: {}, adding new record", cino);
+                
+                existingDetails.setNewRegCaseType(caseTypeDetails.getNewRegCaseType());
+                existingDetails.setNewRegNo(caseTypeDetails.getNewRegNo());
+                existingDetails.setNewRegYear(caseTypeDetails.getNewRegYear());
+                
+
+                String jocode = judgeDetails != null ? judgeDetails.getJocode() : null;
+                caseRepository.insertCaseConversionDetails(existingDetails, cino, jocode, existingDetails.getSrNo());
+                log.info("Successfully added new case conversion record for CINO: {} with sr_no: {}", cino, existingDetails.getSrNo());
+                
+            } else {
+                log.debug("No existing case conversion details found for CINO: {}, adding first record", cino);
+                
+                Integer srNo = 1;
+                
+                String jocode = judgeDetails != null ? judgeDetails.getJocode() : null;
+                caseRepository.insertCaseConversionDetails(caseTypeDetails, cino, jocode, srNo);
+                log.info("Successfully added first case conversion record for CINO: {} with sr_no: {}", cino, srNo);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to save case conversion details for CINO: {} | error: {}", 
+                     courtCase.getCnrNumber(), e.getMessage(), e);
+        }
+    }
+
+    private Integer getDisposalNature(CourtCase courtCase) {
+        try {
+            if (courtCase.getNatureOfDisposal() != null) {
+                return switch (courtCase.getNatureOfDisposal()) {
+                    case CONTESTED -> {
+                        log.debug("Case {} has contested nature of disposal", courtCase.getCnrNumber());
+                        yield 1;
+                    }
+                    case UNCONTESTED -> {
+                        log.debug("Case {} has uncontested nature of disposal", courtCase.getCnrNumber());
+                        yield 2;
+                    }
+                    default -> {
+                        log.warn("Unknown nature of disposal: {} for case: {}",
+                                courtCase.getNatureOfDisposal(), courtCase.getCnrNumber());
+                        yield 0;
+                    }
+                };
+            } else {
+                log.debug("No nature of disposal provided for case: {}, defaulting to 0", courtCase.getCnrNumber());
+                return 0;
+            }
+        } catch (Exception e) {
+            log.error("Error determining disposal nature for case: {} | error: {}", 
+                     courtCase.getCnrNumber(), e.getMessage(), e);
+            return 0;
+        }
     }
 
     private boolean isValidOrder(String orderType, String tenantId, RequestInfo requestInfo) {

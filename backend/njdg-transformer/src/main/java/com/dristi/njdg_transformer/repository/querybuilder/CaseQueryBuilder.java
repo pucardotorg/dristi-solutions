@@ -282,4 +282,35 @@ public class CaseQueryBuilder {
     public String getUpdateActQuery() {
         return "UPDATE acts SET act_code = ?, act_name = ?, act_section = ?, sr_no = ? WHERE cino = ?";
     }
+
+    public String getCaseConversionInsertQuery() {
+        return "INSERT INTO case_conversion " +
+               "(cino, oldregcase_type, oldreg_no, oldreg_year, newregcase_type, newreg_no, newreg_year, " +
+               "sr_no, oldfilcase_type, oldfil_no, oldfil_year, newfilcase_type, newfil_no, newfil_year, jocode) " +
+               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+               "ON CONFLICT (cino, sr_no) DO UPDATE SET " +
+               "oldregcase_type = EXCLUDED.oldregcase_type, " +
+               "oldreg_no = EXCLUDED.oldreg_no, " +
+               "oldreg_year = EXCLUDED.oldreg_year, " +
+               "newregcase_type = EXCLUDED.newregcase_type, " +
+               "newreg_no = EXCLUDED.newreg_no, " +
+               "newreg_year = EXCLUDED.newreg_year, " +
+               "oldfilcase_type = EXCLUDED.oldfilcase_type, " +
+               "oldfil_no = EXCLUDED.oldfil_no, " +
+               "oldfil_year = EXCLUDED.oldfil_year, " +
+               "newfilcase_type = EXCLUDED.newfilcase_type, " +
+               "newfil_no = EXCLUDED.newfil_no, " +
+               "newfil_year = EXCLUDED.newfil_year, " +
+               "jocode = EXCLUDED.jocode";
+    }
+
+    public String getCaseConversionSelectQuery() {
+        return "SELECT oldregcase_type, oldreg_no, oldreg_year, newregcase_type, newreg_no, newreg_year, " +
+               "oldfilcase_type, oldfil_no, oldfil_year, newfilcase_type, newfil_no, newfil_year, sr_no " +
+               "FROM case_conversion WHERE cino = ? ORDER BY sr_no DESC LIMIT 1";
+    }
+
+    public String getMaxSrNoCaseConversionQuery() {
+        return "SELECT MAX(sr_no) FROM case_conversion WHERE cino = ?";
+    }
 }

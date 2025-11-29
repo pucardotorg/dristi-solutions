@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.model.cases;
 
+import com.dristi.njdg_transformer.model.enums.NatureOfDisposal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.Valid;
@@ -182,6 +183,12 @@ public class CourtCase {
 
     @JsonProperty("isLPRCase")
     private Boolean isLPRCase = false;
+
+    @JsonProperty("courtCaseNumberBackup")
+    private String courtCaseNumberBackup = null;
+
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal = null;
 
     @JsonProperty("witnessDetails")
     @Valid
