@@ -106,12 +106,23 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             log.debug("Populated old case type details for CMP case: {}", courtCase.getCnrNumber());
             
         } else if (ST.equalsIgnoreCase(caseType)) {
-            // For ST cases: use courtCaseNumber and set new values
+            // For ST cases: use courtCaseNumber for new values and cmpNumber for old values during migration
             String caseNumber = courtCase.getCourtCaseNumber();
+            String cmpNumber = courtCase.getCmpNumber();
             
             builder.newRegCaseType(caseTypeValue)
                    .newRegNo(numberExtractor.extractCaseNumber(caseNumber))
                    .newRegYear(extractRegYear(caseNumber));
+            
+            // Add old values using cmpNumber during migration
+            if (cmpNumber != null && !cmpNumber.trim().isEmpty()) {
+                Integer cmpCaseTypeValue = caseRepository.getCaseTypeCode(CMP);
+                builder.oldRegCaseType(cmpCaseTypeValue)
+                       .oldRegNo(numberExtractor.extractCaseNumber(cmpNumber))
+                       .oldRegYear(extractRegYear(cmpNumber));
+                log.debug("Populated old case type details using cmpNumber for ST case with CMP case type: {}", courtCase.getCnrNumber());
+            }
+            
             log.debug("Populated new case type details for ST case: {}", courtCase.getCnrNumber());
             
         } else {
