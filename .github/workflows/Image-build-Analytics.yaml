@@ -46,20 +46,21 @@ jobs:
           project: 'analytics'
           path: 'backend/analytics'
           format: 'SARIF'
+          args: "--disableOssIndex"
       - name: Build and analyze for Analytics
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/analytics/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_analytics -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+        run: mvn -B -f backend/analytics/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_analytics -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
       - name: Upload SARIF result to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -80,8 +81,8 @@ jobs:
 
       - name: Build and Push Docker image for analytics
         run: |
-          docker build --build-arg WORK_DIR="backend/analytics" -t pucarsolutionsdev.azurecr.io/pucar_analytics:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_analytics:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/analytics" -t docker.io/venkatramireddyb/pucar_analytics:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_analytics:${{ env.VERSION }}-${{ env.commit_hash }}
 
 
   Workflow_Trigger:

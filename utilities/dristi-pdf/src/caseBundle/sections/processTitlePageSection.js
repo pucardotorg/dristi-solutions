@@ -23,7 +23,9 @@ async function processTitlePageSection(
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
     const coverCaseNumber =
-      courtCase.courtCaseNumber ||
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase.courtCaseNumber) ||
       courtCase.cmpNumber ||
       courtCase.filingNumber;
     const coverYear = (
@@ -56,7 +58,7 @@ async function processTitlePageSection(
     });
 
     // update index
-    const titlepageIndexSection = indexCopy.sections.find(
+    const titlepageIndexSection = indexCopy.sections?.find(
       (section) => section.name === "titlepage"
     );
 

@@ -37,7 +37,7 @@ public class PaymentController {
     }
 
     @PostMapping("/v1/_createDemand")
-    public ResponseEntity<?> createDemand(@RequestBody DemandCreateRequest request) {
+    public ResponseEntity<DemandResponse> createDemand(@RequestBody DemandCreateRequest request) {
         log.info("Creating demand for request: {}", request);
         DemandResponse demandResponse = paymentService.createDemand(request);
         log.info("Demand created successfully for request: {}", request);
@@ -70,6 +70,14 @@ public class PaymentController {
         return PrintResponse.builder()
                 .responseInfo(responseInfo)
                 .document(document).build();
+    }
+
+    @PostMapping("/v1/_getHeadBreakDown")
+    public ResponseEntity<TreasuryMappingResponse> getHeadBreakDown(@RequestParam String consumerCode, @RequestBody RequestInfo requestInfo) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        TreasuryMapping treasuryMapping = paymentService.getHeadBreakDown(consumerCode);
+        TreasuryMappingResponse response = TreasuryMappingResponse.builder().responseInfo(responseInfo).treasuryMapping(treasuryMapping).build();
+        return ResponseEntity.ok(response);
     }
 
 //    @PostMapping("/v1/_doubleVerification")

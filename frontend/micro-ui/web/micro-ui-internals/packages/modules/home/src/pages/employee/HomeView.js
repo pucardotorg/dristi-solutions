@@ -2,20 +2,18 @@ import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
+import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { HomeService, Urls } from "../../hooks/services";
+import { HomeService } from "../../hooks/services";
 import LitigantHomePage from "./LitigantHomePage";
-import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
-import { InboxIcon, DocumentIcon } from "../../../homeIcon";
+import { InboxIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
-import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
@@ -44,12 +42,10 @@ const ProjectBreadCrumb = ({ location, t }) => {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
       path: homePath,
@@ -84,21 +80,15 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
 
-  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
-  const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
-    show: false,
-    bulkSignOrderListLength: null,
-  });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const hasViewSignOrderAccess = useMemo(() => roles?.some((role) => role.code === "VIEW_SIGN_ORDERS"), [roles]);
+  const viewDashBoards = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]); // to show Dashboards, Reports tabs.
+  const viewADiary = useMemo(() => roles?.some((role) => role?.code === "DIARY_VIEWER"), [roles]); // to show A-Diary tab.
+  const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
-  const isClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
@@ -168,7 +158,7 @@ const HomeView = () => {
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
-    Boolean(isJudge && courtId)
+    Boolean(hasViewSignOrderAccess && courtId)
   );
 
   const refreshInbox = () => {
@@ -223,10 +213,7 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-    if (bulkSignSuccess) {
-      setIssueBulkSuccessData(bulkSignSuccess);
-    }
-  }, [state, bulkSignSuccess]);
+  }, [state]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -245,15 +232,19 @@ const HomeView = () => {
     if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
       return rolesToConfigMapping?.find((item) => item[state.role]);
     } else {
-      return (
-        rolesToConfigMapping?.find((item) =>
-          item.roles?.reduce((res, curr) => {
-            if (!res) return res;
-            res = roles?.some((role) => role.code === curr);
-            return res;
-          }, true)
-        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
-      );
+      // For employees, use unified config approach
+      if (userInfoType === "employee") {
+        const unifiedConfig = getUnifiedEmployeeConfig(roles);
+        const onRowClickRoute = getOnRowClickConfig(roles);
+
+        return {
+          config: unifiedConfig,
+          onRowClickRoute: onRowClickRoute,
+          isEmployee: true,
+        };
+      } else if (userInfoType === "citizen") {
+        return litigantConfig;
+      } else return null;
     }
   }, [state?.role, roles, userInfoType]);
 
@@ -443,6 +434,7 @@ const HomeView = () => {
         "PENDING_RESPONSE",
         "UNDER_SCRUTINY",
         "CASE_DISMISSED",
+        "RE_PENDING_PAYMENT",
       ];
       if (statusArray.includes(row?.original?.status)) {
         history.push(getRedirectUrl(row?.original?.status, row?.original?.id, row?.original?.filingNumber));
@@ -450,12 +442,12 @@ const HomeView = () => {
     }
   };
 
-  if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
-    history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+  if (userInfoType === "employee" && !hasViewAllCasesAccess) {
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
   }
 
-  if (isNyayMitra) {
-    history.push(`/${window?.contextPath}/employee`);
+  if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
+    history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
   }
 
   const data = [
@@ -482,7 +474,7 @@ const HomeView = () => {
   };
   return (
     <React.Fragment>
-      {(isJudge || isBenchClerk || isTypist) && <ProjectBreadCrumb location={window.location} t={t} />}
+      {<ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
           <LitigantHomePage isApprovalPending={isApprovalPending} />
@@ -501,9 +493,9 @@ const HomeView = () => {
                   advocateId={advocateId}
                   t={t}
                 />
-                {(isJudge || isClerk || isTypist) && (
+                {(viewDashBoards || viewADiary) && (
                   <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
-                    {isJudge && (
+                    {viewDashBoards && (
                       <React.Fragment>
                         <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
                           {t("OPEN_DASHBOARD")}
@@ -513,9 +505,16 @@ const HomeView = () => {
                         </Link>
                       </React.Fragment>
                     )}
-                    <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
-                      {t("OPEN_A_DIARY")}
-                    </Link>
+                    {viewADiary && (
+                      <span
+                        onClick={() => {
+                          history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
+                        }}
+                        style={{ ...linkStyle, cursor: "pointer" }}
+                      >
+                        {t("OPEN_A_DIARY")}
+                      </span>
+                    )}
                   </div>
                 )}
                 {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
@@ -583,14 +582,6 @@ const HomeView = () => {
               pendingSignOrderList={ordersNotificationData}
             />
           </div>
-        )}
-        {issueBulkSuccessData.show && (
-          <OrderIssueBulkSuccesModal
-            t={t}
-            history={history}
-            bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
-            setIssueBulkSuccessData={setIssueBulkSuccessData}
-          />
         )}
         {toastMsg && (
           <Toast

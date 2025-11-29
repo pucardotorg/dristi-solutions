@@ -79,15 +79,15 @@ public class InboxServiceV2 {
     private void hashParamsWhereverRequiredBasedOnConfiguration(Map<String, Object> moduleSearchCriteria, InboxQueryConfiguration inboxQueryConfiguration) {
 
         inboxQueryConfiguration.getAllowedSearchCriteria().forEach(searchParam -> {
-            if(!ObjectUtils.isEmpty(searchParam.getIsHashingRequired()) && searchParam.getIsHashingRequired()){
-                if(moduleSearchCriteria.containsKey(searchParam.getName())){
-                    if(moduleSearchCriteria.get(searchParam.getName()) instanceof List){
+            if (!ObjectUtils.isEmpty(searchParam.getIsHashingRequired()) && searchParam.getIsHashingRequired()) {
+                if (moduleSearchCriteria.containsKey(searchParam.getName())) {
+                    if (moduleSearchCriteria.get(searchParam.getName()) instanceof List) {
                         List<Object> hashedParams = new ArrayList<>();
                         ((List<?>) moduleSearchCriteria.get(searchParam.getName())).forEach(object -> {
                             hashedParams.add(hashService.getHashValue(object));
                         });
                         moduleSearchCriteria.put(searchParam.getName(), hashedParams);
-                    }else{
+                    } else {
                         Object hashedValue = hashService.getHashValue(moduleSearchCriteria.get(searchParam.getName()));
                         moduleSearchCriteria.put(searchParam.getName(), hashedValue);
                     }
@@ -102,7 +102,7 @@ public class InboxServiceV2 {
           done to avoid having redundant network calls which could hog the performance.
         */
         items.forEach(item -> {
-            if(item.getBusinessObject().containsKey(CURRENT_PROCESS_INSTANCE_CONSTANT)) {
+            if (item.getBusinessObject().containsKey(CURRENT_PROCESS_INSTANCE_CONSTANT)) {
                 // Set process instance object in the native process instance field declared in the model inbox class.
                 ProcessInstance processInstance = mapper.convertValue(item.getBusinessObject().get(CURRENT_PROCESS_INSTANCE_CONSTANT), ProcessInstance.class);
                 item.setProcessInstance(processInstance);
@@ -113,18 +113,17 @@ public class InboxServiceV2 {
         });
     }
 
-    private List<Inbox> getInboxItems(InboxRequest inboxRequest, String indexName){
+    private List<Inbox> getInboxItems(InboxRequest inboxRequest, String indexName) {
         List<BusinessService> businessServices = workflowService.getBusinessServices(inboxRequest);
         enrichActionableStatusesFromRole(inboxRequest, businessServices);
-        if(CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())){
+        if (CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())) {
             return new ArrayList<>();
         }
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.TRUE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
-            log.info("Query: "+q);
-        }
-        catch (Exception e){
+            log.info("Query: " + q);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         StringBuilder uri = getURI(indexName, SEARCH_PATH);
@@ -146,7 +145,7 @@ public class InboxServiceV2 {
         if (StatusIdNameMap.values().size() > 0) {
             if (!CollectionUtils.isEmpty(processCriteria.getStatus())) {
                 processCriteria.getStatus().forEach(statusUuid -> {
-                    if(StatusIdNameMap.keySet().contains(statusUuid)){
+                    if (StatusIdNameMap.keySet().contains(statusUuid)) {
                         actionableStatusUuid.add(statusUuid);
                     }
                 });
@@ -154,26 +153,26 @@ public class InboxServiceV2 {
             } else {
                 inboxRequest.getInbox().getProcessSearchCriteria().setStatus(new ArrayList<>(StatusIdNameMap.keySet()));
             }
-        }else{
+        } else {
             inboxRequest.getInbox().getProcessSearchCriteria().setStatus(new ArrayList<>());
         }
     }
 
-    public Integer getTotalApplicationCount(InboxRequest inboxRequest, String indexName){
+    public Integer getTotalApplicationCount(InboxRequest inboxRequest, String indexName) {
 
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.FALSE);
         StringBuilder uri = getURI(indexName, COUNT_PATH);
         Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
         Integer totalCount = 0;
-        if(response.containsKey(COUNT_CONSTANT)){
+        if (response.containsKey(COUNT_CONSTANT)) {
             totalCount = (Integer) response.get(COUNT_CONSTANT);
-        }else{
+        } else {
             throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
         }
         return totalCount;
     }
 
-    public List<HashMap<String, Object>> getStatusCountMap(InboxRequest inboxRequest, String indexName){
+    public List<HashMap<String, Object>> getStatusCountMap(InboxRequest inboxRequest, String indexName) {
         Map<String, Object> finalQueryBody = queryBuilder.getStatusCountQuery(inboxRequest);
         StringBuilder uri = getURI(indexName, SEARCH_PATH);
         Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
@@ -188,13 +187,13 @@ public class InboxServiceV2 {
         Long currentDate = System.currentTimeMillis(); //current time
         Map<String, Object> auditDetails = (Map<String, Object>) ((Map<String, Object>) data).get(AUDIT_DETAILS_KEY);
         String stateUuid = JsonPath.read(data, STATE_UUID_PATH);
-        if(stateUuidSlaMap.containsKey(stateUuid)){
+        if (stateUuidSlaMap.containsKey(stateUuid)) {
             if (!ObjectUtils.isEmpty(auditDetails.get(LAST_MODIFIED_TIME_KEY))) {
                 Long lastModifiedTime = ((Number) auditDetails.get(LAST_MODIFIED_TIME_KEY)).longValue();
 
                 return Long.valueOf(Math.round((stateUuidSlaMap.get(stateUuid) - (currentDate - lastModifiedTime)) / ((double) (24 * 60 * 60 * 1000))));
             }
-        }else {
+        } else {
             if (!ObjectUtils.isEmpty(auditDetails.get(CREATED_TIME_KEY))) {
                 Long createdTime = ((Number) auditDetails.get(CREATED_TIME_KEY)).longValue();
                 String businessService = JsonPath.read(data, BUSINESS_SERVICE_PATH);
@@ -206,28 +205,28 @@ public class InboxServiceV2 {
         return null;
     }
 
-    private List<HashMap<String,Object>> transformStatusMap(InboxRequest request,HashMap<String, Object> statusCountMap) {
+    private List<HashMap<String, Object>> transformStatusMap(InboxRequest request, HashMap<String, Object> statusCountMap) {
 
-        if(CollectionUtils.isEmpty(statusCountMap))
+        if (CollectionUtils.isEmpty(statusCountMap))
             return null;
 
         List<BusinessService> businessServices = workflowService.getBusinessServices(request);
 
-        Map<String,String> statusIdToBusinessServiceMap = workflowService.getStatusIdToBusinessServiceMap(businessServices);
+        Map<String, String> statusIdToBusinessServiceMap = workflowService.getStatusIdToBusinessServiceMap(businessServices);
         Map<String, String> statusIdToApplicationStatusMap = workflowService.getApplicationStatusIdToStatusMap(businessServices);
         Map<String, String> statusIdToApplicationStateMap = workflowService.getApplicationStatusIdToStateMap(businessServices);
 
-        List<HashMap<String,Object>> statusCountMapTransformed = new ArrayList<>();
+        List<HashMap<String, Object>> statusCountMapTransformed = new ArrayList<>();
 
-        for(Map.Entry<String, Object> entry : statusCountMap.entrySet()){
+        for (Map.Entry<String, Object> entry : statusCountMap.entrySet()) {
             String statusId = entry.getKey();
             Integer count = (Integer) entry.getValue();
             HashMap<String, Object> map = new HashMap<>();
             map.put(COUNT_CONSTANT, count);
-            map.put(APPLICATION_STATUS_KEY,statusIdToApplicationStatusMap.get(statusId));
-            map.put(BUSINESSSERVICE_KEY,statusIdToBusinessServiceMap.get(statusId));
+            map.put(APPLICATION_STATUS_KEY, statusIdToApplicationStatusMap.get(statusId));
+            map.put(BUSINESSSERVICE_KEY, statusIdToBusinessServiceMap.get(statusId));
             map.put(STATUSID_KEY, statusId);
-            map.put(STATE,statusIdToApplicationStateMap.get(statusId));
+            map.put(STATE, statusIdToApplicationStateMap.get(statusId));
             statusCountMapTransformed.add(map);
         }
         return statusCountMapTransformed;
@@ -378,43 +377,211 @@ public class InboxServiceV2 {
         IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
         ActionCategorySearchResponse response = new ActionCategorySearchResponse();
 
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+        if (indexSearchCriteria.getSearchReviewProcess() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        }
+        if (indexSearchCriteria.getSearchScheduleHearing() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        }
+        if (indexSearchCriteria.getSearchViewApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(), inboxQueryConfiguration, response::setViewApplicationData);
+        }
+        if (indexSearchCriteria.getSearchDelayCondonationApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchDelayCondonationApplication(), inboxQueryConfiguration, response::setDelayCondonationApplicationData);
+        }
+        if (indexSearchCriteria.getSearchRescheduleHearingsApplication() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRescheduleHearingsApplication(), inboxQueryConfiguration, response::setRescheduleHearingsData);
+        }
+        if (indexSearchCriteria.getSearchOtherApplications() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
+        }
+        if (indexSearchCriteria.getSearchNoticeAndSummons() != null) {
+            populateActionCategoryDataWithoutGrouping(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
+        }
+        if (indexSearchCriteria.getSearchRegisterCases() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+        }
+        if (indexSearchCriteria.getSearchBailBonds() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
+        }
+        if (indexSearchCriteria.getSearchOfflinePayments() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchOfflinePayments(), config.getBillingServiceModuleName(), response::setOfflinePaymentsData);
+        }
+        if (indexSearchCriteria.getSearchRegisterUsers() != null) {
+            populateActionCategoryDataForOtherIndexes(searchRequest, indexSearchCriteria.getSearchRegisterUsers(), config.getAdvocateModuleName(), response::setRegisterUsersData);
+        }
+        // TODO : Any search implementation that requires courtId filter needs to be above this.
+        if (indexSearchCriteria.getSearchScrutinyCases() != null) {
+            // Remove courtId filter if searching for scrutiny cases
+            Object courtId = moduleSearchCriteria.get("courtId");
+            moduleSearchCriteria.remove("courtId");
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScrutinyCases(), inboxQueryConfiguration, response::setScrutinyCasesData);
+            // Add courtId back to moduleSearchCriteria for other searches
+            if (courtId != null) {
+                moduleSearchCriteria.put("courtId", courtId);
+            }
+        }
 
         return response;
+    }
+
+    private void populateActionCategoryDataForOtherIndexes(SearchRequest searchRequest, Criteria criteria, String moduleName, Consumer<Criteria> setter) {
+
+        ProcessInstanceSearchCriteria processInstanceSearchCriteria = null;
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("billing"))
+                    .build();
+
+            moduleSearchCriteria.put("billStatus", "ACTIVE");
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+            moduleSearchCriteria.put("sortOrder", "DESC");
+        }
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                    .moduleName(moduleName)
+                    .businessService(Collections.singletonList("user-registration-advocate"))
+                    .build();
+
+            moduleSearchCriteria.put("isActive", false);
+            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+        }
+
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                .limit(searchRequest.getIndexSearchCriteria().getLimit())
+                .offset(searchRequest.getIndexSearchCriteria().getOffset())
+                .processSearchCriteria(processInstanceSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .build();
+
+        InboxRequest inboxRequest = InboxRequest.builder()
+                .RequestInfo(searchRequest.getRequestInfo())
+                .inbox(inboxSearchCriteria)
+                .build();
+        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            inboxResponse = getInboxResponse(inboxRequest);
+        }
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            inboxResponse = getIndexResponse(inboxRequest);
+        }
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setCount(inboxResponse.getTotalCount());
+            setter.accept(criteria);
+        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,
                                             Criteria criteria,
                                             InboxQueryConfiguration config,
                                             Consumer<Criteria> setter) {
-        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
 
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
         searchCriteria.put("actionCategory", criteria.getActionCategory());
-
-        if (criteria.getDate() != null) {
-            searchCriteria.put("stateSla", criteria.getDate());
-        }else {
-            searchCriteria.remove("stateSla");
-        }
-
-        if (criteria.getSearchableFields() != null) {
-            searchCriteria.put("searchableFields", criteria.getSearchableFields());
-        }else{
-            searchCriteria.remove("searchableFields");
-        }
-
-        PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
-
-        criteria.setCount(resultData.getTotalSize());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(resultData.getRecords());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfiltered.getTotalSize());
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Final filtered search
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        criteria.setCount(filtered.getTotalSize());
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filtered.getTotalSize());
+        } else {
+            criteria.setData(filtered.getRecords());
         }
 
         setter.accept(criteria);
+    }
+
+    private void populateActionCategoryDataWithoutGrouping(SearchRequest searchRequest,
+                                                           Criteria criteria,
+                                                           InboxQueryConfiguration config,
+                                                           Consumer<Criteria> setter) {
+
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            // Get total count without pagination for unfiltered results
+            Integer unfilteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfilteredTotalCount);
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Get total count without pagination for filtered results
+        Integer filteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        criteria.setCount(filteredTotalCount);
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filteredTotalCount);
+        } else {
+            // Get paginated data for filtered results
+            List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setData(filtered);
+        }
+
+        setter.accept(criteria);
+    }
+
+    /**
+     * Helper to either put a value into the map if not null,
+     * or remove the key if the value is null.
+     */
+    private void putOrRemove(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        } else {
+            map.remove(key);
+        }
+    }
+
+
+    private Integer getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE, false);
+        StringBuilder uri = getURI(index, COUNT_PATH);
+        Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        Integer totalCount = 0;
+        if (response.containsKey(COUNT_CONSTANT)) {
+            totalCount = (Integer) response.get(COUNT_CONSTANT);
+        } else {
+            throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
+        }
+        return totalCount;
     }
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {

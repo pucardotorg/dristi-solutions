@@ -15,6 +15,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -489,32 +490,30 @@ export const UICustomizations = {
       const paymentType = row?.businessObject?.billDetails?.paymentType;
       const courtId = row?.businessObject?.billDetails?.courtId;
       switch (key) {
-        case "CASE_NAME_ID":
+        case "PENDING_CASE_NAME":
           return billStatus === "ACTIVE" ? (
-            <span className="link">
+            <span className="link" style={{ textDecoration: "underline", color: "#0A0A0A" }}>
               <Link
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
-                {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
+                {String(`${caseTitle}` || t("ES_COMMON_NA"))}
               </Link>
             </span>
           ) : (
-            billStatus === "PAID" && <span>{String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}</span>
+            billStatus === "PAID" && <span>{String(`${caseTitle}` || t("ES_COMMON_NA"))}</span>
           );
+        case "CS_CASE_NUMBER_HOME":
+          return <span>{`${getCaseNumber(row?.businessObject?.billDetails)}`}</span>;
         case "AMOUNT_DUE":
           return <span>{`Rs. ${value}/-`}</span>;
         case "ACTION":
           return billStatus === "ACTIVE" ? (
-            <span className="action-link">
+            <span className="action-link home-offline-payments-action-column">
               <Link
-                style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
+                style={{ display: "flex", alignItem: "center", color: "#007E7E" }}
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
-                {" "}
-                <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
-                  {t("CS_RECORD_PAYMENT")}
-                </span>{" "}
-                <ArrowDirection styles={{ height: "20px", width: "20px", fill: "#9E400A" }} />
+                <span style={{ display: "flex", alignItem: "center", color: "#007E7E", fontWeight: "700" }}>{t("CS_RECORD_PAYMENT")}</span>
               </Link>
             </span>
           ) : (
@@ -602,12 +601,11 @@ export const UICustomizations = {
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
           }
+          const tooltipId = `hearing-list-${row?.businessObject?.orderNotification?.id}`;
           return (
             <div>
-              {value?.length > 2 && (
-                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
-              )}
-              <span data-tip data-for={`hearing-list`}>{`${value
+              {value?.length > 2 && <ReactTooltip id={tooltipId}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>}
+              <span data-tip data-for={tooltipId}>{`${value
                 ?.slice(0, 2)
                 ?.map((party) => party?.partyName || party?.name)
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
@@ -638,9 +636,25 @@ export const UICustomizations = {
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          if (value?.status !== OrderWorkflowState.DRAFT_IN_PROGRESS || value?.entityType === "Notification") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="orderInboxConfig" />;
         default:
           break;
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_order_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   litigantInboxConfig: {
@@ -837,7 +851,7 @@ export const UICustomizations = {
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
         case "OWNER":
-          return removeInvalidNameParts(value);
+          return value ? removeInvalidNameParts(value) : "-";
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
@@ -871,7 +885,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -909,7 +923,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1180,9 +1194,15 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const isEmployee = userInfo?.type !== "CITIZEN";
       switch (key) {
         case "FILING_NAME":
-          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : value;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle
+            ? row?.additionalDetails?.formdata?.documentTitle
+            : row?.artifactType === "WITNESS_DEPOSITION"
+            ? `${t(value)} (${row?.tag})`
+            : value;
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
@@ -1204,7 +1224,10 @@ export const UICustomizations = {
               {t("VOID")}
             </div>
           ) : row?.status ? (
-            <CustomChip text={t(row?.status)} shade={"green"} />
+            <CustomChip
+              text={t(row?.artifactType === "WITNESS_DEPOSITION" && row?.status === "COMPLETED" ? "SIGNED" : row?.status)}
+              shade={"green"}
+            />
           ) : (
             ""
           );
@@ -1215,7 +1238,16 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
+        case "EVIDENCE_STATUS":
+          return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
+            <CustomChip
+              text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
+              shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+            />
+          ) : (
+            ""
+          );
         default:
           return "N/A";
       }
@@ -1224,33 +1256,40 @@ export const UICustomizations = {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       // row.status === "Submitted" &&
       return [
-        ...((userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") ||
-          userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")) &&
-        !row?.isVoid &&
-        row?.filingType === "DIRECT"
+        ...(userInfo.roles.map((role) => role.code).includes("EVIDENCE_EDITOR") && !row?.isVoid && row?.filingType === "DIRECT"
           ? [
               {
                 label: "MARK_AS_VOID",
                 id: "mark_as_void",
                 hide: false,
-                disabled: row?.status !== "SUBMITTED",
+                disabled: row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED",
                 action: column.clickFunc,
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
-        !row.isEvidence &&
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
-        !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? [
-              {
-                label: "MARK_AS_EVIDENCE",
-                id: "mark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
+        !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
+          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+            ? [
+                {
+                  label: "VIEW_MARK_AS_EVIDENCE",
+                  id: "view_mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
+            : [
+                {
+                  label: "MARK_AS_EVIDENCE",
+                  id: "mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
           : []),
         // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
         //   ? [
@@ -1279,7 +1318,7 @@ export const UICustomizations = {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
           hide: false,
-          disabled: row?.status !== "SUBMITTED" && row?.filingType === "DIRECT",
+          disabled: (row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT",
           action: column.clickFunc,
         },
       ];
@@ -1413,12 +1452,31 @@ export const UICustomizations = {
                 };
               });
 
+            const witnessDetails =
+              data?.criteria[0]?.responseList[0]?.witnessDetails?.map((itemData) => {
+                const fullName = constructFullName(itemData?.firstName, itemData?.middleName, itemData?.lastName);
+                const designation = constructFullName(itemData?.witnessDesignation);
+                const witnessName = fullName ? fullName : designation ? designation : "";
+                return {
+                  code: witnessName,
+                  name: witnessName,
+                  uniqueId: itemData?.uniqueId,
+                  isJoined: false,
+                  associatedWith: itemData?.ownerType || "COMPLAINANT",
+                  partyType: "witness",
+                  caseId: data?.criteria[0]?.responseList[0]?.id,
+                  isEditable: false,
+                  auditDetails: itemData?.createdTime ? { createdTime: itemData?.createdTime } : data?.criteria[0]?.responseList[0]?.auditDetails,
+                };
+              }) || [];
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
               ...joinedAndPartiallyJoinedAdvocates,
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
+              ...witnessDetails,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1442,7 +1500,12 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
+          const associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+              ? row?.representingList
+              : row?.partyType === "witness"
+              ? t(row?.associatedWith)
+              : "";
           return associatedWith || "";
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
@@ -1468,7 +1531,7 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType;
+          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
@@ -1657,7 +1720,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -1695,7 +1758,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1713,7 +1776,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -1751,7 +1814,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1772,7 +1835,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -1810,7 +1873,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1828,7 +1891,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: null,
                   tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
+                  // hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -1866,7 +1929,7 @@ export const UICustomizations = {
                 .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
                 .then((res) => {
                   history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
                     {
                       caseId: row.caseId,
                       tab: "Orders",
@@ -1880,59 +1943,25 @@ export const UICustomizations = {
       }
     },
   },
-  HomePendingConfig: {
+  HomeScheduleHearingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const tenantId = window?.Digit.ULBService.getStateId();
-      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
-      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
-      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
-      const activeTab = additionalDetails?.activeTab;
       return {
         ...requestCriteria,
         body: {
-          // ...requestCriteria.body,
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
-              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
               courtId: localStorage.getItem("courtId"),
             },
-            searchReviewProcess: {
-              date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
-              actionCategory: "Review Process",
-              ...(activeTab === "REVIEW_PROCESS" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
-            searchViewApplication: {
-              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
-              actionCategory: "View Application",
-              ...(activeTab === "VIEW_APPLICATION" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
+
             searchScheduleHearing: {
-              date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+              isOnlyCountRequired: false,
               actionCategory: "Schedule Hearing",
-              ...(activeTab === "SCHEDULE_HEARING" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
-            },
-            searchRegisterCases: {
-              date: null,
-              isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
-              actionCategory: "Register cases",
-              ...(activeTab === "REGISTRATION" &&
-                requestCriteria?.state?.searchForm?.caseSearchText && {
-                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-                }),
+              ...(requestCriteria?.state?.searchForm?.caseSearchText && {
+                searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+              }),
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
@@ -1941,18 +1970,6 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            const reviwCount = data?.reviewProcessData?.count || 0;
-            const applicationCount = data?.viewApplicationData?.count || 0;
-            const scheduleCount = data?.scheduleHearingData?.count || 0;
-            const registerCount = data?.registerCasesData?.count || 0;
-
-            // setPendingTaskCount();
-            additionalDetails?.setCount({
-              REGISTRATION: registerCount,
-              REVIEW_PROCESS: reviwCount,
-              VIEW_APPLICATION: applicationCount,
-              SCHEDULE_HEARING: scheduleCount,
-            });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
                 const key = curr?.key;
@@ -1980,7 +1997,263 @@ export const UICustomizations = {
                 filingNumber: result?.filingNumber,
                 caseId: result?.caseId,
                 advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
+              };
+            };
+            return {
+              TotalCount: data?.scheduleHearingData?.count,
+              data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
+      switch (key) {
+        case "PENDING_CASE_NAME": {
+          return (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        }
+        case "ADVOCATES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.complainant?.length > 0 &&
+                  `${row?.advocateDetails?.complainant?.[0]}(C)${
+                    row?.advocateDetails?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.complainant?.length > 2
+                      ? ` + ${row?.advocateDetails?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.accused?.length > 0 &&
+                  `${row?.advocateDetails?.accused?.[0]}(A)${
+                    row?.advocateDetails?.accused?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.accused?.length > 2
+                      ? ` + ${row?.advocateDetails?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+            </div>
+          );
+        case "STAGE":
+          return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+        case "APPLICATION_TYPE":
+          return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+  HomePendingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const activeTab = additionalDetails?.activeTab;
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              courtId: localStorage.getItem("courtId"),
+            },
+            searchReviewProcess: {
+              date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
+              actionCategory: "Review Process",
+              ...(activeTab === "REVIEW_PROCESS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchRegisterCases: {
+              date: null,
+              isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
+              actionCategory: "Register cases",
+              ...(activeTab === "REGISTRATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchBailBonds: {
+              date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
+              actionCategory: "Bail Bond",
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            searchScrutinyCases: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Scrutinise cases",
+              status: ["UNDER_SCRUTINY", "CASE_REASSIGNED"],
+            },
+            searchRescheduleHearingsApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_APPLICATIONS" ? false : true,
+              actionCategory: "Reschedule Applications",
+              ...(activeTab === "RESCHEDULE_APPLICATIONS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              ...(activeTab === "RESCHEDULE_APPLICATIONS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            searchDelayCondonationApplication: {
+              date: null,
+              isOnlyCountRequired: activeTab === "DELAY_CONDONATION" ? false : true,
+              actionCategory: "Delay Condonation",
+              ...(activeTab === "DELAY_CONDONATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              ...(activeTab === "DELAY_CONDONATION" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            searchOtherApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "OTHERS" ? false : true,
+              actionCategory: "Others",
+              ...(activeTab === "OTHERS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              ...(requestCriteria?.state?.searchForm?.referenceEntityType && {
+                referenceEntityType: requestCriteria?.state?.searchForm?.referenceEntityType?.type,
+              }),
+              ...(activeTab === "OTHERS" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            searchRegisterUsers: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
+            searchOfflinePayments: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: activeTab === "NOTICE_SUMMONS_MANAGEMENT" ? false : true,
+              actionCategory: "Notice and Summons Management",
+              ...(activeTab === "NOTICE_SUMMONS_MANAGEMENT" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const reviwCount = data?.reviewProcessData?.totalCount || 0;
+            const registerCount = data?.registerCasesData?.totalCount || 0;
+            const bailBondStatusCount = data?.bailBondData?.totalCount || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.totalCount || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.totalCount || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.totalCount || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
+            const registerUsersCount = data?.registerUsersData?.count || 0;
+            const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+
+            additionalDetails?.setCount({
+              REGISTER_USERS: registerUsersCount,
+              OFFLINE_PAYMENTS: offlinePaymentsCount,
+              SCRUTINISE_CASES: scrutinyCasesCount,
+              REGISTRATION: registerCount,
+              REVIEW_PROCESS: reviwCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
+              RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+              DELAY_CONDONATION: delayCondonationApplicationCount,
+              OTHERS: otherApplicationsCount,
+            });
+            const processFields = (fields) => {
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
+                } else if (key === "additionalDetails.partyType") {
+                  acc.partyType = curr.value;
+                } else {
+                  acc[key] = curr.value;
+                }
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
+                advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
                 tab: activeTab,
+                applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                partyUniqueIds: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
+                partyType: result?.partyType,
+                processType: result?.name?.trim()?.split(" ")?.pop(),
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
@@ -1988,17 +2261,32 @@ export const UICustomizations = {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            } else if (activeTab === "VIEW_APPLICATION") {
+            } else if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
               return {
-                TotalCount: data?.viewApplicationData?.count,
-                data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
+                TotalCount: data?.noticeAndSummonsData?.count,
+                data: data?.noticeAndSummonsData?.data?.map((item) => processFields(item.fields)),
               };
-            } else if (activeTab === "SCHEDULE_HEARING")
+            } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
-                TotalCount: data?.scheduleHearingData?.count,
-                data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+                TotalCount: data?.bailBondData?.count,
+                data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
               };
-            else
+            } else if (activeTab === "RESCHEDULE_APPLICATIONS") {
+              return {
+                TotalCount: data?.rescheduleHearingsData?.count,
+                data: data?.rescheduleHearingsData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "DELAY_CONDONATION") {
+              return {
+                TotalCount: data?.delayCondonationApplicationData?.count,
+                data: data?.delayCondonationApplicationData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "OTHERS") {
+              return {
+                TotalCount: data?.otherApplicationsData?.count,
+                data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else
               return {
                 TotalCount: data?.registerCasesData?.count,
                 data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
@@ -2008,6 +2296,30 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
+      const getDaysDiff = (value) => {
+        const createdAt = new Date(value);
+        const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+
+        const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+        return Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      };
+      const renderDaysDiff = (value) => {
+        const days = getDaysDiff(value);
+        return (
+          <span
+            style={{
+              color: days > 2 ? "#9E400A" : undefined,
+              fontWeight: days > 2 ? 500 : 400,
+            }}
+          >
+            {days}
+          </span>
+        );
+      };
+
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2021,6 +2333,8 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
+            <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
@@ -2064,6 +2378,244 @@ export const UICustomizations = {
           );
         case "STAGE":
           return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          return renderDaysDiff(value);
+        case "CS_DAYS_REGISTRATION":
+          return renderDaysDiff(value);
+        case "APPLICATION_TYPE":
+          return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+
+  HomeScrutinyPendingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const activeTab = additionalDetails?.activeTab;
+      const hasCaseReviewerAccess = additionalDetails?.hasCaseReviewerAccess;
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+              courtId: localStorage.getItem("courtId"),
+            },
+            searchReviewProcess: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Review Process",
+            },
+            searchRegisterCases: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Register cases",
+            },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Notice and Summons Management",
+            },
+            searchBailBonds: {
+              date: currentDateInMs,
+              isOnlyCountRequired: true,
+              actionCategory: "Bail Bond",
+            },
+            searchScrutinyCases: {
+              date: null,
+              isOnlyCountRequired: activeTab === "SCRUTINISE_CASES" ? false : true,
+              actionCategory: "Scrutinise cases",
+              ...(activeTab === "SCRUTINISE_CASES" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              status: requestCriteria?.body?.SearchCriteria?.searchScrutinyCases?.status,
+            },
+            searchRescheduleHearingsApplication: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Reschedule Applications",
+            },
+            searchDelayCondonationApplication: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Delay Condonation",
+            },
+            searchOtherApplications: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Others",
+            },
+            searchRegisterUsers: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
+            searchOfflinePayments: {
+              date: null,
+              isOnlyCountRequired: true,
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const reviewCount = data?.reviewProcessData?.totalCount || 0;
+            const registerCount = data?.registerCasesData?.totalCount || 0;
+            const bailBondStatusCount = data?.bailBondData?.totalCount || 0;
+            const scrutinyCasesCount = data?.scrutinyCasesData?.totalCount || 0;
+            const rescheduleHearingsApplicationCount = data?.rescheduleHearingsData?.totalCount || 0;
+            const delayCondonationApplicationCount = data?.delayCondonationApplicationData?.totalCount || 0;
+            const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
+            const registerUsersCount = data?.registerUsersData?.count || 0;
+            const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+
+            additionalDetails?.setCount({
+              REGISTER_USERS: registerUsersCount,
+              OFFLINE_PAYMENTS: offlinePaymentsCount,
+              SCRUTINISE_CASES: scrutinyCasesCount,
+              REGISTRATION: registerCount,
+              REVIEW_PROCESS: reviewCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
+              RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
+              DELAY_CONDONATION: delayCondonationApplicationCount,
+              OTHERS: otherApplicationsCount,
+            });
+            const processFields = (fields) => {
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else {
+                  acc[key] = curr.value;
+                }
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
+                advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
+                tab: activeTab,
+                hasCaseReviewerAccess: hasCaseReviewerAccess,
+              };
+            };
+            return {
+              TotalCount: data?.scrutinyCasesData?.count,
+              data: data?.scrutinyCasesData?.data?.map((item) => processFields(item.fields)) || [],
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
+      switch (key) {
+        case "PENDING_CASE_NAME":
+          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/case`,
+                search: `?caseId=${row?.caseId}`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : (
+            value || "-"
+          );
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+
+  BailBondConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const isCitizen = userRoles?.includes("CITIZEN");
+
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+      const bailId = requestCriteria?.state?.searchForm?.bailId;
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            ...(bailId && { bailId }),
+            ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
+            fuzzySearch: true,
+          },
+          pagination: {
+            sortBy: "bailCreatedTime",
+            order: "desc",
+            limit: limit,
+            offSet: offSet,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "BAIL_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true} />;
+        case "STAGE":
+          return t(value);
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "BAIL_ID":
+          return value;
         default:
           return value ? value : "-";
       }

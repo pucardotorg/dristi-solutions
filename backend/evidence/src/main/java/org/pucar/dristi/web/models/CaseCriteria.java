@@ -21,6 +21,10 @@ import java.util.List;
 @Builder
 public class CaseCriteria {
 
+
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
     @JsonProperty("caseId")
     private String caseId = null;
 
@@ -39,6 +43,9 @@ public class CaseCriteria {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
 
+    @JsonProperty("caseSearchText")
+    private String caseSearchText = null;
+
     @JsonProperty("filingFromDate")
     @Valid
     private Long filingFromDate = null;
@@ -54,6 +61,7 @@ public class CaseCriteria {
     @JsonProperty("registrationToDate")
     @Valid
     private Long registrationToDate = null;
+    //todo judgeid, stage, substage
 
     @JsonProperty("judgeId")
     private String judgeId = null;
@@ -72,12 +80,19 @@ public class CaseCriteria {
     @Valid
     private String advocateId = null;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
     @JsonProperty("status")
     @Valid
     private List<String> status = null;
 
-    @JsonProperty("pagination")
+    @JsonProperty("responseList")
+    @Valid
+    private List<CourtCase> responseList = null;
 
+
+    @JsonProperty("pagination")
     @Valid
     private Pagination pagination = null;
 

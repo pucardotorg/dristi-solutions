@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -180,15 +181,18 @@ async function applicationGeneric(
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
+    const reasonForApplication = htmlToFormattedText(
+      application?.applicationDetails?.reasonForApplication || ""
+    );
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";
     const applicationName =
       application?.applicationDetails?.applicationTitle ||
       applicationNameMap[application?.applicationType] ||
       "General Application";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [

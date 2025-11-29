@@ -13,6 +13,7 @@ import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
+import { mergeBreakdowns } from "./EfilingValidationUtils";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -178,6 +179,7 @@ const complainantWorkflowState = {
 
 const stateSla = {
   PENDING_PAYMENT: 2,
+  RE_PENDING_PAYMENT: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -207,6 +209,7 @@ const ComplainantSignature = ({ path }) => {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -378,6 +381,36 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [litigants]);
 
+  const paymentCriteriaList = useMemo(() => {
+    const processCourierDetails =
+      caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
+    return processCourierDetails.flatMap((accused) => {
+      const combinations = [];
+      const addressList = accused?.addressDetails?.filter((addr) => addr?.checked) || [];
+      const courierGroups = [
+        { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
+        { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+      ];
+      courierGroups.forEach(({ taskType, channels }) => {
+        channels.forEach((channel) => {
+          addressList.forEach((address) => {
+            const pincode = address?.addressDetails?.pincode;
+            if (pincode && channel?.channelId) {
+              combinations.push({
+                channelId: channel.channelId,
+                receiverPincode: pincode,
+                tenantId,
+                id: `${taskType}_${channel.channelId}_${address?.id}`,
+                taskType,
+              });
+            }
+          });
+        });
+      });
+      return combinations;
+    });
+  }, [caseDetails, tenantId]);
+
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
     const filingNumber = caseDetails?.filingNumber;
@@ -410,6 +443,7 @@ const ComplainantSignature = ({ path }) => {
           fileStore: signatureDocumentId,
           fileName: "case Complaint Signed Document",
           isActive: false,
+          toDelete: true,
         });
       }
 
@@ -570,6 +604,11 @@ const ComplainantSignature = ({ path }) => {
     return getUniqueAcronym(placeholder);
   };
 
+  const handleCaseUnlockingWhenMockESign = async () => {
+    await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+    setEsignSuccess(true);
+  };
+
   const handleEsignAction = async () => {
     setLoader(true);
     try {
@@ -584,11 +623,21 @@ const ComplainantSignature = ({ path }) => {
         toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
         setLoader(false);
         return;
+      }
+
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {});
+
+      setLoader(false);
+
+      if (mockESignEnabled) {
+        try {
+          await handleCaseUnlockingWhenMockESign();
+        } catch (error) {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
       } else {
-        await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {}).then(() => {
-          setLoader(false);
-          handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
-        });
+        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
       }
     } catch (error) {
       console.error("Error:", error);
@@ -642,6 +691,16 @@ const ComplainantSignature = ({ path }) => {
 
   const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
     const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+
+    const processCourierCalculationResponse = await DRISTIService.getSummonsPaymentBreakup(
+      {
+        Criteria: paymentCriteriaList,
+      },
+      {}
+    );
+    const calculationList = processCourierCalculationResponse?.Calculation || [];
+    const allBreakdowns = calculationList?.flatMap((item) => item?.breakDown);
+
     const calculationResponse = await DRISTIService.getPaymentBreakup(
       {
         EFillingCalculationCriteria: [
@@ -659,44 +718,23 @@ const ComplainantSignature = ({ path }) => {
       "dristi",
       Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
     );
+    const mergedBreakdowns = mergeBreakdowns(calculationResponse?.Calculation?.[0]?.breakDown || [], allBreakdowns || []);
+    const totalAmount = mergedBreakdowns?.reduce((sum, item) => sum + item?.amount, 0);
+    const updatedCalculation = (calculationResponse?.Calculation || [])?.map((calc) => ({
+      ...calc,
+      totalAmount,
+      breakDown: mergedBreakdowns,
+    }));
 
-    // await DRISTIService.createDemand({
-    //   Demands: [
-    //     {
-    //       tenantId,
-    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-    //       consumerType: "case-default",
-    //       businessService: "case-default",
-    //       taxPeriodFrom: taxPeriod?.fromDate,
-    //       taxPeriodTo: taxPeriod?.toDate,
-    //       demandDetails: [
-    //         {
-    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-    //           taxAmount: calculationResponse?.Calculation?.[0]?.totalAmount,
-    //           collectionAmount: 0,
-    //           isDelayCondonation: isDelayCondonation,
-    //         },
-    //       ],
-    //       additionalDetails: {
-    //         filingNumber: caseDetails?.filingNumber,
-    //         chequeDetails: chequeDetails,
-    //         cnrNumber: caseDetails?.cnrNumber,
-    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-    //         isDelayCondonation: isDelayCondonation,
-    //       },
-    //     },
-    //   ],
-    // });
     await DRISTIService.etreasuryCreateDemand({
       tenantId,
       entityType: "case-default",
       filingNumber: caseDetails?.filingNumber,
       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-      calculation: calculationResponse?.Calculation,
+      calculation: updatedCalculation,
     });
 
-    return calculationResponse;
+    return { Calculation: updatedCalculation };
   };
 
   const updateSignedDocInCaseDoc = () => {
@@ -718,7 +756,7 @@ const ComplainantSignature = ({ path }) => {
     if (isSelectedUploadDoc) {
       updateCase(state);
     } else {
-      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+      if (isLastPersonSigned && (state === "PENDING_PAYMENT" || state === "RE_PENDING_PAYMENT")) {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -778,7 +816,7 @@ const ComplainantSignature = ({ path }) => {
               await Promise.all(promises);
             }
           }
-          if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+          if (res?.cases?.[0]?.status === "PENDING_PAYMENT" || res?.cases?.[0]?.status === "RE_PENDING_PAYMENT") {
             // Extract UUIDs of litigants and representatives if available
             const uuids = [
               ...(Array.isArray(caseDetails?.litigants)
@@ -815,7 +853,25 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            let calculation = null;
+            if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
+              calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            } else {
+              const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+              try {
+                calculation = await DRISTIService.getTreasuryPaymentBreakup(
+                  {
+                    tenantId: tenantId,
+                  },
+                  { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
+                  "dristi",
+                  Boolean(caseDetails?.filingNumber && suffix)
+                );
+                calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+              } catch (error) {
+                console.error("Error fetching treasury payment breakup:", error);
+              }
+            }
             setCalculationResponse(calculation);
             setLoader(false);
             if (isSelectedUploadDoc) {

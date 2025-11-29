@@ -55,23 +55,6 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
-        if(messageCode.equalsIgnoreCase(NOTICE_DELIVERED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeDeliveredTemplateId());
-        } else if(messageCode.equalsIgnoreCase(NOTICE_NOT_DELIVERED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeNotDeliveredTemplateId());
-        } else if(messageCode.equalsIgnoreCase(SUMMONS_DELIVERED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsDeliveredTemplateId());
-        } else if(messageCode.equalsIgnoreCase(SUMMONS_NOT_DELIVERED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsNotDeliveredTemplateId());
-        } else if (messageCode.equalsIgnoreCase(WARRANT_ISSUED)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantIssuedTemplateId());
-        } else if (messageCode.equalsIgnoreCase(WARRANT_ISSUE_SUCCESS)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantIssueSuccess());
-        } else if (messageCode.equalsIgnoreCase(WARRANT_DELIVERED)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantDeliveredTemplateId());
-        } else if (messageCode.equalsIgnoreCase(WARRANT_NOT_DELIVERED)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantNotDeliveredTemplateId());
-        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {

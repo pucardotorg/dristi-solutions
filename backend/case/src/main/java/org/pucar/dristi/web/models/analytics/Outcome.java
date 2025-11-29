@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.springframework.validation.annotation.Validated;
 
 
@@ -28,14 +29,18 @@ public class Outcome {
     @JsonProperty("outcome")
     private String outcome = null;
 
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal = null;
+
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;
 
-    public Outcome(String filingNumber, String tenantId, String outcome) {
+    public Outcome(String filingNumber, String tenantId, String outcome, NatureOfDisposal natureOfDisposal) {
         this.filingNumber = filingNumber;
         this.tenantId = tenantId;
         this.outcome = outcome;
+        this.natureOfDisposal = natureOfDisposal;
     }
 
 }
