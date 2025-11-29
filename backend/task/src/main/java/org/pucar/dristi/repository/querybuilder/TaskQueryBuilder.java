@@ -98,7 +98,7 @@ public class TaskQueryBuilder {
             String courtId = criteria.getCourtId();
             // adding this filter for process summary filtering
             String partyType = criteria.getPartyType();
-            String partyName = criteria.getPartyName();
+            String partyName = criteria.getPartyName() == null ? null : criteria.getPartyName().trim().replaceAll("\\s+", " ");
             String partyCondition = getPartyCondition(partyType, partyName);
 
             String condition = """
