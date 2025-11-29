@@ -162,10 +162,10 @@ public class HearingService {
         int size = hearingDetails.size();
         for(int i=0; i<size; i++) {
             HearingDetails temp = hearingDetails.get(i);
-            if(temp.getNextDate() == null && i == size-1) {
+            if(i == size-1) {
                 temp.setNextDate(newHearingDetail.getHearingDate());
                 producer.push("update-hearing-details", temp);
-            } else if(temp.getNextDate() == null && i < size-1) {
+            } else if(i < size-1) {
                 temp.setNextDate(hearingDetails.get(i+1).getHearingDate());
                 producer.push("update-hearing-details", temp);
             }
