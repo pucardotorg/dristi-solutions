@@ -486,7 +486,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 String jocode = judgeDetails != null ? judgeDetails.getJocode() : null;
                 existingDetails.setCino(cino);
                 existingDetails.setJocode(jocode);
-                producer.push("save-case-conversion-details", caseTypeDetails);
+                producer.push("save-case-conversion-details", existingDetails);
                 log.info("Successfully added new case conversion record for CINO: {} with sr_no: {}", cino, existingDetails.getSrNo());
                 
             } else {
