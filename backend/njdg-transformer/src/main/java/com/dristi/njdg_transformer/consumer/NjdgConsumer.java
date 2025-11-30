@@ -47,6 +47,9 @@ public class NjdgConsumer {
             NJDGTransformRecord existingRecord = checkIfRecordExists(cino);
             if (existingRecord != null) {
                 log.info("Updating existing case record | CINO: {}", cino);
+                if(existingRecord.getPurposeNext() != null && record.getPurposeNext() == null) {
+                    record.setPurposeNext(existingRecord.getPurposeNext());
+                }
                 caseRepository.updateRecord(record);
                 log.info("Successfully updated case record | CINO: {}", cino);
             } else {
@@ -379,5 +382,25 @@ public class NjdgConsumer {
             return 0; // Default value for invalid format
         }
     }
-    //todo: add consumer to persist case type details
+
+    @KafkaListener(topics = "save-case-conversion-details")
+    public void listenCaseConversionDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        Integer caseConversionCode = null;
+
+        log.info("Received case conversion details message on topic: {} | messageId: {} | partition: {} | offset: {}",
+                topic, messageId, payload.partition(), payload.offset());
+
+        try {
+            CaseTypeDetails caseTypeDetails = objectMapper.readValue(payload.value().toString(), CaseTypeDetails.class);
+
+            log.info("Processing case conversion details | CINO: {}", caseTypeDetails.getCino());
+
+            caseRepository.insertCaseConversionDetails(caseTypeDetails);
+            log.info("Successfully processed case conversion | CINO: {}", caseTypeDetails.getCino());
+        } catch (Exception e) {
+            log.error("Failed to process case conversion | caseConversionCode: {} | messageId: {} | error: {}",
+                     caseConversionCode, messageId, e.getMessage(), e);
+        }
+    }
 }

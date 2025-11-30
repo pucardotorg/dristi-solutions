@@ -476,9 +476,9 @@ public class CaseRepository {
         }
     }
 
-    public void insertCaseConversionDetails(CaseTypeDetails caseTypeDetails, String cino, String jocode, Integer srNo) {
+    public void insertCaseConversionDetails(CaseTypeDetails caseTypeDetails) {
         try {
-            log.info("Inserting case conversion details for CINO: {}", cino);
+            log.info("Inserting case conversion details for CINO: {}", caseTypeDetails.getCino());
             
             String insertQuery = queryBuilder.getCaseConversionInsertQuery();
             
@@ -486,21 +486,21 @@ public class CaseRepository {
             List<Integer> preparedStmtArgsList = new ArrayList<>();
             
             // Add parameters in the order they appear in the query
-            preparedStmtList.add(cino);
+            preparedStmtList.add(caseTypeDetails.getCino());
             preparedStmtList.add(caseTypeDetails.getOldRegCaseType());
             preparedStmtList.add(caseTypeDetails.getOldRegNo());
             preparedStmtList.add(caseTypeDetails.getOldRegYear());
             preparedStmtList.add(caseTypeDetails.getNewRegCaseType());
             preparedStmtList.add(caseTypeDetails.getNewRegNo());
             preparedStmtList.add(caseTypeDetails.getNewRegYear());
-            preparedStmtList.add(srNo);
+            preparedStmtList.add(caseTypeDetails.getSrNo());
             preparedStmtList.add(caseTypeDetails.getOldFilCaseType());
             preparedStmtList.add(caseTypeDetails.getOldFilNo());
             preparedStmtList.add(caseTypeDetails.getOldFilYear());
             preparedStmtList.add(caseTypeDetails.getNewFilCaseType());
             preparedStmtList.add(caseTypeDetails.getNewFilNo());
             preparedStmtList.add(caseTypeDetails.getNewFilYear());
-            preparedStmtList.add(jocode);
+            preparedStmtList.add(caseTypeDetails.getJocode());
             
             // Set parameter types
             preparedStmtArgsList.add(Types.VARCHAR);    // cino
@@ -522,10 +522,10 @@ public class CaseRepository {
             jdbcTemplate.update(insertQuery, preparedStmtList.toArray(),
                     preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
             
-            log.info("Successfully inserted case conversion details for CINO: {}", cino);
+            log.info("Successfully inserted case conversion details for CINO: {}", caseTypeDetails.getCino());
             
         } catch (DataAccessException e) {
-            log.error("Failed to insert case conversion details for CINO: {} | error: {}", cino, e.getMessage(), e);
+            log.error("Failed to insert case conversion details for CINO: {} | error: {}", caseTypeDetails.getCino(), e.getMessage(), e);
             throw e;
         }
     }

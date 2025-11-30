@@ -54,4 +54,10 @@ public class CaseTypeDetails {
 
     @JsonProperty("sr_no")
     private Integer srNo;
+
+    @JsonProperty("cino")
+    private String cino;
+
+    @JsonProperty("jocode")
+    private String jocode;
 }
