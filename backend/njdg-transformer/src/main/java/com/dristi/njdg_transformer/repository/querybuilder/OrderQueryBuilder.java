@@ -22,7 +22,8 @@ public class OrderQueryBuilder {
                     "disp_reason AS disp_reason, " +
                     "court_no AS court_no, " +
                     "judge_code AS judge_code, " +
-                    "desig_code AS desig_code " +
+                    "desig_code AS desig_code, " +
+                    "order_number AS order_number " +
                     "FROM interim_orders";
 
     public String getInterimOrderQuery(){
