@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -97,6 +98,18 @@ public class OrderApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true, HttpStatus.OK.getReasonPhrase());
         OrderResponse orderResponse = OrderResponse.builder().order(order).responseInfo(responseInfo).build();
         return new ResponseEntity<>(orderResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/order-details")
+    public ResponseEntity<OrderDetailsResponse> orderDetailsPost(@Parameter(in = ParameterIn.DEFAULT, description = "Request containing order details, order number and unique ID", schema = @Schema()) @Valid @RequestBody OrderDetailsRequest body) {
+        OrderDetailsDTO result = orderService.processOrderDetails(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true, HttpStatus.OK.getReasonPhrase());
+        OrderDetailsResponse response = OrderDetailsResponse.builder()
+                .orderDetailsDTO(result)
+                .responseInfo(responseInfo)
+                .message("Order details processed successfully")
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
 
