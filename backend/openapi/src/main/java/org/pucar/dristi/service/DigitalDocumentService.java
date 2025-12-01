@@ -64,24 +64,22 @@ public class DigitalDocumentService {
             }
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
-            List<String> mobileNumbers =new ArrayList<>();
+            List<String> mobileNumbers = new ArrayList<>();
             if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
                 if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
                     mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
                 }
-            }else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
                 if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
                     mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
                 }
             }
 
-            if (mobileNumbers.contains(request.getMobileNumber())) {
-                log.info("method=searchDigitalDocument, status=COMPLETED, request={}", request);
-                return response;
+            if (!mobileNumbers.contains(request.getMobileNumber())) {
+                throw new CustomException(DIGITALIZE_SERVICE_EXCEPTION, "Not a valid mobile number");
             }
 
-            log.info("method=searchDigitalDocument, status=FAILED, request={}", request);
-            return null;
+            return response;
         } catch (Exception e) {
             log.error("method=searchDigitalDocument, status=FAILED, request={}", request, e);
             throw new CustomException(DIGITALIZE_SERVICE_EXCEPTION, "Digitalize document service exception");
@@ -111,27 +109,28 @@ public class DigitalDocumentService {
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
 
-            List<String> mobileNumbers =new ArrayList<>();
+            List<String> mobileNumbers = new ArrayList<>();
             if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
                 if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
                     mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
                 }
-            }else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
                 if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
                     mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
                 }
             }
 
+            DigitalizedDocumentResponse digitalizedDocumentResponse = null;
             if (mobileNumbers.contains(request.getMobileNumber())) {
 
-                org.pucar.dristi.web.models.digtal_document.Document document = Document.builder()
+                Document document = Document.builder()
                         .id(UUID.randomUUID().toString())
                         .fileStore(request.getFileStoreId())
                         .documentType("application/pdf")
                         .documentUid(UUID.randomUUID().toString())
                         .build();
 
-                if(digitalizedDocument.getDocuments()==null){
+                if (digitalizedDocument.getDocuments() == null) {
                     digitalizedDocument.setDocuments(new ArrayList<>());
                 }
                 digitalizedDocument.getDocuments().add(document);
@@ -140,13 +139,13 @@ public class DigitalDocumentService {
                 workflow.setAction(E_SIGN);
                 digitalizedDocument.setWorkflow(workflow);
 
-                DigitalizedDocumentResponse digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
+                digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
                 log.info("method=updateDigitalDocument, status=COMPLETED, request={}", request);
-                return digitalizedDocumentResponse;
+            } else {
+                throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Not a valid mobile number");
             }
+            return digitalizedDocumentResponse;
 
-            log.info("method=updateDigitalDocument, status=FAILED, request={}", request);
-            return null;
         } catch (Exception e) {
             log.error("method=updateDigitalDocument, status=FAILED, request={}", request, e);
             throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Digitalize document service exception");
@@ -154,7 +153,7 @@ public class DigitalDocumentService {
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {
-        org.egov.common.contract.request.User userInfo = new User();
+        User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
         userInfo.setRoles(userService.internalMicroserviceRoles);
         userInfo.setType(SYSTEM);
