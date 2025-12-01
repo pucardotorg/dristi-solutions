@@ -23,13 +23,14 @@ export const BooleanToCode = (value) => {
   }
 };
 
-export const _getCreatePleaPayload = (caseDetails, formData, tenantId) => {
+export const _getCreatePleaPayload = (caseDetails, formData, tenantId, courtId) => {
   const payload = {
     digitalizedDocument: {
       tenantId: tenantId,
       type: "PLEA",
       caseId: caseDetails?.id,
       caseFilingNumber: caseDetails?.filingNumber,
+      courtId: courtId,
       pleaDetails: {
         accusedName: formData?.accusedDetails?.code,
         accusedUniqueId: formData?.accusedDetails?.uniqueId,

@@ -484,3 +484,18 @@ export const getOrderActionName = (applicationType, type) => {
       return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
   }
 };
+
+export const _getDigitilizationPatiresName = (data) => {
+  if (data?.type === "PLEA") {
+    return data?.pleaDetails?.accusedName?.trim();
+  } else if (data?.type === "EXAMINATION_OF_ACCUSED") {
+    return data?.examinationOfAccusedDetails?.accusedName?.trim();
+  } else if (data?.type === "MEDIATION") {
+    return (
+      data?.mediationDetails?.partyDetails
+        ?.map((p) => p.partyName)
+        ?.filter(Boolean)
+        ?.join(", ") || ""
+    );
+  }
+};

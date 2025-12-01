@@ -12,6 +12,11 @@ const defaultSearchValues = {
   artifactNumber: "",
 };
 
+const digitalizationDefaultSearch = {
+  type:{},
+  documentNumber:"",
+}
+
 const defaultBailValues = { bailId: "" };
 
 //config for tab search sceeen
@@ -248,7 +253,7 @@ export const DocumentSearchConfig = {
       displayLabel: "DIGITTALIZATION_TAB",
       type: "search",
       apiDetails: {
-        serviceName: "/bail-bond/v1/_search", // todo: need to work
+        serviceName: "/digitalized-documents/v1/_search",
         requestParam: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
@@ -260,8 +265,6 @@ export const DocumentSearchConfig = {
           pagination: {
             limit: 10,
             offSet: 0,
-            sortBy: "bailCreatedTime",
-            order: "desc",
           },
         },
         masterName: "commonUiConfig",
@@ -278,7 +281,7 @@ export const DocumentSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: digitalizationDefaultSearch,
             fields: [
               {
                 label: "TYPE",
@@ -286,7 +289,7 @@ export const DocumentSearchConfig = {
                 key: "type",
                 type: "dropdown",
                 populators: {
-                  name: "artifactType",
+                  name: "type",
                   optionsKey: "name",
                   options: [
                     {
@@ -324,27 +327,31 @@ export const DocumentSearchConfig = {
             columns: [
               {
                 label: "DOCUMENT_TYPE",
-                jsonPath: "bailType",
+                jsonPath: "type",
                 additionalCustomization: true,
               },
               {
                 label: "DOCUMENT_ID",
-                jsonPath: "bailId",
+                jsonPath: "documentNumber",
               },
               {
                 label: "PARTIES",
-                jsonpath: "litigantName",
-                // additionalCustomization: true,
+                jsonpath: "parties",
+                additionalCustomization: true,
               },
               {
                 label: "STATUS",
                 jsonPath: "status",
                 additionalCustomization: true,
-              }
+              },
+              {
+                label: "CS_ACTIONS",
+                additionalCustomization: true,
+              },
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "bails",
+            resultsJsonPath: "documents",
           },
           show: true,
         },

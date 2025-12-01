@@ -21,6 +21,7 @@ import GenericUploadSignatureModal from "../../components/GenericUploadSignature
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
+import { getFormattedName } from "../../utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const convertToFormData = (obj) => {
@@ -141,6 +142,28 @@ const PleaSubmission = () => {
     return pleaSearchResponse?.documents?.[0] || {};
   }, [defaultFormValueData, pleaSearchResponse]);
 
+  const accusedList = useMemo(() => {
+    return (
+      caseDetails?.additionalDetails?.respondentDetails?.formdata?.map?.((respondent) => {
+        const respondentDetails = respondent?.data || {};
+        const fullName = getFormattedName(
+          respondentDetails?.respondentFirstName,
+          respondentDetails?.respondentMiddleName,
+          respondentDetails?.respondentLastName,
+          null,
+          null
+        );
+        const uniqueId = respondent?.uniqueId;
+  
+        return {
+          code: fullName,
+          name: fullName,
+          uniqueId: uniqueId,
+        };
+      }) || []
+    );
+  }, [caseDetails]);  
+
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
       ...config,
@@ -157,12 +180,7 @@ const PleaSubmission = () => {
             ...body,
             populators: {
               ...body.populators,
-              options: [
-                {
-                  code: "complainantOne",
-                  name: "ComplainantOne",
-                },
-              ],
+              options: [...accusedList],
             },
           };
         }
@@ -182,15 +200,15 @@ const PleaSubmission = () => {
 
     const originalFormConfig = pleaSubmissionDetailConfig.formConfig;
     return originalFormConfig?.map((config) => applyUiChanges(config));
-  }, [t]);
+  }, [accusedList, t]);
 
   const defaultFormValue = useMemo(() => {
-    if (Object.keys(defaultFormValueData).length > 0) {
-      return convertToFormData(t, defaultFormValueData);
+    if (Object.keys(defaultFormValueData).length > 0 && Object.keys(defaultFormValueData?.pleaDetails).length > 0) {
+      return convertToFormData(t, defaultFormValueData?.pleaDetails || {});
     }
 
     if (documentNumber && pleaResponseDetails) {
-      return convertToFormData(pleaResponseDetails);
+      return convertToFormData(pleaResponseDetails?.pleaDetails || {});
     }
 
     return {
@@ -217,7 +235,7 @@ const PleaSubmission = () => {
       setLoader(true);
       let pleaSubmissionUpdateResponse = null;
       if (!documentNumber) {
-        const payload = _getCreatePleaPayload(caseDetails, formdata, tenantId);
+        const payload = _getCreatePleaPayload(caseDetails, formdata, tenantId, courtId);
         pleaSubmissionUpdateResponse = await submissionService.createDigitalization(payload, tenantId);
         setDefaultFormValueData(pleaSubmissionUpdateResponse?.digitalizedDocument || {});
         history.replace(
@@ -381,7 +399,7 @@ const PleaSubmission = () => {
               setPreviewPleModal(false);
               if (showModal) {
                 history.replace(
-                  `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
+                  `/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
                 );
               }
             }}
