@@ -356,27 +356,20 @@ const AddOrderTypeModal = ({
                     }),
                   }));
                 } else if (isReferralToADR) {
+                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+                  const hideForMediationEndKeys = ["dateOfEndADR"];
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,
                     body: conf?.body?.map((field) => {
-                      if (["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"]?.includes(field?.key)) {
-                        return {
-                          ...field,
-                          populators: {
-                            ...field.populators,
-                            hideInForm: !isMediation,
-                          },
-                        };
-                      } else if (["dateOfEndADR"]?.includes(field?.key)) {
-                        return {
-                          ...field,
-                          populators: {
-                            ...field.populators,
-                            hideInForm: isMediation,
-                          },
-                        };
-                      }
-                      return field;
+                      const shouldHide =
+                        (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+                      return {
+                        ...field,
+                        populators: {
+                          ...field?.populators,
+                          hideInForm: shouldHide,
+                        },
+                      };
                     }),
                   }));
                 }

@@ -3366,21 +3366,6 @@ const GenerateOrdersV2 = () => {
           hasError = true;
           break;
         }
-
-        if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
-          const hearingDate = formData?.dateOfHearing || formData?.dateForHearing || formData?.hearingDate;
-          if (currentOrder?.nextHearingDate && hearingDate) {
-            const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
-            if (dateChanged) {
-              setShowErrorToast({
-                label: t("DATE_MISTATCHED_FOR_HEARING_IN_ORDER"),
-                error: true,
-              });
-              hasError = true;
-              break;
-            }
-          }
-        }
       }
     }
 

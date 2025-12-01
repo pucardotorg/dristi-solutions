@@ -154,6 +154,7 @@ export const channelTypeEnum = {
 };
 
 export const getMediationChangedFlag = (orderDetails, newOrderDetails) => {
+  if (newOrderDetails?.adrMode !== "MEDIATION") return false;
   if (!orderDetails) return true;
 
   const keysToCheck = ["adrMode", "parties", "hearingDate", "modeOfSigning", "mediationCentre"];
@@ -386,7 +387,25 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
       }
 
       for (let p = 0; p < configForThisItem?.length; p++) {
-        const body = configForThisItem?.[p]?.body || [];
+        let body = configForThisItem?.[p]?.body || [];
+        if (orderType === "REFERRAL_CASE_TO_ADR") {
+          const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+          const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+          const hideForMediationEndKeys = ["dateOfEndADR"];
+
+          body = body.map((field) => {
+            const shouldHide =
+              (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+            return {
+              ...field,
+              populators: {
+                ...field?.populators,
+                hideInForm: shouldHide,
+              },
+            };
+          });
+        }
         for (let k = 0; k < body.length; k++) {
           const field = body[k];
           if (field?.populators?.hideInForm) continue;
@@ -395,6 +414,19 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
             itemErrors.push({
               key: field?.label || field?.key,
               errorMessage: "THIS_IS_MANDATORY_FIELD",
+            });
+          }
+        }
+      }
+
+      if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
+        const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
+        if (currentOrder?.nextHearingDate && hearingDate) {
+          const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+          if (dateChanged) {
+            itemErrors?.push({
+              key: "DATE_OF_HEARING",
+              errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
             });
           }
         }
@@ -433,7 +465,24 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
     }
 
     for (let p = 0; p < configForThisItem?.length; p++) {
-      const body = configForThisItem?.[p]?.body || [];
+      let body = configForThisItem?.[p]?.body || [];
+      if (orderType === "REFERRAL_CASE_TO_ADR") {
+        const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+        const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+        const hideForMediationEndKeys = ["dateOfEndADR"];
+
+        body = body.map((field) => {
+          const shouldHide = (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+          return {
+            ...field,
+            populators: {
+              ...field?.populators,
+              hideInForm: shouldHide,
+            },
+          };
+        });
+      }
       for (let k = 0; k < body.length; k++) {
         const field = body[k];
         if (field?.populators?.hideInForm) continue;
@@ -442,6 +491,19 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
           itemErrors.push({
             key: field?.label || field?.key,
             errorMessage: "THIS_IS_MANDATORY_FIELD",
+          });
+        }
+      }
+    }
+
+    if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
+      const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
+      if (currentOrder?.nextHearingDate && hearingDate) {
+        const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+        if (dateChanged) {
+          itemErrors?.push({
+            key: "DATE_OF_HEARING",
+            errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
           });
         }
       }
