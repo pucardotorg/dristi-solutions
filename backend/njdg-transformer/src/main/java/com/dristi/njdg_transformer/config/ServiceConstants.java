@@ -28,4 +28,10 @@ public class ServiceConstants {
     public static final String KOLLAM = "KOLLAM";
     public static final String CMP = "CMP";
     public static final String ST = "ST";
+    public static final String ADMIT_DISMISS_CASE = "ADMIT_DISMISS_CASE";
+    public static final String DISMISSED = "DISMISSED";
+    public static final String DISMISS_CASE = "DISMISS_CASE";
+    public static final String WITHDRAW_CASE = "WITHDRAWAL";
+    public static final String WITHDRAWAL_ACCEPT = "WITHDRAWAL_ACCEPT";
+    public static final String APPROVED = "APPROVED";
 }

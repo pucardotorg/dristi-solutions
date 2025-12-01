@@ -12,19 +12,26 @@ import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.OrderRepository;
 import com.dristi.njdg_transformer.utils.CaseUtil;
 import com.dristi.njdg_transformer.utils.FileStoreUtil;
+import com.dristi.njdg_transformer.utils.JsonUtil;
+import com.dristi.njdg_transformer.utils.MdmsUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
 
@@ -37,9 +44,10 @@ public class OrderService {
     private final FileStoreUtil fileStoreUtil;
     private final Producer producer;
     private final TransformerProperties properties;
-    private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
     private final CaseRepository caseRepository;
+    private final MdmsUtil mdmsUtil;
+    private final JsonUtil jsonUtil;
 
     public InterimOrder processAndUpdateOrder(Order order, RequestInfo requestInfo) {
         String cino = order.getCnrNumber();
@@ -309,5 +317,164 @@ public class OrderService {
         CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
+    }
+
+    public void processAdmitDismissOrder(Order order, RequestInfo requestInfo) {
+        Object orderDetails = order.getOrderDetails();
+        if(orderDetails == null) {
+            log.error("Order details is null for admit/dismiss order: {}", order.getOrderNumber());
+            return;
+        }
+        
+        try {
+            String orderStatus = JsonPath.read(orderDetails, "$.isCaseAdmittedOrDismissed");
+            log.info("Processing admit/dismiss order | orderNumber: {} | caseStatus: {}", 
+                     order.getOrderNumber(), orderStatus);
+            
+            if(DISMISSED.equalsIgnoreCase(orderStatus)) {
+                order.setOrderType(DISMISS_CASE);
+                String outcome = getOutcomeValue(order.getOrderType(), order.getTenantId(), requestInfo);
+                if(outcome != null) {
+                    order.setOutcome(outcome);
+                    log.info("Set outcome for dismiss case order | orderNumber: {} | outcome: {}", 
+                             order.getOrderNumber(), outcome);
+                }
+            }
+            
+            processAndUpdateOrder(order, requestInfo);
+            
+        } catch (Exception e) {
+            log.error("Error processing admit/dismiss order | orderNumber: {} | error: {}", 
+                     order.getOrderNumber(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Main order processing method that handles all order processing logic
+     * Moved from NJDGController to follow proper layered architecture
+     */
+    public ResponseEntity<InterimOrder> processOrderRequest(Order order, RequestInfo requestInfo) {
+        String orderId = order.getOrderNumber();
+        String status = order.getStatus();
+        
+        try {
+            log.info("Processing order | orderId: {} | status: {}", orderId, status);
+            
+            if (!PUBLISHED_ORDER.equals(status)) {
+                log.info("Skipping order processing | orderId: {} | status: {} | expectedStatus: {}",
+                        orderId, status, PUBLISHED_ORDER);
+                return ResponseEntity.ok(new InterimOrder());
+            }
+            
+            if (shouldProcessOrder(order, requestInfo)) {
+                InterimOrder updatedOrder = processAndUpdateOrder(order, requestInfo);
+                log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
+                return ResponseEntity.ok(updatedOrder);
+            } else if(order.getOrderType() != null && ADMIT_DISMISS_CASE.equalsIgnoreCase(order.getOrderType())) {
+                processAdmitDismissOrder(order, requestInfo);
+                log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
+                return ResponseEntity.ok(new InterimOrder());
+            } else if(order.getOrderType() != null && WITHDRAW_CASE.equalsIgnoreCase(order.getOrderType())) {
+                processWithdrawOrder(order, requestInfo);
+                log.info("Order processed successfully | orderId: {} | status: {}", orderId, status);
+                return ResponseEntity.ok(new InterimOrder());
+            } else {
+                log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
+                        orderId, order.getOrderType());
+                return ResponseEntity.ok(new InterimOrder());
+            }
+        } catch (Exception e) {
+            log.error("Error processing order | orderId: {} | status: {} | error: {}", orderId, status, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new InterimOrder());
+        }
+    }
+
+    private void processWithdrawOrder(Order order, RequestInfo requestInfo) {
+        Object orderDetails = order.getOrderDetails();
+        if(orderDetails == null) {
+            log.error("Order details is null for withdraw order: {}", order.getOrderNumber());
+            return;
+        }
+        
+        try {
+            String applicationStatus = JsonPath.read(orderDetails, "$.applicationStatus");
+            log.info("Processing withdraw order | orderNumber: {} | applicationStatus: {}", 
+                     order.getOrderNumber(), applicationStatus);
+            
+            if(APPROVED.equalsIgnoreCase(applicationStatus)) {
+                order.setOrderType(WITHDRAWAL_ACCEPT);
+                String outcome = getOutcomeValue(order.getOrderType(), order.getTenantId(), requestInfo);
+                if(outcome != null) {
+                    order.setOutcome(outcome);
+                    log.info("Set outcome for withdrawal accept order | orderNumber: {} | outcome: {}", 
+                             order.getOrderNumber(), outcome);
+                }
+            }
+            
+            processAndUpdateOrder(order, requestInfo);
+            
+        } catch (Exception e) {
+            log.error("Error processing withdraw order | orderNumber: {} | error: {}", 
+                     order.getOrderNumber(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Determines if an order should be processed based on MDMS outcome validation
+     * @param order The order to validate
+     * @param requestInfo The request info for MDMS calls
+     * @return true if order should be processed, false otherwise
+     */
+    private boolean shouldProcessOrder(Order order, RequestInfo requestInfo) {
+        if(INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
+            String outcome = getOutcomeValue(order.getOrderType(), order.getTenantId(), requestInfo);
+            if(outcome != null) {
+                order.setOutcome(outcome);
+                log.info("Set outcome for intermediate order | orderNumber: {} | orderType: {} | outcome: {}", 
+                         order.getOrderNumber(), order.getOrderType(), outcome);
+                return true;
+            }
+        } else if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+            JsonNode compositeItems = objectMapper.convertValue(order.getCompositeItems(), JsonNode.class);
+            for(JsonNode compositeItem : compositeItems){
+                String outcome = getOutcomeValue(compositeItem.get("orderType").asText(), order.getTenantId(), requestInfo);
+                if(outcome != null) {
+                    order.setOutcome(outcome);
+                    log.info("Set outcome for composite order | orderNumber: {} | orderType: {} | outcome: {}", 
+                             order.getOrderNumber(), compositeItem.get("orderType").asText(), outcome);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Fetches outcome value from MDMS for given order type
+     * @param orderType The order type to look up
+     * @param tenantId The tenant ID
+     * @param requestInfo The request info for MDMS calls
+     * @return String outcome value or null if not found
+     */
+    private String getOutcomeValue(String orderType, String tenantId, RequestInfo requestInfo) {
+        try {
+            Map<String, Map<String, JSONArray>> caseOutcomes = mdmsUtil.fetchMdmsData(requestInfo, tenantId, "case", List.of("OutcomeType"));
+            JSONArray outcomeData = caseOutcomes.get("case").get("OutcomeType");
+            
+            for (Object outcomeObject : outcomeData) {
+                String outcomeOrderType = jsonUtil.getNestedValue(outcomeObject, List.of("orderType"), String.class);
+                if(orderType.equalsIgnoreCase(outcomeOrderType)){
+                    String outcomeValue = jsonUtil.getNestedValue(outcomeObject, List.of("outcome"), String.class);
+                    log.info("Found outcome for orderType | orderType: {} | outcome: {}", orderType, outcomeValue);
+                    return outcomeValue;
+                }
+            }
+            
+            log.info("No outcome found for orderType | orderType: {}", orderType);
+            return null;
+        } catch (Exception e) {
+            log.error("Error fetching outcome value for orderType | orderType: {} | error: {}", orderType, e.getMessage(), e);
+            return null;
+        }
     }
 }

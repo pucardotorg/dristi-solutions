@@ -96,18 +96,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
 
         CaseTypeDetails.CaseTypeDetailsBuilder builder = CaseTypeDetails.builder();
 
-        if (CMP.equalsIgnoreCase(caseType)) {
-            // For CMP cases: assign only old values using courtCaseNumber or cmpNumber
-            String caseNumber = courtCase.getCourtCaseNumber() != null ?
-                               courtCase.getCourtCaseNumber() : courtCase.getCmpNumber();
-
-            builder.oldRegCaseType(caseTypeValue)
-                   .oldRegNo(numberExtractor.extractCaseNumber(caseNumber))
-                   .oldRegYear(extractRegYear(caseNumber));
-
-            log.info("Populated old case type details for CMP case: {}", courtCase.getCnrNumber());
-
-        } else if (ST.equalsIgnoreCase(caseType)) {
+        if (ST.equalsIgnoreCase(caseType)) {
             // For ST cases: use courtCaseNumber for new values and cmpNumber for old values during migration
             String caseNumber = courtCase.getCourtCaseNumber();
             String cmpNumber = courtCase.getCmpNumber();
@@ -145,7 +134,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .dtRegis(dateUtil.formatDate(courtCase.getRegistrationDate()))
                 .caseType(getCaseTypeValue(courtCase.getCaseType()))
                 .filNo(numberExtractor.extractFilingNumber(courtCase.getFilingNumber()))
-                .filYear(dateUtil.extractYear(courtCase.getFilingDate()))
+                .filYear(extractFilingYear(courtCase.getFilingNumber()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? 
@@ -186,6 +175,34 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             log.error("Error retrieving last hearing date for case CNR: {}: {}",
                      cnrNumber, e.getMessage(), e);
             return null;
+        }
+    }
+
+    private Integer extractFilingYear(String filingNumber) {
+        try {
+            if (filingNumber == null || filingNumber.trim().isEmpty()) {
+                log.warn("Filing number is null or empty, returning default year 0");
+                return 0;
+            }
+
+            // Extract year from filing number format: KL-000013-2024
+            String[] parts = filingNumber.trim().split("-");
+            if (parts.length >= 3) {
+                String yearPart = parts[parts.length - 1];
+                Integer year = Integer.parseInt(yearPart);
+                log.info("Extracted filing year {} from filing number: {}", year, filingNumber);
+                return year;
+            } else {
+                log.warn("Filing number format invalid, expected format: XX-NNNNNN-YYYY, got: {}", filingNumber);
+                return 0;
+            }
+
+        } catch (NumberFormatException e) {
+            log.error("Failed to parse year from filing number: {} | error: {}", filingNumber, e.getMessage());
+            return 0;
+        } catch (Exception e) {
+            log.error("Unexpected error extracting year from filing number: {} | error: {}", filingNumber, e.getMessage());
+            return 0;
         }
     }
 
@@ -267,7 +284,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
     private Integer getCaseTypeValue(String caseType) {
         if (caseType == null || caseType.trim().isEmpty()) {
             log.warn("Case type is null or empty");
-            return null;
+            return 0;
         }
         
         Integer caseTypeCode = caseRepository.getCaseTypeCode(caseType);

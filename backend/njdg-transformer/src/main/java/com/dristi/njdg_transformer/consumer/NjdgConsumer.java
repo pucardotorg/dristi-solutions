@@ -102,10 +102,21 @@ public class NjdgConsumer {
             log.info("Processing order details | orderNo: {}", orderNo);
 
             orderRepository.insertInterimOrder(interimOrder);
+            updateCaseDecisionDate(interimOrder);
             log.info("Successfully processed order | orderNo: {}", orderNo);
         } catch (Exception e) {
             log.error("Failed to process order | orderNo: {} | messageId: {} | error: {}",
                      orderNo, messageId, e.getMessage(), e);
+        }
+    }
+
+    private void updateCaseDecisionDate(InterimOrder interimOrder) {
+        String cino = interimOrder.getCino();
+        NJDGTransformRecord record = caseRepository.findByCino(cino);
+        if(record != null) {
+            record.setDateOfDecision(interimOrder.getOrderDate());
+            record.setDispReason(interimOrder.getDispReason());
+            caseRepository.updateRecord(record);
         }
     }
 
