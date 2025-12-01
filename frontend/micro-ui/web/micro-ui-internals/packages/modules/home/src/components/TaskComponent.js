@@ -259,7 +259,14 @@ const TasksComponent = ({
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
+      if (
+        Object?.keys(courierOrderDetails)?.length === 0 &&
+        courierServicePendingTask &&
+        Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
+        Array?.isArray(taskManagementList)
+      ) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
           const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
@@ -402,7 +409,7 @@ const TasksComponent = ({
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails, courierOrderDetails]);
 
   const handleProcessCourierOnSubmit = async (courierData, isLast, hasProcessManagementEditorAccess) => {
     const orderType = courierOrderDetails?.orderType;
