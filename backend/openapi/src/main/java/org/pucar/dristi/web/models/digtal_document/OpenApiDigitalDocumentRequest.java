@@ -29,4 +29,8 @@ public class OpenApiDigitalDocumentRequest {
     @NotNull(message = "fileStoreId is required")
     private String fileStoreId;
 
+    @JsonProperty("courtId")
+    @NotNull(message = "courtId is required")
+    private String courtId;
+
 }

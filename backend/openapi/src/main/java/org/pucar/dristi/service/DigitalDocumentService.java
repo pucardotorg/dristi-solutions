@@ -53,6 +53,7 @@ public class DigitalDocumentService {
 
             DigitalizedDocumentSearchCriteria criteria = DigitalizedDocumentSearchCriteria.builder()
                     .tenantId(request.getTenantId())
+                    .courtId(request.getCourtId())
                     .documentNumber(request.getDocumentNumber())
                     .build();
 
@@ -83,7 +84,7 @@ public class DigitalDocumentService {
             return null;
         } catch (Exception e) {
             log.error("method=searchDigitalDocument, status=FAILED, request={}", request, e);
-            throw new CustomException(EVIDENCE_SERVICE_EXCEPTION, "Digitalize document service exception");
+            throw new CustomException(DIGITALIZE_SERVICE_EXCEPTION, "Digitalize document service exception");
         }
     }
 
@@ -98,13 +99,14 @@ public class DigitalDocumentService {
             // Fetch evidence
             DigitalizedDocumentSearchCriteria criteria = DigitalizedDocumentSearchCriteria.builder()
                     .tenantId(request.getTenantId())
+                    .courtId(request.getCourtId())
                     .documentNumber(request.getDocumentNumber())
                     .build();
 
             DigitalizedDocumentSearchResponse response = digitalizedDocumentUtil.searchDigitalizeDoc(criteria, createInternalRequestInfoWithSystemUserType());
 
             if (response == null || response.getDocuments() == null || response.getDocuments().isEmpty()) {
-                throw new CustomException(EVIDENCE_NOT_FOUND_EXCEPTION, "Digitalize document not found");
+                throw new CustomException(DIGITALIZE_SERVICE_EXCEPTION, "Digitalize document not found");
             }
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
@@ -147,7 +149,7 @@ public class DigitalDocumentService {
             return null;
         } catch (Exception e) {
             log.error("method=updateDigitalDocument, status=FAILED, request={}", request, e);
-            throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Digitalize document service exception");
+            throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Digitalize document service exception");
         }
     }
 
