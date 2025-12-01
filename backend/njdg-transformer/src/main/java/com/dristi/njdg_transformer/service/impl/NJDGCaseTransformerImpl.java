@@ -78,8 +78,10 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 caseRepository.insertRecord(record);
             }
 
-            // Insert case conversion details after pushing to case table
-            insertCaseConversionDetails(courtCase, caseTypeDetails, judgeDetails);
+            // Insert case conversion details only for ST cases
+            if(ST.equalsIgnoreCase(courtCase.getCaseType())){
+                insertCaseConversionDetails(courtCase, caseTypeDetails, judgeDetails);
+            }
 
             return record;
             
@@ -96,7 +98,18 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
 
         CaseTypeDetails.CaseTypeDetailsBuilder builder = CaseTypeDetails.builder();
 
-        if (ST.equalsIgnoreCase(caseType)) {
+        if (CMP.equalsIgnoreCase(caseType)) {
+            // For CMP cases: assign only old values using courtCaseNumber or cmpNumber
+            String caseNumber = courtCase.getCourtCaseNumber() != null ?
+                               courtCase.getCourtCaseNumber() : courtCase.getCmpNumber();
+
+            builder.oldRegCaseType(caseTypeValue)
+                   .oldRegNo(numberExtractor.extractCaseNumber(caseNumber))
+                   .oldRegYear(extractRegYear(caseNumber));
+
+            log.info("Populated old case type details for CMP case: {}", courtCase.getCnrNumber());
+
+        } else if (ST.equalsIgnoreCase(caseType)) {
             // For ST cases: use courtCaseNumber for new values and cmpNumber for old values during migration
             String caseNumber = courtCase.getCourtCaseNumber();
             String cmpNumber = courtCase.getCmpNumber();
