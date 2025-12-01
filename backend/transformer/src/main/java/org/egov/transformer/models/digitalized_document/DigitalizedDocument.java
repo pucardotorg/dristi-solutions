@@ -95,6 +95,12 @@ public class DigitalizedDocument {
     @JsonProperty("title")
     private String title;
 
+    @JsonProperty("caseName")
+    private String caseName;
+
+    @JsonProperty("caseNumber")
+    private String caseNumber;
+
     @JsonProperty("searchableFields")
     private List<String> searchableFields = null;
 

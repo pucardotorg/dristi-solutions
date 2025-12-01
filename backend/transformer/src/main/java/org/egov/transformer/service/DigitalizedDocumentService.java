@@ -30,7 +30,10 @@ public class DigitalizedDocumentService {
         String cmpNumber = courtCase.getCmpNumber();
         String stNumber = courtCase.getCourtCaseNumber();
         String caseNumber = stNumber != null ? stNumber : cmpNumber;
-        digitalizedDocument.setCaseTitle(courtCase.getCaseTitle() + ", " + caseNumber);
+        String caseTitle = courtCase.getCaseTitle();
+        digitalizedDocument.setCaseNumber(caseNumber);
+        digitalizedDocument.setCaseName(caseTitle);
+        digitalizedDocument.setCaseTitle(caseTitle + ", " + caseNumber);
 
         List<String> searchableFields = new ArrayList<>();
         searchableFields.add(digitalizedDocument.getCaseTitle());
