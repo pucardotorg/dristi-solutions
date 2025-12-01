@@ -53,6 +53,8 @@ public class DigitalizedDocumentQueryBuilder {
             String courtId = criteria.getCourtId();
             String orderNumber = criteria.getOrderNumber();
             String orderItemId = criteria.getOrderItemId();
+            String caseId = criteria.getCaseId();
+            String caseFilingNumber = criteria.getCaseFilingNumber();
 
             StringBuilder query = new StringBuilder(BASE_QUERY);
             boolean firstCriteria = true;
@@ -64,7 +66,9 @@ public class DigitalizedDocumentQueryBuilder {
             firstCriteria = addDigitalizedDocumentCriteria(tenantId, query, firstCriteria, "dd.tenant_id = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderNumber, query, firstCriteria, "dd.order_number = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderItemId, query, firstCriteria, "dd.order_item_id = ?", preparedStatementList, preparedStatementArgList);
-            addDigitalizedDocumentCriteria(courtId, query, firstCriteria, "dd.court_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(courtId, query, firstCriteria, "dd.court_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(caseId, query, firstCriteria, "dd.case_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(caseFilingNumber, query, firstCriteria, "dd.case_filing_number = ?", preparedStatementList, preparedStatementArgList);
 
             log.info("Final query: {}", query);
             log.info("Prepared statement list: {}", preparedStatementList);
