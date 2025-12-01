@@ -701,6 +701,7 @@
   border-top: 1px solid #bbbbbd;
   .submit-bar {
     box-shadow: none;
+    width: fit-content;
   }
 }
 
@@ -1488,15 +1489,14 @@
   .container {
     display: flex;
     flex-direction: row;
-    margin-bottom: 50px;
-    height: 100%;
+    height: calc(100vh - 202px);
   }
 
   .details {
     color: #0a0a0a;
     font-weight: 700;
     font-size: 18px;
-    padding-bottom: 22px;
+    padding-bottom: 18px;
   }
 
   .details-section {
@@ -1517,27 +1517,44 @@
 
   .right-panel {
     flex: 1;
-    padding: 48px;
+    padding: 20px 40px 40px 100px;
     width: 80%;
     height: calc(100vh - 167px);
     box-sizing: border-box;
     display: flex;
-    flex-direction: column;
+    justify-content: space-evenly;
+    gap: 40px;
   }
 
   .doc-viewer {
-    flex: 1;
+    flex: 6;
     overflow: auto;
     border-radius: 8px;
     background: white;
+    width: fit-content;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
 
     .docviewer-wrapper {
       margin-top: 0px !important;
+      width: fit-content;
       .doc-card {
         margin-bottom: 0px !important;
       }
     }
   }
+
+  .edit-button {
+    border: none;
+    color: #007e7e;
+    font-size: 16px;
+    font-weight: 700;
+    width: fit-content !important;
+  }
+
+  h2 {
+      width: fit-content !important;
+    }
 
   .litigant-details {
     display: flex;
@@ -1570,9 +1587,6 @@
   }
 
   .action-bar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 20px;
     width: 100%;
     position: fixed;
     bottom: 0;
@@ -1581,7 +1595,7 @@
     background-color: white;
     padding: 16px 24px;
     box-shadow: none;
-    border-top: 1px solid #bbbbbd;
+    border-top: 1px solid #e8e8e8;
   }
 
   .submit-loader {

@@ -15,8 +15,8 @@ export const bulkSignFormsConfig = {
     requestBody: {
       inbox: {
         processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
+          businessService: ["digitalized-document-examination", "digitalized-document-mediation", "digitalized-document-plea"],
+          moduleName: "Digitalized Document Service",
         },
         tenantId: Digit.ULBService.getCurrentTenantId(),
       },
@@ -38,19 +38,18 @@ export const bulkSignFormsConfig = {
         defaultValues: defaultSearchValues,
         fields: [
           {
-            label: "STATUS",
+            label: "PROCESS_TYPE",
             isMandatory: false,
-            key: "status",
+            key: "processType",
             type: "dropdown",
             populators: {
-              name: "status",
-              optionsKey: "type",
-              mdmsConfig: {
-                masterName: "OrderStatus",
-                moduleName: "Order",
-                select:
-                  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
-              },
+              name: "processType",
+              optionsKey: "code",
+              options: [
+                { code: "PLEA", name: "PLEA" },
+                { code: "EXAMINATION_OF_ACCUSED", name: "EXAMINATION_OF_ACCUSED" },
+                { code: "MEDIATION", name: "MEDIATION" },
+              ],
             },
           },
           {

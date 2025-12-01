@@ -700,20 +700,18 @@ export const UICustomizations = {
   bulkSignFormsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const entityType = "Order";
       const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
-      const status = requestCriteria?.state?.searchForm?.status;
+      const processType = requestCriteria?.state?.searchForm?.processType;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
 
       const moduleSearchCriteria = {
-        entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        status: status?.type,
+        status: "PENDING_REVIEW",
+        ...(processType && { processType: processType?.code }),
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
-          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
         ...(courtId && { courtId }),
       };

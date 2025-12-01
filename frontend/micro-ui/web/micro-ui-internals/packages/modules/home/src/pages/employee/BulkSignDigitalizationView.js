@@ -84,29 +84,6 @@ function BulkSignDigitalizationView() {
     Boolean(orderNumber && courtId)
   );
 
-  const { data: bulkOrdersData } = useSearchOrdersNotificationService(
-    {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
-        },
-        limit: 1,
-        offset: 0,
-        tenantId: tenantId,
-        moduleSearchCriteria: {
-          entityType: "Order",
-          tenantId: tenantId,
-          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
-          ...(courtId && { courtId }),
-        },
-      },
-    },
-    { tenantId },
-    `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
-    Boolean(courtId)
-  );
-
   const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
 
   useEffect(() => {
@@ -117,10 +94,7 @@ function BulkSignDigitalizationView() {
         setShowBulkSignAllModal(true);
       }
     }
-    if (bulkOrdersData?.totalCount === 0) {
-      history.replace(homePath);
-    }
-  }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
+  }, [history, userType, deleteOrder, orderDetails]);
 
   useEffect(() => {
     if (showErrorToast) {
@@ -220,18 +194,16 @@ function BulkSignDigitalizationView() {
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const entityType = "Order";
       const caseTitle = form?.searchForm?.caseTitle;
-      const status = form?.searchForm?.status;
+      const processType = form?.searchForm?.processType;
       const startOfTheDay = form?.searchForm?.startOfTheDay;
       const moduleSearchCriteria = {
-        entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        status: status?.type,
+        status: "PENDING_REVIEW",
+        ...(processType && { processType: processType?.code }),
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
-          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
         ...(courtId && { courtId }),
       };
@@ -242,8 +214,8 @@ function BulkSignDigitalizationView() {
           tenantId: tenantId,
           moduleSearchCriteria: moduleSearchCriteria,
           processSearchCriteria: {
-            businessService: ["notification"],
-            moduleName: "Transformer service",
+            businessService: ["digitalized-document-examination", "digitalized-document-mediation", "digitalized-document-plea"],
+            moduleName: "Digitalized Document Service",
           },
         },
       }).then((response) => {
