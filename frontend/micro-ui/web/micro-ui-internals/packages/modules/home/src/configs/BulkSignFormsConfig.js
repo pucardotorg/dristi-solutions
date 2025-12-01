@@ -1,10 +1,8 @@
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-
 const defaultSearchValues = {
-  status: { type: OrderWorkflowState.PENDING_BULK_E_SIGN },
   caseTitle: "",
   startOfTheDay: "",
   endOfTheDay: "",
+  type: {},
 };
 
 export const bulkSignFormsConfig = {
@@ -40,10 +38,10 @@ export const bulkSignFormsConfig = {
           {
             label: "PROCESS_TYPE",
             isMandatory: false,
-            key: "processType",
+            key: "type",
             type: "dropdown",
             populators: {
-              name: "processType",
+              name: "type",
               optionsKey: "code",
               options: [
                 { code: "PLEA", name: "PLEA" },
@@ -85,37 +83,28 @@ export const bulkSignFormsConfig = {
     searchResult: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
       uiConfig: {
-        // customDefaultPagination: {
-        //   limit: 15,
-        //   offset: 0,
-        // },
-        // customPageSizesArray: [15, 30, 45, 60, 75],
         columns: [
           {
             label: "SELECT",
             additionalCustomization: true,
           },
           {
-            label: "CASE_NAME_AND_NUMBER",
-            jsonPath: "businessObject.orderNotification.caseTitle",
-          },
-          {
-            label: "TITLE",
-            jsonPath: "businessObject.orderNotification.title",
+            label: "CASE_TITLE",
+            jsonPath: "businessObject.digitalizedDocumentDetails.caseName",
             additionalCustomization: true,
           },
           {
-            label: "STATUS",
-            jsonPath: "businessObject.orderNotification.status",
+            label: "CS_CASE_NUMBER_HOME",
+            jsonPath: "businessObject.digitalizedDocumentDetails.caseNumber",
+          },
+          {
+            label: "PROCESS_TYPE",
+            jsonPath: "businessObject.digitalizedDocumentDetails.type",
             additionalCustomization: true,
           },
           {
-            label: "DATE_ADDED",
-            jsonPath: "businessObject.orderNotification.createdTime",
-            additionalCustomization: true,
-          },
-          {
-            label: "CS_ACTIONS",
+            label: "DATE_CREATED",
+            jsonPath: "businessObject.digitalizedDocumentDetails.createdTime",
             additionalCustomization: true,
           },
         ],

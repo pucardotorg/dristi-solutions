@@ -9,6 +9,7 @@ import { getDate } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { submissionService } from "../../../../../submissions/src/hooks/services";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
+import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
 
 const DocumentsV2 = ({
   caseDetails,
@@ -72,6 +73,7 @@ const DocumentsV2 = ({
         const filingNumber = docObj?.[0]?.artifactList?.filingNumber;
         const documentNumber = docObj?.[0]?.artifactList?.documentNumber;
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
+        const courtId = docObj?.[0]?.artifactList?.courtId;
         if (type === "PLEA") {
           if (status === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
             history.push(
@@ -85,7 +87,16 @@ const DocumentsV2 = ({
             // TODO: redirect to that modal page url
           }
         } else if (type === "EXAMINATION_OF_ACCUSED") {
-        } else {
+        } else if (type === "MEDIATION") {
+          if (
+            [MediationWorkflowState.PENDING_E_SIGN, MediationWorkflowState.PENDING_UPLOAD, MediationWorkflowState.PENDING_REVIEW]?.includes(status)
+          ) {
+            history.push(
+              `/${window.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/mediation-form-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&courtId=${courtId}`
+            );
+          }
         }
       } else if (docObj?.[0]?.isBail) {
         const bailStatus = docObj?.[0]?.artifactList?.status;

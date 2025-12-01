@@ -4,14 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { digitalizationService, ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
-import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
-import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import { digitalizationService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import axios from "axios";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
-import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
 const parseXml = (xmlString, tagName) => {
@@ -38,25 +34,18 @@ function BulkSignDigitalizationView() {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
 
   const [bulkSignList, setBulkSignList] = useState(null);
-  const [showOrderDeleteModal, setShowOrderDeleteModal] = useState(false);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
 
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
-  const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
   const hasOrderEsignAccess = useMemo(() => roles?.some((role) => role.code === "ORDER_ESIGN"), [roles]);
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -73,29 +62,6 @@ function BulkSignDigitalizationView() {
     setShowErrorToast(null);
   };
 
-  const { data: ordersData } = useSearchOrdersService(
-    {
-      tenantId,
-      criteria: { orderNumber: orderNumber, ...(courtId && { courtId }) },
-      pagination: { limit: 1000, offset: 0 },
-    },
-    { tenantId },
-    orderNumber,
-    Boolean(orderNumber && courtId)
-  );
-
-  const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
-
-  useEffect(() => {
-    if (orderDetails?.orderNumber) {
-      if (deleteOrder) {
-        setShowOrderDeleteModal(true);
-      } else {
-        setShowBulkSignAllModal(true);
-      }
-    }
-  }, [history, userType, deleteOrder, orderDetails]);
-
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => {
@@ -106,10 +72,14 @@ function BulkSignDigitalizationView() {
   }, [showErrorToast]);
 
   const config = useMemo(() => {
-    const updateOrderFunc = async (orderData, checked) => {
+    const updateDocumentFunc = async (documentData, checked) => {
       setBulkSignList((prev) => {
         return prev?.map((item, i) => {
-          if (item?.businessObject?.orderNotification?.id !== orderData?.businessObject?.orderNotification?.id) return item;
+          if (
+            item?.businessObject?.digitalizedDocumentDetails?.documentNumber !==
+            documentData?.businessObject?.digitalizedDocumentDetails?.documentNumber
+          )
+            return item;
 
           return {
             ...item,
@@ -119,30 +89,11 @@ function BulkSignDigitalizationView() {
       });
     };
 
-    const deleteOrderFunc = async (data) => {
-      history.push(
-        `/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${data?.businessObject?.orderNotification?.id}&deleteOrder=true`,
-        {
-          homeActiveTab: "CS_HOME_ORDERS",
-        }
-      );
-    };
-
-    const setOrderFunc = async (order) => {
-      if (order?.businessObject?.orderNotification?.entityType === "Order") {
-        const orderResponse = await ordersService.searchOrder(
-          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id, ...(courtId && { courtId }) } },
-          { tenantId }
+    const setDocumentFunc = async (document) => {
+      if (document?.businessObject?.digitalizedDocumentDetails?.type === "MEDIATION") {
+        history.push(
+          `/${window.contextPath}/${userType}/home/mediation-form-sign?filingNumber=${document?.businessObject?.digitalizedDocumentDetails?.caseFilingNumber}&documentNumber=${document?.businessObject?.digitalizedDocumentDetails?.documentNumber}&courtId=${document?.businessObject?.digitalizedDocumentDetails?.courtId}`
         );
-        order = orderResponse?.list?.[0];
-
-        if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-          history.push(
-            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
-          );
-        } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-          history.push(`/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
-        }
       }
     };
 
@@ -171,17 +122,12 @@ function BulkSignDigitalizationView() {
               return column.label === "SELECT"
                 ? {
                     ...column,
-                    updateOrderFunc: updateOrderFunc,
+                    updateOrderFunc: updateDocumentFunc,
                   }
-                : column.label === "TITLE"
+                : column.label === "CASE_TITLE"
                 ? {
                     ...column,
-                    clickFunc: setOrderFunc,
-                  }
-                : column.label === "CS_ACTIONS"
-                ? {
-                    ...column,
-                    clickFunc: deleteOrderFunc,
+                    clickFunc: setDocumentFunc,
                   }
                 : column;
             }),
@@ -189,21 +135,22 @@ function BulkSignDigitalizationView() {
         },
       },
     };
-  }, [history, tenantId, userType, courtId]);
+  }, [courtId]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
       const tenantId = window?.Digit.ULBService.getStateId();
       const caseTitle = form?.searchForm?.caseTitle;
-      const processType = form?.searchForm?.processType;
+      const type = form?.searchForm?.type;
       const startOfTheDay = form?.searchForm?.startOfTheDay;
       const moduleSearchCriteria = {
         tenantId,
         ...(caseTitle && { caseTitle }),
         status: "PENDING_REVIEW",
-        ...(processType && { processType: processType?.code }),
+        ...(type && { type: type?.code }),
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
         ...(courtId && { courtId }),
       };
@@ -219,53 +166,24 @@ function BulkSignDigitalizationView() {
           },
         },
       }).then((response) => {
-        const updatedData = response?.items
-          ?.filter((data) => data?.businessObject?.orderNotification?.status === OrderWorkflowState.PENDING_BULK_E_SIGN)
-          ?.map((item) => {
-            return {
-              ...item,
-              isSelected: true,
-            };
-          });
+        const updatedData = response?.items?.map((item) => {
+          return {
+            ...item,
+            isSelected: true,
+          };
+        });
         setBulkSignList(updatedData);
       });
     }
   };
 
-  const handleDeleteOrder = async (action) => {
-    setIsDeleteOrderLoading(true);
-    try {
-      await ordersService
-        .updateOrder(
-          {
-            order: {
-              ...orderDetails,
-              workflow: { ...orderDetails?.workflow, action, documents: [{}] },
-            },
-          },
-          { tenantId }
-        )
-        .then(async () => {
-          setTimeout(() => {
-            setIsDeleteOrderLoading(false);
-            setShowOrderDeleteModal(false);
-            history.goBack();
-          }, 2000);
-        });
-    } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true });
-      setIsDeleteOrderLoading(false);
-      console.error("Failed to remove the order from bulk list", e?.message);
-    }
-  };
-
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
+  const fetchResponseFromXmlRequest = async (documentRequestList) => {
     const responses = [];
 
-    const requests = orderRequestList?.map(async (order) => {
+    const requests = documentRequestList?.map(async (document) => {
       try {
         // URL encoding the XML request
-        const formData = qs.stringify({ response: order?.request });
+        const formData = qs.stringify({ response: document?.request });
         const response = await axios.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -276,23 +194,23 @@ function BulkSignDigitalizationView() {
 
         if (parseXml(data, "status") !== "failed") {
           responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
+            documentNumber: document?.documentNumber,
+            signedDocumentData: parseXml(data, "data"),
             signed: true,
             errorMsg: null,
             tenantId: tenantId,
           });
         } else {
           responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
+            documentNumber: document?.documentNumber,
+            signedDocumentData: parseXml(data, "data"),
             signed: false,
             errorMsg: parseXml(data, "error"),
             tenantId: tenantId,
           });
         }
       } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
+        console.error(`Error fetching document ${document?.documentNumber}:`, error?.message);
       }
     });
 
@@ -305,11 +223,12 @@ function BulkSignDigitalizationView() {
     setIsLoading(true);
     const criteriaList = bulkSignList
       ?.filter((data) => data?.isSelected)
-      ?.map((order) => {
+      ?.map((document) => {
         return {
-          fileStoreId: order?.businessObject?.orderNotification?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
-          orderNumber: order?.businessObject?.orderNotification?.id,
-          placeholder: order?.businessObject?.orderNotification?.type === "COMPOSITE" ? "Fduy44hjb" : "Signature",
+          fileStoreId:
+            document?.businessObject?.digitalizedDocumentDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
+          documentNumber: document?.businessObject?.digitalizedDocumentDetails?.documentNumber,
+          placeholder: "Signature",
           tenantId: tenantId,
         };
       });
@@ -320,14 +239,14 @@ function BulkSignDigitalizationView() {
         },
         {}
       );
-      await fetchResponseFromXmlRequest(response?.orderList).then(async (responseArray) => {
-        const updateOrderResponse = await digitalizationService.updateSignedDigitalizedDocuments(
+      await fetchResponseFromXmlRequest(response?.documents).then(async (responseArray) => {
+        const updateDocumentResponse = await digitalizationService.updateSignedDigitalizedDocuments(
           {
-            signedOrders: responseArray,
+            signedDocuments: responseArray,
           },
           {}
         );
-        const signedList = updateOrderResponse?.orders;
+        const signedList = updateDocumentResponse?.documents;
 
         if (signedList?.length === 0) {
           setShowErrorToast({
@@ -357,7 +276,7 @@ function BulkSignDigitalizationView() {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={"bulk-esign-order-view select"}>
+          <div className={"bulk-esign-order-view select title"}>
             <div className="header">{t("CS_HOME_SIGN_FORMS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
@@ -373,45 +292,20 @@ function BulkSignDigitalizationView() {
           )}
         </React.Fragment>
       )}
-      {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}
-      {showOrderDeleteModal && (
-        <Modal
-          headerBarMain={<Heading label={t("CONFIRM_BULK_DELETE")} />}
-          headerBarEnd={<CloseBtn onClick={() => !isDeleteOrderLoading && history.goBack()} />}
-          actionCancelLabel={t("CS_BULK_CANCEL")}
-          actionCancelOnSubmit={() => history.goBack()}
-          actionSaveLabel={t("CS_BULK_DELETE")}
-          actionSaveOnSubmit={() => handleDeleteOrder(OrderWorkflowAction.DELETE)}
-          style={{ height: "40px", background: "#BB2C2F" }}
-          popupStyles={{ width: "35%" }}
-          className={"review-order-modal"}
-          isDisabled={isDeleteOrderLoading}
-          isBackButtonDisabled={isDeleteOrderLoading}
-          children={
-            isDeleteOrderLoading ? (
-              <Loader />
-            ) : (
-              <div className="delete-warning-text">
-                <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_DELETE_TEXT")}</h3>
-              </div>
-            )
-          }
-        />
-      )}
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
           headerBarEnd={<CloseBtn onClick={() => setShowBulkSignConfirmModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
-          actionSaveLabel={t("CS_BULK_SIGN_AND_PUBLISH")}
+          actionSaveLabel={t("CS_FORM_BULK_SIGN")}
           actionSaveOnSubmit={() => handleBulkSign()}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
           children={
             <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_SIGN_TEXT")}</h3>
+              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_FORM_BULK_SIGN_TEXT")}</h3>
             </div>
           }
         />

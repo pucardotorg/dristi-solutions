@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActionBar, SubmitBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -17,15 +17,11 @@ const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
-  const token = window.localStorage.getItem("token");
-  const isUserLoggedIn = Boolean(token);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo?.type]);
   const isMediationCreator = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_CREATOR"]?.includes(role?.code)), [userInfo?.roles]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [isEditCaseModal, setEditCaseModal] = useState(false);
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [loader, setLoader] = useState(false);
@@ -219,12 +215,12 @@ const MediationFormSignaturePage = () => {
   };
 
   const getPlaceholder = () => {
-    const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
+    if (isMediationCreator) return "Signature";
 
+    const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
     if (!party) return "";
 
     const typeLabel = party.partyType === "COMPLAINANT" ? "Complainant" : "Respondent";
-
     return `${typeLabel} ${party.partyIndex + 1} Signature`;
   };
 
@@ -277,8 +273,6 @@ const MediationFormSignaturePage = () => {
         {}
       );
 
-      setLoader(false);
-
       if (mockESignEnabled) {
         try {
           await handleCaseUnlockingWhenMockESign();
@@ -292,6 +286,8 @@ const MediationFormSignaturePage = () => {
     } catch (error) {
       console.error("Error:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setLoader(false);
+    } finally {
       setLoader(false);
     }
   };
@@ -412,22 +408,24 @@ const MediationFormSignaturePage = () => {
           </div>
           <ActionBar className="action-bar">
             <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-              {isCitizen && digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) => party?.hasSigned) && (
-                <Button
-                  label={t("SUBMIT_TO_COURT")}
-                  variation={"secondary"}
-                  onButtonClick={() => setShowSkipConfirmModal(true)}
-                  style={{ boxShadow: "none", backgroundColor: "#fff", width: "110px", marginRight: "20px", border: "none" }}
-                  textStyles={{
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    lineHeight: "18.75px",
-                    textAlign: "center",
-                    color: "#007E7E",
-                  }}
-                />
-              )}
+              {isCitizen &&
+                digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN &&
+                digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) => party?.hasSigned) && (
+                  <Button
+                    label={t("SUBMIT_TO_COURT")}
+                    variation={"secondary"}
+                    onButtonClick={() => setShowSkipConfirmModal(true)}
+                    style={{ boxShadow: "none", backgroundColor: "#fff", padding: "8px 24px", width: "100%", border: "none" }}
+                    textStyles={{
+                      fontFamily: "Roboto",
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      lineHeight: "18.75px",
+                      textAlign: "center",
+                      color: "#007E7E",
+                    }}
+                  />
+                )}
               <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", gap: "20px" }}>
                 {(signatureDocumentId || mediationFileStoreId) && (
                   <Button
@@ -488,6 +486,11 @@ const MediationFormSignaturePage = () => {
                         await handleEsignAction();
                       }
                     }}
+                    isDisabled={
+                      poaPartyDetails
+                        ? poaPartyDetails?.partyDetails?.every((party) => party?.hasSigned)
+                        : digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.uniqueId === userInfo?.uuid)?.hasSigned
+                    }
                   />
                 )}
               </div>

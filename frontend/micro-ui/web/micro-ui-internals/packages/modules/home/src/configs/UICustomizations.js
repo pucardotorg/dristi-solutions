@@ -701,7 +701,7 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
       const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
-      const processType = requestCriteria?.state?.searchForm?.processType;
+      const type = requestCriteria?.state?.searchForm?.type;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
 
@@ -709,9 +709,10 @@ export const UICustomizations = {
         tenantId,
         ...(caseTitle && { caseTitle }),
         status: "PENDING_REVIEW",
-        ...(processType && { processType: processType?.code }),
+        ...(type && { type: type?.code }),
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
         ...(courtId && { courtId }),
       };
@@ -732,21 +733,19 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
-        case "TITLE":
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "CASE_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
-        case "STATUS":
-          return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
-        case "DATE_ADDED":
+        case "PROCESS_TYPE":
+          return t(value);
+        case "DATE_CREATED":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
-        case "SELECT":
-          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
-        case "CS_ACTIONS":
-          return <OverlayDropdown position="relative" column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
         default:
           break;
       }

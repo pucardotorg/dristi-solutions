@@ -702,6 +702,10 @@
   .submit-bar {
     box-shadow: none;
     width: fit-content;
+    padding: 8px 24px;
+    header {
+      line-height: 24px;
+    }
   }
 }
 
@@ -1553,8 +1557,8 @@
   }
 
   h2 {
-      width: fit-content !important;
-    }
+    width: fit-content !important;
+  }
 
   .litigant-details {
     display: flex;

@@ -38,8 +38,8 @@ export const Urls = {
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
   digitalizationService: {
-    getDigitalizedDocumentsToSign: "/digitalization/v1/_getDigitalizedDocumentsToSign",
-    updateSignedDigitalizedDocuments: "/digitalization/v1/_updateSignedDigitalizedDocuments",
+    getDigitalizedDocumentsToSign: "/digitalized-documents/v1/_getDigitalizedDocumentsToSign",
+    updateSignedDigitalizedDocuments: "/digitalized-documents/v1/_updateSignedDigitalizedDocuments",
   },
   processManagement: {
     getProcessToSign: "/task/v1/_getTasksToSign",
