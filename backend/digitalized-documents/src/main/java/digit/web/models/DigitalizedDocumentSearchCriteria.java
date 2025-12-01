@@ -45,4 +45,10 @@ public class DigitalizedDocumentSearchCriteria {
     @JsonProperty("orderItemId")
     private String orderItemId = null;
 
+    @JsonProperty("caseId")
+    private String caseId = null;
+
+    @JsonProperty("caseFilingNumber")
+    private String caseFilingNumber = null;
+
 }
