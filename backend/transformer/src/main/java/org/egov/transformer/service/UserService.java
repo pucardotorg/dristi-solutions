@@ -40,7 +40,7 @@ public class UserService {
     }
 
 
-    @PostConstruct
+    /*@PostConstruct
     void initializeSystemUser() {
         RequestInfo requestInfo = new RequestInfo();
         StringBuilder uri = new StringBuilder();
@@ -65,7 +65,7 @@ public class UserService {
             throw new CustomException("EG_USER_SEARCH_ERROR", "Service returned null while fetching user");
         }
 
-    }
+    }*/
 
     private void createInternalMicroserviceUser(RequestInfo requestInfo) {
         Map<String, Object> userCreateRequest = new HashMap<>();
