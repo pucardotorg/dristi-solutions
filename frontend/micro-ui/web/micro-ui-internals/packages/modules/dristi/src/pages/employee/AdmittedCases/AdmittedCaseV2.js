@@ -58,6 +58,7 @@ import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/em
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
+import ExaminationDrawer from "./ExaminationDrawer";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -190,6 +191,7 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showExaminationModal, setShowExaminationModal] = useState(false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -2665,6 +2667,8 @@ const AdmittedCaseV2 = () => {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
+      } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
+        setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
@@ -3080,6 +3084,10 @@ const AdmittedCaseV2 = () => {
         label: "RECORD_PLEA",
         requiredRoles: [],
       },
+      {
+        label: "RECORD_EXAMINATION_OF_ACCUSED",
+        requiredRoles: [], // TODO: update this when backend validation is done.
+      },
     ],
     []
   );
@@ -3123,6 +3131,10 @@ const AdmittedCaseV2 = () => {
                 label: "TAKE_WITNESS_DEPOSITION",
               },
               { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ]
           : [
               {
@@ -3142,6 +3154,10 @@ const AdmittedCaseV2 = () => {
                 label: "TAKE_WITNESS_DEPOSITION",
               },
               { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ];
       } else
         return [
@@ -3183,6 +3199,10 @@ const AdmittedCaseV2 = () => {
             label: "TAKE_WITNESS_DEPOSITION",
           },
           { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+          {
+            value: "RECORD_EXAMINATION_OF_ACCUSED",
+            label: "RECORD_EXAMINATION_OF_ACCUSED",
+          },
         ];
     } else return [];
   }, [currentInProgressHearing, hasHearingPriorityView, isEmployee]);
@@ -3777,7 +3797,8 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && !caseDetails?.courtCaseNumber?.includes("ST/") && (
+              caseDetails?.courtCaseNumber &&
+              !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />
@@ -4346,6 +4367,28 @@ const AdmittedCaseV2 = () => {
           tenantId={tenantId}
           // refetchCaseData={refetchCaseData}
           artifactNumber={editWitnessDepositionArtifact}
+          caseId={caseId}
+          courtId={courtId}
+        />
+      )}
+      {showExaminationModal && (
+        <ExaminationDrawer
+          isOpen={showExaminationModal}
+          onClose={() => {
+            setShowExaminationModal(false);
+            // setEditExaminationDepositionArtifact(null);
+            refetchHearing();
+            refetchCaseData();
+            onTabChange(0, {}, "Documents");
+          }}
+          onSubmit={(action) => {
+            setShowWitnessModal(false);
+          }}
+          attendees={currentActiveHearing?.attendees}
+          hearing={currentActiveHearing}
+          hearingId={currentInProgressHearingId}
+          tenantId={tenantId}
+          // artifactNumber={editWitnessDepositionArtifact}
           caseId={caseId}
           courtId={courtId}
         />
