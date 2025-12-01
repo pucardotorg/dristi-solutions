@@ -1,0 +1,63 @@
+[
+//PLEA
+  {
+    "id": "f52cca2f-b214-482d-9551-9a4c5782b6e5",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "537",
+    "data": {
+      "id": 537,
+      "actionid": 2767,
+      "rolecode": "PLEA_CREATOR",
+      "tenantid": "kl",
+      "actioncode": "2767"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590318168,
+      "lastModifiedTime": 1764590318168
+    }
+  },
+  {
+    "id": "62342071-f3bd-436f-97ce-343382988a3c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "536",
+    "data": {
+      "id": 536,
+      "actionid": 2768,
+      "rolecode": "PLEA_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590293633,
+      "lastModifiedTime": 1764590293633
+    }
+  },
+  {
+    "id": "7bcf40ae-2642-47e4-ba04-29689e3aca1d",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "535",
+    "data": {
+      "id": 535,
+      "actionid": 2769,
+      "rolecode": "PLEA_VIEWER",
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590184760,
+      "lastModifiedTime": 1764590184760
+    }
+  }
+]
