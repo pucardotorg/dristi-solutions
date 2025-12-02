@@ -782,21 +782,16 @@ const WitnessDrawerV2 = ({
   };
 
   const isWitnessTypeDisabled = useMemo(() => {
-    const party = allParties?.find(
-      (p) =>
-        p?.uuid === selectedWitness?.value ||
-        p?.uniqueId === selectedWitness?.value
-    );
+    const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
 
     // Check if tag ends with a number
     const hasNumberSuffix = (tag) => {
       if (!tag || !tag.trim()) return false;
-      return /\d+$/.test(tag);   // same as Java's ".*\\d+$"
+      return /\d+$/.test(tag); // same as Java's ".*\\d+$"
     };
 
     return hasNumberSuffix(party?.tag);
   }, [selectedWitness, allParties]);
-
 
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
@@ -962,6 +957,7 @@ const WitnessDrawerV2 = ({
       setLoader(false);
       setShowsignatureModal(false);
       setShowUploadSignature(false);
+      setWitnessDepositionText("");
     }
   };
 
@@ -1165,9 +1161,6 @@ const WitnessDrawerV2 = ({
     }
   };
 
-  if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
-    return <Loader />;
-  }
   const CONFIG_KEY = "witnessDeposition";
   const FIELD_NAME = "comment";
 
@@ -1182,6 +1175,10 @@ const WitnessDrawerV2 = ({
       setWitnessDepositionText(value[FIELD_NAME]);
     }
   };
+
+  if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
+    return <Loader />;
+  }
 
   const isDisabled = isProceeding;
 
@@ -1360,8 +1357,15 @@ const WitnessDrawerV2 = ({
 
               <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
 
-              <div style={{ gap: "16px", border: "1px solid" }}>
-                <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
+              <div style={{ gap: "16px", border: "1px solid" }} className="witness-editor">
+                <SelectCustomFormatterTextArea
+                  key={`${activeTabIndex}-${selectedWitness?.value}-${currentArtifactNumber}`}
+                  t={t}
+                  config={config}
+                  formData={formData}
+                  onSelect={onSelect}
+                  errors={{}}
+                />
                 {IsSelectedWitness && (
                   <TranscriptComponent
                     setWitnessDepositionText={setWitnessDepositionText}
@@ -1504,6 +1508,7 @@ const WitnessDrawerV2 = ({
               evidenceRefetch();
               setCurrentEvidence(null);
               setWitnessDepositionUploadLoader(false);
+              setWitnessDepositionText("");
             }}
             message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
           />

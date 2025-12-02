@@ -133,4 +133,15 @@ public class TaskApiController {
         return new ResponseEntity<>(taskResponse, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/v1/task-details", method = RequestMethod.POST)
+    public ResponseEntity<TaskDetailsResponse> taskDetailsPost(@Parameter(in = ParameterIn.DEFAULT, description = "Request containing task details, task number and unique ID", schema = @Schema()) @Valid @RequestBody TaskDetailsRequest body) {
+        TaskDetailsDTO result = taskService.processTaskDetails(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        TaskDetailsResponse response = TaskDetailsResponse.builder()
+                .taskDetailsDTO(result)
+                .responseInfo(responseInfo)
+                .message("Task details processed successfully")
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
