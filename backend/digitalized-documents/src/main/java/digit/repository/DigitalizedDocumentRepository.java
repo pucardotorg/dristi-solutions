@@ -38,6 +38,8 @@ public class DigitalizedDocumentRepository {
         query = queryBuilder.addOrderByQuery(query, pagination);
 
         if (pagination != null) {
+            Integer totalCount = getDigitalizedDocumentCount(query, preparedStatementList);
+            pagination.setTotalCount(Double.valueOf(totalCount));
             query = queryBuilder.addPaginationQuery(query, pagination, preparedStatementList, preparedStatementArgList);
         }
         log.info("Final query: {}", query);
@@ -72,14 +74,11 @@ public class DigitalizedDocumentRepository {
         return documents.get(0);
     }
 
-    public Integer getDigitalizedDocumentCount(DigitalizedDocumentSearchCriteria criteria) {
-        List<Object> preparedStatementList = new ArrayList<>();
-        List<Integer> preparedStatementArgList = new ArrayList<>();
+    public Integer getDigitalizedDocumentCount(String baseQuery, List<Object> preparedStmtList) {
 
-        String query = queryBuilder.getDigitalizedDocumentExistQuery(criteria, preparedStatementList, preparedStatementArgList);
-
+        String query = queryBuilder.getTotalCountQuery(baseQuery);
         try {
-            Integer count = jdbcTemplate.queryForObject(query, preparedStatementList.toArray(), Integer.class);
+            Integer count = jdbcTemplate.queryForObject(query, preparedStmtList.toArray(), Integer.class);
             log.info("Digitalized document count: {}", count);
             return count;
         } catch (Exception e) {
