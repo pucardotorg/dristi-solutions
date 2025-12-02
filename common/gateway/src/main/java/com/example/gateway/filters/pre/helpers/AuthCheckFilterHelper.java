@@ -1,5 +1,6 @@
 package com.example.gateway.filters.pre.helpers;
 
+import com.example.gateway.config.ApplicationProperties;
 import com.example.gateway.utils.CommonUtils;
 import com.example.gateway.utils.UserUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +11,9 @@ import org.egov.tracer.model.CustomException;
 import org.reactivestreams.Publisher;
 import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.factory.rewrite.RewriteFunction;
+import org.springframework.http.HttpCookie;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import java.util.Map;
@@ -19,6 +22,7 @@ import java.util.Set;
 
 import static com.example.gateway.constants.GatewayConstants.REQUEST_INFO_FIELD_NAME_PASCAL_CASE;
 import static com.example.gateway.constants.GatewayConstants.TENANTID_MDC;
+import static com.example.gateway.constants.GatewayConstants.AUTH_TOKEN;
 
 @Slf4j
 @Component
@@ -32,18 +36,38 @@ public class AuthCheckFilterHelper implements RewriteFunction<Map, Map> {
 
     private MultiStateInstanceUtil centralInstanceUtil;
 
-    public AuthCheckFilterHelper(ObjectMapper objectMapper, UserUtils userUtils, CommonUtils commonUtils, MultiStateInstanceUtil centralInstanceUtil) {
+    private ApplicationProperties applicationProperties;
+
+    public AuthCheckFilterHelper(ObjectMapper objectMapper, UserUtils userUtils, CommonUtils commonUtils, MultiStateInstanceUtil centralInstanceUtil, ApplicationProperties applicationProperties) {
         this.objectMapper = objectMapper;
         this.userUtils = userUtils;
         this.commonUtils = commonUtils;
         this.centralInstanceUtil = centralInstanceUtil;
+        this.applicationProperties = applicationProperties;
     }
 
     @Override
     public Publisher<Map> apply(ServerWebExchange serverWebExchange, Map body) {
         try {
             RequestInfo requestInfo = objectMapper.convertValue(body.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE), RequestInfo.class);
-            requestInfo.setUserInfo(userUtils.getUser(requestInfo.getAuthToken(), serverWebExchange));
+            String authToken = null;
+
+            if (applicationProperties.isCookieBasedAuth()) {
+                HttpCookie authCookie = serverWebExchange.getRequest().getCookies().getFirst(AUTH_TOKEN);
+                if (authCookie != null) {
+                    authToken = authCookie.getValue();
+                }
+                if (ObjectUtils.isEmpty(authToken)) {
+                    throw new CustomException("AUTHENTICATION_ERROR", "Auth token not found in cookies");
+                }
+            } else {
+                authToken = requestInfo.getAuthToken();
+                if (ObjectUtils.isEmpty(authToken)) {
+                    throw new CustomException("AUTHENTICATION_ERROR", "Auth token not found in RequestInfo");
+                }
+            }
+
+            requestInfo.setUserInfo(userUtils.getUser(authToken, serverWebExchange));
             body.put(REQUEST_INFO_FIELD_NAME_PASCAL_CASE, requestInfo);
 
             if (centralInstanceUtil.getIsEnvironmentCentralInstance()) {
