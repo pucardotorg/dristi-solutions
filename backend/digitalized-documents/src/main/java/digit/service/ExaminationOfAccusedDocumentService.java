@@ -14,6 +14,7 @@ import digit.web.models.CaseSearchRequest;
 import digit.web.models.DigitalizedDocument;
 import digit.web.models.DigitalizedDocumentRequest;
 import digit.web.models.Document;
+import digit.web.models.ExaminationOfAccusedDetails;
 import digit.web.models.TypeEnum;
 import digit.web.models.WorkflowObject;
 import digit.web.models.sms.SmsTemplateData;
@@ -130,9 +131,6 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
                 .map(DigitalizedDocument::getWorkflow)
                 .map(WorkflowObject::getAction)
                 .orElse(null);
-        TypeEnum type = Optional.ofNullable(request.getDigitalizedDocument())
-                .map(DigitalizedDocument::getType)
-                .orElse(null);
         String messageCode = getMessageCode(action);
         if(messageCode == null){
             log.info("No message code found");
@@ -152,7 +150,10 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
                 .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
                 .build();
 
-        String mobileNumber = request.getDigitalizedDocument().getExaminationOfAccusedDetails().getAccusedMobileNumber();
+        String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())
+                        .map(DigitalizedDocument::getExaminationOfAccusedDetails)
+                        .map(ExaminationOfAccusedDetails::getAccusedMobileNumber)
+                        .orElse(null);
 
         notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, mobileNumber);
     }

@@ -122,9 +122,6 @@ public class PleaDocumentService implements DocumentTypeService {
                 .map(DigitalizedDocument::getWorkflow)
                 .map(WorkflowObject::getAction)
                 .orElse(null);
-        TypeEnum type = Optional.ofNullable(request.getDigitalizedDocument())
-                .map(DigitalizedDocument::getType)
-                .orElse(null);
         String messageCode = getMessageCode(action);
         if(messageCode == null){
             log.info("No message code found");
