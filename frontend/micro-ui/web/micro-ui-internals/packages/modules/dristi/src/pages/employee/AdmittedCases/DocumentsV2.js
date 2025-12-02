@@ -83,8 +83,20 @@ const DocumentsV2 = ({
             );
           }
 
+          if (status === "PENDING_E-SIGN" && isCitizen) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}`
+            );
+          }
+
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
-            // TODO: redirect to that modal page url
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
+            );
           }
         } else if (type === "EXAMINATION_OF_ACCUSED") {
         } else if (type === "MEDIATION") {

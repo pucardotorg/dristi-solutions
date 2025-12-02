@@ -2639,7 +2639,6 @@ export const UICustomizations = {
             fuzzySearch: true,
             type: requestCriteria?.body?.criteria?.type?.code,
           },
-          pagination: null,
         },
         config: {
           ...requestCriteria?.config,
