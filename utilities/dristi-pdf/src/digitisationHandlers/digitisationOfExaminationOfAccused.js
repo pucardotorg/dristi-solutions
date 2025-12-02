@@ -108,12 +108,12 @@ const digitisationOfExaminationOfAccused = async (
       Data: [
         {
           courtName: mdmsCourtRoom.courtName,
-          place: place,
+          place: "",
           state: "",
           caseNumber: caseNumber || "",
           caseYear: caseYear || "",
           accusedName: "",
-          textBody: "",
+          textBody: [],
           caseType: "Negotiable Instruments Act 138A",
           accusedSignature: "Signature of Accused",
           judgeSignature: "Signature of Magistrate",
@@ -131,7 +131,7 @@ const digitisationOfExaminationOfAccused = async (
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
-      "Content-Type": "digitisation/pdf",
+      "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename=${filename}.pdf`,
     });
     pdfResponse.data
