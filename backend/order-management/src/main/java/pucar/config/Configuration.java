@@ -314,4 +314,13 @@ public class Configuration {
 
     @Value("${egov.pdf.digitisation.mediation.template.key}")
     private String pdfDigitisationMediationTemplateKey;
+
+    @Value("${dristi.court.name}")
+    private String courtName;
+
+    @Value("${dristi.place}")
+    private String place;
+
+    @Value("${dristi.state}")
+    private String state;
 }

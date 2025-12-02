@@ -123,6 +123,9 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 DigitalizedDocument existingDoc = existingDocuments.get(0);
                 existingDoc.setMediationDetails(mediationDetails);
                 existingDoc.setWorkflow(workflowObject);
+                existingDoc.setCourtName(configuration.getCourtName());
+                existingDoc.setPlace(configuration.getPlace());
+                existingDoc.setState(configuration.getState());
 
                 DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
                         .requestInfo(requestInfo)
@@ -147,6 +150,9 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .caseFilingNumber(order.getFilingNumber())
                         .orderNumber(order.getOrderNumber())
                         .tenantId(order.getTenantId())
+                        .courtName(configuration.getCourtName())
+                        .place(configuration.getPlace())
+                        .state(configuration.getState())
                         .courtId(order.getCourtId())
                         .mediationDetails(mediationDetails)
                         .workflow(workflowObject)
@@ -278,10 +284,15 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 ? adrDetails.get("caseStage").asText()
                 : null;
 
+        Long dateOfEndADR = adrDetails.hasNonNull("dateOfEndADR")
+                ? adrDetails.get("dateOfEndADR").asLong()
+                : null;
+
         return MediationDetails.builder()
                 .hearingDate(hearingDate)
                 .mediationCentre(mediationCentre)
                 .dateOfInstitution(dateOfInstitution)
+                .dateOfEndADR(dateOfEndADR)
                 .natureOfComplainant(configuration.getNatureOfComplainant())
                 .caseStage(caseStage)
                 .partyDetails(partyDetailsList.isEmpty() ? null : partyDetailsList)
