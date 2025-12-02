@@ -66,9 +66,16 @@ public class AuthPreCheckFilterHelper implements RewriteFunction<Map, Map> {
         }
 
         try {
-            body.putIfAbsent(REQUEST_INFO_FIELD_NAME_PASCAL_CASE, new RequestInfo());
-            RequestInfo requestInfo = objectMapper.convertValue(body.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE), RequestInfo.class);
-            authToken = requestInfo.getAuthToken();
+            if (applicationProperties.isCookieBasedAuth()) {
+                HttpCookie authCookie = exchange.getRequest().getCookies().getFirst(AUTH_TOKEN);
+                if (authCookie != null) {
+                    authToken = authCookie.getValue();
+                }
+            } else {
+                body.putIfAbsent(REQUEST_INFO_FIELD_NAME_PASCAL_CASE, new RequestInfo());
+                RequestInfo requestInfo = objectMapper.convertValue(body.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE), RequestInfo.class);
+                authToken = requestInfo.getAuthToken();
+            }
         } catch (Exception e) {
             log.error(AUTH_TOKEN_RETRIEVE_FAILURE_MESSAGE, e);
             throw new CustomException(AUTH_TOKEN_RETRIEVE_FAILURE_MESSAGE, e.getMessage());

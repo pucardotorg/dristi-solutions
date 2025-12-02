@@ -52,9 +52,19 @@ public class AuthCheckFilterHelper implements RewriteFunction<Map, Map> {
             RequestInfo requestInfo = objectMapper.convertValue(body.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE), RequestInfo.class);
             String authToken = null;
 
-            authToken = requestInfo.getAuthToken();
-            if (ObjectUtils.isEmpty(authToken)) {
-                throw new CustomException("AUTHENTICATION_ERROR", "Auth token not found in RequestInfo");
+            if (applicationProperties.isCookieBasedAuth()) {
+                HttpCookie authCookie = serverWebExchange.getRequest().getCookies().getFirst(AUTH_TOKEN);
+                if (authCookie != null) {
+                    authToken = authCookie.getValue();
+                }
+                if (ObjectUtils.isEmpty(authToken)) {
+                    throw new CustomException("AUTHENTICATION_ERROR", "Auth token not found in cookies");
+                }
+            } else {
+                authToken = requestInfo.getAuthToken();
+                if (ObjectUtils.isEmpty(authToken)) {
+                    throw new CustomException("AUTHENTICATION_ERROR", "Auth token not found in RequestInfo");
+                }
             }
 
             requestInfo.setUserInfo(userUtils.getUser(authToken, serverWebExchange));

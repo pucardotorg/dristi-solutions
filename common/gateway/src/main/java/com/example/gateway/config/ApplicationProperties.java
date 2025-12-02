@@ -39,6 +39,9 @@ public class ApplicationProperties {
 
     private List<String> mixedModeEndpointsWhitelist;
 
+    @Value("${egov.auth.cookie-based:false}")
+    private boolean cookieBasedAuth;
+
     @Value("${egov.encrypted-endpoints-list}")
     public void setEncryptedUrlListValues(List<String> encryptedListFromProperties) {
         this.encryptedUrlSet = Collections.unmodifiableList(encryptedListFromProperties);
