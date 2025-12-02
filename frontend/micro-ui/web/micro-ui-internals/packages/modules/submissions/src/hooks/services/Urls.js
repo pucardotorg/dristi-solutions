@@ -31,9 +31,9 @@ export const Urls = {
   pendingTask: "/analytics/pending_task/v1/create",
   getPendingTaskFields: "/inbox/v2/_getFields",
   digitalization: {
-    create: "/digitalized-documents/v1/_create",
-    update: "/digitalized-documents/v1/_update",
-    search: "/digitalized-documents/v1/_search",
-    pleaPreviewPdf: "/egov-pdf/digitisation" // TODO: need to check
+    digitalizationCreate: "/digitalized-documents/v1/_create",
+    digitalizationUpdate: "/digitalized-documents/v1/_update",
+    digitalizationSearch: "/digitalized-documents/v1/_search",
+    pleaPreviewPdf: "/egov-pdf/digitisation", // TODO: need to check
   },
 };

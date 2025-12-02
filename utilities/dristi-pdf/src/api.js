@@ -603,6 +603,7 @@ async function search_digitisation(tenantId, documentNumber, requestinfo) {
         RequestInfo: requestinfo,
         tenantId: tenantId,
         criteria: {
+          courtId: "KLKM52",//requestinfo?.courtId,
           tenantId: tenantId,
           documentNumber: documentNumber,
         },

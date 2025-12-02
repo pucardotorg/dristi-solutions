@@ -125,7 +125,7 @@ var fontDescriptors = {
 };
 
 var defaultFontMapping = {
-  en_IN: 'Roboto',
+  en_IN: 'MalayalamSangamMn',
   ml_IN: 'MalayalamSangamMn',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',

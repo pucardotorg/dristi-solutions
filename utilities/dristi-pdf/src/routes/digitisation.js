@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const { logger } = require("../logger");
+const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 
 const digitisationOfPlea = require("../digitisationHandlers/digitisationOfPlea");
 const digitisationOfExaminationOfAccused = require("../digitisationHandlers/digitisationOfExaminationOfAccused");
-const digitisationOfMediation = require("../digitisationHandlers/digitisationOfMediation");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -18,9 +18,23 @@ function renderError(res, errorMessage, errorCode, errorObject) {
 router.post(
   "",
   asyncMiddleware(async function (req, res, next) {
+    const {
+      qrCode: qrCodeRaw,
+      documentType,
+      tenantId,
+      courtId,
+    } = req.query || {};
 
-    let qrCode = req.query.qrCode;
-    let digitisationType = req.query.documentType;
+    let qrCode = qrCodeRaw;
+    let digitisationType = documentType;
+    const requestInfo = req.body?.RequestInfo;
+    const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
+      res,
+      tenantId,
+      "Judge",
+      courtId,
+      requestInfo
+    );
     // Set qrCode to false if it is undefined, null, or empty
     if (!qrCode) {
       qrCode = "false";
@@ -43,24 +57,16 @@ router.post(
           await digitisationOfPlea(
             req,
             res,
-            qrCode,
-            // courtCaseJudgeDetails
+            courtCaseJudgeDetails,
+            qrCode
           );
           break;
         case "digitisation-examination-of-accused":
           await digitisationOfExaminationOfAccused(
             req,
             res,
-            qrCode,
-            // courtCaseJudgeDetails
-          );
-          break;
-        case "digitisation-mediation":
-          await digitisationOfMediation(
-            req,
-            res,
-            qrCode,
-            // courtCaseJudgeDetails
+            courtCaseJudgeDetails,
+            qrCode
           );
           break;
         

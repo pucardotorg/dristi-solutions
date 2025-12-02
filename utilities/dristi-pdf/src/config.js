@@ -328,7 +328,7 @@ module.exports = {
     bailBond: process.env.DRISTI_BAIL_BOND_HOST || "http://localhost:8097",
     taskMangement:
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
-    digitisation: process.env.DRISTI_DIGITISATION || "http://localhost:", // TO Do : add host
+    digitisation: process.env.DRISTI_DIGITISATION || "http://localhost:8333",
   },
 
   paths: {

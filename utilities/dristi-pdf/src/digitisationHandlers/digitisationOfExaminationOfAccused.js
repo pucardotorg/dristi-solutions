@@ -100,7 +100,6 @@ const digitisationOfExaminationOfAccused = async (
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const judgeDetails = config.constants.judgeDetails;
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
@@ -116,8 +115,8 @@ const digitisationOfExaminationOfAccused = async (
           accusedName: "",
           textBody: "",
           caseType: "Negotiable Instruments Act 138A",
-          accusedSignature: "",
-          judgeSignature: judgeDetails.judgeSignature,
+          accusedSignature: "Signature of Accused",
+          judgeSignature: "Signature of Magistrate",
           qrCodeUrl: base64Url,
         },
       ],

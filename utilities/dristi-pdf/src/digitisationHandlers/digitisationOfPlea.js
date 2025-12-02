@@ -10,21 +10,15 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("../applicationHandlers/formatDate");
 
 const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
-  const cnrNumber = req.query.cnrNumber;
-  const tenantId = req.query.tenantId;
-  const entityId = req.query.entityId;
-  const code = req.query.code;
-  const requestInfo = req.body.RequestInfo;
-  const documentNumber = req.query.documentNumber;
-
+  const { cnrNumber, tenantId, entityId, code, documentNumber } = req.query;
+  const requestInfo = req.body?.RequestInfo;
+  // const courtId = requestInfo?.courtId;
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
   if (!documentNumber) missingFields.push("documentNumber");
   if (!tenantId) missingFields.push("tenantId");
-  if (requestInfo === undefined) missingFields.push("requestInfo");
-  if (qrCode === "true" && (!entityId || !code))
-    missingFields.push("entityId and code");
-
+  if (!requestInfo) missingFields.push("requestInfo");
+  if (qrCode === "true" && (!entityId || !code)) missingFields.push("entityId and code");
   if (missingFields.length > 0) {
     return renderError(
       res,
@@ -51,17 +45,27 @@ const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
     );
     const resDigitisation = await handleApiCall(
       () => search_digitisation(tenantId, documentNumber, requestInfo),
-
-      "Failed to query case service"
+      
+      "Failed to query digitisation service"
     );
-    const place = resDigitisation?.place;
-    
-    const courtCase = resCase?.data?.criteria[0]?.responseList[0];
+
+    const digitisationRecord =
+      resDigitisation?.data?.digitalizedDocuments?.[0] ||
+      resDigitisation?.data?.documents?.[0] ||
+      resDigitisation?.data || {};
+
+    const pleaDetails = digitisationRecord?.pleaDetails || {};
+    const courtCase = resCase?.data?.criteria?.[0]?.responseList?.[0];
+
     if (!courtCase) {
-      renderError(res, "Court case not found", 404);
+      return renderError(
+        res,
+        "No case details found for the provided inputs (cnrNumber/tenantId)",
+        400
+      );
     }
 
-    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const mdmsCourtRoom = courtCaseJudgeDetails?.mdmsCourtRoom;
 
     let base64Url = "";
     if (qrCode === "true") {
@@ -97,35 +101,33 @@ const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const judgeDetails = config.constants.judgeDetails;
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
-
-    // TODO : payload for data
-
+    const place = mdmsCourtRoom?.place || digitisationRecord?.place || "";
+    const state = mdmsCourtRoom?.state || digitisationRecord?.state || "";
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.courtName,
+          courtName: mdmsCourtRoom?.courtName || digitisationRecord?.courtName || "",
           caseType: "Negotiable Instruments Act 138A",
-          place: place ,
-          state: "",
-          caseNumber: caseNumber || "",
-          caseYear: caseYear || "",
-          accusedName: "",
-          fatherName: "",
-          villageName: "",
-          taluk: "",
-          calling: "",
-          age: "",
+          place,
+          state,
+          caseNumber,
+          caseYear,
+          accusedName: pleaDetails?.accusedName || "",
+          fatherName: pleaDetails?.fatherName || "",
+          villageName: pleaDetails?.village || "",
+          taluk: pleaDetails?.taluk || "",
+          calling: pleaDetails?.calling || "",
+          age: pleaDetails?.age || "",
           date: formattedToday,
-          judgeRemarks: "",
-          accusedSignature: "",
-          judgeSignature: judgeDetails.judgeSignature,
+          judgeRemarks: pleaDetails?.magistrateRemarks || "",
+          accusedSignature: "Signature of Accused",
+          judgeSignature: "Signature of Magistrate",
           qrCodeUrl: base64Url,
         },
       ],
