@@ -2,10 +2,7 @@ package pucar.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -30,7 +27,7 @@ public class FileStoreService {
             String url = config.getFileStoreHost() + config.getFileStoreSaveEndPoint();
             URI uri = UriComponentsBuilder.fromHttpUrl(url)
                     .queryParam("tenantId", tenantId)
-                    .queryParam("module", "")
+                    .queryParam("module", "mediation-document")
                     .build(true)
                     .toUri();
 
@@ -77,5 +74,19 @@ public class FileStoreService {
             this.contentType = contentType;
         }
 
+        @Override
+        public String getFilename() {
+            return this.filename;
+        }
+
+        @Override
+        public long contentLength() {
+            return this.getByteArray().length;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Byte array resource [" + filename + "]";
+        }
     }
 }

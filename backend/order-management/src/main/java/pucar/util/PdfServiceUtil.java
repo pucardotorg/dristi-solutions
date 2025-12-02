@@ -42,7 +42,6 @@ public class PdfServiceUtil {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
-            log.info("Calling PDF service at: {}", uri.toString());
             ResponseEntity<byte[]> responseEntity = restTemplate.postForEntity(uri.toString(), requestEntity, byte[].class);
 
             log.info("PDF generated successfully, size: {} bytes", responseEntity.getBody() != null ? responseEntity.getBody().length : 0);

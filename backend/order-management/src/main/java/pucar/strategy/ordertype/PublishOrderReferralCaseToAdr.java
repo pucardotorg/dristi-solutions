@@ -174,19 +174,20 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
 
     /**
      * Generates PDF, uploads to filestore, and attaches as document to the digitalized document
+     *
      * @param request The digitalized document request
      */
     private void generateAndUploadPdf(DigitalizedDocumentRequest request) {
         try {
             DigitalizedDocument digitalizedDocument = request.getDigitalizedDocument();
-            
+
             // Generate PDF
             byte[] pdfBytes = generatePdf(request);
 
             // Upload to filestore
             String fileStoreId = fileStoreService.upload(
                     pdfBytes,
-                    "mediation_document",
+                    "mediation_document.pdf",
                     "application/pdf",
                     digitalizedDocument.getTenantId()
             );
@@ -208,7 +209,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             List<Document> documents = new ArrayList<>();
             documents.add(document);
             digitalizedDocument.setDocuments(documents);
-            
+
             log.info("PDF generated and uploaded successfully, fileStoreId: {}", fileStoreId);
         } catch (Exception e) {
             log.error("Error generating and uploading PDF for digitalized document", e);
@@ -255,6 +256,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .partyName(getTextValue(party, "partyName"))
                         .partyIndex(getIntValue(party))
                         .hasSigned(party.path("hasSigned").asBoolean(false))
+                        .counselName(party.path("counselName").asText())
                         .build();
                 partyDetailsList.add(partyDetail);
             }
