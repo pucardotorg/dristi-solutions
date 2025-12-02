@@ -36,7 +36,6 @@ public class DigitalizedDocumentSearchCriteria {
     private String tenantId = null;
 
     @JsonProperty("courtId")
-    @NotNull
     private String courtId = null;
 
     @JsonProperty("orderNumber")

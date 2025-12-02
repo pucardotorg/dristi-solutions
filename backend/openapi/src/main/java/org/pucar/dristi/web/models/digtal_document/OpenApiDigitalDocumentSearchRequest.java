@@ -18,7 +18,6 @@ public class OpenApiDigitalDocumentSearchRequest {
     private String tenantId;
 
     @JsonProperty("courtId")
-    @NotNull(message = "courtId is required")
     private String courtId;
 
     @JsonProperty("documentNumber")

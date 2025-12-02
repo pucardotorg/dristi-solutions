@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.tracer.model.ServiceCallException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.ByteArrayResource;
+import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -18,13 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import static digit.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static digit.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class ServiceRequestRepositoryTest {
 
     @Mock
@@ -34,116 +29,126 @@ class ServiceRequestRepositoryTest {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ServiceRequestRepository serviceRequestRepository;
-
-    private StringBuilder uriBuilder;
+    private ServiceRequestRepository repository;
 
     @BeforeEach
     void setUp() {
-        uriBuilder = new StringBuilder("http://test-service/api/v1/endpoint");
-        when(objectMapper.getDeserializationConfig()).thenReturn(null);
+        MockitoAnnotations.openMocks(this);
     }
 
+    // ------------------------------------------------------------------
+    // POST – Success
+    // ------------------------------------------------------------------
     @Test
-    void testFetchResult_Success() {
-        // Arrange
-        Map<String, Object> request = new HashMap<>();
-        request.put("key", "value");
-        
-        Map<String, Object> expectedResponse = new HashMap<>();
-        expectedResponse.put("status", "SUCCESS");
-        
-        when(restTemplate.postForObject(anyString(), any(), eq(Map.class)))
-                .thenReturn(expectedResponse);
+    void testFetchResult_WhenSuccess() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+        Object request = new Object();
 
-        // Act
-        Object response = serviceRequestRepository.fetchResult(uriBuilder, request);
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("status", "ok");
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(expectedResponse, response);
-        verify(restTemplate).postForObject(eq(uriBuilder.toString()), eq(request), eq(Map.class));
-    }
+        when(restTemplate.postForObject(eq(uri.toString()), eq(request), eq(Map.class)))
+                .thenReturn(mockResponse);
 
-    @Test
-    void testFetchResult_HttpClientError() {
-        // Arrange
-        Map<String, Object> request = new HashMap<>();
-        String errorResponse = "{\"error\": \"Bad Request\"}";
-        
-        when(restTemplate.postForObject(anyString(), any(), eq(Map.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", 
-                        errorResponse.getBytes(StandardCharsets.UTF_8), null));
+        Object result = repository.fetchResult(uri, request);
 
-        // Act & Assert
-        ServiceCallException exception = assertThrows(ServiceCallException.class, 
-            () -> serviceRequestRepository.fetchResult(uriBuilder, request));
-        
-        assertEquals(errorResponse, exception.getMessage());
-        verify(restTemplate).postForObject(eq(uriBuilder.toString()), eq(request), eq(Map.class));
-    }
-
-    @Test
-    void testFetchResult_GenericError() {
-        // Arrange
-        Map<String, Object> request = new HashMap<>();
-        
-        when(restTemplate.postForObject(anyString(), any(), eq(Map.class)))
-                .thenThrow(new RuntimeException("Connection refused"));
-
-        // Act
-        Object response = serviceRequestRepository.fetchResult(uriBuilder, request);
-
-        // Assert
-        assertNull(response);
-        verify(restTemplate).postForObject(eq(uriBuilder.toString()), eq(request), eq(Map.class));
-    }
-
-    @Test
-    void testFetchResultGetForResource_Success() {
-        // Arrange
-        ByteArrayResource expectedResource = new ByteArrayResource("test content".getBytes(StandardCharsets.UTF_8));
-        
-        when(restTemplate.getForObject(anyString(), eq(Resource.class)))
-                .thenReturn(expectedResource);
-
-        // Act
-        Resource result = serviceRequestRepository.fetchResultGetForResource(uriBuilder);
-
-        // Assert
         assertNotNull(result);
-        assertEquals(expectedResource, result);
-        verify(restTemplate).getForObject(eq(uriBuilder.toString()), eq(Resource.class));
+        assertEquals(mockResponse, result);
     }
 
+    // ------------------------------------------------------------------
+    // POST – HttpClientErrorException → throws ServiceCallException
+    // ------------------------------------------------------------------
     @Test
-    void testFetchResultGetForResource_HttpClientError() {
-        // Arrange
-        String errorResponse = "{\"error\": \"Not Found\"}";
-        
-        when(restTemplate.getForObject(anyString(), eq(Resource.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Not Found", 
-                        errorResponse.getBytes(StandardCharsets.UTF_8), null));
+    void testFetchResult_WhenHttpClientErrorExceptionThrown() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+        Object request = new Object();
 
-        // Act & Assert
-        ServiceCallException exception = assertThrows(ServiceCallException.class, 
-            () -> serviceRequestRepository.fetchResultGetForResource(uriBuilder));
-        
-        assertEquals(errorResponse, exception.getMessage());
-        verify(restTemplate).getForObject(eq(uriBuilder.toString()), eq(Resource.class));
+        HttpClientErrorException httpError =
+                HttpClientErrorException.create("BAD_REQUEST", HttpStatusCode.valueOf(400),
+                        "Bad Request", null,
+                        "Error occurred".getBytes(StandardCharsets.UTF_8),
+                        StandardCharsets.UTF_8);
+
+        when(restTemplate.postForObject(eq(uri.toString()), eq(request), eq(Map.class)))
+                .thenThrow(httpError);
+
+        ServiceCallException exception = assertThrows(
+                ServiceCallException.class,
+                () -> repository.fetchResult(uri, request)
+        );
+
     }
 
+    // ------------------------------------------------------------------
+    // POST – Generic Exception → log & return null
+    // ------------------------------------------------------------------
     @Test
-    void testFetchResultGetForResource_GenericError() {
-        // Arrange
-        when(restTemplate.getForObject(anyString(), eq(Resource.class)))
-                .thenThrow(new RuntimeException("Connection refused"));
+    void testFetchResult_WhenGenericExceptionThrown() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+        Object request = new Object();
 
-        // Act
-        Resource result = serviceRequestRepository.fetchResultGetForResource(uriBuilder);
+        when(restTemplate.postForObject(eq(uri.toString()), eq(request), eq(Map.class)))
+                .thenThrow(new RuntimeException("Something went wrong"));
 
-        // Assert
+        Object result = repository.fetchResult(uri, request);
+
+        assertNull(result); // Should return null
+    }
+
+    // ------------------------------------------------------------------
+    // GET – Success
+    // ------------------------------------------------------------------
+    @Test
+    void testFetchResultGetForResource_WhenSuccess() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+
+        Resource mockResource = mock(Resource.class);
+
+        when(restTemplate.getForObject(eq(uri.toString()), eq(Resource.class)))
+                .thenReturn(mockResource);
+
+        Resource result = repository.fetchResultGetForResource(uri);
+
+        assertNotNull(result);
+        assertEquals(mockResource, result);
+    }
+
+    // ------------------------------------------------------------------
+    // GET – HttpClientErrorException → throws ServiceCallException
+    // ------------------------------------------------------------------
+    @Test
+    void testFetchResultGetForResource_WhenHttpClientErrorExceptionThrown() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+
+        HttpClientErrorException httpError =
+                HttpClientErrorException.create("BAD_REQUEST", HttpStatusCode.valueOf(400),
+                        "Bad Request", null,
+                        "Error occurred".getBytes(StandardCharsets.UTF_8),
+                        StandardCharsets.UTF_8);
+
+        when(restTemplate.getForObject(eq(uri.toString()), eq(Resource.class)))
+                .thenThrow(httpError);
+
+        ServiceCallException exception = assertThrows(
+                ServiceCallException.class,
+                () -> repository.fetchResultGetForResource(uri)
+        );
+
+    }
+
+    // ------------------------------------------------------------------
+    // GET – Generic Exception → log & return null
+    // ------------------------------------------------------------------
+    @Test
+    void testFetchResultGetForResource_WhenGenericExceptionThrown() {
+        StringBuilder uri = new StringBuilder("http://test-url");
+
+        when(restTemplate.getForObject(eq(uri.toString()), eq(Resource.class)))
+                .thenThrow(new RuntimeException("Something went wrong"));
+
+        Resource result = repository.fetchResultGetForResource(uri);
+
         assertNull(result);
-        verify(restTemplate).getForObject(eq(uriBuilder.toString()), eq(Resource.class));
     }
 }

@@ -53,7 +53,6 @@ public class DigitalDocumentService {
 
             DigitalizedDocumentSearchCriteria criteria = DigitalizedDocumentSearchCriteria.builder()
                     .tenantId(request.getTenantId())
-                    .courtId(request.getCourtId())
                     .documentNumber(request.getDocumentNumber())
                     .build();
 
@@ -97,7 +96,6 @@ public class DigitalDocumentService {
             // Fetch evidence
             DigitalizedDocumentSearchCriteria criteria = DigitalizedDocumentSearchCriteria.builder()
                     .tenantId(request.getTenantId())
-                    .courtId(request.getCourtId())
                     .documentNumber(request.getDocumentNumber())
                     .build();
 

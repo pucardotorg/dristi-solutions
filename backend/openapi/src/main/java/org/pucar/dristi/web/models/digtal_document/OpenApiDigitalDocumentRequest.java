@@ -30,7 +30,6 @@ public class OpenApiDigitalDocumentRequest {
     private String fileStoreId;
 
     @JsonProperty("courtId")
-    @NotNull(message = "courtId is required")
     private String courtId;
 
 }
