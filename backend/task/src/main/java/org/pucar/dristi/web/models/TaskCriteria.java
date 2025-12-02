@@ -63,4 +63,7 @@ public class TaskCriteria {
     @JsonProperty("partyName")
     private String partyName;
 
+    @JsonProperty("partyUniqueId")
+    private String partyUniqueId;
+
 }
