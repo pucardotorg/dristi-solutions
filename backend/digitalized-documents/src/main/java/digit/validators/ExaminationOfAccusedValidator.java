@@ -40,7 +40,7 @@ public class ExaminationOfAccusedValidator {
         }
     }
 
-    public void checkDigitalizedDocumentExists(DigitalizedDocument document){
+    public DigitalizedDocument checkDigitalizedDocumentExists(DigitalizedDocument document){
 
         String documentNumber = document.getDocumentNumber();
         DigitalizedDocument existingDocument = digitalizedDocumentRepository.getDigitalizedDocumentByDocumentNumber(documentNumber, document.getTenantId());
@@ -48,6 +48,8 @@ public class ExaminationOfAccusedValidator {
         if(existingDocument == null){
             throw new CustomException(VALIDATION_ERROR, "Digitalized document with document number " + documentNumber + " does not exist");
         }
+
+        return existingDocument;
     }
 
 }

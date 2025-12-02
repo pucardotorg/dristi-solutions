@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 import static digit.config.ServiceConstants.UPDATE_DIGITALIZED_DOCUMENT_FAILED;
