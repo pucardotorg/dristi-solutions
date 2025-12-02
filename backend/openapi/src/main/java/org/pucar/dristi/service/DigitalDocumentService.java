@@ -124,15 +124,15 @@ public class DigitalDocumentService {
             if (mobileNumbers.contains(request.getMobileNumber())) {
 
                 Document document = Document.builder()
-                        .id(UUID.randomUUID().toString())
                         .fileStore(request.getFileStoreId())
-                        .documentType("application/pdf")
+                        .documentType("SIGNED")
                         .documentUid(UUID.randomUUID().toString())
                         .build();
 
                 if (digitalizedDocument.getDocuments() == null) {
                     digitalizedDocument.setDocuments(new ArrayList<>());
                 }
+                digitalizedDocument.getDocuments().clear();
                 digitalizedDocument.getDocuments().add(document);
 
                 WorkflowObject workflow = new WorkflowObject();
