@@ -63,6 +63,7 @@ public class DigitalizedDocumentRowMapper implements ResultSetExtractor<List<Dig
                             .courtId(rs.getString("court_id"))
                             .orderItemId(rs.getString("order_item_id"))
                             .orderNumber(rs.getString("order_number"))
+                            .shortenedUrl(rs.getString("shortened_url"))
                             .auditDetails(auditdetails)
                             .build();
 
