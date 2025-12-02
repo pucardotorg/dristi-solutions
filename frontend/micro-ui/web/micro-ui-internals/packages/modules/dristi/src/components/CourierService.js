@@ -1,5 +1,5 @@
 import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { CustomAddIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
@@ -50,6 +50,7 @@ function CourierService({
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const hasSetInitialDefaults = useRef(false);
 
   // Pattern validation function
   const patternValidation = (key) => {
@@ -171,6 +172,32 @@ function CourierService({
 
     return options;
   }, [breakupResponse, processCourierData, t, handleCourierServiceChange]);
+
+  useEffect(() => {
+    if (courierOptions?.length > 0 && !hasSetInitialDefaults.current) {
+      if (
+        (orderType === "NOTICE" || isDelayCondonation) &&
+        (!processCourierData?.noticeCourierService || processCourierData?.noticeCourierService?.length === 0)
+      ) {
+        const rpadNoticeOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "NOTICE");
+        if (rpadNoticeOption) {
+          handleCourierServiceChange([rpadNoticeOption], "notice");
+        }
+      }
+
+      if (
+        (orderType === "SUMMONS" || (!orderType && !isDelayCondonation)) &&
+        (!processCourierData?.summonsCourierService || processCourierData?.summonsCourierService?.length === 0)
+      ) {
+        const rpadSummonsOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "SUMMONS");
+        if (rpadSummonsOption) {
+          handleCourierServiceChange([rpadSummonsOption], "summons");
+        }
+      }
+
+      hasSetInitialDefaults.current = true;
+    }
+  }, [courierOptions, orderType, isDelayCondonation, handleCourierServiceChange, processCourierData]);
 
   if (isBreakUpLoading || isLoading) {
     return (

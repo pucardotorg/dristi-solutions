@@ -3755,13 +3755,19 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
+            {caseDetails?.courtCaseNumber && caseDetails?.courtCaseNumber?.includes("ST/") && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             {caseDetails?.isLPRCase ? (
               <React.Fragment>
                 <div className="sub-details-text">{caseDetails?.lprNumber}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && (
+              caseDetails?.courtCaseNumber && !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />
