@@ -197,7 +197,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
             return {
               fileStoreId: bailbond?.businessObject?.bailDetails?.documents?.find((doc) => doc.documentType === "SIGNED")?.fileStore,
               bailId: bailbond?.businessObject?.bailDetails?.bailId,
-              placeholder: "Signature",
+              placeholder: "Magistrate Signature",
               tenantId: tenantId,
             };
           });
