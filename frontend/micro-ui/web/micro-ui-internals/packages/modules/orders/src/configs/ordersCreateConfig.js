@@ -2741,6 +2741,169 @@ export const configsCaseTransferReject = [
           },
         },
       },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+          hideInForm: true,
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "JUDGE_NAME",
+        isMandatory: true,
+        key: "judgeName",
+        type: "text",
+        populators: { name: "judgeName", hideInForm: true },
+      },
+      {
+        label: "JUDGE_DESIGNATION",
+        isMandatory: true,
+        key: "judgeDesignation",
+        type: "text",
+        populators: { name: "judgeDesignation", hideInForm: true },
+      },
+    ],
+  },
+];
+
+export const configsCaseSettlementAccept = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "COURT_NAME",
+        isMandatory: true,
+        key: "courtName",
+        type: "text",
+        populators: { name: "courtName", hideInForm: true },
+      },
+      {
+        label: "CASE_NAME",
+        isMandatory: true,
+        key: "caseName",
+        type: "text",
+        populators: { name: "caseName", hideInForm: true },
+      },
+      {
+        label: "CNR_NUMBER",
+        isMandatory: true,
+        key: "cnrNumber",
+        type: "text",
+        populators: { name: "cnrNumber", hideInForm: true },
+      },
+      {
+        label: "DATE_OF_ORDER",
+        isMandatory: true,
+        key: "dateOfOrder",
+        type: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "ONLY_CURRENT_AND_PAST_DATES_ARE_ALLOWED",
+        populators: {
+          name: "dateOfOrder",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "maxTodayDateValidation",
+            },
+          },
+          hideInForm: true,
+        },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "SETTLEMENT_AGREEMENT_DATE",
+        isMandatory: true,
+        key: "settlementAgreementDate",
+        schemaKeyPath: "orderDetails.settlementDate",
+        transformer: "date",
+        type: "date",
+        populators: {
+          name: "settlementAgreementDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "SETTLEMENT_MECHANISM",
+        isMandatory: true,
+        key: "settlementMechanism",
+        schemaKeyPath: "orderDetails.settlementMechanism",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "settlementMechanism",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "SettlementMechanism",
+            select: "(data) => {return data['Order'].SettlementMechanism?.map((item) => {return item;});}",
+          },
+        },
+      },
+      {
+        label: "SETTLEMENT_IMPLEMETED",
+        isMandatory: true,
+        key: "settlementImplemented",
+        schemaKeyPath: "orderDetails.isSettlementImplemented",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "settlementImplemented",
+          optionsKey: "name",
+          title: "",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "Yes",
+              name: "ES_COMMON_YES",
+            },
+            {
+              code: "No",
+              name: "ES_COMMON_NO",
+            },
+          ],
+        },
+      },
       {
         label: "NATURE_OF_DISPOSAL",
         isMandatory: true,
@@ -2807,7 +2970,7 @@ export const configsCaseTransferReject = [
   },
 ];
 
-export const configsCaseSettlement = [
+export const configsCaseSettlementReject = [
   {
     body: [
       {
@@ -3340,27 +3503,6 @@ export const configsIssueOfWarrants = [
           ],
         },
       },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
-          },
-        },
-      },
     ],
   },
   {
@@ -3613,27 +3755,6 @@ export const configsCaseWithdrawalReject = [
             },
           ],
           hideInForm: true,
-        },
-      },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
-          },
         },
       },
     ],
@@ -5501,27 +5622,6 @@ export const configsApproveRejectLitigantDetailsChange = [
             },
           ],
           hideInForm: true,
-        },
-      },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
-          },
         },
       },
     ],
