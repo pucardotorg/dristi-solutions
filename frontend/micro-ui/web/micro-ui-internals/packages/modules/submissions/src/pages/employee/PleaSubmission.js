@@ -22,6 +22,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";
+import SuccessBannerModal from "../../components/SuccessBannerModal";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const convertToFormData = (obj) => {
@@ -34,9 +35,7 @@ const convertToFormData = (obj) => {
     fatherName: obj?.fatherName,
     village: obj?.village,
     taluk: obj?.taluk,
-    caste: obj?.caste,
     calling: obj?.calling,
-    religion: obj?.religion,
     age: obj?.age,
     isChargesUnderstood: BooleanToCode(obj?.isChargesUnderstood),
     pleadGuilty: BooleanToCode(obj?.pleadGuilty),
@@ -162,7 +161,7 @@ const PleaSubmission = () => {
         };
       }) || []
     );
-  }, [caseDetails]);  
+  }, [caseDetails]);
 
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
@@ -271,11 +270,34 @@ const PleaSubmission = () => {
     }
   };
 
-  const handleEsgin = () => {
+  const handleEsgin = async () => {
     // TODO : extract current selected plea number and setPleaNumber
-    setPleaMobileNumber("9898989898");
-    setShowsignatureModal(false);
-    setShowAddPleaMobileNumber(true);
+
+    try {
+      setLoader(true);
+      const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+        (respondent) => respondent?.uniqueId === formdata?.accusedDetails?.uniqueId
+      );
+      if (respondentData?.data?.respondentVerification?.individualDetails?.individualId) {
+        const individualId = respondentData?.data?.respondentVerification?.individualDetails?.individualId;
+        const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+          {
+            Individual: {
+              individualId: individualId,
+            },
+          },
+          { tenantId, limit: 1000, offset: 0 }
+        );
+        setPleaMobileNumber(individualData?.Individual?.[0]?.mobileNumber);
+      }
+      setShowsignatureModal(false);
+      setShowAddPleaMobileNumber(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
   };
 
   const handleCloseSignatureModal = () => {
@@ -309,7 +331,6 @@ const PleaSubmission = () => {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
-      setShowAddPleaMobileNumber(false);
       setLoader(false);
     }
   };
@@ -360,7 +381,7 @@ const PleaSubmission = () => {
           style={{
             width: "100vw",
             height: "100vh",
-            zIndex: "9999",
+            zIndex: "100001",
             position: "fixed",
             right: "0",
             display: "flex",
@@ -398,9 +419,7 @@ const PleaSubmission = () => {
             handleBack={() => {
               setPreviewPleModal(false);
               if (showModal) {
-                history.replace(
-                  `/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
-                );
+                history.replace(`/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
               }
             }}
             setPreviewModal={setPreviewPleModal}
@@ -445,6 +464,7 @@ const PleaSubmission = () => {
             header={"PLEA_ESIGN_MODAL_HEADER"}
           />
         )}
+        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"PLEA_ESIGN_MODAL_HEADER"} />}
       </div>
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>

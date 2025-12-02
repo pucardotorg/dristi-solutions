@@ -37,9 +37,7 @@ export const _getCreatePleaPayload = (caseDetails, formData, tenantId, courtId) 
         fatherName: formData?.fatherName,
         village: formData?.village,
         taluk: formData?.taluk,
-        caste: formData?.caste,
         calling: formData?.calling,
-        religion: formData?.religion,
         age: formData?.age,
         isChargesUnderstood: convertCodeToBoolean(formData?.isChargesUnderstood?.code),
         pleadGuilty: convertCodeToBoolean(formData?.pleadGuilty?.code),
@@ -57,7 +55,6 @@ export const _getCreatePleaPayload = (caseDetails, formData, tenantId, courtId) 
 
 export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId, pleaMobileNumber) => {
   let payload = {};
-
   if (action === pleaWorkflowActions.ESIGN) {
     const documents = Array.isArray(pleaDetails?.documents) ? pleaDetails.documents : [];
     const documentsFile = fileStoreId
@@ -65,18 +62,20 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           {
             fileStore: fileStoreId,
             documentType: "UNSIGNED",
-            additionalDetails: { name: `${t(`Plea (${pleaDetails?.pleaDetails?.accusedName})`)}.pdf` },
+            additionalDetails: {
+              name: `${t("PLEA")} (${pleaDetails?.pleaDetails?.accusedName}).pdf`,
+            },
             tenantId,
           },
         ]
       : null;
 
     payload = {
-      bail: {
+      digitalizedDocument: {
         ...pleaDetails,
         pleaDetails: {
           ...pleaDetails.pleaDetails,
-          pleaMobileNumber: pleaMobileNumber, // TODO: need to change
+          accusedMobileNumber: pleaMobileNumber,
         },
         documents: documentsFile ? [...documentsFile] : documents,
         workflow: { ...pleaDetails.workflow, action, documents: [{}] },
@@ -96,7 +95,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
       : null;
 
     payload = {
-      bail: {
+      digitalizedDocument: {
         ...pleaDetails,
         documents: documentsFile ? [...documentsFile] : documents,
         workflow: { ...pleaDetails.workflow, action, documents: [{}] },
@@ -112,9 +111,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           fatherName: formData?.fatherName,
           village: formData?.village,
           taluk: formData?.taluk,
-          caste: formData?.caste,
           calling: formData?.calling,
-          religion: formData?.religion,
           age: formData?.age,
           isChargesUnderstood: convertCodeToBoolean(formData?.isChargesUnderstood?.code),
           pleadGuilty: convertCodeToBoolean(formData?.pleadGuilty?.code),

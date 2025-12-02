@@ -52,7 +52,7 @@ const DocumentsV2 = ({
           digitalizedDocument: {
             ...row,
             workflow: {
-              action: "DELETED_DRAFT",
+              action: "DELETE_DRAFT",
             },
           },
         };
@@ -70,7 +70,7 @@ const DocumentsV2 = ({
       if (docObj?.[0]?.isDigitilization && ["PLEA", "EXAMINATION_OF_ACCUSED", "MEDIATION"]?.includes(docObj?.[0]?.artifactList?.type)) {
         const type = docObj?.[0]?.artifactList?.type;
         const status = docObj?.[0]?.artifactList?.status;
-        const filingNumber = docObj?.[0]?.artifactList?.filingNumber;
+        const filingNumber = docObj?.[0]?.artifactList?.caseFilingNumber;
         const documentNumber = docObj?.[0]?.artifactList?.documentNumber;
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
         const courtId = docObj?.[0]?.artifactList?.courtId;

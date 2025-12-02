@@ -65,44 +65,12 @@ const pleaSubmissionConfig = [
         },
       },
       {
-        label: "CASTE",
-        isMandatory: true,
-        key: "caste",
-        type: "text",
-        populators: {
-          name: "caste",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-          validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-            minLength: 1,
-            patternType: "Name",
-          },
-        },
-      },
-      {
         label: "CALLING",
         isMandatory: true,
         key: "calling",
         type: "text",
         populators: {
           name: "calling",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-          validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-            minLength: 1,
-            patternType: "Name",
-          },
-        },
-      },
-      {
-        label: "RELIGION",
-        isMandatory: true,
-        key: "religion",
-        type: "text",
-        populators: {
-          name: "religion",
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
