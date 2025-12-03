@@ -10,6 +10,12 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class TaskDetails {
 
+    @JsonProperty("noticeDetails")
+    private NoticeDetails noticeDetails = null;
+
+    @JsonProperty("witnessDetails")
+    private WitnessDetails witnessDetails = null;
+
     @JsonProperty("summonDetails")
     private SummonsDetails summonDetails = null;
 
@@ -19,6 +25,6 @@ public class TaskDetails {
     @JsonProperty("respondentDetails")
     private RespondentDetails respondentDetails = null;
 
-    @JsonProperty("deliveryChannel")
-    private DeliveryChannel deliveryChannel = null;
+    @JsonProperty("deliveryChannels")
+    private DeliveryChannel deliveryChannels = null;
 }

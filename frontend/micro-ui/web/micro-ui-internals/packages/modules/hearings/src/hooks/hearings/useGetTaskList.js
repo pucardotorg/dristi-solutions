@@ -9,14 +9,11 @@ import { Urls } from "../services/Urls";
  * @returns data
  */
 function useGetTaskList(data, params, keys, enabled, refetchInterval = false) {
-  // Add courtId to criteria if it exists
   const { isLoading, data: taskResponse, isFetching, refetch, error } = useQuery(
     `GET_TASK_${keys}`,
     () =>
       hearingService
-        .customApiService(Urls.hearing.searchTasks, 
-          {...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}}, 
-          params)
+        .customApiService(Urls.hearing.searchTasks, data, params)
         .then((data) => data)
         .catch(() => null),
     {

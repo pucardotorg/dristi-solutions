@@ -14,13 +14,7 @@
           "name": "CauseList Email Template",
           "value": "<!DOCTYPE html><html><head></head><body><p>{{header}}</p><p>{{message}}</p><p>{{footer}}</p></body></html>"
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
-          "createdTime": 1748931471364,
-          "lastModifiedTime": 1748931471364
-        }
+        "isActive": true
       }
     ]
   }

@@ -22,6 +22,9 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -66,10 +69,10 @@ public class ApplicationService {
                 workflowService.updateWorkflowStatus(body);
 
             if (body.getApplication().getWorkflow() != null && (PENDINGAPPROVAL.equalsIgnoreCase(body.getApplication().getStatus())
-                    || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()))) {
+                    || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()) || (COMPLETED.equalsIgnoreCase(body.getApplication().getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(body.getApplication().getApplicationType())))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
-
+            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType(), true);
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
@@ -92,7 +95,7 @@ public class ApplicationService {
                 workflowService.updateWorkflowStatus(applicationRequest);
 
             if (application.getWorkflow() != null && (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())
-                    || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()))) {
+                    || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())) || (COMPLETED.equalsIgnoreCase(application.getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(application.getApplicationType()))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
             }
 
@@ -111,8 +114,14 @@ public class ApplicationService {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
                 log.info("Deleted files for application with ids: {}", fileStoreIds);
             }
-            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
+            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), false);
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
+
+            filterDocuments(new ArrayList<>() {{
+                                add(application);
+                            }},
+                    Application::getDocuments,
+                    Application::setDocuments);
 
             return applicationRequest.getApplication();
 
@@ -122,6 +131,22 @@ public class ApplicationService {
         } catch (Exception e) {
             log.error("Error occurred while updating application {}", e.getMessage());
             throw new CustomException(UPDATE_APPLICATION_ERR, "Error occurred while updating application: " + e.getMessage());
+        }
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
         }
     }
 
@@ -150,7 +175,7 @@ public class ApplicationService {
                         Application parentApplication = relatedApplications.get(0);
                         parentApplication.setWorkflow(application.getWorkflow());
                         updateApplication(ApplicationRequest.builder().application(parentApplication)
-                                .requestInfo(requestInfo).build(),true);
+                                .requestInfo(requestInfo).build(), true);
 
                     } else {
                         log.info("Application with id : {} not found in DB", applicationId);

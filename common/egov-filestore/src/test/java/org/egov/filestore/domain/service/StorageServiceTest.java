@@ -65,7 +65,7 @@ class StorageServiceTest {
         StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
         FileStoreConfig configs = new FileStoreConfig();
         assertNull((new StorageService(artifactRepository, idGeneratorService, fileStoreConfig, storageValidator, configs,
-                new MinioConfig())).retrieve("foo", "foo"));
+                new MinioConfig())).retrieve("foo", "foo", null));
         verify(fileStoreJpaRepository).findByFileStoreIdAndTenantId((String) any(), (String) any());
     }
 
@@ -102,13 +102,13 @@ class StorageServiceTest {
         Resource resource = new Resource("text/plain", "foo.txt", new ByteArrayResource("AAAAAAAA".getBytes("UTF-8")), "42",
                 "File Size");
 
-        when(artifactRepository.find((String) any(), (String) any())).thenReturn(resource);
+        when(artifactRepository.find((String) any(), (String) any(), (String) any())).thenReturn(resource);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
         StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
         FileStoreConfig configs = new FileStoreConfig();
         assertSame(resource, (new StorageService(artifactRepository, idGeneratorService, fileStoreConfig, storageValidator,
-                configs, new MinioConfig())).retrieve("foo", "foo"));
+                configs, new MinioConfig())).retrieve("foo", "foo", null));
         verify(artifact).setContentType((String) any());
         verify(artifact).setCreatedBy((String) any());
         verify(artifact).setCreatedTime((Long) any());
@@ -121,7 +121,7 @@ class StorageServiceTest {
         verify(artifact).setModule((String) any());
         verify(artifact).setTag((String) any());
         verify(artifact).setTenantId((String) any());
-        verify(artifactRepository).find((String) any(), (String) any());
+        verify(artifactRepository).find((String) any(), (String) any(), (String) any());
     }
 
     @Test

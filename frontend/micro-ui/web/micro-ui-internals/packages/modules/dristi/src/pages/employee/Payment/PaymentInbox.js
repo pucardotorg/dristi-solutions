@@ -15,7 +15,6 @@ const sectionsParentStyle = {
 
 function PaymentInbox() {
   const { t } = useTranslation();
-  const roles = Digit.UserService.getUser()?.info?.roles;
   const history = useHistory();
   const [config, setConfig] = useState(paymentTabInboxConfig?.TabSearchConfig?.[0]);
   const [tabData, setTabData] = useState(
@@ -25,8 +24,13 @@ function PaymentInbox() {
       active: index === 0 ? true : false,
     }))
   );
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
 
@@ -70,10 +74,6 @@ function PaymentInbox() {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
     setConfig(paymentTabInboxConfig?.TabSearchConfig?.[n]);
   };
-
-  if (!isNyayMitra) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-  }
 
   return (
     <React.Fragment>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { submissionDocumentDetailsConfig } from "../../configs/submitDocumentConfig";
 import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceS
 import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 import { SubmissionDocumentWorkflowAction, SubmissionDocumentWorkflowState } from "../../utils/submissionDocumentsWorkflow";
 import { Urls } from "../../hooks/services/Urls";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -51,8 +52,11 @@ const SubmissionDocuments = ({ path }) => {
   const todayDate = new Date().getTime();
   const [loader, setLoader] = useState(false);
   const entityType = "voluntary-document-submission";
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -73,24 +77,67 @@ const SubmissionDocuments = ({ path }) => {
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  // const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
+  //   {
+  //     criteria: [
+  //       {
+  //         filingNumber: filingNumber,
+  //       },
+  //     ],
+  //     tenantId,
+  //   },
+  //   {},
+  //   `case-details-${filingNumber}`,
+  //   filingNumber,
+  //   Boolean(filingNumber)
+  // );
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  const isBreadCrumbsParamsDataSet = useRef(false);
+
+  useEffect(() => {
+    const fetchCaseDetails = async () => {
+      try {
+        setIsCaseDetailsLoading(true);
+        const caseData = await DRISTIService.searchCaseService(
+          {
+            criteria: [
+              {
+                filingNumber: filingNumber,
+              },
+            ],
+            tenantId,
+          },
+          {},
+          `case-details-${filingNumber}`,
+          filingNumber,
+          Boolean(filingNumber)
+        );
+        const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+        setCaseData(caseData);
+        // Only update breadcrumb data if it's different from current and hasn't been set yet
+        if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+          setBreadCrumbsParamsData({
+            caseId,
+            filingNumber,
+          });
+          isBreadCrumbsParamsDataSet.current = true;
+        }
+      } catch (err) {
+        setCaseApiError(err);
+      } finally {
+        setIsCaseDetailsLoading(false);
+      }
+    };
+
+    fetchCaseDetails();
+  }, [caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData, tenantId]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
     allAdvocates,
@@ -111,12 +158,13 @@ const SubmissionDocuments = ({ path }) => {
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -166,6 +214,7 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
+    sessionStorage.removeItem("fileStoreId");
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
   };
 
@@ -236,7 +285,7 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              sourceID: isBenchClerk ? userInfo?.uuid : individualId,
+              sourceID: isEmployee ? userInfo?.uuid : individualId,
               filingType: filingType,
               additionalDetails: {
                 uuid: userInfo?.uuid,
@@ -255,7 +304,7 @@ const SubmissionDocuments = ({ path }) => {
             stateSla: todayDate + stateSla.PENDINGESIGN_SUBMIT_DOCUMENT,
           });
         }
-        if (isBenchClerk) {
+        if (isEmployee) {
           history.replace(
             `/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
           );
@@ -265,7 +314,13 @@ const SubmissionDocuments = ({ path }) => {
           );
         }
       } else {
-        const localStorageID = sessionStorage.getItem("fileStoreId");
+        let localStorageID = "";
+        // For mock esign, just put the same file store id in update api.
+        if (mockESignEnabled) {
+          localStorageID = combinedFileStoreId;
+        } else {
+          localStorageID = sessionStorage.getItem("fileStoreId");
+        }
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
@@ -283,6 +338,9 @@ const SubmissionDocuments = ({ path }) => {
             },
           },
         };
+        const updateIdForDownload = Boolean(signedDocumentUploadedID) ? signedDocumentUploadedID : localStorageID;
+        setSignedDocumentUploadID(updateIdForDownload);
+        sessionStorage.removeItem("fileStoreId");
         evidence = await DRISTIService.updateEvidence(evidenceReqBody);
         await createPendingTask({
           name: t("PENDINGESIGN_SUBMIT_DOCUMENT"),
@@ -384,7 +442,7 @@ const SubmissionDocuments = ({ path }) => {
               mdmsConfig: {
                 moduleName: "Submission",
                 masterName: "SubmissionDocumentType",
-                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isBenchClerk});});}`,
+                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isEmployee});});}`,
               },
             },
           };
@@ -405,7 +463,7 @@ const SubmissionDocuments = ({ path }) => {
         })
       );
     }
-  }, [artifactNumber, t, isBenchClerk]);
+  }, [artifactNumber, t, isEmployee]);
 
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
@@ -435,7 +493,7 @@ const SubmissionDocuments = ({ path }) => {
       <div className="citizen create-submission" style={{ padding: "24px 24px 24px 40px" }}>
         {" "}
         <Header> {t(submissionDocumentDetailsConfig.header)}</Header>
-        {isBenchClerk ? (
+        {isEmployee ? (
           <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText11)}</div>
         ) : (
           <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText1)}</div>

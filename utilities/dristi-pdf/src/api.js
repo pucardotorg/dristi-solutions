@@ -10,18 +10,8 @@ const axios = Axios.create();
 axios.interceptors.response.use(
   (res) => res,
   (error) => {
-    const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      status: error.response?.status, // HTTP status code if available
-      data: error.response?.data, // Response body if available
-      url: error.config?.url, // Requested URL
-      method: error.config?.method, // HTTP method
-    };
-
-    // Log error using Winston
-    logger.error("Error during API call", errorDetails);
-    return Promise.reject(error);
+    const { handleApiError } = require("./utils/errorHandler");
+    return handleApiError(error, "API Request Interceptor");
   }
 );
 
@@ -35,7 +25,7 @@ const pool = new Pool({
 
 const auth_token = config.auth_token;
 
-async function search_task(taskNumber, tenantId, requestinfo) {
+async function search_task(taskNumber, tenantId, requestinfo, courtId) {
   try {
     return await axios({
       method: "post",
@@ -45,6 +35,7 @@ async function search_task(taskNumber, tenantId, requestinfo) {
         criteria: {
           tenantId: tenantId,
           taskNumber: taskNumber,
+          ...(courtId && { courtId: courtId }),
         },
       },
     });
@@ -54,7 +45,45 @@ async function search_task(taskNumber, tenantId, requestinfo) {
   }
 }
 
-async function search_case(cnrNumber, tenantId, requestinfo) {
+async function search_table_task(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.task, config.paths.task_table_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.task_table_search}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
+async function search_task_v2(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.task, config.paths.task_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.task_search}: ${error.message}`);
+    throw error;
+  }
+}
+
+async function search_case(cnrNumber, tenantId, requestinfo, courtId) {
   try {
     return await axios({
       method: "post",
@@ -65,6 +94,7 @@ async function search_case(cnrNumber, tenantId, requestinfo) {
         criteria: [
           {
             cnrNumber: cnrNumber,
+            ...(courtId && { courtId: courtId }),
           },
         ],
       },
@@ -91,6 +121,7 @@ async function search_order(
   tenantId,
   orderId,
   requestinfo,
+  courtId,
   isOrderNumber = false,
   filingNumber,
   status,
@@ -109,12 +140,39 @@ async function search_order(
         ...(status && { status: status }),
         ...(filingNumber && { filingNumber: filingNumber }),
         ...(orderType && { orderType: orderType }),
+        ...(courtId && { courtId: courtId }),
       },
     },
   });
 }
 
-async function search_hearing(tenantId, cnrNumber, requestinfo) {
+async function search_order_v2(tenantId, requestinfo, criteria, pagination) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.order, config.paths.order_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
+    },
+  });
+}
+
+async function search_evidence_v2(tenantId, requestinfo, criteria, pagination) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.evidence, config.paths.evidence_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
+    },
+  });
+}
+
+async function search_hearing(tenantId, cnrNumber, requestinfo, courtId) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.hearing, config.paths.hearing_search),
@@ -123,6 +181,7 @@ async function search_hearing(tenantId, cnrNumber, requestinfo) {
       criteria: {
         tenantId: tenantId,
         cnrNumber: cnrNumber,
+        ...(courtId && { courtId: courtId }),
       },
       pagination: {
         limit: 10,
@@ -237,7 +296,12 @@ async function search_individual_uuid(tenantId, userUuid, requestinfo) {
   });
 }
 
-async function search_application(tenantId, applicationId, requestinfo) {
+async function search_application(
+  tenantId,
+  applicationId,
+  requestinfo,
+  courtId
+) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.application, config.paths.application_search),
@@ -247,7 +311,26 @@ async function search_application(tenantId, applicationId, requestinfo) {
       criteria: {
         tenantId: tenantId,
         applicationNumber: applicationId,
+        ...(courtId && { courtId: courtId }),
       },
+    },
+  });
+}
+
+async function search_application_v2(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.application, config.paths.application_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
     },
   });
 }
@@ -447,6 +530,67 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
+async function search_bailBond(tenantId, bailBondId, requestinfo) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria: {
+        tenantId: tenantId,
+        bailId: bailBondId,
+      },
+    },
+  });
+}
+
+async function search_bailBond_v2(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.task_search}: ${error.message}`);
+    throw error;
+  }
+}
+
+async function search_task_mangement(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.taskMangement,
+        config.paths.task_management_search
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.task_management_search}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -470,4 +614,12 @@ module.exports = {
   bulk_hearing_reschedule,
   search_multiple_cases,
   search_task,
+  search_table_task,
+  search_task_v2,
+  search_application_v2,
+  search_order_v2,
+  search_evidence_v2,
+  search_bailBond,
+  search_bailBond_v2,
+  search_task_mangement,
 };
