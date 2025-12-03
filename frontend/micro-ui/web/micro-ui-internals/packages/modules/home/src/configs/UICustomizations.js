@@ -700,10 +700,16 @@ export const UICustomizations = {
   bulkSignFormsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const caseTitle = sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle") || requestCriteria?.state?.searchForm?.caseTitle;
       const type = requestCriteria?.state?.searchForm?.type;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkDigitizationSignList = additionalDetails?.setbulkDigitizationSignList;
+      const setDigitizationPaginationData = additionalDetails?.setDigitizationPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+      const digitizationSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
 
       const moduleSearchCriteria = {
         tenantId,
@@ -727,6 +733,31 @@ export const UICustomizations = {
             offset: requestCriteria?.state?.tableForm?.offset,
             tenantId: tenantId,
             moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const ditilizationItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkDigitalDocumentSignlimit");
+            sessionStorage.removeItem("bulkDigitalDocumentSignoffset");
+            if (sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle")) {
+              sessionStorage.removeItem("bulkDigitalDocumentSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkDigitizationSignList) setbulkDigitizationSignList(ditilizationItems);
+            if (setDigitizationPaginationData) setDigitizationPaginationData({ limit: limit, offset: offset, caseTitle: digitizationSignCaseTitle });
+
+            return {
+              ...data,
+              items: ditilizationItems,
+            };
           },
         },
       };

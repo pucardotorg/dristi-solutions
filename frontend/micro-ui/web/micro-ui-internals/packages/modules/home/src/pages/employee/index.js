@@ -22,7 +22,7 @@ import BailBondModal from "./BailBondModal";
 import { BailBondSignModal } from "./BailBondSignModal";
 import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
 import MediationFormSignaturePage from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/MediationFormSignaturePage";
-import DigitizesDocumentModal from "./DigitizesDocumentModal";
+import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -132,7 +132,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/home-popup`} component={() => <HomePopUp></HomePopUp>} />
         <PrivateRoute exact path={`${path}/epost-home-screen`} component={() => <EpostTrackingPage></EpostTrackingPage>} />
         <PrivateRoute exact path={`${path}/mediation-form-sign`} component={() => <MediationFormSignaturePage />} />
-        <PrivateRoute exact path={`${path}/digitized-document-sign`} component={() => <DigitizesDocumentModal />} />
+        <PrivateRoute exact path={`${path}/digitized-document-sign`} component={() => <DigitalDocumentSignModal />} />
       </AppContainer>
     </Switch>
   );

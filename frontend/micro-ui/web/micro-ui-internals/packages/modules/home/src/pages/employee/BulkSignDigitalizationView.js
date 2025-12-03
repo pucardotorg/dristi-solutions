@@ -9,6 +9,7 @@ import axios from "axios";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
+import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -43,6 +44,13 @@ function BulkSignDigitalizationView() {
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const [seletedDigitalizationDocument, setSeletedDigitalizationDocument] = useState(
+    sessionStorage.getItem("bulkDigitalDocumentSignSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkDigitalDocumentSignSelectedItem")) : null
+  );
+  const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkDigitalDocumentSignSelectedItem") ? true : false);
+  const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
+  const [digitalDocumentPaginationData, setDigitalDocumentPaginationData] = useState({});
+  const [counter, setCounter] = useState(0);
 
   const hasOrderEsignAccess = useMemo(() => roles?.some((role) => role.code === "ORDER_ESIGN"), [roles]);
 
@@ -94,6 +102,9 @@ function BulkSignDigitalizationView() {
         history.push(
           `/${window.contextPath}/${userType}/home/mediation-form-sign?filingNumber=${document?.businessObject?.digitalizedDocumentDetails?.caseFilingNumber}&documentNumber=${document?.businessObject?.digitalizedDocumentDetails?.documentNumber}&courtId=${document?.businessObject?.digitalizedDocumentDetails?.courtId}`
         );
+      } else {
+        setShowBulkSignModal(true);
+        setSeletedDigitalizationDocument(document);
       }
     };
 
@@ -133,9 +144,25 @@ function BulkSignDigitalizationView() {
             }),
           },
         },
+        search: {
+          ...bulkSignFormsConfig.sections.search,
+          uiConfig: {
+            ...bulkSignFormsConfig.sections.search.uiConfig,
+            defaultValues: {
+              ...bulkSignFormsConfig.sections.search.uiConfig.defaultValues,
+              tenantId: tenantId,
+              caseTitle: sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle") ? sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle") : "",
+            },
+          },
+        },
+      },
+      additionalDetails: {
+        setbulkDigitizationSignList: setBulkSignList,
+        setDigitizationPaginationData: setDigitalDocumentPaginationData,
+        setNeedConfigRefresh: setNeedConfigRefresh,
       },
     };
-  }, [courtId]);
+  }, [courtId, needConfigRefresh]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
@@ -278,7 +305,12 @@ function BulkSignDigitalizationView() {
         <React.Fragment>
           <div className={"bulk-esign-order-view select title"}>
             <div className="header">{t("CS_HOME_SIGN_FORMS")}</div>
-            <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
+            <InboxSearchComposer
+              key={`witness-deposition-${counter}`}
+              customStyle={sectionsParentStyle}
+              configs={config}
+              onFormValueChange={onFormValueChange}
+            ></InboxSearchComposer>{" "}
           </div>
           {hasOrderEsignAccess && (
             <div className="bulk-submit-bar">
@@ -291,6 +323,15 @@ function BulkSignDigitalizationView() {
             </div>
           )}
         </React.Fragment>
+      )}
+      {showBulkSignModal && (
+        <DigitalDocumentSignModal
+          selectedDigitizedDocument={seletedDigitalizationDocument}
+          setShowBulkSignModal={setShowBulkSignModal}
+          digitalDocumentPaginationData={digitalDocumentPaginationData}
+          setShowErrorToast={setShowErrorToast}
+          setCounter={setCounter}
+        />
       )}
       {showBulkSignConfirmModal && (
         <Modal
