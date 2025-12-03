@@ -252,6 +252,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
@@ -319,12 +320,12 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         Action: bailBondWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setBailBondSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 
@@ -367,6 +368,19 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       clearBailBondSessionData();
     };
   });
+
+  useEffect(() => {
+    const clearFileStoreId = () => {
+      sessionStorage.removeItem("fileStoreId");
+    };
+    window.addEventListener("beforeunload", clearFileStoreId);
+    window.addEventListener("popstate", clearFileStoreId);
+    return () => {
+      window.removeEventListener("beforeunload", clearFileStoreId);
+      window.removeEventListener("popstate", clearFileStoreId);
+    };
+  }, []);
+  
 
   return (
     <div>

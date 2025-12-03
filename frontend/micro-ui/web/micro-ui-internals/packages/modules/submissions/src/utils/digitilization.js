@@ -53,7 +53,7 @@ export const _getCreatePleaPayload = (caseDetails, formData, tenantId, courtId) 
   return payload;
 };
 
-export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId, pleaMobileNumber) => {
+export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId, pleaMobileNumber, partyUUID) => {
   let payload = {};
   if (action === pleaWorkflowActions.ESIGN) {
     const documents = Array.isArray(pleaDetails?.documents) ? pleaDetails.documents : [];
@@ -78,7 +78,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           accusedMobileNumber: pleaMobileNumber,
         },
         documents: documentsFile ? [...documentsFile] : documents,
-        workflow: { ...pleaDetails.workflow, action, documents: [{}] },
+        workflow: { ...pleaDetails.workflow, action, documents: [{}], ...(action === "INITIATE_E-SIGN" && { assignes: [partyUUID] }) },
       },
     };
   } else if (action === pleaWorkflowActions.UPLOAD) {

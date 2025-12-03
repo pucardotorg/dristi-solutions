@@ -288,6 +288,7 @@ export const DigitalDocumentSignModal = ({
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.documentNumber) {
@@ -325,7 +326,7 @@ export const DigitalDocumentSignModal = ({
   const onESignClick = useCallback(() => {
     try {
       setLoader(true);
-
+      sessionStorage.removeItem("fileStoreId");
       sessionStorage.setItem("digitalDocumentStepper", stepper);
       sessionStorage.setItem("bulkDigitalDocumentSignSelectedItem", JSON.stringify(effectiveRowData));
       sessionStorage.setItem("homeActiveTab", "CS_HOME_SIGN_FORMS");
@@ -354,12 +355,12 @@ export const DigitalDocumentSignModal = ({
         Action: "SIGN",
         fileStoreId: newFilestore,
       });
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setDigitalDocumentSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 

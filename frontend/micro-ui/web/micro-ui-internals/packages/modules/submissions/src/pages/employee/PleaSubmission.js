@@ -78,6 +78,7 @@ const PleaSubmission = () => {
   const [showAddPleaMobileNumber, setShowAddPleaMobileNumber] = useState(false);
   const [pleaMobileNumber, setPleaMobileNumber] = useState("");
   const [pleaMobileNumberError, setPleaMobileNumberError] = useState("");
+  const setFormErrors = useRef([]);
 
   const fetchCaseDetails = async () => {
     try {
@@ -153,11 +154,12 @@ const PleaSubmission = () => {
           null
         );
         const uniqueId = respondent?.uniqueId;
-  
+
         return {
           code: fullName,
           name: fullName,
           uniqueId: uniqueId,
+          individualId: respondentDetails?.respondentVerification?.individualDetails?.individualId,
         };
       }) || []
     );
@@ -227,6 +229,8 @@ const PleaSubmission = () => {
     } else {
       setIsSubmitDisabled(false);
     }
+
+    setFormErrors.current = setError;
   };
 
   const handleSubmit = async () => {
@@ -322,9 +326,20 @@ const PleaSubmission = () => {
         return;
       }
       setLoader(true);
-      const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.ESIGN, pleaFileStoreId, pleaMobileNumber);
+      const partyDetails = accusedList?.find((accused) => accused?.uniqueId === formdata?.accusedDetails?.uniqueId);
+      const partyUUID = caseDetails?.litigants?.find((lit) => lit?.individualId === partyDetails?.individualId)?.additionalDetails?.uuid;
+      const payload = _getUpdatePleaPayload(
+        t,
+        pleaResponseDetails,
+        formdata,
+        tenantId,
+        pleaWorkflowActions.ESIGN,
+        pleaFileStoreId,
+        pleaMobileNumber,
+        partyUUID
+      );
       const res = await submissionService.updateDigitalization(payload, tenantId);
-      setPleaSignatureURL(res?.digitalizedDocument?.shortenedURL);
+      setPleaSignatureURL(res?.digitalizedDocument?.shortenedUrl);
       setShowAddPleaMobileNumber(false);
       setShowPleaEsign(true);
     } catch (error) {
