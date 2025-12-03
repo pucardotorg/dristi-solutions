@@ -73,7 +73,7 @@ import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/compo
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { SubmissionWorkflowState } from "../../utils/submissionWorkflow";
-import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
+import { getAdvocates, getAdvocatesNames, getuuidNameMap } from "../../utils/caseUtils";
 import _ from "lodash";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
@@ -749,6 +749,7 @@ const GenerateOrdersV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const allAdvocatesNames = useMemo(() => getAdvocatesNames(caseDetails), [caseDetails]);
   const uuidNameMap = useMemo(() => getuuidNameMap(caseDetails), [caseDetails]);
   const isCaseAdmitted = useMemo(() => {
     return caseDetails?.status === "CASE_ADMITTED";
@@ -2908,7 +2909,7 @@ const GenerateOrdersV2 = () => {
         console.error("error :>> ", error);
       }
 
-      const parties = getParties(
+      let parties = getParties(
         order?.orderType,
         {
           ...orderSchema,
@@ -2916,13 +2917,21 @@ const GenerateOrdersV2 = () => {
         },
         allParties
       );
+
+       parties = parties.map(p => ({
+        ...p,
+        partyName: p.partyName,
+        counselName: (allAdvocatesNames[p.userUuid] || []).join(", ")
+      }));
+
+
       let actionResponse = null;
       if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
       const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties });
-
+      
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||

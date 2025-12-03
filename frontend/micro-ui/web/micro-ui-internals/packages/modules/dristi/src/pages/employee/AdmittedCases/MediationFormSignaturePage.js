@@ -142,7 +142,7 @@ const MediationFormSignaturePage = () => {
   const updateMediationDocument = async (digitalizationAction) => {
     try {
       const parties = digitalizationServiceDetails?.mediationDetails?.partyDetails || [];
-      const isESign = digitalizationAction === MediationWorkflowAction.E_SIGN;
+      const isESign = digitalizationAction === MediationWorkflowAction.E_SIGN || digitalizationAction === MediationWorkflowAction.SIGN;
       const isUpload = digitalizationAction === MediationWorkflowAction.UPLOAD;
 
       const selectedId = selectedParty?.uniqueId;
@@ -167,10 +167,12 @@ const MediationFormSignaturePage = () => {
             {
               ...digitalizationServiceDetails?.documents?.[0],
               fileStore: signatureDocumentId,
+              documentType: "SIGNED",
             },
           ],
           workflow: {
             action: digitalizationAction,
+
             documents: [{}],
           },
         },
@@ -220,12 +222,14 @@ const MediationFormSignaturePage = () => {
     const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
     if (!party) return "";
 
-    const typeLabel = party.partyType === "COMPLAINANT" ? "Complainant" : "Respondent";
-    return `${typeLabel} ${party.partyIndex + 1} Signature`;
+    const typeLabel = party.partyType === "COMPLAINANT" ? "Complainant" : "Accused";
+    return `${typeLabel} ${party.partyIndex} Signature`;
   };
 
   const handleCaseUnlockingWhenMockESign = async () => {
-    await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
+    if (isCitizen) {
+      await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
+    }
     setEsignSuccess(true);
   };
 
@@ -255,26 +259,30 @@ const MediationFormSignaturePage = () => {
   const handleEsignAction = async () => {
     setLoader(true);
     try {
-      const caseLockStatus = await DRISTIService.getCaseLockStatus(
-        {},
-        {
-          uniqueId: digitalizationServiceDetails?.documentNumber,
-          tenantId: tenantId,
+      if (isCitizen) {
+        const caseLockStatus = await DRISTIService.getCaseLockStatus(
+          {},
+          {
+            uniqueId: digitalizationServiceDetails?.documentNumber,
+            tenantId: tenantId,
+          }
+        );
+        if (caseLockStatus?.Lock?.isLocked) {
+          setShowErrorToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
+          setLoader(false);
+          return;
         }
-      );
-      if (caseLockStatus?.Lock?.isLocked) {
-        setShowErrorToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
-        setLoader(false);
-        return;
-      }
 
-      await DRISTIService.setCaseLock(
-        { Lock: { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId, lockType: "ESIGN" } },
-        {}
-      );
+        await DRISTIService.setCaseLock(
+          { Lock: { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId, lockType: "ESIGN" } },
+          {}
+        );
+      }
 
       if (mockESignEnabled) {
         try {
+          setSignatureDocumentId(mediationFileStoreId);
+
           await handleCaseUnlockingWhenMockESign();
         } catch (error) {
           console.error("Error:", error);
@@ -306,7 +314,7 @@ const MediationFormSignaturePage = () => {
     const esignCaseUpdate = async () => {
       if (isEsignSuccess && digitalizationServiceDetails?.documentNumber) {
         setLoader(true);
-        await updateMediationDocument(MediationWorkflowAction.E_SIGN).then(async () => {
+        await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN).then(async () => {
           setEsignSuccess(false);
           await refetchDigitalizationData();
         });
@@ -317,9 +325,11 @@ const MediationFormSignaturePage = () => {
   }, [isEsignSuccess, digitalizationServiceDetails]);
 
   useEffect(() => {
-    const handleCaseUnlocking = async () => {
-      await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
-    };
+    if (isCitizen) {
+      const handleCaseUnlocking = async () => {
+        await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
+      };
+    }
 
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
     const storedESignObj = sessionStorage.getItem("signStatus");

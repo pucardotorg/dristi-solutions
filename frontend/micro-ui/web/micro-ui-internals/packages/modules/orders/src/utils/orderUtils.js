@@ -211,18 +211,33 @@ export const getParties = (type, orderSchema, allParties) => {
   } else if (["COST", "WITNESS_BATTA"]?.includes(type)) {
     parties = [orderSchema?.orderDetails?.paymentToBeMadeBy, orderSchema?.orderDetails.paymentToBeMadeTo];
   } else if (type === "REFERRAL_CASE_TO_ADR") {
-    const complainants = allParties?.filter((party) => party?.partyType === "complainant");
-    const respondents = allParties?.filter((party) => party?.partyType === "respondent" && party?.isJoined === true);
+    const complainants = allParties?.filter((party) => party?.partyType === "complainant")
+    .sort((a, b) => (a?.partyUuid || '').localeCompare(b?.partyUuid || ''));
+  
+  const respondents = allParties?.filter((party) => party?.partyType === "respondent" && party?.isJoined === true)
+    .sort((a, b) => (a?.partyUuid || '').localeCompare(b?.partyUuid || ''));
+  
+  const updatedComplainants = [...complainants]?.map((party, index) => ({
+    partyName: party.name,
+    partyType: party?.partyType,
+    partyIndex: index+1,
+    poaUuid: party?.poaUuid,
+    userUuid: party?.partyUuid,
+    mobileNumber: party?.mobileNumber,
+  }));
 
-    parties = [...complainants, ...respondents]?.map((party, index) => ({
-      partyName: party.name,
-      partyType: party?.partyType,
-      partyIndex: index,
-      poaUuid: party?.poaUuid,
-      userUuid: party?.partyUuid,
-      mobileNumber: party?.mobileNumber,
-    }));
-    return parties;
+  const updatedRespondents = [...respondents]?.map((party, index) => ({
+    partyName: party.name,
+    partyType: party?.partyType,
+    partyIndex: index+1,
+    poaUuid: party?.poaUuid,
+    userUuid: party?.partyUuid,
+    mobileNumber: party?.mobileNumber,
+  }));
+
+  parties = [...updatedComplainants, ...updatedRespondents];
+
+  return parties;
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;
