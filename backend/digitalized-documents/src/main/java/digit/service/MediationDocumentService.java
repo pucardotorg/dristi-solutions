@@ -106,8 +106,8 @@ public class MediationDocumentService implements DocumentTypeService {
                 if (INITIATE_E_SIGN.equalsIgnoreCase(workflow.getAction()) || E_SIGN.equalsIgnoreCase(workflow.getAction())) {
                     List<String> assignees = computeAssignees(document.getMediationDetails());
                     request.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
+                    updateWorkflowAdditionalDetails(request.getDigitalizedDocument().getWorkflow());
                 }
-                updateWorkflowAdditionalDetails(request.getDigitalizedDocument().getWorkflow());
             }
             workflowService.updateWorkflowStatus(request);
         }
