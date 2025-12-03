@@ -55,6 +55,8 @@ public class ServiceConstants {
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
     public static final String FILE = "file";
 
+    public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
+
 
 
 }
