@@ -173,7 +173,7 @@ public class MediationDocumentService implements DocumentTypeService {
         WorkflowObject workflow = document.getWorkflow();
         if (workflow == null) return;
 
-        if (EDIT.equalsIgnoreCase(workflow.getAction())) {
+        if (INITIATE_E_SIGN.equalsIgnoreCase(workflow.getAction())) {
             document.getMediationDetails()
                     .getPartyDetails()
                     .forEach(party -> party.setHasSigned(false));
