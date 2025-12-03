@@ -3,14 +3,10 @@ package digit.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
-import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.TypeEnum;
+import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
-import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.ProcessInstanceResponse;
 import org.egov.common.contract.workflow.State;
@@ -45,7 +41,7 @@ public class WorkflowService {
         try {
             RequestInfo requestInfo = documentRequest.getRequestInfo();
             DigitalizedDocument digitalizedDocument = documentRequest.getDigitalizedDocument();
-            ProcessInstance processInstance = getDigitalizedDocumentProcessInstance(digitalizedDocument);
+            ProcessInstanceObject processInstance = getDigitalizedDocumentProcessInstance(digitalizedDocument);
             ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(requestInfo, Collections.singletonList(processInstance));
             State state = callWorkFlow(workflowRequest);
             digitalizedDocument.setStatus(state.getState());
@@ -73,10 +69,10 @@ public class WorkflowService {
         }
     }
 
-    private ProcessInstance getDigitalizedDocumentProcessInstance(DigitalizedDocument digitalizedDocument) {
-        Workflow workflow = digitalizedDocument.getWorkflow();
+    private ProcessInstanceObject getDigitalizedDocumentProcessInstance(DigitalizedDocument digitalizedDocument) {
+        WorkflowObject workflow = digitalizedDocument.getWorkflow();
 
-        ProcessInstance processInstance = new ProcessInstance();
+        ProcessInstanceObject processInstance = new ProcessInstanceObject();
         processInstance.setBusinessId(digitalizedDocument.getDocumentNumber());
         processInstance.setAction(workflow.getAction());
         processInstance.setModuleName(config.getDigitalizedDocumentModuleName());
@@ -84,6 +80,7 @@ public class WorkflowService {
         processInstance.setBusinessService(getDigitalizedDocumentBusinessService(digitalizedDocument));
         processInstance.setDocuments(workflow.getDocuments());
         processInstance.setComment(workflow.getComments());
+        processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
 
         if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
             List<User> users = new ArrayList<>();
