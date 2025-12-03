@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - release/*
+      - develop-actions
   workflow_dispatch:
     inputs:
       services:
