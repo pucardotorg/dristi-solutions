@@ -44,7 +44,9 @@ jobs:
         run: |
           if [[ github.event_name == 'workflow_dispatch' ]]; then
             csv="${{ github.event.inputs.services }}"
+            echo "csv=$csv"
             json=$(jq -R 'split(",")' <<< "$csv")
+            echo "json=$json"
             echo "matrix=$json" >> $GITHUB_OUTPUT
           # elif [[ github.event_name == 'pull_request' ]]; then
           #   echo "matrix=[{\"services\": \"testing"}]" >> $GITHUB_OUTPUT
