@@ -52,6 +52,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           CONFIG_FILE="build/config.json"
+          git fetch && git pull
           FILE_LIST=$(git diff ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} --name-only)
           BASE_PATHS=$(jq -r '.[] | .service_source_path' "$CONFIG_FILE")
           
