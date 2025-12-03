@@ -42,14 +42,17 @@ jobs:
       - name: create matrix
         id: create_matrix
         run: |
-          if [[ github.event_name == 'workflow_dispatch' ]]; then
-            csv="${{ github.event.inputs.services }}"
-            echo $csv
-            json=$(jq -R 'split(",")' <<< "$csv")
-            echo $json
-            echo "matrix=$json" >> $GITHUB_OUTPUT
-          # elif [[ github.event_name == 'pull_request' ]]; then
-          #   echo "matrix=[{\"services\": \"testing"}]" >> $GITHUB_OUTPUT
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            csv="${{ inputs.services }}"
+            echo "Input CSV: $csv"
+
+            # Convert CSV → JSON array
+            json=$(jq -R 'split(",") | map(. | gsub("^\\s+|\\s+$"; ""))' <<< "$csv")
+
+            echo "JSON Array: $json"
+
+            # Export as matrix
+            echo "matrix=$json" >> "$GITHUB_OUTPUT"
           fi
   
   # build-docker-image:
