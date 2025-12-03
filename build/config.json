@@ -1,0 +1,11 @@
+{
+    "dristi-pdf": {
+        "dockerfile_path": "utilities/dristi-pdf/Dockerfile",
+        "service_source_path": "utilities/dristi-pdf"
+    },
+    "ab-diary": {
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/ab-diary",
+        "db_dockerfile_path": "backend/ab-diary/src/main/resources/db"
+    }
+}
