@@ -9,6 +9,7 @@ public class ServiceConstants {
 
     public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
     public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
+    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
@@ -18,6 +19,7 @@ public class ServiceConstants {
     public static final String FAILED = "failed";
 
     public static final String URL = "url";
+    public static final String REFERENCE_ID = "referenceId";
     public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
 
@@ -47,6 +49,7 @@ public class ServiceConstants {
     public static final String SKIP_SIGN_AND_SUBMIT = "SKIP_SIGN_AND_SUBMIT";
     public static final String EDIT = "EDIT";
     public static final String E_SIGN = "E_SIGN";
+    public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
     public static final String E_SIGN_COMPLETE = "E_SIGN_COMPLETE";
     public static final String SYSTEM = "SYSTEM";
 
@@ -55,6 +58,14 @@ public class ServiceConstants {
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
     public static final String FILE = "file";
 
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String SIGN_EXAMINATION_DOCUMENT = "SIGN_EXAMINATION_DOCUMENT";
+    public static final String SIGN_PLEA_DOCUMENT = "SIGN_PLEA_DOCUMENT";
+    public static final String SIGN_MEDIATION_DOCUMENT = "SIGN_MEDIATION_DOCUMENT";
     public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
 
 
