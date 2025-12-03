@@ -183,6 +183,11 @@ async function processPendingAdmissionCase({
       indexCopy,
       messagesMap
     ),
+  ];
+
+  await Promise.all(processingPromises);
+
+  const finalPromises = [
     processBailDocuments(
       courtCase,
       caseBundleMaster,
@@ -200,6 +205,11 @@ async function processPendingAdmissionCase({
       TEMP_FILES_DIR,
       indexCopy
     ),
+  ];
+
+  await Promise.all(finalPromises);
+
+  const orderPromises = [
     processPaymentReceipts(
       courtCase,
       caseBundleMaster,
@@ -218,7 +228,7 @@ async function processPendingAdmissionCase({
     ),
   ];
 
-  await Promise.all(processingPromises);
+  await Promise.all(orderPromises);
 
   indexCopy.isRegistered = true;
   indexCopy.contentLastModified = Date.now();

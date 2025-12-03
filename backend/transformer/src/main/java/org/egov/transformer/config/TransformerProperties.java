@@ -81,4 +81,74 @@ public class TransformerProperties {
     private String egovStateTenantId;
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
+
+    @Value("${transformer.producer.case.search.topic}")
+    private String caseSearchTopic;
+
+    //Hearing config
+    @Value("${dristi.hearing.host}")
+    private String hearingHost;
+
+    @Value("${dristi.hearing.search.endpoint}")
+    private String hearingSearchEndPoint;
+
+    // Application timezone ID
+    @Value("${app.zone.id}")
+    private String applicationZoneId;
+
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+    @Value("${bail.bond.index}")
+    private String bailBondIndex;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+    @Value("${transformer.consumer.save.artifact.topic}")
+    private String saveArtifactTopic;
+
+    @Value("${transformer.consumer.update.artifact.topic}")
+    private String updateArtifactTopic;
+
+    @Value("${transformer.producer.open.artifact.index.topic}")
+    private String openArtifactIndexTopic;
+
+    @Value("${open.artifact.index}")
+    private String openArtifactIndex;
+
+    @Value("${inox.search.limit}")
+    private String inboxSearchLimit;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
 }

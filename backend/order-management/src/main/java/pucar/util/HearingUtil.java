@@ -15,12 +15,15 @@ import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.OrderStatus;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.AdvocateMapping;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
+import pucar.web.models.inbox.InboxRequest;
+import pucar.web.models.inbox.OpenHearing;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,8 +42,11 @@ public class HearingUtil {
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
+    private final OrderUtil orderUtil;
+    private final EsUtil esUtil;
+    private final InboxUtil inboxUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil, EsUtil esUtil, InboxUtil inboxUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -49,6 +55,9 @@ public class HearingUtil {
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
+        this.orderUtil = orderUtil;
+        this.esUtil = esUtil;
+        this.inboxUtil = inboxUtil;
     }
 
 
@@ -225,7 +234,42 @@ public class HearingUtil {
                 .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
-                .hearingSummary(order.getHearingSummary())
+                //.hearingSummary(order.getHearingSummary())
+                .workflow(workflowObject)
+                .applicationNumbers(new ArrayList<>())
+                .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
+                        .benchID("BENCH_ID")
+                        .judgeID(Collections.singletonList(courtCase.getJudgeId()))
+                        .courtID(courtCase.getCourtId()).build())
+
+                .build();
+
+
+        // create hearing
+        return HearingRequest.builder()
+                .requestInfo(requestInfo)
+                .hearing(hearing).build();
+
+    }
+
+    public HearingRequest createHearingRequestForScheduleNextHearing(RequestInfo requestInfo, Order order, CourtCase courtCase) {
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction("CREATE");
+        workflowObject.setComments("Create new Hearing");
+
+        Hearing hearing = Hearing.builder()
+                .tenantId(order.getTenantId())
+                .filingNumber(Collections.singletonList(order.getFilingNumber()))
+                .cnrNumbers(Collections.singletonList(order.getCnrNumber()))
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cmpNumber(courtCase.getCmpNumber())
+                .hearingType(order.getPurposeOfNextHearing())
+                .status("true") // this is not confirmed ui is sending true
+                .attendees(getAttendees(requestInfo, courtCase, order , true))
+                .startTime(order.getNextHearingDate())
+                .endTime(order.getNextHearingDate())
+               //.hearingSummary(orderUtil.getHearingSummary(order,requestInfo))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -324,14 +368,9 @@ public class HearingUtil {
     public void updateHearingSummary(OrderRequest orderRequest, Hearing hearing) {
         log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
 
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
 
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
-
-        hearing.setHearingSummary(getHearingSummary(order));
+        hearing.setHearingSummary(orderUtil.getHearingSummary(order,orderRequest.getRequestInfo()));
         List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
         List<Attendee> attendees = hearing.getAttendees();
 
@@ -377,5 +416,41 @@ public class HearingUtil {
             log.info("updated hearing status to close for hearingNumber: {}", hearingNumber);
         }
 
+    }
+
+    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+
+        HearingRequest request = createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
+
+        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+
+        HearingResponse newHearing = createOrUpdateHearing(request, createHearingURI);
+
+        order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
+        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+    }
+
+    public void updateOpenHearingIndex(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest = {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.SIGNED);
+        }
+        log.info("Update open hearing index with orderStatus");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 }

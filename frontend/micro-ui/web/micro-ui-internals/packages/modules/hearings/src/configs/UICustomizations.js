@@ -19,6 +19,7 @@ export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const courtId = requestCriteria?.body?.courtId;
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -30,6 +31,7 @@ export const UICustomizations = {
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
           ...(courtId && { courtId }),
+          ...(userInfo?.type === "CITIZEN" && { searchableFields: additionalDetails?.attendeeIndividualId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
@@ -308,15 +310,33 @@ export const UICustomizations = {
                 const channelDetailsEnum = {
                   SMS: "phone",
                   Email: "email",
+                  EMAIL: "email",
                   Post: "address",
+                  EPOST: "address",
                   Police: "address",
+                  POLICE: "address",
                   RPAD: "address",
                 };
-                const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                function mapStatus(status, taskType) {
+                  const mapping = {
+                    ISSUE_WARRANT: {
+                      PROCLAMATION: "ISSUE_PROCLAMATION",
+                      ATTACHMENT: "ISSUE_ATTACHMENT",
+                    },
+                    WARRANT_SENT: {
+                      PROCLAMATION: "PROCLAMATION_SENT",
+                      ATTACHMENT: "ATTACHMENT_SENT",
+                    },
+                  };
+                  return mapping[status]?.[taskType] || status; // fallback to original
+                }
+                const channelDetails =
+                  taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                  taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
-                  status: data?.status,
+                  status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
@@ -324,6 +344,7 @@ export const UICustomizations = {
                   feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
+            additionalDetails?.setHasTasks(taskData.length > 0);
             return { list: taskData };
           },
         },
@@ -347,7 +368,15 @@ export const UICustomizations = {
           return (
             <CustomChip
               text={t(value)}
-              shade={value === "DELIVERED" ? "green" : value === "UNDELIVERED" ? "red" : value === "pending" ? "grey" : "orange"}
+              shade={
+                value === "DELIVERED"
+                  ? "green"
+                  : value === "UNDELIVERED" || value === "PAYMENT_EXPIRED"
+                  ? "red"
+                  : value === "pending" || value === "PAYMENT_PENDING"
+                  ? "grey"
+                  : "orange"
+              }
             />
           );
         // return t(value);
@@ -355,6 +384,8 @@ export const UICustomizations = {
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":
           return value || "-";
+        case "Delivery Channels":
+          return value === "EPOST" ? t("CS_POST") : t(value);
         default:
           return t("ES_COMMON_NA");
       }

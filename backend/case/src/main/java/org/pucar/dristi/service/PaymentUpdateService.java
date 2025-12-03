@@ -170,12 +170,12 @@ public class PaymentUpdateService {
             caseRequest.setRequestInfo(requestInfo);
             caseRequest.setCases(decryptedCourtCase);
             if(UNDER_SCRUTINY.equalsIgnoreCase(courtCase.getStatus())) {
-                caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
+                caseService.callNotificationService(caseRequest, CASE_FILED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
             Document paymentReceipt = null;
             if(ONLINE.equals(paymentMode)){
-                paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId());
+                paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId(), consumerCode);
             }
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));

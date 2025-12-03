@@ -1,0 +1,38 @@
+[
+  {
+    "id": "e6e71d93-50f3-427e-baf5-9fc36f5e756f",
+    "tenantId": "kl",
+    "schemaCode": "Order.natureOfDisposal",
+    "uniqueIdentifier": "2",
+    "data": {
+      "id": "2",
+      "code": "UNCONTESTED",
+      "name": "Uncontested"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1764246407413,
+      "lastModifiedTime": 1764246407413
+    }
+  },
+  {
+    "id": "8737febf-0e8c-439a-bc10-2d69be3b6a90",
+    "tenantId": "kl",
+    "schemaCode": "Order.natureOfDisposal",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": "1",
+      "code": "CONTESTED",
+      "name": "Contested"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1764246389491,
+      "lastModifiedTime": 1764246389491
+    }
+  }
+]

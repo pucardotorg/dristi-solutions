@@ -20,6 +20,48 @@ const CloseBtn = (props) => {
   );
 };
 
+const getStyles = (key) => {
+  const styles = {
+    container: {
+      position: "relative",
+      padding: "16px 24px",
+      background: "#f7f5f3",
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "20px",
+      alignItems: "flex-start",
+    },
+
+    infoRow: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: "10px",
+    },
+
+    infoKey: {
+      width: "fit-content",
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 700,
+      lineHeight: "18.75px",
+      color: "#0a0a0a",
+    },
+
+    infoValue: {
+      width: "fit-content",
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 400,
+      lineHeight: "18.75px",
+      color: "#3d3c3c",
+    },
+  };
+
+  return styles[key];
+};
+
 // sort the Documents Based on DocumentOrder
 const _getSortedByOrder = (documents) => {
   return documents?.sort((a, b) => {
@@ -42,6 +84,8 @@ const SubmissionPreviewSubmissionTypeMap = {
   SUBMIT_BAIL_DOCUMENTS: "application-submit-bail-documents",
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
+  ADDING_WITNESSES: "application-witness-deposition",
+  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -98,7 +142,7 @@ function ReviewSubmissionModal({
           cnrNumber: application?.cnrNumber,
           qrCode: false,
           applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-          courtId: courtId,
+          courtId: courtId || application?.courtId,
         },
         data: {
           RequestInfo: {
@@ -150,7 +194,7 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
+      actionCancelLabel={applicationType !== "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && t("CS_COMMON_BACK")}
       actionCancelOnSubmit={handleBack}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
@@ -176,55 +220,44 @@ function ReviewSubmissionModal({
     >
       <div className="review-submission-appl-body-main">
         <div className="application-details">
-          <div className="application-info" style={{ flexWrap: "wrap" }}>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("APPLICATION_TYPE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{t(applicationType)}</h3>
-              </div>
+          <div style={getStyles("container")}>
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("APPLICATION_TYPE")}</h3>
+              <h3 style={getStyles("infoValue")}>{t(applicationType)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SUBMISSION_DATE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{convertToDateInputFormat(submissionDate)}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SUBMISSION_DATE")}</h3>
+              <h3 style={getStyles("infoValue")}>{convertToDateInputFormat(submissionDate)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SENDER")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{sender}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
+              <h3 style={getStyles("infoValue")}>{sender || application?.additionalDetails?.owner || ""}</h3>
             </div>
+
             {additionalDetails && (
-              <div className="info-row">
-                <div className="info-key">
-                  <h3>{t("ADDITIONAL_DETAILS")}</h3>
-                </div>
-                <div className="info-value">
-                  <h3>{t(additionalDetails)}</h3>
-                </div>
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("ADDITIONAL_DETAILS")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
               </div>
             )}
           </div>
+
           <div className="application-view">
             {showDocument}
-            {_getSortedByOrder(documents)?.map((docs) => (
-              <DocViewerWrapper
-                key={docs.fileStore}
-                fileStoreId={docs.fileStore}
-                tenantId={tenantId}
-                docWidth="100%"
-                docHeight="unset"
-                showDownloadOption={false}
-                documentName={docs.fileName}
-              />
-            ))}
+            {applicationPreviewPdf &&
+              _getSortedByOrder(documents)?.map((docs) => (
+                <DocViewerWrapper
+                  key={docs.fileStore}
+                  fileStoreId={docs.fileStore}
+                  tenantId={tenantId}
+                  docWidth="100%"
+                  docHeight="unset"
+                  showDownloadOption={false}
+                  documentName={docs?.fileName || docs?.additionalDetails?.name || docs?.name}
+                />
+              ))}
           </div>
         </div>
       </div>

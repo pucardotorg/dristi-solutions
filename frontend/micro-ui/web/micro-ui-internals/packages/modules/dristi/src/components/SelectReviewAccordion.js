@@ -491,10 +491,11 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           <CustomArrowDownIcon />
         </span>
       </div>
-      <div style={{ maxHeight: "fit-content" }} className={`accordion-item ${!isOpen ? "collapsed" : ""}`}>
-        <div className="accordion-content">
+      {isOpen && (
+        <div style={{ maxHeight: "fit-content" }} className={`accordion-item`}>
+          <div className="accordion-content">
           {inputs.map((input, index) => {
-            showFlagIcon = isScrutiny && !input?.disableScrutiny ? true : false;
+            showFlagIcon = isScrutiny && state === CaseWorkflowState.UNDER_SCRUTINY && !input?.disableScrutiny ? true : false;
             const sectionValue = formData && formData[config.key] && formData[config.key]?.[input.name];
             const sectionError = sectionValue?.scrutinyMessage?.FSOError;
             const prevSectionError = input?.prevErrors?.scrutinyMessage?.FSOError;
@@ -646,14 +647,16 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         titleHeading={titleHeading}
                         isPrevScrutiny={isPrevScrutiny}
                         isCaseReAssigned={isCaseReAssigned}
+                        state={state}
                       />
                     );
                   })}
               </div>
             );
           })}
+          </div>
         </div>
-      </div>
+      )}
       {isPopupOpen && (
         <CustomPopUp anchorRef={popupAnchor.current} popupstyle={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}>
           <Fragment>

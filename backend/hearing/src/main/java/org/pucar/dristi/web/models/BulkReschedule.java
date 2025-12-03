@@ -43,6 +43,9 @@ public class BulkReschedule {
     @JsonProperty("hearingIds")
     private List<String> hearingIds;
 
+    @JsonProperty("searchableFields")
+    private String searchableFields;
+
     @JsonProperty("scheduleAfter")
     @NotNull
     private Long scheduleAfter;
