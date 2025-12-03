@@ -1,114 +1,61 @@
-name: AB-Diary Image Build workflow
+name: Common Deployment Pipeline
+
 on:
-  push:
-    branches:
-      - develop
-      - main
-      - release**
-    tags:
-      - 'v*'
-    paths:
-      - 'backend/ab-diary/**'
   pull_request:
     branches:
-      - develop
       - main
-      - release**
-    paths:
-      - 'backend/ab-diary/**'
+      - develop
+      - release/*
   workflow_dispatch:
-  workflow_call:
-permissions:
-  security-events: write
-  contents: read
+    inputs:
+      services:
+        required: true
+        description: "Service name in kubernetes cluster in comma separated format"
+        type: string
+  push:
+    branches:
+      - main
+      - develop
+      - release/*
+
 
 jobs:
-  set-deployment-environment:
+  check-diff:
     runs-on: ubuntu-latest
     outputs:
-      deployment-environment: ${{ steps.set-env.outputs.deploy_env }}
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
     steps:
-      - name: Set Deployment Environment
-        id: set-env
-        uses: pucardotorg/pucar-DevOps/.github/actions/getDeployEnv@Solutions-Pipeline
-
-  docker_image-build:
-    needs: set-deployment-environment
-    environment: ${{ needs.set-deployment-environment.outputs.deployment-environment }}
-    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Docker
-        uses: docker/setup-buildx-action@v2
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-      - name: Dependency check
-        uses: dependency-check/Dependency-Check_Action@main
-        env:
-          JAVA_HOME: /opt/jdk
-        id: Depcheck
-        with:
-          project: 'ab-diary'
-          path: 'backend/ab-diary'
-          format: 'SARIF'
-          args: "--disableOssIndex"
-      - name: Upload SARIF result to GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: reports/dependency-check-report.sarif
-        if: always()
-      - name: Build and analyze for AB Diary
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/ab-diary/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_ab_diary -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
-
-      # Login to Docker Registry
-      - name: Login to Docker Registry
-        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
-
-      - name: Set Version from Tag or Branch
-        id: set_version
+      - name: Set github branch
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}  # Use tag name for version
-          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-            # Use branch name as version, replacing '/' with '-'
-            VERSION=${GITHUB_REF#refs/heads/}
-            VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
+          if [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
+            echo "BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
           else
-            VERSION="latest"  # Default version if not a tag or branch
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-      - name: Git commit_hash for service
+            echo "BRANCH=${{ github.event.ref }}" >> $GITHUB_ENV
+          fi 
+          echo " set the branch for current job as ${{ env.BRANCH }}"
+      
+      # - name: check diff
+      #   if: github.event_name == 'pull_request'
+      #   run: |
+      #     git diff ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} --name-only | cat > diff.txt
+
+      - name: create matrix
+        id: create_matrix
         run: |
-          commit_hash=$(git log -1 --pretty=format:%H -- backend/ab-diary)
-          echo "commit_hash=$commit_hash" >> $GITHUB_ENV
-
-      # - name: Build and Push Docker image for ab-diary
-      #   run: |
-      #     docker build --build-arg WORK_DIR="backend/ab-diary" -t docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-      #     docker push docker.io/venkatramireddyb/pucar_ab_diary:${{ env.VERSION }}-${{ env.commit_hash }}
-
-      # - name: Build and Push Docker image for ab-diary DB
-      #   run: |
-      #     docker build  -t docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-      #     docker push docker.io/venkatramireddyb/pucar_ab_diary_db:${{ env.VERSION }}-${{ env.commit_hash }}
-      #   working-directory: backend/ab-diary/src/main/resources/db
-
-      - name: Deployment to Kubernetes Cluster
-        uses: pucardotorg/pucar-DevOps/.github/actions/Deploy@Solutions-Pipeline
-        with:
-          image_name: "ab_diary"
-          image_tag: "develop-31d93196cb6d4dc6826640ac88efdec4dd0e6a20"
-          sops_key: ${{ secrets.SOPS_KEY }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          helmfile_env: ${{ vars.HELMFILE_ENV }}
-          devops_branch: ${{ vars.DEVOPS_BRANCH }}
+          if [[ github.event_name == 'workflow_dispatch' ]]; then
+            csv="${{ github.event.inputs.services }}"
+            json=$(jq -R 'split(",")' <<< "$csv")
+            echo "matrix=$json" >> $GITHUB_OUTPUT
+          # elif [[ github.event_name == 'pull_request' ]]; then
+          #   echo "matrix=[{\"services\": \"testing"}]" >> $GITHUB_OUTPUT
+          fi
+  
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: check-diff
+    strategy:
+      matrix: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+    steps:
+      - name: Print Service Name
+        run: |
+          echo "Service Name: ${{ matrix.service }}"
