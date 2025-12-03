@@ -1,0 +1,58 @@
+[
+  {
+    "id": "c695e0a6-f3cb-4a77-bfe6-c48d43ace724",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "35",
+    "data": {
+      "id": "35",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "screenType": "home",
+      "pendingTask": "Confirm request for Plea",
+      "closerAction": [
+        "E-SIGN"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN"
+      ],
+      "workflowModule": "digitalized-document-plea"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764766126787,
+      "lastModifiedTime": 1764766126787
+    }
+  },
+
+  {
+    "id": "e0950629-c17f-4795-9304-d8e39fe4eb6d",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "34",
+    "data": {
+      "id": "34",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "screenType": "home",
+      "pendingTask": "Review the plea",
+      "closerAction": [
+        "SIGN"
+      ],
+      "triggerAction": [
+        "E-SIGN",
+        "UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-plea"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764766033285,
+      "lastModifiedTime": 1764766033285
+    }
+  }
+]
