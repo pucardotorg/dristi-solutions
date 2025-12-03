@@ -42,7 +42,7 @@ const getStyles = () => ({
 const DigitizedDocumentsSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { digitalizedDocumentId: documentNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
@@ -162,7 +162,7 @@ const DigitizedDocumentsSignaturePage = () => {
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
       history.replace(
-        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${digitizedDocumentsDetails?.digitalizedDocument?.type}`
+        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
       );
     }
 
@@ -231,7 +231,7 @@ const DigitizedDocumentsSignaturePage = () => {
           <Loader />
         </div>
       )}
-      <div className="header">{`${t(digitizedDocumentsDetails?.digitalizedDocument?.type)}`}</div>
+      <div className="header">{`${t(type)}`}</div>
       <div className="doc-viewer">
         {!isLoading ? (
           <DocViewerWrapper
@@ -290,18 +290,14 @@ const DigitizedDocumentsSignaturePage = () => {
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
           handleMockESign={handleMockESign}
-          customizedNote={
-            digitizedDocumentsDetails?.digitalizedDocument?.type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")
-          }
+          customizedNote={type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")}
         />
       )}
       {showSuccessModal && (
         <SuccessBannerModal
           t={t}
           handleCloseSuccessModal={handleCloseSuccessModal}
-          message={
-            digitizedDocumentsDetails?.digitalizedDocument?.type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"
-          }
+          message={type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"}
         />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}

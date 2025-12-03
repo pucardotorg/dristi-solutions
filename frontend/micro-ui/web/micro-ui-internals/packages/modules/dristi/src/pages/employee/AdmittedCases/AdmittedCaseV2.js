@@ -175,7 +175,7 @@ const AdmittedCaseV2 = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
@@ -191,7 +191,7 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
-  const [showExaminationModal, setShowExaminationModal] = useState(false);
+  const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -242,6 +242,7 @@ const AdmittedCaseV2 = () => {
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
   const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
+  const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -3521,7 +3522,9 @@ const AdmittedCaseV2 = () => {
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
         setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
+        setShowExaminationModal={setShowExaminationModal}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -4376,13 +4379,12 @@ const AdmittedCaseV2 = () => {
           isOpen={showExaminationModal}
           onClose={() => {
             setShowExaminationModal(false);
-            // setEditExaminationDepositionArtifact(null);
-            refetchHearing();
+            setExaminationDocumentNumber(null);
             refetchCaseData();
             onTabChange(0, {}, "Documents");
           }}
           tenantId={tenantId}
-          // documentNumber={editWitnessDepositionArtifact}
+          documentNumber={examinationDocumentNumber}
           caseId={caseId}
           courtId={courtId}
         />

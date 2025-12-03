@@ -1769,6 +1769,36 @@ export const pendingTaskForWitnessDepositionActions = {
   },
 };
 
+export const pendingTaskForDigitalizedDocumentExaminationActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/home/digitalized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "digitalizedDocumentId", value: "referenceId" },
+        { key: "type", value: "EXAMINATION_OF_ACCUSED" }
+      ],
+    },
+  },
+}
+
+export const pendingTaskForDigitalizedDocumentPleaActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/home/digitalized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "digitalizedDocumentId", value: "referenceId" },
+        { key: "type", value: "PLEA" }
+      ],
+    },
+  },
+}
+
 export const pendingTaskForDigitalizedDocumentMediationActions = {
   "PENDING_E-SIGN": {
     actorName: [""],
@@ -1814,4 +1844,7 @@ export const selectTaskType = {
   "bail-bond-default": pendingTaskForBailBondActions,
   "witness-deposition-default": pendingTaskForWitnessDepositionActions,
   "digitalized-document-mediation": pendingTaskForDigitalizedDocumentMediationActions,
+  "digitalized-document-examination": pendingTaskForDigitalizedDocumentExaminationActions,
+  "digitalized-document-plea": pendingTaskForDigitalizedDocumentPleaActions,
+
 };

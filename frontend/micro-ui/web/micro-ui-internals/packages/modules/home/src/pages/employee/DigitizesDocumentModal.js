@@ -264,7 +264,16 @@ const DigitizesDocumentModal = () => {
           },
         };
         await Digit.submissionService.updateDigitalization(payload, tenantId);
-        history.replace(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
+        if (digitalizedDocumentResponseDetails?.type === "PLEA") {
+          history.replace(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
+        }
+        if (digitalizedDocumentResponseDetails?.type === "EXAMINATION_OF_ACCUSED") {
+          history.replace(
+            `/${
+              window?.contextPath
+            }/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents&openExaminationModal=${true}&examinationDocNumber=${documentNumber}`
+          );
+        }
       } catch (error) {
         console.error("Error :", error);
       } finally {

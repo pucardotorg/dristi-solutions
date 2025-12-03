@@ -669,6 +669,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
           workflow: {
             action,
+            ...(action === "INITIATE_E-SIGN" && { assignes: [selectedAccused?.value] }), // uniqueId of accused, so that accused can receive the pending task
           },
         },
       };

@@ -30,6 +30,8 @@ const DocumentsV2 = ({
   counter,
   setShowWitnessModal,
   setEditWitnessDepositionArtifact,
+  setShowExaminationModal,
+  setExaminationDocumentNumber,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -99,6 +101,24 @@ const DocumentsV2 = ({
             );
           }
         } else if (type === "EXAMINATION_OF_ACCUSED") {
+          if (status === "DRAFT_IN_PROGRESS") {
+            setShowExaminationModal(true);
+            setExaminationDocumentNumber(documentNumber);
+          }
+
+          if (status === "PENDING_E-SIGN" && isCitizen) {
+            history.push(
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
+            );
+          }
+
+          if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
+            );
+          }
         } else if (type === "MEDIATION") {
           if (
             [MediationWorkflowState.PENDING_E_SIGN, MediationWorkflowState.PENDING_UPLOAD, MediationWorkflowState.PENDING_REVIEW]?.includes(status)
