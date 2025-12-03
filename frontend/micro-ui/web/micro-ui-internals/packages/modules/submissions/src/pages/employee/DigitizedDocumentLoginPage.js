@@ -43,11 +43,14 @@ const DigitizedDocumentLoginPage = () => {
         setError(true);
         return;
       }
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}`, {
-        mobileNumber: mobileNumber,
-        tenantId: tenantId,
-        isAuthorised: true,
-      });
+      history.replace(
+        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`,
+        {
+          mobileNumber: mobileNumber,
+          tenantId: tenantId,
+          isAuthorised: true,
+        }
+      );
     } catch (error) {
       setError(true);
       return;
