@@ -29,14 +29,18 @@ jobs:
       - name: Set github branch
         run: |
           BRANCH=""
-          if [[ github.event_name == 'pull_request' && github.event.action == 'closed' ]]; then
-            echo "BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
-          elif [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
-            echo "BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            BRANCH="${{ github.event.pull_request.base.ref }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
+            BRANCH="${{ github.event.pull_request.head.ref }}"
           else
-            echo "BRANCH=${{ github.event.ref }}" >> $GITHUB_ENV
+            BRANCH="${{ github.event.ref }}"
           fi 
-          echo " set the branch for current job as ${{ env.BRANCH }}"
+
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+          # show value *now* using shell variable
+          echo "Set the branch for current job as $BRANCH"
 
       - name: checkout
         uses: actions/checkout@v4
