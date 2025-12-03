@@ -57,14 +57,14 @@ jobs:
             echo "matrix=$json" >> "$GITHUB_OUTPUT"
           fi
   
-build-docker-image:
-  runs-on: ubuntu-latest
-  needs: check-diff
-  strategy:
-    matrix:
-      service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
-  steps:
-    - name: Print Service Name
-      run: |
-        echo "Service Name: ${{ matrix.service }}"
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: check-diff
+    strategy:
+      matrix:
+          service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+    steps:
+      - name: Print Service Name
+        run: |
+          echo "Service Name: ${{ matrix.service }}"
 
