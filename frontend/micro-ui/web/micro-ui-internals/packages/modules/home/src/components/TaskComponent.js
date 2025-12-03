@@ -457,6 +457,21 @@ const TasksComponent = ({
         return formattedDate;
       };
       const applicationDetails = await getApplicationDetail(referenceId);
+      if (applicationDetails?.applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+        const pendingTaskRefId = applicationDetails?.additionalDetails?.pendingTaskRefId;
+        const dateOfApplication = applicationDetails?.additionalDetails?.dateOfApplication;
+        const uniqueId = applicationDetails?.additionalDetails?.uniqueId;
+        const refApplicationId = applicationDetails?.applicationNumber;
+
+        history.push(
+          `/${window.contextPath}/${userType}/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication,
+            uniqueId,
+          }
+        );
+        return;
+      }
       const defaultObj = {
         status: applicationDetails?.status,
         details: {

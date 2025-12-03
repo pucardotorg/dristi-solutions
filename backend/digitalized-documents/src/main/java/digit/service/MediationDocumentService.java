@@ -3,6 +3,7 @@ package digit.service;
 import digit.config.Configuration;
 import digit.enrichment.MediationEnrichment;
 import digit.kafka.Producer;
+import digit.util.FileStoreUtil;
 import digit.validators.MediationDocumentValidator;
 import digit.web.models.*;
 import jakarta.validation.Valid;
@@ -13,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,13 +37,17 @@ public class MediationDocumentService implements DocumentTypeService {
 
     private final WorkflowService workflowService;
 
+    private final FileStoreUtil fileStoreUtil;
+
+
     @Autowired
-    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService) {
+    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService, FileStoreUtil fileStoreUtil) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.producer = producer;
         this.configuration = configuration;
         this.workflowService = workflowService;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     @Override
@@ -75,7 +78,7 @@ public class MediationDocumentService implements DocumentTypeService {
 
         WorkflowObject workflow = document.getWorkflow();
 
-        validator.validateUpdateMediationDocument(document);
+        DigitalizedDocument existingDocument = validator.validateUpdateMediationDocument(document);
 
         enrichment.enrichUpdateMediationDocument(request);
 
@@ -102,12 +105,51 @@ public class MediationDocumentService implements DocumentTypeService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
+        List<String> fileStoreIdsToDelete = extractInactiveFileStoreIds(request,existingDocument);
+
+        if (!fileStoreIdsToDelete.isEmpty()) {
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIdsToDelete, request.getDigitalizedDocument().getTenantId());
+            log.info("Deleted files for ids: {}", fileStoreIdsToDelete);
+        }
+
         producer.push(configuration.getMediationDigitalizedDocumentUpdateTopic(), request);
 
         log.info("operation = updateDocument, result = SUCCESS");
 
         return document;
     }
+
+    public List<String> extractInactiveFileStoreIds(
+            DigitalizedDocumentRequest digitalizedDocumentRequest,
+            DigitalizedDocument existingDocument) {
+
+        List<String> inactiveFileStoreIds = new ArrayList<>();
+
+        DigitalizedDocument updatedDocument = digitalizedDocumentRequest.getDigitalizedDocument();
+
+        // Collect filestoreIds present in updated document
+        Set<String> updatedFileStores = new HashSet<>();
+        if (updatedDocument.getDocuments() != null) {
+            updatedDocument.getDocuments().stream()
+                    .filter(Objects::nonNull)
+                    .map(Document::getFileStore)
+                    .filter(Objects::nonNull)
+                    .forEach(updatedFileStores::add);
+        }
+
+        // Compare with existing document → extract filestores missing from updatedDocument
+        if (existingDocument.getDocuments() != null) {
+            existingDocument.getDocuments().stream()
+                    .filter(Objects::nonNull)
+                    .map(Document::getFileStore)
+                    .filter(Objects::nonNull)
+                    .filter(fs -> !updatedFileStores.contains(fs))   // filestore removed in updated payload
+                    .forEach(inactiveFileStoreIds::add);
+        }
+
+        return inactiveFileStoreIds;
+    }
+
 
     private List<String> computeAssignees(@Valid MediationDetails mediationDetails) {
 
@@ -131,7 +173,7 @@ public class MediationDocumentService implements DocumentTypeService {
         WorkflowObject workflow = document.getWorkflow();
         if (workflow == null) return;
 
-        if (EDIT.equalsIgnoreCase(workflow.getAction())) {
+        if (INITIATE_E_SIGN.equalsIgnoreCase(workflow.getAction())) {
             document.getMediationDetails()
                     .getPartyDetails()
                     .forEach(party -> party.setHasSigned(false));

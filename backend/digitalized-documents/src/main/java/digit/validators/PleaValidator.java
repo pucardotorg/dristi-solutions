@@ -21,13 +21,15 @@ public class PleaValidator {
         this.digitalizedDocumentRepository = digitalizedDocumentRepository;
     }
 
-    public void validateDigitalizedDocument(DigitalizedDocument document) {
+    public DigitalizedDocument validateDigitalizedDocument(DigitalizedDocument document) {
         String documentNumber = document.getDocumentNumber();
         DigitalizedDocument existingDocument = digitalizedDocumentRepository.getDigitalizedDocumentByDocumentNumber(documentNumber, document.getTenantId());
 
         if(existingDocument == null){
             throw new CustomException(VALIDATION_ERROR, "Digitalized document with document number " + documentNumber + " does not exist");
         }
+
+        return existingDocument;
     }
 
 }

@@ -1,0 +1,58 @@
+[
+  //PLEA
+                   {
+       "tenantId": "kl",
+       "schemaCode": "ACCESSCONTROL-ROLES.roles",
+       "uniqueIdentifier": null,
+       "data": {
+           "code": "PLEA_CREATOR",
+           "name": "PLEA_CREATOR",
+           "description": "PLEA_CREATOR"
+       },
+       "isActive": true
+   },
+              {
+       "tenantId": "kl",
+       "schemaCode": "ACCESSCONTROL-ROLES.roles",
+       "uniqueIdentifier": null,
+       "data": {
+           "code": "PLEA_APPROVER",
+           "name": "PLEA_APPROVER",
+           "description": "PLEA_APPROVER"
+       },
+       "isActive": true
+   },
+         {
+       "tenantId": "kl",
+       "schemaCode": "ACCESSCONTROL-ROLES.roles",
+       "uniqueIdentifier": null,
+       "data": {
+           "code": "PLEA_SIGNER",
+           "name": "PLEA_SIGNER",
+           "description": "PLEA_SIGNER"
+       },
+       "isActive": true
+   },
+    {
+       "tenantId": "kl",
+       "schemaCode": "ACCESSCONTROL-ROLES.roles",
+       "uniqueIdentifier": null,
+       "data": {
+           "code": "PLEA_EDITOR",
+           "name": "PLEA_EDITOR",
+           "description": "PLEA_EDITOR"
+       },
+       "isActive": true
+   },
+  {
+       "tenantId": "kl",
+       "schemaCode": "ACCESSCONTROL-ROLES.roles",
+       "uniqueIdentifier": null,
+       "data": {
+           "code": "PLEA_VIEWER",
+           "name": "PLEA_VIEWER",
+           "description": "PLEA_VIEWER"
+       },
+       "isActive": true
+   }
+]

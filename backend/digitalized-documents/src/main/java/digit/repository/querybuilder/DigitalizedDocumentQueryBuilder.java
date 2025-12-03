@@ -18,7 +18,7 @@ public class DigitalizedDocumentQueryBuilder {
             " dd.case_id as case_id, dd.case_filing_number as case_filing_number, dd.plea_details as plea_details," +
             " dd.examination_of_accused_details as examination_of_accused_details, dd.mediation_details as mediation_details," +
             " dd.additional_details as additional_details, dd.status as status, dd.documents as documents, dd.order_number as order_number, dd.order_item_id as order_item_id," +
-            " dd.tenant_id as tenant_id, dd.court_id as court_id, dd.created_by as created_by, dd.created_time as created_time," +
+            " dd.tenant_id as tenant_id, dd.court_id as court_id, dd.shortened_url as shortened_url, dd.created_by as created_by, dd.created_time as created_time," +
             " dd.last_modified_by as last_modified_by, dd.last_modified_time as last_modified_time" +
             " FROM digitalized_document dd";
 
@@ -53,6 +53,8 @@ public class DigitalizedDocumentQueryBuilder {
             String courtId = criteria.getCourtId();
             String orderNumber = criteria.getOrderNumber();
             String orderItemId = criteria.getOrderItemId();
+            String caseId = criteria.getCaseId();
+            String caseFilingNumber = criteria.getCaseFilingNumber();
 
             StringBuilder query = new StringBuilder(BASE_QUERY);
             boolean firstCriteria = true;
@@ -64,7 +66,9 @@ public class DigitalizedDocumentQueryBuilder {
             firstCriteria = addDigitalizedDocumentCriteria(tenantId, query, firstCriteria, "dd.tenant_id = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderNumber, query, firstCriteria, "dd.order_number = ?", preparedStatementList, preparedStatementArgList);
             firstCriteria = addDigitalizedDocumentCriteria(orderItemId, query, firstCriteria, "dd.order_item_id = ?", preparedStatementList, preparedStatementArgList);
-            addDigitalizedDocumentCriteria(courtId, query, firstCriteria, "dd.court_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(courtId, query, firstCriteria, "dd.court_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(caseId, query, firstCriteria, "dd.case_id = ?", preparedStatementList, preparedStatementArgList);
+            firstCriteria = addDigitalizedDocumentCriteria(caseFilingNumber, query, firstCriteria, "dd.case_filing_number = ?", preparedStatementList, preparedStatementArgList);
 
             log.info("Final query: {}", query);
             log.info("Prepared statement list: {}", preparedStatementList);

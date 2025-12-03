@@ -35,14 +35,8 @@ public class PleaDetails {
     @JsonProperty("taluk")
     private String taluk = null;
 
-    @JsonProperty("caste")
-    private String caste = null;
-
     @JsonProperty("calling")
     private String calling = null;
-
-    @JsonProperty("religion")
-    private String religion = null;
 
     @JsonProperty("age")
     private Integer age = null;
@@ -55,5 +49,8 @@ public class PleaDetails {
 
     @JsonProperty("magistrateRemarks")
     private String magistrateRemarks = null;
+
+    @JsonProperty("accusedMobileNumber")
+    private String accusedMobileNumber = null;
 
 }
