@@ -7,6 +7,7 @@ const {
   search_digitisation,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 const digitisationOfExaminationOfAccused = async (
   req,
@@ -57,7 +58,13 @@ const digitisationOfExaminationOfAccused = async (
 
       "Failed to query case service"
     );
-    const place = resDigitisation?.place;
+
+    const digitisationRecord =
+      resDigitisation?.data?.digitalizedDocuments?.[0] ||
+      resDigitisation?.data?.documents?.[0] ||
+      resDigitisation?.data || {};
+
+    const examinationOfAccusedDetails = digitisationRecord?.examinationOfAccusedDetails || {};
 
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -103,17 +110,19 @@ const digitisationOfExaminationOfAccused = async (
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const place = mdmsCourtRoom?.place || digitisationRecord?.place || "";
+    const state = mdmsCourtRoom?.state || digitisationRecord?.state || "";
 
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.courtName,
-          place: "",
-          state: "",
-          caseNumber: caseNumber || "",
-          caseYear: caseYear || "",
-          accusedName: "",
-          textBody: [],
+          place: place,
+          state: state,
+          caseNumber: caseNumber,
+          caseYear: caseYear,
+          accusedName: examinationOfAccusedDetails?.accusedName || "",
+          textBody: htmlToFormattedText(examinationOfAccusedDetails?.examinationDescription || ""),
           caseType: "Negotiable Instruments Act 138A",
           accusedSignature: "Signature of Accused",
           judgeSignature: "Signature of Magistrate",
@@ -124,7 +133,7 @@ const digitisationOfExaminationOfAccused = async (
 
     // Generate the PDF
     const pdfKey =
-      qrCode === "true" ? config.pdf.bail_bond_qr : config.pdf.bail_bond;
+      qrCode === "true" ? config.pdf.digitisation_examination_of_accused : config.pdf.digitisation_examination_of_accused;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of Digitisation of Examination of Accused"
