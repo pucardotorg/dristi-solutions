@@ -31,7 +31,7 @@ jobs:
           BRANCH=""
           if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
             BRANCH="${{ github.event.pull_request.base.ref }}"
-          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
             BRANCH="${{ github.event.pull_request.head.ref }}"
           else
             BRANCH="${{ github.event.ref }}"
