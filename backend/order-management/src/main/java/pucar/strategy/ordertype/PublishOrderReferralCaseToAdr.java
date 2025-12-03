@@ -259,7 +259,8 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             for (JsonNode party : partiesNode) {
                 MediationPartyDetails partyDetail = MediationPartyDetails.builder()
                         .partyType(parsePartyType(party))
-                        .uniqueId(getTextValue(party, "userUuid"))
+                        .uniqueId(getTextValue(party, "uniqueId"))
+                        .userUuid(getTextValue(party, "userUuid"))
                         .poaUuid(getTextValue(party, "poaUuid"))
                         .mobileNumber(getTextValue(party, "mobileNumber"))
                         .partyName(getTextValue(party, "partyName"))

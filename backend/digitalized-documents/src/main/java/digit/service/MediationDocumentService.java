@@ -175,7 +175,7 @@ public class MediationDocumentService implements DocumentTypeService {
 
         assignees = mediationDetails.getPartyDetails().stream()
                 .filter(party -> Boolean.FALSE.equals(party.getHasSigned()))
-                .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
+                .flatMap(party -> Stream.of(party.getUserUuid(), party.getPoaUuid()))
                 .filter(Objects::nonNull)  // Remove null values
                 .distinct()  // Ensure unique UUIDs only
                 .collect(Collectors.toList());
