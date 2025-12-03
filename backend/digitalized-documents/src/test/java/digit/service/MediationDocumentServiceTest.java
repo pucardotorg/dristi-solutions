@@ -88,12 +88,12 @@ class MediationDocumentServiceTest {
         updated.getDocuments().add(Document.builder().fileStore("B").build());
         updated.getDocuments().add(Document.builder().fileStore("C").build());
         WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("E_SIGN");
+        workflowObject.setAction("E-SIGN");
         updated.setWorkflow(workflowObject);
         updated.setMediationDetails(MediationDetails.builder()
                 .partyDetails(List.of(
-                        MediationPartyDetails.builder().uniqueId("p1").hasSigned(false).build(),
-                        MediationPartyDetails.builder().uniqueId("p2").hasSigned(true).build()
+                        MediationPartyDetails.builder().userUuid("p1").hasSigned(false).build(),
+                        MediationPartyDetails.builder().userUuid("p2").hasSigned(true).build()
                 ))
                 .build());
 
@@ -127,8 +127,8 @@ class MediationDocumentServiceTest {
         updated.setWorkflow(workflowObject);
         updated.setMediationDetails(MediationDetails.builder()
                 .partyDetails(List.of(
-                        MediationPartyDetails.builder().uniqueId("p1").hasSigned(true).build(),
-                        MediationPartyDetails.builder().uniqueId("p2").hasSigned(true).build()
+                        MediationPartyDetails.builder().userUuid("p1").hasSigned(true).build(),
+                        MediationPartyDetails.builder().userUuid("p2").hasSigned(true).build()
                 ))
                 .build());
 
@@ -141,7 +141,7 @@ class MediationDocumentServiceTest {
         // After completion, workflow action should be E_SIGN_COMPLETE in the document set by service
         boolean completedFound = reqCaptor.getAllValues().stream()
                 .anyMatch(r -> r.getDigitalizedDocument().getWorkflow() != null &&
-                        "E_SIGN_COMPLETE".equals(r.getDigitalizedDocument().getWorkflow().getAction()));
+                        "E-SIGN_COMPLETE".equals(r.getDigitalizedDocument().getWorkflow().getAction()));
         assertTrue(completedFound);
     }
 }
