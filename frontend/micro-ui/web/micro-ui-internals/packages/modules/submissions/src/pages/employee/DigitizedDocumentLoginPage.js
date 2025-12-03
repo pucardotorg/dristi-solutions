@@ -44,7 +44,7 @@ const DigitizedDocumentLoginPage = () => {
         return;
       }
       history.replace(
-        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`,
+        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${res?.documents?.[0]?.type}`,
         {
           mobileNumber: mobileNumber,
           tenantId: tenantId,
