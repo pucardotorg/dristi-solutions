@@ -11,6 +11,7 @@ import pucar.service.FileStoreService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.DigitalizedDocumentUtil;
 import pucar.util.PdfServiceUtil;
+import pucar.util.JsonUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
@@ -35,14 +36,16 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
     private final Configuration configuration;
     private final PdfServiceUtil pdfServiceUtil;
     private final FileStoreService fileStoreService;
+    private final JsonUtil jsonUtil;
 
     @Autowired
-    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService) {
+    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil) {
         this.digitalizedDocumentUtil = digitalizedDocumentUtil;
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.pdfServiceUtil = pdfServiceUtil;
         this.fileStoreService = fileStoreService;
+        this.jsonUtil = jsonUtil;
     }
 
     @Override
@@ -149,6 +152,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .caseId(caseId)
                         .caseFilingNumber(order.getFilingNumber())
                         .orderNumber(order.getOrderNumber())
+                        .orderItemId(getItemId(order))
                         .tenantId(order.getTenantId())
                         .courtName(configuration.getCourtName())
                         .place(configuration.getPlace())
@@ -175,6 +179,13 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             throw new RuntimeException("Error processing digitalized document: " + e.getMessage(), e);
         }
 
+        return null;
+    }
+
+    private String getItemId(Order order) {
+        if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+            return jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+        }
         return null;
     }
 
