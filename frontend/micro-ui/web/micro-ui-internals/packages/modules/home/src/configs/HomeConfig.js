@@ -1812,7 +1812,7 @@ export const pendingTaskForDigitalizedDocumentPleaActions = {
 
   PENDING_REVIEW: {
     actorName: ["JUDGE"],
-    actionName: "Review Plea",
+    actionName: "Review the plea",
     redirectDetails: {
       url: "/home/digitized-document-sign",
       params: [

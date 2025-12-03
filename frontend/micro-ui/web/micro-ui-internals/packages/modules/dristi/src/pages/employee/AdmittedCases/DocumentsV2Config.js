@@ -250,7 +250,7 @@ export const DocumentSearchConfig = {
     },
     {
       label: "Digitalization Forms",
-      displayLabel: "DIGITTALIZATION_TAB",
+      displayLabel: "DIGITALIZATION_TAB",
       type: "search",
       apiDetails: {
         serviceName: "/digitalized-documents/v1/_search",

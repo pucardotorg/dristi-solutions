@@ -222,17 +222,27 @@ export const DigitalDocumentSignModal = ({
         .then(async (res) => {
           if (res?.documents?.length > 0) {
             const documentDetails = res?.documents?.[0];
+            let name = "";
+            if (documentDetails?.type === "PLEA") {
+              name = documentDetails?.pleaDetails?.accusedName;
+            } else {
+              name = documentDetails?.examinationOfAccusedDetails?.accusedName;
+            }
             const payload = {
               digitalizedDocument: {
                 ...documentDetails,
                 documents: [
-                  ...documentDetails?.documents?.map((doc) => {
-                    if (fileStoreId && doc?.documentType === "SIGNED") {
-                      return { ...doc, isActive: false };
-                    }
-                    return doc;
-                  }),
-                  ...(fileStoreId ? [{ documentType: "SIGNED", fileStore: fileStoreId }] : []),
+                  ...(fileStoreId
+                    ? [
+                        {
+                          documentType: "SIGNED",
+                          fileStore: fileStoreId,
+                          additionalDetails: {
+                            name: `${t(documentDetails?.type)} (${name}).pdf`,
+                          },
+                        },
+                      ]
+                    : []),
                 ],
                 workflow: { action: Action },
               },
@@ -324,7 +334,7 @@ export const DigitalDocumentSignModal = ({
       if (digitalDocumentPaginationData?.caseTitle)
         sessionStorage.setItem("bulkDigitalDocumentSignCaseTitle", digitalDocumentPaginationData?.caseTitle);
       if (digitalDocumentPaginationData?.offset) sessionStorage.setItem("bulkDigitalDocumentSignoffset", digitalDocumentPaginationData?.offset);
-      handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, "Authority Signature");
+      handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, "Signature of Magistrate");
     } catch (error) {
       console.error("E-sign navigation error:", error);
       setLoader(false);

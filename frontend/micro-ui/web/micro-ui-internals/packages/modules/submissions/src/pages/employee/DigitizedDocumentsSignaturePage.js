@@ -286,7 +286,7 @@ const DigitizedDocumentsSignaturePage = () => {
           handleCloseSignaturePopup={handleCloseSignatureModal}
           handleProceed={handleEsignProceed}
           fileStoreId={fileStoreId}
-          signPlaceHolder={"Signature of the Accused"}
+          signPlaceHolder={"Signature of Accused"}
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
           handleMockESign={handleMockESign}
