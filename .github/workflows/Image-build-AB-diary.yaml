@@ -27,7 +27,9 @@ jobs:
     steps:
       - name: Set github branch
         run: |
-          if [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
+          if [[ github.event_name == 'pull_request' && github.event.action == 'closed' ]]; then
+            echo "BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
+          elif [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
             echo "BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
           else
             echo "BRANCH=${{ github.event.ref }}" >> $GITHUB_ENV
@@ -47,7 +49,7 @@ jobs:
             echo "Input CSV: $csv"
 
             # Convert CSV → JSON array
-            json=$(jq -R 'split(",") | map(. | gsub("^\\s+|\\s+$"; ""))' <<< "$csv")
+            json=$(jq -c -R 'split(",") | map(. | gsub("^\\s+|\\s+$"; ""))' <<< "$csv")
 
             echo "JSON Array: $json"
 
