@@ -52,27 +52,22 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           CONFIG_FILE="build/config.json"
-          git fetch && git pull
-          FILE_LIST=$(git diff ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} --name-only)
+
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+
+          FILE_LIST=$(git diff ${{ github.event.pull_request.base.ref }} HEAD --name-only)
+
           BASE_PATHS=$(jq -r '.[] | .service_source_path' "$CONFIG_FILE")
-          
+
           if [ -z "$BASE_PATHS" ]; then
-             echo "Error: Could not read base paths from $CONFIG_FILE or file is empty."
-             # Do not exit 1 here if the config might be optionally empty,
-             # but for mandatory services, exiting is fine.
-             echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
-             exit 0
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            exit 0
           fi
-          
+
           MATRIX_ARRAY=""
-          
-          echo "$BASE_PATHS" | while read -r PATH_PREFIX; do
-            if [ -z "$PATH_PREFIX" ]; then
-              continue
-            fi
-            echo "$FILE_LIST" | grep -q "^$PATH_PREFIX"
-            
-            if [ $? -eq 0 ]; then
+
+          for PATH_PREFIX in $BASE_PATHS; do
+            if echo "$FILE_LIST" | grep -q "^$PATH_PREFIX"; then
               if [ -z "$MATRIX_ARRAY" ]; then
                 MATRIX_ARRAY="{\"path\":\"$PATH_PREFIX\"}"
               else
@@ -80,11 +75,9 @@ jobs:
               fi
             fi
           done
-          
+
           FINAL_JSON="{\"include\":[${MATRIX_ARRAY}]}"
-          
           echo "Generated Matrix JSON: $FINAL_JSON"
-          
           echo "matrix=$FINAL_JSON" >> $GITHUB_OUTPUT
 
       - name: create matrix
