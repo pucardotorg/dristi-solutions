@@ -28,6 +28,7 @@ jobs:
     steps:
       - name: Set github branch
         run: |
+          BRANCH=""
           if [[ github.event_name == 'pull_request' && github.event.action == 'closed' ]]; then
             echo "BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
           elif [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
