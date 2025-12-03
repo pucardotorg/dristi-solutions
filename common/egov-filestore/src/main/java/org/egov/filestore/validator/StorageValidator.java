@@ -95,8 +95,9 @@ public class StorageValidator {
 			if (fileStoreConfig.isPdfDisallowRichMedia() && r.hasRichMedia()) {
 				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains RichMedia which is disallowed");
 			}
-			if (fileStoreConfig.isPdfDisallowAcroform() && r.hasAcroForm()) {
-				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains AcroForm actions which are disallowed");
+			if (fileStoreConfig.isPdfDisallowAcroform() && r.hasAcroForm() &&
+					(r.hasJavaScript() || r.hasAA() || r.hasLaunch() || r.hasXfa())) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains harmful AcroForm content which is disallowed");
 			}
 			if (fileStoreConfig.isPdfDisallowFileAttachments() && r.hasFileAttachments()) {
 				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains file attachments which are disallowed");
