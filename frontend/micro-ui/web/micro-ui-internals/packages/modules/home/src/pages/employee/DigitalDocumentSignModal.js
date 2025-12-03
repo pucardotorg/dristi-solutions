@@ -117,7 +117,6 @@ export const DigitalDocumentSignModal = ({
               offSet: 0,
             },
           });
-          debugger;
           const documentData = searchDocumentResponse?.documents?.[0];
           setEffectiveRowData(documentData);
           const combinedDocuments = [...documentData?.documents.filter((doc) => doc.documentType === "SIGNED")];

@@ -42,15 +42,15 @@ const getStyles = () => ({
 const DigitizedDocumentsSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
-  const mobileNumber = location?.state?.mobileNumber;
+  const mobileNumber = userInfo?.mobileNumber || location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isAuthorised = location?.state?.isAuthorised;
   const isUserLoggedIn = Boolean(token);
-  const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
@@ -76,11 +76,11 @@ const DigitizedDocumentsSignaturePage = () => {
   );
 
   const digitizedDocumentsDetails = useMemo(() => {
-    return digitizedDocumentsOpenData;
+    return digitizedDocumentsOpenData?.documents?.[0];
   }, [digitizedDocumentsOpenData]);
 
   const fileStoreId = useMemo(() => {
-    return digitizedDocumentsDetails?.file?.fileStore;
+    return digitizedDocumentsDetails?.documents?.[0]?.fileStore;
   }, [digitizedDocumentsDetails]);
 
   const { data: { file: documentPreviewPdf, fileName: documentPreviewFileName } = {}, isFetching: isLoading } = useQuery({

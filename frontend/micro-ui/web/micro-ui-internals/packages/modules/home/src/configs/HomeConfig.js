@@ -1774,30 +1774,55 @@ export const pendingTaskForDigitalizedDocumentExaminationActions = {
     actorName: [""],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/home/digitalized-document-sign",
+      url: "/dristi/home/digitalized-document-sign",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "digitalizedDocumentId", value: "referenceId" },
-        { key: "type", value: "EXAMINATION_OF_ACCUSED" }
+        { key: "type", defaultValue: "EXAMINATION_OF_ACCUSED" },
       ],
     },
   },
-}
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the examination",
+    redirectDetails: {
+      url: "/home/digitized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
 
 export const pendingTaskForDigitalizedDocumentPleaActions = {
   "PENDING_E-SIGN": {
     actorName: [""],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/home/digitalized-document-sign",
+      url: "/dristi/home/digitalized-document-sign",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "digitalizedDocumentId", value: "referenceId" },
-        { key: "type", value: "PLEA" }
+        { key: "type", defaultValue: "PLEA" },
       ],
     },
   },
-}
+
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review Plea",
+    redirectDetails: {
+      url: "/home/digitized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
 
 export const pendingTaskForDigitalizedDocumentMediationActions = {
   "PENDING_E-SIGN": {
@@ -1846,5 +1871,4 @@ export const selectTaskType = {
   "digitalized-document-mediation": pendingTaskForDigitalizedDocumentMediationActions,
   "digitalized-document-examination": pendingTaskForDigitalizedDocumentExaminationActions,
   "digitalized-document-plea": pendingTaskForDigitalizedDocumentPleaActions,
-
 };

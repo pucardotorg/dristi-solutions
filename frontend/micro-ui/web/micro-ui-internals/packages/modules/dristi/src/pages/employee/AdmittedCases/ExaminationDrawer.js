@@ -138,6 +138,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           let address = formatAddress(userData?.data?.addressDetails?.[0]?.addressDetails);
           const designation = "";
           const accusedIndividualId = userData?.data?.respondentVerification?.individualDetails?.individualId;
+          const accusedUuid = caseDetails?.litigants?.find((lit) => lit?.individualId === accusedIndividualId)?.additionalDetails?.uuid;
 
           if (accusedIndividualId && tenantId) {
             try {
@@ -171,6 +172,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           return {
             code: fullName,
             name: `${fullName}`,
+            uuid: accusedUuid,
             individualId: accusedIndividualId,
             isJoined: true,
             partyType: "respondent",
@@ -669,7 +671,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
           workflow: {
             action,
-            ...(action === "INITIATE_E-SIGN" && { assignes: [selectedAccused?.value] }), // uniqueId of accused, so that accused can receive the pending task
+            ...(action === "INITIATE_E-SIGN" && { assignes: [party?.uuid] }), // uniqueId of accused, so that accused can receive the pending task
           },
         },
       };
@@ -685,7 +687,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     // TODO: call Api then close this modal and show next modal
     try {
       const updatedDocument = await updateExaminationDocument(documentFileStoreId, "INITIATE_E-SIGN", number);
-      setExaminationSignatureURL(updatedDocument?.shortenedUrl);
+      setExaminationSignatureURL(updatedDocument?.digitalizedDocument?.shortenedUrl);
       setShowAddAccusedMobileNumberModal(false);
       setShowsignatureModal(false);
       setShowExaminationESign(true);
