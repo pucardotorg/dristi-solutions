@@ -7,8 +7,10 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.service.FileStoreService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.DigitalizedDocumentUtil;
+import pucar.util.PdfServiceUtil;
 import pucar.util.JsonUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
@@ -19,6 +21,7 @@ import pucar.web.models.digitalizeddocument.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,13 +34,17 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
     private final DigitalizedDocumentUtil digitalizedDocumentUtil;
     private final ObjectMapper objectMapper;
     private final Configuration configuration;
+    private final PdfServiceUtil pdfServiceUtil;
+    private final FileStoreService fileStoreService;
     private final JsonUtil jsonUtil;
 
     @Autowired
-    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, JsonUtil jsonUtil) {
+    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil) {
         this.digitalizedDocumentUtil = digitalizedDocumentUtil;
         this.objectMapper = objectMapper;
         this.configuration = configuration;
+        this.pdfServiceUtil = pdfServiceUtil;
+        this.fileStoreService = fileStoreService;
         this.jsonUtil = jsonUtil;
     }
 
@@ -104,14 +111,6 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
 
             WorkflowObject workflowObject = new WorkflowObject();
             workflowObject.setAction(action);
-            if (INITIATE_E_SIGN.equalsIgnoreCase(action)) {
-                List<String> assignees = mediationDetails.getPartyDetails().stream()
-                        .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
-                        .filter(Objects::nonNull)  // Remove null values
-                        .collect(Collectors.toList());
-
-                workflowObject.setAssignes(assignees);
-            }
 
             if (existingDocuments != null && !existingDocuments.isEmpty()) {
                 // Update existing document
@@ -119,11 +118,17 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 DigitalizedDocument existingDoc = existingDocuments.get(0);
                 existingDoc.setMediationDetails(mediationDetails);
                 existingDoc.setWorkflow(workflowObject);
+                existingDoc.setCourtName(configuration.getCourtName());
+                existingDoc.setPlace(configuration.getPlace());
+                existingDoc.setState(configuration.getState());
 
                 DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
                         .requestInfo(requestInfo)
                         .digitalizedDocument(existingDoc)
                         .build();
+
+                log.info("Generating PDF for updating digitalized document {}", existingDoc.getDocumentNumber());
+                generateAndUploadPdf(updateRequest);
 
                 DigitalizedDocument digitalizedDocument = digitalizedDocumentUtil.updateDigitalizedDocument(updateRequest);
                 log.info("Updated digitalized document successfully {} : ", digitalizedDocument.getDocumentNumber());
@@ -141,6 +146,9 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .orderNumber(order.getOrderNumber())
                         .orderItemId(getItemId(order))
                         .tenantId(order.getTenantId())
+                        .courtName(configuration.getCourtName())
+                        .place(configuration.getPlace())
+                        .state(configuration.getState())
                         .courtId(order.getCourtId())
                         .mediationDetails(mediationDetails)
                         .workflow(workflowObject)
@@ -150,6 +158,9 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .requestInfo(requestInfo)
                         .digitalizedDocument(newDocument)
                         .build();
+
+                log.info("Generating PDF for creating digitalized document {}", newDocument.getDocumentNumber());
+                generateAndUploadPdf(createRequest);
 
                 DigitalizedDocument digitalizedDocument = digitalizedDocumentUtil.createDigitalizedDocument(createRequest);
                 log.info("Created digitalized document successfully {} : ", digitalizedDocument.getDocumentNumber());
@@ -171,6 +182,73 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
     }
 
     /**
+     * Generates PDF, uploads to filestore, and attaches as document to the digitalized document
+     *
+     * @param request The digitalized document request
+     */
+    private void generateAndUploadPdf(DigitalizedDocumentRequest request) {
+        try {
+            DigitalizedDocument digitalizedDocument = request.getDigitalizedDocument();
+
+            // Generate PDF
+            byte[] pdfBytes = generatePdf(request);
+
+            // Upload to filestore
+            String fileStoreId = fileStoreService.upload(
+                    pdfBytes,
+                    "mediation_document.pdf",
+                    "application/pdf",
+                    digitalizedDocument.getTenantId()
+            );
+
+            if (fileStoreId == null || fileStoreId.isEmpty()) {
+                log.error("File upload failed: fileStoreId is null or empty");
+                throw new RuntimeException("Failed to upload PDF to filestore");
+            }
+
+            // Create document object
+            Document document = Document.builder()
+                    .id(UUID.randomUUID().toString())
+                    .isActive(true)
+                    .documentName("mediation_document")
+                    .fileStore(fileStoreId)
+                    .build();
+
+            // Attach document to digitalized document
+            List<Document> documents = new ArrayList<>();
+            documents.add(document);
+            digitalizedDocument.setDocuments(documents);
+
+            log.info("PDF generated and uploaded successfully, fileStoreId: {}", fileStoreId);
+        } catch (Exception e) {
+            log.error("Error generating and uploading PDF for digitalized document", e);
+            throw new RuntimeException("Error generating and uploading PDF: " + e.getMessage(), e);
+        }
+    }
+
+    private byte[] generatePdf(DigitalizedDocumentRequest updateRequest) {
+        try {
+            log.info("Generating PDF for digitalized document");
+            byte[] pdfBytes = pdfServiceUtil.generatePdf(
+                    updateRequest,
+                    updateRequest.getDigitalizedDocument().getTenantId(),
+                    configuration.getPdfDigitisationMediationTemplateKey()
+            );
+
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                log.error("PDF generation failed or returned empty content");
+                throw new RuntimeException("Failed to generate PDF: empty response from PDF service");
+            }
+
+            log.info("PDF generated successfully, size: {} bytes", pdfBytes.length);
+            return pdfBytes;
+        } catch (Exception e) {
+            log.error("Error generating PDF for digitalized document", e);
+            throw new RuntimeException("Error generating PDF: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Builds MediationDetails from orderDetails JsonNode
      */
     private MediationDetails buildMediationDetails(JsonNode adrDetails) {
@@ -187,6 +265,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .partyName(getTextValue(party, "partyName"))
                         .partyIndex(getIntValue(party))
                         .hasSigned(party.path("hasSigned").asBoolean(false))
+                        .counselName(party.path("counselName").asText())
                         .build();
                 partyDetailsList.add(partyDetail);
             }
@@ -208,10 +287,15 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 ? adrDetails.get("caseStage").asText()
                 : null;
 
+        Long dateOfEndADR = adrDetails.hasNonNull("dateOfEndADR")
+                ? adrDetails.get("dateOfEndADR").asLong()
+                : null;
+
         return MediationDetails.builder()
                 .hearingDate(hearingDate)
                 .mediationCentre(mediationCentre)
                 .dateOfInstitution(dateOfInstitution)
+                .dateOfEndADR(dateOfEndADR)
                 .natureOfComplainant(configuration.getNatureOfComplainant())
                 .caseStage(caseStage)
                 .partyDetails(partyDetailsList.isEmpty() ? null : partyDetailsList)

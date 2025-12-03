@@ -36,6 +36,9 @@ public class MediationDetails {
     @JsonProperty("hearingDate")
     private Long hearingDate = null;
 
+    @JsonProperty("dateOfEndADR")
+    private Long dateOfEndADR = null;
+
     @JsonProperty("mediationCentre")
     private String mediationCentre = null;
 

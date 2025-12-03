@@ -1,5 +1,8 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.MediationEnrichment;
 import digit.kafka.Producer;
@@ -39,15 +42,18 @@ public class MediationDocumentService implements DocumentTypeService {
 
     private final FileStoreUtil fileStoreUtil;
 
+    private final ObjectMapper objectMapper;
+
 
     @Autowired
-    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService, FileStoreUtil fileStoreUtil) {
+    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService, FileStoreUtil fileStoreUtil, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.producer = producer;
         this.configuration = configuration;
         this.workflowService = workflowService;
         this.fileStoreUtil = fileStoreUtil;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -92,6 +98,7 @@ public class MediationDocumentService implements DocumentTypeService {
             if (!isLastSign) {
                 List<String> assignees = computeAssignees(document.getMediationDetails());
                 request.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
+                updateWorkflowAdditionalDetails(request.getDigitalizedDocument().getWorkflow());
             }
             workflowService.updateWorkflowStatus(request);
         }
@@ -163,9 +170,25 @@ public class MediationDocumentService implements DocumentTypeService {
                 .filter(party -> Boolean.FALSE.equals(party.getHasSigned()))
                 .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
                 .filter(Objects::nonNull)  // Remove null values
+                .distinct()  // Ensure unique UUIDs only
                 .collect(Collectors.toList());
 
         return assignees;
+    }
+
+    private void updateWorkflowAdditionalDetails(WorkflowObject workflow) {
+        ObjectNode detailsNode;
+        if (workflow.getAdditionalDetails() == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(workflow.getAdditionalDetails(), ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add(MEDIATION_CREATOR);
+        excludeRolesArray.add(SYSTEM_ADMIN);
+        excludeRolesArray.add(SYSTEM);
+
+        workflow.setAdditionalDetails(detailsNode);
     }
 
     private void handleEditAction(DigitalizedDocument document) {

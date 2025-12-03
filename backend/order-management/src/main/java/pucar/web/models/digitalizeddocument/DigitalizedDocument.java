@@ -92,6 +92,18 @@ public class DigitalizedDocument {
     @NotNull(message = "court id cannot be null")
     private String courtId = null;
 
+    @JsonProperty("courtName")
+    @Valid
+    private String courtName = null;
+
+    @JsonProperty("place")
+    @Valid
+    private String place = null;
+
+    @JsonProperty("state")
+    @Valid
+    private String state = null;
+
 
     public DigitalizedDocument putAdditionalDetailsItem(String key, Object additionalDetailsItem) {
         if (this.additionalDetails == null) {

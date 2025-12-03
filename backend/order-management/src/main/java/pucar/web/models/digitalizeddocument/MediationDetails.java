@@ -30,6 +30,9 @@ public class MediationDetails {
     @JsonProperty("dateOfInstitution")
     private Long dateOfInstitution = null;
 
+    @JsonProperty("dateOfEndADR")
+    private Long dateOfEndADR = null;
+
     @JsonProperty("caseStage")
     private String caseStage = null;
 
