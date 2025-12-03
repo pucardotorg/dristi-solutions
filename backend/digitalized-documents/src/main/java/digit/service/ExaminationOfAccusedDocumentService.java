@@ -1,17 +1,31 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.enrichment.DigitalizedDocumentEnrichment;
 import digit.enrichment.ExaminationOfAccusedEnrichment;
 import digit.kafka.Producer;
+import digit.util.CaseUtil;
+import digit.util.UrlShortenerUtil;
 import digit.util.FileStoreUtil;
 import digit.validators.ExaminationOfAccusedValidator;
 import digit.validators.MediationDocumentValidator;
+import digit.web.models.CaseSearchRequest;
 import digit.web.models.DigitalizedDocument;
 import digit.web.models.DigitalizedDocumentRequest;
 import digit.web.models.Document;
+import digit.web.models.ExaminationOfAccusedDetails;
+import digit.web.models.TypeEnum;
+import digit.web.models.WorkflowObject;
+import digit.web.models.sms.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
+
+import static digit.config.ServiceConstants.EDIT;
+import static digit.config.ServiceConstants.INITIATE_E_SIGN;
+import static digit.config.ServiceConstants.SIGN_EXAMINATION_DOCUMENT;
+import static digit.config.ServiceConstants.SIGN_PLEA_DOCUMENT;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,9 +43,12 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
     private final WorkflowService workflowService;
     private final Producer producer;
     private final Configuration config;
+    private final UrlShortenerUtil urlShortenerUtil;
     private final FileStoreUtil fileStoreUtil;
+    private final CaseUtil caseUtil;
+    private final NotificationService notificationService;
 
-    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil) {
+    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, NotificationService notificationService) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.examinationOfAccusedEnrichment = examinationOfAccusedEnrichment;
@@ -39,6 +56,9 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         this.producer = producer;
         this.config = config;
         this.fileStoreUtil = fileStoreUtil;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.caseUtil = caseUtil;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -68,6 +88,26 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
 
         examinationOfAccusedEnrichment.enrichDocumentOnUpdate(request);
 
+        DigitalizedDocument document = request.getDigitalizedDocument();
+
+        // Check if workflow action is EDIT and expire shortening URL
+        if (document.getWorkflow() != null && EDIT.equalsIgnoreCase(document.getWorkflow().getAction())) {
+            expireTheShorteningUrl(request);
+        }
+
+        // Check if workflow action is INITIATE_E_SIGN and create shortened URL
+        if (document.getWorkflow() != null && INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber());
+            document.setShortenedUrl(shortenedUrl);
+            log.info("Calling notification service for SMS");
+            try{
+                callNotificationServiceForSMS(request);
+            } catch (Exception e) {
+                log.error("Error occurred while trying to send SMS: {}", e.getMessage());
+            }
+
+        }
+
         workflowService.updateWorkflowStatus(request);
 
         List<String> fileStoreIdsToDelete = extractInactiveFileStoreIds(request,existingDocument);
@@ -80,6 +120,49 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         producer.push(config.getExaminationOfAccusedUpdateTopic(), request);
 
         return request.getDigitalizedDocument();
+    }
+
+    private void expireTheShorteningUrl(DigitalizedDocumentRequest digitalizedDocumentRequest) {
+        urlShortenerUtil.expireTheUrl(digitalizedDocumentRequest);
+    }
+
+    private void callNotificationServiceForSMS(DigitalizedDocumentRequest request){
+        String action = Optional.ofNullable(request.getDigitalizedDocument())
+                .map(DigitalizedDocument::getWorkflow)
+                .map(WorkflowObject::getAction)
+                .orElse(null);
+        String messageCode = getMessageCode(action);
+        if(messageCode == null){
+            log.info("No message code found");
+            return;
+        }
+
+        RequestInfo requestInfo = request.getRequestInfo();
+
+        JsonNode courtCase = caseUtil.getCaseFromFilingNumber(requestInfo, request.getDigitalizedDocument().getCaseFilingNumber());
+        String cmpNumber = courtCase.path("cmpNumber").asText();
+        String courtCaseNumber = courtCase.path("courtCaseNumber").asText();
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .tenantId(request.getDigitalizedDocument().getTenantId())
+                .cmpNumber(cmpNumber)
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
+                .build();
+
+        String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())
+                        .map(DigitalizedDocument::getExaminationOfAccusedDetails)
+                        .map(ExaminationOfAccusedDetails::getAccusedMobileNumber)
+                        .orElse(null);
+
+        notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, mobileNumber);
+    }
+
+    private String getMessageCode(String action){
+        if(INITIATE_E_SIGN.equalsIgnoreCase(action)){
+            return SIGN_EXAMINATION_DOCUMENT;
+        }
+        return null;
     }
 
     public List<String> extractInactiveFileStoreIds(

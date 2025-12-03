@@ -88,6 +88,13 @@ public class Configuration {
     @Value("${egov.hrms.search.endpoint}")
     private String hrmsEndPoint;
 
+    //Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.endpoint}")
+    private String caseSearchPath;
+
 
     //URLShortening
     @Value("${egov.url.shortner.host}")
@@ -95,6 +102,19 @@ public class Configuration {
 
     @Value("${egov.url.shortner.endpoint}")
     private String urlShortnerEndpoint;
+
+    @Value("${egov.url.shortener.expire.endpoint}")
+    private String urlShortenerExpireEndpoint;
+
+    // long url
+    @Value("${domain.url}")
+    private String domainUrl;
+
+    @Value("${egov.base.url}")
+    private String baseUrl;
+
+    @Value("${egov.long.url}")
+    private String longUrl;
 
 
     //SMSNotification
@@ -139,5 +159,25 @@ public class Configuration {
 
     @Value("${egov.plea.digitalized.document.update.topic}")
     private String pleaDigitalizedDocumentUpdateTopic;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    // Template IDs
+    @Value("${egov.sms.notification.examination.sign.template.id}")
+    private String examinationSignTemplateId;
+
+    @Value("${egov.sms.notification.plea.sign.template.id}")
+    private String pleaSignTemplateId;
+
+    @Value("${egov.sms.notification.mediation.sign.template.id}")
+    private String mediationSignTemplateId;
 
 }

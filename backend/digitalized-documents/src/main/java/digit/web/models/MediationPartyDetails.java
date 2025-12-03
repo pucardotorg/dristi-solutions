@@ -48,5 +48,9 @@ public class MediationPartyDetails {
 
     private Boolean hasSigned = null;
 
+    @JsonProperty("counselName")
+
+    private String counselName = null;
+
 
 }

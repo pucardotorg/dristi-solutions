@@ -304,4 +304,23 @@ public class Configuration {
 
     @Value("${dristi.digitalized-documents.update.endpoint}")
     private String digitalizedDocumentsUpdateEndPoint;
+
+    //PDF Service Config
+    @Value("${egov.pdf.service.host}")
+    private String pdfServiceHost;
+
+    @Value("${egov.pdf.service.create.endpoint}")
+    private String pdfServiceEndpoint;
+
+    @Value("${egov.pdf.digitisation.mediation.template.key}")
+    private String pdfDigitisationMediationTemplateKey;
+
+    @Value("${dristi.court.name}")
+    private String courtName;
+
+    @Value("${dristi.place}")
+    private String place;
+
+    @Value("${dristi.state}")
+    private String state;
 }
