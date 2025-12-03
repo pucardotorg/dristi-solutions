@@ -123,7 +123,7 @@ class MediationDocumentServiceTest {
 
         DigitalizedDocument updated = request.getDigitalizedDocument();
         WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("E_SIGN");
+        workflowObject.setAction("E-SIGN");
         updated.setWorkflow(workflowObject);
         updated.setMediationDetails(MediationDetails.builder()
                 .partyDetails(List.of(
