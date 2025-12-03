@@ -75,7 +75,7 @@ public class DigitalDocumentService {
             }
 
             if (!mobileNumbers.contains(request.getMobileNumber())) {
-                throw new CustomException(DIGITALIZE_SERVICE_EXCEPTION, "Not a valid mobile number");
+                return null;
             }
 
             return response;
@@ -140,7 +140,7 @@ public class DigitalDocumentService {
                 digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
                 log.info("method=updateDigitalDocument, status=COMPLETED, request={}", request);
             } else {
-                throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Not a valid mobile number");
+                return null;
             }
             return digitalizedDocumentResponse;
 
