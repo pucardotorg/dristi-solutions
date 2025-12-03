@@ -67,6 +67,13 @@ public class MediationDocumentService implements DocumentTypeService {
 
         enrichment.enrichCreateMediationDocument(documentRequest);
 
+        if (!ObjectUtils.isEmpty(document.getWorkflow()) && 
+                INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
+            List<String> assignees = computeAssignees(document.getMediationDetails());
+            documentRequest.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
+            updateWorkflowAdditionalDetails(documentRequest.getDigitalizedDocument().getWorkflow());
+        }
+
         workflowService.updateWorkflowStatus(documentRequest);
 
         producer.push(configuration.getMediationDigitalizedDocumentCreateTopic(), documentRequest);
