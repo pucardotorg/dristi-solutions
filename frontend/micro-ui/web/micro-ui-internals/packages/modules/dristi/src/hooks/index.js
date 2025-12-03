@@ -129,6 +129,9 @@ export const Urls = {
     taskManagementSearch: "/task-management/v1/_search",
     createOfflinePayment: "/analytics/offline-payment/_create",
   },
+  digitalization: {
+    examinationPreviewPdf: "/egov-pdf/digitisation",
+  },
 };
 
 const dristi = {

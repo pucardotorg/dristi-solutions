@@ -182,7 +182,7 @@ const WitnessDrawerV2 = ({
             partyType: `ADVOCATE`,
             uuid: rep?.additionalDetails?.uuid,
             representingList: rep?.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
-            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            mobileNumbers: mobileNumber ? [mobileNumber] : [],
             sourceName: rep?.additionalDetails?.advocateName,
             address: address || "",
             age: "",
@@ -249,7 +249,7 @@ const WitnessDrawerV2 = ({
               isJoined: true,
               partyType: "respondent",
               uniqueId,
-              witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
+              mobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
               sourceName: fullName,
               age,
               address: address || "",
@@ -330,7 +330,7 @@ const WitnessDrawerV2 = ({
               isJoined: true,
               partyType: "complainant",
               representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
-              witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+              mobileNumbers: mobileNumber ? [mobileNumber] : [],
               sourceName: fullName,
               age,
               address,
@@ -360,7 +360,7 @@ const WitnessDrawerV2 = ({
             age,
             address,
             designation: designation,
-            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            mobileNumbers: mobileNumber ? [mobileNumber] : [],
             sourceName: fullName,
             tag,
             ownerType: "COMPLAINANT",
@@ -394,7 +394,7 @@ const WitnessDrawerV2 = ({
             individualId: item?.individualId,
             isJoined: true,
             partyType: "poaHolder",
-            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            mobileNumbers: mobileNumber ? [mobileNumber] : [],
             sourceName: fullName,
             age,
             address,
@@ -426,7 +426,7 @@ const WitnessDrawerV2 = ({
           address,
           uniqueId,
           partyType: "witness",
-          witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
+          mobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
           sourceName: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation),
           tag,
           ownerType: witness?.ownerType || "",
@@ -907,8 +907,8 @@ const WitnessDrawerV2 = ({
       const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
       const currnetEvidenceUpdated = structuredClone(currentEvidence);
       let witnessMobileNum = [];
-      if (currentParty?.witnessMobileNumbers?.length > 0) {
-        witnessMobileNum = currentParty?.witnessMobileNumbers;
+      if (currentParty?.mobileNumbers?.length > 0) {
+        witnessMobileNum = currentParty?.mobileNumbers;
       } else if (witnesMobileNumber) {
         witnessMobileNum = [witnesMobileNumber];
       } else if (number) {
@@ -1248,7 +1248,7 @@ const WitnessDrawerV2 = ({
             <div className="drawer-section">
               {/* Tabs UI for draft depositions */}
 
-              <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "scroll" }}>
+              <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "auto" }}>
                 {/* Display tabs for both evidence list items and unsaved drafts */}
                 {activeTabs?.map((tab, index) => (
                   <div
@@ -1465,6 +1465,8 @@ const WitnessDrawerV2 = ({
             witnesMobileNumber={witnesMobileNumber}
             setWitnessMobileNumber={setWitnessMobileNumber}
             allParties={allParties}
+            mainHeader={"CS_ADD_WITNESS_MOBILE_NUMBER"}
+            selectedPartyId={selectedWitness?.value}
           />
         )}
 
@@ -1475,7 +1477,8 @@ const WitnessDrawerV2 = ({
               setShowWitnessDepositionESign(false);
               evidenceRefetch();
             }}
-            witnessDepositionSignatureURL={witnessDepositionSignatureURL}
+            url={witnessDepositionSignatureURL}
+            header={"WITNESS_DEPOSITION_BANNER_HEADER"}
           />
         )}
 
@@ -1494,10 +1497,14 @@ const WitnessDrawerV2 = ({
           <ConfirmDepositionDeleteModal
             t={t}
             selectedWitness={selectedWitness}
-            selectedTab={showConfirmDeleteDepositionModal?.tab}
             allParties={allParties}
             onCancel={() => setShowConfirmDeleteDepositionModal({ show: false, tab: {} })}
             onSubmit={() => handleConfirmDeleteDeposition(showConfirmDeleteDepositionModal?.tab)}
+            name={showConfirmDeleteDepositionModal?.tab?.sourceName}
+            saveLabel={"CS_CONFIRM_DELETE_DEPOSITION"}
+            mainHeader={"DELETE_WITNESS_DEPOSITION"}
+            confirmMessage1={"ARE_YOU_SURE_YOU_WANT_TO_DELETE_DEPOSITION"}
+            confirmMessage2={"PLEASE_CONFIRM_DELETE_DEPOSITION"}
           />
         )}
         {showSuccessModal && (

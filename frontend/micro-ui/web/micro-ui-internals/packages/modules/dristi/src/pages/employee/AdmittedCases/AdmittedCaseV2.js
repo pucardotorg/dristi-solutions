@@ -4381,14 +4381,8 @@ const AdmittedCaseV2 = () => {
             refetchCaseData();
             onTabChange(0, {}, "Documents");
           }}
-          onSubmit={(action) => {
-            setShowWitnessModal(false);
-          }}
-          attendees={currentActiveHearing?.attendees}
-          hearing={currentActiveHearing}
-          hearingId={currentInProgressHearingId}
           tenantId={tenantId}
-          // artifactNumber={editWitnessDepositionArtifact}
+          // documentNumber={editWitnessDepositionArtifact}
           caseId={caseId}
           courtId={courtId}
         />

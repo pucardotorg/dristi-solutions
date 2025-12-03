@@ -9,8 +9,7 @@ import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
 import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
-import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenApiSearchWitnessDeposition";
-import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
+import useOpenApiSearchDigitizedDocuments from "../../hooks/submissions/useOpenApiSearchDigitizedDocuments";
 
 const getStyles = () => ({
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
@@ -40,10 +39,10 @@ const getStyles = () => ({
   editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
 });
 
-const WitnessDepositionSignaturePage = () => {
+const DigitizedDocumentsSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { artifactNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { digitalizedDocumentId: documentNumber, filingNumber } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
@@ -65,40 +64,27 @@ const WitnessDepositionSignaturePage = () => {
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
 
-  const { data: witnessDepositionOpenData, isLoading: isWitnessDepositionOpenLoading } = useOpenApiSearchWitnessDeposition(
+  const { data: digitizedDocumentsOpenData, isLoading: isDigitizedDocumentsOpenOpenLoading } = useOpenApiSearchDigitizedDocuments(
     {
       tenantId,
-      artifactNumber: artifactNumber,
+      documentNumber: documentNumber,
       mobileNumber: mobileNumber || esignMobileNumber,
     },
     {},
-    `witness-deposition-details-${artifactNumber}`,
-    Boolean(artifactNumber && !isUserLoggedIn)
+    `digitized-documents-details-${documentNumber}`,
+    Boolean(documentNumber && mobileNumber)
   );
 
-  const { data: witnessDeposition, isLoading: isWitnessDepositionLoading } = useSearchEvidenceService(
-    {
-      criteria: {
-        artifactNumber: artifactNumber,
-        filingNumber: filingNumber,
-      },
-      tenantId,
-    },
-    {},
-    `witness-deposition-details-${artifactNumber}`,
-    Boolean(artifactNumber && isUserLoggedIn)
-  );
-
-  const witnessDepositionDetails = useMemo(() => {
-    return witnessDeposition?.artifacts?.[0] || witnessDepositionOpenData;
-  }, [witnessDeposition, witnessDepositionOpenData]);
+  const digitizedDocumentsDetails = useMemo(() => {
+    return digitizedDocumentsOpenData;
+  }, [digitizedDocumentsOpenData]);
 
   const fileStoreId = useMemo(() => {
-    return witnessDepositionDetails?.file?.fileStore;
-  }, [witnessDepositionDetails]);
+    return digitizedDocumentsDetails?.file?.fileStore;
+  }, [digitizedDocumentsDetails]);
 
-  const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
-    queryKey: ["witnessDepositionSignaturePdf", tenantId, artifactNumber, userInfo?.uuid],
+  const { data: { file: documentPreviewPdf, fileName: documentPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+    queryKey: ["DigitizedDocumentSignaturePdf", tenantId, documentNumber, userInfo?.uuid],
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
@@ -134,17 +120,16 @@ const WitnessDepositionSignaturePage = () => {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
       const payload = {
         tenantId,
-        artifactNumber: artifactNumber,
-        partyType: witnessDepositionDetails?.sourceType,
+        documentNumber: documentNumber,
         mobileNumber: mobileNumber || esignMobileNumber,
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
+      console.error("Error while updating:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setShowSignatureModal(false);
@@ -176,13 +161,15 @@ const WitnessDepositionSignaturePage = () => {
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-login?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
+      history.replace(
+        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${digitizedDocumentsDetails?.digitalizedDocument?.type}`
+      );
     }
 
-    if (!artifactNumber) {
+    if (!documentNumber) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, [artifactNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
+  }, [documentNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -203,24 +190,23 @@ const WitnessDepositionSignaturePage = () => {
 
       const payload = {
         tenantId,
-        artifactNumber: artifactNumber,
-        partyType: witnessDepositionDetails?.sourceType,
+        documentNumber: documentNumber,
         mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating witness deposition:", error);
+      console.error("Error while updating document:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
     }
   };
 
-  if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
+  if (isDigitizedDocumentsOpenOpenLoading || isLoading) {
     return <Loader />;
   }
 
@@ -245,13 +231,13 @@ const WitnessDepositionSignaturePage = () => {
           <Loader />
         </div>
       )}
-      <div className="header">{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
+      <div className="header">{`${t(digitizedDocumentsDetails?.digitalizedDocument?.type)}`}</div>
       <div className="doc-viewer">
         {!isLoading ? (
           <DocViewerWrapper
             docWidth={"100%"}
             docHeight={"100%"}
-            selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
+            selectedDocs={documentPreviewPdf ? [documentPreviewPdf] : []}
             tenantId={tenantId}
             docViewerCardClassName={"doc-card"}
             showDownloadOption={false}
@@ -280,7 +266,7 @@ const WitnessDepositionSignaturePage = () => {
               className="back-button"
             />
           }
-          {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
+          {digitizedDocumentsDetails?.status === "PENDING_E-SIGN" && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
@@ -300,19 +286,27 @@ const WitnessDepositionSignaturePage = () => {
           handleCloseSignaturePopup={handleCloseSignatureModal}
           handleProceed={handleEsignProceed}
           fileStoreId={fileStoreId}
-          signPlaceHolder={"Deponent"}
+          signPlaceHolder={"Signature of the Accused"}
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
           handleMockESign={handleMockESign}
-          customizedNote={t("WITNESS_DEPOSITION_POPUP_NOTES")}
+          customizedNote={
+            digitizedDocumentsDetails?.digitalizedDocument?.type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")
+          }
         />
       )}
       {showSuccessModal && (
-        <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />
+        <SuccessBannerModal
+          t={t}
+          handleCloseSuccessModal={handleCloseSuccessModal}
+          message={
+            digitizedDocumentsDetails?.digitalizedDocument?.type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"
+          }
+        />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };
 
-export default WitnessDepositionSignaturePage;
+export default DigitizedDocumentsSignaturePage;

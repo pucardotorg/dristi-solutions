@@ -22,7 +22,19 @@ const onDocumentUpload = async (fileData, filename) => {
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
 };
 
-const PreviewPdfModal = ({ t, handleBack, documents = [], setPreviewModal, setFileStoreId, setShowsignatureModal, pdfConfig, header, saveLabel, cancelLabel }) => {
+const PreviewPdfModal = ({
+  t,
+  handleBack,
+  documents = [],
+  setPreviewModal,
+  setFileStoreId,
+  setShowsignatureModal,
+  pdfConfig,
+  header,
+  saveLabel,
+  cancelLabel,
+  callback,
+}) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -51,7 +63,7 @@ const PreviewPdfModal = ({ t, handleBack, documents = [], setPreviewModal, setFi
     },
     enabled: pdfConfig?.enabled,
   });
-  
+
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -107,6 +119,7 @@ const PreviewPdfModal = ({ t, handleBack, documents = [], setPreviewModal, setFi
             .then(() => {
               setShowsignatureModal(true);
               setPreviewModal(false);
+              callback && callback();
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });

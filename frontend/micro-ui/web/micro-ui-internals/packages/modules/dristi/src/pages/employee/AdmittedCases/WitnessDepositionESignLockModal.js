@@ -4,12 +4,12 @@ import { BlackTickIcon, FileDownloadIcon } from "@egovernments/digit-ui-module-d
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 
-function WitnessDepositionESignLockModal({ t, handleSaveOnSubmit, witnessDepositionSignatureURL }) {
+function WitnessDepositionESignLockModal({ t, handleSaveOnSubmit, url, header }) {
   const orderModalInfo = {
-    header: "WITNESS_DEPOSITION_BANNER_HEADER",
+    header,
     url: [
       {
-        value: witnessDepositionSignatureURL,
+        value: url,
         customText: "E-Sign Link",
         copyData: true,
         isLocalization: false,

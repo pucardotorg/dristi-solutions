@@ -114,6 +114,14 @@ export const submissionService = {
       data,
       params,
     }),
+  searchOpenApiDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.openApi.digitizedDocumentSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   updateOpenBailBond: (data, params) =>
     Request({
       url: Urls.openApi.updateBailBond,
@@ -125,6 +133,14 @@ export const submissionService = {
   updateOpenWitnessDeposition: (data, params) =>
     Request({
       url: Urls.openApi.updateWitnessDeposition,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateOpenDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.openApi.updateDigitizedDocument,
       useCache: false,
       userService: false,
       data,

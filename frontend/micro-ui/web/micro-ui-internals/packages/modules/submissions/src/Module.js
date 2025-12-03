@@ -9,6 +9,8 @@ import BailBondLinkExpiredPage from "./pages/employee/BailBondExpirePage";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 import WitnessDepositionLoginPage from "./pages/employee/WitnessDepositionLoginPage";
 import WitnessDepositionSignaturePage from "./pages/employee/WitnessDepositionSignaturePage";
+import DigitizedDocumentLoginPage from "./pages/employee/DigitizedDocumentLoginPage";
+import DigitizedDocumentsSignaturePage from "./pages/employee/DigitizedDocumentsSignaturePage";
 
 export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -35,6 +37,8 @@ const componentsToRegister = {
   BailBondLinkExpiredPage,
   WitnessDepositionLoginPage,
   WitnessDepositionSignaturePage,
+  DigitizedDocumentLoginPage,
+  DigitizedDocumentsSignaturePage,
 };
 
 export const initSubmissionsComponents = () => {
