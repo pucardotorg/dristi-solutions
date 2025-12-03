@@ -44,20 +44,20 @@ jobs:
         run: |
           if [[ github.event_name == 'workflow_dispatch' ]]; then
             csv="${{ github.event.inputs.services }}"
-            echo "csv=$csv"
+            echo $csv
             json=$(jq -R 'split(",")' <<< "$csv")
-            echo "json=$json"
+            echo $json
             echo "matrix=$json" >> $GITHUB_OUTPUT
           # elif [[ github.event_name == 'pull_request' ]]; then
           #   echo "matrix=[{\"services\": \"testing"}]" >> $GITHUB_OUTPUT
           fi
   
-  build-docker-image:
-    runs-on: ubuntu-latest
-    needs: check-diff
-    strategy:
-      matrix: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
-    steps:
-      - name: Print Service Name
-        run: |
-          echo "Service Name: ${{ matrix.service }}"
+  # build-docker-image:
+  #   runs-on: ubuntu-latest
+  #   needs: check-diff
+  #   strategy:
+  #     matrix: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+  #   steps:
+  #     - name: Print Service Name
+  #       run: |
+  #         echo "Service Name: ${{ matrix.service }}"
