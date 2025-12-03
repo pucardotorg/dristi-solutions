@@ -66,8 +66,8 @@ public class ServiceConstants {
     public static final String SIGN_EXAMINATION_DOCUMENT = "SIGN_EXAMINATION_DOCUMENT";
     public static final String SIGN_PLEA_DOCUMENT = "SIGN_PLEA_DOCUMENT";
     public static final String SIGN_MEDIATION_DOCUMENT = "SIGN_MEDIATION_DOCUMENT";
-    public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
 
-
+    public static final String MEDIATION_CREATOR = "MEDIATION_CREATOR";
+    public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
 
 }

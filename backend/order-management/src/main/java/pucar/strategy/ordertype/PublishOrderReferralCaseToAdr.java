@@ -111,14 +111,6 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
 
             WorkflowObject workflowObject = new WorkflowObject();
             workflowObject.setAction(action);
-            if (INITIATE_E_SIGN.equalsIgnoreCase(action)) {
-                List<String> assignees = mediationDetails.getPartyDetails().stream()
-                        .flatMap(party -> Stream.of(party.getUniqueId(), party.getPoaUuid()))
-                        .filter(Objects::nonNull)  // Remove null values
-                        .collect(Collectors.toList());
-
-                workflowObject.setAssignes(assignees);
-            }
 
             if (existingDocuments != null && !existingDocuments.isEmpty()) {
                 // Update existing document
