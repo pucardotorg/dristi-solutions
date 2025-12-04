@@ -128,7 +128,7 @@ export const MultiSelectDropdownNew = React.memo(
                 style={{
                   border: "1px solid teal",
                   background: "white",
-                  padding: "6px 16px",
+                  padding: "3px 12px",
                   borderRadius: 6,
                   cursor: "pointer",
                   color: "#007E7E",
@@ -144,7 +144,7 @@ export const MultiSelectDropdownNew = React.memo(
                   border: "none",
                   background: "#007E7E",
                   color: "white",
-                  padding: "6px 16px",
+                  padding: "3px 12px",
                   borderRadius: 6,
                   cursor: "pointer",
                   fontSize: "16px",

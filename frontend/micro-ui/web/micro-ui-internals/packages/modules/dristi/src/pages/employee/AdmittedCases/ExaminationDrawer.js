@@ -177,12 +177,12 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 : individualData?.Individual?.[0]?.userDetails?.username
                 ? individualData?.Individual?.[0]?.userDetails?.username
                 : "";
-
+                
               if (!mobileNumber || mobileNumber?.length === 0) {
                 mobileNumber = newMobileNumber ? [newMobileNumber] : [];
               } else if (newMobileNumber && !mobileNumber?.includes(newMobileNumber)) {
                 mobileNumber = [...mobileNumber, newMobileNumber];
-              }
+                }
               if (!address) {
                 address = formatAddressFromIndividualData(individualData?.Individual?.[0]?.address?.[0]);
               }
@@ -648,7 +648,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const handleConfirmQuestions = (selectedQuestions) => {
     let newString = "";
     selectedQuestions.forEach((q) => {
-      newString += `<p>Q: ${q.label}</p><p>Answer: </p><p> </p>`;
+      newString += `<p>Q: ${q.label}</p><p>A: </p><p> </p>`;
     });
     if (examinationText !== "") {
       newString = "<p> </p>" + newString;
