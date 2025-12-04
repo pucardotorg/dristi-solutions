@@ -56,4 +56,7 @@ public class Configuration {
 
     @Value("${dristhi.oath.grantType}")
     private String grantType;
+
+    @Value("${dristhi.oath.authorization}")
+    private String authorization;
 }
