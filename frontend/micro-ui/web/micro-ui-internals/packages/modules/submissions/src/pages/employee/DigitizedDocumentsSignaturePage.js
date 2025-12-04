@@ -44,7 +44,7 @@ const DigitizedDocumentsSignaturePage = () => {
   const location = useLocation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
-  const mobileNumber = userInfo?.mobileNumber || location?.state?.mobileNumber;
+  const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const history = useHistory();
@@ -53,8 +53,6 @@ const DigitizedDocumentsSignaturePage = () => {
   const isUserLoggedIn = Boolean(token);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
-  const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -72,16 +70,46 @@ const DigitizedDocumentsSignaturePage = () => {
     },
     {},
     `digitized-documents-details-${documentNumber}`,
-    Boolean(documentNumber && mobileNumber)
+    Boolean(documentNumber && mobileNumber && !isUserLoggedIn)
+  );
+
+  const { data: documentsData, isloading: isDocumentsDataLoading, refetch: documentsRefetch } = Digit.Hooks.submissions.useSearchDigitalization(
+    {
+      criteria: {
+        caseFilingNumber: filingNumber,
+        type,
+        tenantId,
+        documentNumber,
+      },
+      tenantId,
+    },
+    {},
+    `examination-of-accused-${documentNumber}`,
+    Boolean(documentNumber && isUserLoggedIn)
   );
 
   const digitizedDocumentsDetails = useMemo(() => {
-    return digitizedDocumentsOpenData?.documents?.[0];
-  }, [digitizedDocumentsOpenData]);
+    return digitizedDocumentsOpenData?.documents?.[0] || documentsData?.documents?.[0];
+  }, [digitizedDocumentsOpenData, documentsData]);
 
   const fileStoreId = useMemo(() => {
     return digitizedDocumentsDetails?.documents?.[0]?.fileStore;
   }, [digitizedDocumentsDetails]);
+
+  const accMobileNum = useMemo(() => {
+    let mobNumber = "";
+
+    if (isUserLoggedIn) {
+      if (type === "PLEA") {
+        mobNumber = digitizedDocumentsDetails?.pleaDetails?.accusedMobileNumber;
+      } else {
+        mobNumber = digitizedDocumentsDetails?.examinationOfAccusedDetails?.accusedMobileNumber;
+      }
+    } else {
+      mobNumber = mobileNumber;
+    }
+    return mobNumber;
+  }, [digitizedDocumentsDetails, isUserLoggedIn, type, mobileNumber]);
 
   const { data: { file: documentPreviewPdf, fileName: documentPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["DigitizedDocumentSignaturePdf", tenantId, documentNumber, userInfo?.uuid],
@@ -191,7 +219,7 @@ const DigitizedDocumentsSignaturePage = () => {
       const payload = {
         tenantId,
         documentNumber: documentNumber,
-        mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
+        mobileNumber: accMobileNum,
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
@@ -206,7 +234,7 @@ const DigitizedDocumentsSignaturePage = () => {
     }
   };
 
-  if (isDigitizedDocumentsOpenOpenLoading || isLoading) {
+  if (isDigitizedDocumentsOpenOpenLoading || isLoading || isDocumentsDataLoading) {
     return <Loader />;
   }
 
@@ -287,7 +315,7 @@ const DigitizedDocumentsSignaturePage = () => {
           handleProceed={handleEsignProceed}
           fileStoreId={fileStoreId}
           signPlaceHolder={"Signature of Accused"}
-          mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
+          mobileNumber={accMobileNum}
           forWitnessDeposition={true}
           handleMockESign={handleMockESign}
           customizedNote={type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")}
