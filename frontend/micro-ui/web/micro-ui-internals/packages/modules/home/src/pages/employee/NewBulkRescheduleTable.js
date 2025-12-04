@@ -175,8 +175,8 @@ const NewBulkRescheduleTable = ({
                     {t("LOADING")}
                   </td>
                 </tr>
-              ) : allHearings && allHearings?.length > 0 ? (
-                allHearings?.map((row, index) => {
+              ) : newHearingData && newHearingData?.length > 0 ? (
+                newHearingData?.map((row, index) => {
                   const rowId = row?.hearingBookingId;
                   return (
                     <tr key={rowId} className="custom-table-row">
