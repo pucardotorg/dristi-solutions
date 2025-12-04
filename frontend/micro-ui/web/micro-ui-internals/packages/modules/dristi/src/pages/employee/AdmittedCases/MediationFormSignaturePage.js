@@ -30,6 +30,7 @@ const MediationFormSignaturePage = () => {
   const caseCourtId = courtId || localStorage.getItem("courtId");
   const [showUploadSignatureModal, setShowUploadSignatureModal] = useState(false);
   const [showPartySelectionModal, setShowPartySelectionModal] = useState(false);
+  const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const name = "Signature";
   const [formData, setFormData] = useState({});
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -324,11 +325,13 @@ const MediationFormSignaturePage = () => {
     esignCaseUpdate();
   }, [isEsignSuccess, digitalizationServiceDetails]);
 
+  const handleCaseUnlocking = async () => {
+    await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
+  };
+
   useEffect(() => {
     if (isCitizen) {
-      const handleCaseUnlocking = async () => {
-        await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
-      };
+      handleCaseUnlocking();
     }
 
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
@@ -345,13 +348,19 @@ const MediationFormSignaturePage = () => {
       }
     }
     if (esignProcess && digitalizationServiceDetails?.documentNumber) {
-      handleCaseUnlocking();
+      if (isCitizen) {
+        handleCaseUnlocking();
+      }
       sessionStorage.removeItem("esignProcess");
     }
 
-    sessionStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    sessionStorage.removeItem("fileStoreId");
+    const cleanupTimer = setTimeout(() => {
+      sessionStorage.removeItem("isSignSuccess");
+      sessionStorage.removeItem("signStatus");
+      sessionStorage.removeItem("fileStoreId");
+    }, 2000);
+
+    return () => clearTimeout(cleanupTimer);
   }, [tenantId, digitalizationServiceDetails]);
 
   useEffect(() => {
@@ -409,7 +418,7 @@ const MediationFormSignaturePage = () => {
                 <Button
                   className={"edit-button"}
                   variation="secondary"
-                  onButtonClick={handleEditMediation}
+                  onButtonClick={() => setShowEditConfirmModal(true)}
                   label={t("EDIT")}
                   icon={<EditPencilIcon width="20" height="20" />}
                 />
@@ -576,6 +585,24 @@ const MediationFormSignaturePage = () => {
           children={
             <div className="delete-warning-text">
               <h3 style={{ margin: "12px 24px" }}>{t("SKIP_AND_SUBMIT_TEXT")}</h3>
+            </div>
+          }
+        />
+      )}
+      {showEditConfirmModal && (
+        <Modal
+          headerBarMain={<Heading label={t("CONFIRM_EDIT_MEDIATION")} />}
+          headerBarEnd={<CloseBtn onClick={() => setShowEditConfirmModal(false)} />}
+          actionCancelLabel={t("CS_EDIT_BACK")}
+          actionCancelOnSubmit={() => setShowEditConfirmModal(false)}
+          actionSaveLabel={t("CS_EDIT_CONFIRM")}
+          actionSaveOnSubmit={handleEditMediation}
+          style={{ height: "40px", background: "#007E7E" }}
+          popupStyles={{ width: "35%" }}
+          className={"review-order-modal"}
+          children={
+            <div className="delete-warning-text">
+              <h3 style={{ margin: "12px 24px" }}>{t("EDIT_MEDIATION_CONFIRMATION_TEXT")}</h3>
             </div>
           }
         />
