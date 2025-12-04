@@ -483,4 +483,67 @@ public class OrderRegistrationService {
         }
     }
 
+    /**
+     * Process order details request containing additionalDetails, compositeItems, orderNumber and uniqueId
+     * @param request OrderDetailsRequest containing RequestInfo and OrderDetailsDTO
+     * @return processed OrderDetailsDTO
+     */
+    public OrderDetailsDTO processOrderDetails(OrderDetailsRequest request) {
+        try {
+            OrderDetailsDTO orderDetailsDTO = request.getOrderDetailsDTO();
+            String orderNumber = orderDetailsDTO.getOrderNumber();
+            String uniqueId = orderDetailsDTO.getUniqueId();
+            
+            log.info("Processing order details for orderNumber: {} and uniqueId: {}", orderNumber, uniqueId);
+            
+            // Search for the order using orderNumber
+            OrderSearchRequest searchRequest = new OrderSearchRequest();
+            OrderCriteria criteria = new OrderCriteria();
+            criteria.setOrderNumber(orderNumber);
+            searchRequest.setCriteria(criteria);
+
+            searchRequest.setRequestInfo(request.getRequestInfo());
+            
+            List<Order> orders = searchOrder(searchRequest);
+            
+            if (orders == null || orders.isEmpty()) {
+                log.error("No order found with orderNumber: {}", orderNumber);
+                throw new CustomException("ORDER_NOT_FOUND", 
+                        "No order found with orderNumber: " + orderNumber);
+            }
+            
+            Order order = orders.get(0);
+            orderDetailsDTO.setAuditDetails(order.getAuditDetails());
+
+            orderDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            orderDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            
+            // Log the order details
+            log.info("Order details before update for order number: {}, additionalDetails: {}, compositeItems: {}", 
+                    orderNumber, 
+                    order.getAdditionalDetails() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getAdditionalDetails()) : "null",
+                    order.getCompositeItems() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getCompositeItems()) : "null");
+            
+            // Create a request to push to Kafka topic
+            OrderDetailsRequest kafkaRequest = OrderDetailsRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .orderDetailsDTO(orderDetailsDTO)
+                    .build();
+            
+            producer.push(config.getOrderUpdateUniqueIdTopic(), kafkaRequest);
+
+            log.info("Order details after update for order number: {}, additionalDetails: {}, compositeItems: {}", orderNumber, orderDetailsDTO.getAdditionalDetails(), orderDetailsDTO.getCompositeItems());
+            
+            return orderDetailsDTO;
+            
+        } catch (CustomException e) {
+            log.error("Custom exception while processing order details", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing order details", e);
+            throw new CustomException("ORDER_DETAILS_PROCESSING_ERROR", 
+                    "Error processing order details: " + e.getMessage());
+        }
+    }
+
 }

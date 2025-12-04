@@ -1,7 +1,7 @@
 # Billing-Service service
 
  Generates bills for revenue services.
-
+ 
 ### DB UML Diagram
 
 NA

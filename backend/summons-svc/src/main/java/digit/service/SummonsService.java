@@ -77,7 +77,17 @@ public class SummonsService {
         String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
         String templateType = getTemplateType(taskType, taskRequest.getTask().getTaskDetails());
         String noticeType = getNoticeType(taskRequest.getTask().getTaskDetails());
+        Task task = taskRequest.getTask();
+        String deliveryChannel = (task != null &&
+                task.getTaskDetails() != null &&
+                task.getTaskDetails().getDeliveryChannel() != null)
+                ? task.getTaskDetails().getDeliveryChannel().getChannelName()
+                : null;
         String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType);
+
+        if (E_POST.equalsIgnoreCase(deliveryChannel)) {
+            pdfTemplateKey = pdfTemplateKey + "-e-post";
+        }
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
     }

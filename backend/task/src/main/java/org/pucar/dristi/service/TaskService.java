@@ -1034,4 +1034,64 @@ public class TaskService {
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         return sdf.format(date);
     }
+
+    /**
+     * Process task details request containing taskDetails, taskNumber and uniqueId
+     * @param request TaskDetailsRequest containing RequestInfo and TaskDetailsDTO
+     * @return processed TaskDetailsDTO
+     */
+    public TaskDetailsDTO processTaskDetails(TaskDetailsRequest request) {
+        try {
+            TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
+            String taskNumber = taskDetailsDTO.getTaskNumber();
+            String uniqueId = taskDetailsDTO.getUniqueId();
+            
+            log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
+            
+            // Search for the task using taskNumber
+            TaskSearchRequest searchRequest = new TaskSearchRequest();
+            searchRequest.setCriteria(TaskCriteria.builder()
+                    .taskNumber(taskNumber)
+                    .build());
+            searchRequest.setRequestInfo(request.getRequestInfo());
+            
+            List<Task> tasks = searchTask(searchRequest);
+            
+            if (tasks == null || tasks.isEmpty()) {
+                log.error("No task found with taskNumber: {}", taskNumber);
+                throw new CustomException("TASK_NOT_FOUND", 
+                        "No task found with taskNumber: " + taskNumber);
+            }
+            
+            Task task = tasks.get(0);
+            Object taskDetails = task.getTaskDetails();
+            taskDetailsDTO.setAuditDetails(task.getAuditDetails());
+
+            taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            
+            // Log the taskDetails
+            log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
+            
+            // Create a request to push to Kafka topic
+            TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .taskDetailsDTO(taskDetailsDTO)
+                    .build();
+            
+            producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
+
+            log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
+            
+            return taskDetailsDTO;
+            
+        } catch (CustomException e) {
+            log.error("Custom exception while processing task details", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing task details", e);
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
+                    "Error processing task details: " + e.getMessage());
+        }
+    }
 }

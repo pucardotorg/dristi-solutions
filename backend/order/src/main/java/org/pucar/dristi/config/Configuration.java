@@ -100,6 +100,10 @@ public class Configuration {
     @Value("${egov.kafka.order.update.topic}")
     private String updateOrderKafkaTopic;
 
+    //update order unique id kafka topic
+    @Value("${egov.kafka.order.update.uniqueid.topic}")
+    private String orderUpdateUniqueIdTopic;
+
     @Value("${egov.workflow.order.business.name}")
     private String orderBusinessName;
 

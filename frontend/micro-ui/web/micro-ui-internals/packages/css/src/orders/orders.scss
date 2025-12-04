@@ -1163,6 +1163,11 @@
   .new-order {
     padding: 24px !important;
   }
+  .order-type-action{
+      .submit-bar-disabled {
+        width:164px !important;
+      }
+    }
 }
 
 .order-type-form-modal {

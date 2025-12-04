@@ -3,8 +3,6 @@
 The inbox service is a aggregation service which aggregates data of municipal services and workflow based on given complex search criteria
 and returns applications and workflow data in paginated manner. The service also returns the total count matching the search criteria.
 
-
-
 ### Service Dependencies
 
 
