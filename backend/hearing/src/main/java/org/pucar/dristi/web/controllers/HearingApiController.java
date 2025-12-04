@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.response.ResponseInfo;
-import org.pucar.dristi.scheduling.CronJobScheduler;
 import org.pucar.dristi.service.HearingService;
 import org.pucar.dristi.service.WitnessDepositionPdfService;
 import org.pucar.dristi.util.OrderUtil;
@@ -29,19 +28,17 @@ import java.util.List;
 @Slf4j
 public class HearingApiController {
 
-    private final CronJobScheduler cronJobScheduler;
     private HearingService hearingService;
     private ResponseInfoFactory responseInfoFactory;
     private WitnessDepositionPdfService witnessDepositionPdfService;
     private OrderUtil orderUtil;
 
     @Autowired
-    public HearingApiController(HearingService hearingService, ResponseInfoFactory responseInfoFactory, WitnessDepositionPdfService witnessDepositionPdfService, OrderUtil orderUtil, CronJobScheduler cronJobScheduler) {
+    public HearingApiController(HearingService hearingService, ResponseInfoFactory responseInfoFactory, WitnessDepositionPdfService witnessDepositionPdfService, OrderUtil orderUtil) {
         this.hearingService = hearingService;
         this.responseInfoFactory = responseInfoFactory;
         this.witnessDepositionPdfService = witnessDepositionPdfService;
         this.orderUtil = orderUtil;
-        this.cronJobScheduler = cronJobScheduler;
     }
 
     @RequestMapping(value = "/v1/create", method = RequestMethod.POST)
@@ -164,12 +161,5 @@ public class HearingApiController {
         return ResponseEntity.ok(noOfDaysToHearingOfEachCase);
     }
 
-    @PostMapping(value = "/v1/_runCronJob")
-    public ResponseEntity<?> runCronJob() {
-        cronJobScheduler.sendNotificationOnHearingsHeldToday();
-        cronJobScheduler.sendNotificationForHearingsScheduledTomorrow();
-
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
 }
 

@@ -105,7 +105,7 @@ public class HearingService {
 
             // send the sms after creating hearing
 
-            callNotificationService(body, body.getHearing().getStatus(), false);
+            callNotificationService(body, body.getHearing().getStatus());
 
             return body.getHearing();
         } catch (CustomException e) {
@@ -167,7 +167,7 @@ public class HearingService {
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
             String updatedState = hearingRequest.getHearing().getStatus();
-            callNotificationService(hearingRequest, updatedState, false);
+            callNotificationService(hearingRequest, updatedState);
 
             filterDocuments(new ArrayList<>() {{
                                 add(hearing);
@@ -369,7 +369,7 @@ public class HearingService {
 
     }
 
-    private void callNotificationService(HearingRequest hearingRequest, String updatedState, boolean isRescheduled) {
+    private void callNotificationService(HearingRequest hearingRequest, String updatedState) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
@@ -380,15 +380,14 @@ public class HearingService {
             JsonNode additionalData = objectMapper.readTree(jsonData);
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
             String hearingType = hearingRequest.getHearing().getHearingType();
-            String messageCode = updatedState != null ?
-                    getMessageCode(isRescheduled) :
-                    null;
+
+            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned, hearingType) : null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
 
             String hearingDate = hearingRequest.getHearing().getStartTime() != null ? hearingRequest.getHearing().getStartTime().toString() : "";
             LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.of(config.getZoneId()));
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DOB_FORMAT_Y_M_D);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DOB_FORMAT_D_M_Y);
             String date = dateTime.format(formatter);
 
             Set<String> individualIds = extractIndividualIds(caseDetails);
@@ -400,26 +399,13 @@ public class HearingService {
             if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
-            String oldHearingDate = null;
-            if(isRescheduled) {
-                HearingCriteria hearingCriteria = HearingCriteria.builder()
-                        .hearingId(hearingRequest.getHearing().getHearingId())
-                        .build();
-                HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
-                        .criteria(hearingCriteria)
-                        .build();
-                Hearing existingHearing = searchHearing(hearingSearchRequest).get(0);
-                long oldHearingStartTime = existingHearing.getStartTime();
-                oldHearingDate = String.valueOf(dateUtil.getLocalDateFromEpoch(oldHearingStartTime));
-            }
+
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(date)
                     .hearingType(localizedHearingType)
-                    .tenantId(hearingRequest.getHearing().getTenantId())
-                    .oldHearingDate(oldHearingDate)
-                    .build();
+                    .tenantId(hearingRequest.getHearing().getTenantId()).build();
 
             for (String number : phoneNumbers) {
                 notificationService.sendNotification(hearingRequest.getRequestInfo(), smsTemplateData, messageCode, number);
@@ -438,10 +424,14 @@ public class HearingService {
         return caseSearchRequest;
     }
 
-    private String getMessageCode(boolean isRescheduled) {
+    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned, String hearingType) {
 
-        if(isRescheduled){
-            return HEARING_RESCHEDULED;
+        log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
+        if (!hearingType.isEmpty() && updatedStatus.equalsIgnoreCase(SCHEDULED)) {
+            return getMessageCodeForHearingType(hearingType);
+        }
+        if (hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)) {
+            return HEARING_ADJOURNED;
         }
         return null;
     }
@@ -707,7 +697,6 @@ public class HearingService {
 
             updateSchedulerHearings(scheduleHearings, request.getRequestInfo());
             log.info("operation=updateBulkHearing, status=SUCCESS");
-            sendSMSForHearingReschedule(request.getRequestInfo(), hearingList);
             producer.push(config.getBulkRescheduleTopic(), request);
             return updatedBulkHearings;
         } catch (Exception e) {
@@ -743,18 +732,6 @@ public class HearingService {
             updatedBulkHearings.add(hearing);
         }
         return updatedBulkHearings;
-    }
-
-    private void sendSMSForHearingReschedule(RequestInfo requestInfo, List<Hearing> hearingList){
-        HearingRequest hearingRequest = HearingRequest.builder()
-                .requestInfo(requestInfo)
-                .build();
-
-        for(Hearing hearing : hearingList){
-            hearingRequest.setHearing(hearing);
-            callNotificationService(hearingRequest, hearing.getStatus(), true);
-        }
-
     }
 
     public void updateCaseReferenceHearing(Map<String, Object> body) {

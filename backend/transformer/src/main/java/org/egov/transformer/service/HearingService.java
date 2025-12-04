@@ -115,9 +115,6 @@ public class HearingService {
             if(openHearingList.get(0).getSerialNumber() > 0) {
                 openHearing.setSerialNumber(openHearingList.get(0).getSerialNumber());
             }
-            if(openHearingList.get(0).getOrderStatus() !=null && !openHearingList.get(0).getOrderStatus().toString().isEmpty() ) {
-                openHearing.setOrderStatus(openHearingList.get(0).getOrderStatus());
-            }
         }
 
         enrichOrderFields(requestInfo,openHearing);

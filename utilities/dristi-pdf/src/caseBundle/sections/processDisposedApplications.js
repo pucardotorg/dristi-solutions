@@ -40,7 +40,7 @@ async function processDisposedApplications(
     "applicationsorders"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "applications"
   );
 
@@ -142,8 +142,8 @@ async function processDisposedApplications(
             } else if (sourceRepresentative) {
               const docketNameOfComplainants = sourceRepresentative.representing
                 ?.map((lit) => lit.additionalDetails.fullName)
-                ?.filter(Boolean)
-                ?.join(", ");
+                .filter(Boolean)
+                .join(", ");
               const partyType =
                 sourceRepresentative.representing[0].partyType.includes(
                   "complainant"
@@ -249,8 +249,8 @@ async function processDisposedApplications(
                     const docketNameOfComplainants =
                       sourceRepresentative.representing
                         ?.map((lit) => lit.additionalDetails.fullName)
-                        ?.filter(Boolean)
-                        ?.join(", ");
+                        .filter(Boolean)
+                        .join(", ");
                     docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
                   } else {
                     docketCounselFor = "";
@@ -330,7 +330,7 @@ async function processDisposedApplications(
             if (orderList?.length !== 0) {
               const fileStoreIds = [];
 
-              orderList?.map((order) => {
+              orderList.map((order) => {
                 if (order?.documents?.length !== 0) {
                   const document = order?.documents?.find(
                     (doc) => doc?.documentType === "SIGNED"
@@ -368,11 +368,10 @@ async function processDisposedApplications(
           };
         })
       );
-      const applicationsIndexSection = indexCopy.sections?.find(
+      const applicationsIndexSection = indexCopy.sections.find(
         (section) => section.name === "applications"
       );
-      applicationsIndexSection.lineItems =
-        applicationLineItems?.filter(Boolean);
+      applicationsIndexSection.lineItems = applicationLineItems.filter(Boolean);
     }
   }
 }

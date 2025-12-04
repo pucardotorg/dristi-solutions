@@ -164,7 +164,7 @@ class ApplicationServiceTest {
         // Mock config topic
         when(config.getApplicationUpdateTopic()).thenReturn("application-update-topic");
 
-        doNothing().when(smsNotificationUtil).callNotificationService(any(), any(), any(), anyBoolean());
+        doNothing().when(smsNotificationUtil).callNotificationService(any(), any(), any());
         // Act
         Application result = applicationService.updateApplication(mockRequest,false);
 
@@ -435,7 +435,7 @@ class ApplicationServiceTest {
         doNothing().when(workflowService).updateWorkflowStatus(applicationRequest);
         doNothing().when(enrichmentUtil).enrichApplicationNumberByCMPNumber(applicationRequest);
         doNothing().when(fileStoreUtil).deleteFilesByFileStore(anyList(), eq("tenant123"));
-        doNothing().when(smsNotificationUtil).callNotificationService(any(), anyString(), anyString(), anyBoolean());
+        doNothing().when(smsNotificationUtil).callNotificationService(any(), anyString(), anyString());
         doNothing().when(producer).push(anyString(), any());
 
         when(config.getApplicationUpdateTopic()).thenReturn("app-update-topic");
@@ -452,7 +452,7 @@ class ApplicationServiceTest {
         // Verify side effects
         verify(fileStoreUtil).deleteFilesByFileStore(eq(List.of("file-inactive")), eq("tenant123"));
         verify(producer).push("app-update-topic", applicationRequest);
-
+        verify(smsNotificationUtil).callNotificationService(applicationRequest, "PENDINGAPPROVAL", "SUBMIT_BAIL_DOCUMENTS");
     }
 
 

@@ -293,7 +293,7 @@ class InboxUtilTest {
         Long toDate = 987654321L;
         String searchText = "raj";
 
-        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText,false);
+        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
 
         assertNotNull(request);
         assertEquals(tenantId, request.getInbox().getTenantId());
@@ -304,7 +304,7 @@ class InboxUtilTest {
 
     @Test
     void testGetInboxRequestForOpenHearing_withNullParameters() {
-        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing(null, null, null, null,false);
+        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing(null, null, null, null);
 
         assertNotNull(request);
         assertNull(request.getInbox().getTenantId());
@@ -315,7 +315,7 @@ class InboxUtilTest {
 
     @Test
     void testGetInboxRequestForOpenHearing_withEmptySearchText() {
-        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing("pb", 123L, 456L, "",false);
+        InboxRequest request = inboxUtil.getInboxRequestForOpenHearing("pb", 123L, 456L, "");
 
         assertNotNull(request);
         assertEquals("pb", request.getInbox().getTenantId());

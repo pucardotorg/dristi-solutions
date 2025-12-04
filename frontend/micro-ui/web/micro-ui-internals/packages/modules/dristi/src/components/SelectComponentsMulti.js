@@ -88,12 +88,6 @@ const selectCompMultiConfig = {
   populators: {
     inputs: [
       {
-        infoHeader: "CS_COMMON_NOTE",
-        infoText: "ACCUSED_ADDRESS_NOTE",
-        infoTooltipMessage: "ACCUSED_ADDRESS_NOTE",
-        type: "InfoComponent",
-      },
-      {
         label: "CS_TYPE_OF_ADDRESS",
         showOptional: true,
         type: "Radio",

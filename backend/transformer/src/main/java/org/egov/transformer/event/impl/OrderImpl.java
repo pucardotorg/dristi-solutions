@@ -53,7 +53,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
 
-        String businessOfTheDay = getBusinessOfTheDay(event, requestInfo);
+        String businessOfTheDay = getBusinessOfTheDay(event,requestInfo);
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
@@ -182,26 +182,23 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                     String status = entry.getKey(); // "Present", "Absent"
                     List<String> roles = entry.getValue();
 
-                    if ("Present".equalsIgnoreCase(status)) {
+                    if("Present".equalsIgnoreCase(status)) {
                         if (roles != null) {
                             roles.forEach(role -> rolesLocalizedPresent.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
                         }
-                    } else {
+                    }
+                    else {
                         if (roles != null) {
                             roles.forEach(role -> rolesLocalizedAbsentee.add(localizationUtil.callLocalization(requestInfo, order.getTenantId(), role)));
                         }
                     }
                 }
 
-                if (!rolesLocalizedPresent.isEmpty()) {
-                    String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
-                    sb.append(linePresent).append(DOT);
-                }
+                String linePresent = "Present" + ": " + String.join(", ", rolesLocalizedPresent);
+                sb.append(linePresent).append(DOT);
 
-                if (!rolesLocalizedAbsentee.isEmpty()) {
-                    String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
-                    sb.append(lineAbsent).append(DOT);
-                }
+                String lineAbsent = "Absent" + ": " + String.join(", ", rolesLocalizedAbsentee);
+                sb.append(lineAbsent).append(DOT);
             }
 
             // Item Text

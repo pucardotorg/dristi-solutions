@@ -268,9 +268,6 @@ public class Configuration {
     @Value("${egov.sms.notification.warrant.issued.success.template.id}")
     private String smsNotificationWarrantIssueSuccess;
 
-    @Value("${egov.sms.notification.process.fee.payment.template.id}")
-    private String smsNotificationProcessFeePaymentTemplateId;
-
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;

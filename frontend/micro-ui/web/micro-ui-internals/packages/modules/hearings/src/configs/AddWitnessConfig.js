@@ -70,8 +70,6 @@ const createWitnessConfig = (index) => [
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -212,7 +210,6 @@ const createWitnessConfig = (index) => [
         type: "component",
         label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
         component: "SelectCustomTextArea",
-        isInfinite: true,
         populators: {
           inputs: [
             {

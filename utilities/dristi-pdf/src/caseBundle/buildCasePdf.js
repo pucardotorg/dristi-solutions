@@ -28,7 +28,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       tenantId,
       requestInfo
     ).then((mdmsRes) => {
-      return mdmsRes.data.mdms?.filter((x) => x.isActive)?.map((x) => x.data);
+      return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
     });
 
     if (!caseBundleDesign || caseBundleDesign.length === 0) {
@@ -45,7 +45,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
         continue;
       }
 
-      const sectionConfig = caseBundleDesign?.find(
+      const sectionConfig = caseBundleDesign.find(
         (design) => design.name === section.name && design.isactive
       );
 

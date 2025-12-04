@@ -164,6 +164,7 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
+
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {

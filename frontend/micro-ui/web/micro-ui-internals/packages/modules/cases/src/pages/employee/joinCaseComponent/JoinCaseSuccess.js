@@ -22,11 +22,9 @@ const JoinCaseSuccess = ({
   const { t } = useTranslation();
 
   const history = useHistory();
-  const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -129,10 +127,8 @@ const JoinCaseSuccess = ({
               className={"selector-button-border"}
               label={t("BACK_HOME")}
               onButtonClick={() => {
-                triggerSurvey("JOIN_CASE_PAYMENT", () => {
-                  closeModal();
-                  if (refreshInbox) refreshInbox();
-                });
+                closeModal();
+                if (refreshInbox) refreshInbox();
               }}
             />
             <Button
@@ -145,16 +141,14 @@ const JoinCaseSuccess = ({
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
                   );
                 } else {
-                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
-                    if (type === "external") {
-                      closeModal();
-                      if (refreshInbox) refreshInbox();
-                      return;
-                    }
-                    history.push(
-                      `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
-                    );
-                  });
+                  if (type === "external") {
+                    closeModal();
+                    if (refreshInbox) refreshInbox();
+                    return;
+                  }
+                  history.push(
+                    `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                  );
                 }
               }}
               isDisabled={isCaseViewDisabled}
@@ -164,7 +158,6 @@ const JoinCaseSuccess = ({
           </div>
         </React.Fragment>
       )}
-      {SurveyUI}
     </div>
   );
 };

@@ -256,7 +256,7 @@ public class IndexerUtilsTest {
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 "index", "referenceId", "id", "name", "entityType", "referenceId", "status",
                 "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action",
-                "[\"filingNumber\",\"COURT-456\",\"caseTitle\",\"John Doe\"]", "[null]", "[\"role\"]", "cnrNumber",
+                "[\"COURT-456\",\"caseTitle\",\"John Doe\"]", "[null]", "[\"role\"]", "cnrNumber",
                 "filingNumber", "caseId", "caseTitle", true, 123L, 456L,
                 "{\"key\":\"value\"}", null, null, 1000000000, null, "NIA S138", 1000000000, null
         );

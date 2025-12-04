@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
-import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
@@ -58,14 +57,13 @@ public class TaskService {
     private final ESignUtil eSignUtil;
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
-    private final UserUtil userUtil;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, UserUtil userUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -84,7 +82,6 @@ public class TaskService {
         this.eSignUtil = eSignUtil;
         this.cipherUtil = cipherUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
-        this.userUtil = userUtil;
     }
 
     @Autowired
@@ -511,26 +508,7 @@ public class TaskService {
                 individualIds = extractIndividualIds(caseDetails,accusedName);
             }
 
-            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
-                individualIds.clear();
-                Object workflowAdditionalDetailsObj = taskRequest.getTask().getWorkflow().getAdditionalDetails();
-                JsonNode workflowAdditionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(workflowAdditionalDetailsObj));
-                ArrayNode litigants = (ArrayNode) workflowAdditionalDetails.get("litigants");
-                for(JsonNode litigant : litigants) {
-                    individualIds.add(litigant.asText());
-                }
-            }
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
-            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
-                CourtCase courtCase = objectMapper.convertValue(caseDetails, CourtCase.class);
-                List<String> advocateIds = courtCase.getRepresentatives().stream()
-                        .map(AdvocateMapping::getAdvocateId)
-                        .toList();
-                List<User> advocates = userUtil.getUserListFromUserUuid(advocateIds);
-                advocates.forEach(advocate -> {
-                    phoneNumbers.add(advocate.getMobileNumber());
-                });
-            }
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
@@ -627,6 +605,31 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
+        if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
+            return NOTICE_DELIVERED;
+        }
+        if (NOTICE.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
+            return NOTICE_NOT_DELIVERED;
+        }
+        if (SUMMON.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
+            return SUMMONS_DELIVERED;
+        }
+        if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
+            return SUMMONS_NOT_DELIVERED;
+        }
+        boolean b = WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType);
+        if (b && PENDING_PAYMENT.equalsIgnoreCase(status)) {
+            return WARRANT_ISSUED;
+        }
+        if (b && WARRANT_SENT.equalsIgnoreCase(status)) {
+            return WARRANT_ISSUE_SUCCESS;
+        }
+        if (b && EXECUTED.equalsIgnoreCase(status)) {
+            return WARRANT_DELIVERED;
+        }
+        if (b && NOT_EXECUTED.equalsIgnoreCase(status)) {
+            return WARRANT_NOT_DELIVERED;
+        }
         return null;
     }
 

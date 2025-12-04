@@ -24,14 +24,12 @@ public class CaseUtil {
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
     private final Configuration configs;
-    private final ObjectMapper objectMapper;
 
     @Autowired
-    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, ObjectMapper objectMapper) {
+    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.configs = configs;
-        this.objectMapper = objectMapper;
     }
 
     public CaseExistsResponse fetchCaseDetails(CaseExistsRequest caseExistsRequest) {
@@ -66,5 +64,4 @@ public class CaseUtil {
             throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
         }
     }
-
 }

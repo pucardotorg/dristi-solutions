@@ -237,7 +237,6 @@ public class PdfServiceUtil {
                 .orElse("");
         String respondentName = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
         String respondentAddress = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
-        Address address = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
@@ -258,7 +257,6 @@ public class PdfServiceUtil {
                 .barCouncilUrl(config.getBarCouncilUrl())
                 .courtAddress(config.getCourtAddress())
                 .lokAdalatUrl(config.getLokAdalatUrl())
-                .address(address)
                 .infoPdfUrl(config.getInfoPdfUrl())
                 .helplineNumber(config.getHelplineNumber())
                 .build();

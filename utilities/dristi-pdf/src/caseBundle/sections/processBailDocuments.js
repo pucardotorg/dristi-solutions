@@ -31,7 +31,7 @@ async function processBailDocuments(
     "bailbond"
   );
 
-  const sectionPosition = indexCopy.sections?.findIndex(
+  const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "baildocument"
   );
 
@@ -65,7 +65,7 @@ async function processBailDocuments(
 
     if (applicationList?.length !== 0) {
       const innerLineItems = await Promise.all(
-        applicationList?.map(async (application, index) => {
+        applicationList.map(async (application, index) => {
           if (application?.documents?.length !== 0) {
             const signed = [];
             const others = [];
@@ -110,7 +110,7 @@ async function processBailDocuments(
                 const docketNameOfComplainants =
                   sourceRepresentative.representing
                     ?.map((lit) => lit.additionalDetails.fullName)
-                    ?.filter(Boolean)
+                    .filter(Boolean)
                     .join(", ");
                 const partyType =
                   sourceRepresentative.representing[0].partyType.includes(
@@ -241,8 +241,8 @@ async function processBailDocuments(
                     const docketNameOfComplainants =
                       sourceRepresentative.representing
                         ?.map((lit) => lit.additionalDetails.fullName)
-                        ?.filter(Boolean)
-                        ?.join(", ");
+                        .filter(Boolean)
+                        .join(", ");
                     const partyType =
                       sourceRepresentative.representing[0].partyType.includes(
                         "complainant"
@@ -321,12 +321,12 @@ async function processBailDocuments(
           }
         })
       );
-      bailApplicationsLineItems.push(...innerLineItems?.filter(Boolean));
-      const bailDocumentIndexSection = indexCopy.sections?.find(
+      bailApplicationsLineItems.push(...innerLineItems.filter(Boolean));
+      const bailDocumentIndexSection = indexCopy.sections.find(
         (section) => section.name === "baildocument"
       );
       bailDocumentIndexSection.lineItems =
-        bailApplicationsLineItems?.filter(Boolean);
+        bailApplicationsLineItems.filter(Boolean);
     }
   }
 
@@ -354,7 +354,7 @@ async function processBailDocuments(
 
     if (bailBondList?.length !== 0) {
       const innerLineItems = await Promise.all(
-        bailBondList?.map(async (bailBond, index) => {
+        bailBondList.map(async (bailBond, index) => {
           if (bailBond?.documents?.length !== 0) {
             const signed = [];
             const others = [];
@@ -406,10 +406,10 @@ async function processBailDocuments(
                 const docketNameOfComplainants =
                   sourceRepresentative.representing
                     ?.map((lit) => lit.additionalDetails.fullName)
-                    ?.filter(Boolean)
-                    ?.join(", ");
+                    .filter(Boolean)
+                    .join(", ");
                 const partyType =
-                  sourceRepresentative.representing[0].partyType?.includes(
+                  sourceRepresentative.representing[0].partyType.includes(
                     "complainant"
                   )
                     ? "COMPLAINANT"
@@ -480,14 +480,14 @@ async function processBailDocuments(
           }
         })
       );
-      bailBondLineItems.push(...innerLineItems?.filter(Boolean));
-      const bailDocumentIndexSection = indexCopy.sections?.find(
+      bailBondLineItems.push(...innerLineItems.filter(Boolean));
+      const bailDocumentIndexSection = indexCopy.sections.find(
         (section) => section.name === "baildocument"
       );
       // Append bail bond line items to existing bail application line items instead of overwriting
       bailDocumentIndexSection.lineItems = [
-        ...(bailApplicationsLineItems?.filter(Boolean) || []),
-        ...bailBondLineItems?.filter(Boolean),
+        ...(bailApplicationsLineItems.filter(Boolean) || []),
+        ...bailBondLineItems.filter(Boolean),
       ];
     }
   }

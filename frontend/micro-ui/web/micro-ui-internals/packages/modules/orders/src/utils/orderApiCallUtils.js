@@ -17,7 +17,7 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
       },
       {}
     );
-    return breakupResponse?.Calculation?.[0]?.breakDown?.reduce((sum, fee) => (sum += fee.amount), 0);
+    return breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee").reduce((sum, fee) => (sum += fee.amount), 0);
   } catch (error) {
     console.error("error", error);
     return 0;

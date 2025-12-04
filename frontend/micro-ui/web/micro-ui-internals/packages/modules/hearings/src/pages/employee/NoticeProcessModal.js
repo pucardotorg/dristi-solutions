@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { formatDate } from "../../utils";
+import { hearingService } from "../../hooks/services";
+import { Urls } from "../../hooks/services/Urls";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
-import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "72%",
@@ -23,12 +24,22 @@ const modalPopup = {
   // height: "calc(100% - 64px)"
 };
 
-const formDataKeyMap = {
-  NOTICE: "noticeOrder",
-  SUMMONS: "SummonsOrder",
-  WARRANT: "warrantFor",
-  PROCLAMATION: "proclamationFor",
-  ATTACHMENT: "attachmentFor",
+const actionButtonStyle = {
+  position: "fixed",
+  marginBottom: "0px",
+  bottom: "0px",
+  right: "21px",
+  width: "calc(100% - 21px)",
+  backgroundColor: "white",
+  paddingBottom: "14px",
+};
+
+const headingStyle = {
+  fontFamily: "Roboto",
+  fontSize: "16px",
+  fontWeight: 700,
+  lineHeight: "18.75px",
+  textAlign: "center",
 };
 
 const ModalHeading = ({ label }) => {
@@ -39,45 +50,35 @@ const ModalHeading = ({ label }) => {
   );
 };
 
-function removeAccusedSuffix(partyName) {
-  return partyName?.replace(/\s*\((Accused|witness)\)$/, "");
-}
+const CloseButton = (props) => {
+  return (
+    <div onClick={props?.onClick} className="header-bar-end">
+      <CloseSvg />
+    </div>
+  );
+};
 
 function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
-  filteredOrders?.forEach((order) => {
-    const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
-    const parties = Array.isArray(party) ? party : party ? [party] : [];
-    if (!Array?.isArray(parties) || parties?.length === 0) return;
+  filteredOrders.forEach((order) => {
+    const party = order.orderDetails?.parties?.[0];
+    if (!party) return;
 
-    parties.forEach((party) => {
-      const partyName = getFormattedName(
-        party?.data?.firstName || party?.data?.respondentFirstName,
-        party?.data?.middleName || party?.data?.respondentMiddleName,
-        party?.data?.lastName || party?.data?.respondentLastName,
-        party?.data?.witnessDesignation,
-        null
-      );
+    let partyName = party.partyName.trim();
+    let partyType = party.partyType.toLowerCase();
+    if (partyType === "respondent") {
+      partyType = "Accused";
+    }
+    if (partyType === "witness") {
+      partyType = "Witness";
+    }
 
-      if (!partyName) return;
+    if (!accusedWiseOrdersMap.has(partyName)) {
+      accusedWiseOrdersMap.set(partyName, { partyType, partyName, ordersList: [] });
+    }
 
-      let partyType = (party?.data?.partyType || "").toLowerCase();
-
-      if (partyType === "respondent") {
-        partyType = "Accused";
-      } else if (partyType === "witness") {
-        partyType = "Witness";
-      } else {
-        partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
-      }
-
-      if (!accusedWiseOrdersMap?.has(partyName)) {
-        accusedWiseOrdersMap?.set(partyName, { partyType, partyName, ordersList: [] });
-      }
-
-      accusedWiseOrdersMap?.get(partyName)?.ordersList?.push(order);
-    });
+    accusedWiseOrdersMap.get(partyName).ordersList.push(order);
   });
 
   const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());
@@ -100,21 +101,17 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
+  const partyIndex = state?.state?.params?.partyIndex;
   const taskCnrNumber = state?.state?.params?.taskCnrNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [orderNumber, setOrderNumber] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
-  const [partyName, setPartyName] = useState(null);
-  const [partyType, setPartyType] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
-  const [orderList, setOrderList] = useState([]);
-  const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
-  const [hasPendingTasks, setHasPendingTasks] = useState(true);
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -143,12 +140,22 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return [];
   }, [hearingsData, currentHearingId]);
 
-  const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
+  const { caseId, cnrNumber, caseTitle } = useMemo(
+    () => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+    [caseDetails]
+  );
 
   const handleCloseModal = () => {
     if (handleClose) {
       handleClose();
     } else history.goBack();
+  };
+
+  const handleNavigate = () => {
+    const contextPath = window?.contextPath || "";
+    history.push(
+      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${currentHearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
+    );
   };
 
   const { data: ordersData } = useSearchOrdersService(
@@ -157,6 +164,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     filingNumber,
     Boolean(filingNumber && caseCourtId)
   );
+
+  const [orderList, setOrderList] = useState([]);
 
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
@@ -210,52 +219,15 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return updatedGrouped;
   }, [ordersData]);
 
+  const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
+
   useEffect(() => {
     setOrderList(orderListFiltered?.[0]?.ordersList || []);
     setOrderNumber(orderListFiltered?.[0]?.ordersList?.[0]?.orderNumber);
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
-    setPartyName(removeAccusedSuffix(orderListFiltered?.[0]?.partyName));
-    setPartyType(orderListFiltered?.[0]?.partyType);
   }, [orderListFiltered]);
-
-  const [currentHearingNumber, setCurrentHearingNumber] = useState(hearingDetails?.hearingId);
-
-  useEffect(() => {
-    if (hearingDetails?.hearingId && !currentHearingNumber) {
-      setCurrentHearingNumber(hearingDetails.hearingId);
-    }
-  }, [hearingDetails?.hearingId]);
-
-  const hearingCriteria = useMemo(
-    () => ({
-      tenantId,
-      filingNumber,
-      ...(currentHearingNumber && { hearingId: currentHearingNumber }),
-      ...(caseCourtId && { courtId: caseCourtId }),
-    }),
-    [tenantId, filingNumber, caseCourtId, currentHearingNumber]
-  );
-
-  const { data: hearingByNumber } = Digit.Hooks.hearings.useGetHearings(
-    {
-      criteria: hearingCriteria,
-    },
-    { applicationNumber: "", cnrNumber: "" },
-    `${currentHearingNumber}`,
-    Boolean(filingNumber && caseCourtId)
-  );
-
-  const paymentStatusText = useMemo(() => {
-    const status = hearingByNumber?.HearingList?.[0]?.status;
-    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_TEXT" : "PAYMENT_PENDING_TEXT";
-  }, [hearingByNumber]);
-
-  const paymentStatusSubText = useMemo(() => {
-    const status = hearingByNumber?.HearingList?.[0]?.status;
-    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_SUB_TEXT" : "PAYMENT_PENDING_SUB_TEXT";
-  }, [hearingByNumber]);
 
   const config = useMemo(() => {
     if (!taskCnrNumber && !cnrNumber) return undefined;
@@ -267,10 +239,32 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       orderType,
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
-      partyName,
-      partyType,
     });
-  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
+  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId]);
+
+  const getOrderPartyData = (orderType, orderList) => {
+    return orderList?.find((item) => orderType === item?.orderType)?.orderDetails?.parties;
+  };
+
+  const { data: tasksData, isLoading: isTaskLoading } = Digit.Hooks.hearings.useGetTaskList(
+    {
+      criteria: {
+        tenantId: tenantId,
+        cnrNumber: taskCnrNumber || cnrNumber,
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isButtonVisible = useMemo(() => {
+    if (!tasksData || !orderId) return false;
+
+    const filteredTasks = tasksData?.list?.filter((task) => task?.orderId === orderId);
+
+    return filteredTasks?.some((task) => task?.status === "UNDELIVERED" || task?.status === "NOT_EXECUTED");
+  }, [orderId, tasksData]);
 
   const CloseButton = (props) => {
     return (
@@ -312,6 +306,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     );
   }, [t, caseDetails?.caseTitle, filingNumber, currentHearingId, hearingDetails?.startTime, userType, caseId]);
 
+  function removeAccusedSuffix(partyName) {
+    return partyName.replace(/\s*\(Accused\)$/, "");
+  }
+
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
       {!showModal && (
@@ -331,13 +329,9 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
-              setPartyName(removeAccusedSuffix(item?.partyName));
-              setPartyType(item?.partyType);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);
-              setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
-              setHasPendingTasks(true);
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
             style={{
@@ -385,8 +379,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                   setTimeout(() => {
                     setOrderLoading((prev) => !prev);
                   }, 0);
-                  setCurrentHearingNumber(item?.scheduledHearingNumber);
-                  setHasPendingTasks(true);
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
                 style={{
@@ -422,7 +414,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{formatDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
+                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
                 </div>
               </div>
               <div style={{ marginLeft: "10px" }}>
@@ -436,47 +428,40 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               </div>
             </div>
           )}
-          {hasPendingTasks === false ? (
-            <div
-              style={{
-                background: "#F9E6E6",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "24px 0",
+
+          {orderNumber && !orderLoading && config && (
+            <InboxSearchComposer
+              configs={config}
+              defaultValues={filingNumber}
+              additionalConfig={{
+                resultsTable: {
+                  onClickRow: (props) => {
+                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+                      setRowData(props?.original);
+                      setshowNoticeModal(true);
+                      return;
+                    }
+                  },
+                },
               }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "700", marginBottom: "6px" }}>{t(paymentStatusText)}</span>
-              <span style={{ fontSize: "16px", fontWeight: "400" }}>{t(paymentStatusSubText)}</span>
-            </div>
-          ) : (
-            orderNumber &&
-            !orderLoading &&
-            config && (
-              <InboxSearchComposer
-                configs={{
-                  ...config,
-                  additionalDetails: {
-                    ...config?.additionalDetails,
-                    setHasTasks: setHasPendingTasks,
-                  },
-                }}
-                defaultValues={filingNumber}
-                additionalConfig={{
-                  resultsTable: {
-                    onClickRow: (props) => {
-                      if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
-                        setRowData(props?.original);
-                        setshowNoticeModal(true);
-                        return;
-                      }
-                    },
-                  },
-                }}
-              />
-            )
+            />
           )}
+          {/* {isButtonVisible && currentHearingId && userType === "employee" && (
+            <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
+              <Button
+                label={`Re-Issue ${t(orderType)}`}
+                onButtonClick={() => {
+                  handleNavigate();
+                }}
+                className="action-button"
+                style={{
+                  boxShadow: "none",
+                  padding: "16px 24px",
+                }}
+                textStyles={headingStyle}
+              />
+            </div>
+          )} */}
         </React.Fragment>
       )}
     </div>

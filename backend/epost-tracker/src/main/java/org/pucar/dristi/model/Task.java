@@ -1,5 +1,6 @@
 package org.pucar.dristi.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,28 +36,21 @@ public class Task {
     private String tenantId = null;
 
     @JsonProperty("orderId")
+    @NotNull
+    @Valid
     private UUID orderId = null;
 
     @JsonProperty("filingNumber")
-    @NotNull(message = "filing number is required to create a task")
     private String filingNumber = null;
 
     @JsonProperty("taskNumber")
     private String taskNumber = null;
 
-    @JsonProperty("caseTitle")
-    private String caseTitle = null;
-
-    @JsonProperty("courtId")
-    private String courtId;
-
-    @JsonProperty("caseId")
-    private String caseId = null;
-
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
     @JsonProperty("createdDate")
+    @NotNull
     @Valid
     private Long createdDate = null;
 
@@ -77,16 +72,12 @@ public class Task {
     @JsonProperty("taskDetails")
     private TaskDetails taskDetails = null;
 
-    @JsonProperty("amount")
-    @Valid
-    private Amount amount = null;
-
     @JsonProperty("status")
     @NotNull
     private String status = null;
 
     @JsonProperty("assignedTo")
-    private List<AssignedTo> assignedTo = null;
+    private Object assignedTo = null;
 
     @JsonProperty("isActive")
     private Boolean isActive = null;
@@ -104,18 +95,5 @@ public class Task {
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;
-
-    @JsonProperty("workflow")
-    @Valid
-    private WorkflowObject workflow = null;
-
-    @JsonProperty("referenceId")
-    private String referenceId;
-
-    @JsonProperty("state")
-    private String state;
-
-    @JsonProperty("duedate")
-    private Long duedate;
 
 }

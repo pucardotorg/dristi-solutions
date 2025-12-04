@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { caseFileLabels, modifiedEvidenceNumber, TaskManagementWorkflowState } from "../../../Utils";
+import { caseFileLabels, modifiedEvidenceNumber } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
@@ -9,6 +9,7 @@ import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import { Loader } from "@egovernments/digit-ui-react-components";
+import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import MarkAsEvidence from "./MarkAsEvidence";
 import DownloadButton from "../../../components/DownloadButton";
 import CustomChip from "../../../components/CustomChip";
@@ -531,28 +532,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   );
 
   const bailBondList = useMemo(() => bailBondData?.bails, [bailBondData]);
-
-  const { data: taskManagementData, isLoading: isTaskManagementLoading } = Digit.Hooks.dristi.useSearchTaskMangementService(
-    {
-      criteria: {
-        filingNumber,
-        status: TaskManagementWorkflowState.COMPLETED,
-        tenantId: tenantId,
-      },
-      pagination: {
-        sortBy: "last_modified_time",
-        order: "asc",
-        limit: 100,
-      },
-    },
-    {},
-    `case-bundle-taskManagement-${filingNumber}`,
-    Boolean(filingNumber)
-  );
-
-  const taskManagementList = useMemo(() => {
-    return taskManagementData?.taskManagementRecords;
-  }, [taskManagementData]);
 
   useEffect(() => {
     const fetchProcessData = async () => {
@@ -1553,22 +1532,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           }))
       : [];
 
-    const taskManagementDocs =
-      taskManagementList
-        ?.map((taskManagement, index) => {
-          const doc = taskManagement?.documents?.find?.((d) => d?.documentType === "PAYMENT_RECEIPT") || null;
-          if (!doc) return null;
-
-          return {
-            id: `TASK_MANAGEMENT_PAYMENT_RECEIPT_${index}`,
-            title: `${taskManagement?.taskType}_TASK_PAYMENT_RECEIPT`,
-            fileStoreId: doc?.fileStore,
-            hasChildren: false,
-          };
-        })
-        ?.filter(Boolean) || [];
-
-    const paymentReceiptsChildren = [...casePaymentFile, ...genericTaskList, ...(taskManagementDocs?.length > 0 ? taskManagementDocs : [])];
+    const paymentReceiptsChildren = [...casePaymentFile, ...genericTaskList];
 
     const mainStructureRaw = [
       {
@@ -1770,8 +1734,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isPendingApprovalApplicationLoading ||
     isMandatoryOrdersLoading ||
     isBailBondLoading ||
-    isCompleteEvidenceLoading ||
-    isTaskManagementLoading
+    isCompleteEvidenceLoading
   ) {
     return (
       <div style={{ width: "100%", paddingTop: "50px" }}>

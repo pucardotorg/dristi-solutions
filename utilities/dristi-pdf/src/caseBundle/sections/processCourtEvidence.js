@@ -145,11 +145,11 @@ async function processCourtEvidence(
   }
 
   if (courtEvidenceLineItems.length > 0) {
-    const courtEvidenceIndexSection = indexCopy.sections?.find(
+    const courtEvidenceIndexSection = indexCopy.sections.find(
       (section) => section.name === "courtevidence"
     );
     courtEvidenceIndexSection.lineItems =
-      courtEvidenceLineItems?.filter(Boolean);
+      courtEvidenceLineItems.filter(Boolean);
   }
 }
 

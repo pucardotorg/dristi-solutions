@@ -231,7 +231,7 @@ public class OrderQueryBuilder {
 
     private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
         if (isFirstCriteria) {
-            query.append(" WHERE orders.status <> 'DELETED' AND ");
+            query.append(" WHERE ");
         } else {
             query.append(" AND ");
         }

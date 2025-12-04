@@ -1562,7 +1562,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
-        if (!isDisabled && !(step === 2 || step === 3)) onProceed();
+        if (!isDisabled && step !== 3) onProceed();
         if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },

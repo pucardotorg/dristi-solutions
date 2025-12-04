@@ -2,20 +2,8 @@ import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernme
 import React, { useMemo } from "react";
 import { formatAddress } from "../Utils";
 
-const AddressBailBond = ({
-  t,
-  config,
-  onSelect,
-  formData = {},
-  errors,
-  formState,
-  control,
-  watch,
-  register,
-  setError,
-  clearErrors,
-  formDisbalityCount,
-}) => {
+
+const AddressBailBond = ({ t, config, onSelect, formData = {}, errors, formState, control, watch, register, setError, clearErrors }) => {
   const configKey = `${config.key}`;
 
   const { inputs } = useMemo(() => {
@@ -74,7 +62,7 @@ const AddressBailBond = ({
                         }
                         setValue2(value, input.name, input?.autoFill);
                       }}
-                      disable={input?.isDisabled || formDisbalityCount}
+                      disable={input?.isDisabled}
                       isRequired={input?.validation?.isRequired}
                       pattern={input?.validation?.pattern}
                       errMsg={input?.validation?.errMsg}

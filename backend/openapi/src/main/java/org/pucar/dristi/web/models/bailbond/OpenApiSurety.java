@@ -22,10 +22,6 @@ public class OpenApiSurety {
     @NotNull
     private String tenantId = null;
 
-    @JsonProperty("index")
-    @NotNull
-    private Integer index = null;
-
     @JsonProperty("name")
     @NotNull
     private String name = null;

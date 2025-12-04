@@ -51,14 +51,10 @@ const BailEsignModal = ({
       headerBarEnd={<CloseBtn onClick={() => handleCloseSignaturePopup()} />}
       actionCancelLabel={t("BACK")}
       actionCancelOnSubmit={() => handleCloseSignaturePopup()}
-      actionSaveLabel={isSigned ? t("PROCEED") : t("PROCEED_TO_E_SIGN")}
-      isDisabled={false}
+      actionSaveLabel={t("PROCEED")}
+      isDisabled={!isSigned}
       actionSaveOnSubmit={() => {
-        if (!isSigned) {
-          handleClickEsign();
-        } else {
-          handleProceed();
-        }
+        handleProceed();
       }}
       className={"submission-add-signature-modal responsive-signature-modal"}
     >
@@ -66,7 +62,12 @@ const BailEsignModal = ({
         <InfoCard
           variant={"default"}
           label={t("PLEASE_NOTE")}
-          additionalElements={[<p>{forWitnessDeposition ? t("WITNESS_DEPOSITION_POPUP_NOTES") : t("BAIL_BOND_WITNESS_POPUP_NOTES")}</p>]}
+          additionalElements={[
+            <p>
+              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}{" "}
+              <span style={{ fontWeight: "bold" }}>{forWitnessDeposition ? t("WITNESS_DEPOSITION") : t("BAIL_BOND")}</span>
+            </p>,
+          ]}
           inline
           textStyle={{}}
           className={`custom-info-card`}
@@ -75,6 +76,14 @@ const BailEsignModal = ({
           {!isSigned ? (
             <div className="not-signed">
               <h1 style={{ color: "#3d3c3c", fontSize: "24px", fontWeight: "bold" }}>{t("YOUR_SIGNATURE")}</h1>
+              <div className="buttons-div">
+                <Button
+                  label={t("CS_ESIGN_AADHAR")}
+                  onClick={handleClickEsign}
+                  className={"upload-signature"}
+                  labelClassName={"submission-upload-signature-label"}
+                ></Button>
+              </div>
             </div>
           ) : (
             <div className="signed">

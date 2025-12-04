@@ -5,7 +5,7 @@ const advocateDetailsFormConfig = [
         type: "component",
         component: "MultipleAdvocatesAndPip",
         key: "multipleAdvocatesAndPip",
-        labelHeading: "CS_ADVOCATE_HEADING",
+        labelHeading : "CS_ADVOCATE_HEADING",
         withoutLabel: true,
         populators: {
           isDependent: true,
@@ -56,8 +56,7 @@ const advocateDetailsFormConfig = [
               fileTypes: ["JPG", "PDF", "PNG"],
               isMultipleUpload: true,
               downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-              downloadTemplateLink:
-                "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
+              downloadTemplateLink: "https://pucarfilestore.blob.core.windows.net/pucar-filestore/kl/Vakalat.Template.docx",
             },
             {
               infoHeader: "CS_PLEASE_NOTE",

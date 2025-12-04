@@ -26,6 +26,4 @@ public class SmsTemplateData {
     private String advocateName;
 
     private String cmpNumber;
-
-    private String subStage;
 }
