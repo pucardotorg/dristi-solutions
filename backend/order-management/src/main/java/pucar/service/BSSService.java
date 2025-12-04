@@ -220,8 +220,11 @@ public class BSSService {
                     if (order.getNextHearingDate() != null) {
                         hearingUtil.preProcessScheduleNextHearing(orderUpdateRequest);
                     }
-                    updateHearingSummary(orderUpdateRequest);
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    if (order.getHearingNumber() != null) {
+                        updateHearingSummary(orderUpdateRequest);
+                        hearingUtil.updateOpenHearingIndex(order);
+                    }
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     caseDiaryEntries.addAll(diaryEntries);
                     orderProcessor.postProcessOrder(orderUpdateRequest);

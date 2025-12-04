@@ -23,6 +23,7 @@ import HearingTranscriptModal from "./HearingTranscriptModal";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
+import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import {
   admitCaseSubmitConfig,
   scheduleCaseAdmissionConfig,
@@ -37,6 +38,7 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
@@ -492,6 +494,36 @@ const AdmittedCaseV2 = () => {
     [reps]
   );
 
+  const witnesses = useMemo(() => {
+    return (
+      caseDetails?.witnessDetails?.map((data) => {
+        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
+        return {
+          ...data,
+          name: fullName,
+          partyType: "witness",
+        };
+      }) || []
+    );
+  }, [caseDetails]);
+
+  const unJoinedLitigant = useMemo(() => {
+    return (
+      caseDetails?.additionalDetails?.respondentDetails?.formdata
+        ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
+        ?.map((data) => {
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
+          return {
+            ...data,
+            name: `${fullName} (Accused)`,
+            code: fullName,
+            partyType: "respondent",
+            uniqueId: data?.uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails]);
+
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
   const complainants = useMemo(() => {
@@ -654,11 +686,11 @@ const AdmittedCaseV2 = () => {
       cnrNumber,
       title: caseDetails?.caseTitle || "",
       stage: caseDetails?.stage,
-      parties: [...finalLitigantsData, ...finalRepresentativesData],
+      parties: [...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses],
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, unJoinedLitigant, witnesses, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -859,13 +891,7 @@ const AdmittedCaseV2 = () => {
           setShowOrderReviewModal(true);
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-            const isAcceptBail =
-              (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_BAIL") ||
-              (Array.isArray(order?.compositeItems) && order?.compositeItems?.some((i) => i?.isEnabled && i?.orderType === "ACCEPT_BAIL"));
-            const suffix = isAcceptBail ? "&openEdit=1" : "";
-            history.push(
-              `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}${suffix}`
-            );
+            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
             history.push(`/${window.contextPath}/employee/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
           } else {
@@ -3060,10 +3086,7 @@ const AdmittedCaseV2 = () => {
                 value: "NEXT_HEARING",
                 label: "NEXT_HEARING",
               },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
+
               {
                 value: "GENERATE_ORDER",
                 label: "GENERATE_ORDER",
@@ -3118,10 +3141,6 @@ const AdmittedCaseV2 = () => {
                 {
                   value: "END_HEARING",
                   label: "END_HEARING",
-                },
-                {
-                  value: "GENERATE_ORDER",
-                  label: "GENERATE_ORDER",
                 },
                 {
                   value: "SUBMIT_DOCUMENTS",
@@ -3623,6 +3642,14 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_GENERATE_ORDER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
+                              ></Button>
+                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
@@ -3728,13 +3755,19 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
+            {caseDetails?.courtCaseNumber && caseDetails?.courtCaseNumber?.includes("ST/") && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             {caseDetails?.isLPRCase ? (
               <React.Fragment>
                 <div className="sub-details-text">{caseDetails?.lprNumber}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && (
+              caseDetails?.courtCaseNumber && !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />

@@ -1410,3 +1410,68 @@
     }
   }
 }
+
+.home-hearings-search {
+  .filter-bar .filter-fields > * {
+    min-width: 0;
+  }
+
+  .filter-bar .filter-fields .label-field-pair {
+    min-width: 0;
+  }
+
+  .filter-bar.filter-bar {
+    padding: 0 12px;
+  }
+
+  .filter-bar.filter-bar .filter-fields {
+    gap: 6px;
+  }
+
+  .filter-fields .select-wrap {
+    width: 138px !important;
+  }
+
+  .filter-bar .date-arrow-group input[type="date"] {
+    min-width: 100px;
+  }
+
+  .filter-bar .filter-fields .search-input {
+    width: 200px !important;
+    padding: 0 0 0 6px;
+    box-sizing: border-box;
+    flex: 0 1 auto;
+    max-width: 200px;
+    overflow: hidden;
+  }
+
+  .filter-bar .filter-fields .search-input input.home-input {
+    width: 100% !important;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .filter-bar .filter-fields .search-input input.home-input::placeholder {
+    font-size: 13px;
+  }
+
+  .filter-bar .filter-fields .home-search-btn {
+    margin-left: 6px;
+    padding: 8px 18px;
+  }
+
+  .filter-bar .filter-fields .home-clear-btn {
+    margin-left: 6px;
+    font-size: 15px;
+  }
+
+  .filter-bar .filter-actions {
+    gap: 8px;
+    margin-left: 4px;
+  }
+
+  .filter-bar .filter-actions .digit-button-tertiary {
+    padding: 8px 16px !important;
+    margin: 0px 8px 0px 0px;
+  }
+}

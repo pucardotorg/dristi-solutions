@@ -42,12 +42,6 @@ const Heading = (props) => {
 
 function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const history = useHistory();
-  const onCancel = () => {
-    if (!paymentLoader && receiptFilstoreId) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home`);
-    }
-    setShowPaymentModal(false);
-  };
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const { caseId } = window?.Digit.Hooks.useQueryParams();
   const toast = useToast();
@@ -60,6 +54,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [retryPayment, setRetryPayment] = useState(false);
   const [loader, setLoader] = useState(false);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "payment",
@@ -106,6 +101,16 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
       console.error("Error fetching case lock status", error);
     }
   });
+
+  const triggerSurveyContext = caseDetails?.status === "PENDING_PAYMENT" ? "FILING_PAYMENT" : "DEFECT_CORRECTION_PAYMENT";
+  const onCancel = () => {
+    if (!paymentLoader && receiptFilstoreId) {
+      triggerSurvey(triggerSurveyContext, () => {
+        history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+      });
+    }
+    setShowPaymentModal(false);
+  };
 
   useEffect(() => {
     if (caseDetails?.filingNumber) {
@@ -323,6 +328,9 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                       <li>
                         <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
                       </li>
+                      <li>
+                        <span>{t("COURIER_RPAD_NOTE")}</span>
+                      </li>
                     </ul>
                   </div>,
                 ]}
@@ -375,6 +383,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
             )}
           </Modal>
         )}
+        {SurveyUI}
       </div>
     </div>
   );

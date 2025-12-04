@@ -18,6 +18,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import useSearchPendingTask from "../../hooks/submissions/useSearchPendingTask";
 import { Urls } from "../../hooks/services/Urls";
 import { convertTaskResponseToPayload } from "../../utils";
+import { bailBondAddressValidation, validateAdvocateSuretyContactNumber, validateSuretyContactNumber, validateSurities } from "../../utils/bailBondUtils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -59,17 +60,6 @@ const convertToFormData = (t, obj) => {
   };
 
   return formdata;
-};
-
-export const bailBondAddressValidation = ({ formData, inputs }) => {
-  if (
-    inputs?.some((input) => {
-      const isEmpty = /^\s*$/.test(formData?.[input?.name]);
-      return isEmpty || !formData?.[input?.name]?.match(window?.Digit.Utils.getPattern(input?.validation?.patternType) || input?.validation?.pattern);
-    })
-  ) {
-    return true;
-  }
 };
 
 const GenerateBailBondV2 = () => {
@@ -315,7 +305,7 @@ const GenerateBailBondV2 = () => {
       return false;
     }
 
-    if(bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
+    if (bailBondDetails && bailBondDetails?.additionalDetails?.isFormReset) {
       return false;
     }
 
@@ -444,6 +434,7 @@ const GenerateBailBondV2 = () => {
             ) {
               return {
                 ...body,
+                disable: true,
                 formDisbalityCount:
                   bailBondDetails?.additionalDetails?.formDisableCount || applicationDetails?.applicationDetails?.sureties?.length || 0,
               };
@@ -975,81 +966,10 @@ const GenerateBailBondV2 = () => {
     }
   };
 
-  const validateSuretyContactNumber = (individualData, formData) => {
-    const indivualMobileNumber = individualData?.Individual?.[0]?.mobileNumber;
-    const hasDuplicate = formData?.sureties?.some((surety) => surety?.mobileNumber && surety?.mobileNumber === indivualMobileNumber);
-
-    if (hasDuplicate) {
-      setShowErrorToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
-      return false;
-    }
-    return true;
-  };
-
-  const validateAdvocateSuretyContactNumber = (sureties) => {
-    const advocateMobileNumber = userInfo?.mobileNumber;
-    const mobileNumbers = new Set();
-
-    for (let i = 0; i < sureties?.length; i++) {
-      const currentMobile = sureties[i]?.mobileNumber;
-      if (!currentMobile) continue;
-
-      if (advocateMobileNumber && currentMobile === advocateMobileNumber) {
-        setShowErrorToast({ label: t("SURETY_ADVOCATE_MOBILE_NUMBER_SAME"), error: true });
-        return true;
-      }
-
-      if (mobileNumbers.has(currentMobile)) {
-        setShowErrorToast({ label: t("SAME_MOBILE_NUMBER_SURETY"), error: true });
-        return true;
-      }
-
-      mobileNumbers.add(currentMobile);
-    }
-
-    return false;
-  };
-
-  const validateSurities = (sureties) => {
-    let error = false;
-    if (!sureties && !Object.keys(setFormState?.current?.errors).includes("sureties")) {
-      error = true;
-      setFormDataValue.current("sureties", [{}, {}]);
-      setFormErrors.current("sureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-    } else if (sureties?.length > 0 && !Object.keys(setFormState?.current?.errors).includes("sureties")) {
-      sureties?.forEach((docs, index) => {
-        if (!docs?.name && !Object.keys(setFormState?.current?.errors).includes(`name_${index}`)) {
-          error = true;
-          setFormErrors.current(`name_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-
-        if (!docs?.fatherName && !Object.keys(setFormState?.current?.errors).includes(`fatherName_${index}`)) {
-          error = true;
-          setFormErrors.current(`fatherName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-
-        if (!docs?.mobileNumber && !Object.keys(setFormState?.current?.errors).includes(`mobileNumber_${index}`)) {
-          error = true;
-          setFormErrors.current(`mobileNumber_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-
-        if (!docs?.identityProof && !Object.keys(setFormState?.current?.errors).includes(`identityProof_${index}`)) {
-          error = true;
-          setFormErrors.current(`identityProof_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-
-        if (!docs?.proofOfSolvency && !Object.keys(setFormState?.current?.errors).includes(`proofOfSolvency_${index}`)) {
-          error = true;
-          setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-      });
-    }
-    return error;
-  };
 
   const handleSubmit = async () => {
     if (formdata?.bailType?.code === "SURETY") {
-      if (validateSurities(formdata?.sureties)) {
+      if (validateSurities(t, formdata?.sureties, setFormState, setFormErrors, setFormDataValue)) {
         return;
       }
 
@@ -1076,7 +996,7 @@ const GenerateBailBondV2 = () => {
         }
       }
 
-      if (validateAdvocateSuretyContactNumber(formdata?.sureties)) {
+      if (validateAdvocateSuretyContactNumber(t, formdata?.sureties, userInfo, setShowErrorToast)) {
         return;
       }
     }
@@ -1084,7 +1004,7 @@ const GenerateBailBondV2 = () => {
     try {
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
-      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata, setShowErrorToast, t);
 
       if (!validateSuretyContactNumbers) {
         setLoader(false);
@@ -1166,12 +1086,6 @@ const GenerateBailBondV2 = () => {
     }
   };
 
-  const handleClearAutoPopulatedData = () => {
-    setDefaultFormValueData({});
-    // setFormdata({});
-    setClearAutoPopulatedData(true);
-  };
-
   const handleCloseSignatureModal = () => {
     setShowsignatureModal(false);
     setShowBailBondReview(true);
@@ -1186,16 +1100,18 @@ const GenerateBailBondV2 = () => {
     try {
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(bailBondFileStoreId, bailBondWorkflowAction.INITIATEESIGN);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setBailBondSignatureURL(res?.bails?.[0]?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -1210,23 +1126,23 @@ const GenerateBailBondV2 = () => {
       setLoader(false);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      if (pendingTasks?.length > 0) {
+        await submissionService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            ...getPendingTaskPayload,
+            isCompleted: true,
+            tenantId,
+          },
+        });
+      }
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
-      await submissionService.customApiService(Urls.pendingTask, {
-        pendingTask: {
-          ...getPendingTaskPayload,
-          isCompleted: true,
-          tenantId,
-        },
-      });
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
     }
   };
 
@@ -1357,25 +1273,6 @@ const GenerateBailBondV2 = () => {
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />
-          <button
-            type="button"
-            onClick={handleClearAutoPopulatedData}
-            className="tertiary-clear-btn"
-            style={{
-              position: "fixed",
-              bottom: 12,
-              left: 32,
-              background: "transparent",
-              border: "1px solid #007E7E",
-              color: "#007E7E",
-              padding: "8px 16px",
-              fontWeight: 600,
-              cursor: "pointer",
-              zIndex: 1000,
-            }}
-          >
-            {t("CLEAR_INFORMATION")}
-          </button>
         </div>
 
         {showBailBondReview && (

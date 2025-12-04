@@ -452,28 +452,176 @@ public class TaskCreationService {
         List<DeliveryChannel> defaultChannels = ensureDefaultChannels(new ArrayList<>(),party);
 
         if (!defaultChannels.isEmpty()) {
-            RespondentDetails respondentDetails = null;
-            WitnessDetails witnessDetails = null;
-            if (party.getRespondentDetails() != null) {
-                respondentDetails = getRespondentDetails(party.getRespondentDetails(), party.getAddresses().get(0));
-            }
-            if (party.getWitnessDetails() != null) {
-                witnessDetails = getWitnessDetails(party.getWitnessDetails(), party.getAddresses().get(0));
-            }
             for (DeliveryChannel channel : defaultChannels) {
                 log.info("Adding default channel: {}", channel);
-                result.add(TaskDetails.builder()
-                        .caseDetails(caseDetails)
-                        .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
-                        .noticeDetails(baseTaskDetails != null ? baseTaskDetails.getNoticeDetails() : null)
-                        .respondentDetails(respondentDetails)
-                        .witnessDetails(witnessDetails)
-                        .complainantDetails(complainantDetails)
-                        .deliveryChannel(channel)
-                        .build());
+                List<RespondentDetails> respondentDetailsList =
+                        getRespondentDetailsForDefaultChannel(party.getRespondentDetails(), channel, party.getAddresses().get(0));
+                List<WitnessDetails> witnessDetailsList =
+                        getWitnessDetailsForDefaultChannel(party.getWitnessDetails(), channel, party.getAddresses().get(0));
+
+                // Create a TaskDetails entry for each respondent
+                if (!respondentDetailsList.isEmpty()) {
+                    for (RespondentDetails respondent : respondentDetailsList) {
+                        result.add(TaskDetails.builder()
+                                .caseDetails(caseDetails)
+                                .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
+                                .noticeDetails(baseTaskDetails != null ? baseTaskDetails.getNoticeDetails() : null)
+                                .respondentDetails(respondent)
+                                .witnessDetails(null)
+                                .complainantDetails(complainantDetails)
+                                .deliveryChannel(channel)
+                                .build());
+                    }
+                }
+
+                // Create a TaskDetails entry for each witness
+                if (!witnessDetailsList.isEmpty()) {
+                    for (WitnessDetails witness : witnessDetailsList) {
+                        result.add(TaskDetails.builder()
+                                .caseDetails(caseDetails)
+                                .summonDetails(baseTaskDetails != null ? baseTaskDetails.getSummonDetails() : null)
+                                .noticeDetails(baseTaskDetails != null ? baseTaskDetails.getNoticeDetails() : null)
+                                .respondentDetails(null)
+                                .witnessDetails(witness)
+                                .complainantDetails(complainantDetails)
+                                .deliveryChannel(channel)
+                                .build());
+                    }
+                }
             }
+
         }
         return result;
+    }
+
+    private List<WitnessDetails> getWitnessDetailsForDefaultChannel(digit.web.models.cases.WitnessDetails witnessDetails, DeliveryChannel channel, PartyAddress partyAddress) {
+
+        List<WitnessDetails> witnessDetailsList = new ArrayList<>();
+
+        if (witnessDetails == null) {
+            return witnessDetailsList;
+        }
+
+        String firstName = witnessDetails.getFirstName() != null ? witnessDetails.getFirstName() : "";
+        String middleName = witnessDetails.getMiddleName() != null ? witnessDetails.getMiddleName() : "";
+        String lastName = witnessDetails.getLastName() != null ? witnessDetails.getLastName() : "";
+
+        List<String> nameParts = Stream.of(firstName, middleName, lastName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        String name = String.join(" ", nameParts);
+        String designation = witnessDetails.getWitnessDesignation();
+
+        if (!name.isEmpty()) {
+            if (designation != null && !designation.isBlank()) {
+                name = name + " - " + designation;
+            }
+        } else if (designation != null && !designation.isBlank()) {
+            name = designation;
+        }
+        // Parse age as Integer safely
+        Integer age = null;
+        try {
+            age = witnessDetails.getWitnessAge() != null ? Integer.valueOf(witnessDetails.getWitnessAge()) : null;
+        } catch (NumberFormatException ex) {
+            log.error("Error formatting age: {}", ex.getMessage());
+        }
+
+        Address address = mapToAddress(partyAddress.getAddressDetails());
+        // Add entries from phone list
+        if (SMS.equalsIgnoreCase(channel.getChannelCode()) && witnessDetails.getPhoneNumbers() != null &&
+                witnessDetails.getPhoneNumbers().getMobileNumber() != null &&
+                !witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+
+            for (String phone : witnessDetails.getPhoneNumbers().getMobileNumber()) {
+                witnessDetailsList.add(
+                        WitnessDetails.builder()
+                                .uniqueId(witnessDetails.getUniqueId())
+                                .name(name)
+                                .age(age)
+                                .phone(phone)
+                                .address(address)
+                                .build()
+                );
+            }
+        }
+
+        // Add entries from email list
+        if (EMAIL.equalsIgnoreCase(channel.getChannelCode()) && witnessDetails.getEmails() != null &&
+                witnessDetails.getEmails().getEmailId() != null &&
+                !witnessDetails.getEmails().getEmailId().isEmpty()) {
+
+            for (String email : witnessDetails.getEmails().getEmailId()) {
+                witnessDetailsList.add(
+                        WitnessDetails.builder()
+                                .uniqueId(witnessDetails.getUniqueId())
+                                .name(name)
+                                .age(age)
+                                .email(email)
+                                .address(address)
+                                .build()
+                );
+            }
+        }
+
+        return witnessDetailsList;
+    }
+
+
+    private List<RespondentDetails> getRespondentDetailsForDefaultChannel(digit.web.models.cases.RespondentDetails respondentDetails, DeliveryChannel channel, PartyAddress partyAddress) {
+        List<RespondentDetails> respondentDetailsList = new ArrayList<>();
+        if (respondentDetails == null) {
+            return respondentDetailsList;
+        }
+
+        String firstName = respondentDetails.getRespondentFirstName() != null ? respondentDetails.getRespondentFirstName() : "";
+        String middleName = respondentDetails.getRespondentMiddleName() != null ? respondentDetails.getRespondentMiddleName() : "";
+        String lastName = respondentDetails.getRespondentLastName() != null ? respondentDetails.getRespondentLastName() : "";
+        List<String> nameParts = Stream.of(firstName, middleName, lastName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        String name = String.join(" ", nameParts);
+
+        Integer age = respondentDetails.getRespondentAge();
+
+        Address address = mapToAddress(partyAddress.getAddressDetails());
+        // Add entries for phone numbers
+        if (SMS.equalsIgnoreCase(channel.getChannelCode()) && respondentDetails.getPhoneNumbers() != null &&
+                !respondentDetails.getPhoneNumbers().isEmpty()) {
+
+            for (String phone : respondentDetails.getPhoneNumbers()) {
+                respondentDetailsList.add(
+                        RespondentDetails.builder()
+                                .uniqueId(respondentDetails.getUniqueId())
+                                .name(name)
+                                .age(age)
+                                .phone(phone)
+                                .address(address)
+                                .build()
+                );
+            }
+        }
+
+        // Add entries for emails
+        if (EMAIL.equalsIgnoreCase(channel.getChannelCode()) && respondentDetails.getEmail() != null &&
+                !respondentDetails.getEmail().isEmpty()) {
+            for (String email : respondentDetails.getEmail()) {
+                respondentDetailsList.add(
+                        RespondentDetails.builder()
+                                .uniqueId(respondentDetails.getUniqueId())
+                                .name(name)
+                                .age(age)
+                                .email(email)
+                                .address(address)
+                                .build()
+                );
+            }
+        }
+        return respondentDetailsList;
     }
 
     /**
@@ -570,6 +718,7 @@ public class TaskCreationService {
         Address address = mapToAddress(partyAddresses.getAddressDetails());
 
         return WitnessDetails.builder()
+                .uniqueId(witnessDetails.getUniqueId())
                 .name(name)
                 .age(age)
                 .phone(phone)
@@ -609,6 +758,7 @@ public class TaskCreationService {
         Integer age = respondentDetails.getRespondentAge();
 
         return RespondentDetails.builder()
+                .uniqueId(respondentDetails.getUniqueId())
                 .email(email)
                 .name(name)
                 .address(address)

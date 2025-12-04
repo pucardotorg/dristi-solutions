@@ -226,12 +226,6 @@ public class TaskManagementUtil {
                         Arrays.asList("formdata", "noticeOrder", "party"),
                         List.class
                 );
-            } else if (SUMMONS.equalsIgnoreCase(orderType)) {
-                parties = jsonUtil.getNestedValue(
-                        order.getAdditionalDetails(),
-                        Arrays.asList("formdata", "SummonsOrder", "party"),
-                        List.class
-                );
             } else {
                 log.debug("Order type {} not supported for party type mapping", orderType);
                 return partyTypeToUniqueIdsMap;
@@ -260,6 +254,99 @@ public class TaskManagementUtil {
             log.error("Error creating party type to unique ID mapping", e);
         }
         return partyTypeToUniqueIdsMap;
+    }
+
+    public Map<String, List<Map<String, String>>> createPartyTypeMappingForSummons(Order order, List<String> uniqueIdPendingTask) {
+        Map<String, List<Map<String, String>>> partyTypeToUniqueIdMap = new HashMap<>();
+        try {
+            String orderType = order.getOrderType();
+            List<Object> parties;
+
+            // Extract parties based on order type
+            if (SUMMONS.equalsIgnoreCase(orderType)) {
+                parties = jsonUtil.getNestedValue(
+                        order.getAdditionalDetails(),
+                        Arrays.asList("formdata", "SummonsOrder", "party"),
+                        List.class
+                );
+            } else {
+                log.debug("Order type {} not supported for party type mapping", orderType);
+                return partyTypeToUniqueIdMap;
+            }
+            partyTypeToUniqueIdMap.put("respondent", new ArrayList<>());
+            partyTypeToUniqueIdMap.put("complainant", new ArrayList<>());
+            partyTypeToUniqueIdMap.put("court", new ArrayList<>());
+            if (parties != null) {
+                for (Object partyObj : parties) {
+                    if (partyObj instanceof Map<?, ?> partyMap) {
+                        Object dataObj = partyMap.get("data");
+                        if (dataObj instanceof Map<?, ?> dataMap) {
+                            processPartyData(dataMap, uniqueIdPendingTask, partyTypeToUniqueIdMap);
+                        }
+                    }
+                }
+            }
+            log.info("Successfully created party type mapping with {} entries", partyTypeToUniqueIdMap.size());
+        } catch (Exception e) {
+            log.error("Error creating party type to unique id.");
+        }
+        return partyTypeToUniqueIdMap;
+    }
+
+    /**
+     * Processes party data and adds it to the appropriate party type mapping
+     * 
+     * @param dataMap The party data map containing uniqueId, partyType, and ownerType
+     * @param uniqueIdPendingTask Set of unique IDs that have pending tasks
+     * @param partyTypeToUniqueIdMap Map to store party type to unique ID mappings
+     */
+    private static void processPartyData(Map<?, ?> dataMap, List<String> uniqueIdPendingTask,
+                                       Map<String, List<Map<String, String>>> partyTypeToUniqueIdMap) {
+        String uniqueId = (String) dataMap.get("uniqueId");
+        String partyType = (String) dataMap.get("partyType");
+        String ownerType = (String) dataMap.get("ownerType");
+        
+        if (!uniqueIdPendingTask.contains(uniqueId)) {
+            return;
+        }
+        
+        Map<String, String> partyMap = createPartyMap(partyType, uniqueId);
+        String targetPartyType = determineTargetPartyType(ownerType);
+        
+        partyTypeToUniqueIdMap.get(targetPartyType).add(partyMap);
+    }
+
+    /**
+     * Creates a party map with partyType and uniqueId
+     * 
+     * @param partyType The type of party
+     * @param uniqueId The unique identifier
+     * @return Map containing partyType and uniqueId
+     */
+    private static Map<String, String> createPartyMap(String partyType, String uniqueId) {
+        Map<String, String> partyMap = new HashMap<>();
+        partyMap.put("partyType", partyType);
+        partyMap.put("uniqueId", uniqueId);
+        return partyMap;
+    }
+
+    /**
+     * Determines the target party type based on owner type
+     * 
+     * @param ownerType The owner type from the data
+     * @return The target party type for mapping
+     */
+    private static String determineTargetPartyType(String ownerType) {
+        if (ownerType == null) {
+            return "complainant";
+        }
+        
+        return switch (ownerType) {
+            case ACCUSED -> "respondent";
+            case COMPLAINANT -> "complainant";
+            case COURT_WITNESS -> "court";
+            default -> "complainant";
+        };
     }
 }
 

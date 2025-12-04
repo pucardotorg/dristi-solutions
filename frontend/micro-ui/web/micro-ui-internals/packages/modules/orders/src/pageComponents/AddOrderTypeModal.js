@@ -60,6 +60,27 @@ const AddOrderTypeModal = ({
 
     const currentOrderType = orderType?.code || "";
 
+    if (currentOrderType && ["COST", "WITNESS_BATTA"].includes(currentOrderType)) {
+      if (typeof formData?.amount === "string") {
+let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
+        if (cleanedAmount === "-") cleanedAmount = "";
+        if (cleanedAmount !== formData.amount) {
+          setValue("amount", cleanedAmount);
+        }
+      }
+
+      const amountNum = Number(formData?.amount);
+      const hasAmount = formData?.amount !== undefined && formData?.amount !== null && formData?.amount !== "";
+      const hasAmountError = Object.keys(formState?.errors).includes("amount");
+
+      if (hasAmount && Number.isFinite(amountNum) && amountNum < 0 && !hasAmountError) {
+        setFormErrors?.current?.[index]?.("amount", { message: t("Amount should be greater that 0") });
+      } else if ((!hasAmount || (Number.isFinite(amountNum) && amountNum >= 0)) && hasAmountError) {
+        clearFormErrors?.current?.[index]?.("amount");
+      }
+    }
+
+
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
@@ -204,9 +225,17 @@ const AddOrderTypeModal = ({
     }
 
     if (currentOrderType === "ACCEPT_BAIL") {
-      if (formData?.chequeAmount < 0 && !Object.keys(formState?.errors).includes("chequeAmount")) {
+      if (typeof formData?.chequeAmount === "string") {
+        let cleaned = formData.chequeAmount.replace(/[^0-9.]/g, "");
+        if (cleaned !== formData.chequeAmount) {
+          setValue("chequeAmount", cleaned);
+        }
+      }
+
+      const chequeAmountNum = Number(formData?.chequeAmount);
+      if (chequeAmountNum < 0 && !Object.keys(formState?.errors).includes("chequeAmount")) {
         setFormErrors?.current?.[index]?.("chequeAmount", { message: t("Amount should be greater that 0") });
-      } else if (formData?.chequeAmount > 0 && Object.keys(formState?.errors).includes("chequeAmount")) {
+      } else if (chequeAmountNum >= 0 && Object.keys(formState?.errors).includes("chequeAmount")) {
         clearFormErrors?.current?.[index]?.("chequeAmount");
       }
 
@@ -217,22 +246,22 @@ const AddOrderTypeModal = ({
       })();
 
       if (isSurety) {
+        if (typeof formData?.noOfSureties === "string") {
+          const cleanedSureties = formData.noOfSureties.replace(/\D/g, "");
+          if (cleanedSureties !== formData.noOfSureties) {
+            setValue("noOfSureties", cleanedSureties);
+          }
+        }
+
         const suretiesNum = Number(formData?.noOfSureties);
         const hasNoOfSuretiesError = Object.keys(formState?.errors).includes("noOfSureties");
-        if (
-          formState?.submitCount &&
-          !formData?.noOfSureties &&
-          !hasNoOfSuretiesError
-        ) {
+        if (formState?.submitCount && !formData?.noOfSureties && !hasNoOfSuretiesError) {
           setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        } else if (
-          formState?.submitCount &&
-          Number.isFinite(suretiesNum) &&
-          suretiesNum <= 0 &&
-          !hasNoOfSuretiesError
-        ) {
-          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("Sureties should be greater that 0") });
-        } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && hasNoOfSuretiesError) {
+        } else if (Number.isFinite(suretiesNum) && suretiesNum <= 0 && !hasNoOfSuretiesError) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MINIMUM_SURETIES_ERROR") });
+        } else if (Number.isFinite(suretiesNum) && suretiesNum > 100 && !hasNoOfSuretiesError) {
+          setFormErrors?.current?.[index]?.("noOfSureties", { message: t("MAXIMUM_SURETIES_ERROR") });
+        } else if (Number.isFinite(suretiesNum) && suretiesNum > 0 && suretiesNum <= 100 && hasNoOfSuretiesError) {
           clearFormErrors?.current?.[index]?.("noOfSureties");
         }
       } else {

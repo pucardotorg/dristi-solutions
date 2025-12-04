@@ -1,0 +1,255 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "commonUiConfig",
+    "masterName": "witnessConfig",
+    "mdmsPayload": {
+      "id": "dde30189-ad44-41cf-a7ca-895fc25a2674",
+      "tenantId": "kl",
+      "schemaCode": "commonUiConfig.witnessConfig",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "header": "CS_WITNESS_DETAIL_HEADING",
+        "subtext": "CS_WITNESS_DETAIL_SUBTEXT",
+        "className": "witness-details",
+        "formconfig": [
+          {
+            "body": [
+              {
+                "type": "text",
+                "label": "FIRST_NAME",
+                "populators": {
+                  "name": "firstName"
+                }
+              },
+              {
+                "type": "text",
+                "label": "MIDDLE_NAME",
+                "populators": {
+                  "name": "middleName",
+                  "validation": {
+                    "title": "",
+                    "pattern": {
+                      "message": "CORE_COMMON_APPLICANT_NAME_INVALID",
+                      "masterName": "commonUiConfig",
+                      "moduleName": "patternValidation",
+                      "patternType": "userName"
+                    },
+                    "patternType": "Name"
+                  }
+                },
+                "isMandatory": false,
+                "labelChildren": "optional"
+              },
+              {
+                "type": "text",
+                "label": "LAST_NAME",
+                "populators": {
+                  "name": "lastName",
+                  "validation": {
+                    "title": "",
+                    "pattern": {
+                      "message": "CORE_COMMON_APPLICANT_NAME_INVALID",
+                      "masterName": "commonUiConfig",
+                      "moduleName": "patternValidation",
+                      "patternType": "userName"
+                    },
+                    "patternType": "Name"
+                  }
+                },
+                "isMandatory": false,
+                "labelChildren": "optional"
+              },
+              {
+                "key": "OrSeparator",
+                "type": "component",
+                "sublabel": "OR",
+                "component": "OrSeparator",
+                "populators": {
+                  "inputs": []
+                }
+              },
+              {
+                "type": "text",
+                "label": "WITNESS_DESIGNATION",
+                "populators": {
+                  "name": "witnessDesignation"
+                }
+              },
+              {
+                "type": "text",
+                "label": "AGE",
+                "populators": {
+                  "name": "witnessAge",
+                  "error": "CORE_REQUIRED_FIELD_ERROR",
+                  "validation": {
+                    "maxLength": 3,
+                    "patternType": "Number"
+                  }
+                },
+                "isMandatory": false,
+                "labelChildren": "optional"
+              }
+            ],
+            "head": "WITNESS_BASIC_DETAILS"
+          },
+          {
+            "body": [
+              {
+                "key": "phonenumbers",
+                "type": "component",
+                "label": "CORE_COMMON_PHONE_NUMBER",
+                "component": "SelectBulkInputs",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "mobileNumber",
+                      "type": "text",
+                      "error": "ERR_HRMS_INVALID_MOB_NO",
+                      "label": "CORE_COMMON_PHONE_NUMBER",
+                      "className": "mobile-number",
+                      "validation": {
+                        "pattern": {
+                          "masterName": "commonUiConfig",
+                          "moduleName": "patternValidation",
+                          "patternType": "contact"
+                        },
+                        "isNumber": true,
+                        "required": true,
+                        "maxLength": 10,
+                        "minLength": 10
+                      },
+                      "componentInFront": "+91"
+                    }
+                  ],
+                  "validation": {}
+                },
+                "withoutLabel": true
+              }
+            ],
+            "head": "CS_WITNESS_CONTACT_DETAILS",
+            "subHead": "CS_WITNESS_NOTE"
+          },
+          {
+            "body": [
+              {
+                "key": "emails",
+                "type": "component",
+                "label": "CORE_COMMON_EMAILS",
+                "component": "SelectBulkInputs",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "emailId",
+                      "type": "text",
+                      "error": "ERR_HRMS_INVALID_MOB_NO",
+                      "label": "CORE_COMMON_EMAILS",
+                      "className": "email-address",
+                      "validation": {
+                        "pattern": {
+                          "masterName": "commonUiConfig",
+                          "moduleName": "patternValidation",
+                          "patternType": "email"
+                        },
+                        "required": true
+                      }
+                    }
+                  ],
+                  "validation": {}
+                },
+                "withoutLabel": true
+              }
+            ],
+            "head": " "
+          },
+          {
+            "body": [
+              {
+                "key": "addressDetails",
+                "type": "component",
+                "error": "CORE_REQUIRED_FIELD_ERROR",
+                "formType": "Witness",
+                "required": false,
+                "component": "SelectComponentsMulti",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "pincode",
+                      "type": "text",
+                      "label": "PINCODE",
+                      "validation": {
+                        "max": "9999999",
+                        "title": "",
+                        "errMsg": "ADDRESS_PINCODE_INVALID",
+                        "pattern": "[0-9]+",
+                        "maxlength": 7,
+                        "minlength": 6,
+                        "isRequired": true,
+                        "patternType": "Pincode"
+                      },
+                      "isMandatory": true
+                    },
+                    {
+                      "name": "state",
+                      "type": "text",
+                      "label": "STATE",
+                      "validation": {
+                        "isRequired": true
+                      },
+                      "isMandatory": true
+                    },
+                    {
+                      "name": "district",
+                      "type": "text",
+                      "label": "DISTRICT",
+                      "validation": {
+                        "isRequired": true
+                      },
+                      "isMandatory": true
+                    },
+                    {
+                      "name": "city",
+                      "type": "text",
+                      "label": "CITY/TOWN",
+                      "validation": {
+                        "isRequired": true
+                      },
+                      "isMandatory": true
+                    }
+                  ],
+                  "validation": {}
+                },
+                "withoutLabel": true
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "key": "witnessAdditionalDetails",
+                "type": "component",
+                "component": "SelectCustomTextArea",
+                "isInfinite": true,
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "text",
+                      "type": "TextAreaComponent",
+                      "isOptional": true,
+                      "textAreaSubHeader": "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "isOptional": false,
+        "addFormText": "ADD_WITNESS",
+        "formItemName": "CS_WITNESS",
+        "showOptionalInHeader": true
+      }
+    }
+  }
+]

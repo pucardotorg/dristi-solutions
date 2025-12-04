@@ -16,7 +16,7 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { createOrUpdateTask, getSuffixByBusinessCode } from "../utils";
+import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -85,6 +85,8 @@ const TasksComponent = ({
   const courtId = localStorage.getItem("courtId");
   const [isLoader, setIsLoader] = useState(false);
   const [hideCancelButton, setHideCancelButton] = useState(false);
+  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -157,6 +159,12 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         orderNumber: courierServicePendingTask?.referenceId?.split("_").pop(),
+        ...(courierServicePendingTask?.partyType && {
+          partyType: courierServicePendingTask?.partyType,
+        }),
+        ...(courierServicePendingTask?.orderItemId && {
+          orderItemId: courierServicePendingTask?.orderItemId,
+        }),
         tenantId: tenantId,
       },
     },
@@ -251,7 +259,14 @@ const TasksComponent = ({
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
+      if (
+        Object?.keys(courierOrderDetails)?.length === 0 &&
+        courierServicePendingTask &&
+        Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
+        Array?.isArray(taskManagementList)
+      ) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
           const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
@@ -321,7 +336,7 @@ const TasksComponent = ({
                   ...party,
                   data: {
                     ...party.data,
-                    addressDetails: mergedFromCase?.map((addr) => ({
+                    addressDetails: filterValidAddresses(mergedFromCase)?.map((addr) => ({
                       ...addr,
                       checked: true,
                     })),
@@ -379,7 +394,7 @@ const TasksComponent = ({
                 ...party,
                 data: {
                   ...party.data,
-                  addressDetails: mergedAddressDetails,
+                  addressDetails: filterValidAddresses(mergedAddressDetails),
                 },
                 summonsCourierService,
                 noticeCourierService,
@@ -394,9 +409,9 @@ const TasksComponent = ({
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails, courierOrderDetails]);
 
-  const handleProcessCourierOnSubmit = async (courierData) => {
+  const handleProcessCourierOnSubmit = async (courierData, isLast, hasProcessManagementEditorAccess) => {
     const orderType = courierOrderDetails?.orderType;
     const formDataKey = formDataKeyMap[orderType];
     const formData = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party;
@@ -411,8 +426,17 @@ const TasksComponent = ({
         formData: formData,
         filingNumber: courierOrderDetails?.filingNumber,
         tenantId,
+        isLast,
       });
       await refetchTaskManagement();
+      if (isLast && hasProcessManagementEditorAccess) {
+        setShowCourierServiceModal(false);
+        setCourierServicePendingTask(null);
+        setCourierOrderDetails({});
+        setTimeout(async () => {
+          await refetch();
+        }, 2000);
+      }
       return { continue: true };
     } catch (error) {
       console.error("Error creating or updating task:", error);
@@ -423,7 +447,7 @@ const TasksComponent = ({
   };
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isView, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -433,6 +457,21 @@ const TasksComponent = ({
         return formattedDate;
       };
       const applicationDetails = await getApplicationDetail(referenceId);
+      if (applicationDetails?.applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+        const pendingTaskRefId = applicationDetails?.additionalDetails?.pendingTaskRefId;
+        const dateOfApplication = applicationDetails?.additionalDetails?.dateOfApplication;
+        const uniqueId = applicationDetails?.additionalDetails?.uniqueId;
+        const refApplicationId = applicationDetails?.applicationNumber;
+
+        history.push(
+          `/${window.contextPath}/${userType}/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication,
+            uniqueId,
+          }
+        );
+        return;
+      }
       const defaultObj = {
         status: applicationDetails?.status,
         details: {
@@ -476,11 +515,19 @@ const TasksComponent = ({
         const newTabUrl = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&applicationNumber=${applicationDetails?.applicationNumber}&tab=Submissions`;
         window.open(newTabUrl, "_blank", "noopener,noreferrer");
       } else if (isApplicationCompositeOrder) {
-        history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
-          applicationDocObj: docObj,
-          compositeOrderObj: compositeOrderObj,
-          isApplicationAccepted: isApplicationAccepted,
-        });
+        if (isView) {
+          history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
+            applicationDocObj: docObj,
+          });
+        } else {
+          history.replace(
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`,
+            {
+              applicationDocObj: docObj,
+              isApplicationAccepted: isApplicationAccepted,
+            }
+          );
+        }
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
@@ -592,6 +639,7 @@ const TasksComponent = ({
         ...(applicationType && { applicationType }),
       };
       const orderItemId = data?.fields?.find((field) => field?.key === "additionalDetails.orderItemId")?.value;
+      const partyType = data?.fields?.find((field) => field?.key === "additionalDetails.partyType")?.value;
       const partyUniqueIdsMap = {};
 
       data?.fields?.forEach(({ key, value }) => {
@@ -614,7 +662,7 @@ const TasksComponent = ({
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
         return result;
       }, {});
-      if (actionName === "order for scheduling next hearing") {
+      if (actionName === "Schedule Next Hearing") {
         additionalDetails = {
           orderType: "SCHEDULE_OF_HEARING_DATE",
           caseTitle: caseTitle,
@@ -650,6 +698,7 @@ const TasksComponent = ({
         dueDateColor: due === "Due today" ? "#9E400A" : "",
         redirectUrl,
         orderItemId,
+        partyType,
         bailBondId,
         ...(Object.keys(partyUniqueIdsMap).length > 0 ? { partyUniqueIds: Object.values(partyUniqueIdsMap) } : {}),
         params: {
@@ -1043,6 +1092,7 @@ const TasksComponent = ({
           orderItemId: courierOrderDetails?.orderItemId,
           orderNumber: courierOrderDetails?.orderNumber,
           courtId: courierOrderDetails?.courtId,
+          witnessPartyType: courierServicePendingTask?.partyType,
         };
 
         const partyTypeLabel = courierData?.partyType ? `(${t(displayPartyType[courierData?.partyType.toLowerCase()])})` : "";
@@ -1078,7 +1128,7 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            return await handleProcessCourierOnSubmit(courierData);
+            return await handleProcessCourierOnSubmit(courierData, isLast, hasProcessManagementEditorAccess);
           },
           isDisabled:
             isTaskManagementLoading ||
@@ -1105,10 +1155,19 @@ const TasksComponent = ({
   const courierServiceConfig = useMemo(() => {
     return {
       handleClose: () => {
-        setShowCourierServiceModal(false);
-        setHideCancelButton(false);
-        setCourierServicePendingTask(null);
-        setCourierOrderDetails({});
+        if (isPaymentCompleted) {
+          triggerSurvey("TASK_PAYMENT", () => {
+            setShowCourierServiceModal(false);
+            setHideCancelButton(false);
+            setCourierServicePendingTask(null);
+            setCourierOrderDetails({});
+          });
+        } else {
+          setShowCourierServiceModal(false);
+          setHideCancelButton(false);
+          setCourierServicePendingTask(null);
+          setCourierOrderDetails({});
+        }
       },
       isStepperModal: true,
       actionSaveLabel: t("CS_COURIER_NEXT"),
@@ -1133,8 +1192,7 @@ const TasksComponent = ({
                     taskManagementList={taskManagementList}
                     courierOrderDetails={courierOrderDetails}
                     refetchPendingTasks={refetch}
-                    setShowCourierServiceModal={setShowCourierServiceModal}
-                    setCourierServicePendingTask={setCourierServicePendingTask}
+                    setIsPaymentCompleted={setIsPaymentCompleted}
                   />
                 ),
               },
@@ -1305,6 +1363,7 @@ const TasksComponent = ({
       {showCourierServiceModal && courierServiceSteps?.length > 0 && <DocumentModal config={courierServiceConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
+      {SurveyUI}
     </div>
   ) : (
     <div className="tasks-component-table-view">
@@ -1342,6 +1401,7 @@ const TasksComponent = ({
           )}
           {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
           {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
+          {SurveyUI}
         </React.Fragment>
       ) : (
         <React.Fragment></React.Fragment>

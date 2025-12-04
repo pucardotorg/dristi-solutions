@@ -216,7 +216,10 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            searchableFieldsList.add(caseNumber);
+            searchableFieldsList.add(filingNumber);
+            if (!filingNumber.equals(caseNumber)) {
+                searchableFieldsList.add(caseNumber);
+            }
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
@@ -405,7 +408,10 @@ public class IndexerUtils {
             }
 
             List<String> searchableFieldsList = new ArrayList<>();
-            searchableFieldsList.add(caseNumber);
+            if (caseNumber != null && !Objects.equals(caseNumber, filingNumber)) {
+                searchableFieldsList.add(caseNumber);
+            }
+            searchableFieldsList.add(filingNumber);
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
