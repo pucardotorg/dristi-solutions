@@ -122,15 +122,23 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             DEPLOYMENT_ENV="${{ inputs.deployment_env }}"
           elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
-            if [[ "${{ github.event.pull_request.head.ref }}" == "main" ]]; then
+            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
               DEPLOYMENT_ENV="demo"
-            elif [[ "${{ github.event.pull_request.head.ref }}" == "develop" ]]; then
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
               DEPLOYMENT_ENV="dev"
-            elif [[ "${{ github.event.pull_request.head.ref }}" == "release/*" ]]; then
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
               DEPLOYMENT_ENV="qa"
-            else
-              DEPLOYMENT_ENV="dev"
             fi
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
+            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+              DEPLOYMENT_ENV="demo"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
+              DEPLOYMENT_ENV="dev"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
+              DEPLOYMENT_ENV="qa"
+            fi
+          else
+            DEPLOYMENT_ENV="dev"
           fi
           echo "deployment_env set to $DEPLOYMENT_ENV"
           echo "deployment_env=$DEPLOYMENT_ENV" >> $GITHUB_ENV
