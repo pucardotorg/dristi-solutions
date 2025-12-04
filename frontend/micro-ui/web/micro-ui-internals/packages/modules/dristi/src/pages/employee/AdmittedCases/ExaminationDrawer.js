@@ -84,7 +84,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmDeleteExaminationModal, setShowConfirmDeleteExaminationModal] = useState({ show: false, tab: {} });
   const [respondentsData, setRespondentsData] = useState([]);
-  const [examinationQuestionOptions, setExaminationQuestionOptions] = useState(defaultExaminationQuestionOptions);
   const [active, setActive] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
 
@@ -105,6 +104,28 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+
+  const { isLoading: examinationQuestionsDataLoading, data: examinationQuestionsData } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Examination-Of-Accused",
+    [{ name: "Examination-Questions" }],
+    {
+      cacheTime: 0,
+      select: (data) => {
+        return data?.["Examination-Of-Accused"]?.["Examination-Questions"] || [];
+      },
+    }
+  );
+
+  const examinationQuestionOptions = useMemo(() => {
+    return (
+      examinationQuestionsData?.map((item) => ({
+        code: item?.code,
+        title: item?.title,
+        label: item?.label,
+      })) || []
+    );
+  }, [examinationQuestionsData]);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
@@ -734,7 +755,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     downloadPdf(tenantId, documentFileStoreId);
   };
 
-  if (isFilingTypeLoading || isDocumentsDataLoading || caseApiLoading) {
+  if (isFilingTypeLoading || isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
     return <Loader />;
   }
   const CONFIG_KEY = "examinationOfAccused";
