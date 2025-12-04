@@ -1,0 +1,70 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "37",
+    "data": {
+      "id": "37",
+      "actor": "Judge/CMO",
+      "state": "PENDING_UPLOAD",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Upload Document For Mediation",
+      "closerAction": [
+        "UPLOAD"
+      ],
+      "triggerAction": [
+        "INITIATE_UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-mediation"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "36",
+    "data": {
+      "id": "36",
+      "actor": "Judge/CMO",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review request for Mediation",
+      "closerAction": [
+        "SIGN"
+      ],
+      "defaultRoles": [],
+      "triggerAction": [
+        "E-SIGN_COMPLETE",
+        "SKIP_SIGN_AND_SUBMIT",
+        "UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-mediation"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "31",
+    "data": {
+      "id": "31",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Confirm request for Mediation",
+      "closerAction": [
+        "E-SIGN_COMPLETE"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN",
+        "E-SIGN"
+      ],
+      "workflowModule": "digitalized-document-mediation",
+      "referenceEntityTypeNameMapping": []
+    },
+    "isActive": true
+  }
+]

@@ -108,7 +108,7 @@ class MediationDocumentServiceTest {
         List<String> assignes = captured.get(0).getDigitalizedDocument().getWorkflow().getAssignes();
         assertNotNull(assignes);
         assertTrue(assignes.contains("p1"));
-        assertFalse(assignes.contains("p2"));
+        assertTrue(assignes.contains("p2"));
 
         // file delete should remove only A
         verify(fileStoreUtil).deleteFilesByFileStore(eq(List.of("A")), eq("t1"));

@@ -71,7 +71,7 @@ public class MediationDocumentService implements DocumentTypeService {
                 INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
             List<String> assignees = computeAssignees(document.getMediationDetails());
             documentRequest.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
-            updateWorkflowAdditionalDetails(documentRequest.getDigitalizedDocument().getWorkflow());
+            updateWorkflowAdditionalDetails(documentRequest.getDigitalizedDocument().getWorkflow(), document.getMediationDetails());
         }
 
         workflowService.updateWorkflowStatus(documentRequest);
@@ -106,7 +106,7 @@ public class MediationDocumentService implements DocumentTypeService {
                 if (INITIATE_E_SIGN.equalsIgnoreCase(workflow.getAction()) || E_SIGN.equalsIgnoreCase(workflow.getAction())) {
                     List<String> assignees = computeAssignees(document.getMediationDetails());
                     request.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
-                    updateWorkflowAdditionalDetails(request.getDigitalizedDocument().getWorkflow());
+                    updateWorkflowAdditionalDetails(request.getDigitalizedDocument().getWorkflow(), document.getMediationDetails());
                 }
             }
             workflowService.updateWorkflowStatus(request);
@@ -176,7 +176,6 @@ public class MediationDocumentService implements DocumentTypeService {
         }
 
         assignees = mediationDetails.getPartyDetails().stream()
-                .filter(party -> Boolean.FALSE.equals(party.getHasSigned()))
                 .flatMap(party -> Stream.of(party.getUserUuid(), party.getPoaUuid()))
                 .filter(Objects::nonNull)  // Remove null values
                 .distinct()  // Ensure unique UUIDs only
@@ -185,7 +184,7 @@ public class MediationDocumentService implements DocumentTypeService {
         return assignees;
     }
 
-    private void updateWorkflowAdditionalDetails(WorkflowObject workflow) {
+    private void updateWorkflowAdditionalDetails(WorkflowObject workflow, MediationDetails mediationDetails) {
         ObjectNode detailsNode;
         if (workflow.getAdditionalDetails() == null) {
             detailsNode = objectMapper.createObjectNode();
@@ -196,6 +195,18 @@ public class MediationDocumentService implements DocumentTypeService {
         excludeRolesArray.add(MEDIATION_CREATOR);
         excludeRolesArray.add(SYSTEM_ADMIN);
         excludeRolesArray.add(SYSTEM);
+
+        // Exclude parties who have already signed
+        if (mediationDetails != null && !ObjectUtils.isEmpty(mediationDetails.getPartyDetails())) {
+            ArrayNode excludedAssignedUuidsArray = detailsNode.putArray("excludedAssignedUuids");
+
+            mediationDetails.getPartyDetails().stream()
+                    .filter(party -> Boolean.TRUE.equals(party.getHasSigned()))
+                    .flatMap(party -> Stream.of(party.getUserUuid(), party.getPoaUuid()))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .forEach(excludedAssignedUuidsArray::add);
+        }
 
         workflow.setAdditionalDetails(detailsNode);
     }
