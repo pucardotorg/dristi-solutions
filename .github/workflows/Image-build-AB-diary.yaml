@@ -11,8 +11,18 @@ on:
     inputs:
       services:
         required: true
-        description: "Service name in kubernetes cluster in comma separated format"
+        description: "Service name in kubernetes cluster in comma separated format (eg: service1, service2)"
         type: string
+      deployment_env:
+        required: true
+        description: "Deployment environment (eg: dev, qa, demo)"
+        type: list
+        default: dev
+        options:
+          - dev
+          - qa
+          - demo
+
   push:
     branches:
       - main
@@ -25,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
+      deployment_env: ${{ steps.set_deployment_environment.outputs.deployment_env }}
     steps:
       - name: Set github branch
         run: |
@@ -83,7 +94,6 @@ jobs:
 
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
-
       - name: create matrix
         id: create_matrix
         run: |
@@ -104,7 +114,24 @@ jobs:
             echo "Matrix JSON: $MATRIX"
             echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           fi
-        
+
+      - name: set deployment environment
+        id: set_deployment_environment
+        run: |
+          DEPLOYMENT_ENV=""
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            DEPLOYMENT_ENV="${{ inputs.deployment_env }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            if [[ "${{ github.event.pull_request.head.ref }}" == "main" ]]; then
+              DEPLOYMENT_ENV="demo"
+            elif [[ "${{ github.event.pull_request.head.ref }}" == "develop" ]]; then
+              DEPLOYMENT_ENV="dev"
+            elif [[ "${{ github.event.pull_request.head.ref }}" == "release/*" ]]; then
+              DEPLOYMENT_ENV="qa"
+            fi
+          fi
+          echo "DEPLOYMENT_ENV=$DEPLOYMENT_ENV" >> $GITHUB_ENV
+
   build-docker-image:
     runs-on: ubuntu-latest
     needs: check-diff
