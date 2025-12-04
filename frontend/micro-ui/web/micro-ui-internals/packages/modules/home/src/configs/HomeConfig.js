@@ -1839,12 +1839,24 @@ export const pendingTaskForDigitalizedDocumentMediationActions = {
   },
   PENDING_REVIEW: {
     actorName: ["JUDGE"],
+    actionName: "Review of Mediation Form",
+    redirectDetails: {
+      url: "/home/mediation-form-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+      ],
+    },
+  },
+  PENDING_UPLOAD: {
+    actorName: ["JUDGE"],
     actionName: "Review the witness deposition",
     redirectDetails: {
       url: "/home/mediation-form-sign",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "documentNumber", value: "referenceId" },
+        { key: "courtId", value: "courtId" },
       ],
     },
   },
