@@ -83,6 +83,7 @@ const pleaSubmissionConfig = [
       {
         type: "text",
         label: "AGE",
+        key: "age",
         populators: {
           name: "age",
           error: "AGE_VALIDATION",

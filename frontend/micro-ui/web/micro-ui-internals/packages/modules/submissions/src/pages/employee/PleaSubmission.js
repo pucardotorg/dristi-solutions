@@ -12,6 +12,7 @@ import {
   _getPdfConfig,
   _getUpdatePleaPayload,
   BooleanToCode,
+  checkTextValidation,
   pleaWorkflowActions,
   validateMobileNumber,
 } from "../../utils/digitilization";
@@ -220,6 +221,7 @@ const PleaSubmission = () => {
   }, [defaultFormValueData, documentNumber, pleaResponseDetails, t]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    checkTextValidation({ formData, setValue, formdata, reset, clearErrors, formState });
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
     }

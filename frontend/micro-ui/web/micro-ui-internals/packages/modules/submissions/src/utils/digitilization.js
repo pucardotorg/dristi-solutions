@@ -165,3 +165,65 @@ export const validateMobileNumber = (number) => {
 
   return "";
 };
+
+export const formatName = (value, capitalize = true) => {
+  let cleanedValue = value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trimStart()
+    .replace(/ +/g, " ");
+
+  if (!capitalize) return cleanedValue;
+
+  return cleanedValue;
+};
+
+export const formatAge = (value) => {
+  if (typeof value !== "string") return value;
+  let cleaned = value.replace(/[^0-9]/g, "");
+  cleaned = cleaned.replace(/^0+/, "");
+  if (cleaned.length > 3) {
+    cleaned = cleaned.slice(0, 3);
+  }
+  return cleaned;
+};
+
+export const checkTextValidation = ({ formData, setValue, reset, formdata, clearErrors, formState }) => {
+  const formDataCopy = structuredClone(formData);
+
+  for (const key in formDataCopy) {
+    if (["fatherName", "village", "taluk", "calling"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+      const oldValue = formDataCopy[key];
+      let value = oldValue;
+      if (typeof value === "string") {
+        let updatedValue = formatName(value);
+        if (updatedValue !== oldValue) {
+          const element = document.querySelector(`[name="${key}"]`);
+          const start = element?.selectionStart;
+          const end = element?.selectionEnd;
+          setValue(key, updatedValue);
+          setTimeout(() => {
+            element?.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+    if (["age"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+      const oldValue = formDataCopy[key];
+      let value = oldValue;
+      if (typeof value === "string") {
+        let updatedValue = formatAge(value);
+        if (updatedValue !== oldValue) {
+          const element = document.querySelector(`[name="${key}"]`);
+          const start = element?.selectionStart;
+          const end = element?.selectionEnd;
+
+          setValue(key, updatedValue);
+
+          setTimeout(() => {
+            element?.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+  }
+};
