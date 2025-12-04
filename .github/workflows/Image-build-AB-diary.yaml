@@ -100,8 +100,9 @@ jobs:
             echo "matrix=$json" >> "$GITHUB_OUTPUT"
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             echo "Using matrix from check_diff step"
-            echo "matrix=${{ steps.check_diff.outputs.matrix }}"
-            echo "matrix=${{ steps.check_diff.outputs.matrix }}" >> "$GITHUB_OUTPUT"
+            MATRIX='${{ steps.check_diff.outputs.matrix }}'
+            echo "Matrix JSON: $MATRIX"
+            echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           fi
         
   build-docker-image:
