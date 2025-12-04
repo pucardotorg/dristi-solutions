@@ -52,11 +52,18 @@ jobs:
         if: github.event_name == 'pull_request'
         id: check_diff
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git fetch origin ${{ github.event.pull_request.head.ref }}
+          git fetch --all --prune
 
-          git diff --name-only ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} > changed.txt
+          BASE="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD="origin/${{ github.event.pull_request.head.ref }}"
 
+          echo "Base branch: $BASE"
+          echo "Head branch: $HEAD"
+
+          git diff --name-only "$BASE" "$HEAD" > changed.txt
+
+          echo "Changed files:"
+          cat changed.txt
           services=$(jq -r 'to_entries[] | "\(.key) \(.value.service_source_path)"' build/config.json |
           while read svc raw_path; do
             path=$(echo "$raw_path" | sed 's:/*$::')
@@ -71,10 +78,9 @@ jobs:
 
           matrix=$(echo "$services" | jq -R -s -c 'split("\n") | map(select(. != ""))')
 
-          echo "Matrix JSON for GitHub Actions:"
+          echo "Matrix JSON:"
           echo "$matrix"
-
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
       - name: create matrix
         id: create_matrix
