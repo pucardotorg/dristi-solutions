@@ -119,9 +119,8 @@ export const DigitalDocumentSignModal = ({
           });
           const documentData = searchDocumentResponse?.documents?.[0];
           setEffectiveRowData(documentData);
-          const combinedDocuments = [...documentData?.documents.filter((doc) => doc.documentType === "SIGNED")];
 
-          setDocumentFiles(combinedDocuments);
+          setDocumentFiles(documentData?.documents || []);
         }
         setDocumentLoader(false);
       } catch (error) {
@@ -623,9 +622,11 @@ export const DigitalDocumentSignModal = ({
               clearDigitalDocumentSessionData();
               if (userType && caseId && filingNumber) {
                 sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
-                history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+                history.replace(
+                  `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
+                );
               } else {
-                history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+                history.replace(`/${window?.contextPath}/${userType}/home/home-screen`);
               }
             }
           }}

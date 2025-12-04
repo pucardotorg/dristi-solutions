@@ -629,6 +629,9 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     selectedQuestions.forEach((q) => {
       newString += `<p>Q: ${q.label}</p><p>Answer: </p><p> </p>`;
     });
+    if (examinationText !== "") {
+      newString = "<p> </p>" + newString;
+    }
     setExaminationText((prev) => prev + newString);
     setActive(false);
   };
@@ -671,7 +674,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
           workflow: {
             action,
-            ...(action === "INITIATE_E-SIGN" && { assignes: [party?.uuid] }), // uniqueId of accused, so that accused can receive the pending task
+            ...(action === "INITIATE_E-SIGN" && party?.uuid && { assignes: [party?.uuid] }), // uniqueId of accused, so that accused can receive the pending task
           },
         },
       };

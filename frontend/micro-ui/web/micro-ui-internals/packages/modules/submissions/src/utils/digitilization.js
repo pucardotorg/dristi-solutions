@@ -78,7 +78,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           accusedMobileNumber: pleaMobileNumber,
         },
         documents: documentsFile ? [...documentsFile] : documents,
-        workflow: { ...pleaDetails.workflow, action, documents: [{}], ...(action === "INITIATE_E-SIGN" && { assignes: [partyUUID] }) },
+        workflow: { ...pleaDetails.workflow, action, documents: [{}], ...(action === "INITIATE_E-SIGN" && partyUUID && { assignes: [partyUUID] }) },
       },
     };
   } else if (action === pleaWorkflowActions.UPLOAD) {
