@@ -16,7 +16,7 @@ on:
       deployment_env:
         required: true
         description: "Deployment environment (eg: dev, qa, demo)"
-        type: list
+        type: choice
         default: dev
         options:
           - dev
