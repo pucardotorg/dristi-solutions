@@ -216,6 +216,7 @@ export const getParties = (type, orderSchema, allParties) => {
   
   const respondents = allParties?.filter((party) => party?.partyType === "respondent" && party?.isJoined === true)
     .sort((a, b) => (a?.partyUuid || '').localeCompare(b?.partyUuid || ''));
+
   
   const updatedComplainants = [...complainants]?.map((party, index) => ({
     partyName: party.name,
@@ -223,6 +224,7 @@ export const getParties = (type, orderSchema, allParties) => {
     partyIndex: index+1,
     poaUuid: party?.poaUuid,
     userUuid: party?.partyUuid,
+    uniqueId: party?.partyUuid,
     mobileNumber: party?.mobileNumber,
   }));
 
@@ -232,6 +234,7 @@ export const getParties = (type, orderSchema, allParties) => {
     partyIndex: index+1,
     poaUuid: party?.poaUuid,
     userUuid: party?.partyUuid,
+    uniqueId: party?.partyUuid,
     mobileNumber: party?.mobileNumber,
   }));
 
