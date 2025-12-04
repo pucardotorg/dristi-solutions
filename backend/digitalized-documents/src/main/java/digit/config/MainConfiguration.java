@@ -22,7 +22,7 @@ public class MainConfiguration {
     @Value("${app.timezone}")
     private String timeZone;
 
-    @\PostConstruct
+    @PostConstruct
     public void initialize() {
         TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
     }
