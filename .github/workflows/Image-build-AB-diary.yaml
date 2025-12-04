@@ -118,30 +118,30 @@ jobs:
       - name: set deployment environment
         id: set_deployment_environment
         run: |
-          DEPLOYMENT_ENV=""
+          deployment_env=""
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            DEPLOYMENT_ENV="${{ inputs.deployment_env }}"
+            deployment_env="${{ inputs.deployment_env }}"
           elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
             if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
-              DEPLOYMENT_ENV="demo"
+              deployment_env="demo"
             elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
-              DEPLOYMENT_ENV="dev"
+              deployment_env="dev"
             elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
-              DEPLOYMENT_ENV="qa"
+              deployment_env="qa"
             fi
           elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
             if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
-              DEPLOYMENT_ENV="demo"
+              deployment_env="demo"
             elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
-              DEPLOYMENT_ENV="dev"
+              deployment_env="dev"
             elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
-              DEPLOYMENT_ENV="qa"
+              deployment_env="qa"
             else
-              DEPLOYMENT_ENV="dev"
+              deployment_env="dev"
             fi
           fi
-          echo "deployment_env set to $DEPLOYMENT_ENV"
-          echo "deployment_env=$DEPLOYMENT_ENV" >> $GITHUB_ENV
+          echo "deployment_env set to $deployment_env"
+          echo "deployment_env=$deployment_env" >> $GITHUB_ENV
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
@@ -149,9 +149,10 @@ jobs:
     strategy:
       matrix:
           service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
-          deployment_env: ${{ needs.check-diff.outputs.deployment_env }}
+    environment: 
+      name: ${{ needs.check-diff.outputs.deployment_env }}
     steps:
       - name: Print Service Name
         run: |
           echo "Service Name: ${{ matrix.service }}"
-          echo "Deployment Environment: ${{ matrix.deployment_env }}"
+          echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
