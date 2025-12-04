@@ -130,6 +130,7 @@ jobs:
               DEPLOYMENT_ENV="qa"
             fi
           fi
+          echo "deployment_env set to $DEPLOYMENT_ENV"
           echo "deployment_env=$DEPLOYMENT_ENV" >> $GITHUB_ENV
 
   build-and-push-docker-image:
@@ -138,7 +139,7 @@ jobs:
     strategy:
       matrix:
           service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
-          deployment_env: ${{ needs.set_deployment_environment.outputs.deployment_env }}
+          deployment_env: ${{ needs.check-diff.outputs.deployment_env }}
     steps:
       - name: Print Service Name
         run: |
