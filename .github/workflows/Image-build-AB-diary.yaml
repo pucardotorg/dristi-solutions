@@ -130,15 +130,17 @@ jobs:
               DEPLOYMENT_ENV="qa"
             fi
           fi
-          echo "DEPLOYMENT_ENV=$DEPLOYMENT_ENV" >> $GITHUB_ENV
+          echo "deployment_env=$DEPLOYMENT_ENV" >> $GITHUB_ENV
 
-  build-docker-image:
+  build-and-push-docker-image:
     runs-on: ubuntu-latest
     needs: check-diff
     strategy:
       matrix:
           service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+          deployment_env: ${{ needs.set_deployment_environment.outputs.deployment_env }}
     steps:
       - name: Print Service Name
         run: |
           echo "Service Name: ${{ matrix.service }}"
+          echo "Deployment Environment: ${{ matrix.deployment_env }}"
