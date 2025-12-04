@@ -93,6 +93,7 @@ export const DigitalDocumentSignModal = ({
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [isEditModal, setIsEditModal] = useState(false);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   useEffect(() => {
     const fetchDocumentData = async () => {
@@ -317,23 +318,27 @@ export const DigitalDocumentSignModal = ({
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
   const onESignClick = useCallback(() => {
-    try {
-      setLoader(true);
-      sessionStorage.removeItem("fileStoreId");
-      sessionStorage.setItem("digitalDocumentStepper", stepper);
-      sessionStorage.setItem("bulkDigitalDocumentSignSelectedItem", JSON.stringify(effectiveRowData));
-      sessionStorage.setItem("homeActiveTab", "CS_HOME_SIGN_FORMS");
-      sessionStorage.setItem("esignProcess", "true");
-      if (digitalDocumentPaginationData?.limit) sessionStorage.setItem("bulkDigitalDocumentSignlimit", digitalDocumentPaginationData?.limit);
-      if (digitalDocumentPaginationData?.caseTitle)
-        sessionStorage.setItem("bulkDigitalDocumentSignCaseTitle", digitalDocumentPaginationData?.caseTitle);
-      if (digitalDocumentPaginationData?.offset) sessionStorage.setItem("bulkDigitalDocumentSignoffset", digitalDocumentPaginationData?.offset);
-      handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, "Signature of Magistrate");
-    } catch (error) {
-      console.error("E-sign navigation error:", error);
-      setLoader(false);
-    } finally {
-      setLoader(false);
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      try {
+        setLoader(true);
+        sessionStorage.removeItem("fileStoreId");
+        sessionStorage.setItem("digitalDocumentStepper", stepper);
+        sessionStorage.setItem("bulkDigitalDocumentSignSelectedItem", JSON.stringify(effectiveRowData));
+        sessionStorage.setItem("homeActiveTab", "CS_HOME_SIGN_FORMS");
+        sessionStorage.setItem("esignProcess", "true");
+        if (digitalDocumentPaginationData?.limit) sessionStorage.setItem("bulkDigitalDocumentSignlimit", digitalDocumentPaginationData?.limit);
+        if (digitalDocumentPaginationData?.caseTitle)
+          sessionStorage.setItem("bulkDigitalDocumentSignCaseTitle", digitalDocumentPaginationData?.caseTitle);
+        if (digitalDocumentPaginationData?.offset) sessionStorage.setItem("bulkDigitalDocumentSignoffset", digitalDocumentPaginationData?.offset);
+        handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, "Signature of Magistrate");
+      } catch (error) {
+        console.error("E-sign navigation error:", error);
+        setLoader(false);
+      } finally {
+        setLoader(false);
+      }
     }
   }, [stepper, effectiveRowData, digitalDocumentPaginationData, handleEsign, selectedDigitalDocumentFilestoreid]);
 
@@ -348,6 +353,7 @@ export const DigitalDocumentSignModal = ({
         Action: "SIGN",
         fileStoreId: newFilestore,
       });
+      setDigitalDocumentSignedPdf(newFilestore);
       sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
@@ -387,7 +393,7 @@ export const DigitalDocumentSignModal = ({
         Action: "EDIT",
       });
       if (effectiveRowData?.type === "PLEA") {
-        history.replace(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}&documentNumber=${docsNumber}`);
+        history.replace(`/${window?.contextPath}/employee/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${docsNumber}`);
       }
       if (effectiveRowData?.type === "EXAMINATION_OF_ACCUSED") {
         history.replace(

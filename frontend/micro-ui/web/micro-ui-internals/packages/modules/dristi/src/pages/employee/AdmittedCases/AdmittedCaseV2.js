@@ -2683,7 +2683,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
         handleCaseTransition(option.value);
       } else if (option.value === "RECORD_PLEA") {
-        history.push(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}`);
+        history.push(`/${window?.contextPath}/employee/submissions/record-plea?filingNumber=${filingNumber}`);
         return;
       }
     },

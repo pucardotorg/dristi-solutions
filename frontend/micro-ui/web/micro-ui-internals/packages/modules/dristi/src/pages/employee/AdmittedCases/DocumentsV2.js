@@ -81,7 +81,7 @@ const DocumentsV2 = ({
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
-              }/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
+              }/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
             );
           }
 

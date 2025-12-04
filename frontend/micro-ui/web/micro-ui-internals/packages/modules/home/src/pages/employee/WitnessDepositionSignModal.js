@@ -350,6 +350,7 @@ export const WitnessDepositionSignModal = ({
         action: witnessDepositionWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      setWitnessDepositionSignedPdf(newFilestore);
       sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);

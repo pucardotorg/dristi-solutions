@@ -440,7 +440,7 @@ const PleaSubmission = () => {
             handleBack={() => {
               setPreviewPleModal(false);
               if (showModal) {
-                history.replace(`/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
+                history.replace(`/${window?.contextPath}/${userType}/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
               }
             }}
             setPreviewModal={setPreviewPleModal}
