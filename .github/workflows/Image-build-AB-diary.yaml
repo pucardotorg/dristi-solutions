@@ -136,9 +136,9 @@ jobs:
               DEPLOYMENT_ENV="dev"
             elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
               DEPLOYMENT_ENV="qa"
+            else
+              DEPLOYMENT_ENV="dev"
             fi
-          else
-            DEPLOYMENT_ENV="dev"
           fi
           echo "deployment_env set to $DEPLOYMENT_ENV"
           echo "deployment_env=$DEPLOYMENT_ENV" >> $GITHUB_ENV
