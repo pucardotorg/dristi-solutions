@@ -3208,7 +3208,7 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
+  const takeActionOptions = useMemo(() => [{ label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
 
   const allowedTakeActionOptions = useMemo(() => {
     return takeActionOptions
@@ -3695,6 +3695,14 @@ const AdmittedCaseV2 = () => {
                                     value: "NEXT_HEARING",
                                   })
                                 }
+                              ></Button>
+                            )}
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_GENERATE_ORDER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
                               ></Button>
                             )}
                             <ActionButton
