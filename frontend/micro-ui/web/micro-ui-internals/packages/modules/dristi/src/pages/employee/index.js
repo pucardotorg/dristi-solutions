@@ -32,15 +32,15 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
+  const { caseId: contextCaseId, filingNumber: contextFilingNumber } = BreadCrumbsParamsData || {};
   const queryForViewCase = useMemo(() => {
-    const caseId = BreadCrumbsParamsData?.caseId || location?.state?.caseId;
-    const filingNumber = BreadCrumbsParamsData?.filingNumber || location?.state?.filingNumber;
+    const caseId = contextCaseId || location?.state?.caseId;
+    const filingNumber = contextFilingNumber || location?.state?.filingNumber;
     if (caseId && filingNumber) {
       return `?${new URLSearchParams({ caseId, filingNumber }).toString()}`;
     }
     return location?.search || "";
-  }, [BreadCrumbsParamsData?.caseId, BreadCrumbsParamsData?.filingNumber, location?.state?.caseId, location?.state?.filingNumber, location?.search]);
+  }, [contextCaseId, contextFilingNumber, location?.state?.caseId, location?.state?.filingNumber, location?.search]);
 
   const employeeCrumbs = [
     {
