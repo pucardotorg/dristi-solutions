@@ -50,35 +50,31 @@ jobs:
 
       - name: check diff
         if: github.event_name == 'pull_request'
+        id: check_diff
         run: |
-          CONFIG_FILE="build/config.json"
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git fetch origin ${{ github.event.pull_request.head.ref }}
 
-          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          git diff --name-only ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} > changed.txt
 
-          FILE_LIST=$(git diff ${{ github.event.pull_request.base.ref }} HEAD --name-only)
+          services=$(jq -r 'to_entries[] | "\(.key) \(.value.service_source_path)"' build/config.json |
+          while read svc raw_path; do
+            path=$(echo "$raw_path" | sed 's:/*$::')
 
-          BASE_PATHS=$(jq -r '.[] | .service_source_path' "$CONFIG_FILE")
-
-          if [ -z "$BASE_PATHS" ]; then
-            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          MATRIX_ARRAY=""
-
-          for PATH_PREFIX in $BASE_PATHS; do
-            if echo "$FILE_LIST" | grep -q "^$PATH_PREFIX"; then
-              if [ -z "$MATRIX_ARRAY" ]; then
-                MATRIX_ARRAY="{\"path\":\"$PATH_PREFIX\"}"
-              else
-                MATRIX_ARRAY="$MATRIX_ARRAY,{\"path\":\"$PATH_PREFIX\"}"
-              fi
+            if grep -q "^$path/" changed.txt; then
+              echo "$svc"
             fi
-          done
+          done | sort -u)
 
-          FINAL_JSON="{\"include\":[${MATRIX_ARRAY}]}"
-          echo "Generated Matrix JSON: $FINAL_JSON"
-          echo "matrix=$FINAL_JSON" >> $GITHUB_OUTPUT
+          echo "Changed services:"
+          echo "$services"
+
+          matrix=$(echo "$services" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+
+          echo "Matrix JSON for GitHub Actions:"
+          echo "$matrix"
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
       - name: create matrix
         id: create_matrix
@@ -94,8 +90,12 @@ jobs:
 
             # Export as matrix
             echo "matrix=$json" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            echo "Using matrix from check_diff step"
+            echo "matrix=${{ steps.check_diff.outputs.matrix }}"
+            echo "matrix=${{ steps.check_diff.outputs.matrix }}" >> "$GITHUB_OUTPUT"
           fi
-  
+        
   build-docker-image:
     runs-on: ubuntu-latest
     needs: check-diff
