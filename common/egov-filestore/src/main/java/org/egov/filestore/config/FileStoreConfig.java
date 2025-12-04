@@ -51,50 +51,60 @@ public class FileStoreConfig {
 	private Long fileSizeMax;
 
     // PDF security scanning flags
-    @Value("${pdf.scan.enabled:true}")
+    @Value("${pdf.scan.enabled:false}")
     private boolean pdfScanEnabled;
 
-    @Value("${pdf.disallow.javascript:true}")
+    @Value("${pdf.disallow.javascript:false}")
     private boolean pdfDisallowJavascript;
 
-    @Value("${pdf.disallow.openaction:true}")
+    @Value("${pdf.disallow.openaction:false}")
     private boolean pdfDisallowOpenAction;
 
-    @Value("${pdf.disallow.aa:true}")
+    @Value("${pdf.disallow.aa:false}")
     private boolean pdfDisallowAA;
 
-    @Value("${pdf.disallow.launch:true}")
+    @Value("${pdf.disallow.launch:false}")
     private boolean pdfDisallowLaunch;
 
-    @Value("${pdf.disallow.embedded_files:true}")
+    @Value("${pdf.disallow.embedded_files:false}")
     private boolean pdfDisallowEmbeddedFiles;
 
-    @Value("${pdf.disallow.richmedia:true}")
+    @Value("${pdf.disallow.richmedia:false}")
     private boolean pdfDisallowRichMedia;
 
-    @Value("${pdf.disallow.acroform_actions:true}")
+    @Value("${pdf.disallow.acroform_actions:false}")
     private boolean pdfDisallowAcroform;
 
-    @Value("${pdf.disallow.file_attachments:true}")
+    @Value("${pdf.disallow.file_attachments:false}")
     private boolean pdfDisallowFileAttachments;
 
-    @Value("${pdf.disallow.encrypted:true}")
+    @Value("${pdf.disallow.encrypted:false}")
     private boolean pdfDisallowEncrypted;
 
-    @Value("${pdf.disallow.xfa:true}")
+    @Value("${pdf.disallow.xfa:false}")
     private boolean pdfDisallowXfa;
 
-    @Value("${pdf.disallow.stream_javascript:true}")
+    @Value("${pdf.disallow.stream_javascript:false}")
     private boolean pdfDisallowStreamJavascript;
 
-    @Value("${pdf.disallow.object_streams:true}")
+    @Value("${pdf.disallow.object_streams:false}")
     private boolean pdfDisallowObjectStreams;
 
-    @Value("${pdf.disallow.xref_streams:true}")
+    @Value("${pdf.disallow.xref_streams:false}")
     private boolean pdfDisallowXrefStreams;
 
-    @Value("${pdf.disallow.suspicious_filters:true}")
+    @Value("${pdf.disallow.suspicious_filters:false}")
     private boolean pdfDisallowSuspiciousFilters;
+
+    // ClamAV virus scanning configuration
+    @Value("${clamav.host:localhost}")
+    private String clamavHost;
+
+    @Value("${clamav.port:3310}")
+    private int clamavPort;
+
+    @Value("${clamav.enabled:false}")
+    private boolean clamavEnabled;
 
 	@PostConstruct
 	private void enrichKeysetForFormats() {

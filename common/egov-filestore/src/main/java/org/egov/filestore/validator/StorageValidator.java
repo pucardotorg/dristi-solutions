@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.Tika;
@@ -17,16 +19,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
+@Slf4j
 public class StorageValidator {
 
-	private FileStoreConfig fileStoreConfig;
+	private final FileStoreConfig fileStoreConfig;
+    private final ClamAVValidator clamAVValidator;
 
 	
 	@Autowired
-	public StorageValidator(FileStoreConfig fileStoreConfig) {
-		super();
-		this.fileStoreConfig = fileStoreConfig;
-	}
+	public StorageValidator(FileStoreConfig fileStoreConfig, ClamAVValidator clamAVValidator) {
+        this.fileStoreConfig = fileStoreConfig;
+        this.clamAVValidator = clamAVValidator;
+    }
 
 	private static final Map<String, byte[]> MAGIC_NUMBERS = new HashMap<>();
 
@@ -51,9 +55,21 @@ public class StorageValidator {
 		}
 		validateMagicNumber(artifact.getMultipartFile(), extension);
 		validateFileSize(artifact.getMultipartFile());
-	}
-	
-	private void validateFileExtention(String extension) {
+        validateVirusScan(artifact);
+    }
+
+    private void validateVirusScan(Artifact artifact) {
+        try {
+            boolean safe = clamAVValidator.isFileSafe(artifact.getMultipartFile().getInputStream());
+            if (!safe) {
+                throw new CustomException("EG_FILESTORE_VIRUS_FOUND", "File contains a virus");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void validateFileExtention(String extension) {
 		if(!fileStoreConfig.getAllowedFormatsMap().containsKey(extension)) {
 			throw new CustomException("EG_FILESTORE_INVALID_INPUT","Inalvid input provided for file : " + extension + ", please upload any of the allowed formats : " + fileStoreConfig.getAllowedKeySet());
 		}
