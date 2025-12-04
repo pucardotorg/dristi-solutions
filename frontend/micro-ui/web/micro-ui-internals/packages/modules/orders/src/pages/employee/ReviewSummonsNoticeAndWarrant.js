@@ -1186,10 +1186,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
           hideSubmit:
-            isTypist ||
-            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
-              rowData?.documentStatus === "SIGN_PENDING" &&
-              !isJudge),
+            ((rowData?.taskType === "WARRANT" && !hasSignWarrantAccess) ||
+              (rowData?.taskType === "PROCLAMATION" && !hasSignProclamationAccess) ||
+              (rowData?.taskType === "ATTACHMENT" && !hasSignAttachmentAccess)) &&
+            rowData?.documentStatus === "SIGN_PENDING" &&
+            !isJudge,
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -1295,7 +1296,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       // actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
-      hideSubmit: isTypist,
+      hideSubmit: !hasEditTaskAccess,
       modalBody: (
         <CustomStepperSuccess
           successMessage={successMessage}
@@ -1347,7 +1348,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
-      hideSubmit: isTypist,
+      hideSubmit: !hasEditTaskAccess,
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
