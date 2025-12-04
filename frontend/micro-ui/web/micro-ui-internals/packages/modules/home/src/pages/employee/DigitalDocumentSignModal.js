@@ -92,6 +92,7 @@ export const DigitalDocumentSignModal = ({
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
+  const [isEditModal, setIsEditModal] = useState(false);
 
   useEffect(() => {
     const fetchDocumentData = async () => {
@@ -259,12 +260,14 @@ export const DigitalDocumentSignModal = ({
                   setShowBulkSignModal(false);
                   if (queryStrings?.documentNumber) {
                     clearDigitalDocumentSessionData();
-                    if (userType && caseId && filingNumber && Action !== "EDIT") {
-                      sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
-                      history.push(
-                        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
-                      );
-                    } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+                    if (Action !== "EDIT") {
+                      if (userType && caseId && filingNumber) {
+                        sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+                        history.push(
+                          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
+                        );
+                      } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+                    }
                   }
                 }
                 setLoader(false);
@@ -273,16 +276,7 @@ export const DigitalDocumentSignModal = ({
           }
         });
     } catch (error) {
-      console.error("Error while updating digital document:", error);
-      setShowBulkSignModal(false);
-      if (queryStrings?.documentNumber) {
-        clearDigitalDocumentSessionData();
-        if (userType && caseId && filingNumber && Action !== "EDIT") {
-          sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
-          history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
-        } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
-      }
-      setLoader(false);
+      throw error;
     }
   };
 
@@ -360,6 +354,16 @@ export const DigitalDocumentSignModal = ({
       setIsSigned(false);
       setDigitalDocumentSignedPdf("");
       setFormData({});
+      console.error("Error while updating digital document:", error);
+      setShowBulkSignModal(false);
+      if (queryStrings?.documentNumber) {
+        clearDigitalDocumentSessionData();
+        if (userType && caseId && filingNumber) {
+          sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+          history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+        } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+      }
+      setLoader(false);
     }
   };
 
@@ -368,30 +372,35 @@ export const DigitalDocumentSignModal = ({
     const label = _getLabel(effectiveRowData?.status, userType, isJudge);
 
     if (label === "EDIT") {
-      try {
-        setLoader(true);
-        const docsNumber = effectiveRowData?.businessObject?.digitalizedDocumentDetails?.documentNumber || effectiveRowData?.documentNumber;
-        await updateDigitalDocument({
-          documentNumber: docsNumber,
-          Action: "EDIT",
-        });
-        if (effectiveRowData?.type === "PLEA") {
-          history.replace(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}&documentNumber=${docsNumber}`);
-        }
-        if (effectiveRowData?.type === "EXAMINATION_OF_ACCUSED") {
-          history.replace(
-            `/${
-              window?.contextPath
-            }/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents&openExaminationModal=${true}&examinationDocNumber=${docsNumber}`
-          );
-        }
-      } catch (error) {
-        console.error("Error :", error);
-      } finally {
-        setLoader(false);
-      }
+      setIsEditModal(true);
     } else {
       setStepper(1);
+    }
+  };
+
+  const handleConfirmEdit = async () => {
+    try {
+      setLoader(true);
+      const docsNumber = effectiveRowData?.businessObject?.digitalizedDocumentDetails?.documentNumber || effectiveRowData?.documentNumber;
+      await updateDigitalDocument({
+        documentNumber: docsNumber,
+        Action: "EDIT",
+      });
+      if (effectiveRowData?.type === "PLEA") {
+        history.replace(`/${window?.contextPath}/employee/submissions/plea?filingNumber=${filingNumber}&documentNumber=${docsNumber}`);
+      }
+      if (effectiveRowData?.type === "EXAMINATION_OF_ACCUSED") {
+        history.replace(
+          `/${
+            window?.contextPath
+          }/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents&openExaminationModal=${true}&examinationDocNumber=${docsNumber}`
+        );
+      }
+    } catch (error) {
+      console.error("Error while updating digital document:", error);
+      setShowBulkSignModal(false);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -643,6 +652,22 @@ export const DigitalDocumentSignModal = ({
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {isEditModal && (
+        <Modal
+          headerBarMain={<Heading label={t("EDIT_DIGITILIZATION_MODAL_HEADER")} />}
+          headerBarEnd={<CloseBtn onClick={() => setIsEditModal(false)} />}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={() => setIsEditModal(false)}
+          actionSaveLabel={t("CONFIRM")}
+          actionSaveOnSubmit={handleConfirmEdit}
+          className="reject-modal"
+        >
+          <div className="reject-modal-content">
+            <p>{t("EDIT_DIGITILIZATION_MODAL_TEXT")}</p>
           </div>
         </Modal>
       )}

@@ -17,7 +17,7 @@ const pleaSubmissionConfig = [
         },
       },
       {
-        label: "FATHER_NAME",
+        label: "ACCUSED_FATHER_NAME",
         isMandatory: true,
         key: "fatherName",
         type: "text",

@@ -255,7 +255,7 @@ function BulkSignDigitalizationView() {
           fileStoreId:
             document?.businessObject?.digitalizedDocumentDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
           documentNumber: document?.businessObject?.digitalizedDocumentDetails?.documentNumber,
-          placeholder: "Signature",
+          placeholder: "Signature of Magistrate",
           tenantId: tenantId,
         };
       });

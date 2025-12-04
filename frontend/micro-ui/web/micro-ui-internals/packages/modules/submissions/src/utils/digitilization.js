@@ -195,12 +195,16 @@ export const checkTextValidation = ({ formData, setValue, reset, formdata, clear
       const oldValue = formDataCopy[key];
       let value = oldValue;
       if (typeof value === "string") {
+        if (value.length > 100) {
+          value = value.slice(0, 100);
+        }
         let updatedValue = formatName(value);
         if (updatedValue !== oldValue) {
           const element = document.querySelector(`[name="${key}"]`);
           const start = element?.selectionStart;
           const end = element?.selectionEnd;
           setValue(key, updatedValue);
+          clearErrors(key);
           setTimeout(() => {
             element?.setSelectionRange(start, end);
           }, 0);
@@ -216,9 +220,8 @@ export const checkTextValidation = ({ formData, setValue, reset, formdata, clear
           const element = document.querySelector(`[name="${key}"]`);
           const start = element?.selectionStart;
           const end = element?.selectionEnd;
-
           setValue(key, updatedValue);
-
+          clearErrors("age");
           setTimeout(() => {
             element?.setSelectionRange(start, end);
           }, 0);

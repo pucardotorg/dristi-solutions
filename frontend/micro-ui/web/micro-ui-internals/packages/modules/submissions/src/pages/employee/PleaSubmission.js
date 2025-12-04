@@ -237,6 +237,10 @@ const PleaSubmission = () => {
 
   const handleSubmit = async () => {
     try {
+      if (formdata?.age < 18) {
+        setFormErrors?.current("age", { message: t("AGE_LIMIT_ERROR") })
+        return;
+      }
       setLoader(true);
       let pleaSubmissionUpdateResponse = null;
       if (!documentNumber) {
@@ -414,8 +418,8 @@ const PleaSubmission = () => {
       )}
       <div className="citizen create-submission" style={{ padding: "24px 24px 24px 40px" }}>
         {" "}
-        <Header> {t(pleaSubmissionDetailConfig.header)}</Header>
-        <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "15px", width: "50%" }}>
+        <Header styles={{margin: "0px"}}> {t(pleaSubmissionDetailConfig.header)}</Header>
+        <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "0px", width: "50%" }}>
           <FormComposerV2
             label={t("REVIEW_PLEA_SUBMISSION")}
             config={modifiedFormConfig}
@@ -481,7 +485,7 @@ const PleaSubmission = () => {
             header={"PLEA_ESIGN_MODAL_HEADER"}
           />
         )}
-        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"PLEA_ESIGN_MODAL_HEADER"} />}
+        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"PLEA_ESIGN_MODAL_SUCCESS"} />}
       </div>
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
