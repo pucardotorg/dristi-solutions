@@ -46,9 +46,7 @@ initLibraries().then(() => {
 });
 
 function App() {
-  const stateCode =
-    process.env.REACT_APP_STATE_LEVEL_TENANT_ID || "kl";
-  console.log("stateCode", stateCode);
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   if (!stateCode) {
     return <h1>stateCode is not defined</h1>;
   }
