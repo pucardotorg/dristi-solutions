@@ -1288,6 +1288,15 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "BAIL_BOND_CREATOR",
             "BAIL_BOND_VIEWER",
             "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -3479,8 +3488,7 @@ export const transformCaseDataForUpdate = (caseDetails, key) => {
       });
       delete updatedCaseData.additionalDetails[key];
       updatedCaseData.witnessDetails = witnessDetails;
-    }
-    else updatedCaseData.witnessDetails = [];
+    } else updatedCaseData.witnessDetails = [];
   }
   return updatedCaseData;
 };

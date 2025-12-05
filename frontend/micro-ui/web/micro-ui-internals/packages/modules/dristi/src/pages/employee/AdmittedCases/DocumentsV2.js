@@ -1,5 +1,5 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -7,6 +7,9 @@ import "./tabs.css";
 import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { getDate } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { submissionService } from "../../../../../submissions/src/hooks/services";
+import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
+import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
 
 const DocumentsV2 = ({
   caseDetails,
@@ -27,9 +30,12 @@ const DocumentsV2 = ({
   counter,
   setShowWitnessModal,
   setEditWitnessDepositionArtifact,
+  setShowExaminationModal,
+  setExaminationDocumentNumber,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
+  const { path } = useRouteMatch();
   const history = useHistory();
   const { t } = useTranslation();
 
@@ -39,9 +45,92 @@ const DocumentsV2 = ({
   const isCitizen = userRoles?.includes("CITIZEN");
   const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  const ditilizationDeleteFunc = async (history, column, row, item) => {
+    if (item.id === "draft_ditilization_delete") {
+      try {
+        const payload = {
+          digitalizedDocument: {
+            ...row,
+            workflow: {
+              action: "DELETE_DRAFT",
+            },
+          },
+        };
+        await submissionService.updateDigitalization(payload, tenantId);
+        history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+      } catch (error) {
+        console.error("error: ", error);
+        setShowErrorToast({ label: t("DELTED_SUCCESSFULLY"), error: true });
+      }
+    }
+  };
+
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
-      if (docObj?.[0]?.isBail) {
+      if (docObj?.[0]?.isDigitilization && ["PLEA", "EXAMINATION_OF_ACCUSED", "MEDIATION"]?.includes(docObj?.[0]?.artifactList?.type)) {
+        const type = docObj?.[0]?.artifactList?.type;
+        const status = docObj?.[0]?.artifactList?.status;
+        const filingNumber = docObj?.[0]?.artifactList?.caseFilingNumber;
+        const documentNumber = docObj?.[0]?.artifactList?.documentNumber;
+        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
+        const courtId = docObj?.[0]?.artifactList?.courtId;
+        if (type === "PLEA") {
+          if (status === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
+            );
+          }
+
+          if (status === "PENDING_E-SIGN" && isCitizen) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}`
+            );
+          }
+
+          if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
+            );
+          }
+        } else if (type === "EXAMINATION_OF_ACCUSED") {
+          if (status === "DRAFT_IN_PROGRESS") {
+            setShowExaminationModal(true);
+            setExaminationDocumentNumber(documentNumber);
+          }
+
+          if (status === "PENDING_E-SIGN" && isCitizen) {
+            history.push(
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
+            );
+          }
+
+          if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
+            );
+          }
+        } else if (type === "MEDIATION") {
+          if (
+            [MediationWorkflowState.PENDING_E_SIGN, MediationWorkflowState.PENDING_UPLOAD, MediationWorkflowState.PENDING_REVIEW]?.includes(status)
+          ) {
+            history.push(
+              `/${window.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/mediation-form-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&courtId=${courtId}`
+            );
+          }
+        }
+      } else if (docObj?.[0]?.isBail) {
         const bailStatus = docObj?.[0]?.artifactList?.status;
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
         const bailBondId = docObj?.[0]?.artifactList?.bailId;
@@ -272,6 +361,46 @@ const DocumentsV2 = ({
               },
             },
           };
+        case "Digitalization Forms":
+          return {
+            ...tabConfig,
+            apiDetails: {
+              ...tabConfig.apiDetails,
+              requestBody: {
+                ...tabConfig.apiDetails.requestBody,
+                criteria: {
+                  ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
+                  caseFilingNumber: filingNumber,
+                },
+              },
+            },
+            sections: {
+              ...tabConfig.sections,
+              search: {
+                ...tabConfig.sections.search,
+                uiConfig: {
+                  ...tabConfig.sections.search.uiConfig,
+                  fields: [...tabConfig.sections.search.uiConfig.fields],
+                },
+              },
+              searchResult: {
+                ...tabConfig.sections.searchResult,
+                uiConfig: {
+                  ...tabConfig.sections.searchResult.uiConfig,
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                    switch (column.label) {
+                      case "DOCUMENT_TYPE":
+                        return { ...column, clickFunc: docSetFunc };
+                      case "CS_ACTIONS":
+                        return { ...column, clickFunc: ditilizationDeleteFunc };
+                      default:
+                        return column;
+                    }
+                  }),
+                },
+              },
+            },
+          };
         default:
           return {
             ...tabConfig,
@@ -315,6 +444,19 @@ const DocumentsV2 = ({
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig]);
 
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
   return (
     <React.Fragment>
       <div style={{ padding: "5px", margin: "5px" }}>
@@ -346,6 +488,7 @@ const DocumentsV2 = ({
       </div>
 
       <InboxSearchComposer key={`${config?.label}-${counter}`} configs={config} showTab={false}></InboxSearchComposer>
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
 };

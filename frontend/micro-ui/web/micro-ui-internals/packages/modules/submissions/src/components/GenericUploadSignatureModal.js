@@ -14,7 +14,7 @@ const CloseBtn = (props) => {
   );
 };
 
-const BailUploadSignatureModal = ({
+const GenericUploadSignatureModal = ({
   t,
   handleCloseSignatureModal,
   handleDownload,
@@ -24,7 +24,9 @@ const BailUploadSignatureModal = ({
   showUploadSignature,
   setLoader,
   loader,
-  bailBondFileStoreId,
+  fileStoreId,
+  title="SELECT_MODE_SIGNING",
+  infoText="BAIL_SIGN_INFO"
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -80,7 +82,7 @@ const BailUploadSignatureModal = ({
   return (
     <React.Fragment>
       <Modal
-        headerBarMain={<Heading label={t("SELECT_MODE_SIGNING")} />}
+        headerBarMain={<Heading label={t(title)} />}
         headerBarEnd={<CloseBtn onClick={handleCloseSignatureModal} />}
         actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
         actionCancelOnSubmit={handleDownload}
@@ -93,7 +95,7 @@ const BailUploadSignatureModal = ({
         className={"bail-signature-modal"}
       >
         <div style={{ padding: "10px" }}>
-          <p style={{ marginBottom: "24px", color: "#0A0A0A" }}>{t("BAIL_SIGN_INFO")}</p>
+          <p style={{ marginBottom: "24px", color: "#0A0A0A" }}>{t(infoText)}</p>
         </div>
       </Modal>
 
@@ -112,7 +114,7 @@ const BailUploadSignatureModal = ({
           infoHeader={"CS_PLEASE_COMMON_NOTE"}
           infoText={"PLEASE_ENSURE_SIGN"}
           showDownloadText={true}
-          fileStoreId={bailBondFileStoreId}
+          fileStoreId={fileStoreId}
           cancelLabel={"SUBMIT"}
         />
       )}
@@ -120,4 +122,4 @@ const BailUploadSignatureModal = ({
   );
 };
 
-export default BailUploadSignatureModal;
+export default GenericUploadSignatureModal;

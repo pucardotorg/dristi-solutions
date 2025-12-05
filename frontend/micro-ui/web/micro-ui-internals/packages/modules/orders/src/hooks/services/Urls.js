@@ -3,6 +3,7 @@ export const Urls = {
   orders: {
     orderCreate: "/order/v1/create",
     orderAddItem: "/order/v2/add-item",
+    orderManagementAddItem: "/order-management/v2/add-item",
     orderRemoveItem: "/order/v2/remove-item",
     orderUpdate: "/order/v1/update",
     orderSearch: "/order/v1/search",
@@ -36,6 +37,10 @@ export const Urls = {
   orderManagement: {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
     updateSignedOrders: "/order-management/v1/_updateSignedOrders",
+  },
+  digitalizationService: {
+    getDigitalizedDocumentsToSign: "/digitalized-documents/v1/_getDigitalizedDocumentsToSign",
+    updateSignedDigitalizedDocuments: "/digitalized-documents/v1/_updateSignedDigitalizedDocuments",
   },
   processManagement: {
     getProcessToSign: "/task/v1/_getTasksToSign",

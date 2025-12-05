@@ -166,6 +166,7 @@ function PendingTaskAccordion({
                       if (modalView) {
                         setShowAllPendingTasksModal(false);
                       }
+
                       if (item?.bailBondId && item?.status === "PENDING_RAISE_BAIL_BOND") {
                         const updatedUrl = addParamToUrl(item?.redirectUrl, "bailBondId", item?.bailBondId);
                         redirectPendingTaskUrl(updatedUrl, item?.isCustomFunction, item?.params);

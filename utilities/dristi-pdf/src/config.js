@@ -298,6 +298,8 @@ module.exports = {
     new_order_generic: process.env.NEW_ORDER_GENERIC || "new-order-generic",
     new_order_generic_qr:
       process.env.NEW_ORDER_GENERIC_QR || "new-order-generic-qr",
+    digitisation_plea: process.env.DIGITISATION_PLEA || "digitisation-plea",
+    digitisation_examination_of_accused: process.env.DIGITISATION_EXAMINATION_OF_ACCUSED || "digitisation-examination-of-accused",
   },
 
   app: {
@@ -326,6 +328,7 @@ module.exports = {
     bailBond: process.env.DRISTI_BAIL_BOND_HOST || "http://localhost:8097",
     taskMangement:
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
+    digitisation: process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
   },
 
   paths: {
@@ -351,6 +354,7 @@ module.exports = {
     evidence_search: "/evidence/v1/_search",
     bail_bond_search: "/bail-bond/v1/_search",
     task_management_search: "/task-management/v1/_search",
+    digitalized_documents_search:"/digitalized-documents/v1/_search"
   },
 
   constraints: {

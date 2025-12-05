@@ -24,6 +24,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -1174,23 +1175,15 @@ const MainHomeScreen = () => {
           <div className="home-bulk-sign">
             <BulkESignView />
           </div>
+        ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
+          <div className="home-bulk-sign">
+            <BulkSignDigitalizationView />
+          </div>
         ) : (
-          // <div
-          //   className="inbox-search-wrapper"
-          //   style={{
-          //     width: "100%",
-          //     maxHeight: "calc(100vh - 90px)",
-          //     overflowY: "auto",
-          //     scrollbarWidth: "thin",
-          //     scrollbarColor: "#c5c5c5 #f9fafb",
-          //     padding: "26px",
-          //   }}
-          // >
           <div className={`bulk-esign-order-view`}>
             <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
             <div className="inbox-search-wrapper">{activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}</div>
           </div>
-          // </div>
         )}
         {showBailBondModal && (
           <BailBondModal

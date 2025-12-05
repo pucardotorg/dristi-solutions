@@ -697,6 +697,105 @@ export const UICustomizations = {
     },
   },
 
+  bulkSignFormsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const caseTitle = sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle") || requestCriteria?.state?.searchForm?.caseTitle;
+      const type = requestCriteria?.state?.searchForm?.type;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkDigitizationSignList = additionalDetails?.setbulkDigitizationSignList;
+      const setDigitizationPaginationData = additionalDetails?.setDigitizationPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+      const digitizationSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: "PENDING_REVIEW",
+        ...(type && { type: type?.code }),
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+        ...(courtId && { courtId }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const ditilizationItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkDigitalDocumentSignlimit");
+            sessionStorage.removeItem("bulkDigitalDocumentSignoffset");
+            if (sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle")) {
+              sessionStorage.removeItem("bulkDigitalDocumentSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkDigitizationSignList) setbulkDigitizationSignList(ditilizationItems);
+            if (setDigitizationPaginationData) setDigitizationPaginationData({ limit: limit, offset: offset, caseTitle: digitizationSignCaseTitle });
+
+            return {
+              ...data,
+              items: ditilizationItems,
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "PROCESS_TYPE":
+          return t(value);
+        case "DATE_CREATED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        default:
+          break;
+      }
+    },
+    dropDownItems: (row, column, t) => {
+      return [
+        {
+          label: t("DELETE_BULK_ORDER"),
+          id: "delete_order",
+          hide: false,
+          disabled: false,
+          action: (history, column, row, item) => {
+            column?.clickFunc(row);
+          },
+        },
+      ];
+    },
+  },
+
   bulkADiarySignConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const date = new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime();

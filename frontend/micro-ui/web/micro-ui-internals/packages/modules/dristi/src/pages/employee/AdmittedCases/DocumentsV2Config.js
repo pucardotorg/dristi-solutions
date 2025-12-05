@@ -12,6 +12,11 @@ const defaultSearchValues = {
   artifactNumber: "",
 };
 
+const digitalizationDefaultSearch = {
+  type:{},
+  documentNumber:"",
+}
+
 const defaultBailValues = { bailId: "" };
 
 //config for tab search sceeen
@@ -238,6 +243,115 @@ export const DocumentSearchConfig = {
 
             enableColumnSort: true,
             resultsJsonPath: "bails",
+          },
+          show: true,
+        },
+      },
+    },
+    {
+      label: "Digitalization Forms",
+      displayLabel: "DIGITALIZATION_TAB",
+      type: "search",
+      apiDetails: {
+        serviceName: "/digitalized-documents/v1/_search",
+        requestParam: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+        },
+        requestBody: {
+          apiOperation: "SEARCH",
+          criteria: {
+            fuzzySearch: true,
+          },
+          pagination: {
+            limit: 10,
+            offSet: 0,
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "DigitalizationConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody.pagination",
+        filterFormJsonPath: "requestBody.criteria",
+        searchFormJsonPath: "requestBody.criteria",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: digitalizationDefaultSearch,
+            fields: [
+              {
+                label: "TYPE",
+                isMandatory: false,
+                key: "type",
+                type: "dropdown",
+                populators: {
+                  name: "type",
+                  optionsKey: "name",
+                  options: [
+                    {
+                      code: "PLEA",
+                      name: "PLEA",
+                    },
+                    {
+                      code: "EXAMINATION_OF_ACCUSED",
+                      name: "EXAMINATION_OF_ACCUSED",
+                    },
+                    {
+                      code: "MEDIATION",
+                      name: "MEDIATION",
+                    },
+                  ],
+                },
+              },
+              {
+                label: "SEARCH_DOCUMENT_NUMBER",
+                isMandatory: false,
+                key: "documentNumber",
+                type: "text",
+                populators: {
+                  name: "documentNumber",
+                },
+              },
+            ],
+          },
+
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "DOCUMENT_TYPE",
+                jsonPath: "type",
+                additionalCustomization: true,
+              },
+              {
+                label: "DOCUMENT_ID",
+                jsonPath: "documentNumber",
+              },
+              {
+                label: "PARTIES",
+                jsonpath: "parties",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "status",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_ACTIONS",
+                additionalCustomization: true,
+              },
+            ],
+
+            enableColumnSort: true,
+            resultsJsonPath: "documents",
           },
           show: true,
         },

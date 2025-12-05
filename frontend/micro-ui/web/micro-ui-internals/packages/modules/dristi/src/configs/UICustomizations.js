@@ -9,7 +9,7 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -2619,6 +2619,62 @@ export const UICustomizations = {
         default:
           return value ? value : "-";
       }
+    },
+  },
+
+  DigitalizationConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const courtId = localStorage.getItem("courtId");
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            courtId,
+            tenantId,
+            fuzzySearch: true,
+            type: requestCriteria?.body?.criteria?.type?.code,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isDigitilization={true} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return _getDigitilizationPatiresName(row);
+        case "CS_ACTIONS":
+          if (row?.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="DigitalizationConfig" />;
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_ditilization_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   patternValidation: (key) => {

@@ -304,6 +304,7 @@ const WitnessDepositionSignaturePage = () => {
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
           handleMockESign={handleMockESign}
+          customizedNote={t("WITNESS_DEPOSITION_POPUP_NOTES")}
         />
       )}
       {showSuccessModal && (

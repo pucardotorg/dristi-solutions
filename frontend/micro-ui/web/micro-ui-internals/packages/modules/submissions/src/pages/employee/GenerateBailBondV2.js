@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
 import isEqual from "lodash/isEqual";
 import BailBondReviewModal from "../../components/BailBondReviewModal";
-import BailUploadSignatureModal from "../../components/BailUploadSignatureModal";
+import GenericUploadSignatureModal from "../../components/GenericUploadSignatureModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
-import BailBondEsignLockModal from "../../components/BailBondEsignLockModal";
+import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
@@ -1123,7 +1123,7 @@ const GenerateBailBondV2 = () => {
   const handleSubmitSignature = async (fileStoreId) => {
     // TODO: api call with fileStoreID then
     try {
-      setLoader(false);
+      setLoader(true);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
       const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
       if (pendingTasks?.length > 0) {
@@ -1292,7 +1292,7 @@ const GenerateBailBondV2 = () => {
         )}
 
         {showSignatureModal && (
-          <BailUploadSignatureModal
+          <GenericUploadSignatureModal
             t={t}
             handleCloseSignatureModal={handleCloseSignatureModal}
             handleDownload={handleDownload}
@@ -1302,17 +1302,17 @@ const GenerateBailBondV2 = () => {
             handleSubmit={handleSubmitSignature}
             setLoader={setBailUploadLoader}
             loader={bailUploadLoader}
-            bailBondFileStoreId={bailBondFileStoreId}
+            fileStoreId={bailBondFileStoreId}
           />
         )}
 
         {showBailBondEsign && (
-          <BailBondEsignLockModal
+          <GenericSuccessLinkModal
             t={t}
             handleSaveOnSubmit={handleCloseSuccessModal}
             userType={userType}
             filingNumber={filingNumber}
-            bailBondSignatureURL={bailBondSignatureURL}
+            signatureUrl={bailBondSignatureURL}
           />
         )}
         {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"BAIL_BOND_BANNER_HEADER"} />}
