@@ -446,7 +446,7 @@ export const DigitalDocumentSignModal = ({
             docWidth="100%"
             docHeight="unset"
             showDownloadOption={false}
-            documentName={docs?.name}
+            documentName={docs?.name || docs?.additionalDetails?.name}
           />
         ))}
       </React.Fragment>
