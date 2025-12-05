@@ -154,13 +154,9 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             userData?.data?.respondentLastName
           );
           const uniqueId = userData?.uniqueId;
-          let mobileNumber = userData?.data?.phonenumbers?.mobileNumber || [];
-          const age = userData?.data?.respondentAge || "";
-          let address = formatAddress(userData?.data?.addressDetails?.[0]?.addressDetails);
-          const designation = "";
+          let mobileNumber = [];
           const accusedIndividualId = userData?.data?.respondentVerification?.individualDetails?.individualId;
           const accusedUuid = caseDetails?.litigants?.find((lit) => lit?.individualId === accusedIndividualId)?.additionalDetails?.uuid;
-
           if (accusedIndividualId && tenantId) {
             try {
               const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
@@ -177,33 +173,22 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 : individualData?.Individual?.[0]?.userDetails?.username
                 ? individualData?.Individual?.[0]?.userDetails?.username
                 : "";
-                
-              if (!mobileNumber || mobileNumber?.length === 0) {
-                mobileNumber = newMobileNumber ? [newMobileNumber] : [];
-              } else if (newMobileNumber && !mobileNumber?.includes(newMobileNumber)) {
-                mobileNumber = [...mobileNumber, newMobileNumber];
+                if(newMobileNumber) {
+                  mobileNumber = [newMobileNumber];
                 }
-              if (!address) {
-                address = formatAddressFromIndividualData(individualData?.Individual?.[0]?.address?.[0]);
-              }
+                else {
+                  mobileNumber = userData?.data?.phonenumbers?.mobileNumber || [];
+                }
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
           }
           return {
-            code: fullName,
             name: `${fullName}`,
             uuid: accusedUuid,
             individualId: accusedIndividualId,
-            isJoined: true,
-            partyType: "respondent",
             uniqueId,
             mobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
-            sourceName: fullName,
-            age,
-            address: address || "",
-            designation,
-            ownerType: "ACCUSED",
           };
         }) || []
       );
