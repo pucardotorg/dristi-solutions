@@ -60,7 +60,9 @@ jobs:
 
       - name: Build and Push Docker image for digit-ui
         run: |
-          docker build  -t docker.io/venkatramireddyb/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }} -f  web/docker/Dockerfile .
+          docker build  -t docker.io/venkatramireddyb/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }} \
+           --build-arg REACT_APP_STATE_LEVEL_TENANT_ID="kl" \
+           -f  web/docker/Dockerfile .
           docker push docker.io/venkatramireddyb/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: frontend/micro-ui
 

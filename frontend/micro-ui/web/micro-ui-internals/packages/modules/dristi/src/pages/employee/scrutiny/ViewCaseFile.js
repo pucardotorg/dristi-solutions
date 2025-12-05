@@ -18,9 +18,11 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { use } from "react";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
-const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+const judgeId = "JUDGE_ID";
+const courtId = localStorage.getItem("courtId");
+const benchId = "BENCH_ID";
+
+debugger;
 
 const downloadButtonStyle = {
   backgroundColor: "white",
