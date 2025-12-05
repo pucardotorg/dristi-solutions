@@ -912,6 +912,8 @@ export const configsOrderTranferToADR = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
+          styles: { marginBottom: "16px" },
+          customStyle: { marginBottom: "0px" },
           options: [
             {
               code: "E_SIGN",
@@ -929,6 +931,7 @@ export const configsOrderTranferToADR = [
         component: "CustomText",
         key: "mediationNote",
         populators: {
+          customStyle: { marginBottom: "0px" },
           inputs: [
             {
               textStyles: { color: "#2563EB" },

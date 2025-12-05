@@ -2918,12 +2918,11 @@ const GenerateOrdersV2 = () => {
         allParties
       );
 
-       parties = parties.map(p => ({
+      parties = parties?.map((p) => ({
         ...p,
-        partyName: p.partyName,
-        counselName: (allAdvocatesNames[p.userUuid] || []).join(", ")
+        partyName: p?.partyName,
+        counselName: (allAdvocatesNames[p?.userUuid] || [])?.join(", "),
       }));
-
 
       let actionResponse = null;
       if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
@@ -2931,7 +2930,7 @@ const GenerateOrdersV2 = () => {
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
       const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties });
-      
+
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
