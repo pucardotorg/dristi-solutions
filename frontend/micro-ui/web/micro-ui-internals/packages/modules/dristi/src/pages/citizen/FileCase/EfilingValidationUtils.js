@@ -338,7 +338,8 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
       formData?.lastName ||
       formData?.witnessDesignation ||
       formData?.witnessAge ||
-      formData?.complainantAge
+      formData?.complainantAge ||
+      formData?.poaAge
     ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
@@ -391,14 +392,14 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
             }, 0);
           }
         }
-        if (["complainantAge", "witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (key === "poaAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
-
+          // keep only digits
           let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
+          // Max 3 digits
+          if (updatedValue.length > 3) {
+            updatedValue = updatedValue.substring(0, 3);
           }
           if (updatedValue !== oldValue) {
             const element = document?.querySelector(`[name="${key}"]`);
@@ -1087,6 +1088,19 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
   }
 };
 
+export const ageValidation = ({ formData, selected, setFormErrors,clearFormDataErrors}) => {
+  debugger;
+  if (selected === "poaAge"){
+    const poaAge = parseInt(formData?.poaAge, 10);
+    if (poaAge < 18 || poaAge > 999) {
+      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });  
+      return true;
+    }  
+    clearFormDataErrors("poaAge");   
+  }
+}
+    
+   
 export const addressValidation = ({ formData, selected, setAddressError, config }) => {
   if (
     config
