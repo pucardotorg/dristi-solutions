@@ -459,6 +459,18 @@ export const DigitalDocumentSignModal = ({
     };
   });
 
+  useEffect(() => {
+    const clearFileStoreId = () => {
+      sessionStorage.removeItem("fileStoreId");
+    };
+    window.addEventListener("beforeunload", clearFileStoreId);
+    window.addEventListener("popstate", clearFileStoreId);
+    return () => {
+      window.removeEventListener("beforeunload", clearFileStoreId);
+      window.removeEventListener("popstate", clearFileStoreId);
+    };
+  }, []);
+
   return (
     <div>
       <style>{customStyles}</style>
