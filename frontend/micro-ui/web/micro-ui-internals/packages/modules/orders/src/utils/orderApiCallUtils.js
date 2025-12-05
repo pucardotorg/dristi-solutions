@@ -79,6 +79,8 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
           caseStage: caseDetails?.stage,
           caseId: caseDetails?.id,
           isMediationChanged: isMediationChanged,
+          dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
+          mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
         }),
       },
       additionalDetails: item?.orderSchema?.additionalDetails,

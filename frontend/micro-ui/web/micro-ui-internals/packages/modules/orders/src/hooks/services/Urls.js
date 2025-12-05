@@ -3,6 +3,7 @@ export const Urls = {
   orders: {
     orderCreate: "/order/v1/create",
     orderAddItem: "/order/v2/add-item",
+    orderManagementAddItem: "/order-management/v2/add-item",
     orderRemoveItem: "/order/v2/remove-item",
     orderUpdate: "/order/v1/update",
     orderSearch: "/order/v1/search",

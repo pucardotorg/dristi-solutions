@@ -220,7 +220,7 @@ export const getParties = (type, orderSchema, allParties) => {
       .sort((a, b) => (a?.partyUuid || "").localeCompare(b?.partyUuid || ""));
 
     const updatedComplainants = [...complainants]?.map((party, index) => ({
-      partyName: party?.name,
+      partyName: party?.name?.replace(/\s*\(.*?\)\s*/g, "")?.trim(),
       partyType: party?.partyType,
       partyIndex: index + 1,
       poaUuid: party?.poaUuid,
@@ -230,7 +230,7 @@ export const getParties = (type, orderSchema, allParties) => {
     }));
 
     const updatedRespondents = [...respondents]?.map((party, index) => ({
-      partyName: party?.name,
+      partyName: party?.name?.replace(/\s*\(.*?\)\s*/g, "")?.trim(),
       partyType: party?.partyType,
       partyIndex: index + 1,
       poaUuid: party?.poaUuid,

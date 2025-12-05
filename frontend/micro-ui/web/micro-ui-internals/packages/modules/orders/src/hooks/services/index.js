@@ -12,7 +12,7 @@ export const ordersService = {
     }),
   addOrderItem: (data, params) =>
     Request({
-      url: Urls.orders.orderAddItem,
+      url: Urls.orders.orderManagementAddItem,
       useCache: false,
       userService: true,
       data,

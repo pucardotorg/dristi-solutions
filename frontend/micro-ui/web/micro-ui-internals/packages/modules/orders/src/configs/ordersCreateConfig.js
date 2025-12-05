@@ -868,7 +868,7 @@ export const configsOrderTranferToADR = [
         label: "DATE_OF_HEARING",
         key: "hearingDate",
         schemaKeyPath: "orderDetails.hearingDate",
-        transformer: "customDate",
+        transformer: "date",
         labelChildren: "OutlinedInfoIcon",
         isMandatory: true,
         disable: true,

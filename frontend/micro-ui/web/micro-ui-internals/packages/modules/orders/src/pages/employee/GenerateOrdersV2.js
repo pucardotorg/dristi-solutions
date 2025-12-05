@@ -2949,6 +2949,8 @@ const GenerateOrdersV2 = () => {
             caseStage: caseDetails?.stage,
             caseId: caseDetails?.id,
             isMediationChanged: isMediationChanged,
+            dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
+            mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
           }),
         },
       };
