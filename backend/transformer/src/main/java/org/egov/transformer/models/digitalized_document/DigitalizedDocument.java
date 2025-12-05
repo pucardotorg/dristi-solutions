@@ -104,6 +104,12 @@ public class DigitalizedDocument {
     @JsonProperty("searchableFields")
     private List<String> searchableFields = null;
 
+    @JsonProperty("assignedRoles")
+    private List<String> assignedRoles = null;
+
+    @JsonProperty("assignedTo")
+    private List<String> assignedTo = null;
+
 
     public DigitalizedDocument putAdditionalDetailsItem(String key, Object additionalDetailsItem) {
         if (this.additionalDetails == null) {
