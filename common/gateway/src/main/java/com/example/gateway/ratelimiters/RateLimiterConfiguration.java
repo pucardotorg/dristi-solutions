@@ -33,7 +33,6 @@ public class RateLimiterConfiguration {
      * @return
      */
     @Bean
-    @Primary
     public KeyResolver ipKeyResolver() {
         return exchange -> {
             String xForwardedForHeader = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
@@ -56,6 +55,7 @@ public class RateLimiterConfiguration {
      * @return
      */
     @Bean
+    @Primary
     public KeyResolver userKeyResolver() {
 
         return exchange -> {
