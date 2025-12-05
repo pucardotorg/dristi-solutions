@@ -8,8 +8,13 @@ import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
@@ -51,22 +56,52 @@ public class RateLimiterConfiguration {
 
 
     /**
-     * user limit
+     * user limit - extracts user UUID from request body
+     * Falls back to IP if user UUID not present
      * @return
      */
     @Bean
     @Primary
     public KeyResolver userKeyResolver() {
-
         return exchange -> {
-            return Mono.just(modifyRequestBodyFilter.apply(
-                    new ModifyRequestBodyGatewayFilterFactory
-                            .Config()
-                            .setRewriteFunction(Map.class, String.class, (serverWebExchange, s) -> {
-                                RequestInfo requestInfo = objectMapper.convertValue(s.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE), RequestInfo.class);
-                                return Mono.just(requestInfo.getUserInfo().getUuid());
-                            })).toString());
+            // Try to get cached body from exchange attributes (set by previous filters)
+            Object cachedBody = exchange.getAttribute("cachedRequestBodyObject");
+            
+            if (cachedBody instanceof Map) {
+                try {
+                    Map<String, Object> bodyMap = (Map<String, Object>) cachedBody;
+                    Object requestInfoObj = bodyMap.get(REQUEST_INFO_FIELD_NAME_PASCAL_CASE);
+                    
+                    if (requestInfoObj != null) {
+                        RequestInfo requestInfo = objectMapper.convertValue(requestInfoObj, RequestInfo.class);
+                        if (requestInfo.getUserInfo() != null && 
+                            requestInfo.getUserInfo().getUuid() != null && 
+                            !requestInfo.getUserInfo().getUuid().isEmpty()) {
+                            // Return user UUID for per-user rate limiting
+                            return Mono.just(requestInfo.getUserInfo().getUuid());
+                        }
+                    }
+                } catch (Exception e) {
+                    // Fall through to IP-based limiting
+                }
+            }
+            
+            // Fallback to IP-based rate limiting
+            return Mono.just(getClientIp(exchange));
         };
+    }
+    
+    /**
+     * Helper method to get client IP address
+     */
+    private String getClientIp(org.springframework.web.server.ServerWebExchange exchange) {
+        String xForwardedForHeader = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+        if (xForwardedForHeader != null && !xForwardedForHeader.isEmpty()) {
+            return xForwardedForHeader.split(",")[0].trim();
+        }
+        return Objects.requireNonNull(exchange.getRequest().getRemoteAddress())
+                .getAddress()
+                .getHostAddress();
     }
 
 
