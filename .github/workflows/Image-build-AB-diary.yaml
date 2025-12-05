@@ -6,12 +6,23 @@ on:
       - main
       - develop
       - release/*
+      - develop-actions
   workflow_dispatch:
     inputs:
       services:
         required: true
-        description: "Service name in kubernetes cluster in comma separated format"
+        description: "Service name in kubernetes cluster in comma separated format (eg: service1, service2)"
         type: string
+      deployment_env:
+        required: true
+        description: "Deployment environment (eg: dev, qa, demo)"
+        type: choice
+        default: dev
+        options:
+          - dev
+          - qa
+          - demo
+
   push:
     branches:
       - main
@@ -24,17 +35,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
+      deployment_env: ${{ steps.set_deployment_environment.outputs.deployment_env }}
     steps:
       - name: Set github branch
         run: |
-          if [[ github.event_name == 'pull_request' && github.event.action == 'closed' ]]; then
-            echo "BRANCH=${{ github.event.pull_request.base.ref }}" >> $GITHUB_ENV
-          elif [[ github.event_name == 'pull_request' && github.event.action == 'opened' ]]; then
-            echo "BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          BRANCH=""
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            BRANCH="${{ github.event.pull_request.base.ref }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
+            BRANCH="${{ github.event.pull_request.head.ref }}"
           else
-            echo "BRANCH=${{ github.event.ref }}" >> $GITHUB_ENV
+            BRANCH="${{ github.event.ref }}"
           fi 
-          echo " set the branch for current job as ${{ env.BRANCH }}"
+
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+          # show value *now* using shell variable
+          echo "Set the branch for current job as $BRANCH"
 
       - name: checkout
         uses: actions/checkout@v4
@@ -44,41 +61,38 @@ jobs:
 
       - name: check diff
         if: github.event_name == 'pull_request'
+        id: check_diff
         run: |
-          CONFIG_FILE="build/config.json"
-          FILE_LIST=$(git diff ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} --name-only)
-          BASE_PATHS=$(jq -r '.[] | .service_source_path' "$CONFIG_FILE")
+          git fetch --all --prune
           
-          if [ -z "$BASE_PATHS" ]; then
-             echo "Error: Could not read base paths from $CONFIG_FILE or file is empty."
-             # Do not exit 1 here if the config might be optionally empty,
-             # but for mandatory services, exiting is fine.
-             echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
-             exit 0
-          fi
-          
-          MATRIX_ARRAY=""
-          
-          echo "$BASE_PATHS" | while read -r PATH_PREFIX; do
-            if [ -z "$PATH_PREFIX" ]; then
-              continue
+          BASE="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD="origin/${{ github.event.pull_request.head.ref }}"
+
+          git diff --name-only "$BASE" "$HEAD" > changed.txt
+
+          services=$(jq -r 'to_entries[] | "\(.key) \(.value.service_source_path)"' build/config.json |
+          while read svc raw_path; do
+            path=$(echo "$raw_path" | sed 's:/*$::')
+
+            if grep -q "^$path/" changed.txt; then
+              echo "$svc"
             fi
-            echo "$FILE_LIST" | grep -q "^$PATH_PREFIX"
-            
-            if [ $? -eq 0 ]; then
-              if [ -z "$MATRIX_ARRAY" ]; then
-                MATRIX_ARRAY="{\"path\":\"$PATH_PREFIX\"}"
-              else
-                MATRIX_ARRAY="$MATRIX_ARRAY,{\"path\":\"$PATH_PREFIX\"}"
-              fi
-            fi
-          done
-          
-          FINAL_JSON="{\"include\":[${MATRIX_ARRAY}]}"
-          
-          echo "Generated Matrix JSON: $FINAL_JSON"
-          
-          echo "matrix=$FINAL_JSON" >> $GITHUB_OUTPUT
+          done | sort -u)
+
+          echo "Changed services:"
+          echo "$services"
+
+          # SAFE JSON conversion
+          matrix=$(printf "%s\n" "$services" | jq -R -s -c '
+            split("\n")
+            | map(select(. != ""))
+            | map(.)
+          ')
+
+          echo "Matrix JSON:"
+          echo "$matrix"
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
       - name: create matrix
         id: create_matrix
@@ -94,15 +108,51 @@ jobs:
 
             # Export as matrix
             echo "matrix=$json" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            echo "Using matrix from check_diff step"
+            MATRIX='${{ steps.check_diff.outputs.matrix }}'
+            echo "Matrix JSON: $MATRIX"
+            echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           fi
-  
-  build-docker-image:
+
+      - name: set deployment environment
+        id: set_deployment_environment
+        run: |
+          deployment_env=""
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            deployment_env="${{ inputs.deployment_env }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+              deployment_env="demo"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
+              deployment_env="dev"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
+              deployment_env="qa"
+            fi
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
+            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+              deployment_env="demo"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
+              deployment_env="dev"
+            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
+              deployment_env="qa"
+            else
+              deployment_env="dev"
+            fi
+          fi
+          echo "deployment_env set to $deployment_env"
+          echo "deployment_env=$deployment_env" >> $GITHUB_ENV
+
+  build-and-push-docker-image:
     runs-on: ubuntu-latest
     needs: check-diff
     strategy:
       matrix:
           service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+    environment: 
+      name: ${{ needs.check-diff.outputs.deployment_env }}
     steps:
       - name: Print Service Name
         run: |
           echo "Service Name: ${{ matrix.service }}"
+          echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"

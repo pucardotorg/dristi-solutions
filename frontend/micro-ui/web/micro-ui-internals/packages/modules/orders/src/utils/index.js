@@ -121,14 +121,19 @@ export const removeInvalidNameParts = (name) => {
 };
 
 export const constructFullName = (firstName, middleName, lastName) => {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+  return [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
   const nameParts = [firstName, middleName, lastName]
     ?.map((part) => part?.trim())
     ?.filter(Boolean)
-    ?.join(" ");
+    ?.join(" ")
+    ?.trim();
 
   const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
@@ -156,7 +161,11 @@ export const getRespondantName = (respondentNameData) => {
 };
 
 export const getComplainantName = (complainantDetails) => {
-  const partyName = complainantDetails?.firstName && `${complainantDetails?.firstName || ""} ${complainantDetails?.lastName || ""}`.trim();
+  const partyName =
+    complainantDetails?.firstName &&
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
+      complainantDetails?.lastName?.trim() || ""
+    }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }
@@ -327,7 +336,7 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
   const partyData = formdata?.[key]?.party?.data;
 
   const name =
-    [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+    [partyData?.firstName?.trim(), partyData?.middleName?.trim(), partyData?.lastName?.trim()]?.filter(Boolean)?.join(" ") ||
     (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
     (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
     (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||

@@ -30,12 +30,6 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
-  const onCancel = () => {
-    if (!paymentLoader) {
-      history.goBack();
-      setShowPaymentModal(false);
-    }
-  };
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const params = location?.state.state.params;
   const caseId = params?.caseId;
@@ -48,6 +42,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [retryPayment, setRetryPayment] = useState(false);
   const [loader, setLoader] = useState(false);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "payment",
@@ -163,6 +158,21 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   });
 
+  const triggerSurveyContext = caseDetails?.status === "PENDING_PAYMENT" ? "FILING_PAYMENT" : "DEFECT_CORRECTION_PAYMENT";
+  const onCancel = () => {
+    if (!paymentLoader) {
+      if (receiptFilstoreId) {
+        triggerSurvey(triggerSurveyContext, () => {
+          history.goBack();
+          setShowPaymentModal(false);
+        });
+      } else {
+        history.goBack();
+        setShowPaymentModal(false);
+      }
+    }
+  };
+
   useEffect(() => {
     if (caseDetails?.filingNumber) {
       fetchCaseLockStatus();
@@ -262,6 +272,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                   <li>
                     <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
                   </li>
+                  <li>
+                    <span>{t("COURIER_RPAD_NOTE")}</span>
+                  </li>
                 </ul>
               </div>,
             ]}
@@ -313,6 +326,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
         )}
       </Modal>
+      {SurveyUI}
     </div>
   );
 }

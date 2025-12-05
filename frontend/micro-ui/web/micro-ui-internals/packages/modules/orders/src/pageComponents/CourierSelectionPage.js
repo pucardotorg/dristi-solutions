@@ -154,7 +154,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
         ],
       };
       const addressResponse = await openApiService.addAddress(payload, {});
-      
+
       const partyResponse = addressResponse?.partyAddressList?.[0];
       if (!partyResponse) return;
 
@@ -209,23 +209,6 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
               {notice?.subtitle && <div className="notice-subtitle">{notice.subtitle}</div>}
             </div>
 
-            <div className="courier-selection-section">
-              <h3>{t("SELECT_COURIER_SERVICES")}</h3>
-              <div className="courier-options">
-                {notice?.courierOptions?.map((courier) => (
-                  <label key={courier.id} className="courier-option">
-                    <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.channelId)} />
-                    <div className="courier-details">
-                      <div className="courier-name">
-                        {t(courier?.name)} {courier?.fees ? `(INR ${courier.fees})` : ""}
-                      </div>
-                      <div className="delivery-time">{t(courier?.deliveryTime)}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
             <div className="address-selection-section">
               <h3>{t("CS_SELECT_ADDRESS_FOR_DELIVERY")}</h3>
               <p className="address-note">{t("CS_SELECT_ADDRESS_FOR_DELIVERY_NOTE")}</p>
@@ -242,6 +225,23 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
               <button className="add-more-address" onClick={() => handleAddAddress(notice.id)}>
                 <AddIcon /> {t("CS_ADD_MORE_ADDRESS")}
               </button>
+            </div>
+
+            <div className="courier-selection-section">
+              <h3>{t("SELECT_COURIER_SERVICES")}</h3>
+              <div className="courier-options">
+                {notice?.courierOptions?.map((courier) => (
+                  <label key={courier.id} className="courier-option">
+                    <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.channelId)} />
+                    <div className="courier-details">
+                      <div className="courier-name">
+                        {t(courier?.name)} {courier?.fees ? `(INR ${courier.fees})` : ""}
+                      </div>
+                      <div className="delivery-time">{t(courier?.deliveryTime)}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         ))}

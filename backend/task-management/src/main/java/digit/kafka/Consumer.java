@@ -3,19 +3,21 @@ package digit.kafka;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
-import digit.service.PaymentUpdateService;
 import digit.service.TaskCreationService;
-import digit.service.TaskManagementService;
 import digit.service.WorkflowService;
 import digit.util.CaseUtil;
 import digit.util.DateUtil;
+import digit.util.PendingTaskUtil;
 import digit.web.models.*;
 import digit.web.models.cases.CourtCase;
+import digit.web.models.pendingtask.PendingTask;
+import digit.web.models.pendingtask.PendingTaskRequest;
 import digit.web.models.taskdetails.UpFrontStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -43,6 +45,7 @@ public class Consumer {
     private final WorkflowService workflowService;
     private final Producer producer;
     private final Configuration configuration;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @KafkaListener(topics = {"${task.upfront.create.topic}"})
     public void listen(final Map<String, Object> data, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -58,6 +61,63 @@ public class Consumer {
         } catch (final Exception e) {
             log.error("Error while listening to value: {} on topic: {}: ", data, topic, e);
         }
+    }
+
+    @KafkaListener(topics = {"${kafka.save.task-management.topic}", "${kafka.update.task-management.topic}"})
+    public void listenTaskManagementEvents(final Map<String, Object> data, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received task management event on topic: {}", topic);
+            TaskManagementRequest request = objectMapper.convertValue(data, TaskManagementRequest.class);
+            
+            if (request.getTaskManagement() != null
+                && request.getTaskManagement().getWorkflow() != null
+                && COMPLETE_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())
+                && COMPLETED_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getStatus())) {
+                
+                log.info("Processing complete without payment for task: {}", 
+                    request.getTaskManagement().getTaskManagementNumber());
+
+                // Generate follow-up tasks
+                closePendingTask(request.getRequestInfo(), request.getTaskManagement());
+                taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
+                
+                log.info("Successfully generated follow-up tasks for task: {}", 
+                    request.getTaskManagement().getTaskManagementNumber());
+            } else {
+                log.debug("Task management event does not match complete without payment criteria. Action: {}, Status: {}", 
+                    request.getTaskManagement().getWorkflow() != null ? request.getTaskManagement().getWorkflow().getAction() : "null",
+                    request.getTaskManagement().getStatus());
+            }
+        } catch (final Exception e) {
+            log.error("Error while processing task management event on topic: {}: ", topic, e);
+        }
+    }
+
+    private void closePendingTask(RequestInfo requestInfo, TaskManagement taskManagement) {
+        try {
+            log.info("Closing payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
+
+            String referenceId = getReferenceId(taskManagement);
+            JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(referenceId);
+            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
+            JsonNode hit = hitsNode.get(0);
+            JsonNode dataNode = hit.path("_source").path("Data");
+            PendingTask pendingTask = objectMapper.convertValue(dataNode, PendingTask.class);
+            pendingTask.setStatus(COMPLETED);
+            pendingTask.setIsCompleted(true);
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+            log.info("Successfully closed payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
+        } catch (CustomException e) {
+            log.error("Error closing payment pending task: {}", e.getMessage(), e);
+        }
+    }
+
+    private String getReferenceId(TaskManagement taskManagement) {
+        String partyTypeStr = taskManagement.getPartyType() != null
+                ? taskManagement.getPartyType().toString() + "_"
+                : "";
+        String orderItemId = (taskManagement.getOrderItemId() != null && !taskManagement.getOrderItemId().isEmpty()) ? taskManagement.getOrderItemId() + "_" : "";
+        return MANUAL + orderItemId + partyTypeStr + taskManagement.getOrderNumber();
     }
 
     public void processUpfrontApplication(TaskManagement taskManagement, RequestInfo requestInfo) {

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import digit.web.models.enums.PartyType;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
@@ -55,5 +56,8 @@ public class TaskSearchCriteria {
 
     @JsonProperty("taskType")
     private List<String> taskType = null;
+
+    @JsonProperty("partyType")
+    private String partyType;
 
 }

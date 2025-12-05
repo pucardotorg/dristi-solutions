@@ -156,6 +156,7 @@ public class ServiceConstants {
     public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
     public static final String COURT_WITNESS = "-";
     public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
 
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION = "MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION";
 
@@ -197,5 +198,12 @@ public class ServiceConstants {
     public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
+    public static final String ERRORS_PATH = "$.errors";
+
+    public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+
+    public static final String ES_UPDATE_DOCUMENT_FORMAT =
+            "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":\"%s\"}}}}\n";
 
 }

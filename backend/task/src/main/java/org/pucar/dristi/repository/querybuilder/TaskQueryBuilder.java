@@ -99,7 +99,9 @@ public class TaskQueryBuilder {
             // adding this filter for process summary filtering
             String partyType = criteria.getPartyType();
             String partyName = criteria.getPartyName();
+            String partyUuid = criteria.getPartyUniqueId();
             String partyCondition = getPartyCondition(partyType, partyName);
+            String partyConditionByUuid = getPartyConditionByUuid(partyType, partyUuid);
 
             String condition = """
                         EXISTS (
@@ -130,7 +132,8 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
-            addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
+            addTaskCriteria(partyConditionByUuid != null ? partyUuid : null, query, firstCriteria, partyConditionByUuid, preparedStmtList, preparedStmtArgList);
 
             return query.toString();
         } catch (Exception e) {
@@ -148,7 +151,22 @@ public class TaskQueryBuilder {
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
             }  else {
-                log.warn("Unrecognized partyType value: {}. Filter will be ignored.", partyType);
+                log.warn("Unrecognized partyType value: {}. while filtering by party name Filter will be ignored.", partyType);
+            }
+        }
+        return partyCondition;
+    }
+
+    private String getPartyConditionByUuid(String partyType, String partyUuid) {
+        String partyCondition = null;
+
+        if (partyType != null && !partyType.trim().isEmpty() && partyUuid != null && !partyUuid.trim().isEmpty()) {
+            if ("respondent".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'uniqueId' = ?";
+            } else if ("witness".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
+            }  else {
+                log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
             }
         }
         return partyCondition;

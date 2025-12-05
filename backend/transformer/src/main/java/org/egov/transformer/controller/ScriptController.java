@@ -50,7 +50,7 @@ public class ScriptController {
     @RequestMapping(value = "/v1/openHearing", method = RequestMethod.POST)
     public ResponseEntity<?> openHearing(@Valid @RequestBody HearingRequest body) {
         try {
-            hearingService.enrichOpenHearings(body);
+            hearingService.enrichOpenHearings(body,false);
             log.info("enriched openHearing of hearingId: {}", body.getHearing().getHearingId());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
