@@ -294,6 +294,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
 
         return MediationDetails.builder()
                 .hearingDate(hearingDate)
+                .pdfCreatedDate(System.currentTimeMillis())
                 .mediationCentre(mediationCentre)
                 .dateOfInstitution(dateOfInstitution)
                 .dateOfEndADR(dateOfEndADR)
