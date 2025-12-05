@@ -248,7 +248,7 @@ const PleaSubmission = () => {
         pleaSubmissionUpdateResponse = await submissionService.createDigitalization(payload, tenantId);
         setDefaultFormValueData(pleaSubmissionUpdateResponse?.digitalizedDocument || {});
         history.replace(
-          `/${window?.contextPath}/${userType}/submissions/plea?filingNumber=${filingNumber}&documentNumber=${pleaSubmissionUpdateResponse?.digitalizedDocument?.documentNumber}&showModal=true`
+          `/${window?.contextPath}/${userType}/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${pleaSubmissionUpdateResponse?.digitalizedDocument?.documentNumber}&showModal=true`
         );
       } else {
         const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.SAVEDRAFT, null);
