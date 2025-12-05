@@ -1,5 +1,32 @@
 [
-  //PLEA
+  {
+    "id": "39e907a1-f7d6-4b56-bbc0-5737b30907ec",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "539",
+    "data": {
+      "id": 539,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_PLEA",
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "1c4c8454-f7bb-4bf3-8117-d34965d95bee",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "538",
+    "data": {
+      "id": 538,
+      "actionid": 2773,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2773"
+    },
+    "isActive": true
+  },
   {
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
@@ -11,7 +38,13 @@
       "tenantid": "kl",
       "actioncode": "2767"
     },
-    "isActive": true
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590318168,
+      "lastModifiedTime": 1764590318168
+    }
   },
   {
     "tenantId": "kl",
@@ -24,7 +57,13 @@
       "tenantid": "kl",
       "actioncode": "2768"
     },
-    "isActive": true
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590293633,
+      "lastModifiedTime": 1764590293633
+    }
   },
   {
     "tenantId": "kl",
@@ -50,6 +89,161 @@
       "rolecode": "ORDER_APPROVER",
       "tenantid": "kl",
       "actioncode": "2735"
+    },
+    "isActive": true
+    "isActive": true
+  },
+  {
+    "id": "7702cc17-31ab-4646-87a5-69a51a2b0aaf",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "534",
+    "data": {
+      "id": 534,
+      "actionid": 2768,
+      "rolecode": "MEDIATION_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true
+  },
+  {
+    "id": "c90d870d-fd80-4bce-931b-55414e207375",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "533",
+    "data": {
+      "id": 533,
+      "actionid": 2769,
+      "rolecode": "MEDIATION_VIEWER",
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "id": "dc24c14a-6efa-454b-9b4f-475b227d5bc6",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "532",
+    "data": {
+      "id": 532,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION",
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "022a7dd1-f1f6-4b6c-8279-bc6cb618a170",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "531",
+    "data": {
+      "id": 531,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION",
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "a45fdc0c-45a5-42d5-89bf-2ecefec908e1",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "530",
+    "data": {
+      "id": 530,
+      "actionid": 2770,
+      "rolecode": "DIGITALIZED_DOCUMENT_ESIGN",
+      "tenantid": "kl",
+      "actioncode": "2770"
+    },
+    "isActive": true
+  },
+  {
+    "id": "738f4eb4-877e-4236-a801-9d131b8b9f22",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "529",
+    "data": {
+      "id": 529,
+      "actionid": 2769,
+      "rolecode": "EXAMINATION_VIEWER",
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "id": "59ccc836-caed-4c9a-aedc-52e641b9499e",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "527",
+    "data": {
+      "id": 527,
+      "actionid": 2768,
+      "rolecode": "EXAMINATION_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true
+  },
+  {
+    "id": "5a533503-0bab-4482-a6da-8e76c0d9451c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "526",
+    "data": {
+      "id": 526,
+      "actionid": 2767,
+      "rolecode": "EXAMINATION_CREATOR",
+      "tenantid": "kl",
+      "actioncode": "2767"
+    },
+    "isActive": true
+  },
+  {
+    "id": "eddfb1b8-3a5d-40de-9f56-0dec3ccf3dd8",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "525",
+    "data": {
+      "id": 525,
+      "actionid": 2769,
+      "rolecode": "MEDIATION_VIEWER",
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "id": "ae351a51-64ba-4925-b2e2-452c028efa00",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "524",
+    "data": {
+      "id": 524,
+      "actionid": 2768,
+      "rolecode": "MEDIATION_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true
+  },
+  {
+    "id": "26ea9c26-9039-4d55-8c27-4df59cb9d201",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "523",
+    "data": {
+      "id": 523,
+      "actionid": 2767,
+      "rolecode": "MEDIATION_CREATOR",
+      "tenantid": "kl",
+      "actioncode": "2767"
     },
     "isActive": true
   }
