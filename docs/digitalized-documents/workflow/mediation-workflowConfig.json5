@@ -33,38 +33,6 @@
         },
         {
           "sla": null,
-          "state": "DRAFT_IN_PROGRESS",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "INITIATE_E-SIGN",
-              "nextState": "PENDING_E-SIGN",
-              "roles": [
-                "MEDIATION_CREATOR"
-              ]
-            },
-            {
-              "action": "INITIATE_UPLOAD",
-              "nextState": "PENDING_UPLOAD",
-              "roles": [
-                "MEDIATION_CREATOR"
-              ]
-            },
-            {
-              "action": "DELETE_DRAFT",
-              "nextState": "DELETED_DRAFT",
-              "roles": [
-                "MEDIATION_CREATOR"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": null,
           "state": "PENDING_E-SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
@@ -95,8 +63,22 @@
               ]
             },
             {
-              "action": "EDIT",
-              "nextState": "DRAFT_IN_PROGRESS",
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
               "roles": [
                 "MEDIATION_CREATOR"
               ]
@@ -115,6 +97,27 @@
             {
               "action": "UPLOAD",
               "nextState": "PENDING_REVIEW",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
               "roles": [
                 "MEDIATION_CREATOR"
               ]
@@ -140,8 +143,22 @@
               ]
             },
             {
-              "action": "EDIT",
-              "nextState": "DRAFT_IN_PROGRESS",
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
               "roles": [
                 "MEDIATION_CREATOR"
               ]
