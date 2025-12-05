@@ -1,5 +1,6 @@
 package com.example.gateway.ratelimiters;
 
+import com.example.gateway.model.Otp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.cloud.gateway.filter.factory.rewrite.ModifyRequestBodyGatewayFilterFactory;
@@ -66,6 +67,38 @@ public class RateLimiterConfiguration {
                                 return Mono.just(requestInfo.getUserInfo().getUuid());
                             })).toString());
         };
+    }
+
+
+    @Bean
+    public KeyResolver otpKeyResolver() {
+        return exchange -> Mono.just(
+                modifyRequestBodyFilter.apply(
+                        new ModifyRequestBodyGatewayFilterFactory.Config()
+                                .setRewriteFunction(Map.class, String.class, (serverWebExchange, body) -> {
+                                    String mobile = null;
+                                    try {
+                                        if (body != null) {
+                                            Object otpNode = body.get("otp");
+                                            if (otpNode != null) {
+                                                Otp otp = objectMapper.convertValue(otpNode, Otp.class);
+                                                mobile = otp.getMobileNumber();
+                                            } else if (body.get("mobileNumber") != null) {
+                                                mobile = objectMapper.convertValue(body.get("mobileNumber"), String.class);
+                                            }
+                                        }
+                                    } catch (IllegalArgumentException e) {
+                                    }
+
+                                    if (mobile == null || mobile.isEmpty()) {
+                                        mobile = Objects.requireNonNull(serverWebExchange.getRequest().getRemoteAddress())
+                                                .getAddress()
+                                                .getHostAddress();
+                                    }
+                                    return Mono.just(mobile);
+                                })
+                ).toString()
+        );
     }
 
 
