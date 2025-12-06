@@ -200,8 +200,9 @@ public class DigitalizedDocumentService {
 
     private List<String> getLitigantUUIDS(CourtCase courtCase, String partyType){
         List<Party> litigants = courtCase.getLitigants();
-        List<String> litigantUUIDs = new ArrayList<>();
         if(litigants == null) return Collections.emptyList();
+
+        List<String> litigantUUIDs = new ArrayList<>();
         for(Party litigant: litigants) {
             if(litigant.getPartyType().contains(partyType)){
                 Object additionalDetails = litigant.getAdditionalDetails();
@@ -215,9 +216,10 @@ public class DigitalizedDocumentService {
     }
 
     private List<String> getAdvocateUUIDS(CourtCase courtCase, List<String> litigantUUIDs){
-        List<String> advocateUUIDs = new ArrayList<>();
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
         if(representatives == null) return Collections.emptyList();
+
+        List<String> advocateUUIDs = new ArrayList<>();
         for(AdvocateMapping advocateMapping: representatives) {
             List<Party> representingList = advocateMapping.getRepresenting();
             for(Party representing: representingList) {
@@ -233,12 +235,11 @@ public class DigitalizedDocumentService {
     }
 
     private List<String> getPOAUUIDs(CourtCase courtCase, String partyType){
-        List<String> accusedIndividualIDs = getLitigantIndividualIDs(courtCase, partyType);
-        List<String> poaUUIDs = new ArrayList<>();
         List<POAHolder> poaHolders = courtCase.getPoaHolders();
-
         if(poaHolders == null) return Collections.emptyList();
 
+        List<String> accusedIndividualIDs = getLitigantIndividualIDs(courtCase, partyType);
+        List<String> poaUUIDs = new ArrayList<>();
         for(POAHolder poaHolder: poaHolders) {
             Object additionalDetails = poaHolder.getAdditionalDetails();
             JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
