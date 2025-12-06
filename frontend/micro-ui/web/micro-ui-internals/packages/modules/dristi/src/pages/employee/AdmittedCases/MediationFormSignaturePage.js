@@ -329,14 +329,39 @@ const MediationFormSignaturePage = () => {
   }, [isEsignSuccess, digitalizationServiceDetails, isCitizen]);
 
   const handleCaseUnlocking = async () => {
-    await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
+    await DRISTIService.setCaseUnlock({}, { uniqueId: documentNumber, tenantId: tenantId });
+  };
+
+  const handleSkipAndSubmit = async () => {
+    try {
+      setLoader(true);
+      const caseLockStatus = await DRISTIService.getCaseLockStatus(
+        {},
+        {
+          uniqueId: digitalizationServiceDetails?.documentNumber,
+          tenantId: tenantId,
+        }
+      );
+      if (caseLockStatus?.Lock?.isLocked) {
+        setShowErrorToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
+        setLoader(false);
+        return;
+      }
+
+      await DRISTIService.setCaseLock(
+        { Lock: { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId, lockType: "ESIGN" } },
+        {}
+      );
+      await updateMediationDocument(MediationWorkflowAction.SKIP_SIGN_AND_SUBMIT);
+      await handleCaseUnlocking();
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoader(false);
+    }
   };
 
   useEffect(() => {
-    if (isCitizen) {
-      handleCaseUnlocking();
-    }
-
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
@@ -578,10 +603,7 @@ const MediationFormSignaturePage = () => {
           actionCancelLabel={t("CS_SKIP_AND_SUBMIT_BACK")}
           actionCancelOnSubmit={() => setShowSkipConfirmModal(false)}
           actionSaveLabel={t("CS_SKIP_AND_SUBMIT_CONFIRM")}
-          actionSaveOnSubmit={async () => {
-            setLoader(true);
-            await updateMediationDocument(MediationWorkflowAction.SKIP_SIGN_AND_SUBMIT);
-          }}
+          actionSaveOnSubmit={handleSkipAndSubmit}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
