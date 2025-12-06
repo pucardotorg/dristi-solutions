@@ -201,7 +201,7 @@ public class DigitalizedDocumentService {
     private List<String> getLitigantUUIDS(CourtCase courtCase, String partyType){
         List<Party> litigants = courtCase.getLitigants();
         List<String> litigantUUIDs = new ArrayList<>();
-
+        if(litigants == null) return Collections.emptyList();
         for(Party litigant: litigants) {
             if(litigant.getPartyType().contains(partyType)){
                 Object additionalDetails = litigant.getAdditionalDetails();
@@ -217,6 +217,7 @@ public class DigitalizedDocumentService {
     private List<String> getAdvocateUUIDS(CourtCase courtCase, List<String> litigantUUIDs){
         List<String> advocateUUIDs = new ArrayList<>();
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+        if(representatives == null) return Collections.emptyList();
         for(AdvocateMapping advocateMapping: representatives) {
             List<Party> representingList = advocateMapping.getRepresenting();
             for(Party representing: representingList) {
