@@ -85,7 +85,8 @@ const MediationFormSignaturePage = () => {
     },
     {},
     `digitilization-${documentNumber}`,
-    Boolean(documentNumber && caseCourtId)
+    Boolean(documentNumber && caseCourtId),
+    5 * 60
   );
 
   const digitalizationServiceDetails = useMemo(() => {
@@ -93,7 +94,7 @@ const MediationFormSignaturePage = () => {
   }, [digitalizationData]);
 
   const mediationFileStoreId = useMemo(() => {
-    return digitalizationServiceDetails?.documents?.[0]?.fileStore || "663a6d82-830b-44c7-928b-ea60bcc90e97";
+    return digitalizationServiceDetails?.documents?.[0]?.fileStore;
   }, [digitalizationServiceDetails]);
 
   const poaPartyDetails = useMemo(() => {
@@ -164,13 +165,15 @@ const MediationFormSignaturePage = () => {
             ...digitalizationServiceDetails?.mediationDetails,
             partyDetails: updatedPartyDetails,
           },
-          documents: [
-            {
-              ...digitalizationServiceDetails?.documents?.[0],
-              fileStore: signatureDocumentId,
-              documentType: "SIGNED",
-            },
-          ],
+          ...(signatureDocumentId && {
+            documents: [
+              {
+                ...digitalizationServiceDetails?.documents?.[0],
+                fileStore: signatureDocumentId,
+                documentType: "SIGNED",
+              },
+            ],
+          }),
           workflow: {
             action: digitalizationAction,
 
@@ -323,7 +326,7 @@ const MediationFormSignaturePage = () => {
     };
 
     esignCaseUpdate();
-  }, [isEsignSuccess, digitalizationServiceDetails]);
+  }, [isEsignSuccess, digitalizationServiceDetails, isCitizen]);
 
   const handleCaseUnlocking = async () => {
     await DRISTIService.setCaseUnlock({}, { uniqueId: digitalizationServiceDetails?.documentNumber, tenantId: tenantId });
@@ -361,7 +364,7 @@ const MediationFormSignaturePage = () => {
     }, 2000);
 
     return () => clearTimeout(cleanupTimer);
-  }, [tenantId, digitalizationServiceDetails]);
+  }, [tenantId, digitalizationServiceDetails, isCitizen]);
 
   useEffect(() => {
     if (showErrorToast) {
