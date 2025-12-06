@@ -190,6 +190,10 @@ public class CourtCase {
     @JsonProperty("isLPRCase")
     private Boolean isLPRCase = false;
 
+    @JsonProperty("poaHolders")
+    @Valid
+    private List<POAHolder> poaHolders = new ArrayList<>();
+
     public CourtCase addLinkedCasesItem(LinkedCase linkedCasesItem) {
         this.linkedCases.add(linkedCasesItem);
         return this;

@@ -653,6 +653,8 @@ public class IndexerUtils {
                 return processBailBondEntity(request, referenceId);
             else if (config.getTaskManagementBusinessServiceList().contains(entityType))
                 return processTaskManagementEntity(request, referenceId);
+            else if (config.getDigitalizedDocumentsBusinessServiceList().contains(entityType))
+                return processDigitalizedDocumentsEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -797,6 +799,35 @@ public class IndexerUtils {
         caseDetails.put("caseTitle", caseTitle);
 
         return caseDetails;
+    }
+
+    private Map<String, String> processDigitalizedDocumentsEntity(JSONObject request, String referenceId) throws InterruptedException {
+
+        Map<String, String> caseDetails = new HashMap<>();
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+
+        String filingNumber = getFilingNumberFromBusinessId(referenceId);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
+        caseDetails.put("cnrNumber", cnrNumber);
+        caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
+
+        return caseDetails;
+
+    }
+
+    private String getFilingNumberFromBusinessId(String businessId) {
+        String[] parts = businessId.split("-");
+        String result = String.join("-", parts[0], parts[1], parts[2]);
+        log.info(result);
+        return result;
     }
 
 

@@ -98,4 +98,8 @@ public class ServiceConstants {
 
     public static final String PENDING = "PENDING";
 
+    public static final String DIGITALIZE_SERVICE_EXCEPTION = "DIGITALIZE_SERVICE_EXCEPTION";
+
+    public static final String DIGITALIZE_UPDATE_EXCEPTION = "DIGITALIZE_UPDATE_EXCEPTION";
+
 }

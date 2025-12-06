@@ -77,4 +77,31 @@ public class ServiceConstants {
 
    public static final String DOT = ". ";
 
+   public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+   public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
+   public static final String PENDING_REVIEW = "PENDING_REVIEW";
+   public static final String PENDING_UPLOAD = "PENDING_UPLOAD";
+   public static final String DELETED_DRAFT = "DELETED_DRAFT";
+   public static final String COMPLETED = "COMPLETED";
+
+   public static final String EXAMINATION_CREATOR = "EXAMINATION_CREATOR";
+   public static final String EXAMINATION_APPROVER = "EXAMINATION_APPROVER";
+   public static final String EXAMINATION_SIGNER = "EXAMINATION_SIGNER";
+   public static final String EXAMINATION_VIEWER = "EXAMINATION_VIEWER";
+
+   public static final String MEDIATION_CREATOR = "MEDIATION_CREATOR";
+   public static final String MEDIATION_APPROVER = "MEDIATION_APPROVER";
+   public static final String MEDIATION_SIGNER = "MEDIATION_SIGNER";
+   public static final String MEDIATION_VIEWER = "MEDIATION_VIEWER";
+
+   public static final String PLEA_CREATOR = "PLEA_CREATOR";
+   public static final String PLEA_APPROVER = "PLEA_APPROVER";
+   public static final String PLEA_SIGNER = "PLEA_SIGNER";
+   public static final String PLEA_VIEWER = "PLEA_VIEWER";
+
+   public static final String ACCUSED_PARTY_TYPE="respondent";
+   public static final String COMPLAINANT_PARTY_TYPE="complainant";
+
+
+
 }

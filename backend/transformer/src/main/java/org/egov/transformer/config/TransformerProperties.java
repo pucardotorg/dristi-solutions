@@ -151,4 +151,7 @@ public class TransformerProperties {
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
 
+    @Value("${transformer.producer.digitalized.document.topic}")
+    private String digitalizedDocumentTopic;
+
 }

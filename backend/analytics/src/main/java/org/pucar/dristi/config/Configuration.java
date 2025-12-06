@@ -156,6 +156,10 @@ public class Configuration {
     private String taskManagementBusinessServices;
     private List<String> taskManagementBusinessServiceList;
 
+    @Value("${egov.digitalized.documents.business.services}")
+    private String digitalizedDocumentsBusinessServices;
+    private List<String> digitalizedDocumentsBusinessServiceList;
+
 	@Value("${egov.application.business.services}")
 	private String applicationBusinessServices;
 	private List<String> applicationBusinessServiceList;
@@ -253,6 +257,7 @@ public class Configuration {
 		evidenceBusinessServiceList = Arrays.asList(evidenceBusinessServices.split(","));
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
         taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
+		digitalizedDocumentsBusinessServiceList = Arrays.asList(digitalizedDocumentsBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));

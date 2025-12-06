@@ -289,4 +289,38 @@ public class Configuration {
     @Value("${egov.bulk.index.path}")
     private String bulkPath;
 
+    @Value("${dristi.nature.of.complainant}")
+    private String natureOfComplainant;
+
+    //Digitalized Documents
+    @Value("${dristi.digitalized-documents.host}")
+    private String digitalizedDocumentsHost;
+
+    @Value("${dristi.digitalized-documents.create.endpoint}")
+    private String digitalizedDocumentsCreateEndPoint;
+
+    @Value("${dristi.digitalized-documents.search.endpoint}")
+    private String digitalizedDocumentsSearchEndPoint;
+
+    @Value("${dristi.digitalized-documents.update.endpoint}")
+    private String digitalizedDocumentsUpdateEndPoint;
+
+    //PDF Service Config
+    @Value("${egov.pdf.service.host}")
+    private String pdfServiceHost;
+
+    @Value("${egov.pdf.service.create.endpoint}")
+    private String pdfServiceEndpoint;
+
+    @Value("${egov.pdf.digitisation.mediation.template.key}")
+    private String pdfDigitisationMediationTemplateKey;
+
+    @Value("${dristi.court.name}")
+    private String courtName;
+
+    @Value("${dristi.place}")
+    private String place;
+
+    @Value("${dristi.state}")
+    private String state;
 }

@@ -177,6 +177,16 @@ public class Configuration {
     @Value("${evidence.service.update.endpoint}")
     private String evidenceServiceUpdateEndpoint;
 
+    // digitalize doc service configs
+    @Value("${digitalize.service.host}")
+    private String digitalizeServiceHost;
+
+    @Value("${digitalize.service.search.endpoint}")
+    private String digitalizeServiceSearchEndpoint;
+
+    @Value("${digitalize.service.update.endpoint}")
+    private String digitalizeServiceUpdateEndpoint;
+
     // Case Status Configuration
     @Value("${case.status.disposed.outcomes}")
     private List<String> disposedOutcomes;
