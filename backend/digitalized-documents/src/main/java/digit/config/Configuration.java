@@ -180,4 +180,11 @@ public class Configuration {
     @Value("${egov.sms.notification.mediation.sign.template.id}")
     private String mediationSignTemplateId;
 
+    // ESign Config
+    @Value("${egov.esign.host}")
+    private String esignHost;
+
+    @Value("${egov.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
 }

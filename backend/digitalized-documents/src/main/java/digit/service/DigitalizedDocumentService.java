@@ -23,7 +23,7 @@ import static digit.config.ServiceConstants.UPDATE_DIGITALIZED_DOCUMENT_FAILED;
 public class DigitalizedDocumentService {
 
     private final DocumentTypeServiceFactory serviceFactory;
-    private final EsignUtil eSignUtil;
+    private final ESignUtil eSignUtil;
     private final FileStoreUtil fileStoreUtil;
     private final CipherUtil cipherUtil;
     private final XMLRequestGenerator xmlRequestGenerator;
@@ -31,7 +31,7 @@ public class DigitalizedDocumentService {
 
     @Autowired
     public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory, 
-                                     EsignUtil eSignUtil,
+                                     ESignUtil eSignUtil,
                                      FileStoreUtil fileStoreUtil,
                                      CipherUtil cipherUtil,
                                      XMLRequestGenerator xmlRequestGenerator,

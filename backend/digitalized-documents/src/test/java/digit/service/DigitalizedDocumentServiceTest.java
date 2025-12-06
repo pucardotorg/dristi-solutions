@@ -2,7 +2,7 @@ package digit.service;
 
 import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
-import digit.util.EsignUtil;
+import digit.util.ESignUtil;
 import digit.util.FileStoreUtil;
 import digit.util.XMLRequestGenerator;
 import digit.web.models.*;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 class DigitalizedDocumentServiceTest {
 
     @Mock private DocumentTypeServiceFactory factory;
-    @Mock private EsignUtil eSignUtil;
+    @Mock private ESignUtil eSignUtil;
     @Mock private FileStoreUtil fileStoreUtil;
     @Mock private CipherUtil cipherUtil;
     @Mock private XMLRequestGenerator xmlRequestGenerator;
