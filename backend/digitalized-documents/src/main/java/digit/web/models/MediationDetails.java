@@ -33,6 +33,9 @@ public class MediationDetails {
     @JsonProperty("caseStage")
     private String caseStage = null;
 
+    @JsonProperty("pdfCreatedDate")
+    private Long pdfCreatedDate = null;
+
     @JsonProperty("hearingDate")
     private Long hearingDate = null;
 
