@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models.digtal_document;
+package org.pucar.dristi.web.models.digital_document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;

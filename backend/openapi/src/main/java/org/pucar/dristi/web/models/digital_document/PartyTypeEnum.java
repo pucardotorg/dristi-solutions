@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models.digtal_document;
+package org.pucar.dristi.web.models.digital_document;
 
 /**
  * Party Type Enum

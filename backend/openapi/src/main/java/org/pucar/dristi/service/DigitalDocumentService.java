@@ -8,11 +8,9 @@ import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.DigitalizedDocumentUtil;
-import org.pucar.dristi.util.EvidenceUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.web.models.WorkflowObject;
-import org.pucar.dristi.web.models.digtal_document.*;
-import org.pucar.dristi.web.models.witnessdeposition.*;
+import org.pucar.dristi.web.models.digital_document.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,15 +32,12 @@ public class DigitalDocumentService {
 
     private final Configuration configuration;
 
-    private final ObjectMapper objectMapper;
-
     @Autowired
     public DigitalDocumentService(DigitalizedDocumentUtil digitalizedDocumentUtil, UserService userService, FileStoreUtil fileStoreUtil, Configuration configuration, ObjectMapper objectMapper) {
         this.digitalizedDocumentUtil = digitalizedDocumentUtil;
         this.userService = userService;
         this.fileStoreUtil = fileStoreUtil;
         this.configuration = configuration;
-        this.objectMapper = objectMapper;
     }
 
     public DigitalizedDocumentSearchResponse searchDigitalDocument(OpenApiDigitalDocumentSearchRequest request) {
@@ -118,7 +113,7 @@ public class DigitalDocumentService {
                 }
             }
 
-            DigitalizedDocumentResponse digitalizedDocumentResponse = null;
+            DigitalizedDocumentResponse digitalizedDocumentResponse;
             if (mobileNumbers.contains(request.getMobileNumber())) {
 
                 Document document = Document.builder()
