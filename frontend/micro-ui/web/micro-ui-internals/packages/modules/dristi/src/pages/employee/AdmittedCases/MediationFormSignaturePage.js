@@ -42,6 +42,7 @@ const MediationFormSignaturePage = () => {
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const { handleEsign } = Digit.Hooks.orders.useESign();
   const [selectedParty, setSelectedParty] = useState(null);
+  const pageModule = isCitizen ? "ci" : "en";
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -293,7 +294,7 @@ const MediationFormSignaturePage = () => {
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         }
       } else {
-        handleEsign(name, "ci", mediationFileStoreId, getPlaceholder());
+        handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
       }
     } catch (error) {
       console.error("Error:", error);
