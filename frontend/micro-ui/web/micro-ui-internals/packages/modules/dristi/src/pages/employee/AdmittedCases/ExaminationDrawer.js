@@ -155,6 +155,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           );
           const uniqueId = userData?.uniqueId;
           let mobileNumber = [];
+          let numberFromIndividual = null;
           const accusedIndividualId = userData?.data?.respondentVerification?.individualDetails?.individualId;
           const accusedUuid = caseDetails?.litigants?.find((lit) => lit?.individualId === accusedIndividualId)?.additionalDetails?.uuid;
           if (accusedIndividualId && tenantId) {
@@ -168,20 +169,19 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 { tenantId, limit: 1000, offset: 0 }
               );
               // Use API data if local data is missing or append if new number found
-              const newMobileNumber = individualData?.Individual?.[0]?.mobileNumber
+              numberFromIndividual = individualData?.Individual?.[0]?.mobileNumber
                 ? individualData?.Individual?.[0]?.mobileNumber
                 : individualData?.Individual?.[0]?.userDetails?.username
                 ? individualData?.Individual?.[0]?.userDetails?.username
                 : "";
-                if(newMobileNumber) {
-                  mobileNumber = [newMobileNumber];
-                }
-                else {
-                  mobileNumber = userData?.data?.phonenumbers?.mobileNumber || [];
-                }
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
+          }
+          if (numberFromIndividual) {
+            mobileNumber = [numberFromIndividual];
+          } else {
+            mobileNumber = userData?.data?.phonenumbers?.mobileNumber || [];
           }
           return {
             name: `${fullName}`,

@@ -105,7 +105,7 @@ const PreviewPdfModal = ({
         actionCancelLabel={t(cancelLabel)}
         actionCancelOnSubmit={handleBack}
         actionSaveLabel={t(saveLabel)}
-        isDisabled={false}
+        isDisabled={isLoading}
         actionSaveOnSubmit={() => {
           const pdfFile = new File([previewPdf], previewPdfFilename, { type: "application/pdf" });
 
