@@ -76,8 +76,9 @@ class MediationDocumentServiceTest {
     @Test
     void updateDocument_AssignsNextSigners_AndDeletesRemovedFiles() {
         when(config.getMediationDigitalizedDocumentUpdateTopic()).thenReturn("topic.update");
-        // existing doc has A,B
+        // existing doc has A,B with tenant t1 to match the request's tenant for file deletion
         DigitalizedDocument existing = DigitalizedDocument.builder()
+                .tenantId("t1")
                 .documents(List.of(Document.builder().fileStore("A").build(), Document.builder().fileStore("B").build()))
                 .build();
         when(validator.validateUpdateMediationDocument(any(DigitalizedDocument.class))).thenReturn(existing);

@@ -279,17 +279,28 @@ public class MediationDocumentService implements DocumentTypeService {
     }
 
     private void addSystemRole(DigitalizedDocumentRequest request) {
-        request.getRequestInfo()
-                .getUserInfo()
-                .getRoles()
-                .add(
-                        Role.builder()
-                                .id(123L)
-                                .code(SYSTEM)
-                                .name(SYSTEM)
-                                .tenantId(request.getDigitalizedDocument().getTenantId())
-                                .build()
-                );
+        if (request == null || request.getRequestInfo() == null) {
+            throw new CustomException("INVALID_REQUEST", "Request or RequestInfo cannot be null");
+        }
+        
+        if (request.getRequestInfo().getUserInfo() == null) {
+            throw new CustomException("INVALID_REQUEST", "UserInfo cannot be null");
+        }
+        
+        List<Role> roles = request.getRequestInfo().getUserInfo().getRoles();
+        if (roles == null) {
+            roles = new ArrayList<>();
+            request.getRequestInfo().getUserInfo().setRoles(roles);
+        }
+        
+        roles.add(
+                Role.builder()
+                        .id(123L)
+                        .code(SYSTEM)
+                        .name(SYSTEM)
+                        .tenantId(request.getDigitalizedDocument().getTenantId())
+                        .build()
+        );
     }
 
 
