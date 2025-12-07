@@ -61,13 +61,13 @@ public class MediationDocumentValidator {
 
     public DigitalizedDocument validateUpdateMediationDocument(DigitalizedDocument document) {
 
+        validateNotNull(document, INVALID_MEDIATION_DETAILS, "Document cannot be null");
+
         validateNotNull(document.getId(), INVALID_MEDIATION_DETAILS, "Id cannot be null");
 
         validateNotNull(document.getDocumentNumber(), INVALID_MEDIATION_DETAILS, "Document number cannot be null");
 
         validateNotNull(document.getOrderNumber(), INVALID_ORDER_NUMBER, "Order number cannot be null");
-
-        validateNotNull(document, INVALID_MEDIATION_DETAILS, "Document cannot be null");
 
         String documentNumber = document.getDocumentNumber();
         DigitalizedDocument existingDocument = digitalizedDocumentRepository.getDigitalizedDocumentByDocumentNumber(documentNumber, document.getTenantId());

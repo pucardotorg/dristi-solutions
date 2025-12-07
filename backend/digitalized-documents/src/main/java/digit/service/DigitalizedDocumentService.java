@@ -1,8 +1,11 @@
 package digit.service;
 
-import digit.web.models.*;
-import digit.util.*;
 import digit.repository.DigitalizedDocumentRepository;
+import digit.util.CipherUtil;
+import digit.util.ESignUtil;
+import digit.util.FileStoreUtil;
+import digit.util.XMLRequestGenerator;
+import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 import static digit.config.ServiceConstants.UPDATE_DIGITALIZED_DOCUMENT_FAILED;

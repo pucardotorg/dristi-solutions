@@ -12,7 +12,6 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,16 +65,5 @@ public class CaseUtil {
                 .build();
 
         return searchCaseDetails(caseSearchRequest);
-    }
-
-    private String extractFieldFromCase(JsonNode caseDetails, String fieldName) {
-        if (caseDetails != null) {
-            JsonNode fieldNode = caseDetails.path(fieldName);
-            if (fieldNode != null && !fieldNode.isNull()) {
-                return fieldNode.textValue();
-            }
-        }
-        log.error("{} not found", fieldName);
-        return null;
     }
 }

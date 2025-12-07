@@ -6,27 +6,18 @@ import digit.enrichment.DigitalizedDocumentEnrichment;
 import digit.enrichment.PleaEnrichment;
 import digit.kafka.Producer;
 import digit.util.CaseUtil;
-import digit.util.UrlShortenerUtil;
 import digit.util.FileStoreUtil;
+import digit.util.UrlShortenerUtil;
 import digit.validators.PleaValidator;
-import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.Document;
-import digit.web.models.PleaDetails;
-import digit.web.models.TypeEnum;
-import digit.web.models.WorkflowObject;
+import digit.web.models.*;
 import digit.web.models.sms.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
 
-import static digit.config.ServiceConstants.EDIT;
-import static digit.config.ServiceConstants.INITIATE_E_SIGN;
-import static digit.config.ServiceConstants.SIGN_EXAMINATION_DOCUMENT;
-import static digit.config.ServiceConstants.SIGN_PLEA_DOCUMENT;
-
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static digit.config.ServiceConstants.*;
 
 /**
  * Service for processing PLEA type documents

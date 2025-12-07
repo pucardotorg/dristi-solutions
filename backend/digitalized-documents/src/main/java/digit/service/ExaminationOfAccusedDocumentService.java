@@ -86,8 +86,6 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
 
         examinationOfAccusedEnrichment.enrichDocumentOnUpdate(request);
 
-        examinationOfAccusedEnrichment.enrichDocumentOnUpdate(request);
-
         DigitalizedDocument document = request.getDigitalizedDocument();
 
         // Check if workflow action is EDIT and expire shortening URL

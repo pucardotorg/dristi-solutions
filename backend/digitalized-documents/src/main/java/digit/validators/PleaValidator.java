@@ -2,8 +2,6 @@ package digit.validators;
 
 import digit.repository.DigitalizedDocumentRepository;
 import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.ExaminationOfAccusedDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
