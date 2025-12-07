@@ -75,7 +75,7 @@
         <dependency>
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
-            <version>2.5.0</version>
+            <version>2.5.2</version>
         </dependency>
         <!-- Egov dependencies -->
         <dependency>
@@ -113,7 +113,7 @@
     <dependency>
         <groupId>org.apache.tika</groupId>
         <artifactId>tika-core</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.2</version>
     </dependency>
     </dependencies>
     <repositories>
