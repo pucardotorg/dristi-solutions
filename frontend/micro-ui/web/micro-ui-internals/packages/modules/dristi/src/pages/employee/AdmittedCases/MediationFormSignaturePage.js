@@ -315,7 +315,7 @@ const MediationFormSignaturePage = () => {
   };
 
   useEffect(() => {
-    const esignCaseUpdate = async () => {
+    const esignMediationUpdate = async () => {
       if (isEsignSuccess && digitalizationServiceDetails?.documentNumber) {
         setLoader(true);
         await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN).then(async () => {
@@ -325,8 +325,8 @@ const MediationFormSignaturePage = () => {
       }
     };
 
-    esignCaseUpdate();
-  }, [isEsignSuccess, digitalizationServiceDetails, isCitizen]);
+    esignMediationUpdate();
+  }, [isEsignSuccess, digitalizationServiceDetails?.documentNumber, isCitizen]);
 
   const handleCaseUnlocking = async () => {
     await DRISTIService.setCaseUnlock({}, { uniqueId: documentNumber, tenantId: tenantId });
