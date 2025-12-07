@@ -252,8 +252,7 @@ function BulkSignDigitalizationView() {
       ?.filter((data) => data?.isSelected)
       ?.map((document) => {
         return {
-          fileStoreId:
-            document?.businessObject?.digitalizedDocumentDetails?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore || "",
+          fileStoreId: document?.businessObject?.digitalizedDocumentDetails?.documents?.[0]?.fileStore || "",
           documentNumber: document?.businessObject?.digitalizedDocumentDetails?.documentNumber,
           placeholder: "Signature of Magistrate",
           tenantId: tenantId,
