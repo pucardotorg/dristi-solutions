@@ -509,6 +509,48 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     Boolean(filingNumber)
   );
 
+  const {
+    data: digitalizedDocumentsData,
+    isLoading: isDigitalizedDocumentsLoading,
+    refetch: digitalizedDocumentsRefetch,
+  } = Digit.Hooks.submissions.useSearchDigitalization(
+    {
+      criteria: {
+        caseId: caseDetails?.id,
+        tenantId,
+        status: "COMPLETED",
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+      },
+      tenantId,
+    },
+    {},
+    caseDetails?.filingNumber,
+    Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
+  );
+
+  const sortedAndFilteredDigitalizedDocumentsData = useMemo(
+    () =>
+      digitalizedDocumentsData?.documents
+        ?.filter((doc) => doc?.documents?.[0]?.fileStore)
+        ?.sort((a, b) => {
+          const aTime = a?.auditDetails?.createdTime || 0;
+          const bTime = b?.auditDetails?.createdTime || 0;
+          return aTime - bTime;
+        }),
+    [digitalizedDocumentsData]
+  );
+
+  const examinationOfAccusedDocumentsList = useMemo(() => {
+    return sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "EXAMINATION_OF_ACCUSED");
+  }, [sortedAndFilteredDigitalizedDocumentsData]);
+  const pleaDocumentsList = useMemo(() => sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "PLEA"), [
+    sortedAndFilteredDigitalizedDocumentsData,
+  ]);
+
+  const mediationDocumentsList = useMemo(() => sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "MEDIATION"), [
+    sortedAndFilteredDigitalizedDocumentsData,
+  ]);
+
   const bailApplicationsList = useMemo(() => bailApplicationsData?.applicationList, [bailApplicationsData]);
 
   const { data: bailBondData, isLoading: isBailBondLoading } = Digit.Hooks.submissions.useSearchBailBondService(
@@ -709,6 +751,57 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           id: `affidavit-225-${index + 1}`,
           title: `${t("AFFIDAVIT")} ${index + 1}`,
           fileStoreId: doc.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
+
+    return structure;
+  };
+
+  const generateExaminationAndPleaStructure = () => {
+    const structure = [];
+    if (pleaDocumentsList?.length > 0) {
+      structure.push({
+        id: "plea",
+        title: "PLEA",
+        hasChildren: true,
+        children: pleaDocumentsList.map((doc, index) => ({
+          id: `plea-${index + 1}`,
+          title: `${t("PLEA")} ${index + 1}`,
+          fileStoreId: doc?.documents?.[0]?.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
+
+    if (examinationOfAccusedDocumentsList?.length > 0) {
+      structure.push({
+        id: "s351-examination",
+        title: "S351_EXAMINATION",
+        hasChildren: true,
+        children: examinationOfAccusedDocumentsList.map((doc, index) => ({
+          id: `s351-examination-${index + 1}`,
+          title: `${t("S351_EXAMINATION")} ${index + 1}`,
+          fileStoreId: doc?.documents?.[0]?.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
+    return structure;
+  };
+
+  const mediationDocumentsStructure = () => {
+    const structure = [];
+    if (mediationDocumentsList?.length > 0) {
+      structure.push({
+        id: "mediation",
+        title: "MEDIATION",
+        hasChildren: true,
+        children: mediationDocumentsList.map((doc, index) => ({
+          id: `mediation-${index + 1}`,
+          title: `${t("MEDIATION")} ${index + 1}`,
+          fileStoreId: doc?.documents?.[0]?.fileStore,
           hasChildren: false,
         })),
       });
@@ -1538,6 +1631,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
     const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtDepositions);
+    const examinationAndPleaChildren = generateExaminationAndPleaStructure();
+    const mediationDocumentsChildren = mediationDocumentsStructure();
 
     // const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
 
@@ -1657,10 +1752,22 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         children: paymentReceiptsChildren,
       },
       {
+        id: "examination-of-accused",
+        title: "EXAMINATION_OF_ACCUSED",
+        hasChildren: examinationOfAccusedDocumentsList?.length > 0 || pleaDocumentsList?.length > 0,
+        children: examinationAndPleaChildren,
+      },
+      {
         id: "orders",
         title: "ORDERS_CASE_PDF",
         hasChildren: publishedOrderData?.length > 0,
         children: publishedOrderChildren,
+      },
+      {
+        id: "others",
+        title: "OTHERS",
+        hasChildren: mediationDocumentsList?.length > 0,
+        children: mediationDocumentsChildren,
       },
     ];
 
@@ -1771,7 +1878,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isMandatoryOrdersLoading ||
     isBailBondLoading ||
     isCompleteEvidenceLoading ||
-    isTaskManagementLoading
+    isTaskManagementLoading ||
+    isDigitalizedDocumentsLoading
   ) {
     return (
       <div style={{ width: "100%", paddingTop: "50px" }}>
