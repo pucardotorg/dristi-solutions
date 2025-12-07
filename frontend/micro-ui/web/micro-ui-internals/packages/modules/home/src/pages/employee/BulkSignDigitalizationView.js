@@ -265,7 +265,7 @@ function BulkSignDigitalizationView() {
         },
         {}
       );
-      await fetchResponseFromXmlRequest(response?.documents).then(async (responseArray) => {
+      await fetchResponseFromXmlRequest(response?.documentList)?.then(async (responseArray) => {
         const updateDocumentResponse = await digitalizationService.updateSignedDigitalizedDocuments(
           {
             signedDocuments: responseArray,
