@@ -10,6 +10,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,34 +42,39 @@ public class FileStoreUtil {
      */
     public Resource getFileStore(RequestInfo requestInfo, String tenantId, String fileStoreId) {
         try {
-            // Validate inputs to prevent SSRF attacks
+            // Validate user inputs (sanitization)
             String validatedTenantId = urlValidator.validateTenantId(tenantId);
             String validatedFileStoreId = urlValidator.validateIdentifier(fileStoreId, "FILE_STORE_ID");
             
-            // Construct the complete URI using safe URL builder
-            String uri = urlValidator.buildSafeUri(
-                    configs.getFileStoreHost(),
-                    configs.getFileStorePath(),
-                    "tenantId", validatedTenantId,
-                    "fileStoreId", validatedFileStoreId
-            );
+            // SSRF Protection: Build URI using ONLY trusted configuration for host/path
+            // User input is restricted to query parameters only (not host/path)
+            String trustedBaseUrl = configs.getFileStoreHost(); // From application config
+            String trustedPath = configs.getFileStorePath();     // From application config
+            
+            // Construct URI with trusted base, user input only in query params
+            URI targetUri = UriComponentsBuilder
+                    .fromUriString(trustedBaseUrl)
+                    .path(trustedPath)
+                    .queryParam("tenantId", validatedTenantId)
+                    .queryParam("fileStoreId", validatedFileStoreId)
+                    .build()
+                    .encode()
+                    .toUri();
 
-            // Prepare RequestInfo JSON (same as curl)
+            // Prepare RequestInfo JSON
             Map<String, Object> requestInfoWrapper = new HashMap<>();
             requestInfoWrapper.put("RequestInfo", requestInfo);
-
             String requestBody = mapper.writeValueAsString(requestInfoWrapper);
 
             // Prepare headers
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(MediaType.parseMediaTypes("*/*"));
             headers.setContentType(MediaType.APPLICATION_JSON);
-
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
-            // Use exchange() to handle body with GET
+            // Make request to trusted FileStore service
             ResponseEntity<Resource> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, entity, Resource.class);
+                    targetUri, HttpMethod.GET, entity, Resource.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 log.info("Successfully fetched file {} for tenant {}", fileStoreId, tenantId);
