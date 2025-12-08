@@ -1,0 +1,94 @@
+name: "Sonar Analysis"
+description: "Performs Sonar code analysis for a specified module."
+
+inputs:
+  service_name:
+    description: "Provide the service module name"
+    required: true
+  sonar_token:
+    description: "Provide the sonar token"
+    required: true
+  branch:
+    description: "git branch for sonar token analysis"
+    required: true
+    type: string
+  repo:
+    description: "Provide repo name (eg: owner/repo-name)"
+    default: "pucardotorg/dristi-solutions"
+    required: true
+  ghub_token:
+    description: "Github Token"
+    required: true
+    type: string
+
+outputs:
+  sonarqube_status:
+    description: "SonarQube quality gate status"
+    value: ${{ steps.check-status.outputs.sonarqube_status }}
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        ref: ${{ inputs.repo_branch }}
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        service_name="${{ inputs.service_name }}"
+        jq -r ".\"$service_name\" | to_entries | .[] | \"\(.key)=\(.value)\"" build/config.json | while IFS="=" read -r key value; do
+          echo "$key=$value" >> $GITHUB_ENV
+        done
+
+    - name: print env
+      shell: bash
+      run: |
+        echo "$language $version $db_source_path $dockerfile_path"
+
+    - name: Build and analyze
+      if: $language == "nodejs"
+      env:
+        GITHUB_TOKEN: ${{ inputs.ghub_token }}
+        SONAR_TOKEN: ${{ inputs.sonar_token }}
+      run: |
+        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./$sonar_sources -Dsonar.exclusions="node_modules/**,dist/**"
+      working-directory: $service_source_path
+
+    - name: Set up JDK 17
+      if: $language == "java"
+      uses: actions/setup-java@v4
+      with:
+        java-version: $version
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Dependency check
+      uses: dependency-check/Dependency-Check_Action@main
+      if: $language == "java"
+      env:
+        JAVA_HOME: /opt/jdk
+      id: Depcheck
+      with:
+        project: ${{ inputs.service_name }}
+        path: $service_source_path
+        format: 'SARIF'
+        args: "--disableOssIndex"
+
+    - name: Upload SARIF result to GitHub
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: reports/dependency-check-report.sarif
+      if: $language == "java"
+
+    - name: Build and analyze
+      env:
+        GITHUB_TOKEN: ${{ inputs.ghub_token }}
+        SONAR_TOKEN: ${{ inputs.sonar_token }}
+      if: $language == "java"
+      run: | 
+          mvn -B -f $service_source_path/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+      shell: bash

@@ -1,0 +1,401 @@
+{
+    "ab-diary": {
+        "db_source_path": "backend/ab-diary/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/ab-diary",
+        "language": "java",
+        "version": "17"
+    },
+    "advocate": {
+        "db_source_path": "backend/advocate/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/advocate",
+        "language": "java",
+        "version": "17"
+    },
+    "analytics": {
+        "db_source_path": "backend/analytics/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/analytics",
+        "language": "java",
+        "version": "17"
+    },
+    "application": {
+        "db_source_path": "backend/application/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/application",
+        "language": "java",
+        "version": "17"
+    },
+    "bail-bond": {
+        "db_source_path": "backend/bail-bond/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/bail-bond",
+        "language": "java",
+        "version": "17"
+    },
+    "case": {
+        "db_source_path": "backend/case/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/case",
+        "language": "java",
+        "version": "17"
+    },
+    "casemanagement": {
+        "db_source_path": "backend/casemanagement/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/casemanagement",
+        "language": "java",
+        "version": "17"
+    },
+    "digitalized-documents": {
+        "db_source_path": "backend/digitalized-documents/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/digitalized-documents",
+        "language": "java",
+        "version": "17"
+    },
+    "dristi-case-pdf": {
+        "db_source_path": "",
+        "dockerfile_path": "backend/dristi-case-pdf/Dockerfile",
+        "service_source_path": "backend/dristi-case-pdf",
+        "language": "nodejs",
+        "version": "20",
+        "sonar_sources": ""
+    },
+    "epost-tracker": {
+        "db_source_path": "backend/epost-tracker/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/epost-tracker",
+        "language": "java",
+        "version": "17"
+    },
+    "esign-interceptor": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/esign-interceptor",
+        "language": "java",
+        "version": "17"
+    },
+    "e-sign-svc": {
+        "db_source_path": "backend/e-sign-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/e-sign-svc",
+        "language": "java",
+        "version": "17"
+    },
+    "evidence": {
+        "db_source_path": "backend/evidence/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/evidence",
+        "language": "java",
+        "version": "17"
+    },
+    "hearing": {
+        "db_source_path": "backend/hearing/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/hearing",
+        "language": "java",
+        "version": "17"
+    },
+    "hearing-management": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/hearing-management",
+        "language": "java",
+        "version": "17"
+    },
+    "icops-integration": {
+        "db_source_path": "backend/icops_integration-kerala/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/icops_integration-kerala",
+        "language": "java",
+        "version": "17"
+    },
+    "inportal-survey": {
+        "db_source_path": "backend/inportal-survey/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/inportal-survey",
+        "language": "java",
+        "version": "17"
+    },
+    "kerala-sms": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/kerala-sms",
+        "language": "java",
+        "version": "17"
+    },
+    "njdg-transformer": {
+        "db_source_path": "backend/njdg-transformer/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/njdg-transformer",
+        "language": "java",
+        "version": "17"
+    },
+    "notification": {
+        "db_source_path": "backend/Notification/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/Notification",
+        "language": "java",
+        "version": "17"
+    },
+    "ocr-service": {
+        "db_source_path": "backend/ocr-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/ocr-service",
+        "language": "java",
+        "version": "17"
+    },
+    "openapi": {
+        "db_source_path": "backend/openapi/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/openapi",
+        "language": "java",
+        "version": "17"
+    },
+    "opencv": {
+        "db_source_path": "backend/opencv-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/opencv-svc",
+        "language": "python",
+        "version": "3.12"
+    },
+    "order": {
+        "db_source_path": "backend/order/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/order",
+        "language": "java",
+        "version": "17"
+    },
+    "order-management": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/order-management",
+        "language": "java",
+        "version": "17"
+    },
+    "payment-calculator": {
+        "db_source_path": "backend/payment-calculator-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/payment-calculator-svc",
+        "language": "java",
+        "version": "17"
+    },
+    "sbi-svc": {
+        "db_source_path": "backend/sbi-backend/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/sbi-backend",
+        "language": "java",
+        "version": "17"
+    },
+    "sbi-webpage": {
+        "db_source_path": "backend/sbi-webpage/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/sbi-webpage",
+        "language": "nodejs",
+        "version": "20",
+        "sonar_sources": ""
+    },
+    "scheduler": {
+        "db_source_path": "backend/scheduler-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/scheduler-svc",
+        "language": "java",
+        "version": "17"
+    },
+    "summons-svc": {
+        "db_source_path": "backend/summons-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/summons-svc",
+        "language": "java",
+        "version": "17"
+    },
+    "task": {
+        "db_source_path": "backend/task/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/task",
+        "language": "java",
+        "version": "17"
+    },
+    "task-management": {
+        "db_source_path": "backend/task-management/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/task-management",
+        "language": "java",
+        "version": "17"
+    },
+    "transformer": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/transformer",
+        "language": "java",
+        "version": "17"
+    },
+    "etreasury": {
+        "db_source_path": "backend/treasury-backend/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "backend/treasury-backend",
+        "language": "java",
+        "version": "17"
+    },
+    "epayments": {
+        "db_source_path": "backend/treasury-webpage/src/main/resources/db",
+        "dockerfile_path": "backend/treasury-webpage/Dockerfile",
+        "service_source_path": "backend/treasury-webpage",
+        "language": "nodejs",
+        "version": "20",
+        "sonar_sources": ""
+    },
+    "billing-service": {
+        "db_source_path": "common/billing-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/billing-service",
+        "language": "java",
+        "version": "17"
+    },
+    "collection-services": {
+        "db_source_path": "common/collection-services/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/collection-services",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-apportion-service": {
+        "db_source_path": "common/egov-apportion-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-apportion-service",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-filestore": {
+        "db_source_path": "common/egov-filestore/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-filestore",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-hrms": {
+        "db_source_path": "common/egov-hrms/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-hrms",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-idgen": {
+        "db_source_path": "common/egov-idgen/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-idgen",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-indexer": {
+        "db_source_path": "common/egov-indexer/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-indexer",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-localization": {
+        "db_source_path": "common/egov-localization/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-localization",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-mdms-service": {
+        "db_source_path": "common/egov-mdms-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-mdms-service",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-notification-mail": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-notification-mail",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-url-shortening": {
+        "db_source_path": "common/egov-url-shortening/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-url-shortening",
+        "language": "java",
+        "version": "17"
+    },
+    "egov-user": {
+        "db_source_path": "common/egov-user/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "common/egov-user",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-workflow-v2": {
+        "db_source_path": "common/egov-workflow-v2/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/egov-workflow-v2",
+        "language": "java",
+        "version": "17"
+    },
+    "inbox": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "common/inbox",
+        "language": "java",
+        "version": "8"
+    },
+    "individual": {
+        "db_source_path": "common/individual/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "common/individual",
+        "language": "java",
+        "version": "8"
+    },
+    "lock-svc": {
+        "db_source_path": "common/lock-svc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/lock-svc",
+        "language": "java",
+        "version": "17"
+    },
+    "pdf-service": {
+        "db_source_path": "",
+        "dockerfile_path": "common/pdf-service/Dockerfile",
+        "service_source_path": "common/pdf-service",
+        "language": "nodejs",
+        "version": "20",
+        "sonar_sources": "src"
+    },
+    "sunbirdrc-credential-service": {
+        "db_source_path": "common/sunbirdrc-credential-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/sunbirdrc-credential-service",
+        "language": "java",
+        "version": "17"
+    },
+    "user-otp": {
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/user-otp",
+        "language": "java",
+        "version": "17"
+    },
+    "digit-ui": {
+        "db_source_path": "",
+        "dockerfile_path": "frontend/micro-ui/web/docker/Dockerfile",
+        "service_source_path": "frontend/micro-ui",
+        "language": "nodejs",
+        "version": "14",
+        "sonar_sources": ""
+
+    },
+    "dristi-pdf": {
+        "db_source_path": "",
+        "dockerfile_path": "utilities/dristi-pdf/Dockerfile",
+        "service_source_path": "utilities/dristi-pdf",
+        "language": "nodejs",
+        "version": "20",
+        "sonar_sources": "src"
+    }
+}
