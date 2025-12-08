@@ -50,7 +50,7 @@ runs:
         echo "$language $version $db_source_path $dockerfile_path"
 
     - name: Build and analyze
-      if: $language == "nodejs"
+      if: language == "nodejs"
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
@@ -60,7 +60,7 @@ runs:
       working-directory: $service_source_path
 
     - name: Set up JDK 17
-      if: $language == "java"
+      if: language == "java"
       uses: actions/setup-java@v4
       with:
         java-version: $version
@@ -69,7 +69,7 @@ runs:
 
     - name: Dependency check
       uses: dependency-check/Dependency-Check_Action@main
-      if: $language == "java"
+      if: language == "java"
       env:
         JAVA_HOME: /opt/jdk
       id: Depcheck
@@ -83,13 +83,13 @@ runs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: reports/dependency-check-report.sarif
-      if: $language == "java"
+      if: language == "java"
 
     - name: Build and analyze
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
-      if: $language == "java"
+      if: language == "java"
       run: | 
           mvn -B -f $service_source_path/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
       shell: bash
