@@ -88,7 +88,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           {
             fileStore: fileStoreId,
             documentType: "SIGNED",
-            additionalDetails: { name: `${t(`Plea (${pleaDetails?.pleaDetails?.accusedName})`)}.pdf` },
+            additionalDetails: { name: `${t("PLEA")} (${pleaDetails?.pleaDetails?.accusedName}).pdf` },
             tenantId,
           },
         ]

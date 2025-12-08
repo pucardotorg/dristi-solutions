@@ -3083,11 +3083,11 @@ const AdmittedCaseV2 = () => {
       },
       {
         label: "RECORD_PLEA",
-        requiredRoles: [],
+        requiredRoles: ["PLEA_CREATOR", "PLEA_EDITOR"],
       },
       {
         label: "RECORD_EXAMINATION_OF_ACCUSED",
-        requiredRoles: [], // TODO: update this when backend validation is done.
+        requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // TODO: update this when backend validation is done.
       },
     ],
     []
