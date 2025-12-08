@@ -36,8 +36,10 @@ jobs:
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
       deployment_env: ${{ steps.set_deployment_environment.outputs.deployment_env }}
+      repo_branch: ${{ steps.set_branch.outputs.BRANCH }}
     steps:
       - name: Set github branch
+        id: set_branch
         run: |
           BRANCH=""
           if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
@@ -143,7 +145,7 @@ jobs:
           echo "deployment_env set to $deployment_env"
           echo "deployment_env=$deployment_env" >> $GITHUB_ENV
 
-  build-and-push-docker-image:
+  build-deploy:
     runs-on: ubuntu-latest
     needs: check-diff
     strategy:
@@ -156,3 +158,12 @@ jobs:
         run: |
           echo "Service Name: ${{ matrix.service }}"
           echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
+
+      - name: Sonar Analysis
+        uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop-actions-pr-test
+        with:
+          service_name: ${{ matrix.service }}
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          branch: ${{ needs.check-diff.outputs.repo_branch }}
+          repo: "pucardotorg/dristi-solutions"
+          ghub_token: ${{ secrets.GHUB_TOKEN }}

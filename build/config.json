@@ -60,7 +60,8 @@
         "dockerfile_path": "backend/dristi-case-pdf/Dockerfile",
         "service_source_path": "backend/dristi-case-pdf",
         "language": "nodejs",
-        "version": "20"
+        "version": "20",
+        "sonar_sources": ""
     },
     "epost-tracker": {
         "db_source_path": "backend/epost-tracker/src/main/resources/db",
@@ -193,7 +194,8 @@
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/sbi-webpage",
         "language": "nodejs",
-        "version": "20"
+        "version": "20",
+        "sonar_sources": ""
     },
     "scheduler": {
         "db_source_path": "backend/scheduler-svc/src/main/resources/db",
@@ -242,7 +244,8 @@
         "dockerfile_path": "backend/treasury-webpage/Dockerfile",
         "service_source_path": "backend/treasury-webpage",
         "language": "nodejs",
-        "version": "20"
+        "version": "20",
+        "sonar_sources": ""
     },
     "billing-service": {
         "db_source_path": "common/billing-service/src/main/resources/db",
@@ -361,7 +364,8 @@
         "dockerfile_path": "common/pdf-service/Dockerfile",
         "service_source_path": "common/pdf-service",
         "language": "nodejs",
-        "version": "20"
+        "version": "20",
+        "sonar_sources": "src"
     },
     "sunbirdrc-credential-service": {
         "db_source_path": "common/sunbirdrc-credential-service/src/main/resources/db",
@@ -382,13 +386,16 @@
         "dockerfile_path": "frontend/micro-ui/web/docker/Dockerfile",
         "service_source_path": "frontend/micro-ui",
         "language": "nodejs",
-        "version": "14"
+        "version": "14",
+        "sonar_sources": ""
+
     },
     "dristi-pdf": {
         "db_source_path": "",
         "dockerfile_path": "utilities/dristi-pdf/Dockerfile",
         "service_source_path": "utilities/dristi-pdf",
         "language": "nodejs",
-        "version": "20"
+        "version": "20",
+        "sonar_sources": "src"
     }
 }
