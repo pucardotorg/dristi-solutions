@@ -20,12 +20,14 @@ public class FileStoreUtil {
     private final TransformerProperties configs;
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
+    private final UrlValidator urlValidator;
 
     @Autowired
-    public FileStoreUtil(RestTemplate restTemplate, TransformerProperties configs, ObjectMapper mapper) {
+    public FileStoreUtil(RestTemplate restTemplate, TransformerProperties configs, ObjectMapper mapper, UrlValidator urlValidator) {
         this.restTemplate = restTemplate;
         this.configs = configs;
         this.mapper = mapper;
+        this.urlValidator = urlValidator;
     }
 
     /**
@@ -37,12 +39,17 @@ public class FileStoreUtil {
      */
     public Resource getFileStore(RequestInfo requestInfo, String tenantId, String fileStoreId) {
         try {
-            // Construct the complete URI
-            String uri = new StringBuilder(configs.getFileStoreHost())
-                    .append(configs.getFileStorePath())
-                    .append("?tenantId=").append(tenantId)
-                    .append("&fileStoreId=").append(fileStoreId)
-                    .toString();
+            // Validate inputs to prevent SSRF attacks
+            String validatedTenantId = urlValidator.validateTenantId(tenantId);
+            String validatedFileStoreId = urlValidator.validateIdentifier(fileStoreId, "FILE_STORE_ID");
+            
+            // Construct the complete URI using safe URL builder
+            String uri = urlValidator.buildSafeUri(
+                    configs.getFileStoreHost(),
+                    configs.getFileStorePath(),
+                    "tenantId", validatedTenantId,
+                    "fileStoreId", validatedFileStoreId
+            );
 
             // Prepare RequestInfo JSON (same as curl)
             Map<String, Object> requestInfoWrapper = new HashMap<>();

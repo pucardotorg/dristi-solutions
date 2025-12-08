@@ -19,27 +19,34 @@ public class HrmsUtil {
     private final TransformerProperties properties;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final UrlValidator urlValidator;
 
-    public HrmsUtil(TransformerProperties properties, RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public HrmsUtil(TransformerProperties properties, RestTemplate restTemplate, ObjectMapper objectMapper, UrlValidator urlValidator) {
         this.properties = properties;
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
+        this.urlValidator = urlValidator;
     }
 
     public EmployeeResponse getEmployeeDetails(String tenantId, String employeeId, RequestInfo requestInfo){
-
-        StringBuilder uri = new StringBuilder()
-                .append(properties.getHrmsHost())
-                .append(properties.getHrmsEndPoint())
-                .append("?tenantId=").append(tenantId)
-                .append("&codes=").append(employeeId);
+        // Validate inputs to prevent SSRF attacks
+        String validatedTenantId = urlValidator.validateTenantId(tenantId);
+        String validatedEmployeeId = urlValidator.validateIdentifier(employeeId, "EMPLOYEE_ID");
+        
+        // Construct the complete URI using safe URL builder
+        String uri = urlValidator.buildSafeUri(
+                properties.getHrmsHost(),
+                properties.getHrmsEndPoint(),
+                "tenantId", validatedTenantId,
+                "codes", validatedEmployeeId
+        );
 
         RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder()
                 .requestInfo(requestInfo)
                 .build();
 
         try {
-            JsonNode response = restTemplate.postForObject(uri.toString(), requestInfoWrapper, JsonNode.class);
+            JsonNode response = restTemplate.postForObject(uri, requestInfoWrapper, JsonNode.class);
             return objectMapper.convertValue(response, EmployeeResponse.class);
         } catch (Exception e) {
             log.error("Error while fetching courtId from HRMS", e);

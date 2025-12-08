@@ -3,9 +3,6 @@ package com.dristi.njdg_transformer.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * Utility class for extracting numbers from strings
  * Follows Single Responsibility Principle
@@ -14,7 +11,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class NumberExtractor {
 
-    private static final Pattern CASE_NUMBER_PATTERN = Pattern.compile(".*/(\\d+)/.*");
+    // Maximum input length to prevent ReDoS attacks
+    private static final int MAX_INPUT_LENGTH = 500;
 
     /**
      * Extract filing number from filing number string
@@ -50,9 +48,11 @@ public class NumberExtractor {
     }
 
     /**
-     * Extract case number from case number string
-     * @param caseNumber the case number string
-     * @return extracted number or null if invalid
+     * Extract case number from case number string.
+     * Uses string operations instead of regex to prevent ReDoS vulnerabilities.
+     * 
+     * @param caseNumber the case number string (expected format: prefix/NUMBER/suffix)
+     * @return extracted number or 0 if invalid
      */
     public Integer extractCaseNumber(String caseNumber) {
         if (caseNumber == null || caseNumber.trim().isEmpty()) {
@@ -60,17 +60,41 @@ public class NumberExtractor {
             return 0;
         }
         
+        String trimmed = caseNumber.trim();
+        
+        // Length check to prevent potential DoS with very long strings
+        if (trimmed.length() > MAX_INPUT_LENGTH) {
+            log.warn("Case number exceeds maximum length: {}", trimmed.length());
+            return 0;
+        }
+        
         try {
-            Matcher matcher = CASE_NUMBER_PATTERN.matcher(caseNumber);
-            if (matcher.matches()) {
-                String numberPart = matcher.group(1).replaceFirst("^0+(?!$)", "");
-                Integer extractedNumber = Integer.valueOf(numberPart);
-                log.info("Extracted case number {} from: {}", extractedNumber, caseNumber);
-                return extractedNumber;
-            } else {
-                log.warn("Case number does not match expected pattern: {}", caseNumber);
+            // Use string operations instead of regex to prevent ReDoS
+            int firstSlash = trimmed.indexOf('/');
+            if (firstSlash == -1) {
+                log.warn("Case number does not contain slash: {}", caseNumber);
                 return 0;
             }
+            
+            int secondSlash = trimmed.indexOf('/', firstSlash + 1);
+            if (secondSlash == -1) {
+                log.warn("Case number does not contain second slash: {}", caseNumber);
+                return 0;
+            }
+            
+            String numberPart = trimmed.substring(firstSlash + 1, secondSlash);
+            
+            // Validate that the extracted part contains only digits
+            if (!numberPart.matches("\\d+")) {
+                log.warn("Extracted part is not a valid number: {}", numberPart);
+                return 0;
+            }
+            
+            // Remove leading zeros
+            String cleanedNumber = numberPart.replaceFirst("^0+(?!$)", "");
+            Integer extractedNumber = Integer.valueOf(cleanedNumber);
+            log.info("Extracted case number {} from: {}", extractedNumber, caseNumber);
+            return extractedNumber;
             
         } catch (NumberFormatException e) {
             log.error("Error parsing case number from: {}: {}", caseNumber, e.getMessage());
