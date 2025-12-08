@@ -34,6 +34,7 @@ import axios from "axios";
 import {
   accusedAddressValidation,
   addressValidation,
+  ageValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
   checkNameValidation,
@@ -2100,6 +2101,7 @@ function EFilingCases({ path }) {
     }
 
     if (selected === "complainantDetails") {
+      let isValidationError = false;
       if (
         formdata
           ?.filter((data) => data.isenabled)
@@ -2109,9 +2111,27 @@ function EFilingCases({ path }) {
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
               setAddressError,
               config: modifiedFormConfig[index],
+              setFormErrors: setFormErrors.current,
             })
           )
       ) {
+        isValidationError = true;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "poaAge",
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors:clearFormDataErrors.current,
+          })
+        )
+      ) {
+        isValidationError = isValidationError|| true;
+      }
+      if(isValidationError){
         return;
       }
     }
