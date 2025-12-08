@@ -1,13 +1,13 @@
 import { useQuery, useQueryClient } from "react-query";
 import { submissionService } from "../services";
 
-function useSearchDigitalization(reqData, params, key, enabled) {
+function useSearchDigitalization(reqData, params, key, enabled, cacheTime = 0) {
   const client = useQueryClient();
   const { isLoading, data, isFetching, refetch, error } = useQuery(
     `GET_DIGITALIZATION_${key}`,
     () => submissionService.searchDigitalization(reqData, params),
     {
-      cacheTime: 0,
+      cacheTime: cacheTime,
       enabled: Boolean(enabled),
     }
   );

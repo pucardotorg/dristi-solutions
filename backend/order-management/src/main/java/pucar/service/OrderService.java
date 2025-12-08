@@ -233,4 +233,20 @@ public class OrderService {
         CourtCase courtCase = cases.get(0);
         return courtCase.getCnrNumber();
     }
+
+    public Order addItem(@Valid OrderRequest request) {
+        Order order = request.getOrder();
+        log.info("adding item to order, result= IN_PROGRESS, orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+        OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
+        OrderProcessor orderProcessor = orderFactory.createProcessor();
+
+        OrderResponse orderResponse = orderUtil.addOrderItem(request);
+        request.setOrder(orderResponse.getOrder());
+
+        // TODO : this is temporary solution need to have proper implementation
+        orderProcessor.preProcessOrder(request);
+
+        return orderResponse.getOrder();
+    }
 }

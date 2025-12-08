@@ -252,8 +252,7 @@ function BulkSignDigitalizationView() {
       ?.filter((data) => data?.isSelected)
       ?.map((document) => {
         return {
-          fileStoreId:
-            document?.businessObject?.digitalizedDocumentDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
+          fileStoreId: document?.businessObject?.digitalizedDocumentDetails?.documents?.[0]?.fileStore || "",
           documentNumber: document?.businessObject?.digitalizedDocumentDetails?.documentNumber,
           placeholder: "Signature of Magistrate",
           tenantId: tenantId,
@@ -266,7 +265,7 @@ function BulkSignDigitalizationView() {
         },
         {}
       );
-      await fetchResponseFromXmlRequest(response?.documents).then(async (responseArray) => {
+      await fetchResponseFromXmlRequest(response?.documentList)?.then(async (responseArray) => {
         const updateDocumentResponse = await digitalizationService.updateSignedDigitalizedDocuments(
           {
             signedDocuments: responseArray,

@@ -91,5 +91,12 @@ public class OrderApiController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/v2/add-item", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> addItem(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new item/order + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest request) {
+        Order order = orderService.addItem(request);
+        OrderResponse response = OrderResponse.builder()
+                .order(order).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 }

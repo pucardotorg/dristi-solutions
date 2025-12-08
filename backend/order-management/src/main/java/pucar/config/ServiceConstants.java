@@ -199,6 +199,8 @@ public class ServiceConstants {
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
 
+    public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
+
     public static final String ERRORS_PATH = "$.errors";
 
     public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
