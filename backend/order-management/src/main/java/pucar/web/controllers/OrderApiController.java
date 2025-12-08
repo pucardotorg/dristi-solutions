@@ -64,19 +64,19 @@ public class OrderApiController {
         return ResponseEntity.accepted().body(response);
     }
 
-    @RequestMapping(value = "/v1/getBotdOrders", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/getBotdOrders", method = RequestMethod.POST)
     public ResponseEntity<BotdOrderResponse> getBotdOrders(@Parameter(in = ParameterIn.DEFAULT, description = "Check Botd Order for Order Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody BotdOrderRequest request) {
 
         String filingNumber = request.getCriteria().getFilingNumber();
         String tenantId = request.getCriteria().getTenantId();
         String orderNumber = request.getCriteria().getOrderNumber();
 
-        List<BotdOrderSummary> botdOrders = orderService.getBotdOrders( tenantId, filingNumber, orderNumber, request.getRequestInfo());
+        List<BotdOrderSummary> botdOrders = orderService.getBotdOrders( tenantId, filingNumber, orderNumber, request.getPagination(), request.getRequestInfo());
 
         BotdOrderResponse response = BotdOrderResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true))
                 .botdOrderList(botdOrders)
                 .build();
-        return ResponseEntity.accepted().body(response);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(value = "/v1/_runCronJob")

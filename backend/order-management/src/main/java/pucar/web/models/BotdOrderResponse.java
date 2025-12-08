@@ -27,4 +27,8 @@ public class BotdOrderResponse {
     @Valid
     private List<BotdOrderSummary> botdOrderList = null;
 
+    @JsonProperty("pagination")
+    @Valid
+    private Pagination pagination = null;
+
 }

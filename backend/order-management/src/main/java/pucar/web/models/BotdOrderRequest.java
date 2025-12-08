@@ -2,6 +2,7 @@ package pucar.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,12 +20,15 @@ import org.springframework.validation.annotation.Validated;
 public class BotdOrderRequest {
     @JsonProperty("RequestInfo")
     @Valid
+    @NotNull
     private RequestInfo requestInfo = null;
 
     @JsonProperty("criteria")
     @Valid
+    @NotNull
     private OrderCriteria criteria = null;
 
     @JsonProperty("pagination")
+    @Valid
     private Pagination pagination = null;
 }

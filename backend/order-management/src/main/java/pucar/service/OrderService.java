@@ -173,7 +173,7 @@ public class OrderService {
         return orderResponse.getOrder();
     }
 
-    public List<BotdOrderSummary> getBotdOrders(String tenantId, String filingNumber, String orderNumber, RequestInfo requestInfo) {
+    public List<BotdOrderSummary> getBotdOrders(String tenantId, String filingNumber, String orderNumber, Pagination pagination, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .status("PUBLISHED")
@@ -181,9 +181,13 @@ public class OrderService {
                 .tenantId(tenantId)
                 .build();
 
+        if(pagination == null){
+            pagination = Pagination.builder().limit(100.0).offSet(0.0).build();
+        }
+
         OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .pagination(pagination)
                 .build();
 
         OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
