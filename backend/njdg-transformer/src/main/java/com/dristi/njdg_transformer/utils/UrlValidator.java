@@ -6,10 +6,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * Utility class for URL validation and sanitization to prevent SSRF attacks.
  * Validates user input before incorporating into HTTP requests.
+ * Enforces an allowlist of tenant IDs for SSRF protection.
  */
 @Component
 public class UrlValidator {
@@ -19,12 +21,21 @@ public class UrlValidator {
     
     // Pattern for valid identifier strings (fileStoreId, employeeId, etc.)
     private static final Pattern VALID_IDENTIFIER_PATTERN = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9._-]*$");
+    // Whitelist for allowed tenant IDs
+    private final Set<String> allowedTenantIds;
+
+    // Constructor for injecting allowed tenant IDs
+    public UrlValidator(Set<String> allowedTenantIds) {
+        this.allowedTenantIds = allowedTenantIds;
+    }
+
     
     // Maximum length for identifiers to prevent buffer overflow attacks
     private static final int MAX_IDENTIFIER_LENGTH = 256;
 
     /**
-     * Validates and sanitizes tenant ID to prevent URL injection.
+     * Validates and sanitizes tenant ID to prevent URL injection and SSRF.
+     * Also ensures tenantId is included in allowlist.
      * 
      * @param tenantId The tenant ID to validate
      * @return The validated tenant ID
@@ -44,6 +55,11 @@ public class UrlValidator {
         if (!VALID_TENANT_PATTERN.matcher(trimmed).matches()) {
             throw new CustomException("INVALID_TENANT_ID", 
                 "Tenant ID contains invalid characters. Only alphanumeric, dots, hyphens, and underscores are allowed");
+        }
+
+        // SSRF whitelist enforcement
+        if (allowedTenantIds != null && !allowedTenantIds.contains(trimmed)) {
+            throw new CustomException("INVALID_TENANT_ID", "Tenant ID is not authorized");
         }
         
         // Check for CRLF injection attempts
