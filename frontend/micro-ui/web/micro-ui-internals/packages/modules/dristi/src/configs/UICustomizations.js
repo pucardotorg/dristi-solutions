@@ -2683,7 +2683,7 @@ export const UICustomizations = {
               ...(isCitizen ? { assignedTo: [userUUID] } : {}),
               ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
             },
-            limit: requestCriteria?.state?.tableForm?.limit,
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
         },

@@ -19,16 +19,52 @@ export const clearDigitalDocumentSessionData = () => {
   sessionStorage.removeItem("homeActiveTab");
 };
 
-const _getLabel = (status, userType, isJudge) => {
+const createRoleActionMapping = {
+  EXAMINATION_OF_ACCUSED: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"],
+  PLEA: ["PLEA_CREATOR", "PLEA_EDITOR"],
+  MEDIATION: ["MEDIATION_CREATOR", "MEDIATION_EDITOR"],
+};
+
+const signRoleActionMapping = {
+  EXAMINATION_OF_ACCUSED: ["EXAMINATION_APPROVER"],
+  PLEA: ["PLEA_APPROVER"],
+  MEDIATION: ["MEDIATION_APPROVER"],
+};
+
+const checkIfRolesPresentForGivenUserAndAction = (userRoles, action, docType) => {
+  if (action === "edit") {
+    const requiredRoles = createRoleActionMapping[docType]; // create and edit actions have same required roles.
+    let isAllowed = true;
+    for (const role of requiredRoles) {
+      if (!userRoles?.some((r) => r?.code === role)) {
+        isAllowed = false;
+        break;
+      }
+    }
+    return isAllowed;
+  } else if (action === "sign") {
+    const requiredRoles = signRoleActionMapping[docType];
+    let isAllowed = true;
+    for (const role of requiredRoles) {
+      if (!userRoles?.some((r) => r?.code === role)) {
+        isAllowed = false;
+        break;
+      }
+    }
+    return isAllowed;
+  }
+};
+
+const _getLabel = (status, userType, roles, docType) => {
   if (userType === "EMPLOYEE") {
-    if (status === "PENDING_E-SIGN") {
+    if (status === "PENDING_E-SIGN" && checkIfRolesPresentForGivenUserAndAction(roles, "edit", docType)) {
       return "EDIT";
-    } else if (status === "PENDING_REVIEW" && isJudge) {
+    } else if (status === "PENDING_REVIEW" && checkIfRolesPresentForGivenUserAndAction(roles, "sign", docType)) {
       return "PROCEED_TO_SIGN";
     }
     return null;
   } else {
-    if (status === "PENDING_E-SIGN" && !isJudge) {
+    if (status === "PENDING_E-SIGN") {
       return "PROCEED_TO_SIGN";
     }
     return null;
@@ -48,7 +84,6 @@ export const DigitalDocumentSignModal = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkDigitalDocumentSignSelectedItem = sessionStorage.getItem("bulkDigitalDocumentSignSelectedItem");
@@ -137,7 +172,6 @@ export const DigitalDocumentSignModal = ({
     selectedDigitizedDocument?.documentNumber,
     selectedDigitizedDocument?.businessObject?.digitalizedDocumentDetails?.documentNumber,
   ]);
-  console.log(effectiveRowData, "kkl");
 
   const CloseBtn = useCallback((props) => {
     return (
@@ -375,7 +409,7 @@ export const DigitalDocumentSignModal = ({
 
   const handleSubmit = async () => {
     const userType = isCitizen ? "CITIZEN" : "EMPLOYEE";
-    const label = _getLabel(effectiveRowData?.status, userType, isJudge);
+    const label = _getLabel(effectiveRowData?.status, userType, roles, effectiveRowData?.type);
 
     if (label === "EDIT") {
       setIsEditModal(true);
@@ -500,7 +534,7 @@ export const DigitalDocumentSignModal = ({
           popupStyles={{ width: "70vw", minHeight: "75vh", maxheight: "90vh" }}
           actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
           actionCancelOnSubmit={handleDownload}
-          actionSaveLabel={isSign ? t(_getLabel(effectiveRowData?.status, isCitizen ? "CITIZEN" : "EMPLOYEE", isJudge)) : null}
+          actionSaveLabel={isSign ? t(_getLabel(effectiveRowData?.status, isCitizen ? "CITIZEN" : "EMPLOYEE", roles, effectiveRowData?.type)) : null}
           actionSaveOnSubmit={handleSubmit}
           formId="modal-action"
           headerBarMainStyle={{ minHeight: "50px" }}
