@@ -43,11 +43,11 @@ export const bulkSignFormsConfig = {
             populators: {
               name: "type",
               optionsKey: "code",
-              options: [
-                { code: "PLEA", name: "PLEA" },
-                { code: "EXAMINATION_OF_ACCUSED", name: "EXAMINATION_OF_ACCUSED" },
-                { code: "MEDIATION", name: "MEDIATION" },
-              ],
+              mdmsConfig: {
+                masterName: "DigitalizationForm",
+                moduleName: "Order",
+                select: "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};});}",
+              },
             },
           },
           {
