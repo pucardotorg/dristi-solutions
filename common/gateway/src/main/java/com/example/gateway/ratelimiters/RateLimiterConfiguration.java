@@ -82,7 +82,7 @@ public class RateLimiterConfiguration {
             }
             
             // Try MDC as fallback (unreliable in reactive context - for demonstration)
-            String userInfoJson = MDC.get(USER_INFO_KEY);
+            String userInfoJson = MDC.get(USER_INFO_KEY) != null ? MDC.get(USER_INFO_KEY) : exchange.getAttribute(USER_INFO_KEY);
             if (!ObjectUtils.isEmpty(userInfoJson)) {
                 try {
                     User user = objectMapper.readValue(userInfoJson, User.class);
