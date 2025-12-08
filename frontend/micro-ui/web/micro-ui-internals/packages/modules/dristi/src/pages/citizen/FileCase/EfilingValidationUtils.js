@@ -398,7 +398,7 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
           // keep only digits
           let updatedValue = value?.replace(/\D/g, "");
           // Max 3 digits
-          if (updatedValue.length > 3) {
+          if (updatedValue?.length > 3) {
             updatedValue = updatedValue.substring(0, 3);
           }
           if (updatedValue !== oldValue) {
@@ -1088,19 +1088,17 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
   }
 };
 
-export const ageValidation = ({ formData, selected, setFormErrors,clearFormDataErrors}) => {
-  debugger;
-  if (selected === "poaAge"){
+export const ageValidation = ({ formData, selected, setFormErrors, clearFormDataErrors }) => {
+  if (selected === "poaAge") {
     const poaAge = parseInt(formData?.poaAge, 10);
     if (poaAge < 18 || poaAge > 999) {
-      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });  
+      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });
       return true;
-    }  
-    clearFormDataErrors("poaAge");   
+    }
+    clearFormDataErrors("poaAge");
   }
-}
-    
-   
+};
+
 export const addressValidation = ({ formData, selected, setAddressError, config }) => {
   if (
     config
