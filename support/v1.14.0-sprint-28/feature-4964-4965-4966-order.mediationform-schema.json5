@@ -1,0 +1,31 @@
+// TODO : need to add this new schema through postman
+{
+  "tenantId": "kl",
+  "code": "Order.DigitalizationForm",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id",
+      "code",
+      "name"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "number"
+      },
+      "code": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}
