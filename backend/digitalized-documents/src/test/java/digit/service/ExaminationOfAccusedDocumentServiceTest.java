@@ -91,7 +91,7 @@ class ExaminationOfAccusedDocumentServiceTest {
 
         assertNotNull(result);
         verify(validator).validateDigitalizedDocument(eq(request));
-        verify(eoaaEnrichment, times(2)).enrichDocumentOnUpdate(eq(request));
+        verify(eoaaEnrichment, times(1)).enrichDocumentOnUpdate(eq(request));
         verify(workflowService).updateWorkflowStatus(eq(request));
         verify(fileStoreUtil).deleteFilesByFileStore(eq(List.of("A")), eq("t1"));
         verify(producer).push(eq("topic.update"), eq(request));
