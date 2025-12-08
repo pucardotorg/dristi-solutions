@@ -71,10 +71,12 @@ public class OrderApiController {
         String tenantId = request.getCriteria().getTenantId();
         String orderNumber = request.getCriteria().getOrderNumber();
 
-        List<BotdOrderSummary> botdOrders = orderService.getBotdOrders( tenantId, filingNumber, orderNumber, request.getPagination(), request.getRequestInfo());
+        BotdOrderListResponse botdOrderListResponse = orderService.getBotdOrders(tenantId, filingNumber, orderNumber, request.getPagination(), request.getRequestInfo());
 
-        BotdOrderResponse response = BotdOrderResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true))
-                .botdOrderList(botdOrders)
+        BotdOrderResponse response = BotdOrderResponse.builder()
+                .responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true))
+                .botdOrderList(botdOrderListResponse.getBotdOrderList())
+                .pagination(botdOrderListResponse.getPagination())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

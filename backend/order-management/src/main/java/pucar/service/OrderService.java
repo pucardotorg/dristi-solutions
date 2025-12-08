@@ -173,7 +173,7 @@ public class OrderService {
         return orderResponse.getOrder();
     }
 
-    public List<BotdOrderSummary> getBotdOrders(String tenantId, String filingNumber, String orderNumber, Pagination pagination, RequestInfo requestInfo) {
+    public BotdOrderListResponse getBotdOrders(String tenantId, String filingNumber, String orderNumber, Pagination pagination, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .status("PUBLISHED")
@@ -199,7 +199,21 @@ public class OrderService {
                 botdOrders.add(botdOrderSummary);
             }
         }
-        return botdOrders;
+        
+        Integer totalCount = orderListResponse != null ? orderListResponse.getTotalCount() : 0;
+        Pagination responsePagination = orderListResponse != null && orderListResponse.getPagination() != null 
+                ? orderListResponse.getPagination() 
+                : pagination;
+        
+        if (responsePagination != null) {
+            responsePagination.setTotalCount(totalCount.doubleValue());
+        }
+        
+        return BotdOrderListResponse.builder()
+                .botdOrderList(botdOrders)
+                .totalCount(totalCount)
+                .pagination(responsePagination)
+                .build();
     }
 
     private BotdOrderSummary buildBotdOrderSummary(Order order, RequestInfo requestInfo) {
