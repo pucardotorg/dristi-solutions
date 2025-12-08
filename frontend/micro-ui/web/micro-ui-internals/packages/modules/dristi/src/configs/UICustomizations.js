@@ -2683,8 +2683,8 @@ export const UICustomizations = {
               ...(isCitizen ? { assignedTo: [userUUID] } : {}),
               ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
             },
-            limit: requestCriteria?.body?.pagination?.limit,
-            offset: requestCriteria?.body?.pagination?.offSet || 0,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
         },
         config: {
