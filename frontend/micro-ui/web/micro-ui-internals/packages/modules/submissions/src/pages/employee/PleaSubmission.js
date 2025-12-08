@@ -214,11 +214,12 @@ const PleaSubmission = () => {
     }
 
     return {
+      ...(accusedList?.length === 1 ? { accusedDetails: accusedList?.[0] } : {}),
       magistrateRemarks: { text: "Taken down by/before me in open court, interpreted/read over to the accused and admitted by him/her label" },
       pleadGuilty: { code: "NO", name: "NO" },
       isChargesUnderstood: { code: "YES", name: "YES" },
     };
-  }, [defaultFormValueData, documentNumber, pleaResponseDetails, t]);
+  }, [accusedList, defaultFormValueData, documentNumber, pleaResponseDetails, t]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     checkTextValidation({ formData, setValue, formdata, reset, clearErrors, formState });
@@ -238,7 +239,7 @@ const PleaSubmission = () => {
   const handleSubmit = async () => {
     try {
       if (formdata?.age < 18) {
-        setFormErrors?.current("age", { message: t("AGE_LIMIT_ERROR") })
+        setFormErrors?.current("age", { message: t("AGE_LIMIT_ERROR") });
         return;
       }
       setLoader(true);
@@ -419,7 +420,7 @@ const PleaSubmission = () => {
       )}
       <div className="citizen create-submission" style={{ padding: "24px 24px 24px 40px" }}>
         {" "}
-        <Header styles={{margin: "0px"}}> {t(pleaSubmissionDetailConfig.header)}</Header>
+        <Header styles={{ margin: "0px" }}> {t(pleaSubmissionDetailConfig.header)}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "0px", width: "50%" }}>
           <FormComposerV2
             label={t("REVIEW_PLEA_SUBMISSION")}
@@ -441,7 +442,9 @@ const PleaSubmission = () => {
             handleBack={() => {
               setPreviewPleModal(false);
               if (showModal) {
-                history.replace(`/${window?.contextPath}/${userType}/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`);
+                history.replace(
+                  `/${window?.contextPath}/${userType}/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
+                );
               }
             }}
             setPreviewModal={setPreviewPleModal}
