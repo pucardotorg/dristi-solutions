@@ -1089,7 +1089,6 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
 };
 
 export const ageValidation = ({ formData, selected, setFormErrors, clearFormDataErrors }) => {
-  debugger;
   if (selected === "poaAge") {
     const poaAge = parseInt(formData?.poaAge, 10);
     if (poaAge < 18 || poaAge > 999) {
