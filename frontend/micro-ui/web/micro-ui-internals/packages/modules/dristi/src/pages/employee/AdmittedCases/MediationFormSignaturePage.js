@@ -20,7 +20,7 @@ const MediationFormSignaturePage = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo?.type]);
-  const isMediationCreator = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_CREATOR"]?.includes(role?.code)), [userInfo?.roles]);
+  const isMediationApprover = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_APPROVER"]?.includes(role?.code)), [userInfo?.roles]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -222,7 +222,7 @@ const MediationFormSignaturePage = () => {
   };
 
   const getPlaceholder = () => {
-    if (isMediationCreator) return "Signature";
+    if (isMediationApprover) return "Signature";
 
     const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
     if (!party) return "";
@@ -443,7 +443,7 @@ const MediationFormSignaturePage = () => {
               )}
             </div>
             <div style={{ flex: 1 }}>
-              {mediationOrderDetails?.status === OrderWorkflowState.DRAFT_IN_PROGRESS && isMediationCreator && (
+              {mediationOrderDetails?.status === OrderWorkflowState.DRAFT_IN_PROGRESS && isMediationApprover && (
                 <Button
                   className={"edit-button"}
                   variation="secondary"
@@ -491,9 +491,9 @@ const MediationFormSignaturePage = () => {
                     onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
                   />
                 )}
-                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_UPLOAD) || isCitizen) && (
+                {((isMediationApprover && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_UPLOAD) || isCitizen) && (
                   <Button
-                    label={isMediationCreator ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
+                    label={isMediationApprover ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
                     variation={"secondary"}
                     style={{ boxShadow: "none", backgroundColor: "#fff", padding: "8px 24px", width: "fit-content" }}
                     textStyles={{
@@ -505,7 +505,7 @@ const MediationFormSignaturePage = () => {
                       color: "#007E7E",
                     }}
                     onButtonClick={() => {
-                      if (isMediationCreator) {
+                      if (isMediationApprover) {
                         setShowUploadSignatureModal(true);
                       } else {
                         history.goBack();
@@ -513,7 +513,7 @@ const MediationFormSignaturePage = () => {
                     }}
                   />
                 )}
-                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_REVIEW) ||
+                {((isMediationApprover && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_REVIEW) ||
                   (isCitizen && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN)) && (
                   <Button
                     label={t("E_SIGN_MEDIATION")}
