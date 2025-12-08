@@ -54,6 +54,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
+      shell: bash
       run: |
         npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./$sonar_sources -Dsonar.exclusions="node_modules/**,dist/**"
       working-directory: $service_source_path
