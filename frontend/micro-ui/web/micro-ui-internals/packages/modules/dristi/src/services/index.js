@@ -249,6 +249,15 @@ export const DRISTIService = {
       params,
     });
   },
+  searchBotdOrders: (data, params) => {
+    return Request({
+      url: Urls.dristi.botdOrdersSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   searchSubmissions: (data, params) => {
     return Request({
       url: Urls.dristi.submissionsSearch,
