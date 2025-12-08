@@ -763,6 +763,13 @@ const WitnessDrawerV2 = ({
 
       // Also refresh evidence list to ensure server and client are in sync
       evidenceRefetch();
+      if (submit) {
+        if (!isWitnessTypeDisabled) {
+          setShowConfirmWitnessModal(true);
+        } else {
+          setShowWitnessDepositionReview(true);
+        }
+      }
     } catch (error) {
       console.error("Error saving draft:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -770,13 +777,6 @@ const WitnessDrawerV2 = ({
       setLoader(false);
       if (backAction) {
         onClose();
-      }
-      if (submit) {
-        if (!isWitnessTypeDisabled) {
-          setShowConfirmWitnessModal(true);
-        } else {
-          setShowWitnessDepositionReview(true);
-        }
       }
     }
   };
