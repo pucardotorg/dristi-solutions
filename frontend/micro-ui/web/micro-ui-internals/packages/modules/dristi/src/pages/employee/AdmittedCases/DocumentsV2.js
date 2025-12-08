@@ -7,7 +7,6 @@ import "./tabs.css";
 import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { getDate } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { submissionService } from "../../../../../submissions/src/hooks/services";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
 
@@ -32,6 +31,7 @@ const DocumentsV2 = ({
   setEditWitnessDepositionArtifact,
   setShowExaminationModal,
   setExaminationDocumentNumber,
+  setDocumentCounter,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -49,16 +49,28 @@ const DocumentsV2 = ({
 
   const ditilizationDeleteFunc = async (history, column, row, item) => {
     if (item.id === "draft_ditilization_delete") {
+      const documentNumber = row?.documentNumber;
       try {
+        const res = await Digit.submissionService.searchDigitalization({
+          criteria: {
+            tenantId: tenantId,
+            courtId: row?.courtId,
+            documentNumber: documentNumber,
+          },
+          pagination: {
+            limit: 10,
+            offSet: 0,
+          },
+        });
         const payload = {
           digitalizedDocument: {
-            ...row,
+            ...res?.documents?.[0],
             workflow: {
               action: "DELETE_DRAFT",
             },
           },
         };
-        await submissionService.updateDigitalization(payload, tenantId);
+        await Digit.submissionService.updateDigitalization(payload, tenantId);
         history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
       } catch (error) {
         console.error("error: ", error);
@@ -74,23 +86,22 @@ const DocumentsV2 = ({
         const status = docObj?.[0]?.artifactList?.status;
         const filingNumber = docObj?.[0]?.artifactList?.caseFilingNumber;
         const documentNumber = docObj?.[0]?.artifactList?.documentNumber;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
         const courtId = docObj?.[0]?.artifactList?.courtId;
         if (type === "PLEA") {
-          if (status === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
+          if (status === "DRAFT_IN_PROGRESS" && !isCitizen) {
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
               }/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
             );
+            return;
           }
 
           if (status === "PENDING_E-SIGN" && isCitizen) {
             history.push(
-              `/${window?.contextPath}/${
-                isCitizen ? "citizen" : "employee"
-              }/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}`
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`
             );
+            return;
           }
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
@@ -108,8 +119,9 @@ const DocumentsV2 = ({
 
           if (status === "PENDING_E-SIGN" && isCitizen) {
             history.push(
-              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`
             );
+            return;
           }
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
@@ -128,6 +140,16 @@ const DocumentsV2 = ({
                 isCitizen ? "citizen" : "employee"
               }/home/mediation-form-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&courtId=${courtId}`
             );
+            return;
+          }
+
+          if (["COMPLETED", "VOID"]?.includes(status)) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
+            );
+            return;
           }
         }
       } else if (docObj?.[0]?.isBail) {
@@ -368,9 +390,12 @@ const DocumentsV2 = ({
               ...tabConfig.apiDetails,
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
-                  caseFilingNumber: filingNumber,
+                SearchCriteria: {
+                  ...(tabConfig.apiDetails?.requestBody?.SearchCriteria || {}),
+                  moduleSearchCriteria: {
+                    ...(tabConfig.apiDetails?.requestBody?.SearchCriteria?.moduleSearchCriteria || {}),
+                    caseFilingNumber: filingNumber,
+                  },
                 },
               },
             },

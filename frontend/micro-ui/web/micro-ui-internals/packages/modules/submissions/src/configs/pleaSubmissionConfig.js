@@ -26,7 +26,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -42,7 +42,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -58,7 +58,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -74,7 +74,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },

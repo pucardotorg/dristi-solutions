@@ -3525,6 +3525,7 @@ const AdmittedCaseV2 = () => {
         setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
         setShowExaminationModal={setShowExaminationModal}
+        setDocumentCounter={setDocumentCounter}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
