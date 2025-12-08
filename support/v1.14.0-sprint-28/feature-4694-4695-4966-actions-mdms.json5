@@ -1,0 +1,17 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2735",
+    "data": {
+      "id": 2735,
+      "url": "/order-management/v2/add-item",
+      "code": "2735",
+      "name": "Order management add item",
+      "displayName": "Order management add item",
+      "orderNumber": 2,
+      "serviceCode": "Order-Management"
+    },
+    "isActive": true
+  }
+]
