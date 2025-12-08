@@ -26,6 +26,9 @@ public class MediationPartyDetails {
 
     private String uniqueId = null;
 
+    @JsonProperty("userUuid")
+    private String userUuid = null;
+
     @JsonProperty("poaUuid")
 
     private String poaUuid = null;
@@ -45,6 +48,10 @@ public class MediationPartyDetails {
     @JsonProperty("hasSigned")
 
     private Boolean hasSigned = null;
+
+    @JsonProperty("counselName")
+
+    private String counselName = null;
 
 
 }
