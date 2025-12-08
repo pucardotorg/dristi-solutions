@@ -13,9 +13,9 @@ const defaultSearchValues = {
 };
 
 const digitalizationDefaultSearch = {
-  type:{},
-  documentNumber:"",
-}
+  type: {},
+  documentNumber: "",
+};
 
 const defaultBailValues = { bailId: "" };
 
@@ -253,26 +253,19 @@ export const DocumentSearchConfig = {
       displayLabel: "DIGITALIZATION_TAB",
       type: "search",
       apiDetails: {
-        serviceName: "/digitalized-documents/v1/_search",
+        serviceName: "/inbox/v2/_getFields",
         requestParam: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         requestBody: {
-          apiOperation: "SEARCH",
-          criteria: {
-            fuzzySearch: true,
-          },
-          pagination: {
-            limit: 10,
-            offSet: 0,
-          },
+          SearchCriteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "DigitalizationConfig",
         minParametersForSearchForm: 0,
         tableFormJsonPath: "requestBody.pagination",
-        filterFormJsonPath: "requestBody.criteria",
-        searchFormJsonPath: "requestBody.criteria",
+        filterFormJsonPath: "requestBody.SearchCriteria",
+        searchFormJsonPath: "requestBody.SearchCriteria",
       },
       sections: {
         search: {
@@ -291,20 +284,11 @@ export const DocumentSearchConfig = {
                 populators: {
                   name: "type",
                   optionsKey: "name",
-                  options: [
-                    {
-                      code: "PLEA",
-                      name: "PLEA",
-                    },
-                    {
-                      code: "EXAMINATION_OF_ACCUSED",
-                      name: "EXAMINATION_OF_ACCUSED",
-                    },
-                    {
-                      code: "MEDIATION",
-                      name: "MEDIATION",
-                    },
-                  ],
+                  mdmsConfig: {
+                    masterName: "DigitalizationForm",
+                    moduleName: "Order",
+                    select: "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};});}",
+                  },
                 },
               },
               {
@@ -331,7 +315,7 @@ export const DocumentSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "DOCUMENT_ID",
+                label: "DITILIZATION_DOCUMENT_NUMBER",
                 jsonPath: "documentNumber",
               },
               {

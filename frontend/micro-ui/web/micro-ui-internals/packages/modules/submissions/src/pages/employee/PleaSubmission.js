@@ -357,6 +357,7 @@ const PleaSubmission = () => {
   };
 
   const handleCloseSuccessModal = () => {
+    sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
   };
 
