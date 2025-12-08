@@ -34,7 +34,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repo }}
-        ref: ${{ inputs.repo_branch }}
+        ref: ${{ inputs.branch }}
 
     - name: Set environment variables
       shell: bash
@@ -47,35 +47,35 @@ runs:
     - name: print env
       shell: bash
       run: |
-        echo "$language $version $db_source_path $dockerfile_path"
+        echo "${{ env.language }} ${{ env.version }} ${{ env.db_source_path }} ${{ env.dockerfile_path }}"
 
-    - name: Build and analyze
-      if: language == "nodejs"
+    - name: Build and analyze (Node.js)
+      if: ${{ env.language == 'nodejs' }}
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
       shell: bash
       run: |
-        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./$sonar_sources -Dsonar.exclusions="node_modules/**,dist/**"
-      working-directory: $service_source_path
+        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
+      working-directory: ${{ env.service_source_path }}
 
     - name: Set up JDK 17
-      if: language == "java"
+      if: ${{ env.language == 'java' }}
       uses: actions/setup-java@v4
       with:
-        java-version: $version
+        java-version: ${{ env.version }}
         distribution: 'temurin'
         cache: maven
 
     - name: Dependency check
       uses: dependency-check/Dependency-Check_Action@main
-      if: language == "java"
+      if: ${{ env.language == 'java' }}
       env:
         JAVA_HOME: /opt/jdk
       id: Depcheck
       with:
         project: ${{ inputs.service_name }}
-        path: $service_source_path
+        path: ${{ env.service_source_path }}
         format: 'SARIF'
         args: "--disableOssIndex"
 
@@ -83,13 +83,14 @@ runs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: reports/dependency-check-report.sarif
-      if: language == "java"
+      if: ${{ env.language == 'java' }}
 
-    - name: Build and analyze
+    - name: Build and analyze (Java)
+      if: ${{ env.language == 'java' }}
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
-      if: language == "java"
-      run: | 
-          mvn -B -f $service_source_path/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
       shell: bash
+      run: | 
+        # FIX: Use env context for service_source_path
+        mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
