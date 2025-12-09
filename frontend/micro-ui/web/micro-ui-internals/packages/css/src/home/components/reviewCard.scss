@@ -63,3 +63,12 @@
     }
   }
 }
+
+.doc-preview{
+  .docviewer-wrapper{
+    .card{
+      max-width: 100% !important;
+      border: 1px solid #bbbb;
+    }
+  }
+}

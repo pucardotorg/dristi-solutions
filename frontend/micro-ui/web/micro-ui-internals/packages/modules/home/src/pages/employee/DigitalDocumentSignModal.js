@@ -546,7 +546,7 @@ export const DigitalDocumentSignModal = ({
         >
           <div className="review-submission-appl-body-main">
             <div className="application-details">
-              <div className="application-view">{documentLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
+              <div className="application-view doc-preview">{documentLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
             </div>
           </div>
         </Modal>
@@ -691,7 +691,7 @@ export const DigitalDocumentSignModal = ({
               }
             }
           }}
-          className={"orders-success-modal"}
+          className={"orders-success-modal success-modal"}
           cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
         >
           <div style={{ padding: "8px 24px" }}>
@@ -710,7 +710,7 @@ export const DigitalDocumentSignModal = ({
 
       {isEditModal && (
         <Modal
-          headerBarMain={<Heading label={t("EDIT_DIGITILIZATION_MODAL_HEADER")} />}
+          headerBarMain={<Heading label={`${t("EDIT_DIGITILIZATION_MODAL_HEADER")} ${t(effectiveRowData?.type)}`} />}
           headerBarEnd={<CloseBtn onClick={() => setIsEditModal(false)} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => setIsEditModal(false)}
