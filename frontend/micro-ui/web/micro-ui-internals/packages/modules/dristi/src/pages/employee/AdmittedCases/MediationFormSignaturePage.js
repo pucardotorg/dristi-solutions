@@ -318,6 +318,7 @@ const MediationFormSignaturePage = () => {
     const esignMediationUpdate = async () => {
       if (isEsignSuccess && digitalizationServiceDetails?.documentNumber && !isUpdatingRef.current) {
         isUpdatingRef.current = true;
+        setEsignSuccess(false);
         setLoader(true);
         try {
           await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN);
@@ -326,7 +327,6 @@ const MediationFormSignaturePage = () => {
           console.error("Error:", error);
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         } finally {
-          setEsignSuccess(false);
           setLoader(false);
           isUpdatingRef.current = false;
         }
@@ -334,7 +334,7 @@ const MediationFormSignaturePage = () => {
     };
 
     esignMediationUpdate();
-  }, [isEsignSuccess, isCitizen]);
+  }, [isEsignSuccess, digitalizationServiceDetails?.documentNumber, isCitizen]);
 
   const handleCaseUnlocking = async () => {
     await DRISTIService.setCaseUnlock({}, { uniqueId: documentNumber, tenantId: tenantId });
