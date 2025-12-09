@@ -168,7 +168,11 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    if (isUserLoggedIn) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    } else {
+      window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
+    }
   };
 
   useEffect(() => {
@@ -276,7 +280,7 @@ const DigitizedDocumentsSignaturePage = () => {
       </div>
       <ActionBar>
         <div className="action-bar">
-          {
+          {isUserLoggedIn && (
             <Button
               label={t("BACK")}
               variation={"secondary"}
@@ -293,7 +297,7 @@ const DigitizedDocumentsSignaturePage = () => {
               }}
               className="back-button"
             />
-          }
+          )}
           {digitizedDocumentsDetails?.status === "PENDING_E-SIGN" && (
             <SubmitBar
               label={
