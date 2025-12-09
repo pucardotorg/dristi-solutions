@@ -132,8 +132,7 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
                   border: "none",
                   outline: "none",
                   fontSize: "16px",
-                  // color: "#0B0C0C"
-                  color: "#77787B",
+                  color: "#0B0C0C",
                 }}
                 maxLength={10}
               />
