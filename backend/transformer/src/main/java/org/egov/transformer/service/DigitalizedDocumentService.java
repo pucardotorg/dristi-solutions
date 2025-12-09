@@ -59,6 +59,7 @@ public class DigitalizedDocumentService {
         CourtCase courtCase = caseService.getCase(filingNumber, tenantId, requestInfo);
         String cmpNumber = courtCase.getCmpNumber();
         String stNumber = courtCase.getCourtCaseNumber();
+        // Enriched in document for pdf generation
         String caseNumber = stNumber != null ? stNumber : cmpNumber;
         String caseTitle = courtCase.getCaseTitle();
         digitalizedDocument.setCaseNumber(caseNumber);
