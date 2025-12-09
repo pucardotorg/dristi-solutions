@@ -1,9 +1,9 @@
 package com.example.gateway.ratelimiters;
 
+import com.example.gateway.config.ApplicationProperties;
 import com.example.gateway.model.Otp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.factory.rewrite.ModifyRequestBodyGatewayFilterFactory;
@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.example.gateway.constants.GatewayConstants.REQUEST_INFO_FIELD_NAME_PASCAL_CASE;
 import static com.example.gateway.constants.GatewayConstants.USER_INFO_KEY;
 import static com.example.gateway.constants.GatewayConstants.USER_UUID_KEY;
 
@@ -31,9 +30,14 @@ public class RateLimiterConfiguration {
 
     private ObjectMapper objectMapper;
 
-    public RateLimiterConfiguration(ModifyRequestBodyGatewayFilterFactory modifyRequestBodyFilter, ObjectMapper objectMapper) {
+    private ApplicationProperties applicationProperties;
+
+    public RateLimiterConfiguration(ModifyRequestBodyGatewayFilterFactory modifyRequestBodyFilter,
+                                    ObjectMapper objectMapper,
+                                    ApplicationProperties applicationProperties) {
         this.modifyRequestBodyFilter = modifyRequestBodyFilter;
         this.objectMapper = objectMapper;
+        this.applicationProperties = applicationProperties;
     }
 
     /**
@@ -73,6 +77,14 @@ public class RateLimiterConfiguration {
     @Primary
     public KeyResolver userKeyResolver() {
         return exchange -> {
+            // Only apply OTP-specific resolution for /user-otp paths
+            String path = exchange.getRequest().getPath().value();
+            java.util.List<String> otpPathPrefixes = applicationProperties.getOtpPathPrefixes();
+            if (otpPathPrefixes != null && otpPathPrefixes.stream().anyMatch(path::startsWith)) {
+                // For configured OTP paths, delegate to otpKeyResolver
+                return otpKeyResolver().resolve(exchange);
+            }
+
             // Try exchange attributes FIRST (reliable in reactive systems)
             String userUuid = exchange.getAttribute(USER_UUID_KEY);
             
