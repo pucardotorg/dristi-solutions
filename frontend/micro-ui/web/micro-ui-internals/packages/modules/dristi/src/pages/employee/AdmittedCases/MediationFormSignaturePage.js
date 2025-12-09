@@ -42,7 +42,14 @@ const MediationFormSignaturePage = () => {
   const [showSkipConfirmModal, setShowSkipConfirmModal] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const { handleEsign } = Digit.Hooks.orders.useESign();
-  const [selectedParty, setSelectedParty] = useState(null);
+  const [selectedParty, setSelectedParty] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("selectedParty")) || null;
+    } catch {
+      return null;
+    }
+  });
+
   const pageModule = isCitizen ? "ci" : "en";
 
   const Heading = (props) => {
@@ -188,6 +195,7 @@ const MediationFormSignaturePage = () => {
       throw error;
     } finally {
       setSelectedParty(null);
+      sessionStorage.removeItem("selectedParty");
     }
   };
 
@@ -564,7 +572,10 @@ const MediationFormSignaturePage = () => {
           headerBarEnd={<CloseBtn onClick={() => !loader && setShowPartySelectionModal(false)} />}
           formId="modal-action"
           headerBarMain={<Heading label={t("CS_DETAILS")} />}
-          actionSaveOnSubmit={handleEsignAction}
+          actionSaveOnSubmit={() => {
+            sessionStorage.setItem("selectedParty", JSON?.stringify(selectedParty));
+            handleEsignAction();
+          }}
           actionCancelOnSubmit={() => setShowPartySelectionModal(false)}
           isDisabled={loader}
           isBackButtonDisabled={loader}
