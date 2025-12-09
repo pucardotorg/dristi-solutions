@@ -542,9 +542,15 @@ const MediationFormSignaturePage = () => {
                       }
                     }}
                     isDisabled={
-                      poaPartyDetails
+                      (poaPartyDetails
                         ? poaPartyDetails?.partyDetails?.every((party) => party?.hasSigned)
-                        : digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.uniqueId === userInfo?.uuid)?.hasSigned
+                        : digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.uniqueId === userInfo?.uuid)
+                            ?.hasSigned) ||
+                      (isCitizen &&
+                        !digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
+                          [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(userInfo?.uuid)
+                        )) ||
+                      loader
                     }
                   />
                 )}
