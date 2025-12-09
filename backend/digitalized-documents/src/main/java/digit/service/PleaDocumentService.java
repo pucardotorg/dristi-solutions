@@ -89,7 +89,7 @@ public class PleaDocumentService implements DocumentTypeService {
 
         // Check if workflow action is INITIATE_E_SIGN and create shortened URL
         if (document.getWorkflow() != null && INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
-            String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber());
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber(), String.valueOf(document.getType()));
             document.setShortenedUrl(shortenedUrl);
             log.info("Calling notification service for SMS");
             try{

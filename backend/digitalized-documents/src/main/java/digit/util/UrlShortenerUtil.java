@@ -46,13 +46,13 @@ public class UrlShortenerUtil {
         }
     }
 
-    public String createShortenedUrl(String tenantId, String documentNumber) {
+    public String createShortenedUrl(String tenantId, String documentNumber, String type) {
 
         try {
             String baseUrl = configs.getDomainUrl() + configs.getBaseUrl();
 
             // Build the final long URL with query parameters
-            String longUrl = String.format(configs.getLongUrl(), baseUrl, tenantId, documentNumber);
+            String longUrl = String.format(configs.getLongUrl(), baseUrl, tenantId, documentNumber, type);
 
             // Return shortened version
             return getShortenedUrl(longUrl, documentNumber);
