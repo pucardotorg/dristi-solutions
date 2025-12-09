@@ -173,6 +173,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           return getStringAddressDetails(addressDetail.addressDetails);
         });
         return {
+          displayIndex: accusedInAdditionalDetails?.displayindex + 1 ?? null,
           individualId: accused?.individualId,
           name: accused?.additionalDetails?.fullName,
           address: addresses?.join(", ") || "",
@@ -193,6 +194,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
             return getStringAddressDetails(addressDetail?.addressDetails);
           });
           return {
+            displayIndex: formData?.displayindex + 1 || null,
             individualId:
               data?.respondentVerification?.individualDetails?.individualId ||
               null,
@@ -211,7 +213,9 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
             )
         ) || [];
 
-    const accusedList = [...joinedAccuseds, ...unJoinedAccuseds];
+    const accusedList = [...joinedAccuseds, ...unJoinedAccuseds]
+      .sort((a, b) => (a.displayIndex ?? Infinity) - (b.displayIndex ?? Infinity))
+      .map(({ displayIndex, ...rest }) => rest);
 
     const listOfPresentAttendees =
       order?.attendance?.Present?.map(
