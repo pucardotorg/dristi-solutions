@@ -37,8 +37,10 @@ public class TaskManagementService {
 
     private final Configuration configuration;
 
+    private final TaskCreationService taskCreationService;
+
     @Autowired
-    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowService workflowService, DemandService demandService, TaskManagementValidator validator, TaskManagementEnrichment enrichment, Producer producer, Configuration configuration) {
+    public TaskManagementService(TaskManagementRepository taskManagementRepository, WorkflowService workflowService, DemandService demandService, TaskManagementValidator validator, TaskManagementEnrichment enrichment, Producer producer, Configuration configuration, TaskCreationService taskCreationService) {
         this.taskManagementRepository = taskManagementRepository;
         this.workflowService = workflowService;
         this.demandService = demandService;
@@ -46,6 +48,7 @@ public class TaskManagementService {
         this.enrichment = enrichment;
         this.producer = producer;
         this.configuration = configuration;
+        this.taskCreationService = taskCreationService;
     }
 
     public TaskManagement createTaskManagement(TaskManagementRequest request) {

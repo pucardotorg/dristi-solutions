@@ -3,6 +3,7 @@ package digit.repository.rowmapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.web.models.TaskManagement;
+import digit.web.models.enums.PartyType;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 @Component
@@ -54,6 +56,7 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
                             .tenantId(rs.getString("tenant_id"))
                             .partyDetails(getObjectListFromJson(rs.getString("party_details"), new TypeReference<>() {
                             }))
+                            .partyType(getPartyType(rs))
                             .taskType(rs.getString("task_type"))
                             .documents(getObjectListFromJson(rs.getString("documents"), new TypeReference<>() {
                             }))
@@ -77,6 +80,11 @@ public class TaskManagementRowMapper implements ResultSetExtractor<List<TaskMana
         }
         
         return new ArrayList<>(taskMap.values());
+    }
+
+    private PartyType getPartyType(ResultSet rs) throws SQLException {
+        String type = rs.getString("party_type");
+        return type == null ? null : PartyType.valueOf(type);
     }
 
     public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {

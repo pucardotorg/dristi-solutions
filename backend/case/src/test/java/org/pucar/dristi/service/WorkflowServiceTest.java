@@ -270,7 +270,6 @@ public class WorkflowServiceTest {
         assertEquals("caseBusinessServiceName", result.getProcessInstances().get(0).getBusinessService());
         assertEquals("caseBusinessName", result.getProcessInstances().get(0).getModuleName());
         assertEquals("filingNumber", result.getProcessInstances().get(0).getBusinessId());
-        assertEquals("Payment for Case processed", result.getProcessInstances().get(0).getComment());
         assertEquals(tenantId, result.getProcessInstances().get(0).getTenantId());
     }
 

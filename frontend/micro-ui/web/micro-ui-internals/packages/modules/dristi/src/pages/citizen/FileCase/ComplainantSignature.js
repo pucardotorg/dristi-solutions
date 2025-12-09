@@ -443,6 +443,7 @@ const ComplainantSignature = ({ path }) => {
           fileStore: signatureDocumentId,
           fileName: "case Complaint Signed Document",
           isActive: false,
+          toDelete: true,
         });
       }
 

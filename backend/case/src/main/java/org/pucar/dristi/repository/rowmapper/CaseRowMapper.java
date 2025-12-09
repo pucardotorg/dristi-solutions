@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -61,6 +63,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .courtCaseNumber(rs.getString("courtcaseNumber"))
                             .accessCode(rs.getString("accesscode"))
                             .outcome(rs.getString("outcome"))
+                            .natureOfDisposal(getNatureOfDisposal(rs))
                             .caseType(rs.getString("casetype"))
                             .courtId(rs.getString("courtid"))
                             .benchId(rs.getString("benchid"))
@@ -105,6 +108,20 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(caseMap.values());
+    }
+
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
+            return null;
+        }
     }
 
     public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {

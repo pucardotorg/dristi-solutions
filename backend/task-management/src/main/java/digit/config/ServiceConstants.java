@@ -45,6 +45,8 @@ public class ServiceConstants {
     public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
     public static final String COMPLETED = "COMPLETED";
     public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
+    public static final String COMPLETE_WITHOUT_PAYMENT = "COMPLETE_WITHOUT_PAYMENT";
+    public static final String COMPLETED_WITHOUT_PAYMENT = "COMPLETED_WITHOUT_PAYMENT";
 
     public static final String WITNESS ="WITNESS";
     public static final String ACCUSED = "ACCUSED";

@@ -87,7 +87,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
             return orderRequest;
         }
         //for these uniqueIds fetch respondent details and create map of partytype to uniqueId from order payload inside notice parties
-        Map<String, List<String>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeToUniqueIdMapping(order, uniqueIdPendingTask);
+        Map<String, List<Map<String, String>>> partyTypeToUniqueIdMap = taskManagementUtil.createPartyTypeMappingForSummons(order, uniqueIdPendingTask);
         log.info("Created party type mapping for {} unique IDs requiring pending tasks", partyTypeToUniqueIdMap.size());
 
         // case search and update
@@ -100,98 +100,27 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
 
-        String type = "complainant";
-        if(isSummonForAccusedWitness(order))
-            type = "respondent";
-        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
-        List<String> assignees = new ArrayList<>();
-        List<User> uniqueAssignee = new ArrayList<>();
-        Set<String> uniqueSet = new HashSet<>();
-        List<String> complainantIndividualId = new ArrayList<>();
+        // Traverse partyTypeToUniqueIdMap and generate pending tasks for each party type
 
-        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
-
-        for (Party party : complainants) {
-            String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
-            if (litigantAdvocateMapping.containsKey(uuid)) {
-                assignees.addAll(litigantAdvocateMapping.get(uuid));
-                assignees.add(uuid);
-            }
-            complainantIndividualId.add(party.getIndividualId());
-
-            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
-                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
-                if (poaHolders != null) {
-                    for (POAHolder poaHolder : poaHolders) {
-                        if (poaHolder.getAdditionalDetails() != null) {
-                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
-                            if (poaUUID != null) assignees.add(poaUUID);
-                        }
+        for (Map.Entry<String, List<Map<String, String>>> entry : partyTypeToUniqueIdMap.entrySet()) {
+            String targetPartyCategory = entry.getKey(); // "complainant", "respondent", "court"
+            List<Map<String, String>> partyDetails = entry.getValue();
+            log.info("Generating pending tasks for party category: {} with {} party details", targetPartyCategory, partyDetails.size());
+            
+            if (!partyDetails.isEmpty()) {
+                // Extract party types for logging
+                Set<String> partyTypes = new HashSet<>();
+                for (Map<String, String> partyDetail : partyDetails) {
+                    String actualPartyType = partyDetail.get("partyType");
+                    if (actualPartyType != null) {
+                        partyTypes.add(actualPartyType);
                     }
                 }
+                
+                log.info("Generating pending tasks for party category: {} with party types: {}", targetPartyCategory, partyTypes);
+                generatePendingTasks(orderRequest, courtCase, targetPartyCategory, litigantAdvocateMapping, order, partyDetails, requestInfo);
+                log.info("Generated pending tasks for party category: {} with party types: {}", targetPartyCategory, partyTypes);
             }
-
-        }
-
-        for (String userUUID : assignees) {
-            if (uniqueSet.contains(userUUID)) {
-                continue;
-            }
-            User user = User.builder().uuid(userUUID).build();
-            uniqueAssignee.add(user);
-            uniqueSet.add(userUUID);
-        }
-
-        Long sla = pendingTaskUtil.getStateSlaBasedOnOrderType(order.getOrderType());
-        String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
-
-        Map<String, Object> additionalDetails = new HashMap<>();
-        additionalDetails.put("applicationNumber", applicationNumber);
-        additionalDetails.put("litigants", complainantIndividualId);
-        additionalDetails.put("orderItemId", getItemId(order));
-        List<Map<String, Object>> partyTypeToUniqueIdList = getMaps(partyTypeToUniqueIdMap);
-        additionalDetails.put("uniqueIds", partyTypeToUniqueIdList);
-        try {
-
-            String itemId = getItemId(order);
-            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") +  order.getOrderNumber();
-
-            PendingTask pendingTask = PendingTask.builder()
-                    .referenceId(referenceId)
-                    .name("Take Steps - Summons")
-                    .entityType("task-management-payment")
-                    .status(PENDING_PAYMENT)
-                    .assignedTo(uniqueAssignee)
-                    .cnrNumber(courtCase.getCnrNumber())
-                    .filingNumber(courtCase.getFilingNumber())
-                    .caseId(courtCase.getId().toString())
-                    .caseTitle(courtCase.getCaseTitle())
-                    .isCompleted(false)
-                    .screenType("home")
-                    .assignedRole(configuration.getTaskManagementAssignedRole())
-                    .actionCategory(configuration.getTaskManagementActionCategory())
-                    .additionalDetails(additionalDetails)
-                    .stateSla(sla)
-                    .build();
-
-            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
-
-            try {
-
-                SMSTemplateData smsTemplateData = SMSTemplateData.builder()
-                        .tenantId(courtCase.getTenantId())
-                        .courtCaseNumber(courtCase.getCourtCaseNumber())
-                        .cmpNumber(courtCase.getCmpNumber())
-                        .shortenedUrl(createShortUrl(order, referenceId))
-                        .build();
-
-                callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
-            } catch (Exception e) {
-                log.error("Error occurred while sending notification to user: {}", e.toString());
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(),courtCase.getId().toString(),courtCase.getCaseTitle());
         return null;
@@ -260,6 +189,100 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 //            throw new RuntimeException(e);
        } **/
 
+    }
+
+    private void generatePendingTasks(OrderRequest orderRequest, CourtCase courtCase, String type, Map<String, List<String>> litigantAdvocateMapping, Order order, List<Map<String, String>> partyDetails, RequestInfo requestInfo) {
+        List<Party> respondentOrComplainant = caseUtil.getRespondentOrComplainant(courtCase, type);
+        List<String> assignees = new ArrayList<>();
+        List<User> uniqueAssignee = new ArrayList<>();
+        Set<String> uniqueSet = new HashSet<>();
+        List<String> complainantIndividualId = new ArrayList<>();
+
+        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
+        for (Party party : respondentOrComplainant) {
+            String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
+            if (litigantAdvocateMapping.containsKey(uuid)) {
+                assignees.addAll(litigantAdvocateMapping.get(uuid));
+                assignees.add(uuid);
+            }
+            complainantIndividualId.add(party.getIndividualId());
+
+            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
+                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
+                if (poaHolders != null) {
+                    for (POAHolder poaHolder : poaHolders) {
+                        if (poaHolder.getAdditionalDetails() != null) {
+                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                            if (poaUUID != null) assignees.add(poaUUID);
+                        }
+                    }
+                }
+            }
+
+        }
+
+        for (String userUUID : assignees) {
+            if (uniqueSet.contains(userUUID)) {
+                continue;
+            }
+            User user = User.builder().uuid(userUUID).build();
+            uniqueAssignee.add(user);
+            uniqueSet.add(userUUID);
+        }
+
+        Long sla = pendingTaskUtil.getStateSlaBasedOnOrderType(order.getOrderType());
+        String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
+
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("applicationNumber", applicationNumber);
+        additionalDetails.put("litigants", complainantIndividualId);
+        additionalDetails.put("orderItemId", getItemId(order));
+        additionalDetails.put("uniqueIds", partyDetails);
+        additionalDetails.put("partyType", type.toUpperCase());
+        try {
+
+            String itemId = getItemId(order);
+            String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") + type.toUpperCase() + "_" +  order.getOrderNumber();
+
+            PendingTask pendingTask = PendingTask.builder()
+                    .referenceId(referenceId)
+                    .name("Take Steps - Summons")
+                    .entityType("task-management-payment")
+                    .status(PENDING_PAYMENT)
+                    .assignedTo(uniqueAssignee)
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
+                    .isCompleted(false)
+                    .screenType("home")
+                    .assignedRole(configuration.getTaskManagementAssignedRole())
+                    .actionCategory(configuration.getTaskManagementActionCategory())
+                    .additionalDetails(additionalDetails)
+                    .stateSla(sla)
+                    .build();
+
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+
+            try {
+
+                SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                        .tenantId(courtCase.getTenantId())
+                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .shortenedUrl(createShortUrl(order, referenceId))
+                        .orderType(order.getOrderType())
+                        .build();
+
+                callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
+            } catch (Exception e) {
+                log.error("Error occurred while sending notification to user: {}", e.toString());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private @NotNull List<Map<String, Object>> getMaps(Map<String, List<String>> partyTypeToUniqueIdMap) {

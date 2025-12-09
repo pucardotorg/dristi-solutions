@@ -249,7 +249,7 @@ public class CaseRegistrationEnrichment {
         courtCase.setFilingDate(caseUtil.getCurrentTimeMil());
     }
 
-    private void enrichStatuteAndSectionsOnCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
+    public void enrichStatuteAndSectionsOnCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
         if (courtCase.getStatutesAndSections() == null) {
             return;
         }

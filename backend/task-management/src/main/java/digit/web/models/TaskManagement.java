@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+import digit.web.models.enums.PartyType;
 import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
@@ -74,5 +75,8 @@ public class TaskManagement {
 
     @JsonProperty("documents")
     private List<Document> documents;
+
+    @JsonProperty("partyType")
+    private PartyType partyType;
 
 }

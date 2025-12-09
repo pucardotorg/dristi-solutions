@@ -98,6 +98,9 @@ public class Configuration {
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
 
+    @Value("${task.kafka.update.uniqueid.topic}")
+    private String taskUpdateUniqueIdTopic;
+
     @Value("${egov.courtId}")
     private String courtId;
 
