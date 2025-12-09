@@ -583,7 +583,7 @@ const MediationFormSignaturePage = () => {
                 t={t}
                 option={poaPartyDetails?.partyDetails}
                 selected={selectedParty}
-                optionKey={"name"}
+                optionKey={"partyName"}
                 select={(e) => {
                   setSelectedParty(e);
                 }}
