@@ -34,7 +34,7 @@ const MediationFormSignaturePage = () => {
   const name = "Signature";
   const [formData, setFormData] = useState({});
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
-  const [signatureDocumentId, setSignatureDocumentId] = useState("49fc87f1-b76b-472f-99cd-31452ca63153");
+  const [signatureDocumentId, setSignatureDocumentId] = useState(null);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
   const isUpdatingRef = useRef(false);
   const { downloadPdf } = useDownloadCasePdf();
