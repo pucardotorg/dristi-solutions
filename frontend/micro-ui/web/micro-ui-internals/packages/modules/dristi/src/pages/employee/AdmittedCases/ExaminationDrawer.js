@@ -662,7 +662,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             {
               fileStore: fileStoreId,
               documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("EXAMINATION_OF_ACCUSED")} (${party?.name}).pdf` },
+              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
               tenantId,
             },
           ]
