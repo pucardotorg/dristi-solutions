@@ -22,8 +22,6 @@ const judgeId = "JUDGE_ID";
 const courtId = localStorage.getItem("courtId");
 const benchId = "BENCH_ID";
 
-debugger;
-
 const downloadButtonStyle = {
   backgroundColor: "white",
   border: "none",
