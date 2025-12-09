@@ -107,7 +107,7 @@ jobs:
         uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop-actions-pr-test
         with:
           service_name: ${{ matrix.service }}
-          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          sonar_token: ${{ secrets.SONAR_TOKEN_BEEHYV }}
           branch: ${{ needs.check-diff.outputs.repo_branch }}
           repo: "pucardotorg/dristi-solutions"
           ghub_token: ${{ secrets.GHUB_TOKEN }}

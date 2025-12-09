@@ -20,6 +20,10 @@ inputs:
     description: "Github Token"
     required: true
     type: string
+  sonar_url:
+    description: "SonarQube URL"
+    type: string
+    default: "https://sq.beehyv.com"
 
 outputs:
   sonarqube_status:
@@ -56,7 +60,7 @@ runs:
         SONAR_TOKEN: ${{ inputs.sonar_token }}
       shell: bash
       run: |
-        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
+        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
       working-directory: ${{ env.service_source_path }}
 
     - name: Set up JDK 17
@@ -93,4 +97,4 @@ runs:
       shell: bash
       run: | 
         # FIX: Use env context for service_source_path
-        mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+        mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }}
