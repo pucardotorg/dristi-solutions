@@ -9,6 +9,7 @@ import org.egov.filestore.persistence.entity.Artifact;
 import org.egov.filestore.persistence.repository.ArtifactRepository;
 import org.egov.filestore.persistence.repository.FileStoreJpaRepository;
 import org.egov.filestore.repository.impl.minio.MinioConfig;
+import org.egov.filestore.validator.ClamAVValidator;
 import org.egov.filestore.validator.StorageValidator;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -31,7 +32,8 @@ class StorageServiceTest {
                 .thenReturn(stringList);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         StorageService storageService = new StorageService(artifactRepository, idGeneratorService, fileStoreConfig,
                 storageValidator, configs, new MinioConfig());
@@ -62,7 +64,8 @@ class StorageServiceTest {
         ArtifactRepository artifactRepository = new ArtifactRepository(fileStoreJpaRepository);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         assertNull((new StorageService(artifactRepository, idGeneratorService, fileStoreConfig, storageValidator, configs,
                 new MinioConfig())).retrieve("foo", "foo", null));
@@ -105,7 +108,8 @@ class StorageServiceTest {
         when(artifactRepository.find((String) any(), (String) any(), (String) any())).thenReturn(resource);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         assertSame(resource, (new StorageService(artifactRepository, idGeneratorService, fileStoreConfig, storageValidator,
                 configs, new MinioConfig())).retrieve("foo", "foo", null));
@@ -131,7 +135,8 @@ class StorageServiceTest {
         ArtifactRepository artifactRepository = new ArtifactRepository(fileStoreJpaRepository);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         assertTrue((new StorageService(artifactRepository, idGeneratorService, fileStoreConfig, storageValidator, configs,
                 new MinioConfig())).retrieveByTag("foo", "foo").isEmpty());
@@ -161,7 +166,8 @@ class StorageServiceTest {
         ArtifactRepository artifactRepository = new ArtifactRepository(fileStoreJpaRepository);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         List<FileInfo> actualRetrieveByTagResult = (new StorageService(artifactRepository, idGeneratorService,
                 fileStoreConfig, storageValidator, configs, new MinioConfig())).retrieveByTag("foo", "foo");
@@ -218,7 +224,8 @@ class StorageServiceTest {
         ArtifactRepository artifactRepository = new ArtifactRepository(fileStoreJpaRepository);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         List<FileInfo> actualRetrieveByTagResult = (new StorageService(artifactRepository, idGeneratorService,
                 fileStoreConfig, storageValidator, configs, new MinioConfig())).retrieveByTag("foo", "foo");
@@ -254,7 +261,8 @@ class StorageServiceTest {
         when(artifactRepository.findByTag((String) any(), (String) any())).thenReturn(fileInfoList);
         IdGeneratorService idGeneratorService = new IdGeneratorService();
         FileStoreConfig fileStoreConfig = new FileStoreConfig();
-        StorageValidator storageValidator = new StorageValidator(new FileStoreConfig());
+        ClamAVValidator clamAVValidator = new ClamAVValidator(fileStoreConfig);
+        StorageValidator storageValidator = new StorageValidator(fileStoreConfig, clamAVValidator);
         FileStoreConfig configs = new FileStoreConfig();
         List<FileInfo> actualRetrieveByTagResult = (new StorageService(artifactRepository, idGeneratorService,
                 fileStoreConfig, storageValidator, configs, new MinioConfig())).retrieveByTag("foo", "foo");
