@@ -131,10 +131,10 @@ public class RateLimiterConfiguration {
 
 
     /**
-     * OTP-specific rate limiting - extracts mobile number from cached request body
+     * OTP-specific rate limiting - extracts mobile number from request body
      * 
      * OTP endpoints are unauthenticated, so we can't use user UUID.
-     * The CacheRequestBody filter caches the request body, which we read here to extract mobile number.
+     * Reads the request body directly to extract mobile number.
      * Falls back to IP-based rate limiting if mobile not found.
      * 
      * @return KeyResolver that returns mobile number or IP
@@ -142,48 +142,77 @@ public class RateLimiterConfiguration {
     @Bean
     public KeyResolver otpKeyResolver() {
         return exchange -> {
-            // Try to read from cached request body (set by CacheRequestBody filter)
+            // First try cached body (if available)
             Object cachedBody = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
             
-            if (cachedBody != null) {
-                try {
-                    // CacheRequestBody stores body as Map when bodyClass=java.util.Map
-                    if (cachedBody instanceof Map) {
-                        Map<String, Object> bodyMap = (Map<String, Object>) cachedBody;
-                        
-                        // Try to extract mobile from otp object: {"otp": {"mobileNumber": "..."}}
-                        Object otpNode = bodyMap.get("otp");
-                        if (otpNode != null) {
-                            Otp otp = objectMapper.convertValue(otpNode, Otp.class);
-                            if (!ObjectUtils.isEmpty(otp.getMobileNumber())) {
-                                log.debug("Rate limiting OTP by mobile from otp object: {}", otp.getMobileNumber());
-                                return Mono.just(otp.getMobileNumber());
-                            }
-                        }
-                        
-                        // Try direct mobileNumber field: {"mobileNumber": "..."}
-                        if (bodyMap.get("mobileNumber") != null) {
-                            String directMobile = objectMapper.convertValue(bodyMap.get("mobileNumber"), String.class);
-                            if (!ObjectUtils.isEmpty(directMobile)) {
-                                log.debug("Rate limiting OTP by direct mobile field: {}", directMobile);
-                                return Mono.just(directMobile);
-                            }
-                        }
-                    }
-                    
-                    log.debug("Cached body found but mobile number not extracted, falling back to IP");
-                } catch (Exception e) {
-                    log.warn("Failed to extract mobile from cached body: {}", e.getMessage());
-                }
-            } else {
-                log.debug("No cached body found (CacheRequestBody filter may not be configured)");
+            if (cachedBody instanceof Map) {
+                return extractMobileFromBody((Map<String, Object>) cachedBody, exchange);
             }
             
-            // Fallback to IP-based rate limiting for OTP requests
-            String ip = getClientIp(exchange);
-            log.debug("Rate limiting OTP by IP: {}", ip);
-            return Mono.just(ip);
+            // If cached body is not available, read the body directly
+            return exchange.getRequest().getBody()
+                .next()
+                .flatMap(dataBuffer -> {
+                    try {
+                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(bytes);
+                        org.springframework.core.io.buffer.DataBufferUtils.release(dataBuffer);
+                        
+                        Map<String, Object> bodyMap = objectMapper.readValue(bytes, Map.class);
+                        
+                        // Cache the body for downstream filters
+                        exchange.getAttributes().put(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR, bodyMap);
+                        
+                        return extractMobileFromBody(bodyMap, exchange);
+                    } catch (Exception e) {
+                        log.warn("Failed to read request body for OTP rate limiting: {}", e.getMessage());
+                        String ip = getClientIp(exchange);
+                        log.debug("Rate limiting OTP by IP (body read failed): {}", ip);
+                        return Mono.just(ip);
+                    }
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    // Empty body - fallback to IP
+                    String ip = getClientIp(exchange);
+                    log.debug("Rate limiting OTP by IP (empty body): {}", ip);
+                    return Mono.just(ip);
+                }));
         };
+    }
+    
+    /**
+     * Helper method to extract mobile number from request body map
+     */
+    private Mono<String> extractMobileFromBody(Map<String, Object> bodyMap, org.springframework.web.server.ServerWebExchange exchange) {
+        try {
+            // Try to extract mobile from otp object: {"otp": {"mobileNumber": "..."}}
+            Object otpNode = bodyMap.get("otp");
+            if (otpNode != null) {
+                Otp otp = objectMapper.convertValue(otpNode, Otp.class);
+                if (!ObjectUtils.isEmpty(otp.getMobileNumber())) {
+                    log.debug("Rate limiting OTP by mobile from otp object: {}", otp.getMobileNumber());
+                    return Mono.just(otp.getMobileNumber());
+                }
+            }
+            
+            // Try direct mobileNumber field: {"mobileNumber": "..."}
+            if (bodyMap.get("mobileNumber") != null) {
+                String directMobile = objectMapper.convertValue(bodyMap.get("mobileNumber"), String.class);
+                if (!ObjectUtils.isEmpty(directMobile)) {
+                    log.debug("Rate limiting OTP by direct mobile field: {}", directMobile);
+                    return Mono.just(directMobile);
+                }
+            }
+            
+            log.debug("Mobile number not found in body, falling back to IP");
+        } catch (Exception e) {
+            log.warn("Failed to extract mobile from body: {}", e.getMessage());
+        }
+        
+        // Fallback to IP-based rate limiting
+        String ip = getClientIp(exchange);
+        log.debug("Rate limiting OTP by IP: {}", ip);
+        return Mono.just(ip);
     }
 
 
