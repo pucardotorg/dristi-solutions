@@ -106,6 +106,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             List<DigitalizedDocument> existingDocuments = digitalizedDocumentUtil.searchDigitalizedDocuments(searchRequest);
 
             String action = adrDetails.has("modeOfSigning") ? adrDetails.get("modeOfSigning").textValue() : null;
+            String caseNumber = adrDetails.has("caseNumber") ? adrDetails.get("caseNumber").textValue() : null;
 
             MediationDetails mediationDetails = buildMediationDetails(adrDetails);
 
@@ -118,6 +119,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 DigitalizedDocument existingDoc = existingDocuments.get(0);
                 existingDoc.setMediationDetails(mediationDetails);
                 existingDoc.setWorkflow(workflowObject);
+                existingDoc.setCaseNumber(caseNumber);
                 existingDoc.setCourtName(configuration.getCourtName());
                 existingDoc.setPlace(configuration.getPlace());
                 existingDoc.setState(configuration.getState());
@@ -147,6 +149,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .orderItemId(getItemId(order))
                         .tenantId(order.getTenantId())
                         .courtName(configuration.getCourtName())
+                        .caseNumber(caseNumber)
                         .place(configuration.getPlace())
                         .state(configuration.getState())
                         .courtId(order.getCourtId())
