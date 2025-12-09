@@ -98,8 +98,17 @@ const DocumentsV2 = ({
           }
 
           if (status === "PENDING_E-SIGN" && isCitizen) {
+            const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+              (respondent) => respondent?.uniqueId === docObj?.[0]?.artifactList?.pleaDetails?.accusedUniqueId
+            );
+            let accusedIndividualId = "";
+            if (respondentData?.data?.respondentVerification?.individualDetails?.individualId) {
+              accusedIndividualId = respondentData?.data?.respondentVerification?.individualDetails?.individualId;
+            }
+            const partyUUID = caseDetails?.litigants?.find((lit) => lit?.individualId === accusedIndividualId)?.additionalDetails?.uuid;
             history.push(
-              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`,
+              { partyUUID }
             );
             return;
           }
@@ -118,8 +127,17 @@ const DocumentsV2 = ({
           }
 
           if (status === "PENDING_E-SIGN" && isCitizen) {
+            const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+              (respondent) => respondent?.uniqueId === docObj?.[0]?.artifactList?.examinationOfAccusedDetails?.accusedUniqueId
+            );
+            let accusedIndividualId = "";
+            if (respondentData?.data?.respondentVerification?.individualDetails?.individualId) {
+              accusedIndividualId = respondentData?.data?.respondentVerification?.individualDetails?.individualId;
+            }
+            const partyUUID = caseDetails?.litigants?.find((lit) => lit?.individualId === accusedIndividualId)?.additionalDetails?.uuid;
             history.push(
-              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`
+              `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${type}`,
+              { partyUUID }
             );
             return;
           }
