@@ -19,7 +19,6 @@ import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { use } from "react";
 const judgeId = "JUDGE_ID";
-const courtId = localStorage.getItem("courtId");
 const benchId = "BENCH_ID";
 
 const downloadButtonStyle = {
@@ -93,6 +92,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const [loading, setLoading] = useState(false);
+  const courtId = localStorage.getItem("courtId");
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
