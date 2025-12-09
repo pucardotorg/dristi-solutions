@@ -46,6 +46,9 @@ public class DigitalizedDocument {
     @NotNull(message = "filing number cannot be null")
     private String caseFilingNumber = null;
 
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
+
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
