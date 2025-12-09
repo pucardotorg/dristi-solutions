@@ -1873,9 +1873,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1884,9 +1884,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1905,9 +1905,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1916,9 +1916,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1984,9 +1984,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1995,9 +1995,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -2016,9 +2016,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -2027,9 +2027,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -2169,8 +2169,8 @@ export const updateCaseDetails = async ({
                       },
                     });
                   const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
-                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
-                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
+                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "";
+                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
                   const street = Individual?.Individual?.address[0]?.street || "";
                   const city = Individual?.Individual?.address[0]?.city || "";
