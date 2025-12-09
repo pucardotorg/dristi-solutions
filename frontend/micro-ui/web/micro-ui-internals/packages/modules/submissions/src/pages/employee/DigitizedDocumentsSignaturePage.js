@@ -45,6 +45,7 @@ const DigitizedDocumentsSignaturePage = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
+  const partyUUID = location?.state?.partyUUID;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const history = useHistory();
@@ -238,6 +239,12 @@ const DigitizedDocumentsSignaturePage = () => {
     }
   };
 
+  const isSubmitButtonEnabled = useMemo(() => {
+    if(digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
+    if(isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
+    return true;
+  }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, userInfo]);
+
   if (isDigitizedDocumentsOpenOpenLoading || isLoading || isDocumentsDataLoading) {
     return <Loader />;
   }
@@ -298,7 +305,7 @@ const DigitizedDocumentsSignaturePage = () => {
               className="back-button"
             />
           )}
-          {digitizedDocumentsDetails?.status === "PENDING_E-SIGN" && (
+          {isSubmitButtonEnabled && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>

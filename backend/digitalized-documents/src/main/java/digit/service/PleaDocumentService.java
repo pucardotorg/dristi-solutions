@@ -1,6 +1,9 @@
 package digit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.DigitalizedDocumentEnrichment;
 import digit.enrichment.PleaEnrichment;
@@ -36,8 +39,9 @@ public class PleaDocumentService implements DocumentTypeService {
     private final UrlShortenerUtil urlShortenerUtil;
     private final NotificationService notificationService;
     private final CaseUtil caseUtil;
+    private final ObjectMapper objectMapper;
 
-    public PleaDocumentService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, CaseUtil caseUtil) {
+    public PleaDocumentService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, CaseUtil caseUtil, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.pleaEnrichment = pleaEnrichment;
@@ -48,6 +52,7 @@ public class PleaDocumentService implements DocumentTypeService {
         this.urlShortenerUtil = urlShortenerUtil;
         this.notificationService = notificationService;
         this.caseUtil = caseUtil;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -80,7 +85,7 @@ public class PleaDocumentService implements DocumentTypeService {
 
         // Check if workflow action is INITIATE_E_SIGN and create shortened URL
         if (document.getWorkflow() != null && INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
-            String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber());
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber(), String.valueOf(document.getType()));
             document.setShortenedUrl(shortenedUrl);
             log.info("Calling notification service for SMS");
             try{
@@ -88,6 +93,7 @@ public class PleaDocumentService implements DocumentTypeService {
             } catch (Exception e) {
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
+            updateWorkflowAdditionalDetails(request);
         }
 
         workflowService.updateWorkflowStatus(request);
@@ -102,6 +108,21 @@ public class PleaDocumentService implements DocumentTypeService {
         producer.push(config.getPleaDigitalizedDocumentUpdateTopic(), request);
 
         return request.getDigitalizedDocument();
+    }
+
+    private void updateWorkflowAdditionalDetails(DigitalizedDocumentRequest request) {
+        ObjectNode detailsNode;
+        if (request.getDigitalizedDocument().getWorkflow().getAdditionalDetails() == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(request.getDigitalizedDocument().getWorkflow().getAdditionalDetails(), ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add(PLEA_CREATOR);
+        excludeRolesArray.add(SYSTEM_ADMIN);
+        excludeRolesArray.add(SYSTEM);
+
+        request.getDigitalizedDocument().getWorkflow().setAdditionalDetails(detailsNode);
     }
 
     private void expireTheShorteningUrl(DigitalizedDocumentRequest digitalizedDocumentRequest) {
