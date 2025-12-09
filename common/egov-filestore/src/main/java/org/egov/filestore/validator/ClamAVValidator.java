@@ -29,7 +29,7 @@ public class ClamAVValidator {
             log.info("ClamAV is disabled. Skipping virus scan.");
             return true;
         }
-        try (Socket socket = new Socket(fileStoreConfig.getClamavHost(), fileStoreConfig.getClamavPort());
+        try (Socket socket = new Socket(fileStoreConfig.getClamavHost(), Integer.parseInt(fileStoreConfig.getClamavPort()));
              InputStream in = socket.getInputStream();
              java.io.OutputStream out = socket.getOutputStream()) {
 

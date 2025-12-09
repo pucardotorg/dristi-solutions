@@ -101,7 +101,7 @@ public class FileStoreConfig {
     private String clamavHost;
 
     @Value("${clamav.port:3310}")
-    private int clamavPort;
+    private String clamavPort;
 
     @Value("${clamav.enabled:false}")
     private boolean clamavEnabled;
