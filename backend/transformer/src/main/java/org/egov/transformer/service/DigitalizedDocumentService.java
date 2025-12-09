@@ -207,7 +207,7 @@ public class DigitalizedDocumentService {
             if(litigant.getPartyType().contains(partyType)){
                 Object additionalDetails = litigant.getAdditionalDetails();
                 JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-                String uuid = additionalDetailsNode.get("uuid").toString();
+                String uuid = additionalDetailsNode.get("uuid").asText();
                 litigantUUIDs.add(uuid);
             }
         }
@@ -225,7 +225,7 @@ public class DigitalizedDocumentService {
             for(Party representing: representingList) {
                 Object additionalDetails = representing.getAdditionalDetails();
                 JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-                String uuid = additionalDetailsNode.get("uuid").toString();
+                String uuid = additionalDetailsNode.get("uuid").asText();
                 if(litigantUUIDs.contains(uuid)) {
                     advocateUUIDs.add(uuid);
                 }
@@ -243,7 +243,7 @@ public class DigitalizedDocumentService {
         for(POAHolder poaHolder: poaHolders) {
             Object additionalDetails = poaHolder.getAdditionalDetails();
             JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-            String uuid = additionalDetailsNode.get("uuid").toString();
+            String uuid = additionalDetailsNode.get("uuid").asText();
             for(PoaParty litigant: poaHolder.getRepresentingLitigants()){
                 if(accusedIndividualIDs.contains(litigant.getIndividualId())){
                     poaUUIDs.add(uuid);
