@@ -26,6 +26,6 @@ public class RequestStartTimeFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -6;
+        return -7;
     }
 }

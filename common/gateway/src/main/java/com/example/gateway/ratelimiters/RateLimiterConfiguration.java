@@ -142,41 +142,18 @@ public class RateLimiterConfiguration {
     @Bean
     public KeyResolver otpKeyResolver() {
         return exchange -> {
-            // First try cached body (if available)
+            // First try cached body (if available from RequestBodyCacheFilter or CacheRequestBody filter)
             Object cachedBody = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
             
             if (cachedBody instanceof Map) {
+                log.debug("Using cached body for OTP rate limiting");
                 return extractMobileFromBody((Map<String, Object>) cachedBody, exchange);
             }
             
-            // If cached body is not available, read the body directly
-            return exchange.getRequest().getBody()
-                .next()
-                .flatMap(dataBuffer -> {
-                    try {
-                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
-                        dataBuffer.read(bytes);
-                        org.springframework.core.io.buffer.DataBufferUtils.release(dataBuffer);
-                        
-                        Map<String, Object> bodyMap = objectMapper.readValue(bytes, Map.class);
-                        
-                        // Cache the body for downstream filters
-                        exchange.getAttributes().put(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR, bodyMap);
-                        
-                        return extractMobileFromBody(bodyMap, exchange);
-                    } catch (Exception e) {
-                        log.warn("Failed to read request body for OTP rate limiting: {}", e.getMessage());
-                        String ip = getClientIp(exchange);
-                        log.debug("Rate limiting OTP by IP (body read failed): {}", ip);
-                        return Mono.just(ip);
-                    }
-                })
-                .switchIfEmpty(Mono.defer(() -> {
-                    // Empty body - fallback to IP
-                    String ip = getClientIp(exchange);
-                    log.debug("Rate limiting OTP by IP (empty body): {}", ip);
-                    return Mono.just(ip);
-                }));
+            // Fallback to IP if no cached body (shouldn't happen with RequestBodyCacheFilter)
+            String ip = getClientIp(exchange);
+            log.debug("Rate limiting OTP by IP (no cached body): {}", ip);
+            return Mono.just(ip);
         };
     }
     
