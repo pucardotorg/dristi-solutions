@@ -1,6 +1,9 @@
 package digit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.DigitalizedDocumentEnrichment;
 import digit.enrichment.ExaminationOfAccusedEnrichment;
@@ -22,13 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
 
-import static digit.config.ServiceConstants.EDIT;
-import static digit.config.ServiceConstants.INITIATE_E_SIGN;
-import static digit.config.ServiceConstants.SIGN_EXAMINATION_DOCUMENT;
-import static digit.config.ServiceConstants.SIGN_PLEA_DOCUMENT;
-
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static digit.config.ServiceConstants.*;
 
 /**
  * Service for processing EXAMINATION_OF_ACCUSED type documents
@@ -47,8 +47,9 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
     private final FileStoreUtil fileStoreUtil;
     private final CaseUtil caseUtil;
     private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
-    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, NotificationService notificationService) {
+    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, NotificationService notificationService, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.examinationOfAccusedEnrichment = examinationOfAccusedEnrichment;
@@ -59,6 +60,7 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         this.urlShortenerUtil = urlShortenerUtil;
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -104,6 +106,8 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
 
+            updateWorkflowAdditionalDetails(request);
+
         }
 
         workflowService.updateWorkflowStatus(request);
@@ -118,6 +122,21 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         producer.push(config.getExaminationOfAccusedUpdateTopic(), request);
 
         return request.getDigitalizedDocument();
+    }
+
+    private void updateWorkflowAdditionalDetails(DigitalizedDocumentRequest request) {
+        ObjectNode detailsNode;
+        if (request.getDigitalizedDocument().getWorkflow().getAdditionalDetails() == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(request.getDigitalizedDocument().getWorkflow().getAdditionalDetails(), ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add(EXAMINATION_CREATOR);
+        excludeRolesArray.add(SYSTEM_ADMIN);
+        excludeRolesArray.add(SYSTEM);
+
+        request.getDigitalizedDocument().getWorkflow().setAdditionalDetails(detailsNode);
     }
 
     private void expireTheShorteningUrl(DigitalizedDocumentRequest digitalizedDocumentRequest) {
