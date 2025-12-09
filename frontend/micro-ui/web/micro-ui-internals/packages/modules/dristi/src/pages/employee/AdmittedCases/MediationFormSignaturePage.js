@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -36,6 +36,7 @@ const MediationFormSignaturePage = () => {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [signatureDocumentId, setSignatureDocumentId] = useState(null);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
+  const isUpdatingRef = useRef(false);
   const { downloadPdf } = useDownloadCasePdf();
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [showSkipConfirmModal, setShowSkipConfirmModal] = useState(false);
@@ -184,11 +185,9 @@ const MediationFormSignaturePage = () => {
       });
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("error", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      throw error;
     } finally {
       setSelectedParty(null);
-      setLoader(false);
     }
   };
 
@@ -317,12 +316,20 @@ const MediationFormSignaturePage = () => {
 
   useEffect(() => {
     const esignMediationUpdate = async () => {
-      if (isEsignSuccess && digitalizationServiceDetails?.documentNumber) {
+      if (isEsignSuccess && digitalizationServiceDetails?.documentNumber && !isUpdatingRef.current) {
+        isUpdatingRef.current = true;
         setLoader(true);
-        await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN).then(async () => {
+        try {
+          await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN);
           setEsignSuccess(false);
           await refetchDigitalizationData();
-        });
+        } catch (error) {
+          console.error("Error:", error);
+          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        } finally {
+          setLoader(false);
+          isUpdatingRef.current = false;
+        }
       }
     };
 
