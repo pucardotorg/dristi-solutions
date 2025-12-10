@@ -26,11 +26,12 @@ public class FileStoreUtil {
     private final UrlValidator urlValidator;
 
     @Autowired
-    public FileStoreUtil(RestTemplate restTemplate, TransformerProperties configs, ObjectMapper mapper, UrlValidator urlValidator) {
+    public FileStoreUtil(RestTemplate restTemplate, TransformerProperties configs, ObjectMapper mapper) {
         this.restTemplate = restTemplate;
         this.configs = configs;
         this.mapper = mapper;
-        this.urlValidator = urlValidator;
+        // Get allowedTenantIds from configs, assume getAllowedTenantIds() returns Set<String>
+        this.urlValidator = new UrlValidator(configs.getAllowedTenantIds());
     }
 
     /**
