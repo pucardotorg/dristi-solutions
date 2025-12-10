@@ -410,7 +410,7 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
         if (orderType === "REFERRAL_CASE_TO_ADR") {
           const isMediation = formdata?.ADRMode?.name === "MEDIATION";
 
-          const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+          const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
           const hideForMediationEndKeys = ["dateOfEndADR"];
 
           body = body.map((field) => {
@@ -488,7 +488,7 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
       if (orderType === "REFERRAL_CASE_TO_ADR") {
         const isMediation = formdata?.ADRMode?.name === "MEDIATION";
 
-        const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+        const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
         const hideForMediationEndKeys = ["dateOfEndADR"];
 
         body = body.map((field) => {
