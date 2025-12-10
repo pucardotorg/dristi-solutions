@@ -86,7 +86,7 @@ public class DigitalizedDocumentService {
 
         List<String> accusedUUIDs = getLitigantUUIDS(courtCase, ACCUSED_PARTY_TYPE, digitalizedDocument);
         List<String> accusedAdvocateUUIDs = getAdvocateUUIDS(courtCase, accusedUUIDs);
-        List<String> accusedPoaUUIDs = getPOAUUIDs(courtCase, ACCUSED_PARTY_TYPE);
+        List<String> accusedPoaUUIDs = getPOAUUIDs(courtCase, accusedUUIDs);
 
         List<String> complainantUUIDs = new ArrayList<>();
         List<String> complainantAdvocateUUIDs = new ArrayList<>();
@@ -96,7 +96,7 @@ public class DigitalizedDocumentService {
         if(digitalizedDocument.getType().equals(TypeEnum.MEDIATION)){
             complainantUUIDs = getLitigantUUIDS(courtCase, COMPLAINANT_PARTY_TYPE, digitalizedDocument);
             complainantAdvocateUUIDs = getAdvocateUUIDS(courtCase, complainantUUIDs);
-            complainantPoaUUIDs = getPOAUUIDs(courtCase, COMPLAINANT_PARTY_TYPE);
+            complainantPoaUUIDs = getPOAUUIDs(courtCase, complainantUUIDs);
         }
 
 
@@ -310,19 +310,22 @@ public class DigitalizedDocumentService {
         return advocateUUIDs;
     }
 
-    private List<String> getPOAUUIDs(CourtCase courtCase, String partyType){
+    private List<String> getPOAUUIDs(CourtCase courtCase, List<String> litigantUUIDs){
         List<POAHolder> poaHolders = courtCase.getPoaHolders();
         if(poaHolders == null) return Collections.emptyList();
 
-        List<String> accusedIndividualIDs = getLitigantIndividualIDs(courtCase, partyType);
+        List<String> litigantIndividualIDs = getLitigantIndividualIDsFromUUIDs(courtCase, litigantUUIDs);
         List<String> poaUUIDs = new ArrayList<>();
+
         for(POAHolder poaHolder: poaHolders) {
-            Object additionalDetails = poaHolder.getAdditionalDetails();
-            JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-            String uuid = additionalDetailsNode.get("uuid").asText();
+
+            Object poaAdditionalDetails = poaHolder.getAdditionalDetails();
+            JsonNode poaAdditionalDetailsNode = objectMapper.convertValue(poaAdditionalDetails, JsonNode.class);
+            String poaUUID = poaAdditionalDetailsNode.get("uuid").asText();
+
             for(PoaParty litigant: poaHolder.getRepresentingLitigants()){
-                if(accusedIndividualIDs.contains(litigant.getIndividualId())){
-                    poaUUIDs.add(uuid);
+                if(litigantIndividualIDs.contains(litigant.getIndividualId())){
+                    poaUUIDs.add(poaUUID);
                 }
             }
         }
@@ -331,16 +334,24 @@ public class DigitalizedDocumentService {
 
     }
 
-    private List<String> getLitigantIndividualIDs(CourtCase courtCase, String partyType){
-        List<Party> litigants = courtCase.getLitigants();
-        List<String> accusedIndividualIDs = new ArrayList<>();
-        for(Party litigant: litigants) {
-            if(litigant.getPartyType().contains(partyType)){
-                String individualID = litigant.getIndividualId();
-                accusedIndividualIDs.add(individualID);
+    private List<String> getLitigantIndividualIDsFromUUIDs(CourtCase courtCase, List<String> litigantUUIDs){
+
+        if(litigantUUIDs.isEmpty()) return Collections.emptyList();
+
+        List<String> litigantIndividualIds = new ArrayList<>();
+
+        for(Party litigant: courtCase.getLitigants()){
+
+            Object litigantAdditionalDetails = litigant.getAdditionalDetails();
+            JsonNode litigantAdditionalDetailsNode = objectMapper.convertValue(litigantAdditionalDetails, JsonNode.class);
+            String litigantUUID = litigantAdditionalDetailsNode.get("uuid").asText();
+
+            if(litigantUUIDs.contains(litigantUUID)){
+                litigantIndividualIds.add(litigant.getIndividualId());
             }
         }
-        return accusedIndividualIDs;
+
+        return litigantIndividualIds;
 
     }
 }
