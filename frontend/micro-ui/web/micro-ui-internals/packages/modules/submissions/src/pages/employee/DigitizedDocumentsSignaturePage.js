@@ -45,6 +45,7 @@ const DigitizedDocumentsSignaturePage = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
+  const partyUUID = location?.state?.partyUUID;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const history = useHistory();
@@ -168,7 +169,11 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    if (isUserLoggedIn) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    } else {
+      window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
+    }
   };
 
   useEffect(() => {
@@ -234,6 +239,12 @@ const DigitizedDocumentsSignaturePage = () => {
     }
   };
 
+  const isSubmitButtonEnabled = useMemo(() => {
+    if(digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
+    if(isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
+    return true;
+  }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, userInfo]);
+
   if (isDigitizedDocumentsOpenOpenLoading || isLoading || isDocumentsDataLoading) {
     return <Loader />;
   }
@@ -276,7 +287,7 @@ const DigitizedDocumentsSignaturePage = () => {
       </div>
       <ActionBar>
         <div className="action-bar">
-          {
+          {isUserLoggedIn && (
             <Button
               label={t("BACK")}
               variation={"secondary"}
@@ -293,8 +304,8 @@ const DigitizedDocumentsSignaturePage = () => {
               }}
               className="back-button"
             />
-          }
-          {digitizedDocumentsDetails?.status === "PENDING_E-SIGN" && (
+          )}
+          {isSubmitButtonEnabled && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>

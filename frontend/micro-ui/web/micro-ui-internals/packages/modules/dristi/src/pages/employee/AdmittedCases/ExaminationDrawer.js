@@ -454,6 +454,9 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
       // Also refresh to ensure server and client are in sync
       documentsRefetch();
+      if (submit) {
+        setShowAccusedExaminationReview(true);
+      }
     } catch (error) {
       console.error("Error saving draft:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -461,9 +464,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       setLoader(false);
       if (backAction) {
         onClose();
-      }
-      if (submit) {
-        setShowAccusedExaminationReview(true);
       }
     }
   };
@@ -633,7 +633,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const handleConfirmQuestions = (selectedQuestions) => {
     let newString = "";
     selectedQuestions.forEach((q) => {
-      newString += `<p>Q: ${q.label}</p><p>A: </p><p> </p>`;
+      newString += `<p>Q: ${q.label}</p><p>A:&nbsp;</p><p> </p>`;
     });
     if (examinationText !== "") {
       newString = "<p> </p>" + newString;
@@ -656,18 +656,18 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const updateExaminationDocument = async (fileStoreId = null, action, number) => {
     try {
       const documents = Array.isArray(currentDocument?.file) ? currentDocument.file : {};
+      const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const documentsFile = fileStoreId
         ? [
             {
               fileStore: fileStoreId,
               documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("EXAMINATION_OF_ACCUSED")})` },
+              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
               tenantId,
             },
           ]
         : null;
       const document = activeTabs?.find((tab) => tab?.documentNumber === currentDocumentNumber);
-      const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const reqBody = {
         digitalizedDocument: {
           ...document,
@@ -1025,6 +1025,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             handleSaveOnSubmit={() => {
               setShowExaminationESign(false);
               documentsRefetch();
+              onClose();
             }}
             url={examinationSignatureURL}
             header={"EXAMINATION_OF_ACCUSED_ESIGN_LOCK_BANNER_HEADER"}
@@ -1053,6 +1054,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               documentsRefetch();
               setCurrentDocument(null);
               setExaminationUploadLoader(false);
+              onClose();
             }}
             message={"EXAMINATION_OF_ACCUSED_SUCCESS_BANNER_HEADER"}
           />
