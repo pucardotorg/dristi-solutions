@@ -323,4 +323,10 @@ public class Configuration {
 
     @Value("${dristi.state}")
     private String state;
+
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${egov.mdms.v2.search.endpoint}")
+    private String mdmsV2EndPoint;
 }

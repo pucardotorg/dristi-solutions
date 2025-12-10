@@ -10,6 +10,7 @@ import pucar.config.Configuration;
 import pucar.service.FileStoreService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.DigitalizedDocumentUtil;
+import pucar.util.MdmsV2Util;
 import pucar.util.PdfServiceUtil;
 import pucar.util.JsonUtil;
 import pucar.web.models.Order;
@@ -18,13 +19,7 @@ import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.digitalizeddocument.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import java.util.*;
 import static pucar.config.ServiceConstants.*;
 
 @Component
@@ -37,15 +32,17 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
     private final PdfServiceUtil pdfServiceUtil;
     private final FileStoreService fileStoreService;
     private final JsonUtil jsonUtil;
+    private final MdmsV2Util mdmsV2Util;
 
     @Autowired
-    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil) {
+    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil, MdmsV2Util mdmsV2Util) {
         this.digitalizedDocumentUtil = digitalizedDocumentUtil;
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.pdfServiceUtil = pdfServiceUtil;
         this.fileStoreService = fileStoreService;
         this.jsonUtil = jsonUtil;
+        this.mdmsV2Util = mdmsV2Util;
     }
 
     @Override
@@ -113,6 +110,12 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             WorkflowObject workflowObject = new WorkflowObject();
             workflowObject.setAction(action);
 
+            // Fetch court details from MDMS
+            Map<String, String> courtDetails = mdmsV2Util.fetchCourtDetails(requestInfo, order.getTenantId(), order.getCourtId());
+            String courtName = courtDetails.getOrDefault("courtName", configuration.getCourtName());
+            String place = courtDetails.getOrDefault("place", configuration.getPlace());
+            String state = courtDetails.getOrDefault("state", configuration.getState());
+
             if (existingDocuments != null && !existingDocuments.isEmpty()) {
                 // Update existing document
                 log.info("Found existing digitalized document with id: {}, updating...", existingDocuments.get(0).getDocumentNumber());
@@ -120,9 +123,9 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 existingDoc.setMediationDetails(mediationDetails);
                 existingDoc.setWorkflow(workflowObject);
                 existingDoc.setCaseNumber(caseNumber);
-                existingDoc.setCourtName(configuration.getCourtName());
-                existingDoc.setPlace(configuration.getPlace());
-                existingDoc.setState(configuration.getState());
+                existingDoc.setCourtName(courtName);
+                existingDoc.setPlace(place);
+                existingDoc.setState(state);
 
                 DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
                         .requestInfo(requestInfo)
@@ -148,10 +151,10 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .orderNumber(order.getOrderNumber())
                         .orderItemId(getItemId(order))
                         .tenantId(order.getTenantId())
-                        .courtName(configuration.getCourtName())
+                        .courtName(courtName)
                         .caseNumber(caseNumber)
-                        .place(configuration.getPlace())
-                        .state(configuration.getState())
+                        .place(place)
+                        .state(state)
                         .courtId(order.getCourtId())
                         .mediationDetails(mediationDetails)
                         .workflow(workflowObject)
