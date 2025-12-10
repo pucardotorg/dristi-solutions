@@ -301,6 +301,9 @@ const PleaSubmission = () => {
         );
         setPleaMobileNumber(individualData?.Individual?.[0]?.mobileNumber);
       }
+      else if(respondentData?.data?.phonenumbers?.mobileNumber?.[0]){
+        setPleaMobileNumber(respondentData?.data?.phonenumbers?.mobileNumber?.[0]);
+      }
       setShowsignatureModal(false);
       setShowAddPleaMobileNumber(true);
     } catch (error) {
