@@ -12,12 +12,14 @@ const { formatDate } = require("../applicationHandlers/formatDate");
 const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
   const { cnrNumber, tenantId, entityId, code, documentNumber } = req.query;
   const requestInfo = req.body?.RequestInfo;
-  // const courtId = requestInfo?.courtId;
+  const courtId = req.query?.courtId || requestInfo?.courtId;
+  
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
   if (!documentNumber) missingFields.push("documentNumber");
   if (!tenantId) missingFields.push("tenantId");
   if (!requestInfo) missingFields.push("requestInfo");
+  if (!courtId) missingFields.push("courtId");
   if (qrCode === "true" && (!entityId || !code)) missingFields.push("entityId and code");
   if (missingFields.length > 0) {
     return renderError(
@@ -39,7 +41,7 @@ const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
 
   try {
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo, req.query.courtId),
+      () => search_case(cnrNumber, tenantId, requestInfo, courtId),
 
       "Failed to query case service"
     );
@@ -51,11 +53,7 @@ const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
           {
             documentNumber: documentNumber,
             tenantId: tenantId,
-            ...(req.query.courtId
-              ? { courtId: req.query.courtId }
-              : requestInfo?.courtId
-              ? { courtId: requestInfo.courtId }
-              : {}),
+            courtId: courtId,
           }
         ),
       "Failed to query digitisation service"
