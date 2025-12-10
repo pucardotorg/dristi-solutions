@@ -1,14 +1,4 @@
-<<<<<<<< HEAD:backend/case/src/main/java/org/pucar/dristi/web/models/AdvocateSearchRequest.java
-package org.pucar.dristi.web.models;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.egov.common.contract.request.RequestInfo;
-import org.springframework.validation.annotation.Validated;
-========
 package com.dristi.njdg_transformer.model.advocate;
->>>>>>>> 01115c2f144c0cc67d9682d49ca6cefc20114f83:backend/njdg-transformer/src/main/java/com/dristi/njdg_transformer/model/advocate/AdvocateSearchRequest.java
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -33,10 +23,7 @@ import java.util.List;
 @Builder
 public class AdvocateSearchRequest {
 	@JsonProperty("RequestInfo")
-<<<<<<<< HEAD:backend/case/src/main/java/org/pucar/dristi/web/models/AdvocateSearchRequest.java
-	@javax.validation.Valid
-========
->>>>>>>> 01115c2f144c0cc67d9682d49ca6cefc20114f83:backend/njdg-transformer/src/main/java/com/dristi/njdg_transformer/model/advocate/AdvocateSearchRequest.java
+	@Valid
 	private RequestInfo requestInfo = null;
 
 	@JsonProperty("tenantId")

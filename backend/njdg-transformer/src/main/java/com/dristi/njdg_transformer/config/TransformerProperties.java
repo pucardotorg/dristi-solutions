@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -88,5 +90,8 @@ public class TransformerProperties {
 
     @Value("${app.zone.id}")
     private String applicationZoneId;
+
+    @Value("${app.allowed.tenant.ids:}")
+    private Set<String> allowedTenantIds;
 
 }
