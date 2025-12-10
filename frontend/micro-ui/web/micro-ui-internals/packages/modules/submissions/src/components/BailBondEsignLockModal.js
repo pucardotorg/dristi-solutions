@@ -8,7 +8,7 @@ function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber,
   const orderModalInfo = {
     header: "BAIL_BOND_BANNER_HEADER",
     url: [
-      {om 4:30PM tomorrow
+      {
         value: bailBondSignatureURL,
         customText: "E-Sign Link",
         copyData: true,
