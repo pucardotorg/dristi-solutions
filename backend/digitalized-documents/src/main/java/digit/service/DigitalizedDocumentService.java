@@ -17,8 +17,23 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static digit.config.ServiceConstants.ATTRIBUTE;
+import static digit.config.ServiceConstants.CERTIFICATE;
+import static digit.config.ServiceConstants.COMMAND;
+import static digit.config.ServiceConstants.CO_ORDINATES;
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
+import static digit.config.ServiceConstants.DATA;
+import static digit.config.ServiceConstants.FILE;
+import static digit.config.ServiceConstants.NAME;
+import static digit.config.ServiceConstants.PAGE;
+import static digit.config.ServiceConstants.PDF;
+import static digit.config.ServiceConstants.PKI_NETWORK_SIGN;
+import static digit.config.ServiceConstants.SIZE;
+import static digit.config.ServiceConstants.TIME_STAMP;
+import static digit.config.ServiceConstants.TXN;
+import static digit.config.ServiceConstants.TYPE;
 import static digit.config.ServiceConstants.UPDATE_DIGITALIZED_DOCUMENT_FAILED;
+import static digit.config.ServiceConstants.VALUE;
 
 @Service
 @Slf4j
@@ -226,9 +241,9 @@ public class DigitalizedDocumentService {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
-        requestData.put("command", "PKI_NETWORK_SIGN");
-        requestData.put("timeStamp", timeStamp);
-        requestData.put("txn", txnId);
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
 
         List<Map<String, Object>> certificateAttributes = new ArrayList<>();
         certificateAttributes.add(createAttribute("CN", ""));
@@ -240,19 +255,19 @@ public class DigitalizedDocumentService {
         certificateAttributes.add(createAttribute("CA", ""));
         certificateAttributes.add(createAttribute("TC", "SG"));
         certificateAttributes.add(createAttribute("AP", "1"));
-        requestData.put("certificate", certificateAttributes);
+        requestData.put(CERTIFICATE, certificateAttributes);
 
         Map<String, Object> file = new LinkedHashMap<>();
-        file.put("attribute", Map.of("name", "type", "value", "PDF"));
-        requestData.put("file", file);
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
 
         Map<String, Object> pdf = new LinkedHashMap<>();
-        pdf.put("page", pageNumber);
-        pdf.put("coordinates", coordination);
-        pdf.put("size", "150,100");
-        requestData.put("pdf", pdf);
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "150,100");
+        requestData.put(PDF, pdf);
 
-        requestData.put("data", base64Doc);
+        requestData.put(DATA, base64Doc);
 
         String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
         log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
@@ -263,9 +278,9 @@ public class DigitalizedDocumentService {
     private Map<String, Object> createAttribute(String name, String value) {
         Map<String, Object> attribute = new LinkedHashMap<>();
         Map<String, String> attrData = new LinkedHashMap<>();
-        attrData.put("name", name);
-        attrData.put("value", value);
-        attribute.put("attribute", attrData);
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
         return attribute;
     }
 }
