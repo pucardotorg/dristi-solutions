@@ -21,11 +21,13 @@ const digitisationOfExaminationOfAccused = async (
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
   const documentNumber = req.query.documentNumber;
+  const courtId = req.query?.courtId || requestInfo?.courtId;
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
   if (!documentNumber) missingFields.push("documentNumber");
   if (!tenantId) missingFields.push("tenantId");
+  if (!courtId) missingFields.push("courtId");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
@@ -50,7 +52,7 @@ const digitisationOfExaminationOfAccused = async (
 
   try {
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo, req.query.courtId),
+      () => search_case(cnrNumber, tenantId, requestInfo, courtId),
       "Failed to query case service"
     );
    const resDigitisation = await handleApiCall(
@@ -61,11 +63,7 @@ const digitisationOfExaminationOfAccused = async (
           {
             documentNumber: documentNumber,
             tenantId: tenantId,
-            ...(req.query.courtId
-              ? { courtId: req.query.courtId }
-              : requestInfo?.courtId
-              ? { courtId: requestInfo.courtId }
-              : {}),
+            courtId: courtId,
           }
         ),
       "Failed to query case service"
