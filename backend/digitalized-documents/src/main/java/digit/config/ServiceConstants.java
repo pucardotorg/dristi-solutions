@@ -49,6 +49,7 @@ public class ServiceConstants {
     public static final String SKIP_SIGN_AND_SUBMIT = "SKIP_SIGN_AND_SUBMIT";
     public static final String EDIT = "EDIT";
     public static final String E_SIGN = "E-SIGN";
+    public static final String SIGN = "SIGN";
     public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
     public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
     public static final String SYSTEM = "SYSTEM";

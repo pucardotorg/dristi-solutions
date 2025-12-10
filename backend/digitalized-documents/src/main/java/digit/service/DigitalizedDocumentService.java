@@ -28,6 +28,7 @@ import static digit.config.ServiceConstants.NAME;
 import static digit.config.ServiceConstants.PAGE;
 import static digit.config.ServiceConstants.PDF;
 import static digit.config.ServiceConstants.PKI_NETWORK_SIGN;
+import static digit.config.ServiceConstants.SIGN;
 import static digit.config.ServiceConstants.SIZE;
 import static digit.config.ServiceConstants.TIME_STAMP;
 import static digit.config.ServiceConstants.TXN;
@@ -217,8 +218,11 @@ public class DigitalizedDocumentService {
                     document.getAuditDetails().setLastModifiedTime(currentTime);
                     document.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
 
-                    // Save the updated document to database
+                    WorkflowObject workflowObject = new WorkflowObject();
+                    workflowObject.setAction(SIGN);
+                    document.setWorkflow(workflowObject);
 
+                    // Save the updated document to database
                     DigitalizedDocumentRequest digitalizedDocumentRequest = DigitalizedDocumentRequest.builder()
                             .requestInfo(request.getRequestInfo())
                             .digitalizedDocument(document)
