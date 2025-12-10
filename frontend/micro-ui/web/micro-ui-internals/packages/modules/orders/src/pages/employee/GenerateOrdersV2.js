@@ -1404,7 +1404,6 @@ const GenerateOrdersV2 = () => {
       const currentIndex = validData?.findIndex(
         (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
       );
-
       for (let step = 1; step < validData.length; step++) {
         const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
         const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;

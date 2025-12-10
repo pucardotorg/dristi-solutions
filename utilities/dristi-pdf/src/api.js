@@ -591,12 +591,19 @@ async function search_task_mangement(
   }
 }
 
-
-async function search_digitalizedDocuments(tenantId, requestinfo, criteria, pagination) {
+async function search_digitalizedDocuments(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
   try {
     return await axios({
       method: "post",
-      url: URL.resolve(config.host.digitisation, config.paths.digitalized_documents_search),
+      url: URL.resolve(
+        config.host.digitisation,
+        config.paths.digitalized_documents_search
+      ),
       data: {
         RequestInfo: requestinfo,
         criteria,
@@ -605,7 +612,9 @@ async function search_digitalizedDocuments(tenantId, requestinfo, criteria, pagi
       },
     });
   } catch (error) {
-    logger.error(`Error in ${config.paths.digitalized_documents_search}: ${error.message}`);
+    logger.error(
+      `Error in ${config.paths.digitalized_documents_search}: ${error.message}`
+    );
     throw error;
   }
 }
