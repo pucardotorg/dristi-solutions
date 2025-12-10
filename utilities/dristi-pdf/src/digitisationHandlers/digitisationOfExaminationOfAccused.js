@@ -66,7 +66,7 @@ const digitisationOfExaminationOfAccused = async (
             courtId: courtId,
           }
         ),
-      "Failed to query case service"
+      "Failed to query digitisation service"
     );
 
     const digitisationRecord =
