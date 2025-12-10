@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { caseFileLabels, modifiedEvidenceNumber, TaskManagementWorkflowState } from "../../../Utils";
+import { _getDigitilizationPatiresName, caseFileLabels, modifiedEvidenceNumber, TaskManagementWorkflowState } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
@@ -766,12 +766,16 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         id: "plea",
         title: "PLEA",
         hasChildren: true,
-        children: pleaDocumentsList.map((doc, index) => ({
-          id: `plea-${index + 1}`,
-          title: `${t("PLEA")} ${index + 1}`,
-          fileStoreId: doc?.documents?.[0]?.fileStore,
-          hasChildren: false,
-        })),
+        children: pleaDocumentsList.map((doc, index) => {
+          console.log("doc", doc);
+          const partyName = _getDigitilizationPatiresName(doc);
+          return {
+            id: `plea-${index + 1}`,
+            title: `${t("PLEA")} (${partyName})`,
+            fileStoreId: doc?.documents?.[0]?.fileStore,
+            hasChildren: false,
+          };
+        }),
       });
     }
 
@@ -780,12 +784,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         id: "s351-examination",
         title: "S351_EXAMINATION",
         hasChildren: true,
-        children: examinationOfAccusedDocumentsList.map((doc, index) => ({
-          id: `s351-examination-${index + 1}`,
-          title: `${t("S351_EXAMINATION")} ${index + 1}`,
-          fileStoreId: doc?.documents?.[0]?.fileStore,
-          hasChildren: false,
-        })),
+        children: examinationOfAccusedDocumentsList.map((doc, index) => {
+          const partyName = _getDigitilizationPatiresName(doc);
+          return {
+            id: `s351-examination-${index + 1}`,
+            title: `${t("S351_EXAMINATION")} (${partyName})`,
+            fileStoreId: doc?.documents?.[0]?.fileStore,
+            hasChildren: false,
+          };
+        }),
       });
     }
     return structure;
@@ -796,11 +803,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     if (mediationDocumentsList?.length > 0) {
       structure.push({
         id: "mediation",
-        title: "MEDIATION",
+        title: "MEDIATION_FORM",
         hasChildren: true,
         children: mediationDocumentsList.map((doc, index) => ({
           id: `mediation-${index + 1}`,
-          title: `${t("MEDIATION")} ${index + 1}`,
+          title: `${t("MEDIATION_FORM")} ${index + 1}`,
           fileStoreId: doc?.documents?.[0]?.fileStore,
           hasChildren: false,
         })),

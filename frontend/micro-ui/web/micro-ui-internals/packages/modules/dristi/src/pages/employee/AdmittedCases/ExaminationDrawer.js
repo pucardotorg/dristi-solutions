@@ -633,7 +633,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const handleConfirmQuestions = (selectedQuestions) => {
     let newString = "";
     selectedQuestions.forEach((q) => {
-      newString += `<p>Q: ${q.label}</p><p>A: </p><p> </p>`;
+      newString += `<p>Q: ${q.label}</p><p>A:&nbsp;</p><p> </p>`;
     });
     if (examinationText !== "") {
       newString = "<p> </p>" + newString;
@@ -1025,6 +1025,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             handleSaveOnSubmit={() => {
               setShowExaminationESign(false);
               documentsRefetch();
+              onClose();
             }}
             url={examinationSignatureURL}
             header={"EXAMINATION_OF_ACCUSED_ESIGN_LOCK_BANNER_HEADER"}
@@ -1053,6 +1054,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               documentsRefetch();
               setCurrentDocument(null);
               setExaminationUploadLoader(false);
+              onClose();
             }}
             message={"EXAMINATION_OF_ACCUSED_SUCCESS_BANNER_HEADER"}
           />
