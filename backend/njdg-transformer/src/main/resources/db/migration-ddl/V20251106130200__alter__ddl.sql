@@ -1,0 +1,1 @@
+ALTER TABLE disp_type ADD COLUMN disp_nature VARCHAR(255) DEFAULT '';
