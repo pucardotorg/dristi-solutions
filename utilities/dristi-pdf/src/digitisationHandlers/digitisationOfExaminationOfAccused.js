@@ -4,7 +4,7 @@ const {
   search_case,
   search_sunbirdrc_credential_service,
   create_pdf,
-  search_digitisation,
+  search_digitalizedDocuments,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
@@ -21,11 +21,13 @@ const digitisationOfExaminationOfAccused = async (
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
   const documentNumber = req.query.documentNumber;
+  const courtId = req.query?.courtId || requestInfo?.courtId;
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
   if (!documentNumber) missingFields.push("documentNumber");
   if (!tenantId) missingFields.push("tenantId");
+  if (!courtId) missingFields.push("courtId");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
@@ -50,13 +52,21 @@ const digitisationOfExaminationOfAccused = async (
 
   try {
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo, req.query.courtId),
+      () => search_case(cnrNumber, tenantId, requestInfo, courtId),
       "Failed to query case service"
     );
    const resDigitisation = await handleApiCall(
-      () => search_digitisation(tenantId, documentNumber, requestInfo),
-
-      "Failed to query case service"
+      () =>
+        search_digitalizedDocuments(
+          tenantId,
+          requestInfo,
+          {
+            documentNumber: documentNumber,
+            tenantId: tenantId,
+            courtId: courtId,
+          }
+        ),
+      "Failed to query digitisation service"
     );
 
     const digitisationRecord =
