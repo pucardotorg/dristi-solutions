@@ -73,5 +73,21 @@ public class ServiceConstants {
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
     public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
 
+    public static final String COMMAND = "command";
+    public static final String PKI_NETWORK_SIGN = "pkiNetworkSign";
+    public static final String TIME_STAMP = "ts";
+    public static final String TXN = "txn";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String TYPE = "type";
+    public static final String PDF = "pdf";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String CERTIFICATE = "certificate";
+    public static final String PAGE = "page";
+    public static final String CO_ORDINATES = "cood";
+    public static final String SIZE = "size";
+    public static final String DATA = "data";
+    public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+
 
 }
