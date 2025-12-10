@@ -313,9 +313,11 @@ const MediationFormSignaturePage = () => {
   };
 
   const handleCloseSuccessModal = () => {
-    sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+    history.replace(
+      `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${digitalizationServiceDetails?.caseId}&filingNumber=${filingNumber}&tab=Documents`
+    );
   };
 
   const closeToast = () => {
