@@ -11,6 +11,7 @@ import org.egov.transformer.models.Party;
 import org.egov.transformer.models.PoaParty;
 import org.egov.transformer.models.digitalized_document.DigitalizedDocument;
 import org.egov.transformer.models.digitalized_document.DigitalizedDocumentRequest;
+import org.egov.transformer.models.digitalized_document.TypeEnum;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -83,13 +84,20 @@ public class DigitalizedDocumentService {
             return;
         }
 
-        List<String> accusedUUIDs = getLitigantUUIDS(courtCase, ACCUSED_PARTY_TYPE);
+        List<String> accusedUUIDs = getLitigantUUIDS(courtCase, ACCUSED_PARTY_TYPE, digitalizedDocument);
         List<String> accusedAdvocateUUIDs = getAdvocateUUIDS(courtCase, accusedUUIDs);
         List<String> accusedPoaUUIDs = getPOAUUIDs(courtCase, ACCUSED_PARTY_TYPE);
 
-        List<String> complainantUUIDs = getLitigantUUIDS(courtCase, COMPLAINANT_PARTY_TYPE);
-        List<String> complainantAdvocateUUIDs = getAdvocateUUIDS(courtCase, complainantUUIDs);
-        List<String> complainantPoaUUIDs = getPOAUUIDs(courtCase, COMPLAINANT_PARTY_TYPE);
+        List<String> complainantUUIDs = new ArrayList<>();
+        List<String> complainantAdvocateUUIDs = new ArrayList<>();
+        List<String> complainantPoaUUIDs = new ArrayList<>();
+
+        // complainant side parties are only required for mediation
+        if(digitalizedDocument.getType().equals(TypeEnum.MEDIATION)){
+            complainantUUIDs = getLitigantUUIDS(courtCase, COMPLAINANT_PARTY_TYPE, digitalizedDocument);
+            complainantAdvocateUUIDs = getAdvocateUUIDS(courtCase, complainantUUIDs);
+            complainantPoaUUIDs = getPOAUUIDs(courtCase, COMPLAINANT_PARTY_TYPE);
+        }
 
 
         switch (digitalizedDocument.getType()){
@@ -200,21 +208,84 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedTo(assignedTo);
     }
 
-    private List<String> getLitigantUUIDS(CourtCase courtCase, String partyType){
+    private List<String> getLitigantUUIDS(CourtCase courtCase, String partyType, DigitalizedDocument digitalizedDocument){
         List<Party> litigants = courtCase.getLitigants();
         if(litigants == null) return Collections.emptyList();
 
-        List<String> litigantUUIDs = new ArrayList<>();
-        for(Party litigant: litigants) {
-            if(litigant.getPartyType().contains(partyType)){
-                Object additionalDetails = litigant.getAdditionalDetails();
-                JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-                String uuid = additionalDetailsNode.get("uuid").asText();
-                litigantUUIDs.add(uuid);
+        TypeEnum type = digitalizedDocument.getType();
+        switch (type){
+            case EXAMINATION_OF_ACCUSED -> {
+                String accusedUniqueId = digitalizedDocument.getExaminationOfAccusedDetails().getAccusedUniqueId();
+                return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
+            }
+
+            case PLEA -> {
+                String accusedUniqueId = digitalizedDocument.getPleaDetails().getAccusedUniqueId();
+                return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
+            }
+
+            case MEDIATION -> {
+                List<String> litigantUUIDs = new ArrayList<>();
+                for(Party litigant: litigants) {
+                    if(litigant.getPartyType().contains(partyType)){
+                        Object additionalDetails = litigant.getAdditionalDetails();
+                        JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+                        String uuid = additionalDetailsNode.get("uuid").asText();
+                        litigantUUIDs.add(uuid);
+                    }
+                }
+
+                return litigantUUIDs;
             }
         }
 
-        return litigantUUIDs;
+        return Collections.emptyList();
+    }
+
+    private List<String> getAccusedUUIDFromUniqueId(CourtCase courtCase, String uniqueId){
+
+        JsonNode caseAdditionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        JsonNode respondentDetailsFormDataNode = caseAdditionalDetailsNode
+                .path("respondentDetails")
+                .path("formdata");
+
+        if(!doesJsonNodeContainElements(respondentDetailsFormDataNode)){
+            log.info("No respondents present in the case");
+            return Collections.emptyList();
+        }
+
+        for(JsonNode respondentNode: respondentDetailsFormDataNode){
+
+            String respondentUniqueId = respondentNode.path("uniqueId").asText();
+
+            if(respondentUniqueId.equals(uniqueId)){
+
+                String individualId = respondentNode
+                        .path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails")
+                        .path("individualId")
+                        .asText();
+
+                if(individualId.isEmpty()){
+                    log.info("Accused has not yet joined the case");
+                    return Collections.emptyList();
+                }
+
+                return courtCase.getLitigants().stream()
+                        .filter(litigant -> litigant.getIndividualId().equals(individualId))
+                        .map(Party::getAdditionalDetails)
+                        .map(additionalDetails -> objectMapper.convertValue(additionalDetails, JsonNode.class))
+                        .map(additionalDetailsNode -> additionalDetailsNode.path("uuid").asText())
+                        .toList();
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private boolean doesJsonNodeContainElements(JsonNode node){
+        return node!= null && !node.isNull() && node.isArray() && !node.isEmpty();
     }
 
     private List<String> getAdvocateUUIDS(CourtCase courtCase, List<String> litigantUUIDs){
