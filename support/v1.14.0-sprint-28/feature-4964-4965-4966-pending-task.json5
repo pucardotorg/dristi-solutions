@@ -145,7 +145,7 @@
       "state": "PENDING_E-SIGN",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Confirm request for Examination",
+      "pendingTask": "Sign S351 Examination",
       "closerAction": [
         "E-SIGN"
       ],
