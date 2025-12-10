@@ -128,6 +128,7 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     `/home/digitalized-document-login`,
     `/home/payment-login`,
     `/home/sms-payment`,
+    `/home/access-expired`,
   ];
   const mobileResponsive = openMobileViewRoutes.some((path) => pathname.includes(path)) || pathname === "/ui/citizen/dristi";
   if (isMobileView && !mobileResponsive) {
