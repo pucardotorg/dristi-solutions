@@ -4382,6 +4382,7 @@ const AdmittedCaseV2 = () => {
             setShowExaminationModal(false);
             setExaminationDocumentNumber(null);
             refetchCaseData();
+            sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
             onTabChange(0, {}, "Documents");
           }}
           tenantId={tenantId}
