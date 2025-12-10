@@ -58,6 +58,7 @@ import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/em
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
+import ExaminationDrawer from "./ExaminationDrawer";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -174,7 +175,7 @@ const AdmittedCaseV2 = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
@@ -190,6 +191,7 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -240,6 +242,7 @@ const AdmittedCaseV2 = () => {
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
   const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
+  const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -512,11 +515,7 @@ const AdmittedCaseV2 = () => {
       caseDetails?.additionalDetails?.respondentDetails?.formdata
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
-          const fullName = constructFullName(
-            data?.data?.respondentFirstName,
-            data?.data?.respondentMiddleName,
-            data?.data?.respondentLastName
-          );
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
           return {
             ...data,
             name: `${fullName} (Accused)`,
@@ -711,7 +710,6 @@ const AdmittedCaseV2 = () => {
       ].includes(caseStatus)
     );
   }, [userRoles, caseStatus, isAdvocatePresent]);
-
 
   const openDraftModal = (orderList) => {
     setDraftOrderList(orderList);
@@ -2670,6 +2668,8 @@ const AdmittedCaseV2 = () => {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
+      } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
+        setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
@@ -2682,6 +2682,9 @@ const AdmittedCaseV2 = () => {
         setShowAddWitnessModal(true);
       } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
         handleCaseTransition(option.value);
+      } else if (option.value === "RECORD_PLEA") {
+        history.push(`/${window?.contextPath}/employee/submissions/record-plea?filingNumber=${filingNumber}`);
+        return;
       }
     },
     [
@@ -3078,6 +3081,14 @@ const AdmittedCaseV2 = () => {
         label: "VIEW_CALENDAR",
         requiredRoles: [],
       },
+      {
+        label: "RECORD_PLEA",
+        requiredRoles: ["PLEA_CREATOR", "PLEA_EDITOR"],
+      },
+      {
+        label: "RECORD_EXAMINATION_OF_ACCUSED",
+        requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // TODO: update this when backend validation is done.
+      },
     ],
     []
   );
@@ -3120,6 +3131,11 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ]
           : [
               {
@@ -3137,6 +3153,11 @@ const AdmittedCaseV2 = () => {
               {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
+              },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
               },
             ];
       } else
@@ -3177,6 +3198,11 @@ const AdmittedCaseV2 = () => {
           {
             value: "TAKE_WITNESS_DEPOSITION",
             label: "TAKE_WITNESS_DEPOSITION",
+          },
+          { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+          {
+            value: "RECORD_EXAMINATION_OF_ACCUSED",
+            label: "RECORD_EXAMINATION_OF_ACCUSED",
           },
         ];
     } else return [];
@@ -3496,7 +3522,10 @@ const AdmittedCaseV2 = () => {
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
         setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
+        setShowExaminationModal={setShowExaminationModal}
+        setDocumentCounter={setDocumentCounter}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -3760,13 +3789,20 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
+            {caseDetails?.courtCaseNumber && caseDetails?.courtCaseNumber?.includes("ST/") && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             {caseDetails?.isLPRCase ? (
               <React.Fragment>
                 <div className="sub-details-text">{caseDetails?.lprNumber}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && (
+              caseDetails?.courtCaseNumber &&
+              !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />
@@ -4335,6 +4371,22 @@ const AdmittedCaseV2 = () => {
           tenantId={tenantId}
           // refetchCaseData={refetchCaseData}
           artifactNumber={editWitnessDepositionArtifact}
+          caseId={caseId}
+          courtId={courtId}
+        />
+      )}
+      {showExaminationModal && (
+        <ExaminationDrawer
+          isOpen={showExaminationModal}
+          onClose={() => {
+            setShowExaminationModal(false);
+            setExaminationDocumentNumber(null);
+            refetchCaseData();
+            sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+            onTabChange(0, {}, "Documents");
+          }}
+          tenantId={tenantId}
+          documentNumber={examinationDocumentNumber}
           caseId={caseId}
           courtId={courtId}
         />

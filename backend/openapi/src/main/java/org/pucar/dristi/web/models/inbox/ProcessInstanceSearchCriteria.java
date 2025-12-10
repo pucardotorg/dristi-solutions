@@ -35,15 +35,14 @@ public class ProcessInstanceSearchCriteria {
     @JsonProperty("history")
     private Boolean history = false;
 
-    @JsonProperty("isHearingSerialNumberSorting")
-    private Boolean isHearingSerialNumberSorting = false;
-
     @JsonProperty("fromDate")
     private Long fromDate = null;
 
     @JsonProperty("toDate")
     private Long toDate = null;
 
+    @JsonProperty("isHearingSerialNumberSorting")
+    private Boolean isHearingSerialNumberSorting = false;
 
     @JsonProperty("offset")
     private Integer offset;

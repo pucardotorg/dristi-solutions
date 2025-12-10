@@ -568,7 +568,6 @@ public class CaseService {
         if (updateCase == null || existingCase == null) {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
-
         // Safely get the document list using Optional
         List<Document> documents = Optional.ofNullable(updateCase.getDocuments())
                 .orElse(Collections.emptyList());
@@ -2225,7 +2224,6 @@ public class CaseService {
                 hearingRequest.setHearing(hearing);
                 hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
 
-
                 //update open hearing index
                 updateHearingIndex(getName(individual),individual.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId());
             });
@@ -2305,7 +2303,7 @@ public class CaseService {
                 if(advocate.getComplainant()==null)
                     advocate.setComplainant(new ArrayList<>());
                 if(!advocate.getComplainant().contains(name))
-                    advocate.getComplainant().add(name);
+                 advocate.getComplainant().add(name);
                 advocate.getComplainant().removeAll(namesToBeRemoved);
             }
             if(!openHearing.getSearchableFields().contains(name)){
@@ -2314,7 +2312,7 @@ public class CaseService {
             openHearing.getSearchableFields().removeAll(namesToBeRemoved);
 
             if(!openHearing.getAdvocate().getIndividualIds().contains(individualId))
-                openHearing.getAdvocate().getIndividualIds().add(individualId);
+             openHearing.getAdvocate().getIndividualIds().add(individualId);
             producer.push(config.getOpenHearingTopic(), openHearing);
         }
     }
@@ -5698,7 +5696,6 @@ public class CaseService {
                 boolean isAccusedAdvocate = !replacementDetails.getLitigantDetails().getPartyType().contains("complainant");
 
                 List<String> namesToBeRemoved= new ArrayList<>();
-
                 if (!isAdvocatePartOfCase) {
                     for (int i = 0; i < attendees.size(); i++) {
                         if ((attendees.get(i).getIndividualId() != null) && attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
@@ -5708,7 +5705,6 @@ public class CaseService {
                         }
                     }
                 }
-
                 //update open hearing index
                 updateHearingIndexForReplaceAdvocate(fullName,individualTryingToReplace.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId(),namesToBeRemoved);
             }

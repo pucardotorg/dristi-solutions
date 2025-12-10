@@ -60,6 +60,13 @@ public class Advocate {
 	@JsonProperty("individualId")
 	private String individualId = null;
 
+	@JsonProperty("isActive")
+	private Boolean isActive = true;
+
+	@JsonProperty("workflow")
+	@Valid
+	private Workflow workflow = null;
+
 	@JsonProperty("accused")
 	private List<String> accused = null;
 
@@ -68,13 +75,6 @@ public class Advocate {
 
 	@JsonProperty("individualIds")
 	private List<String> individualIds = null;
-
-	@JsonProperty("isActive")
-	private Boolean isActive = true;
-
-	@JsonProperty("workflow")
-	@Valid
-	private Workflow workflow = null;
 
 	@JsonProperty("documents")
 	@Valid

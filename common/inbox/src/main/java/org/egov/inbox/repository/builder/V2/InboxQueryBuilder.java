@@ -3,7 +3,9 @@ package org.egov.inbox.repository.builder.V2;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+
 import java.util.Comparator;
+
 import lombok.extern.slf4j.Slf4j;
 import org.egov.inbox.util.ErrorConstants;
 import org.egov.inbox.util.MDMSUtil;
@@ -56,9 +58,9 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
             if (inboxSortConfiguration != null && inboxSortConfiguration.getSortOrder() != null && !inboxSortConfiguration.getSortOrder().isEmpty()) {
                 addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder(),inboxRequest.getInbox().getProcessSearchCriteria().getIsHearingSerialNumberSorting(),inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
-            }else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))){
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))) {
                 addIndexSort(baseEsQuery, configuration.getIndex());
-            }else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
+            } else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
                 List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
 
                 for (OrderBy orderBy : sortOrders) {
@@ -70,8 +72,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                         addSortClauseToBaseQuery(baseEsQuery, sortField, orderEnum);
                     }
                 }
-            }
-            else {
+            } else {
                 addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
             }
 
@@ -169,7 +170,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         }
     }
 
-    public Map<String, Object> getESQueryForSimpleSearch(SearchRequest searchRequest, Boolean isPaginationRequired,Boolean isGroupByFilingNumber ) {
+    public Map<String, Object> getESQueryForSimpleSearch(SearchRequest searchRequest, Boolean isPaginationRequired, Boolean isGroupByFilingNumber) {
 
         InboxQueryConfiguration configuration = mdmsUtil.getConfigFromMDMS(searchRequest.getIndexSearchCriteria().getTenantId(), searchRequest.getIndexSearchCriteria().getModuleName());
         Map<String, Object> params = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
@@ -426,7 +427,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
     }
 
     private Object prepareMustClauseChild(Map<String, Object> params, String
-                                                  key, Map<String, String> nameToPathMap,
+            key, Map<String, String> nameToPathMap,
                                           Map<String, SearchParam.Operator> nameToOperatorMap) {
 
         SearchParam.Operator operator = nameToOperatorMap.get(key);

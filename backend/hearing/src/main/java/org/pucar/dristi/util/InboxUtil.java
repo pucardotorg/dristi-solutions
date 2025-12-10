@@ -83,7 +83,6 @@ public class InboxUtil {
 
                 if (value == null) continue;
 
-
                 if (field.getType().isEnum()) {
                     Method fromValue = field.getType().getMethod("fromValue", String.class);
                     Object enumValue = fromValue.invoke(null, value.toString());

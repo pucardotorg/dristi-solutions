@@ -75,6 +75,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }),
     [caseData]
   );
+
   const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "case-default"), [paymentTypeData]);
   const [calculationResponse, setCalculationResponse] = useState(null);
   const [ispaymentLoading, setIsLoading] = useState(false);
@@ -106,10 +107,12 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
     fetchCalculation();
   }, [tenantId, caseDetails, suffix]);
+
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
   }, [calculationResponse?.Calculation]);
+
   const paymentCalculation = useMemo(() => {
     const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
     const updatedCalculation = breakdown.map((item) => ({

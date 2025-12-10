@@ -454,7 +454,6 @@ public class Configuration {
 	@Value("${egov.order.search.endpoint}")
 	private String orderSearchEndpoint;
 
-
 	@Value("${app.zone.id}")
 	private String zoneId;
 

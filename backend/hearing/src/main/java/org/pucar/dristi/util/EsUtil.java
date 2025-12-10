@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.Advocate;
 import org.pucar.dristi.web.models.OpenHearing;
+import org.pucar.dristi.web.models.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -64,7 +65,7 @@ public class EsUtil {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), hearingUuid, hearingUuid, tenantId, filingNumber, caseTitle, caseUuid, hearingNumber, caseNumber, stage, status, fromDate, toDate, subStage, courtId, accusedString, complainantString, searchableFieldsString, hearingType, caseFilingDate, statusOrder, hearingTypeOrder,serialNumber, orderStatus
+                config.getIndex(), hearingUuid, hearingUuid, tenantId, filingNumber, caseTitle, caseUuid, hearingNumber, caseNumber, stage, status, fromDate, toDate, subStage, courtId, accusedString, complainantString, searchableFieldsString, hearingType, caseFilingDate, statusOrder, hearingTypeOrder,serialNumber,orderStatus
 
         );
     }

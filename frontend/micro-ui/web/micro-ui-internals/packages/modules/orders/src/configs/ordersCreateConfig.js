@@ -825,73 +825,6 @@ export const configsOrderTranferToADR = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId", hideInForm: true },
-      },
-      {
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        label: "JUDGE_NAME",
-        isMandatory: true,
-        key: "judgeName",
-        type: "text",
-        populators: { name: "judgeName", hideInForm: true },
-      },
-      {
-        label: "DATE_OF_ORDER",
-        isMandatory: true,
-        key: "dateOfOrder",
-        type: "date",
-        populators: { name: "dateOfOrder", hideInForm: true },
-      },
-      {
-        label: "DATE_END_ADR",
-        isMandatory: true,
-        key: "dateOfEndADR",
-        schemaKeyPath: "orderDetails.dateOfEndADR",
-        transformer: "date",
-        type: "date",
-        populators: {
-          name: "dateOfEndADR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
-      {
         label: "ADR_MODE",
         isMandatory: true,
         key: "ADRMode",
@@ -913,33 +846,98 @@ export const configsOrderTranferToADR = [
         },
       },
       {
-        label: "JUDGE_DESIGNATION",
+        label: "DATE_END_ADR",
         isMandatory: true,
-        key: "judgeDesignation",
-        type: "text",
-        populators: { name: "judgeDesignation", hideInForm: true },
-      },
-    ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
+        key: "dateOfEndADR",
+        schemaKeyPath: "orderDetails.dateOfEndADR",
+        transformer: "date",
+        type: "date",
         populators: {
-          inputs: [
+          name: "dateOfEndADR",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+      {
+        type: "date",
+        label: "DATE_OF_HEARING",
+        key: "hearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        labelChildren: "OutlinedInfoIcon",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "hearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "MEDIATION_CENTRE",
+        isMandatory: true,
+        key: "mediationCentre",
+        schemaKeyPath: "orderDetails.mediationCentre",
+        transformer: "customDropdown",
+        type: "dropdown",
+        populators: {
+          name: "mediationCentre",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          options: [
             {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
+              code: "KOLLAM_MEDIATION_CENTRE",
+              name: "KOLLAM_MEDIATION_CENTRE",
             },
           ],
-          hideInForm: true,
+        },
+      },
+      {
+        label: "MODE_OF_MEDIATION_SIGNING",
+        isMandatory: true,
+        key: "modeOfSigning",
+        schemaKeyPath: "orderDetails.modeOfSigning",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "modeOfSigning",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          styles: { marginBottom: "16px" },
+          customStyle: { marginBottom: "0px" },
+          options: [
+            {
+              code: "E_SIGN",
+              name: "INITIATE_E-SIGN",
+            },
+            {
+              code: "UPLOAD_SIGNED_COPY",
+              name: "INITIATE_UPLOAD",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "CustomText",
+        key: "mediationNote",
+        populators: {
+          customStyle: { marginBottom: "0px" },
+          inputs: [
+            {
+              textStyles: { color: "#2563EB" },
+              infoText: "MEDIATION_REFERRAL_FORM_NOTE",
+            },
+          ],
         },
       },
     ],

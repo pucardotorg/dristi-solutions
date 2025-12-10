@@ -89,7 +89,7 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
@@ -110,7 +110,7 @@ public class OrderService {
 
         log.info("updated order and created diary entry, result= SUCCESS");
 
-        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && order.getHearingNumber() != null){
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && order.getHearingNumber() != null) {
             updateHearingSummary(request);
             hearingUtil.updateOpenHearingIndex(request.getOrder());
         }
@@ -120,7 +120,7 @@ public class OrderService {
 
     public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
 
-        if(cnrNumber==null){
+        if (cnrNumber == null) {
             cnrNumber = getCnrNumber(tenantId, filingNumber, requestInfo);
         }
 
@@ -130,22 +130,22 @@ public class OrderService {
                 .tenantId(tenantId)
                 .build();
 
-                OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
                 .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
                 .build();
 
-                OrderResponse orderResponse;
+        OrderResponse orderResponse;
 
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
             log.info("Found order associated with Hearing Number: {}", hearingNumber);
-            if("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())){
-                throw new CustomException("ORDER_ALREADY_PUBLISHED","Order is already published for hearing number: " + hearingNumber);
+            if ("PUBLISHED".equalsIgnoreCase(response.getList().get(0).getStatus())) {
+                throw new CustomException("ORDER_ALREADY_PUBLISHED", "Order is already published for hearing number: " + hearingNumber);
             }
             return response.getList().get(0);
         } else {
-                    Order order = Order.builder()
+            Order order = Order.builder()
                     .hearingNumber(hearingNumber)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)
@@ -158,12 +158,12 @@ public class OrderService {
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
 
-                    WorkflowObject workflow = new WorkflowObject();
+            WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("SAVE_DRAFT");
             workflow.setDocuments(List.of(new org.egov.common.contract.models.Document()));
             order.setWorkflow(workflow);
 
-                    OrderRequest orderRequest = OrderRequest.builder()
+            OrderRequest orderRequest = OrderRequest.builder()
                     .requestInfo(requestInfo).order(order).build();
             orderResponse = orderUtil.createOrder(orderRequest);
             log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
@@ -182,5 +182,21 @@ public class OrderService {
         // add validation here
         CourtCase courtCase = cases.get(0);
         return courtCase.getCnrNumber();
+    }
+
+    public Order addItem(@Valid OrderRequest request) {
+        Order order = request.getOrder();
+        log.info("adding item to order, result= IN_PROGRESS, orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+        OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
+        OrderProcessor orderProcessor = orderFactory.createProcessor();
+
+        OrderResponse orderResponse = orderUtil.addOrderItem(request);
+        request.setOrder(orderResponse.getOrder());
+
+        // TODO : this is temporary solution need to have proper implementation
+        orderProcessor.preProcessOrder(request);
+
+        return orderResponse.getOrder();
     }
 }

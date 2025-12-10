@@ -27,7 +27,15 @@ export const Urls = {
     updateBailBond: "/openapi/v1/updateBailBond",
     witnessDepositionSearch: "/openapi/v1/witness_deposition/search",
     updateWitnessDeposition: "/openapi/v1/witness_deposition/update",
+    digitizedDocumentSearch: "/openapi/v1/digitalized_document/search",
+    updateDigitizedDocument: "/openapi/v1/digitalized_document/update",
   },
   pendingTask: "/analytics/pending_task/v1/create",
   getPendingTaskFields: "/inbox/v2/_getFields",
+  digitalization: {
+    digitalizationCreate: "/digitalized-documents/v1/_create",
+    digitalizationUpdate: "/digitalized-documents/v1/_update",
+    digitalizationSearch: "/digitalized-documents/v1/_search",
+    pleaPreviewPdf: "/egov-pdf/digitisation",
+  },
 };

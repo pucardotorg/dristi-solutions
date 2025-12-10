@@ -60,6 +60,9 @@ export const Urls = {
     evidenceSearch: "/evidence/v1/_search",
     evidenceCreate: "/evidence/v1/_create",
     evidenceUpdate: "/evidence/v1/_update",
+    searchDigitizedDocument: "/digitalized-documents/v1/_search",
+    createDigitizedDocument: "/digitalized-documents/v1/_create",
+    updateDigitizedDocument: "/digitalized-documents/v1/_update",
     searchHearings: "/hearing/v1/search",
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
@@ -125,6 +128,9 @@ export const Urls = {
     taskManagementUpdate: "/task-management/v1/_update",
     taskManagementSearch: "/task-management/v1/_search",
     createOfflinePayment: "/analytics/offline-payment/_create",
+  },
+  digitalization: {
+    examinationPreviewPdf: "/egov-pdf/digitisation",
   },
 };
 

@@ -122,6 +122,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
   }, [calculationResponse?.Calculation]);
+
   const paymentCalculation = useMemo(() => {
     const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
     const updatedCalculation = breakdown.map((item) => ({

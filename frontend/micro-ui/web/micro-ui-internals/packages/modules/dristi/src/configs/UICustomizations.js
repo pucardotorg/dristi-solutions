@@ -9,7 +9,7 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -53,6 +53,46 @@ const getCaseNumber = (billDetails = {}) => {
   if (isValid(filingNumber)) return filingNumber;
 
   return "";
+};
+
+const normalizeItems = (items = []) => {
+  return items?.map?.((item) => {
+    const obj = {};
+
+    item?.fields?.forEach?.(({ key, value }) => {
+      const cleanedKey = key.replace("digitalizedDocumentDetails.", "");
+
+      const parts = cleanedKey.split(".");
+      let current = obj;
+
+      parts.forEach((part, index) => {
+        const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+
+        if (arrayMatch) {
+          const prop = arrayMatch[1];
+          const idx = Number(arrayMatch[2]);
+
+          current[prop] = current[prop] || [];
+          current[prop][idx] = current[prop][idx] || {};
+
+          if (index === parts.length - 1) {
+            current[prop][idx] = value;
+          } else {
+            current = current[prop][idx];
+          }
+        } else {
+          if (index === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      });
+    });
+
+    return obj;
+  });
 };
 
 export const UICustomizations = {
@@ -2619,6 +2659,70 @@ export const UICustomizations = {
         default:
           return value ? value : "-";
       }
+    },
+  },
+
+  DigitalizationConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const courtId = localStorage.getItem("courtId");
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const isCitizen = userRoles?.includes("CITIZEN");
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Digitalized Document Service",
+            moduleSearchCriteria: {
+              ...(requestCriteria.body.SearchCriteria.moduleSearchCriteria || {}),
+              ...(courtId ? { courtId } : {}),
+              ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
+              ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
+              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const normalized = normalizeItems(data?.data || []);
+            return { documents: normalized, totalCount: data?.totalCount || normalized?.length };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isDigitilization={true} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return _getDigitilizationPatiresName(row);
+        case "CS_ACTIONS":
+          if (row?.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="DigitalizationConfig" />;
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_ditilization_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   patternValidation: (key) => {

@@ -45,7 +45,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        return false;
     }
 
     @Override
@@ -91,9 +91,9 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
             hearingNumber = orderUtil.getHearingNumberFormApplicationAdditionalDetails(applications.get(0).getAdditionalDetails());
         }
         log.info("hearingNumber:{}", hearingNumber);
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
-           Hearing hearing = hearings.get(0);
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
 
         order.setHearingNumber(hearing.getHearingId());
 

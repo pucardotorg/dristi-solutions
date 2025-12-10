@@ -14,7 +14,18 @@ import { Link } from "react-router-dom";
  * @param {string} props.className - Optional CSS class for styling
  * @param {Object} props.style - Optional inline styles for breadcrumb items
  * @param {Object} props.spanStyle - Optional inline styles for text spans
+ *
  */
+
+const formatCrumbText = (text) => {
+  if (!text || typeof text !== "string") return text;
+
+  return text
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const BreadCrumbSubmissions = (props) => {
   /**
    * Determines if the current crumb is the last one in the list
@@ -45,7 +56,9 @@ const BreadCrumbSubmissions = (props) => {
           <li key={ci} style={{ ...props.style, color: "rgb(0, 126, 126)" }} className="bread-crumb--item">
             {/* Render as plain text if it's the last item or has no path */}
             {isLast(ci) || !crumb?.path ? (
-              <span style={props?.spanStyle ? { ...props?.spanStyle, color: "#0B0C0C" } : { color: "#0B0C0C" }}>{crumb.content}</span>
+              <span style={props?.spanStyle ? { ...props?.spanStyle, color: "#0B0C0C" } : { color: "#0B0C0C" }}>
+                {formatCrumbText(crumb.content)}
+              </span>
             ) : (
               /* Otherwise render as a link with the custom redirect handler */
               <Link to={{ pathname: crumb.path }} onClick={(ev) => handleRedirect(ev, crumb)}>

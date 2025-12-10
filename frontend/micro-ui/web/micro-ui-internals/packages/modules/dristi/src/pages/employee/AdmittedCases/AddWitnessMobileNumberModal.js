@@ -2,8 +2,17 @@ import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
 
-function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witnesMobileNumber, setWitnessMobileNumber }) {
-  const [mobileNumber, setMobileNumber] = useState("");
+function AddWitnessMobileNumberModal({
+  t,
+  handleClose,
+  allParties,
+  submit,
+  witnesMobileNumber,
+  setWitnessMobileNumber,
+  mainHeader,
+  selectedPartyId,
+}) {
+  const [mobileNumber, setMobileNumber] = useState(witnesMobileNumber || "");
   const [error, setError] = useState("");
 
   const CloseBtn = (props) => {
@@ -58,8 +67,10 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
       return;
     }
 
-    // Check if mobile number already exists in any party's witnessMobileNumbers array
-    const isDuplicateMobile = allParties?.some((party) => party?.witnessMobileNumbers?.includes(mobileNumber));
+    // Check if mobile number already exists in any other party's MobileNumbers array
+    const isDuplicateMobile = allParties?.some(
+      (party) => !(party?.uniqueId === selectedPartyId || party?.uuid === selectedPartyId) && party?.mobileNumbers?.includes(mobileNumber)
+    );
 
     if (isDuplicateMobile) {
       setError("THIS_NUMBER_ALREADY_EXISTS");
@@ -83,7 +94,7 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
         actionSaveOnSubmit={handlesubmit}
         actionSaveLabel={t("CS_COMMON_SUBMIT")}
         formId="modal-action"
-        headerBarMain={<Heading label={t("CS_ADD_WITNESS_MOBILE_NUMBER")} />}
+        headerBarMain={<Heading label={t(mainHeader)} />}
         headerBarEnd={<CloseBtn onClick={handleClose} />}
       >
         <div style={{ padding: "20px 0" }}>
@@ -132,8 +143,7 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
                   border: "none",
                   outline: "none",
                   fontSize: "16px",
-                  // color: "#0B0C0C"
-                  color: "#77787B",
+                  color: "#0B0C0C",
                 }}
                 maxLength={10}
               />
