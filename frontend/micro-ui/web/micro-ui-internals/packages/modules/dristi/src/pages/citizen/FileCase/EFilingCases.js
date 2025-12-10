@@ -51,6 +51,7 @@ import {
   getRespondentName,
   prayerAndSwornValidation,
   respondentValidation,
+  runGenericTextSanitizer,
   showDemandNoticeModal,
   showToastForComplainant,
   signatureValidation,
@@ -1596,6 +1597,11 @@ function EFilingCases({ path }) {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
+    runGenericTextSanitizer({
+      formData,
+      formConfig: modifiedFormConfig,
+      setValue,
+    });
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
