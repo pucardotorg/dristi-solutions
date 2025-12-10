@@ -209,7 +209,7 @@ public class DigitalizedDocumentService {
                             .build();
 
                     // Update document's documents list
-                    List<Document> documents = document.getDocuments() != null ? new ArrayList<>(document.getDocuments()) : new ArrayList<>();
+                    List<Document> documents = new ArrayList<>();
                     documents.add(signedDoc);
                     document.setDocuments(documents);
 
