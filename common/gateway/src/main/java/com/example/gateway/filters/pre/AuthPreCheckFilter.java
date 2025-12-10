@@ -159,7 +159,7 @@ public class AuthPreCheckFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return 2;
+        return -4;
     }
 
 }

@@ -39,6 +39,9 @@ public class ApplicationProperties {
 
     private List<String> mixedModeEndpointsWhitelist;
 
+    @Value("${rate-limiter.otp-path-prefix}")
+    private List<String> otpPathPrefixes;
+
     @Value("${egov.encrypted-endpoints-list}")
     public void setEncryptedUrlListValues(List<String> encryptedListFromProperties) {
         this.encryptedUrlSet = Collections.unmodifiableList(encryptedListFromProperties);

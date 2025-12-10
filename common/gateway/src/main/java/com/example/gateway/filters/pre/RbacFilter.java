@@ -80,7 +80,7 @@ public class RbacFilter implements GlobalFilter, Ordered {
     private void isIncomingURIInAuthorizedActionList(ServerWebExchange exchange) {
 
         String requestUri = exchange.getRequest().getURI().getPath();
-        String userInfo = MDC.get(USER_INFO_KEY);
+        String userInfo = MDC.get(USER_INFO_KEY) != null ? MDC.get(USER_INFO_KEY) : exchange.getAttribute(USER_INFO_KEY);
         User user = null;
         if (!ObjectUtils.isEmpty(userInfo)) {
             try {

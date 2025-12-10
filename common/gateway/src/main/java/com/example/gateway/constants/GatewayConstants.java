@@ -27,6 +27,7 @@ public class GatewayConstants {
     public static final String REQUEST_INFO_FIELD_NAME_CAMEL_CASE = "requestInfo";
     public static final String USER_INFO_FIELD_NAME = "userInfo";
     public static final String USER_INFO_KEY = "USER_INFO";
+    public static final String USER_UUID_KEY = "USER_UUID";
     public static final String CORRELATION_ID_FIELD_NAME = "correlationId";
     public static final String CORRELATION_ID_HEADER_NAME = "x-correlation-id";
     public static final String CORRELATION_ID_KEY = "CORRELATION_ID";

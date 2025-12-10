@@ -54,6 +54,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 User user = userUtils.getUser(authToken, exchange);
                 try {
                     MDC.put(USER_INFO_KEY, objectMapper.writeValueAsString(user));
+                    exchange.getAttributes().put(USER_INFO_KEY, objectMapper.writeValueAsString(user));
+                    // Store user UUID in exchange attributes for rate limiting
+                    if (user != null && user.getUuid() != null) {
+                        exchange.getAttributes().put(USER_UUID_KEY, user.getUuid());
+                    }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
@@ -68,7 +73,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return 4;
+        return -2;
     }
 
 }
