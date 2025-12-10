@@ -102,8 +102,9 @@ public class UrlValidator {
             throw new IllegalArgumentException("Parameters must be provided as key-value pairs");
         }
         
+        URI baseUri = URI.create(baseUrl);
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(baseUrl)
+                .fromUri(baseUri)
                 .path(path);
         
         for (int i = 0; i < params.length; i += 2) {

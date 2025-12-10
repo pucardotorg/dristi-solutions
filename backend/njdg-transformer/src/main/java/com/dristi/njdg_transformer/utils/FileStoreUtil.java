@@ -42,18 +42,16 @@ public class FileStoreUtil {
      */
     public Resource getFileStore(RequestInfo requestInfo, String tenantId, String fileStoreId) {
         try {
-            // Validate user inputs (sanitization)
             String validatedTenantId = urlValidator.validateTenantId(tenantId);
             String validatedFileStoreId = urlValidator.validateIdentifier(fileStoreId, "FILE_STORE_ID");
             
-            // SSRF Protection: Build URI using ONLY trusted configuration for host/path
-            // User input is restricted to query parameters only (not host/path)
-            String trustedBaseUrl = configs.getFileStoreHost(); // From application config
-            String trustedPath = configs.getFileStorePath();     // From application config
+            String trustedBaseUrl = configs.getFileStoreHost();
+            String trustedPath = configs.getFileStorePath();
             
-            // Construct URI with trusted base, user input only in query params
+            URI trustedBaseUri = URI.create(trustedBaseUrl);
+            
             URI targetUri = UriComponentsBuilder
-                    .fromUriString(trustedBaseUrl)
+                    .fromUri(trustedBaseUri)
                     .path(trustedPath)
                     .queryParam("tenantId", validatedTenantId)
                     .queryParam("fileStoreId", validatedFileStoreId)
@@ -61,18 +59,21 @@ public class FileStoreUtil {
                     .encode()
                     .toUri();
 
-            // Prepare RequestInfo JSON
+            if (!urlValidator.isAllowedHost(targetUri.toString(), trustedBaseUrl)) {
+                log.error("SSRF attempt detected: URI host mismatch. Target: {}, Allowed: {}", 
+                        targetUri.getHost(), trustedBaseUrl);
+                throw new SecurityException("Request blocked: Invalid host detected");
+            }
+
             Map<String, Object> requestInfoWrapper = new HashMap<>();
             requestInfoWrapper.put("RequestInfo", requestInfo);
             String requestBody = mapper.writeValueAsString(requestInfoWrapper);
 
-            // Prepare headers
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(MediaType.parseMediaTypes("*/*"));
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
-            // Make request to trusted FileStore service
             ResponseEntity<Resource> response = restTemplate.exchange(
                     targetUri, HttpMethod.GET, entity, Resource.class);
 
