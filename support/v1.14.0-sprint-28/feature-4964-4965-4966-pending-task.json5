@@ -37,8 +37,7 @@
       "defaultRoles": [],
       "triggerAction": [
         "E-SIGN_COMPLETE",
-        "SKIP_SIGN_AND_SUBMIT",
-        "UPLOAD"
+        "SKIP_SIGN_AND_SUBMIT"
       ],
       "workflowModule": "digitalized-document-mediation"
     },
