@@ -229,7 +229,7 @@ const MediationFormSignaturePage = () => {
   };
 
   const getPlaceholder = () => {
-    if (isMediationApprover) return "Signature";
+    if (isMediationApprover) return "Signature of Magistrate";
 
     const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
     if (!party) return "";
@@ -457,13 +457,14 @@ const MediationFormSignaturePage = () => {
                 />
               )}
             </div>
-            <div style={{ flex: 1 }}>
-              {mediationOrderDetails?.status === OrderWorkflowState.DRAFT_IN_PROGRESS && isMediationApprover && (
+            <div style={{ flex: 1 }} title={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED && t("ORDER_ALREADY_PUBLISHED")}>
+              {isMediationApprover && (
                 <Button
                   className={"edit-button"}
                   variation="secondary"
                   onButtonClick={() => setShowEditConfirmModal(true)}
                   label={t("EDIT")}
+                  isDisabled={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED}
                   icon={<EditPencilIcon width="20" height="20" />}
                 />
               )}
