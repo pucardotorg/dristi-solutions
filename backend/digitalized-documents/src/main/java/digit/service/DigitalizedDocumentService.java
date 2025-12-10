@@ -4,7 +4,7 @@ import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
 import digit.util.FileStoreUtil;
-import digit.util.XMLRequestGenerator;
+import digit.util.XmlRequestGenerator;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
@@ -43,7 +43,7 @@ public class DigitalizedDocumentService {
     private final ESignUtil eSignUtil;
     private final FileStoreUtil fileStoreUtil;
     private final CipherUtil cipherUtil;
-    private final XMLRequestGenerator xmlRequestGenerator;
+    private final XmlRequestGenerator xmlRequestGenerator;
     private final DigitalizedDocumentRepository repository;
 
     @Autowired
@@ -51,7 +51,7 @@ public class DigitalizedDocumentService {
                                      ESignUtil eSignUtil,
                                      FileStoreUtil fileStoreUtil,
                                      CipherUtil cipherUtil,
-                                     XMLRequestGenerator xmlRequestGenerator,
+                                     XmlRequestGenerator xmlRequestGenerator,
                                      DigitalizedDocumentRepository repository) {
         this.serviceFactory = serviceFactory;
         this.eSignUtil = eSignUtil;

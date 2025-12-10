@@ -88,6 +88,8 @@ public class ServiceConstants {
     public static final String SIZE = "size";
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+    public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
+    public static final String XML_CREATE_ERROR_MESSAGE = "error while creating XML";
 
 
 }
