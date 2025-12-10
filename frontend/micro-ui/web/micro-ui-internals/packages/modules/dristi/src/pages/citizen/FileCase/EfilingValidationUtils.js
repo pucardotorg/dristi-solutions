@@ -1726,7 +1726,7 @@ export const updateCaseDetails = async ({
     const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
-    // if (isCompleted === true) {
+    if (isCompleted === true) {
       litigants = await Promise.all(
         updatedFormData
           .filter((item) => item.isenabled)
@@ -2239,7 +2239,7 @@ export const updateCaseDetails = async ({
             }
           })
       );
-    // }
+    }
 
     let docList = [];
     const newFormData = await Promise.all(
