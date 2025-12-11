@@ -117,12 +117,24 @@ var fontDescriptors = {
     bold: "src/fonts/BalooPaaji2-Bold.ttf"
   },
   MalayalamSangamMn:{
-    normal: "src/fonts/malayalam-sangam-mn.ttf",
+    normal: "src/fonts/NotoSansMalayalam-VariableFont_wdth,wght.ttf",
     bold: "src/fonts/malayalam-sangam-mn-bold.ttf",
     italics: "src/fonts/Roboto-Italic.ttf",
     bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   }
 };
+
+// Add Noto Sans Malayalam font for better Malayalam glyph rendering
+// Note: Ensure the following files are present in src/fonts/
+// - NotoSansMalayalam-Regular.ttf
+// - NotoSansMalayalam-Bold.ttf
+// If you prefer a different naming, update the paths accordingly.
+// fontDescriptors["NotoSansMalayalam"] = {
+//   normal: "src/fonts/NotoSansMalayalam-Regular.ttf",
+//   bold: "src/fonts/NotoSansMalayalam-Bold.ttf",
+//   italics: "src/fonts/Roboto-Italic.ttf",
+//   bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
+// };
 
 var defaultFontMapping = {
   en_IN: 'MalayalamSangamMn',
@@ -451,6 +463,16 @@ app.post(
         );
         // restoring footer function
         formatConfigByFile[0].footer = convertFooterStringtoFunctionIfExist(formatconfig.footer);
+        // Force Noto Sans Malayalam for the 'digitisation-plea' template to stabilise Malayalam text rendering
+        // if (key === 'digitisation-plea') {
+        //   formatConfigByFile[0] = {
+        //     ...formatConfigByFile[0],
+        //     defaultStyle: {
+        //       ...(formatConfigByFile[0].defaultStyle || {}),
+        //       font: 'NotoSansMalayalam',
+        //     },
+        //   };
+        // }
         const doc = printer.createPdfKitDocument(formatConfigByFile[0]);
         let fileNameAppend = "-" + new Date().getTime();
         let filename = key + "" + fileNameAppend + ".pdf";
@@ -918,6 +940,18 @@ export const createAndSave = async (
           font: defaultFontMapping[locale],
         },
       }
+    
+    // Force Noto Sans Malayalam for the 'digitisation-plea' template to stabilise Malayalam text rendering
+    // This is scoped to this single key and will not affect other templates
+    // if (key === 'digitisation-plea') {
+    //   formatconfigCopy = {
+    //     ...formatconfigCopy,
+    //     defaultStyle: {
+    //       ...(formatconfigCopy.defaultStyle || {}),
+    //       font: 'NotoSansMalayalam',
+    //     },
+    //   };
+    // }
       
     createPdfBinary(
       key,
