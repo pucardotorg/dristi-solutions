@@ -77,7 +77,7 @@
       "state": "PENDING_E-SIGN",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Confirm request for Plea",
+      "pendingTask": "Sign Recorded Plea",
       "closerAction": [
         "E-SIGN"
       ],
@@ -99,7 +99,7 @@
       "state": "PENDING_REVIEW",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Review the plea",
+      "pendingTask": "Sign Accused Plea",
       "closerAction": [
         "SIGN"
       ],
