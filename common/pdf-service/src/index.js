@@ -130,8 +130,8 @@ var fontDescriptors = {
 // - NotoSansMalayalam-Bold.ttf
 // If you prefer a different naming, update the paths accordingly.
 fontDescriptors["NotoSansMalayalam"] = {
-  normal: "src/fonts/NotoSansMalayalam-VariableFont.ttf",
-  bold: "src/fonts/NotoSansMalayalam-VariableFont.ttf",
+  normal: "src/fonts/NotoSansMalayalam-Regular.ttf",
+  bold: "src/fonts/NotoSansMalayalam-Bold.ttf",
   italics: "src/fonts/Roboto-Italic.ttf",
   bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
 };
