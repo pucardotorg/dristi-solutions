@@ -55,6 +55,46 @@ const getCaseNumber = (billDetails = {}) => {
   return "";
 };
 
+const normalizeItems = (items = []) => {
+  return items?.map?.((item) => {
+    const obj = {};
+
+    item?.fields?.forEach?.(({ key, value }) => {
+      const cleanedKey = key.replace("digitalizedDocumentDetails.", "");
+
+      const parts = cleanedKey.split(".");
+      let current = obj;
+
+      parts.forEach((part, index) => {
+        const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+
+        if (arrayMatch) {
+          const prop = arrayMatch[1];
+          const idx = Number(arrayMatch[2]);
+
+          current[prop] = current[prop] || [];
+          current[prop][idx] = current[prop][idx] || {};
+
+          if (index === parts.length - 1) {
+            current[prop][idx] = value;
+          } else {
+            current = current[prop][idx];
+          }
+        } else {
+          if (index === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      });
+    });
+
+    return obj;
+  });
+};
+
 export const UICustomizations = {
   businessServiceMap,
   updatePayload: (applicationDetails, data, action, businessService) => {
@@ -2626,24 +2666,32 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
       const courtId = localStorage.getItem("courtId");
-
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const isCitizen = userRoles?.includes("CITIZEN");
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
       return {
         ...requestCriteria,
         body: {
-          ...requestCriteria?.body,
-          tenantId: tenantId,
-          criteria: {
-            ...requestCriteria?.body?.criteria,
-            courtId,
+          SearchCriteria: {
             tenantId,
-            fuzzySearch: true,
-            type: requestCriteria?.body?.criteria?.type?.code,
+            moduleName: "Digitalized Document Service",
+            moduleSearchCriteria: {
+              ...(requestCriteria.body.SearchCriteria.moduleSearchCriteria || {}),
+              ...(courtId ? { courtId } : {}),
+              ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
+              ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
+              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
         },
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, totalCount: data?.pagination?.totalCount };
+            const normalized = normalizeItems(data?.data || []);
+            return { documents: normalized, totalCount: data?.totalCount || normalized?.length };
           },
         },
       };

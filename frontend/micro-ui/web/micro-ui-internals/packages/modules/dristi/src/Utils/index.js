@@ -487,9 +487,9 @@ export const getOrderActionName = (applicationType, type) => {
 
 export const _getDigitilizationPatiresName = (data) => {
   if (data?.type === "PLEA") {
-    return data?.pleaDetails?.accusedName?.trim();
+    return data?.pleaDetails?.accusedName?.trim() || "";
   } else if (data?.type === "EXAMINATION_OF_ACCUSED") {
-    return data?.examinationOfAccusedDetails?.accusedName?.trim();
+    return data?.examinationOfAccusedDetails?.accusedName?.trim() || "";
   } else if (data?.type === "MEDIATION") {
     return (
       data?.mediationDetails?.partyDetails

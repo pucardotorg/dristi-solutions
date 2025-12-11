@@ -49,6 +49,7 @@ public class ServiceConstants {
     public static final String SKIP_SIGN_AND_SUBMIT = "SKIP_SIGN_AND_SUBMIT";
     public static final String EDIT = "EDIT";
     public static final String E_SIGN = "E-SIGN";
+    public static final String SIGN = "SIGN";
     public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
     public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
     public static final String SYSTEM = "SYSTEM";
@@ -68,8 +69,28 @@ public class ServiceConstants {
     public static final String SIGN_MEDIATION_DOCUMENT = "SIGN_MEDIATION_DOCUMENT";
 
     public static final String MEDIATION_CREATOR = "MEDIATION_CREATOR";
+    public static final String PLEA_CREATOR = "PLEA_CREATOR";
+    public static final String EXAMINATION_CREATOR = "EXAMINATION_CREATOR";
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
     public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
+
+    public static final String COMMAND = "command";
+    public static final String PKI_NETWORK_SIGN = "pkiNetworkSign";
+    public static final String TIME_STAMP = "ts";
+    public static final String TXN = "txn";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String TYPE = "type";
+    public static final String PDF = "pdf";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String CERTIFICATE = "certificate";
+    public static final String PAGE = "page";
+    public static final String CO_ORDINATES = "cood";
+    public static final String SIZE = "size";
+    public static final String DATA = "data";
+    public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+    public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
+    public static final String XML_CREATE_ERROR_MESSAGE = "error while creating XML";
 
 
 }

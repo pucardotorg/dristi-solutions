@@ -1215,6 +1215,7 @@ const SubmissionsCreate = ({ path }) => {
                 toUpload = combined || docsArr;
               } catch (e) {
                 console.error("Error combining files:", e);
+                throw e;
               }
             }
             const uploaded = await onDocumentUpload(toUpload?.[0], `${defaultName}.pdf`);
@@ -1260,6 +1261,7 @@ const SubmissionsCreate = ({ path }) => {
           };
         } catch (e) {
           console.error("Failed to map surety details for Request for Bail", e);
+          throw e;
         }
       }
 

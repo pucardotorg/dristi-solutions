@@ -865,11 +865,12 @@ export const configsOrderTranferToADR = [
       },
       {
         type: "date",
-        label: "DATE_OF_HEARING",
+        label: "DATE_OF_NEXT_HEARING",
         key: "hearingDate",
         schemaKeyPath: "orderDetails.hearingDate",
         transformer: "date",
         labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "DATE_OF_NEXT_HEARING_TOOLTIP",
         isMandatory: true,
         disable: true,
         populators: {
