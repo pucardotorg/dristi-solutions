@@ -4,7 +4,7 @@ import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
 import digit.util.FileStoreUtil;
-import digit.util.XMLRequestGenerator;
+import digit.util.XmlRequestGenerator;
 import digit.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -32,7 +32,7 @@ class DigitalizedDocumentServiceTest {
     @Mock private ESignUtil eSignUtil;
     @Mock private FileStoreUtil fileStoreUtil;
     @Mock private CipherUtil cipherUtil;
-    @Mock private XMLRequestGenerator xmlRequestGenerator;
+    @Mock private XmlRequestGenerator xmlRequestGenerator;
     @Mock private DigitalizedDocumentRepository repository;
 
     @InjectMocks private DigitalizedDocumentService service;
