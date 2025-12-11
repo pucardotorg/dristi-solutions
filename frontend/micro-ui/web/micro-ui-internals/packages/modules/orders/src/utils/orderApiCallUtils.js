@@ -24,7 +24,18 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (t, order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties, currentOrder) => {
+export const addOrderItem = async (
+  t,
+  order,
+  action,
+  tenantId,
+  applicationTypeConfigUpdated,
+  configKeys,
+  caseDetails,
+  allParties,
+  currentOrder,
+  allAdvocatesNames
+) => {
   const compositeItems = [];
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
@@ -50,7 +61,7 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
     }
 
-    const parties = getParties(
+    let parties = getParties(
       item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
       {
         ...orderSchema,
@@ -58,6 +69,11 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       },
       allParties
     );
+
+    parties = parties?.map((p) => ({
+      ...p,
+      counselName: (allAdvocatesNames[p?.userUuid] || [])?.join(", "),
+    }));
 
     const caseNumber =
       (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||

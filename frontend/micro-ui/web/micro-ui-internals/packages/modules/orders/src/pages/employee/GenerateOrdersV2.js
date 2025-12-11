@@ -2920,7 +2920,6 @@ const GenerateOrdersV2 = () => {
 
       parties = parties?.map((p) => ({
         ...p,
-        partyName: p?.partyName,
         counselName: (allAdvocatesNames[p?.userUuid] || [])?.join(", "),
       }));
 
@@ -3047,7 +3046,8 @@ const GenerateOrdersV2 = () => {
             configKeys,
             caseDetails,
             allParties,
-            currentOrder
+            currentOrder,
+            allAdvocatesNames
           );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
@@ -3073,7 +3073,8 @@ const GenerateOrdersV2 = () => {
               configKeys,
               caseDetails,
               allParties,
-              currentOrder
+              currentOrder,
+              allAdvocatesNames
             );
           }
         }
