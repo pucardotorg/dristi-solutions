@@ -2699,7 +2699,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
       switch (key) {
         case "DOCUMENT_TYPE":
-          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isDigitilization={true} />;
+          const newValue = value === "MEDIATION" ? "MEDIATION_FORM" : value;
+          return (
+            <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={newValue} showAsHeading={true} isDigitilization={true} />
+          );
         case "STATUS":
           return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
         case "PARTIES":
