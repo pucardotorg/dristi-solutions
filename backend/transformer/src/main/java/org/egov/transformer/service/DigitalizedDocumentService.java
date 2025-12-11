@@ -215,11 +215,19 @@ public class DigitalizedDocumentService {
         TypeEnum type = digitalizedDocument.getType();
         switch (type){
             case EXAMINATION_OF_ACCUSED -> {
+                if (digitalizedDocument.getExaminationOfAccusedDetails() == null) {
+                    log.warn("ExaminationOfAccusedDetails is null for document {}", digitalizedDocument.getDocumentNumber());
+                    return Collections.emptyList();
+                }
                 String accusedUniqueId = digitalizedDocument.getExaminationOfAccusedDetails().getAccusedUniqueId();
                 return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
             }
 
             case PLEA -> {
+                if (digitalizedDocument.getPleaDetails() == null) {
+                    log.warn("PleaDetails is null for document {}", digitalizedDocument.getDocumentNumber());
+                    return Collections.emptyList();
+                }
                 String accusedUniqueId = digitalizedDocument.getPleaDetails().getAccusedUniqueId();
                 return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
             }
@@ -230,7 +238,11 @@ public class DigitalizedDocumentService {
                     if(litigant.getPartyType().contains(partyType)){
                         Object additionalDetails = litigant.getAdditionalDetails();
                         JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-                        String uuid = additionalDetailsNode.get("uuid").asText();
+                        String uuid = additionalDetailsNode.path("uuid").asText();
+                        if (uuid.isEmpty()) {
+                            log.warn("UUID not found for litigant");
+                            continue;
+                        }
                         litigantUUIDs.add(uuid);
                     }
                 }
@@ -273,7 +285,7 @@ public class DigitalizedDocumentService {
                 }
 
                 return courtCase.getLitigants().stream()
-                        .filter(litigant -> litigant.getIndividualId().equals(individualId))
+                        .filter(litigant -> individualId.equals(litigant.getIndividualId()))
                         .map(Party::getAdditionalDetails)
                         .map(additionalDetails -> objectMapper.convertValue(additionalDetails, JsonNode.class))
                         .map(additionalDetailsNode -> additionalDetailsNode.path("uuid").asText())
@@ -321,7 +333,11 @@ public class DigitalizedDocumentService {
 
             Object poaAdditionalDetails = poaHolder.getAdditionalDetails();
             JsonNode poaAdditionalDetailsNode = objectMapper.convertValue(poaAdditionalDetails, JsonNode.class);
-            String poaUUID = poaAdditionalDetailsNode.get("uuid").asText();
+            String poaUUID = poaAdditionalDetailsNode.path("uuid").asText();
+            if (poaUUID.isEmpty()) {
+                log.warn("UUID not found for POA holder");
+                continue;
+            }
 
             for(PoaParty litigant: poaHolder.getRepresentingLitigants()){
                 if(litigantIndividualIDs.contains(litigant.getIndividualId())){
@@ -338,13 +354,16 @@ public class DigitalizedDocumentService {
 
         if(litigantUUIDs.isEmpty()) return Collections.emptyList();
 
+        List<Party> litigants = courtCase.getLitigants();
+        if(litigants == null) return Collections.emptyList();
+
         List<String> litigantIndividualIds = new ArrayList<>();
 
-        for(Party litigant: courtCase.getLitigants()){
+        for(Party litigant: litigants){
 
             Object litigantAdditionalDetails = litigant.getAdditionalDetails();
             JsonNode litigantAdditionalDetailsNode = objectMapper.convertValue(litigantAdditionalDetails, JsonNode.class);
-            String litigantUUID = litigantAdditionalDetailsNode.get("uuid").asText();
+            String litigantUUID = litigantAdditionalDetailsNode.path("uuid").asText();
 
             if(litigantUUIDs.contains(litigantUUID)){
                 litigantIndividualIds.add(litigant.getIndividualId());
