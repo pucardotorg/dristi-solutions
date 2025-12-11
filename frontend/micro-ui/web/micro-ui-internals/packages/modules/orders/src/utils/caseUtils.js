@@ -53,7 +53,6 @@ export const getAdvocates = (caseDetails) => {
   return litigants;
 };
 
-
 export const getAdvocatesNames = (caseDetails) => {
   let litigants = {};
   let list = [];

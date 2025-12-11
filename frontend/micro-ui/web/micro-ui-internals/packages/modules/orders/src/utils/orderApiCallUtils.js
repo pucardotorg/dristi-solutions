@@ -1,6 +1,6 @@
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../hooks/services";
-import { formatDate, getMediationChangedFlag, getParties } from "./orderUtils";
+import { getMediationChangedFlag, getParties } from "./orderUtils";
 
 export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
   try {

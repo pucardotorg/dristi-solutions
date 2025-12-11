@@ -44,7 +44,6 @@ public class ProcessInstanceSearchCriteria {
     @JsonProperty("toDate")
     private Long toDate = null;
 
-
     @JsonProperty("offset")
     private Integer offset;
 
