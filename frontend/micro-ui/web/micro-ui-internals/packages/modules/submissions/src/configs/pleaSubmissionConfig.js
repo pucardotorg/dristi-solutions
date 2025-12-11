@@ -34,7 +34,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "VILLAGE",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "village",
         type: "text",
         populators: {
@@ -50,7 +51,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "TALUK",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "taluk",
         type: "text",
         populators: {
@@ -66,7 +68,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "CALLING",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "calling",
         type: "text",
         populators: {
