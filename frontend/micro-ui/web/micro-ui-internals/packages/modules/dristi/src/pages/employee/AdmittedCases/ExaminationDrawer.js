@@ -924,7 +924,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                   </div>
                 </LabelFieldPair>
               </div>
-              <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
+              <div style={{ marginTop: "16px" }}>{t("CS_EXAMINATION_DESCRIPTION")}</div>
 
               <div style={{ gap: "16px", border: "1px solid" }}>
                 <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
