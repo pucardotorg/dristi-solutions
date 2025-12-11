@@ -889,7 +889,7 @@ export const configsOrderTranferToADR = [
           name: "mediationCentre",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
+          styles: { maxWidth: "100%", paddingBottom: "8px" },
           required: true,
           isMandatory: true,
           options: [
@@ -913,7 +913,7 @@ export const configsOrderTranferToADR = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
-          styles: { marginBottom: "16px" },
+          styles: { marginBottom: "16px", paddingBottom: "14px" },
           customStyle: { marginBottom: "0px" },
           options: [
             {
