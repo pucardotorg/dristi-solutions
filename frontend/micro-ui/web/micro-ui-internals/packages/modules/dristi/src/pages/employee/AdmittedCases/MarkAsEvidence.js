@@ -10,6 +10,7 @@ import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { set } from "lodash";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -442,9 +443,9 @@ const MarkAsEvidence = ({
               firstName: data.firstName || "",
               lastName: data.lastName || "",
               middleName: data.middleName || "",
-              fullName: getFullName(" ", data.firstName, data.middleName, data.lastName),
+              fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
               code: data.witnessTag,
-              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.middleName, data.lastName) + ")",
+              displayName: data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
             }
           : null;
       });
