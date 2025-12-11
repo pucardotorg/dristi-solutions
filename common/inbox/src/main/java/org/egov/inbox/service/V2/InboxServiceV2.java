@@ -361,7 +361,8 @@ public class InboxServiceV2 {
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
         hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
         List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        SearchResponse searchResponse = SearchResponse.builder().data(data).build();
+        Integer totalCount = getTotalCountForGetFieldFromSimpleSearch(searchRequest,inboxQueryConfiguration.getIndex());
+        SearchResponse searchResponse = SearchResponse.builder().data(data).totalCount(totalCount).build();
         return searchResponse;
     }
 
@@ -596,6 +597,19 @@ public class InboxServiceV2 {
         Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
         List<Data> dataList = parseSearchResponseForSimpleSearch(result);
         return dataList;
+    }
+
+    private Integer getTotalCountForGetFieldFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
+        StringBuilder uri = getURI(index, COUNT_PATH);
+        Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        Integer totalCount = 0;
+        if (response.containsKey(COUNT_CONSTANT)) {
+            totalCount = (Integer) response.get(COUNT_CONSTANT);
+        } else {
+            throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
+        }
+        return totalCount;
     }
 
     private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {

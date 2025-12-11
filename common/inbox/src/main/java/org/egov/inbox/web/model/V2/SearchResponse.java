@@ -1,6 +1,7 @@
 package org.egov.inbox.web.model.V2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.models.auth.In;
 import lombok.*;
 
 import java.util.List;
@@ -14,5 +15,8 @@ public class SearchResponse {
 
     @JsonProperty("data")
     private List<Data> data;
+
+    @JsonProperty("totalCount")
+    private Integer totalCount;
 
 }
