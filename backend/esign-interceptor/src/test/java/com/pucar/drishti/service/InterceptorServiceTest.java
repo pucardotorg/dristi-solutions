@@ -53,6 +53,7 @@ class InterceptorServiceTest {
         when(configuration.getUserType()).thenReturn("testUserType");
         when(configuration.getScope()).thenReturn("testScope");
         when(configuration.getGrantType()).thenReturn("testGrantType");
+        when(configuration.getAuthorization()).thenReturn("Basic test=");
 
         // Mock OAuth response
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(createMockOAuthResponse(token));
