@@ -7,7 +7,7 @@
     "data": {
       "id": 539,
       "actionid": 2772,
-      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_PLEA",
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_PLEA", // update signed documents
       "tenantid": "kl",
       "actioncode": "2772"
     },
@@ -20,7 +20,7 @@
     "uniqueIdentifier": "538",
     "data": {
       "id": 538,
-      "actionid": 2773,
+      "actionid": 2773, // egov pdf digitization
       "rolecode": "EMPLOYEE",
       "tenantid": "kl",
       "actioncode": "2773"
@@ -34,7 +34,7 @@
     "data": {
       "id": 537,
       "actionid": 2767,
-      "rolecode": "PLEA_CREATOR",
+      "rolecode": "PLEA_CREATOR", // digitalized documents create
       "tenantid": "kl",
       "actioncode": "2767"
     },
@@ -53,7 +53,7 @@
     "data": {
       "id": 536,
       "actionid": 2768,
-      "rolecode": "PLEA_EDITOR",
+      "rolecode": "PLEA_EDITOR", // digitalized documents update
       "tenantid": "kl",
       "actioncode": "2768"
     },
@@ -72,7 +72,7 @@
     "data": {
       "id": 535,
       "actionid": 2769,
-      "rolecode": "PLEA_VIEWER",
+      "rolecode": "PLEA_VIEWER", // digitalized documents search
       "tenantid": "kl",
       "actioncode": "2769"
     },
@@ -94,34 +94,6 @@
     "isActive": true
   },
   {
-    "id": "7702cc17-31ab-4646-87a5-69a51a2b0aaf",
-    "tenantId": "kl",
-    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
-    "uniqueIdentifier": "534",
-    "data": {
-      "id": 534,
-      "actionid": 2768,
-      "rolecode": "MEDIATION_EDITOR",
-      "tenantid": "kl",
-      "actioncode": "2768"
-    },
-    "isActive": true
-  },
-  {
-    "id": "c90d870d-fd80-4bce-931b-55414e207375",
-    "tenantId": "kl",
-    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
-    "uniqueIdentifier": "533",
-    "data": {
-      "id": 533,
-      "actionid": 2769,
-      "rolecode": "MEDIATION_VIEWER",
-      "tenantid": "kl",
-      "actioncode": "2769"
-    },
-    "isActive": true
-  },
-  {
     "id": "dc24c14a-6efa-454b-9b4f-475b227d5bc6",
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
@@ -129,7 +101,7 @@
     "data": {
       "id": 532,
       "actionid": 2772,
-      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION",
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION", // update signed documents
       "tenantid": "kl",
       "actioncode": "2772"
     },
@@ -143,7 +115,7 @@
     "data": {
       "id": 531,
       "actionid": 2772,
-      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION",
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION", // update signed documents
       "tenantid": "kl",
       "actioncode": "2772"
     },
@@ -157,7 +129,7 @@
     "data": {
       "id": 530,
       "actionid": 2770,
-      "rolecode": "DIGITALIZED_DOCUMENT_ESIGN",
+      "rolecode": "DIGITALIZED_DOCUMENT_ESIGN", // get digitalized documents to sign
       "tenantid": "kl",
       "actioncode": "2770"
     },
@@ -171,7 +143,7 @@
     "data": {
       "id": 529,
       "actionid": 2769,
-      "rolecode": "EXAMINATION_VIEWER",
+      "rolecode": "EXAMINATION_VIEWER", // digitalized documents search
       "tenantid": "kl",
       "actioncode": "2769"
     },
@@ -185,7 +157,7 @@
     "data": {
       "id": 527,
       "actionid": 2768,
-      "rolecode": "EXAMINATION_EDITOR",
+      "rolecode": "EXAMINATION_EDITOR", // digitalized documents update
       "tenantid": "kl",
       "actioncode": "2768"
     },
@@ -199,7 +171,7 @@
     "data": {
       "id": 526,
       "actionid": 2767,
-      "rolecode": "EXAMINATION_CREATOR",
+      "rolecode": "EXAMINATION_CREATOR", // digitalized documents create
       "tenantid": "kl",
       "actioncode": "2767"
     },
@@ -213,7 +185,7 @@
     "data": {
       "id": 525,
       "actionid": 2769,
-      "rolecode": "MEDIATION_VIEWER",
+      "rolecode": "MEDIATION_VIEWER", // digitalized documents search
       "tenantid": "kl",
       "actioncode": "2769"
     },
@@ -227,7 +199,7 @@
     "data": {
       "id": 524,
       "actionid": 2768,
-      "rolecode": "MEDIATION_EDITOR",
+      "rolecode": "MEDIATION_EDITOR", // digitalized documents update
       "tenantid": "kl",
       "actioncode": "2768"
     },
@@ -241,10 +213,30 @@
     "data": {
       "id": 523,
       "actionid": 2767,
-      "rolecode": "MEDIATION_CREATOR",
+      "rolecode": "MEDIATION_CREATOR", // digitalized documents create
       "tenantid": "kl",
       "actioncode": "2767"
     },
     "isActive": true
+  },
+  {
+    "id": "f8c74a17-d781-4409-bc64-0b4abb5896ba",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "547",
+    "data": {
+      "id": 547,
+      "actionid": 2776, // get botd orders
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2776"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1765386878825,
+      "lastModifiedTime": 1765386878825
+    }
   }
 ]
