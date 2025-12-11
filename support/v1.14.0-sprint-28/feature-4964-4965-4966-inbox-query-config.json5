@@ -9,7 +9,7 @@
         "module": "Digitalized Document Service",
         "sortBy": {
           "path": "Data.digitalizedDocumentDetails.createdTime",
-          "defaultOrder": "ASC"
+          "defaultOrder": "DESC"
         },
         "sourceFilterPathList": [
           "Data"
