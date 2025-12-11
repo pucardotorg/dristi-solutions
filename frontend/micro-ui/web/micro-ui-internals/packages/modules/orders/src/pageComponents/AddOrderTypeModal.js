@@ -356,7 +356,7 @@ const AddOrderTypeModal = ({
                     }),
                   }));
                 } else if (isReferralToADR) {
-                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "hearingDate"];
+                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
                   const hideForMediationEndKeys = ["dateOfEndADR"];
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,

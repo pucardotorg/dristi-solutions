@@ -97,7 +97,7 @@
           "actions": [
             {
               "action": "UPLOAD",
-              "nextState": "PENDING_REVIEW",
+              "nextState": "COMPLETED",
               "roles": [
                 "MEDIATION_CREATOR"
               ]

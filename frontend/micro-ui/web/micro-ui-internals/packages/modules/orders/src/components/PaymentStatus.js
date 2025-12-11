@@ -19,7 +19,7 @@ const PaymentStatus = ({ path }) => {
   const orderType = receiptData?.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const commonProps = {
     whichSvg: "tick",
