@@ -426,7 +426,7 @@ const PleaSubmission = () => {
         <Header styles={{ margin: "0px" }}> {t(pleaSubmissionDetailConfig.header)}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "0px", width: "50%" }}>
           <FormComposerV2
-            label={t("REVIEW_PLEA_SUBMISSION")}
+            label={t("REVIEW_PLEA_SUBMISSION_BUTTON")}
             config={modifiedFormConfig}
             defaultValues={defaultFormValue}
             onFormValueChange={onFormValueChange}
@@ -468,6 +468,7 @@ const PleaSubmission = () => {
             setLoader={setPleaUploadLoader}
             loader={pleUploadLoader}
             fileStoreId={pleaFileStoreId}
+            infoText={"PLEA_SIGN_INFO"}
           />
         )}
         {showAddPleaMobileNumber && (
