@@ -123,7 +123,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
         code: item?.code,
         title: item?.title,
         label: item?.label,
-      })) || []
+      }))?.reverse() || []
     );
   }, [examinationQuestionsData]);
 
