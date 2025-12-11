@@ -16,14 +16,6 @@
            "description": "PLEA_APPROVER"
        }
    },
-         {
- 
-       "data": {
-           "code": "PLEA_SIGNER",
-           "name": "PLEA_SIGNER",
-           "description": "PLEA_SIGNER"
-       }
-   },
     {
 
        "data": {

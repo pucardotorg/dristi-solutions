@@ -32,7 +32,7 @@ public class PartyDetails {
     private String partyName = null;
 
     @JsonProperty("witnessDesignation")
-    private String witnessDesignation;
+    private String witnessDesignation = null;
 
     @JsonProperty("emails")
     private List<String> emails = null;

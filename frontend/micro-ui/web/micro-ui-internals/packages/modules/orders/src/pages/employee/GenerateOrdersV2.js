@@ -1404,7 +1404,6 @@ const GenerateOrdersV2 = () => {
       const currentIndex = validData?.findIndex(
         (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
       );
-
       for (let step = 1; step < validData.length; step++) {
         const row = validData[(Math.max(currentIndex, 0) + step) % validData.length];
         const nextFiling = row?.businessObject?.hearingDetails?.filingNumber;
@@ -2920,7 +2919,6 @@ const GenerateOrdersV2 = () => {
 
       parties = parties?.map((p) => ({
         ...p,
-        partyName: p?.partyName,
         counselName: (allAdvocatesNames[p?.userUuid] || [])?.join(", "),
       }));
 
@@ -3047,7 +3045,8 @@ const GenerateOrdersV2 = () => {
             configKeys,
             caseDetails,
             allParties,
-            currentOrder
+            currentOrder,
+            allAdvocatesNames
           );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
@@ -3073,7 +3072,8 @@ const GenerateOrdersV2 = () => {
               configKeys,
               caseDetails,
               allParties,
-              currentOrder
+              currentOrder,
+              allAdvocatesNames
             );
           }
         }

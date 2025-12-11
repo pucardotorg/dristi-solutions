@@ -91,7 +91,6 @@ public class CaseService {
     private final DateUtil dateUtil;
     private final InboxUtil inboxUtil;
 
-
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
                        CaseRegistrationEnrichment enrichmentUtil,
@@ -5709,7 +5708,6 @@ public class CaseService {
                 //update open hearing index
                 updateHearingIndexForReplaceAdvocate(fullName,individualTryingToReplace.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId(),namesToBeRemoved);
             }
-
 
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
 

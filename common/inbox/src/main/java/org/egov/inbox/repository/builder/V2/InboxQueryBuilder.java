@@ -101,7 +101,9 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
     }
 
     private void addSortClauseToBaseQueryUsingConfig(Map<String, Object> baseEsQuery, List<SortOrder> sortOrder,boolean isHearingSerialNumberSorting,String moduleName) {
+
         List<Map<String, Object>> sortList = new ArrayList<>();
+
         if (isHearingSerialNumberSorting && "Hearing Service".equalsIgnoreCase(moduleName) ) {
             Map<String, Object> innerSortOrderClause = new HashMap<>();
             innerSortOrderClause.put(ORDER_KEY, "ASC");

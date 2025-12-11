@@ -26,7 +26,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -34,7 +34,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "VILLAGE",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "village",
         type: "text",
         populators: {
@@ -42,7 +43,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -50,7 +51,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "TALUK",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "taluk",
         type: "text",
         populators: {
@@ -58,7 +60,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },
@@ -66,7 +68,8 @@ const pleaSubmissionConfig = [
       },
       {
         label: "CALLING",
-        isMandatory: true,
+        isMandatory: false,
+        labelChildren: "optional",
         key: "calling",
         type: "text",
         populators: {
@@ -74,7 +77,7 @@ const pleaSubmissionConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           validation: {
-            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+            pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]+$/i,
             minLength: 1,
             patternType: "Name",
           },

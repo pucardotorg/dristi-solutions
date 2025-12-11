@@ -98,6 +98,7 @@ public class DigitalizedDocument {
     @JsonProperty("caseName")
     private String caseName;
 
+    // Enriched for pdf generation
     @JsonProperty("caseNumber")
     private String caseNumber;
 
