@@ -99,7 +99,7 @@
       "state": "PENDING_REVIEW",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Sign Accused Plea",
+      "pendingTask": "Review Accused Plea",
       "closerAction": [
         "SIGN"
       ],
