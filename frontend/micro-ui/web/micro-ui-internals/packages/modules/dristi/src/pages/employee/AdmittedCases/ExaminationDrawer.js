@@ -893,7 +893,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               <div style={{ display: "flex", gap: "50px", margin: "16px 0px 0px" }}>
                 <LabelFieldPair>
                   <CardLabel className="case-input-label">{t("ACCUSED_NAME")}</CardLabel>
-                  <div style={{ width: "300px" }}>
+                  <div style={{ width: "450px" }}>
                     <Dropdown
                       t={t}
                       option={options}
@@ -909,7 +909,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 </LabelFieldPair>
                 <LabelFieldPair>
                   <CardLabel className="case-input-label">{t("ADD_QUESTION")}</CardLabel>
-                  <div style={{ width: "300px" }}>
+                  <div style={{ width: "450px" }}>
                     <MultiSelectDropdownNew
                       t={t}
                       defaultLabel={t("SELECT_HERE")}
