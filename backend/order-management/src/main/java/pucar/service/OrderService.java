@@ -26,6 +26,7 @@ import pucar.web.models.hearing.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -170,6 +171,51 @@ public class OrderService {
         }
 
         return orderResponse.getOrder();
+    }
+
+    public List<BotdOrderSummary> getBotdOrders(String tenantId, String filingNumber, String orderNumber, RequestInfo requestInfo) {
+        OrderCriteria criteria = OrderCriteria.builder()
+                .filingNumber(filingNumber)
+                .status("PUBLISHED")
+                .orderNumber(orderNumber)
+                .tenantId(tenantId)
+                .build();
+
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .build();
+
+        OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
+        List<BotdOrderSummary> botdOrders = new ArrayList<>();
+
+        if (orderListResponse != null && orderListResponse.getList() != null) {
+            for (Order order : orderListResponse.getList()) {
+                BotdOrderSummary botdOrderSummary = buildBotdOrderSummary(order, requestInfo);
+                botdOrders.add(botdOrderSummary);
+            }
+        }
+        return botdOrders;
+    }
+
+    private BotdOrderSummary buildBotdOrderSummary(Order order, RequestInfo requestInfo) {
+        String businessOfTheDay = orderUtil.getBusinessOfTheDay(order, requestInfo);
+        
+        return BotdOrderSummary.builder()
+                .orderNumber(order.getOrderNumber())
+                .orderTitle(order.getOrderTitle())
+                .orderType(order.getOrderType())
+                .orderCategory(order.getOrderCategory())
+                .status(order.getStatus())
+                .createdDate(order.getCreatedDate())
+                .tenantId(order.getTenantId())
+                .filingNumber(order.getFilingNumber())
+                .hearingNumber(order.getHearingNumber())
+                .itemText(order.getItemText())
+                .purposeOfNextHearing(order.getPurposeOfNextHearing())
+                .nextHearingDate(order.getNextHearingDate())
+                .businessOfTheDay(businessOfTheDay)
+                .build();
     }
 
     private String getCnrNumber(String tenantId, String filingNumber, RequestInfo requestInfo) {
