@@ -105,7 +105,9 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
             } catch (Exception e) {
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
+
             updateWorkflowAdditionalDetails(request);
+
         }
 
         workflowService.updateWorkflowStatus(request);
