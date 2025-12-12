@@ -36,7 +36,7 @@ const WitnessDepositionReviewModal = ({
   setShowsignatureModal,
   courtId,
   cnrNumber,
-  filingNumber
+  filingNumber,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
