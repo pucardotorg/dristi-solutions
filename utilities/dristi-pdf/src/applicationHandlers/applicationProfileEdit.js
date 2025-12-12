@@ -54,7 +54,7 @@ const showAddress = (data) => {
       (part) => part !== null && part !== undefined && part.trim?.() !== ""
     );
 
-    return {address: parts.join(", ")};
+    return { address: parts.join(", ") };
   };
 
   if (Array.isArray(data)) {
@@ -295,7 +295,8 @@ async function applicationProfileEdit(
           ),
           currentPermanentAddress:
             showAddress(oldData?.data?.addressDetails) || [],
-          currentResedentialAddress: showAddress(oldData?.data?.currentAddressDetails) || [],
+          currentResedentialAddress:
+            showAddress(oldData?.data?.currentAddressDetails) || [],
           isEntity: currentDetailsLitigantTypeCode !== "INDIVIDUAL",
           currentCompanyName: currentCompanyName || "",
           currentEntityType: currentEntityType || "",
@@ -306,7 +307,8 @@ async function applicationProfileEdit(
           ),
           newEmailId: getCommaSeparatedValues(newData?.emails?.emailId),
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
-          newResedentialAddress: showAddress(newData?.currentAddressDetails) || [],
+          newResedentialAddress:
+            showAddress(newData?.currentAddressDetails) || [],
         },
       ],
     };

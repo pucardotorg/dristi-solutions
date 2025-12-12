@@ -240,8 +240,8 @@ const DigitizedDocumentsSignaturePage = () => {
   };
 
   const isSubmitButtonEnabled = useMemo(() => {
-    if(digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
-    if(isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
+    if (digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
+    if (isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
     return true;
   }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, userInfo]);
 

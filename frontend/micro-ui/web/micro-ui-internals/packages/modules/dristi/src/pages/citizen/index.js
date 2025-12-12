@@ -140,7 +140,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     "/registration/email",
     "/home/evidence-sign",
     "/home/evidence-login",
-    "/home/digitalized-document-sign", 
+    "/home/digitalized-document-sign",
     "/home/digitalized-document-login",
     "/home/payment-login",
     "/home/sms-payment",
@@ -173,7 +173,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/payment-login`,
     `${path}/home/sms-payment`,
   ];
-  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`, `${path}/home/sms-payment`, `${path}/home/digitalized-document-sign`];
+  const openRoute = [
+    `${path}/home/bail-bond-sign`,
+    `${path}/home/evidence-sign`,
+    `${path}/home/sms-payment`,
+    `${path}/home/digitalized-document-sign`,
+  ];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
