@@ -14,11 +14,15 @@ import digit.util.UrlShortenerUtil;
 import digit.validators.PleaValidator;
 import digit.web.models.*;
 import digit.web.models.sms.SmsTemplateData;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 
@@ -93,6 +97,7 @@ public class PleaDocumentService implements DocumentTypeService {
             } catch (Exception e) {
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
+
             updateWorkflowAdditionalDetails(request);
         }
 

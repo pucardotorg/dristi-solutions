@@ -214,7 +214,9 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
         ) || [];
 
     const accusedList = [...joinedAccuseds, ...unJoinedAccuseds]
-      .sort((a, b) => (a.displayIndex ?? Infinity) - (b.displayIndex ?? Infinity))
+      .sort(
+        (a, b) => (a.displayIndex ?? Infinity) - (b.displayIndex ?? Infinity)
+      )
       .map(({ displayIndex, ...rest }) => rest);
 
     const listOfPresentAttendees =

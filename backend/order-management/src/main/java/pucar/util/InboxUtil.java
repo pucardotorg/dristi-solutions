@@ -138,7 +138,6 @@ public class InboxUtil {
         return value; // Return as is if no conversion logic is provided
     }
 
-
     public InboxRequest getInboxRequestForOpenHearing(String courtId,String hearingNumber) {
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
