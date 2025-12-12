@@ -121,12 +121,24 @@ var fontDescriptors = {
     bold: "src/fonts/malayalam-sangam-mn-bold.ttf",
     italics: "src/fonts/Roboto-Italic.ttf",
     bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
+  },
+  RachanaMalyalam: {
+    normal: "src/fonts/Rachana-Regular.ttf",
+    bold: "src/fonts/Rachana-Bold.ttf",
+    italics: "src/fonts/Roboto-Italic.ttf",
+    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
+  },
+  ManjiriMalyalam: {
+    normal: "src/fonts/Manjari-Regular.ttf",
+    bold: "src/fonts/Manjari-Bold.ttf",
+    italics: "src/fonts/Roboto-Italic.ttf",
+    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   }
 };
 
 var defaultFontMapping = {
-  en_IN: 'MalayalamSangamMn',
-  ml_IN: 'MalayalamSangamMn',
+  en_IN: 'ManjiriMalyalam',
+  ml_IN: 'ManjiriMalyalam',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
