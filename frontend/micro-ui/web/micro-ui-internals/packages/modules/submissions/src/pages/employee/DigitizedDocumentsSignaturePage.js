@@ -98,22 +98,14 @@ const DigitizedDocumentsSignaturePage = () => {
   }, [digitizedDocumentsDetails]);
 
   const ifUserAuthorized = useMemo(() => {
-    let mobNumber = "";
-    let loggedInUserAuthorized = false;
     if (isUserLoggedIn) {
-      if (type === "PLEA") {
-        mobNumber = digitizedDocumentsDetails?.pleaDetails?.accusedMobileNumber;
-      } else {
-        mobNumber = digitizedDocumentsDetails?.examinationOfAccusedDetails?.accusedMobileNumber;
-      }
-
-      if (mobNumber === userInfo?.mobileNumber) {
-        loggedInUserAuthorized = true;
-      }
-      return loggedInUserAuthorized;
-    } else if (!isUserLoggedIn) {
-      return isAuthorised;
+      const mobNumber =
+        type === "PLEA"
+          ? digitizedDocumentsDetails?.pleaDetails?.accusedMobileNumber
+          : digitizedDocumentsDetails?.examinationOfAccusedDetails?.accusedMobileNumber;
+      return mobNumber === userInfo?.mobileNumber;
     }
+    return isAuthorised;
   }, [digitizedDocumentsDetails, isAuthorised, isUserLoggedIn, type, userInfo?.mobileNumber]);
 
   const accMobileNum = useMemo(() => {
@@ -233,7 +225,6 @@ const DigitizedDocumentsSignaturePage = () => {
     documentNumber,
     history,
     isAuthorised,
-    isCitizen,
     isUserLoggedIn,
     tenantId,
     userType,
