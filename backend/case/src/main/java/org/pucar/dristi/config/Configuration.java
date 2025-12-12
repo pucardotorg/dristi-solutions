@@ -153,6 +153,9 @@ public class Configuration {
 	@Value("${witness.kafka.update.topic}")
 	private String witnessUpdateTopic;
 
+	@Value("${case.kafka.add.address.topic}")
+	private String addAddressTopic;
+
 	@Value("${egov.workflow.case.business.name}")
 	private String caseBusinessName;
 
@@ -175,6 +178,9 @@ public class Configuration {
 
 	@Value("${etreasury.payment.receipt.endpoint}")
 	private String treasuryPaymentReceiptEndPoint;
+
+	@Value("${etreasury.head.breakup.calculation.endpoint}")
+	private String etreasuryCalculationEndPoint;
 
 	//Join a Case
 	@Value("${egov.litigant.join.case.kafka.topic}")
@@ -283,6 +289,12 @@ public class Configuration {
 	@Value("${egov.sms.notification.reject.profile.request.template.id}")
 	private String smsNotificationRejectProfileRequestTemplateId;
 
+	@Value("${egov.sms.notification.errors.pending.template.id}")
+	private String smsNotificationErrorsPendingTemplateId;
+
+	@Value("${egov.sms.notification.vakalatnama.filed.template.id}")
+	private String smsNotificationVakalatnamaFiledTemplateId;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -369,6 +381,9 @@ public class Configuration {
 	@Value("${egov.payment.calculator.endpoint}")
 	private String paymentCalculatorEndpoint;
 
+	@Value("${egov.case.filing.payment.calculator.endpoint}")
+	private String caseFilingPaymentCalculatorEndpoint;
+
 	@Value("${egov.task.service.host}")
 	private String taskServiceHost;
 
@@ -396,6 +411,9 @@ public class Configuration {
 	@Value("${kafka.case.update.last.modified.time}")
 	private String caseUpdateLastModifiedTimeTopic;
 
+	@Value("${egov.poa.join.case.kafka.topic}")
+	private String poaJoinCaseKafkaTopic;
+
 	// evidence
 	@Value("${egov.evidence.host}")
 	private String evidenceServiceHost;
@@ -406,4 +424,46 @@ public class Configuration {
 	@Value("${egov.evidence.search.path}")
 	private String evidenceServiceSearchPath;
 
+	// LPR config
+	@Value("${egov.idgen.lprConfig}")
+	private String lprConfig;
+
+	@Value("${egov.idgen.lprFormat}")
+	private String lprFormat;
+
+	@Value("${lpr.case.details.update.kafka.topic}")
+	private String lprCaseDetailsUpdateTopic;
+
+    @Value("${lpr.stage}")
+    private String lprStage;
+
+    @Value("${lpr.sub.stage}")
+    private String lprSubStage;
+
+	// Time config for async SMS
+	@Value("${egov.sms.case.filed.time}")
+	private String smsCaseFiledTime;
+
+	@Value("${egov.sms.vakalatnama.filed.time}")
+	private String smsVakalatnamaFiledTime;
+
+	// Order
+	@Value("${egov.order.host}")
+	private String orderHost;
+
+	@Value("${egov.order.search.endpoint}")
+	private String orderSearchEndpoint;
+
+	@Value("${app.zone.id}")
+	private String zoneId;
+
+	// inbox config
+	@Value("${egov.inbox.host}")
+	private String inboxHost;
+
+	@Value("${egov.inbox.search.endpoint}")
+	private String indexSearchEndPoint;
+
+	@Value("${open.hearing.topic}")
+	private String openHearingTopic;
 }

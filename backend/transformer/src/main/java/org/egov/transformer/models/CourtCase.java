@@ -184,6 +184,16 @@ public class CourtCase {
     @JsonProperty("lastModifiedTime")
     private Long lastModifiedTime = null;
 
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = false;
+
+    @JsonProperty("poaHolders")
+    @Valid
+    private List<POAHolder> poaHolders = new ArrayList<>();
+
     public CourtCase addLinkedCasesItem(LinkedCase linkedCasesItem) {
         this.linkedCases.add(linkedCasesItem);
         return this;

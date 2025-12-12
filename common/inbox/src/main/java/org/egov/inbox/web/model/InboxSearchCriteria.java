@@ -1,7 +1,10 @@
 package org.egov.inbox.web.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.egov.inbox.web.model.workflow.ProcessInstanceSearchCriteria;
 
 import javax.validation.Valid;
@@ -12,6 +15,9 @@ import java.util.List;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class InboxSearchCriteria {
 
     @NotNull

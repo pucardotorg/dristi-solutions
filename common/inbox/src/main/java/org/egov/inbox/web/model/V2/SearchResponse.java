@@ -15,4 +15,7 @@ public class SearchResponse {
     @JsonProperty("data")
     private List<Data> data;
 
+    @JsonProperty("totalCount")
+    private Integer totalCount;
+
 }

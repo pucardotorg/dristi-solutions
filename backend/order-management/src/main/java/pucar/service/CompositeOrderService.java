@@ -50,6 +50,8 @@ public class CompositeOrderService implements OrderProcessor {
             // todo : need to find permanent solution for this
             if (compositeOrderItem.getHearingNumber() != null && !compositeOrderItem.getHearingNumber().equals(oldHearingNumber))
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
+            if (compositeOrderItem.getScheduledHearingNumber() != null)
+                order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 
         }
 
@@ -76,7 +78,7 @@ public class CompositeOrderService implements OrderProcessor {
         CaseDiaryEntry diaryEntry = null;
         if (!diaryEntries.isEmpty()) {
             diaryEntry = diaryEntries.get(0);
-            diaryEntry.setBusinessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()));
+            diaryEntry.setBusinessOfDay(orderUtil.getBusinessOfTheDay(order, requestInfo));
         }
         log.info("common processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 

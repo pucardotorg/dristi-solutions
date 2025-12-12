@@ -53,10 +53,10 @@ const SubmissionDocuments = ({ path }) => {
   const [loader, setLoader] = useState(false);
   const entityType = "voluntary-document-submission";
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const isEmployee = useMemo(() => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role?.code)), [
-    userInfo?.roles,
-  ]);
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -214,6 +214,7 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
+    sessionStorage.removeItem("fileStoreId");
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
   };
 
@@ -313,7 +314,13 @@ const SubmissionDocuments = ({ path }) => {
           );
         }
       } else {
-        const localStorageID = sessionStorage.getItem("fileStoreId");
+        let localStorageID = "";
+        // For mock esign, just put the same file store id in update api.
+        if (mockESignEnabled) {
+          localStorageID = combinedFileStoreId;
+        } else {
+          localStorageID = sessionStorage.getItem("fileStoreId");
+        }
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
@@ -331,6 +338,9 @@ const SubmissionDocuments = ({ path }) => {
             },
           },
         };
+        const updateIdForDownload = Boolean(signedDocumentUploadedID) ? signedDocumentUploadedID : localStorageID;
+        setSignedDocumentUploadID(updateIdForDownload);
+        sessionStorage.removeItem("fileStoreId");
         evidence = await DRISTIService.updateEvidence(evidenceReqBody);
         await createPendingTask({
           name: t("PENDINGESIGN_SUBMIT_DOCUMENT"),

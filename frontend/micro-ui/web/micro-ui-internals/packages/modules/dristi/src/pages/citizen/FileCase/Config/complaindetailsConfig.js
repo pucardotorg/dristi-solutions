@@ -237,6 +237,8 @@ const complainantDetailsFormConfig = [
           error: "AGE_VALIDATION",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -781,6 +783,8 @@ const complainantDetailsFormConfig = [
           error: "AGE_VALIDATION",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
