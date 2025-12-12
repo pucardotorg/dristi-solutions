@@ -7,6 +7,7 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { Banner } from "@egovernments/digit-ui-react-components";
 import { Urls } from "../../hooks";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
 export const clearDigitalDocumentSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -185,6 +186,7 @@ export const DigitalDocumentSignModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
+        <CustomChip text={props.status} shade={"green"} />
       </div>
     );
   }, []);
@@ -546,7 +548,9 @@ export const DigitalDocumentSignModal = ({
         >
           <div className="review-submission-appl-body-main">
             <div className="application-details">
-              <div className="application-view doc-preview">{documentLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
+              <div className="application-view doc-preview">
+                {documentLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}
+              </div>
             </div>
           </div>
         </Modal>
