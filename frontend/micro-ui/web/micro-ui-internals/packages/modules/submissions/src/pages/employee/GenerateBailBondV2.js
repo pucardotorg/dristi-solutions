@@ -18,7 +18,12 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import useSearchPendingTask from "../../hooks/submissions/useSearchPendingTask";
 import { Urls } from "../../hooks/services/Urls";
 import { convertTaskResponseToPayload } from "../../utils";
-import { bailBondAddressValidation, validateAdvocateSuretyContactNumber, validateSuretyContactNumber, validateSurities } from "../../utils/bailBondUtils";
+import {
+  bailBondAddressValidation,
+  validateAdvocateSuretyContactNumber,
+  validateSuretyContactNumber,
+  validateSurities,
+} from "../../utils/bailBondUtils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -965,7 +970,6 @@ const GenerateBailBondV2 = () => {
       throw error;
     }
   };
-
 
   const handleSubmit = async () => {
     if (formdata?.bailType?.code === "SURETY") {

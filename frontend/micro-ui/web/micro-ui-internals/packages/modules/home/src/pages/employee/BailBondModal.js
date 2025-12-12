@@ -222,13 +222,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         if (direct) return direct;
         const fields = Array.isArray(r?.fields) ? r.fields : [];
         const getField = (k) => fields?.find((f) => f?.key === k)?.value;
-        return (
-          getField("referenceId") ||
-          getField("taskReferenceId") ||
-          getField("refId") ||
-          getField("taskRefId") ||
-          null
-        );
+        return getField("referenceId") || getField("taskReferenceId") || getField("refId") || getField("taskRefId") || null;
       };
 
       let resolvedRefId = getRefFromRow(row) || `MANUAL_BAIL_BOND_${filingNumber}`;
@@ -276,8 +270,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
               })();
           }
         }
-      } catch (e) {
-      }
+      } catch (e) {}
       const caseDetailsRes = await DRISTIService.caseDetailSearchService(
         {
           criteria: { filingNumber },
