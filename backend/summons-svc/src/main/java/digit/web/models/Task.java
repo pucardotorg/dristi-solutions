@@ -76,6 +76,15 @@ public class Task {
     @JsonProperty("taskDetails")
     private TaskDetails taskDetails = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("status")
     @NotNull
     private String status = null;
@@ -100,15 +109,6 @@ public class Task {
     @JsonProperty("workflow")
     @Valid
     private Workflow workflow = null;
-
-    @JsonProperty("caseTitle")
-    private String caseTitle = null;
-
-    @JsonProperty("courtId")
-    private String courtId;
-
-    @JsonProperty("caseId")
-    private String caseId = null;
 
 
     public Task addDocumentsItem(Document documentsItem) {

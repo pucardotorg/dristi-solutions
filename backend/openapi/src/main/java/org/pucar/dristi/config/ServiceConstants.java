@@ -9,6 +9,7 @@ public class ServiceConstants {
 
     public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
     public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
+    public static final String INVALID_SEARCH_CASE_CRITERIA_EXCEPTION = "INVALID_SEARCH_CASE_CRITERIA_EXCEPTION";
 
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
@@ -54,5 +55,51 @@ public class ServiceConstants {
     public static final String CASE_TYPE_ST = "ST";
     public static final String CASE_TYPE_EXCEPTION = "CASE_TYPE_EXCEPTION";
 
+    public static final String HEARING_BUSINESS_SERVICE = "hearing-default";
+    public static final String OPENAPI_BUSINESS_SERVICE = "openapi";
+    public static final String OPENAPI_MODULE_NAME = "Openapi Service";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String COURT_CASE_JSON_PATH="$.criteria[0].responseList[0]";
+    public static final String ERROR_CASE_SEARCH = "error executing case search query";
+
+
+    public static final String ERROR_WHILE_FETCHING_FROM_BAIL = "ERROR_WHILE_FETCHING_FROM_BAIL";
+    public static final String BAIL_NOT_FOUND_EXCEPTION = "BAIL_NOT_FOUND_EXCEPTION";
+    public static final String ORDER_NOT_FOUND_EXCEPTION = "ORDER_NOT_FOUND_EXCEPTION";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
+
+    public static final String BAIL_BOND_CREATOR = "BAIL_BOND_CREATOR";
+
+    public static final String E_SIGN = "E-SIGN";
+
+    public static final String SYSTEM = "SYSTEM";
+
+    public static final String EVIDENCE_NOT_FOUND_EXCEPTION = "EVIDENCE_NOT_FOUND_EXCEPTION";
+
+    public static final String EVIDENCE_SERVICE_EXCEPTION = "EVIDENCE_SERVICE_EXCEPTION";
+
+    public static final String EVIDENCE_UPDATE_EXCEPTION = "EVIDENCE_UPDATE_EXCEPTION";
+
+    public static final String DISPOSED = "DISPOSED";
+
+    public static final String PENDING = "PENDING";
+
+    public static final String DIGITALIZE_SERVICE_EXCEPTION = "DIGITALIZE_SERVICE_EXCEPTION";
+
+    public static final String DIGITALIZE_UPDATE_EXCEPTION = "DIGITALIZE_UPDATE_EXCEPTION";
 
 }

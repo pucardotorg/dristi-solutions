@@ -61,6 +61,8 @@ class PaymentServiceTest {
     private TransactionDetails transactionDetails;
     @Mock
     private TreasuryEnrichment enrichment;
+    @Mock
+    private CaseUtil caseUtil;
 
     @Test
     void verifyConnection_success() {
@@ -105,10 +107,13 @@ class PaymentServiceTest {
     void getTreasuryPaymentData_notFound() {
         String testBillId = "nonExistentBillId";
 
-        when(treasuryPaymentRepository.getTreasuryPaymentData(testBillId))
-                .thenReturn(Collections.emptyList());
+        when(treasuryPaymentRepository.getTreasuryPaymentData(testBillId)).thenReturn(Collections.emptyList());
 
-        assertThrows(CustomException.class, () -> paymentService.getTreasuryPaymentData(testBillId));
+        Document result = paymentService.getTreasuryPaymentData(testBillId);
+        assertNull(result, "Expected null when no payment data is found");
+
+        verify(treasuryPaymentRepository, times(1)).getTreasuryPaymentData(testBillId);
+
     }
 
     @Test
@@ -170,7 +175,6 @@ class PaymentServiceTest {
         when(transactionDetails.getStatus()).thenReturn("success");
         when(requestInfo.getUserInfo()).thenReturn(mock(User.class));
         doNothing().when(enrichment).enrichTreasuryPaymentData(any(), any());
-
         TreasuryPaymentData treasuryPaymentData = paymentService.decryptAndProcessTreasuryPayload(treasuryParams,requestInfo);
 
         assertNotNull(treasuryPaymentData);

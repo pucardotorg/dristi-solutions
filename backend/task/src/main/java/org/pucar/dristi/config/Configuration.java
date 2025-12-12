@@ -98,6 +98,9 @@ public class Configuration {
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
 
+    @Value("${task.kafka.update.uniqueid.topic}")
+    private String taskUpdateUniqueIdTopic;
+
     @Value("${egov.courtId}")
     private String courtId;
 
@@ -142,6 +145,24 @@ public class Configuration {
 
     @Value("${egov.workflow.task.warrant.business.service.name}")
     private String taskWarrantBusinessServiceName;
+
+    @Value("${egov.workflow.task.proclamation.business.name}")
+    private String taskProclamationBusinessName;
+
+    @Value("${egov.workflow.task.proclamation.business.service.name}")
+    private String taskProclamationBusinessServiceName;
+
+    @Value("${egov.workflow.task.attachment.business.name}")
+    private String taskAttachmentBusinessName;
+
+    @Value("${egov.workflow.task.attachment.business.service.name}")
+    private String taskAttachmentBusinessServiceName;
+
+    @Value("${egov.workflow.task.generic.business.service.name}")
+    private String taskGenericBusinessServiceName;
+
+    @Value("${egov.workflow.task.generic.business.name}")
+    private String taskGenericBusinessName;
 
     @Value("${task.join.case.approved.topic}")
     private String taskJoinCaseApprovedTopic;
@@ -247,6 +268,9 @@ public class Configuration {
     @Value("${egov.sms.notification.warrant.issued.success.template.id}")
     private String smsNotificationWarrantIssueSuccess;
 
+    @Value("${egov.sms.notification.process.fee.payment.template.id}")
+    private String smsNotificationProcessFeePaymentTemplateId;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
@@ -267,4 +291,58 @@ public class Configuration {
 
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
+
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+    //Billing
+    @Value("${etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${etreasury.demand.create.endpoint}")
+    private String etreasuryDemandCreateEndPoint;
+
+    @Value("${etreasury.payment.receipt.endpoint}")
+    private String etreasuryPaymentReceiptEndPoint;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    // Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    // Sla values
+    @Value("${sla.envelope.sla.value}")
+    private Long envelopeSlaValue;
+
+    @Value("${state.level.tenant.id}")
+    private String tenantId;
+
+    // ESign Config
+    @Value("${dristi.esign.host}")
+    private String esignHost;
+
+    @Value("${dristi.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    // Zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 }

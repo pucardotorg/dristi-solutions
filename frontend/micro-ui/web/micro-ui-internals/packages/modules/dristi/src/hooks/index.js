@@ -25,6 +25,7 @@ import { useGetPendingTask } from "./dristi/useGetPendingTask.js";
 import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
+import useDownloadFiles from "./dristi/useDownloadFiles.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles, getFilingType } from "../Utils/index.js";
@@ -34,10 +35,13 @@ import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
+import { useSurveyManager } from "./dristi/useSurveyManager.js";
+import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
+    getMarkAsEvidencePdf: "/egov-pdf/evidence",
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
@@ -56,9 +60,13 @@ export const Urls = {
     evidenceSearch: "/evidence/v1/_search",
     evidenceCreate: "/evidence/v1/_create",
     evidenceUpdate: "/evidence/v1/_update",
+    searchDigitizedDocument: "/digitalized-documents/v1/_search",
+    createDigitizedDocument: "/digitalized-documents/v1/_create",
+    updateDigitizedDocument: "/digitalized-documents/v1/_update",
     searchHearings: "/hearing/v1/search",
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
+    getDraftOrder: "/order-management/v1/getDraftOrder",
     demandCreate: "/billing-service/demand/_create",
     ordersSearch: "/order/v1/search",
     ordersCreate: "/order/v1/create",
@@ -69,11 +77,15 @@ export const Urls = {
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
     applicationCreate: "/application/v1/create",
+    eligibility: "/inportal-survey/v1/eligibility",
+    feedback: "/inportal-survey/v1/feedback",
+    remindMeLater: "/inportal-survey/v1/remind-me-later",
 
     //Solutions
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",
     eSign: "/e-sign-svc/v1/_esign",
     paymentCalculator: "/payment-calculator/v1/case/fees/_calculate",
+    getTreasuryPaymentBreakup: "/etreasury/payment/v1/_getHeadBreakDown",
     fetchBill: "/billing-service/bill/v2/_fetchbill",
     searchBill: "/billing-service/bill/v2/_search",
     eTreasury: "/etreasury/payment/v1/_processChallan",
@@ -94,12 +106,32 @@ export const Urls = {
     createProfileRequest: "/case/v2/profilerequest/create",
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
+    taskSearch: "/task/v1/search",
+    searchBailBonds: "/bail-bond/v1/_search",
   },
   case: {
     addWitness: "/case/v1/add/witness",
+    addNewWitness: "/case/v2/add/witness",
+    taskCreate: "/task/v1/create",
+    searchTasks: "/task/v1/search",
+    addAddress: "/case/v1/address/_add",
+  },
+  hearing: {
+    hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
+    uploadWitnesspdf: "/hearing/witnessDeposition/v1/uploadPdf",
+    witnessDepositionPreviewPdf: "/egov-pdf/hearing",
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
+  taskManagement: {
+    taskManagementCreate: "/task-management/v1/_create",
+    taskManagementUpdate: "/task-management/v1/_update",
+    taskManagementSearch: "/task-management/v1/_search",
+    createOfflinePayment: "/analytics/offline-payment/_create",
+  },
+  digitalization: {
+    examinationPreviewPdf: "/egov-pdf/digitisation",
+  },
 };
 
 const dristi = {
@@ -128,12 +160,15 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
+  useDownloadFiles,
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
   downloadPdfFromFile,
   useGetAllAdvocates,
   useSearchADiaryService,
   useEtreasuryCreateDemand,
+  useSurveyManager,
+  useSearchTaskMangementService,
 };
 
 const Hooks = {

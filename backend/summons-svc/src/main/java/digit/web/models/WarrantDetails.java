@@ -33,4 +33,10 @@ public class WarrantDetails {
 
     @JsonProperty("executorName")
     private String executorName;
+
+    @JsonProperty("templateType")
+    private String templateType;
+
+    @JsonProperty("warrantText")
+    private String warrantText;
 }

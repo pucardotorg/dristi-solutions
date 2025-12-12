@@ -19,5 +19,6 @@ public class Constants {
 	public static final String MESSAGE_CONSTRUCTION_ERROR = "Error while constructing message: ";
 
 	public static final String CAUSELIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
+	public static final String BAIL_BOND_TEMPLATE_CODE = "BAIL_BOND_TEMPLATE_CODE";
 
 }

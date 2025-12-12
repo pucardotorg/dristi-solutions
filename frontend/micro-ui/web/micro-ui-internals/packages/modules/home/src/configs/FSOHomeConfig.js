@@ -27,6 +27,9 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -56,6 +59,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -90,6 +96,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -148,8 +157,8 @@ export const TabFSOSearchConfig = {
                 name: "Filed",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
-                ascText: "(old first)",
-                descText: "(new first)",
+                ascText: "(Old First)",
+                descText: "(New First)",
                 showAdditionalText: true,
                 showIcon: true,
                 icon: "UpDownArrowIcon",
@@ -225,155 +234,6 @@ export const TabFSOSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_CASE_NUMBER_HOME",
-                jsonPath: "filingNumber",
-                additionalCustomization: true,
-              },
-              {
-                label: "CASE_TYPE",
-                jsonPath: "",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_DAYS_FILING",
-                jsonPath: "lastModifiedTime",
-                additionalCustomization: true,
-              },
-            ],
-
-            enableColumnSort: true,
-            resultsJsonPath: "caseList",
-          },
-          show: true,
-        },
-      },
-      additionalDetails: {
-        sortBy: "sortCaseListByDate",
-      },
-    },
-    {
-      label: "CS_SCRUTINY_DUE",
-      type: "search",
-      apiDetails: {
-        serviceName: "/case/v2/search/list",
-        requestParam: {},
-        requestBody: {
-          tenantId: "pg",
-          criteria: {
-            status: ["UNDER_SCRUTINY"],
-          },
-        },
-        masterName: "commonUiConfig",
-        moduleName: "homeFSOUiConfig",
-        minParametersForSearchForm: 0,
-        tableFormJsonPath: "requestBody",
-        filterFormJsonPath: "requestBody",
-        searchFormJsonPath: "requestBody",
-      },
-      sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: {
-              ...defaultSearchValues,
-              sortCaseListByDate: {
-                sortBy: "createdtime",
-                order: "desc",
-              },
-            },
-            fields: [
-              {
-                type: "component",
-                component: "CustomSortComponent",
-                isMandatory: false,
-                disable: false,
-                name: "Filed",
-                key: "sortCaseListByDate",
-                sortBy: "createdtime",
-                ascText: "(old first)",
-                descText: "(new first)",
-                showAdditionalText: true,
-                showIcon: true,
-                icon: "UpDownArrowIcon",
-                populators: {},
-              },
-              {
-                label: "CASE_TYPE",
-                isMandatory: false,
-                key: "caseType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "caseType",
-                  options: ["NIA S138"],
-                  styles: {
-                    maxWidth: "200px",
-                    minWidth: "150px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CS_STAGE",
-                isMandatory: false,
-                key: "stage",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "substage",
-                  optionsKey: "code",
-                  mdmsConfig: {
-                    masterName: "SubStage",
-                    moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
-                  },
-                  styles: {
-                    maxWidth: "250px",
-                    minWidth: "200px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CS_CASE_NAME_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-            ],
-          },
-
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "CS_CASE_NAME",
-                jsonPath: "caseTitle",
-              },
-              {
-                label: "CS_SCRUTINY_STATUS",
-                jsonPath: "status",
                 additionalCustomization: true,
               },
               {

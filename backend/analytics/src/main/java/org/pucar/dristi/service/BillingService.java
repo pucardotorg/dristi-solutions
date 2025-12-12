@@ -4,6 +4,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,6 +13,8 @@ import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.Util;
+import org.pucar.dristi.web.models.OfflinePaymentTaskRequest;
+import org.pucar.dristi.web.models.billingservice.Demand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +43,36 @@ public class BillingService {
         this.config = config;
         this.indexerUtils = indexerUtils;
         this.mdmsUtil = mdmsUtil;
+    }
+
+    public void processOfflinePayment(OfflinePaymentTaskRequest offlinePaymentTaskRequest) {
+
+        String consumerCode = offlinePaymentTaskRequest.getOfflinePaymentTask().getConsumerCode();
+
+        String tenantId = offlinePaymentTaskRequest.getOfflinePaymentTask().getTenantId();
+
+        RequestInfo requestInfo = offlinePaymentTaskRequest.getRequestInfo();
+
+        List<Demand> demands = billingUtil.getDemandByConsumerCode(consumerCode, ACTIVE,  tenantId , requestInfo);
+
+        if (demands == null || demands.isEmpty()) {
+            log.warn("No active demands found for consumer code: {}", consumerCode);
+            return;
+        }
+
+        Demand demand = demands.get(0);
+
+        String payload = billingUtil.buildPayload(demand, requestInfo, offlinePaymentTaskRequest.getOfflinePaymentTask());
+
+        if (payload != null) {
+            String uri = config.getEsHostUrl() + config.getBulkPath();
+            try {
+                indexerUtils.esPostManual(uri, payload);
+            } catch (Exception e) {
+                log.error("Error indexing document", e);
+                throw new CustomException("INDEXING_ERROR", "Error indexing document");
+            }
+        }
     }
 
     public void process(String topic, String kafkaJson) {
@@ -123,7 +156,7 @@ public class BillingService {
     }
 
 
-    private void processDemand(String demands,Long paymentCompletedDate) {
+    private void processDemand(String demands, Long paymentCompletedDate) {
         try {
             JSONArray kafkaJsonArray = util.constructArray(demands, DEMAND_PATH);
 
@@ -157,14 +190,14 @@ public class BillingService {
         return bulkRequest;
     }
 
-    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo, Long paymentCompletedDate) {
+    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo,Long paymentCompletedDate) {
         try {
             String stringifiedObject = billingUtil.buildString(jsonObject);
             String consumerCode = JsonPath.read(stringifiedObject, CONSUMER_CODE_PATH);
-            String[] consumerCodeSplitArray = consumerCode.split("_", 2);
+            String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
 
             if (isOfflinePaymentAvailable(consumerCodeSplitArray[1])) {
-                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo,paymentCompletedDate);
+                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo, paymentCompletedDate);
                 if (payload != null && !payload.isEmpty())
                     bulkRequest.append(payload);
             } else {
@@ -174,6 +207,12 @@ public class BillingService {
         } catch (Exception e) {
             log.error("Error while processing JSON object: {}", jsonObject, e);
         }
+    }
+
+    private String[] splitConsumerCode(String consumerCode) {
+        String[] temp = consumerCode.split("_", 2);
+        String suffix = temp[1].replaceFirst("-\\d+$", "");
+        return new String[] { temp[0], suffix };
     }
 
     private boolean isOfflinePaymentAvailable(String suffix) {

@@ -1,0 +1,4 @@
+ALTER TABLE interim_orders ADD COLUMN order_type VARCHAR(255) DEFAULT '';
+ALTER TABLE interim_orders ADD COLUMN order_number VARCHAR(255) DEFAULT '';
+ALTER TABLE cases ADD COLUMN judge_code INTEGER;
+ALTER TABLE cases ADD COLUMN desig_code INTEGER;

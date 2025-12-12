@@ -93,6 +93,10 @@ export const bulkESignOrderConfig = {
         // customPageSizesArray: [15, 30, 45, 60, 75],
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_NAME_AND_NUMBER",
             jsonPath: "businessObject.orderNotification.caseTitle",
           },
@@ -109,10 +113,6 @@ export const bulkESignOrderConfig = {
           {
             label: "DATE_ADDED",
             jsonPath: "businessObject.orderNotification.createdTime",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
           {
