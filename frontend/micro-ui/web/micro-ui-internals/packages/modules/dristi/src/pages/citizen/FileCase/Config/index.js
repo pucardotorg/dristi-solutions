@@ -1,4 +1,6 @@
+import { complaintdetailconfig } from "./complaindetailsConfig";
 import { processDeliveryCourierServiceConfig } from "./processDeliveryCourierServiceConfig";
+import { respondentconfig } from "./respondentConfig";
 
 export const sideMenuConfig = [
   {
@@ -13,16 +15,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "complainantDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: complaintdetailconfig,
         mandatoryFields: [
           "complainantType",
           "complainantVerification.otpNumber", // checkThis- make sure to unset otpNumber if otp model is closed or canceled.
@@ -75,16 +68,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "respondentConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: respondentconfig,
         mandatoryFields: ["respondentType", "respondentFirstName"],
         ifMultipleAddressLocations: {
           // using this for counting mandatory fields in case of multiple locations .

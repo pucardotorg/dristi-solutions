@@ -16,11 +16,11 @@ const complainantDetailsFormConfig = [
                 type: "InfoComponent",
                 infoText: "CS_PLEASE_CONTACT_NYAY_MITRA_TEXT",
                 infoHeader: "CS_PLEASE_COMMON_NOTE",
-                infoTooltipMessage: "CS_NOTE_TOOLTIP_RESPONDENT_PERSONAL_DETAILS",
-              },
-            ],
+                infoTooltipMessage: "CS_NOTE_TOOLTIP_RESPONDENT_PERSONAL_DETAILS"
+              }
+            ]
           },
-          withoutLabel: true,
+          withoutLabel: true
         },
         component: "CustomRadioInfoComponent",
         populators: {
@@ -31,23 +31,23 @@ const complainantDetailsFormConfig = [
           mdmsConfig: {
             select: "(data) => {return data['case'].ComplainantRespondentType?.map((item) => {return item;});}",
             masterName: "ComplainantRespondentType",
-            moduleName: "case",
+            moduleName: "case"
           },
           optionsKey: "code",
           customStyle: {
             gap: "40px",
             alignItems: "center",
-            flexDirection: "row",
+            flexDirection: "row"
           },
           isDependent: true,
-          isMandatory: true,
+          isMandatory: true
         },
         isMandatory: true,
         withoutLabel: true,
         resetFormData: true,
-        noteDependentOn: "complainantVerification.individualDetails",
-      },
-    ],
+        noteDependentOn: "complainantVerification.individualDetails"
+      }
+    ]
   },
   {
     body: [
@@ -62,23 +62,25 @@ const complainantDetailsFormConfig = [
           label: "SELECT_RESPONDENT_TYPE",
           styles: {
             maxWidth: "100%",
-            marginBottom: "10px",
+            marginBottom: "10px"
           },
           required: false,
           mdmsConfig: {
             select: "(data) => {return data['case'].TypeOfEntity?.map((item) => {return item;});}",
             masterName: "TypeOfEntity",
-            moduleName: "case",
+            moduleName: "case"
           },
           optionsKey: "code",
-          isMandatory: true,
+          isMandatory: true
         },
-        isMandatory: true,
-      },
+        isMandatory: true
+      }
     ],
     dependentKey: {
-      complainantType: ["showCompanyDetails"],
-    },
+      complainantType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
@@ -94,20 +96,20 @@ const complainantDetailsFormConfig = [
           pattern: {
             masterName: "commonUiConfig",
             moduleName: "patternValidation",
-            patternType: "contact",
+            patternType: "contact"
           },
           required: true,
           maxLength: 10,
-          minLength: 10,
+          minLength: 10
         },
         isMandatory: true,
         updateLabel: {
           key: "label",
-          value: "CS_REPRESENTATIVE_MOBILE_NUMBER",
+          value: "CS_REPRESENTATIVE_MOBILE_NUMBER"
         },
         defaultLabel: {
           key: "label",
-          value: "CS_COMPLAINANT_MOBILE_NUMBER",
+          value: "CS_COMPLAINANT_MOBILE_NUMBER"
         },
         withoutLabel: true,
         updateLabelOn: "complainantType.showCompanyDetails",
@@ -124,14 +126,16 @@ const complainantDetailsFormConfig = [
           "city",
           "locality",
           "addressDetails",
-          "dateOfBirth",
+          "dateOfBirth"
         ],
-        isVerifiedOtpDisabledKey: "isDuplicateNumber",
-      },
+        isVerifiedOtpDisabledKey: "isDuplicateNumber"
+      }
     ],
     dependentKey: {
-      complainantType: ["commonFields"],
-    },
+      complainantType: [
+        "commonFields"
+      ]
+    }
   },
   {
     body: [
@@ -147,27 +151,29 @@ const complainantDetailsFormConfig = [
               label: "COMPLAINANT_ID",
               updateLabel: {
                 key: "label",
-                value: "CS_ENTITY_ID",
+                value: "CS_ENTITY_ID"
               },
               defaultLabel: {
                 key: "label",
-                value: "COMPLAINANT_ID",
+                value: "COMPLAINANT_ID"
               },
               updateLabelOn: "complainantType.showCompanyDetails",
-              verificationOn: "complainantVerification.individualDetails",
-            },
+              verificationOn: "complainantVerification.individualDetails"
+            }
           ],
           customStyle: {
-            marginTop: 20,
-          },
+            marginTop: 20
+          }
         },
         isMandatory: true,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     dependentKey: {
-      complainantType: ["commonFields"],
-    },
+      complainantType: [
+        "commonFields"
+      ]
+    }
   },
   {
     body: [
@@ -183,13 +189,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
             minLength: 1,
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
-        isMandatory: true,
+        isMandatory: true
       },
       {
         type: "text",
@@ -202,13 +208,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -221,13 +227,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -237,27 +243,27 @@ const complainantDetailsFormConfig = [
           error: "AGE_VALIDATION",
           validation: {
             maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
-            patternType: "Number",
-          },
+            patternType: "Number"
+          }
         },
-        isMandatory: true,
-      },
+        isMandatory: true
+      }
     ],
     head: "CS_COMMON_COMPLAINANT_DETAIL",
     updateLabel: {
       key: "head",
-      value: "CS_COMMON_ENTITY_DETAIL",
+      value: "CS_COMMON_ENTITY_DETAIL"
     },
     defaultLabel: {
       key: "head",
-      value: "CS_COMMON_COMPLAINANT_DETAIL",
+      value: "CS_COMMON_COMPLAINANT_DETAIL"
     },
     dependentKey: {
-      complainantType: ["commonFields"],
+      complainantType: [
+        "commonFields"
+      ]
     },
-    updateLabelOn: "complainantType.showCompanyDetails",
+    updateLabelOn: "complainantType.showCompanyDetails"
   },
   {
     body: [
@@ -273,18 +279,20 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
-      },
+        labelChildren: "optional"
+      }
     ],
     dependentKey: {
-      complainantType: ["showCompanyDetails"],
-    },
+      complainantType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
@@ -296,7 +304,7 @@ const complainantDetailsFormConfig = [
           name: "complainantCompanyName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
           styles: {
-            minWidth: "100%",
+            minWidth: "100%"
           },
           validation: {
             title: "",
@@ -304,19 +312,19 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_NON_NUMERIC_TYPE_IN",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "nonNumericString",
+              patternType: "nonNumericString"
             },
             minLength: 1,
-            patternType: "Name",
+            patternType: "Name"
           },
           customStyle: {
-            minWidth: "100%",
+            minWidth: "100%"
           },
           labelStyles: {
-            padding: "8px",
-          },
+            padding: "8px"
+          }
         },
-        isMandatory: true,
+        isMandatory: true
       },
       {
         key: "companyDetailsUpload",
@@ -328,7 +336,11 @@ const complainantDetailsFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "PDF",
+                "PNG"
+              ],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
               maxFileSize: 50,
@@ -336,29 +348,35 @@ const complainantDetailsFormConfig = [
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_50",
               documentHeaderStyle: {
-                textAlign: "start",
+                textAlign: "start"
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-            },
-          ],
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+            }
+          ]
         },
         isMandatory: false,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "CS_RESPONDENT_COMPANY_DETAIL",
     dependentKey: {
-      complainantType: ["showCompanyDetails"],
-    },
+      complainantType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
       {
         key: "addressDetails",
         type: "component",
+        label: "PERMANENT_ADDRESS",
         notes: {
           key: "personalDetailsNote",
           type: "component",
+          styles: {
+            marginBottom: "20px"
+          },
           component: "SelectCustomNote",
           populators: {
             inputs: [
@@ -366,23 +384,130 @@ const complainantDetailsFormConfig = [
                 type: "InfoComponent",
                 infoText: "CS_ADDRESS_MATCHES_ID_PROOF",
                 infoHeader: "CS_PLEASE_COMMON_NOTE",
-                infoTooltipMessage: "CS_ADDRESS_MATCHES_ID_PROOF",
-              },
-            ],
+                infoTooltipMessage: "CS_ADDRESS_MATCHES_ID_PROOF"
+              }
+            ]
           },
-          styles: { marginBottom: "20px" },
-          withoutLabel: true,
+          withoutLabel: true
         },
         addUUID: true,
         component: "SelectComponents",
         populators: {
           inputs: [
             {
-              name: "typeOfAddress",
+              name: "pincode",
+              type: "text",
+              label: "PINCODE",
+              validation: {
+                max: "999999",
+                title: "",
+                errMsg: "ADDRESS_PINCODE_INVALID",
+                pattern: "[0-9]+",
+                maxlength: 6,
+                minlength: 6,
+                isRequired: true,
+                patternType: "Pincode"
+              },
+              isMandatory: true,
+              inputFieldClassName: "user-details-form-style"
+            },
+            {
+              name: "state",
+              type: "text",
+              label: "STATE",
+              validation: {
+                title: "",
+                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "name"
+                },
+                isRequired: true,
+                patternType: "Name"
+              },
+              isMandatory: true,
+              inputFieldClassName: "user-details-form-style"
+            },
+            {
+              name: "district",
+              type: "text",
+              label: "DISTRICT",
+              validation: {
+                title: "",
+                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "name"
+                },
+                isRequired: true,
+                patternType: "Name"
+              },
+              isMandatory: true,
+              inputFieldClassName: "user-details-form-style"
+            },
+            {
+              name: "city",
+              type: "text",
+              label: "CITY/TOWN",
+              validation: {
+                errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                isRequired: true,
+                patternType: "Name"
+              },
+              isMandatory: true,
+              inputFieldClassName: "user-details-form-style"
+            },
+            {
+              name: "locality",
+              type: "text",
+              label: "ADDRESS",
+              validation: {
+                errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "address"
+                },
+                maxlength: 256,
+                minlength: 2,
+                isRequired: true
+              },
+              isMandatory: true,
+              isFormatRequired: true,
+              inputFieldClassName: "user-details-form-style"
+            }
+          ],
+          validation: {}
+        },
+        withoutLabel: true
+      },
+      {
+        key: "currentAddressDetails",
+        type: "component",
+        label: "CURRENT_RESIDENTIAL_ADDRESS",
+        addUUID: true,
+        component: "SelectComponents",
+        populators: {
+          inputs: [
+            {
+              name: "isCurrAddrSame",
               type: "Radio",
-              label: "CS_TYPE_OF_ADDRESS",
-              options: [],
-              showOptional: true,
+              label: "IS_CURRENT_ADDRESS_SAME",
+              options: [
+                {
+                  code: "YES",
+                  name: "YES"
+                },
+                {
+                  code: "NO",
+                  name: "NO"
+                }
+              ],
+              required: true,
+              optionsKey: "code",
+              isMandatory: true
             },
             {
               name: "pincode",
@@ -396,10 +521,10 @@ const complainantDetailsFormConfig = [
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
-                patternType: "Pincode",
+                patternType: "Pincode"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "state",
@@ -411,13 +536,13 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "district",
@@ -429,13 +554,13 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "city",
@@ -444,10 +569,10 @@ const complainantDetailsFormConfig = [
               validation: {
                 errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "locality",
@@ -458,26 +583,28 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "address",
+                  patternType: "address"
                 },
                 maxlength: 256,
                 minlength: 2,
-                isRequired: true,
+                isRequired: true
               },
               isMandatory: true,
               isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style",
-            },
+              inputFieldClassName: "user-details-form-style"
+            }
           ],
-          validation: {},
+          validation: {}
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
-    head: "CS_COMPLAINANT_LOCATION",
+    head: "COMPLAINANT_ADDRESS",
     dependentKey: {
-      complainantType: ["complainantLocation"],
-    },
+      complainantType: [
+        "complainantLocation"
+      ]
+    }
   },
   {
     body: [
@@ -493,7 +620,7 @@ const complainantDetailsFormConfig = [
               type: "Radio",
               label: "CS_TYPE_OF_ADDRESS",
               options: [],
-              showOptional: true,
+              showOptional: true
             },
             {
               name: "pincode",
@@ -507,11 +634,11 @@ const complainantDetailsFormConfig = [
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
-                patternType: "Pincode",
+                patternType: "Pincode"
               },
               isMandatory: true,
               shouldBeEnabled: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "state",
@@ -523,14 +650,14 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
               shouldBeEnabled: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "district",
@@ -542,14 +669,14 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
               shouldBeEnabled: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "city",
@@ -558,11 +685,11 @@ const complainantDetailsFormConfig = [
               validation: {
                 errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
               shouldBeEnabled: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "locality",
@@ -570,38 +697,38 @@ const complainantDetailsFormConfig = [
               label: "ADDRESS",
               validation: {
                 errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                isRequired: true,
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "address",
+                  patternType: "address"
                 },
                 maxlength: 256,
                 minlength: 2,
+                isRequired: true
               },
               isMandatory: true,
               shouldBeEnabled: true,
               isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style",
-            },
+              inputFieldClassName: "user-details-form-style"
+            }
           ],
-          validation: {},
+          validation: {}
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "CS_COMPANY_LOCATION",
     dependentKey: {
-      complainantType: ["showCompanyDetails"],
-    },
+      complainantType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
       {
         key: "transferredPOA",
         type: "radio",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE_INFO",
         label: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE",
         populators: {
           name: "transferredPOA",
@@ -609,52 +736,60 @@ const complainantDetailsFormConfig = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           styles: {
             maxWidth: "100%",
-            marginBottom: "10px",
+            marginBottom: "10px"
           },
-          required: false,
-          optionsKey: "code",
           options: [
             {
               code: "YES",
               name: "YES",
-              showPoaDetails: true,
+              showPoaDetails: true
             },
             {
               code: "NO",
               name: "NO",
-              showPoaDetails: false,
-            },
+              showPoaDetails: false
+            }
           ],
-          isMandatory: true,
+          required: false,
+          optionsKey: "code",
+          isMandatory: true
         },
         isMandatory: true,
-      },
+        tooltipValue: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
     ],
     head: "POWER_OF_ATTORNEY_DETAILS",
     dependentKey: {
-      complainantType: ["commonFields"],
-    },
+      complainantType: [
+        "commonFields"
+      ]
+    }
   },
   {
-    dependentKey: { transferredPOA: ["showPoaDetails"] },
     body: [
       {
+        key: "poaDetailNote",
         type: "component",
         component: "SelectCustomNote",
-        key: "poaDetailNote",
-        withoutLabel: true,
         populators: {
           inputs: [
             {
-              infoHeader: "CS_COMMON_NOTE",
-              infoText: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER",
-              infoTooltipMessage: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER_TOOLTIP",
               type: "InfoComponent",
-            },
-          ],
+              infoText: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER",
+              infoHeader: "CS_COMMON_NOTE",
+              infoTooltipMessage: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER_TOOLTIP"
+            }
+          ]
         },
-      },
+        withoutLabel: true
+      }
     ],
+    dependentKey: {
+      transferredPOA: [
+        "showPoaDetails"
+      ]
+    }
   },
   {
     body: [
@@ -670,23 +805,35 @@ const complainantDetailsFormConfig = [
           pattern: {
             masterName: "commonUiConfig",
             moduleName: "patternValidation",
-            patternType: "contact",
+            patternType: "contact"
           },
           required: true,
           maxLength: 10,
-          minLength: 10,
+          minLength: 10
         },
         isMandatory: true,
         withoutLabel: true,
         componentInFront: "+91",
         disableConfigKey: "individualDetails",
-        disableConfigFields: ["firstName", "middleName", "lastName", "pincode", "state", "district", "city", "locality", "addressDetails"],
-        isVerifiedOtpDisabledKey: "isDuplicateNumber",
-      },
+        disableConfigFields: [
+          "firstName",
+          "middleName",
+          "lastName",
+          "pincode",
+          "state",
+          "district",
+          "city",
+          "locality",
+          "addressDetails"
+        ],
+        isVerifiedOtpDisabledKey: "isDuplicateNumber"
+      }
     ],
     dependentKey: {
-      transferredPOA: ["showPoaDetails"],
-    },
+      transferredPOA: [
+        "showPoaDetails"
+      ]
+    }
   },
   {
     body: [
@@ -700,20 +847,22 @@ const complainantDetailsFormConfig = [
             {
               name: "poaComplainantId",
               label: "POA_ID",
-              verificationOn: "complainantVerification.individualDetails",
-            },
+              verificationOn: "complainantVerification.individualDetails"
+            }
           ],
           customStyle: {
-            marginTop: 20,
-          },
+            marginTop: 20
+          }
         },
         isMandatory: true,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     dependentKey: {
-      transferredPOA: ["showPoaDetails"],
-    },
+      transferredPOA: [
+        "showPoaDetails"
+      ]
+    }
   },
   {
     body: [
@@ -729,13 +878,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
             minLength: 1,
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
-        isMandatory: true,
+        isMandatory: true
       },
       {
         type: "text",
@@ -748,13 +897,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -767,13 +916,13 @@ const complainantDetailsFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -784,17 +933,18 @@ const complainantDetailsFormConfig = [
           validation: {
             maxLength: 3,
             minLength: 2,
-            pattern: "[0-9]+",
-            patternType: "Number",
-          },
+            patternType: "Number"
+          }
         },
-        isMandatory: true,
-      },
+        isMandatory: true
+      }
     ],
     head: "CS_POA_BASIC_DETAILS",
     dependentKey: {
-      transferredPOA: ["showPoaDetails"],
-    },
+      transferredPOA: [
+        "showPoaDetails"
+      ]
+    }
   },
   {
     body: [
@@ -817,10 +967,10 @@ const complainantDetailsFormConfig = [
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
-                patternType: "Pincode",
+                patternType: "Pincode"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "state",
@@ -832,13 +982,13 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "district",
@@ -850,13 +1000,13 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name",
+                  patternType: "name"
                 },
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "city",
@@ -865,10 +1015,10 @@ const complainantDetailsFormConfig = [
               validation: {
                 errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
                 isRequired: true,
-                patternType: "Name",
+                patternType: "Name"
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
+              inputFieldClassName: "user-details-form-style"
             },
             {
               name: "locality",
@@ -879,20 +1029,20 @@ const complainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "address",
+                  patternType: "address"
                 },
                 maxlength: 256,
                 minlength: 2,
-                isRequired: true,
+                isRequired: true
               },
               isMandatory: true,
               isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style",
-            },
+              inputFieldClassName: "user-details-form-style"
+            }
           ],
-          validation: {},
+          validation: {}
         },
-        withoutLabel: true,
+        withoutLabel: true
       },
       {
         key: "poaAuthorizationDocument",
@@ -904,31 +1054,38 @@ const complainantDetailsFormConfig = [
             {
               name: "poaDocument",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "PDF",
+                "PNG"
+              ],
               isMandatory: true,
               maxFileSize: 50,
               documentHeader: "POA_AUTHORIZATION_DOCUMENT",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_50",
               documentHeaderStyle: {
-                textAlign: "start",
+                textAlign: "start"
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-            },
-          ],
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+            }
+          ]
         },
         isMandatory: true,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "POA_HOLDER_LOCATION",
-    sectionHeadStyle: { marginBottom: 0 },
     dependentKey: {
-      transferredPOA: ["showPoaDetails"],
+      transferredPOA: [
+        "showPoaDetails"
+      ]
     },
-  },
-];
-
+    sectionHeadStyle: {
+      marginBottom: 0
+    }
+  }
+]
 export const complaintdetailconfig = {
   formconfig: complainantDetailsFormConfig,
   header: "CS_COMPLAINT_DETAIL_HEADING",

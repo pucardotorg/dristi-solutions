@@ -339,7 +339,8 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
       formData?.witnessDesignation ||
       formData?.witnessAge ||
       formData?.complainantAge ||
-      formData?.poaAge
+      formData?.poaAge ||
+      formData?.respondentAge 
     ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
@@ -1098,8 +1099,25 @@ export const ageValidation = ({ formData, selected, setFormErrors,clearFormDataE
     }  
     clearFormDataErrors("poaAge");   
   }
+  else
+    if (selected === "complainantAge"){
+    const complainantAge = parseInt(formData?.complainantAge, 10);
+    if (complainantAge < 18 || complainantAge > 999) {
+      setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" });  
+      return true;
+    }  
+    clearFormDataErrors("complainantAge");   
+  }
+  else
+     if (selected === "respondentAge"){
+    const respondentAge = parseInt(formData?.respondentAge, 10);
+    if (respondentAge < 18 || respondentAge > 999) {
+      setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" });  
+      return true;
+    }  
+    clearFormDataErrors("respondentAge");   
+  }
 }
-    
    
 export const addressValidation = ({ formData, selected, setAddressError, config }) => {
   if (

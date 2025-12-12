@@ -2134,6 +2134,23 @@ function EFilingCases({ path }) {
       if(isValidationError){
         return;
       }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "complainantAge",
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors:clearFormDataErrors.current,
+          })
+        )
+      ) {
+        isValidationError = isValidationError|| true;
+      }
+      if(isValidationError){
+        return;
+      }
     }
 
     if (selected === "respondentDetails") {
@@ -2151,6 +2168,23 @@ function EFilingCases({ path }) {
       ) {
         return;
       }
+     if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "respondentAge",
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors:clearFormDataErrors.current,
+          })
+        )
+      ) {
+        isValidationError = isValidationError|| true;
+      }
+      if(isValidationError){
+        return;
+      }  
     }
 
     if (

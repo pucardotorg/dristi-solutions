@@ -12,17 +12,17 @@ const respondentFromconfig = [
           mdmsConfig: {
             select: "(data) => {return data['case'].ComplainantRespondentType?.map((item) => {return item;});}",
             masterName: "ComplainantRespondentType",
-            moduleName: "case",
+            moduleName: "case"
           },
           optionsKey: "code",
           isDependent: true,
-          isMandatory: true,
+          isMandatory: true
         },
         isMandatory: true,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
-    head: "CS_RESPONDENT_TYPE",
+    head: "CS_RESPONDENT_TYPE"
   },
   {
     body: [
@@ -37,23 +37,25 @@ const respondentFromconfig = [
           label: "SELECT_RESPONDENT_TYPE",
           styles: {
             maxWidth: "100%",
-            marginBottom: "10px",
+            marginBottom: "10px"
           },
           required: false,
           mdmsConfig: {
             select: "(data) => {return data['case'].TypeOfEntity?.map((item) => {return item;});}",
             masterName: "TypeOfEntity",
-            moduleName: "case",
+            moduleName: "case"
           },
           optionsKey: "code",
-          isMandatory: true,
+          isMandatory: true
         },
-        isMandatory: true,
-      },
+        isMandatory: true
+      }
     ],
     dependentKey: {
-      respondentType: ["showCompanyDetails"],
-    },
+      respondentType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
@@ -65,7 +67,7 @@ const respondentFromconfig = [
           name: "respondentCompanyName",
           title: "FIRST_TERMS_AND_CONDITIONS",
           styles: {
-            minWidth: "100%",
+            minWidth: "100%"
           },
           validation: {
             title: "",
@@ -73,19 +75,19 @@ const respondentFromconfig = [
               message: "CORE_COMMON_NON_NUMERIC_TYPE_IN",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "nonNumericString",
+              patternType: "nonNumericString"
             },
             minLength: 1,
-            patternType: "Name",
+            patternType: "Name"
           },
           customStyle: {
-            minWidth: "100%",
+            minWidth: "100%"
           },
           labelStyles: {
-            padding: "8px",
-          },
+            padding: "8px"
+          }
         },
-        isMandatory: true,
+        isMandatory: true
       },
       {
         key: "companyDetailsUpload",
@@ -97,7 +99,12 @@ const respondentFromconfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "JPEG",
+                "PDF",
+                "PNG"
+              ],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
               maxFileSize: 50,
@@ -105,20 +112,22 @@ const respondentFromconfig = [
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_50",
               documentHeaderStyle: {
-                textAlign: "start",
+                textAlign: "start"
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-            },
-          ],
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+            }
+          ]
         },
         isMandatory: false,
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "CS_RESPONDENT_COMPANY_DETAIL",
     dependentKey: {
-      respondentType: ["showCompanyDetails"],
-    },
+      respondentType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
@@ -134,13 +143,13 @@ const respondentFromconfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
             minLength: 1,
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
-        isMandatory: true,
+        isMandatory: true
       },
       {
         type: "text",
@@ -153,13 +162,13 @@ const respondentFromconfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -172,13 +181,13 @@ const respondentFromconfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
+        labelChildren: "optional"
       },
       {
         type: "text",
@@ -187,28 +196,28 @@ const respondentFromconfig = [
           name: "respondentAge",
           validation: {
             maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
-            patternType: "Number",
-          },
+            patternType: "Number"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
-      },
+        labelChildren: "optional"
+      }
     ],
     head: "CS_RESPONDENT_NAME",
     updateLabel: {
       key: "head",
-      value: "CS_COMMON_ENTITY_DETAIL",
+      value: "CS_COMMON_ENTITY_DETAIL"
     },
     defaultLabel: {
       key: "head",
-      value: "CS_RESPONDENT_NAME",
+      value: "CS_RESPONDENT_NAME"
     },
     dependentKey: {
-      respondentType: ["commonFields"],
+      respondentType: [
+        "commonFields"
+      ]
     },
-    updateLabelOn: "respondentType.showCompanyDetails",
+    updateLabelOn: "respondentType.showCompanyDetails"
   },
   {
     body: [
@@ -222,16 +231,18 @@ const respondentFromconfig = [
               type: "InfoComponent",
               infoText: "CS_NOTETEXT_RESPONDENT_PERSONAL_DETAILS",
               infoHeader: "CS_COMMON_NOTE",
-              infoTooltipMessage: "CS_NOTETOOLTIP_RESPONDENT_PERSONAL_DETAILS",
-            },
-          ],
+              infoTooltipMessage: "CS_NOTETOOLTIP_RESPONDENT_PERSONAL_DETAILS"
+            }
+          ]
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     dependentKey: {
-      respondentType: ["commonFields"],
-    },
+      respondentType: [
+        "commonFields"
+      ]
+    }
   },
   {
     body: [
@@ -247,18 +258,20 @@ const respondentFromconfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
-              patternType: "userName",
+              patternType: "userName"
             },
-            patternType: "Name",
-          },
+            patternType: "Name"
+          }
         },
         isMandatory: false,
-        labelChildren: "optional",
-      },
+        labelChildren: "optional"
+      }
     ],
     dependentKey: {
-      respondentType: ["showCompanyDetails"],
-    },
+      respondentType: [
+        "showCompanyDetails"
+      ]
+    }
   },
   {
     body: [
@@ -279,35 +292,37 @@ const respondentFromconfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "contact",
+                  patternType: "contact"
                 },
                 isNumber: true,
                 required: true,
                 maxLength: 10,
-                minLength: 10,
+                minLength: 10
               },
               isMandatory: true,
-              componentInFront: "+91",
-            },
+              componentInFront: "+91"
+            }
           ],
-          validation: {},
+          validation: {}
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "CS_RESPONDENT_PHONE",
     updateLabel: {
       key: "head",
-      value: "CS_REPRESENTATIVE_PHONE",
+      value: "CS_REPRESENTATIVE_PHONE"
     },
     defaultLabel: {
       key: "head",
-      value: "CS_RESPONDENT_PHONE",
+      value: "CS_RESPONDENT_PHONE"
     },
     dependentKey: {
-      respondentType: ["commonFields"],
+      respondentType: [
+        "commonFields"
+      ]
     },
-    updateLabelOn: "respondentType.showCompanyDetails",
+    updateLabelOn: "respondentType.showCompanyDetails"
   },
   {
     body: [
@@ -328,32 +343,34 @@ const respondentFromconfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "email",
+                  patternType: "email"
                 },
                 required: true,
-                maxLength: 150,
+                maxLength: 150
               },
-              isMandatory: true,
-            },
+              isMandatory: true
+            }
           ],
-          validation: {},
+          validation: {}
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     head: "CS_RESPONDENT_EMAIL",
     updateLabel: {
       key: "head",
-      value: "CS_REPRESENTATIVE_EMAIL",
+      value: "CS_REPRESENTATIVE_EMAIL"
     },
     defaultLabel: {
       key: "head",
-      value: "CS_RESPONDENT_EMAIL",
+      value: "CS_RESPONDENT_EMAIL"
     },
     dependentKey: {
-      respondentType: ["commonFields"],
+      respondentType: [
+        "commonFields"
+      ]
     },
-    updateLabelOn: "respondentType.showCompanyDetails",
+    updateLabelOn: "respondentType.showCompanyDetails"
   },
   {
     body: [
@@ -370,7 +387,7 @@ const respondentFromconfig = [
               type: "Radio",
               label: "CS_TYPE_OF_ADDRESS",
               options: [],
-              showOptional: true,
+              showOptional: true
             },
             {
               name: "pincode",
@@ -384,57 +401,48 @@ const respondentFromconfig = [
                 maxlength: 7,
                 minlength: 6,
                 isRequired: true,
-                patternType: "Pincode",
+                patternType: "Pincode"
               },
-              isMandatory: true,
+              isMandatory: true
             },
             {
               name: "state",
               type: "text",
               label: "STATE",
               validation: {
-                isRequired: true,
-                patternType: "Name", // new
+                isRequired: true
               },
-              isMandatory: true,
+              isMandatory: true
             },
             {
               name: "district",
               type: "text",
               label: "DISTRICT",
               validation: {
-                isRequired: true,
-                patternType: "Name", // new
+                isRequired: true
               },
-              isMandatory: true,
+              isMandatory: true
             },
             {
               name: "city",
               type: "text",
               label: "CITY/TOWN",
               validation: {
-                isRequired: true,
-                patternType: "Name", // new
+                isRequired: true
               },
-              isMandatory: true,
+              isMandatory: true
             },
             {
               name: "locality",
               type: "text",
               label: "ADDRESS",
               validation: {
-                isRequired: true,
-                // new
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "address",
-                },
+                isRequired: true
               },
-              isMandatory: true,
-            },
+              isMandatory: true
+            }
           ],
-          validation: {},
+          validation: {}
         },
         isMandatory: true,
         withoutLabel: true,
@@ -450,8 +458,8 @@ const respondentFromconfig = [
               precision: 15,
               lowerBound: 8.4,
               upperBound: 37.6,
-              errorMessage: "LATITUDE_ERROR_MESSAGE",
-            },
+              errorMessage: "LATITUDE_ERROR_MESSAGE"
+            }
           },
           longitudeInput: {
             name: "longitude",
@@ -463,15 +471,15 @@ const respondentFromconfig = [
               precision: 15,
               lowerBound: 68.7,
               upperBound: 97.25,
-              errorMessage: "LONGITUDE_ERROR_MESSAGE",
-            },
+              errorMessage: "LONGITUDE_ERROR_MESSAGE"
+            }
           },
           policeStationDropdown: {
             name: "policeStation",
             type: "dropdown",
             label: "SELECT_POLICE_STATION",
             header: "POLICE_STATION_HEADER",
-            optionsKey: "name",
+            optionsKey: "name"
           },
           juridictionRadioButton: {
             name: "jurisdictionKnown",
@@ -480,29 +488,31 @@ const respondentFromconfig = [
             options: [
               {
                 code: "YES",
-                name: "ES_COMMON_YES",
+                name: "ES_COMMON_YES"
               },
               {
                 code: "NO",
-                name: "NO",
-              },
+                name: "NO"
+              }
             ],
             validation: {
               required: true,
-              errorMessage: "This field is required.",
+              errorMessage: "This field is required."
             },
             defaultValue: {
               code: "YES",
-              name: "ES_COMMON_YES",
-            },
-          },
+              name: "ES_COMMON_YES"
+            }
+          }
         },
-        isPoliceStationComponent: true,
-      },
+        isPoliceStationComponent: true
+      }
     ],
     dependentKey: {
-      respondentType: ["commonFields"],
-    },
+      respondentType: [
+        "commonFields"
+      ]
+    }
   },
   {
     body: [
@@ -516,26 +526,32 @@ const respondentFromconfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "JPEG",
+                "PDF",
+                "PNG"
+              ],
               isOptional: "",
               maxFileSize: 50,
               documentHeader: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_50",
               infoTooltipMessage: "AFFIDAVIT_UNDER_SECTION_225_BNSS_TOOLTIP_MSG",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-            },
-          ],
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+            }
+          ]
         },
-        withoutLabel: true,
-      },
+        withoutLabel: true
+      }
     ],
     dependentKey: {
-      respondentType: ["commonFields"],
-    },
-  },
-];
-
+      respondentType: [
+        "commonFields"
+      ]
+    }
+  }
+]
 export const respondentconfig = {
   formconfig: respondentFromconfig,
   header: "CS_RESPONDENT_DETAIL_HEADING",
