@@ -47,9 +47,6 @@ public class OrderDetailsSearchResponse {
     @Valid
     private String hearingNumber = null;
 
-    @JsonProperty("hearingType")
-    private String hearingType = null;
-
     @JsonProperty("scheduledHearingNumber")
     @Valid
     private String scheduledHearingNumber = null;

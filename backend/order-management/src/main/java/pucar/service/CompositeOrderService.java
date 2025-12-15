@@ -41,7 +41,6 @@ public class CompositeOrderService implements OrderProcessor {
         log.info("pre processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         String oldHearingNumber = order.getHearingNumber();
-        String oldHearingType = order.getHearingType();
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
 
@@ -51,8 +50,6 @@ public class CompositeOrderService implements OrderProcessor {
             // todo : need to find permanent solution for this
             if (compositeOrderItem.getHearingNumber() != null && !compositeOrderItem.getHearingNumber().equals(oldHearingNumber))
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
-            if (compositeOrderItem.getHearingType() != null && !compositeOrderItem.getHearingType().equals(oldHearingType))
-                order.setHearingType(compositeOrderItem.getHearingType());
             if (compositeOrderItem.getScheduledHearingNumber() != null)
                 order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 

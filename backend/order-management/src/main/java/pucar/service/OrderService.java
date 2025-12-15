@@ -26,7 +26,6 @@ import pucar.web.models.hearing.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -119,7 +118,7 @@ public class OrderService {
         return orderResponse.getOrder();
     }
 
-    public Order createDraftOrder(String hearingNumber, String hearingType, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+    public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
 
         if (cnrNumber == null) {
             cnrNumber = getCnrNumber(tenantId, filingNumber, requestInfo);
@@ -148,7 +147,6 @@ public class OrderService {
         } else {
             Order order = Order.builder()
                     .hearingNumber(hearingNumber)
-                    .hearingType(hearingType)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
@@ -172,70 +170,6 @@ public class OrderService {
         }
 
         return orderResponse.getOrder();
-    }
-
-    public BotdOrderListResponse getBotdOrders(String tenantId, String filingNumber, String orderNumber, Pagination pagination, RequestInfo requestInfo) {
-        OrderCriteria criteria = OrderCriteria.builder()
-                .filingNumber(filingNumber)
-                .status("PUBLISHED")
-                .orderNumber(orderNumber)
-                .tenantId(tenantId)
-                .build();
-
-        if(pagination == null){
-            pagination = Pagination.builder().limit(100.0).offSet(0.0).build();
-        }
-
-        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
-                .criteria(criteria)
-                .pagination(pagination)
-                .build();
-
-        OrderListResponse orderListResponse = orderUtil.getOrders(searchRequest);
-        List<BotdOrderSummary> botdOrders = new ArrayList<>();
-
-        if (orderListResponse != null && orderListResponse.getList() != null) {
-            for (Order order : orderListResponse.getList()) {
-                BotdOrderSummary botdOrderSummary = buildBotdOrderSummary(order, requestInfo);
-                botdOrders.add(botdOrderSummary);
-            }
-        }
-        
-        Integer totalCount = orderListResponse != null ? orderListResponse.getTotalCount() : 0;
-        Pagination responsePagination = orderListResponse != null && orderListResponse.getPagination() != null 
-                ? orderListResponse.getPagination() 
-                : pagination;
-        
-        if (responsePagination != null) {
-            responsePagination.setTotalCount(totalCount.doubleValue());
-        }
-        
-        return BotdOrderListResponse.builder()
-                .botdOrderList(botdOrders)
-                .totalCount(totalCount)
-                .pagination(responsePagination)
-                .build();
-    }
-
-    private BotdOrderSummary buildBotdOrderSummary(Order order, RequestInfo requestInfo) {
-        String businessOfTheDay = orderUtil.getBusinessOfTheDay(order, requestInfo);
-        
-        return BotdOrderSummary.builder()
-                .orderNumber(order.getOrderNumber())
-                .orderTitle(order.getOrderTitle())
-                .orderType(order.getOrderType())
-                .orderCategory(order.getOrderCategory())
-                .status(order.getStatus())
-                .createdDate(order.getCreatedDate())
-                .tenantId(order.getTenantId())
-                .filingNumber(order.getFilingNumber())
-                .hearingNumber(order.getHearingNumber())
-                .hearingType(order.getHearingType())
-                .itemText(order.getItemText())
-                .purposeOfNextHearing(order.getPurposeOfNextHearing())
-                .nextHearingDate(order.getNextHearingDate())
-                .businessOfTheDay(businessOfTheDay)
-                .build();
     }
 
     private String getCnrNumber(String tenantId, String filingNumber, RequestInfo requestInfo) {

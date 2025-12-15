@@ -3,7 +3,6 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
-import useGetBotdOrders from "../../../hooks/dristi/useGetBotdOrders";
 import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
 import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
@@ -60,7 +59,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
     Boolean(filingNumber)
   );
 
-  const { data: botdOrdersRes, isLoading: isBotdOrdersLoading } = useGetBotdOrders(
+  const { data: ordersRes, isLoading: isOrdersLoading } = useGetOrders(
     {
       criteria: {
         filingNumber: filingNumber,
@@ -76,9 +75,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
     [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
 
-  const previousBotdOrders = botdOrdersRes?.botdOrderList?.sort((order1, order2) => order2.createdDate - order1.createdDate);
-
-  if (isHearingsLoading || isBotdOrdersLoading) {
+  if (isHearingsLoading || isOrdersLoading) {
     return <Loader />;
   }
   return (
@@ -109,7 +106,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   }}
                 >
                   <PreviousHearingIcon />
-                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS")} {previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} {t("BOTD")}</span>
+                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_HEARING_SUMMARY")}</span>
                 </div>
                 <div
                   style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
@@ -128,7 +125,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   lineHeight: "24px",
                 }}
               >
-                {previousBotdOrders?.[0]?.businessOfTheDay ? <div>{previousBotdOrders?.[0]?.businessOfTheDay}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
+                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
               </div>
             </Card>
           }
@@ -165,7 +162,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
           </Card>
         </div>
       )}
-      {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} botdOrderList={previousBotdOrders} judgeView={true} />}
+      {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
       {/* {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           <WorkflowTimeline
