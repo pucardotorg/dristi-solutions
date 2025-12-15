@@ -2830,6 +2830,7 @@ const AdmittedCaseV2 = () => {
                 filingNumber,
                 tenantId,
                 hearingNumber: currentInProgressHearing?.hearingId,
+                hearingType: currentInProgressHearing?.hearingType,
               },
             },
             {}

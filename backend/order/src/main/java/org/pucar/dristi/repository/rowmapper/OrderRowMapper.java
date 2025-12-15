@@ -57,6 +57,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .orderNumber(rs.getString("ordernumber"))
                             .linkedOrderNumber(rs.getString("linkedordernumber"))
                             .hearingNumber(rs.getString("hearingnumber"))
+                            .hearingType(rs.getString("hearingtype"))
                             .scheduledHearingNumber(rs.getString("scheduledhearingnumber"))
                             .cnrNumber(rs.getString("cnrnumber"))
                             .orderCategory(rs.getString("ordercategory"))

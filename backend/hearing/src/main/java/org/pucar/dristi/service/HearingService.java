@@ -874,7 +874,7 @@ public class HearingService {
         return averageDaysList;
     }
 
-    public void createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+    public void createDraftOrder(String hearingNumber, String hearingType, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .hearingNumber(hearingNumber)
@@ -894,6 +894,7 @@ public class HearingService {
         } else {
             org.pucar.dristi.web.models.orders.Order order = Order.builder()
                     .hearingNumber(hearingNumber)
+                    .hearingType(hearingType)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
