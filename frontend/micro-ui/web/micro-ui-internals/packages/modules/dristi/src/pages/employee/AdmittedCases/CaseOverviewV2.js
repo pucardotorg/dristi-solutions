@@ -109,7 +109,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   }}
                 >
                   <PreviousHearingIcon />
-                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_BOTD_SUMMARY")}</span>
+                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS")} {previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} {t("BOTD_SUMMARY")}</span>
                 </div>
                 <div
                   style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}

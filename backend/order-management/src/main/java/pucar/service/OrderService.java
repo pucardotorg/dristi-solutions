@@ -230,6 +230,7 @@ public class OrderService {
                 .tenantId(order.getTenantId())
                 .filingNumber(order.getFilingNumber())
                 .hearingNumber(order.getHearingNumber())
+                .hearingType(order.getHearingType())
                 .itemText(order.getItemText())
                 .purposeOfNextHearing(order.getPurposeOfNextHearing())
                 .nextHearingDate(order.getNextHearingDate())

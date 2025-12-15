@@ -41,6 +41,9 @@ public class BotdOrderSummary {
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
 
+    @JsonProperty("hearingType")
+    private String hearingType = null;
+
     @JsonProperty("itemText")
     private String itemText = null;
 
