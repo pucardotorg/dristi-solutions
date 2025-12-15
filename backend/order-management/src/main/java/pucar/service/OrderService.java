@@ -119,7 +119,7 @@ public class OrderService {
         return orderResponse.getOrder();
     }
 
-    public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+    public Order createDraftOrder(String hearingNumber, String hearingType, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
 
         if (cnrNumber == null) {
             cnrNumber = getCnrNumber(tenantId, filingNumber, requestInfo);
@@ -148,6 +148,7 @@ public class OrderService {
         } else {
             Order order = Order.builder()
                     .hearingNumber(hearingNumber)
+                    .hearingType(hearingType)
                     .filingNumber(filingNumber)
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
