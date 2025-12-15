@@ -495,6 +495,7 @@ class EvidenceServiceTest {
         EvidenceRequest request = buildEvidenceRequest();
         Artifact artifact = new Artifact(); // mock artifact
         artifact.setArtifactNumber("AR124");
+        artifact.setEvidenceNumber("FN123-EV123");
 
         // Simulate duplicate found
         when(evidenceService.searchEvidence(any(), any(), any()))
@@ -505,7 +506,7 @@ class EvidenceServiceTest {
             evidenceService.checkUniqueEvidenceNumberForCase(request);
         });
 
-        assertTrue(ex.getMessage().contains("Evidence Number EV123 already exists for case: FN123"));
+        assertTrue(ex.getMessage().contains("Evidence Number FN123-EV123 already exists for case: FN123"));
     }
 
 
@@ -522,7 +523,7 @@ class EvidenceServiceTest {
     private EvidenceRequest buildEvidenceRequest() {
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("FN123");
-        artifact.setEvidenceNumber("EV123");
+        artifact.setEvidenceNumber("FN123-EV123");
         artifact.setArtifactNumber("AR123");
 
         RequestInfo requestInfo = new RequestInfo();
