@@ -533,8 +533,8 @@ export const UICustomizations = {
         completeStatusData = compStatus ? [compStatus] : sentData;
       }
       let resolvedApplicationStatus = "";
-      if (activeTabIndex === 0) resolvedApplicationStatus = "SIGN_PENDING";
-      else if (activeTabIndex === 1) resolvedApplicationStatus = "SIGNED";
+      if (activeTabIndex === 1) resolvedApplicationStatus = "SIGN_PENDING";
+      else if (activeTabIndex === 2) resolvedApplicationStatus = "SIGNED";
 
       return {
         ...requestCriteria,

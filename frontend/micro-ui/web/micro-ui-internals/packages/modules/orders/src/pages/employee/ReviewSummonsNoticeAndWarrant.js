@@ -127,8 +127,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
+  const [bulkRpadList, setBulkRpadList] = useState([]);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [showBulkSendConfirmModal, setShowBulkSendConfirmModal] = useState(false);
+  const [showBulkRpadConfirmModal, setShowBulkRpadConfirmModal] = useState(false);
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const [isBulkSending, setIsBulkSending] = useState(false);
   const [showBulkSignatureModal, setShowBulkSignatureModal] = useState(false);
@@ -138,6 +140,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
+  useEffect(() => {
+    console.log("bulkRpadList changed:", bulkRpadList);
+  }, [bulkRpadList]);
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
   const { uploadDocuments } = useDocumentUpload();
@@ -518,6 +523,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setActiveTabIndex(n);
     setBulkSignList([]);
     setBulkSendList([]);
+    setBulkRpadList([]);
     setReload(!reload);
   };
 
@@ -805,6 +811,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setShowBulkSignConfirmModal(true);
   }, [bulkSignList, t, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
+
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
@@ -819,6 +826,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setShowBulkSendConfirmModal(true);
   }, [bulkSendList, t]);
+
+  const handleBulkPendingRpad = useCallback(() => {
+    const selectedItems = bulkRpadList?.filter((item) => item?.isSelected) || [];
+    if (selectedItems.length === 0) {
+      setShowErrorToast({
+        message: t("NO_DOCUMENTS_SELECTED"),
+        error: true,
+      });
+      setTimeout(() => {
+        setShowErrorToast(null);
+      }, 5000);
+      return;
+    }
+    // [TODO: add success condition based on API response]
+    setShowErrorToast({
+      message: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY"),
+      error: false,
+    });
+    setTimeout(() => {
+      setShowErrorToast(null);
+    }, 5000);
+  }, [bulkRpadList, t]);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -1045,9 +1074,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = bulkSendList?.some((item) => item?.isSelected && item?.documentStatus === "SIGNED") || currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = bulkRpadList?.some((item) => item?.isSelected) || currentConfig?.label === "PENDING_RPAD_COLLECTION"; // TODO : add document status
 
       const selectedItems = isSignedTab
         ? bulkSendList?.filter((item) => item?.isSelected) || []
+        : isPendingRpadTab
+        ? bulkRpadList?.filter((item) => item?.isSelected) || []
         : bulkSignList?.filter((item) => item?.isSelected) || [];
 
       if (selectedItems.length === 0) {
@@ -1063,7 +1095,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const downloadPromises = selectedItems.map(async (item, index) => {
         const fileStoreId = isSignedTab
           ? item?.documents?.filter((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore
-          : item?.documents?.[0]?.fileStore;
+          : // : isPendingRpadTab
+            // ? item?.documents?.filter((doc) => doc?.documentType === "PENDING_RPAD_DOCUMENT")?.[0]?.fileStore // [TODO : change document type]
+            item?.documents?.[0]?.fileStore;
         if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
@@ -1148,9 +1182,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }, 5000);
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       if (isSignedTab) {
         setBulkSendList([]);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList([]);
       } else {
         setBulkSignList([]);
       }
@@ -1168,6 +1205,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     isJudge,
     setBulkSendList,
     setBulkSignList,
+    setBulkRpadList,
     setReload,
   ]);
 
@@ -1415,6 +1453,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     (form) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
       if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
         const updatedData = form.searchResult.map((item) => ({
           ...item,
@@ -1423,6 +1462,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
         if (isSignedTab) {
           setBulkSendList(updatedData);
+        } else if (isPendingRpadTab) {
+          setBulkRpadList(updatedData);
         } else {
           setBulkSignList(updatedData);
         }
@@ -1430,6 +1471,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
       if (isSignedTab) {
         setBulkSendList([]);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList([]);
       } else {
         setBulkSignList([]);
       }
@@ -1439,16 +1482,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const hasNoSelectedItems = useMemo(() => {
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-    const currentList = currentConfig?.label === "PENDING_SIGN" ? bulkSignList : bulkSendList;
+    const currentList =
+      currentConfig?.label === "PENDING_SIGN" ? bulkSignList : currentConfig?.label === "PENDING_RPAD_COLLECTION" ? bulkRpadList : bulkSendList;
     const selectedItems = currentList?.filter((item) => item?.isSelected) || [];
     const result = !currentList || currentList?.length === 0 || currentList?.every((item) => !item?.isSelected);
     return result;
-  }, [bulkSignList, bulkSendList, activeTabIndex, isJudge, courtId]);
+  }, [bulkSignList, bulkSendList, bulkRpadList, activeTabIndex, isJudge, courtId]);
 
   const config = useMemo(() => {
     const updateTaskFunc = (taskData, checked) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       const updateList = (prev) => {
         if (!prev || prev.length === 0) {
@@ -1471,6 +1516,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       if (isSignedTab) {
         setBulkSendList(updateList);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList(updateList);
       } else {
         setBulkSignList(updateList);
       }
@@ -1562,7 +1609,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={`bulk-esign-order-view  ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
+          <div className={`bulk-esign-order-view  ${["PENDING_SIGN", "SIGNED", "PENDING_RPAD_COLLECTION"].includes(config?.label) ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
@@ -1588,7 +1635,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       ? signedModalConfig
                       : config?.label === "SENT"
                       ? sentModalConfig
-                      : signedModalConfig
+                      : // : config?.label === "PENDING_RPAD_COLLECTION"   [TODO : add modal for single click on rpad tab]
+                        // ? pendingRpadModalConfig
+                        signedModalConfig
                   }
                   currentStep={step}
                 />
@@ -1621,6 +1670,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 {hasEditTaskAccess && (
                   <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
                 )}
+              </div>
+            </div>
+          )}
+          {config?.label === "PENDING_RPAD_COLLECTION" && (
+            <div className={"bulk-submit-bar"}>
+              <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
+                  onSubmit={handleBulkDownload}
+                  disabled={hasNoSelectedItems}
+                  style={{ width: "auto" }}
+                />
+                {canSign && <SubmitBar label={t("SEND_FOR_BULK_SIGN")} onSubmit={handleBulkPendingRpad} disabled={hasNoSelectedItems} />}
               </div>
             </div>
           )}

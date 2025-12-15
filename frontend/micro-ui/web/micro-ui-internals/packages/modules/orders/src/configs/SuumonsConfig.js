@@ -59,6 +59,164 @@ export const SummonsTabsConfig = {
   moduleName: "reviewSummonWarrantNotice",
   showTab: true,
   SummonsTabsConfig: [
+    // Pending RPAD collection
+    {
+      label: "PENDING_RPAD_COLLECTION",
+      type: "search",
+      // TODO : API integration for rpad
+      apiDetails: {
+        serviceName: "/task/v1/table/search",
+        requestParam: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          limit: 10,
+          offset: 0,
+        },
+        requestBody: {
+          apiOperation: "SEARCH",
+          criteria: {
+            applicationStatus: "SIGN_PENDING",
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "reviewSummonWarrantNotice",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestParam",
+        filterFormJsonPath: "requestBody.criteria",
+        searchFormJsonPath: "requestBody.criteria",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: defaultSearchValues,
+            fields: [
+              // process type
+              {
+                label: "PROCESS_TYPE",
+                isMandatory: false,
+                key: "orderType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "orderType",
+                  optionsKey: "name",
+                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
+                  mdmsConfig: {
+                    moduleName: "Order",
+                    masterName: "CourtStaffOrderType",
+                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  className: "custom-dropdown-color",
+                },
+              },
+              // Delivery channel
+              {
+                label: "DELIVERY_CHANNEL",
+                isMandatory: false,
+                key: "channel",
+                type: "dropdown",
+                populators: {
+                  name: "channel",
+                  // optionsKey: "channel",
+                  optionsKey: "displayLabel",
+                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
+                  mdmsConfig: {
+                    moduleName: "payment",
+                    masterName: "paymentType",
+                    select:
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                },
+              },
+              // search case
+              {
+                label: "CS_CASE_NAME_ID",
+                isMandatory: false,
+                type: "text",
+                key: "searchText", // seach text
+                disable: false,
+                populators: {
+                  name: "searchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "SELECT",
+                columnType: "checkbox",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TITLE",
+                jsonPath: "caseName",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "courtCaseNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "PROCESS_TYPE",
+                jsonPath: "taskType",
+                additionalCustomization: true,
+              },
+              {
+                label: "ISSUE_DATE",
+                jsonPath: "createdDate",
+                additionalCustomization: true,
+              },
+              {
+                label: "DELIEVERY_CHANNEL",
+                jsonPath: "delieveryChannel",
+                additionalCustomization: true,
+              },
+              {
+                label: "HEARING_DATE",
+                jsonPath: "hearingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "list",
+          },
+          show: true,
+        },
+      },
+      additionalDetails: {
+        sortBy: "sortCaseListByDate",
+      },
+    },
     // Pending Sign
     {
       label: "PENDING_SIGN",
