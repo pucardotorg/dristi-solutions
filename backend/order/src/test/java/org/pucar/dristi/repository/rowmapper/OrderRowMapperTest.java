@@ -90,6 +90,7 @@ class OrderRowMapperTest {
         assertEquals("ORDER-123", order.getOrderNumber());
         assertEquals("LINKED-ORDER-123", order.getLinkedOrderNumber());
         assertEquals("123e4567-e89b-12d3-a456-556642440001", order.getHearingNumber());
+        assertEquals("Type1", order.getHearingType());
         assertEquals("CNR-123", order.getCnrNumber());
         assertEquals("Category1", order.getOrderCategory());
         assertTrue(order.getIsActive());

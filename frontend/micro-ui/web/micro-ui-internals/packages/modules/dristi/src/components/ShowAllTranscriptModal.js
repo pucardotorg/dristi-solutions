@@ -26,7 +26,6 @@ const CloseBtn = (props) => {
 
 const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
   const { t } = useTranslation();
-  debugger;
 
   return (
     <Modal
@@ -41,7 +40,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {botdOrderList?.length === 0 ? (
+        {botdOrderList?.length ? (
           <div style={{ marginTop: "20px" }}>
             {t("NO_BOTD_SUMMARY_AVAILABLE")}
           </div>

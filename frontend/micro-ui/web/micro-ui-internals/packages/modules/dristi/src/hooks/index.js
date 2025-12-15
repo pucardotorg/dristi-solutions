@@ -7,6 +7,7 @@ import useIndividualService from "./dristi/useIndividualService";
 import { DRISTIService } from "../services";
 import useGetEvidence from "./dristi/useGetEvidence";
 import useGetOrders from "./dristi/useGetOrders";
+import useGetBotdOrders from "./dristi/useGetBotdOrders";
 import useGetSubmissions from "./dristi/useGetSubmissions";
 import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
@@ -148,6 +149,7 @@ const dristi = {
   useCreateHearings,
   useGetEvidence,
   useGetOrders,
+  useGetBotdOrders,
   useGetSubmissions,
   useApplicationDetails,
   useEvidenceDetails,
