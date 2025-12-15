@@ -2,7 +2,16 @@ import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
 
-function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witnesMobileNumber, setWitnessMobileNumber, mainHeader, selectedPartyId}) {
+function AddWitnessMobileNumberModal({
+  t,
+  handleClose,
+  allParties,
+  submit,
+  witnesMobileNumber,
+  setWitnessMobileNumber,
+  mainHeader,
+  selectedPartyId,
+}) {
   const [mobileNumber, setMobileNumber] = useState(witnesMobileNumber || "");
   const [error, setError] = useState("");
 
@@ -59,7 +68,9 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
     }
 
     // Check if mobile number already exists in any other party's MobileNumbers array
-    const isDuplicateMobile = allParties?.some((party) => !(party?.uniqueId === selectedPartyId || party?.uuid  === selectedPartyId) && party?.mobileNumbers?.includes(mobileNumber));
+    const isDuplicateMobile = allParties?.some(
+      (party) => !(party?.uniqueId === selectedPartyId || party?.uuid === selectedPartyId) && party?.mobileNumbers?.includes(mobileNumber)
+    );
 
     if (isDuplicateMobile) {
       setError("THIS_NUMBER_ALREADY_EXISTS");
@@ -132,8 +143,7 @@ function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witne
                   border: "none",
                   outline: "none",
                   fontSize: "16px",
-                  // color: "#0B0C0C"
-                  color: "#77787B",
+                  color: "#0B0C0C",
                 }}
                 maxLength={10}
               />

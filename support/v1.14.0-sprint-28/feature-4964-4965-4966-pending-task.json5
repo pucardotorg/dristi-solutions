@@ -37,8 +37,7 @@
       "defaultRoles": [],
       "triggerAction": [
         "E-SIGN_COMPLETE",
-        "SKIP_SIGN_AND_SUBMIT",
-        "UPLOAD"
+        "SKIP_SIGN_AND_SUBMIT"
       ],
       "workflowModule": "digitalized-document-mediation"
     },
@@ -78,7 +77,7 @@
       "state": "PENDING_E-SIGN",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Confirm request for Plea",
+      "pendingTask": "Sign Recorded Plea",
       "closerAction": [
         "E-SIGN"
       ],
@@ -100,7 +99,7 @@
       "state": "PENDING_REVIEW",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Review the plea",
+      "pendingTask": "Review Accused Plea",
       "closerAction": [
         "SIGN"
       ],
@@ -146,7 +145,7 @@
       "state": "PENDING_E-SIGN",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "Confirm request for Examination",
+      "pendingTask": "Sign S351 Examination",
       "closerAction": [
         "E-SIGN"
       ],

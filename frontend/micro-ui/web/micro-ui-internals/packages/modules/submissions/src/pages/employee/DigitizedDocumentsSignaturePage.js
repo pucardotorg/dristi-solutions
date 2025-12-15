@@ -45,6 +45,7 @@ const DigitizedDocumentsSignaturePage = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { digitalizedDocumentId: documentNumber, filingNumber, type } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
+  const partyUUID = location?.state?.partyUUID;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const history = useHistory();
@@ -95,6 +96,17 @@ const DigitizedDocumentsSignaturePage = () => {
   const fileStoreId = useMemo(() => {
     return digitizedDocumentsDetails?.documents?.[0]?.fileStore;
   }, [digitizedDocumentsDetails]);
+
+  const ifUserAuthorized = useMemo(() => {
+    if (isUserLoggedIn) {
+      const mobNumber =
+        type === "PLEA"
+          ? digitizedDocumentsDetails?.pleaDetails?.accusedMobileNumber
+          : digitizedDocumentsDetails?.examinationOfAccusedDetails?.accusedMobileNumber;
+      return mobNumber === userInfo?.mobileNumber;
+    }
+    return isAuthorised;
+  }, [digitizedDocumentsDetails, isAuthorised, isUserLoggedIn, type, userInfo?.mobileNumber]);
 
   const accMobileNum = useMemo(() => {
     let mobNumber = "";
@@ -168,7 +180,11 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    if (isUserLoggedIn) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home`);
+    } else {
+      window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
+    }
   };
 
   useEffect(() => {
@@ -188,7 +204,15 @@ const DigitizedDocumentsSignaturePage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isUserLoggedIn && !isAuthorised) {
+    if (isUserLoggedIn) {
+      if (!isDocumentsDataLoading && digitizedDocumentsDetails) {
+        if (!ifUserAuthorized) {
+          history.replace(
+            `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
+          );
+        }
+      }
+    } else if (!isUserLoggedIn && !ifUserAuthorized) {
       history.replace(
         `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
       );
@@ -197,7 +221,18 @@ const DigitizedDocumentsSignaturePage = () => {
     if (!documentNumber) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, [documentNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
+  }, [
+    documentNumber,
+    history,
+    isAuthorised,
+    isUserLoggedIn,
+    tenantId,
+    userType,
+    isDocumentsDataLoading,
+    digitizedDocumentsDetails,
+    ifUserAuthorized,
+    type,
+  ]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -234,13 +269,19 @@ const DigitizedDocumentsSignaturePage = () => {
     }
   };
 
+  const isSubmitButtonEnabled = useMemo(() => {
+    if (digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
+    if (isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
+    return true;
+  }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, userInfo]);
+
   if (isDigitizedDocumentsOpenOpenLoading || isLoading || isDocumentsDataLoading) {
     return <Loader />;
   }
 
   return (
     <div className="witness-deposition-signature">
-      {loader && (
+      {loader || isDocumentsDataLoading || isDigitizedDocumentsOpenOpenLoading ? (
         <div
           style={{
             width: "100vw",
@@ -258,77 +299,80 @@ const DigitizedDocumentsSignaturePage = () => {
         >
           <Loader />
         </div>
-      )}
-      <div className="header">{`${t(type)}`}</div>
-      <div className="doc-viewer">
-        {!isLoading ? (
-          <DocViewerWrapper
-            docWidth={"100%"}
-            docHeight={"100%"}
-            selectedDocs={documentPreviewPdf ? [documentPreviewPdf] : []}
-            tenantId={tenantId}
-            docViewerCardClassName={"doc-card"}
-            showDownloadOption={false}
-          />
-        ) : (
-          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-        )}
-      </div>
-      <ActionBar>
-        <div className="action-bar">
-          {
-            <Button
-              label={t("BACK")}
-              variation={"secondary"}
-              onButtonClick={() => {
-                history.goBack();
-              }}
-              textStyles={{
-                fontFamily: "Roboto",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: "18.75px",
-                textAlign: "center",
-                color: "#007E7E",
-              }}
-              className="back-button"
-            />
-          }
-          {digitizedDocumentsDetails?.status === "PENDING_E-SIGN" && (
-            <SubmitBar
-              label={
-                <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                  <span>{t("PROCEED_TO_E_SIGN")}</span>
-                </div>
-              }
-              onSubmit={handleSubmit}
-              style={styles.submitButton}
+      ) : (
+        <div>
+          <div className="header">{`${t(type)}`}</div>
+          <div className="doc-viewer">
+            {!isLoading ? (
+              <DocViewerWrapper
+                docWidth={"100%"}
+                docHeight={"100%"}
+                selectedDocs={documentPreviewPdf ? [documentPreviewPdf] : []}
+                tenantId={tenantId}
+                docViewerCardClassName={"doc-card"}
+                showDownloadOption={false}
+              />
+            ) : (
+              <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+            )}
+          </div>
+          <ActionBar>
+            <div className="action-bar">
+              {isUserLoggedIn && (
+                <Button
+                  label={t("BACK")}
+                  variation={"secondary"}
+                  onButtonClick={() => {
+                    history.goBack();
+                  }}
+                  textStyles={{
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#007E7E",
+                  }}
+                  className="back-button"
+                />
+              )}
+              {isSubmitButtonEnabled && (
+                <SubmitBar
+                  label={
+                    <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+                      <span>{t("PROCEED_TO_E_SIGN")}</span>
+                    </div>
+                  }
+                  onSubmit={handleSubmit}
+                  style={styles.submitButton}
+                />
+              )}
+            </div>
+          </ActionBar>
+
+          {showSignatureModal && (
+            <BailEsignModal
+              t={t}
+              handleCloseSignaturePopup={handleCloseSignatureModal}
+              handleProceed={handleEsignProceed}
+              fileStoreId={fileStoreId}
+              signPlaceHolder={"Signature of Accused"}
+              mobileNumber={accMobileNum}
+              forWitnessDeposition={true}
+              handleMockESign={handleMockESign}
+              customizedNote={type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")}
             />
           )}
+          {showSuccessModal && (
+            <SuccessBannerModal
+              t={t}
+              handleCloseSuccessModal={handleCloseSuccessModal}
+              message={type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"}
+            />
+          )}
+          {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
         </div>
-      </ActionBar>
-
-      {showSignatureModal && (
-        <BailEsignModal
-          t={t}
-          handleCloseSignaturePopup={handleCloseSignatureModal}
-          handleProceed={handleEsignProceed}
-          fileStoreId={fileStoreId}
-          signPlaceHolder={"Signature of Accused"}
-          mobileNumber={accMobileNum}
-          forWitnessDeposition={true}
-          handleMockESign={handleMockESign}
-          customizedNote={type === "PLEA" ? t("PLEA_POPUP_NOTES") : t("EXAMINATION_OF_ACCUSED_POPUP_NOTES")}
-        />
       )}
-      {showSuccessModal && (
-        <SuccessBannerModal
-          t={t}
-          handleCloseSuccessModal={handleCloseSuccessModal}
-          message={type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"}
-        />
-      )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

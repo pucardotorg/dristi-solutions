@@ -10,6 +10,7 @@ import pucar.config.Configuration;
 import pucar.service.FileStoreService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.DigitalizedDocumentUtil;
+import pucar.util.MdmsV2Util;
 import pucar.util.PdfServiceUtil;
 import pucar.util.JsonUtil;
 import pucar.web.models.Order;
@@ -18,13 +19,7 @@ import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.digitalizeddocument.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import java.util.*;
 import static pucar.config.ServiceConstants.*;
 
 @Component
@@ -37,15 +32,17 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
     private final PdfServiceUtil pdfServiceUtil;
     private final FileStoreService fileStoreService;
     private final JsonUtil jsonUtil;
+    private final MdmsV2Util mdmsV2Util;
 
     @Autowired
-    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil) {
+    public PublishOrderReferralCaseToAdr(DigitalizedDocumentUtil digitalizedDocumentUtil, ObjectMapper objectMapper, Configuration configuration, PdfServiceUtil pdfServiceUtil, FileStoreService fileStoreService, JsonUtil jsonUtil, MdmsV2Util mdmsV2Util) {
         this.digitalizedDocumentUtil = digitalizedDocumentUtil;
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.pdfServiceUtil = pdfServiceUtil;
         this.fileStoreService = fileStoreService;
         this.jsonUtil = jsonUtil;
+        this.mdmsV2Util = mdmsV2Util;
     }
 
     @Override
@@ -106,11 +103,18 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
             List<DigitalizedDocument> existingDocuments = digitalizedDocumentUtil.searchDigitalizedDocuments(searchRequest);
 
             String action = adrDetails.has("modeOfSigning") ? adrDetails.get("modeOfSigning").textValue() : null;
+            String caseNumber = adrDetails.has("caseNumber") ? adrDetails.get("caseNumber").textValue() : null;
 
             MediationDetails mediationDetails = buildMediationDetails(adrDetails);
 
             WorkflowObject workflowObject = new WorkflowObject();
             workflowObject.setAction(action);
+
+            // Fetch court details from MDMS
+            Map<String, String> courtDetails = mdmsV2Util.fetchCourtDetails(requestInfo, order.getTenantId(), order.getCourtId());
+            String courtName = courtDetails.getOrDefault("courtName", configuration.getCourtName());
+            String place = courtDetails.getOrDefault("place", configuration.getPlace());
+            String state = courtDetails.getOrDefault("state", configuration.getState());
 
             if (existingDocuments != null && !existingDocuments.isEmpty()) {
                 // Update existing document
@@ -118,9 +122,10 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                 DigitalizedDocument existingDoc = existingDocuments.get(0);
                 existingDoc.setMediationDetails(mediationDetails);
                 existingDoc.setWorkflow(workflowObject);
-                existingDoc.setCourtName(configuration.getCourtName());
-                existingDoc.setPlace(configuration.getPlace());
-                existingDoc.setState(configuration.getState());
+                existingDoc.setCaseNumber(caseNumber);
+                existingDoc.setCourtName(courtName);
+                existingDoc.setPlace(place);
+                existingDoc.setState(state);
 
                 DigitalizedDocumentRequest updateRequest = DigitalizedDocumentRequest.builder()
                         .requestInfo(requestInfo)
@@ -146,9 +151,10 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                         .orderNumber(order.getOrderNumber())
                         .orderItemId(getItemId(order))
                         .tenantId(order.getTenantId())
-                        .courtName(configuration.getCourtName())
-                        .place(configuration.getPlace())
-                        .state(configuration.getState())
+                        .courtName(courtName)
+                        .caseNumber(caseNumber)
+                        .place(place)
+                        .state(state)
                         .courtId(order.getCourtId())
                         .mediationDetails(mediationDetails)
                         .workflow(workflowObject)

@@ -33,6 +33,7 @@ const HomeSidebar = ({
   const hasViewSignWitnessDepositionAccess = useMemo(() => assignedRoles?.includes("VIEW_WITNESS_DEPOSITION"), [assignedRoles]);
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
   const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("DIARY_VIEWER"), [assignedRoles]);
+  const hasViewSignFormsAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_FORMS"), [assignedRoles]);
 
   return (
     <div className="home-sidebar">
@@ -107,7 +108,7 @@ const HomeSidebar = ({
         hasViewSignEvidenceAccess ||
         hasViewSignADiaryAccess) && (
         <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
-          {hasViewSignOrdersAccess && (
+          {hasViewSignFormsAccess && (
             <SidebarItem
               t={t}
               label="CS_HOME_SIGN_FORMS"

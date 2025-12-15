@@ -57,7 +57,7 @@ public class DigitalizedDocument {
 
     @JsonProperty("mediationDetails")
     @Valid
-    private MediationPartyDetails mediationDetails = null;
+    private MediationDetails mediationDetails = null;
 
     @JsonProperty("additionalDetails")
     private Map<String, Object> additionalDetails = null;
@@ -98,6 +98,7 @@ public class DigitalizedDocument {
     @JsonProperty("caseName")
     private String caseName;
 
+    // Enriched for pdf generation
     @JsonProperty("caseNumber")
     private String caseNumber;
 

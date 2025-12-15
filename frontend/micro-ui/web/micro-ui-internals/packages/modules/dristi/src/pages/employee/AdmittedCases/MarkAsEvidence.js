@@ -10,6 +10,7 @@ import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { set } from "lodash";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -434,23 +435,29 @@ const MarkAsEvidence = ({
         },
         {}
       );
+
+      // Check if tag ends with a number
+      const hasNumberSuffix = (tag) => {
+        if (!tag || !tag.trim()) return false;
+        return /\d+$/.test(tag);
+      };
       const witnessList = response?.criteria[0]?.responseList[0]?.witnessDetails?.map((witness) => {
         const data = witness || {};
-        return data?.witnessTag
+        return (data?.witnessTag && hasNumberSuffix(data?.witnessTag))
           ? {
               witnessTag: data.witnessTag || "",
               firstName: data.firstName || "",
               lastName: data.lastName || "",
               middleName: data.middleName || "",
-              fullName: getFullName(" ", data.firstName, data.middleName, data.lastName),
+              fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
               code: data.witnessTag,
-              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.middleName, data.lastName) + ")",
+              displayName: data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
             }
           : null;
       });
       const LitigantList = (response?.criteria?.[0]?.responseList?.[0]?.litigants || [])?.map((litigant) => {
         const data = litigant?.additionalDetails?.tag || null;
-        return data
+        return (data && hasNumberSuffix(data))
           ? {
               witnessTag: data || "",
               fullName: litigant?.additionalDetails?.fullName,
@@ -461,7 +468,7 @@ const MarkAsEvidence = ({
       });
       const advList = (response?.criteria?.[0]?.responseList?.[0]?.representatives || [])?.map((adv) => {
         const data = adv?.additionalDetails?.tag || null;
-        return data
+        return (data && hasNumberSuffix(data))
           ? {
               witnessTag: data || "",
               fullName: adv?.additionalDetails?.advocateName,
@@ -472,7 +479,7 @@ const MarkAsEvidence = ({
       });
       const poaList = (response?.criteria?.[0]?.responseList?.[0]?.poaHolders || [])?.map((poa) => {
         const data = poa?.additionalDetails?.tag || null;
-        return data
+        return (data && hasNumberSuffix(data))
           ? {
               witnessTag: data || "",
               fullName: poa?.name,

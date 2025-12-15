@@ -63,3 +63,59 @@
     }
   }
 }
+
+.doc-preview{
+  .docviewer-wrapper{
+    .card{
+      max-width: 100% !important;
+      border: 1px solid #bbbb;
+    }
+  }
+}
+
+.expired-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background: #f2f2f2;
+
+  .expired-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    h1 {
+      color: #bb2c2f;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.5;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.9rem;
+      background-color: teal;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+}

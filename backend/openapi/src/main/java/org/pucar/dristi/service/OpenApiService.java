@@ -15,10 +15,7 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
-import org.pucar.dristi.web.models.address.AddAddressRequest;
-import org.pucar.dristi.web.models.address.AddAddressResponse;
-import org.pucar.dristi.web.models.address.AddressResponse;
-import org.pucar.dristi.web.models.address.PartyAddress;
+import org.pucar.dristi.web.models.address.*;
 import org.pucar.dristi.web.models.bailbond.*;
 import org.pucar.dristi.web.models.cases.AddressDetails;
 import org.pucar.dristi.web.models.cases.CourtCase;
@@ -204,7 +201,7 @@ public class OpenApiService {
         Long toDate = body.getToDate();
         Boolean isHearingSerialNumberSorting = body.getIsHearingSerialNumberSorting();
 
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText,isHearingSerialNumberSorting);
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText, isHearingSerialNumberSorting);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 
@@ -823,8 +820,8 @@ public class OpenApiService {
             OrderDetailsSearchResponse response = new OrderDetailsSearchResponse();
 
             //validate mobile number from pending task assigned to list
-            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber,tenantId);
-            if(pendingTaskAdditionalDetails==null){
+            JsonNode pendingTaskAdditionalDetails = validateMobileNumber(referenceId, mobileNumber, tenantId);
+            if (pendingTaskAdditionalDetails == null) {
                 response.setIsPendingTaskCompleted(true);
                 return response;
             }
@@ -897,7 +894,8 @@ public class OpenApiService {
                 // Convert JsonNode to Map for easier manipulation
                 Map<String, Object> additionalDetailsMap = objectMapper.convertValue(
                         pendingTaskAdditionalDetails,
-                        new TypeReference<Map<String, Object>>() {}
+                        new TypeReference<Map<String, Object>>() {
+                        }
                 );
 
                 // Extract uniqueIds list
@@ -912,10 +910,10 @@ public class OpenApiService {
 
 
                     // Process respondent details
-                    processRespondents(rootNode, partyDetailsList,validUniqueIds);
+                    processRespondents(rootNode, partyDetailsList, validUniqueIds);
 
                     // Process witness details
-                    processWitnesses(courtCase.getWitnessDetails(), partyDetailsList,validUniqueIds);
+                    processWitnesses(courtCase.getWitnessDetails(), partyDetailsList, validUniqueIds);
 
                     response.setPartyDetails(partyDetailsList);
                 }
@@ -939,7 +937,7 @@ public class OpenApiService {
 
             JsonNode data = respondent.path("data");
 
-            if (respondent.has("uniqueId") && validUniqueIds.contains(respondent.path("uniqueId").asText()) ) {
+            if (respondent.has("uniqueId") && validUniqueIds.contains(respondent.path("uniqueId").asText())) {
 
                 PartyDetails party = new PartyDetails();
                 party.setPartyType("Accused");
@@ -994,6 +992,7 @@ public class OpenApiService {
                             JsonNode addrDetails = addressNode.path("addressDetails");
                             AddressDetails address = new AddressDetails();
 
+                            address.setId(addressNode.path("id").asText(""));
                             address.setDoorNo(addrDetails.path("doorNo").asText(""));
                             address.setStreet(addrDetails.path("street").asText(""));
                             address.setLandmark(addrDetails.path("landmark").asText(""));
@@ -1027,9 +1026,9 @@ public class OpenApiService {
                 PartyDetails party = new PartyDetails();
                 party.setPartyType("Witness");
                 if(witnessDetail.getPhoneNumbers()!=null)
-                    party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
+                 party.setMobileNumbers(witnessDetail.getPhoneNumbers().getMobileNumber());
                 if(witnessDetail.getEmails()!=null)
-                    party.setEmails(witnessDetail.getEmails().getEmailId());
+                 party.setEmails(witnessDetail.getEmails().getEmailId());
                 String name = (witnessDetail.getFirstName()  != null ? witnessDetail.getFirstName()  : "") +
                         (witnessDetail.getMiddleName() != null ? " " + witnessDetail.getMiddleName() : "") +
                         (witnessDetail.getLastName() != null ? " " + witnessDetail.getLastName() : "");
@@ -1142,7 +1141,7 @@ public class OpenApiService {
                 }
             }
             boolean isCompleted = source.path("isCompleted").asBoolean(false);
-            if(isCompleted){
+            if (isCompleted) {
                 return null;
             }
         }

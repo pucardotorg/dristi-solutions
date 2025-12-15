@@ -51,8 +51,12 @@ function BulkSignDigitalizationView() {
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [digitalDocumentPaginationData, setDigitalDocumentPaginationData] = useState({});
   const [counter, setCounter] = useState(0);
-
-  const hasOrderEsignAccess = useMemo(() => roles?.some((role) => role.code === "ORDER_ESIGN"), [roles]);
+  const isPleaApprover = useMemo(() => roles?.some((role) => role?.code === "PLEA_APPROVER"), [roles]);
+  const isExaminationApprover = useMemo(() => roles?.some((role) => role?.code === "EXAMINATION_APPROVER"), [roles]);
+  const isMediationApprover = useMemo(() => roles?.some((role) => role?.code === "MEDIATION_APPROVER"), [roles]);
+  const hasSignFormsAccess = useMemo(() => {
+    return isPleaApprover || isExaminationApprover || isMediationApprover;
+  }, [isPleaApprover, isExaminationApprover, isMediationApprover]);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -245,7 +249,7 @@ function BulkSignDigitalizationView() {
     return responses;
   };
 
-  const handleBulkSign = async () => {
+  const handleBulkSignConfirm = async () => {
     setShowBulkSignConfirmModal(false);
     setIsLoading(true);
     const criteriaList = bulkSignList
@@ -276,7 +280,7 @@ function BulkSignDigitalizationView() {
 
         if (signedList?.length === 0) {
           setShowErrorToast({
-            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            label: t("FAILED_TO_PERFORM_BULK_SIGN"),
             error: true,
           });
           setTimeout(() => {
@@ -296,6 +300,31 @@ function BulkSignDigitalizationView() {
     }
   };
 
+  const handleBulkSign = async () => {
+    const notAllowedItems = bulkSignList
+      ?.filter((data) => data?.isSelected)
+      ?.filter((doc) => {
+        if (doc?.businessObject?.digitalizedDocumentDetails?.type === "PLEA" && !isPleaApprover) return true;
+        if (doc?.businessObject?.digitalizedDocumentDetails?.type === "EXAMINATION_OF_ACCUSED" && !isExaminationApprover) return true;
+        if (doc?.businessObject?.digitalizedDocumentDetails?.type === "MEDIATION" && !isMediationApprover) return true;
+        return false;
+      });
+
+    if (notAllowedItems?.length > 0) {
+      const notAllowedTypes = [...new Set(notAllowedItems?.map((doc) => t(doc?.businessObject?.digitalizedDocumentDetails?.type)))];
+      const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes?.join(", ");
+      setShowErrorToast({
+        label: msg,
+        error: true,
+      });
+      setTimeout(() => {
+        setShowErrorToast(null);
+      }, 5000);
+      return;
+    }
+    setShowBulkSignConfirmModal(true);
+  };
+
   return (
     <React.Fragment>
       {isLoading ? (
@@ -311,13 +340,13 @@ function BulkSignDigitalizationView() {
               onFormValueChange={onFormValueChange}
             ></InboxSearchComposer>{" "}
           </div>
-          {hasOrderEsignAccess && (
+          {hasSignFormsAccess && (
             <div className="bulk-submit-bar">
               <SubmitBar
                 label={t("SIGN_SELECTED_DIGITALIZATION_FORMS")}
                 submit="submit"
                 disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
+                onSubmit={handleBulkSign}
               />
             </div>
           )}
@@ -339,7 +368,7 @@ function BulkSignDigitalizationView() {
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
           actionSaveLabel={t("CS_FORM_BULK_SIGN")}
-          actionSaveOnSubmit={() => handleBulkSign()}
+          actionSaveOnSubmit={handleBulkSignConfirm}
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
