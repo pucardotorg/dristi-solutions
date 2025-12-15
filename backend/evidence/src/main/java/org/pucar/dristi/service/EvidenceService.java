@@ -26,7 +26,6 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -521,17 +520,16 @@ public class EvidenceService {
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
 
-            String evidenceNumber = evidenceRequest.getArtifact().getEvidenceNumber();
-            String filingNumber = evidenceRequest.getArtifact().getFilingNumber();
-
-            if(evidenceNumber != null && !evidenceNumber.startsWith(filingNumber)){
-                throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Evidence Number must start with case Filing Number");
-            }
-
             if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
-                if (ObjectUtils.isEmpty(evidenceNumber)) {
-                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
-                } else {
+                String action = Optional.of(evidenceRequest.getArtifact())
+                        .map(Artifact::getWorkflow)
+                        .map(Workflow::getAction)
+                        .orElse(null);
+                if(DELETE_DRAFT.equalsIgnoreCase(action)) {
+                    evidenceRequest.getArtifact().setEvidenceNumber(null);
+                }
+
+                else {
                     // check if the evidence number already exists for the case
                     checkUniqueEvidenceNumberForCase(evidenceRequest);
                 }
@@ -596,10 +594,19 @@ public class EvidenceService {
     }
 
     public void checkUniqueEvidenceNumberForCase(EvidenceRequest body){
+
+        // Check if evidence number is valid
+        String evidenceNumber = body.getArtifact().getEvidenceNumber();
+        String filingNumber = body.getArtifact().getFilingNumber();
+
+        if(evidenceNumber == null || !evidenceNumber.startsWith(filingNumber)){
+            throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Evidence Number must start with case Filing Number");
+        }
+
         // Throw exception if evidence number exists
         EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
-                .filingNumber(body.getArtifact().getFilingNumber())
-                .evidenceNumber(body.getArtifact().getEvidenceNumber())
+                .filingNumber(filingNumber)
+                .evidenceNumber(evidenceNumber)
                 .tenantId(body.getArtifact().getTenantId())
                 .build();
         Pagination pagination = Pagination.builder()
