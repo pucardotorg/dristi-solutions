@@ -40,7 +40,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {botdOrderList?.length ? (
+        {!botdOrderList?.length ? (
           <div style={{ marginTop: "20px" }}>
             {t("NO_BOTD_SUMMARY_AVAILABLE")}
           </div>
@@ -48,7 +48,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
         botdOrderList?.map((botdOrder, index) => (
           <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
             <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ marginLeft: "4px" }}>{botdOrder?.hearingNumber ? `${previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} ${t("BOTD_SUMMARY")}` : t("BOTD")}</div>
+              <div style={{ marginLeft: "4px" }}>{botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}</div>
               <div style={{ marginRight: "8px" }}>{`${formatDate(botdOrder?.createdDate)}`}</div>
             </div>
             <div>
