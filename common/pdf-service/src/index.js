@@ -122,12 +122,6 @@ var fontDescriptors = {
     italics: "src/fonts/Roboto-Italic.ttf",
     bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   },
-  RachanaMalyalam: {
-    normal: "src/fonts/Rachana-Regular.ttf",
-    bold: "src/fonts/Rachana-Bold.ttf",
-    italics: "src/fonts/Roboto-Italic.ttf",
-    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
-  },
   ManjiriMalyalam: {
     normal: "src/fonts/Manjari-Regular.ttf",
     bold: "src/fonts/Manjari-Bold.ttf",
@@ -137,13 +131,21 @@ var fontDescriptors = {
 };
 
 var defaultFontMapping = {
-  en_IN: 'ManjiriMalyalam',
-  ml_IN: 'ManjiriMalyalam',
+  en_IN: 'MalayalamSangamMn',
+  ml_IN: 'MalayalamSangamMn',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
-  or_IN: 'BalooBhaina'
+  or_IN: 'BalooBhaina',
+  mr_In: "ManjiriMalyalam",
 }
+
+const getFontForKey = (key, locale) => {
+  if(["digitisation-plea", "digitisation-examination-of-accused", "new-witness-deposition"].includes(key)) {
+     return defaultFontMapping["mr_In"];
+   }
+   return defaultFontMapping[locale];
+};
 
 const printer = new pdfMakePrinter(fontDescriptors);
 const uuidv4 = require("uuid/v4");
@@ -927,7 +929,7 @@ export const createAndSave = async (
       formatconfigCopy = {
         ...formatconfigCopy,
         defaultStyle: {
-          font: defaultFontMapping[locale],
+          font: getFontForKey(key, locale),
         },
       }
       
@@ -1463,7 +1465,7 @@ const prepareBulk = async (
           formatconfigCopy = {
             ...formatconfigCopy,
             defaultStyle: {
-              font: defaultFontMapping[locale],
+              font: getFontForKey(key, locale),
             },
           }
 
