@@ -268,7 +268,6 @@ const HomeHearingsTab = ({
                   filingNumber: hearingDetails?.filingNumber,
                   tenantId: hearingDetails?.tenantId,
                   hearingNumber: hearingDetails?.hearingNumber,
-                  hearingType: hearingDetails?.hearingType,
                 },
               },
               {}

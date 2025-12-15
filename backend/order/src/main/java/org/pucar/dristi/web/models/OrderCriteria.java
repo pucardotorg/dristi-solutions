@@ -45,9 +45,6 @@ public class OrderCriteria {
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
 
-    @JsonProperty("hearingType")
-    private String hearingType = null;
-
     @JsonProperty("scheduledHearingNumber")
     @Valid
     private String scheduledHearingNumber = null;

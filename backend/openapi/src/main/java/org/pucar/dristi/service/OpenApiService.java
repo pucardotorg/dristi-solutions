@@ -1069,7 +1069,6 @@ public class OpenApiService {
         response.setCnrNumber(order.getCnrNumber());
         response.setApplicationNumber(order.getApplicationNumber());
         response.setHearingNumber(order.getHearingNumber());
-        response.setHearingType(order.getHearingType());
         response.setScheduledHearingNumber(order.getScheduledHearingNumber());
         response.setOrderNumber(order.getOrderNumber());
         response.setLinkedOrderNumber(order.getLinkedOrderNumber());

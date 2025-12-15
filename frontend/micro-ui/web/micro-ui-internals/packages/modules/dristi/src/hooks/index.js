@@ -7,7 +7,6 @@ import useIndividualService from "./dristi/useIndividualService";
 import { DRISTIService } from "../services";
 import useGetEvidence from "./dristi/useGetEvidence";
 import useGetOrders from "./dristi/useGetOrders";
-import useGetBotdOrders from "./dristi/useGetBotdOrders";
 import useGetSubmissions from "./dristi/useGetSubmissions";
 import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
@@ -70,7 +69,6 @@ export const Urls = {
     getDraftOrder: "/order-management/v1/getDraftOrder",
     demandCreate: "/billing-service/demand/_create",
     ordersSearch: "/order/v1/search",
-    botdOrdersSearch: "/order-management/v1/getBotdOrders",
     ordersCreate: "/order/v1/create",
     submissionsSearch: "/application/v1/search",
     submissionsUpdate: "/application/v1/update",
@@ -149,7 +147,6 @@ const dristi = {
   useCreateHearings,
   useGetEvidence,
   useGetOrders,
-  useGetBotdOrders,
   useGetSubmissions,
   useApplicationDetails,
   useEvidenceDetails,
