@@ -571,7 +571,7 @@ public class PaymentService {
     }
 
     private boolean isSummonDemand(String entityType) {
-        return entityType.equals("task-summons") || entityType.equals("task-notice") || entityType.equals("task-warrant");
+        return entityType.equals("task-summons") || entityType.equals("task-notice") || entityType.equals("task-warrant") || entityType.equals("task-proclamation") || entityType.equals("task-attachment");
     }
 
     private List<DemandDetail> getDemandDetailSummons(List<Calculation> calculation, String entityType, String deliveryChannel, Map<String, Map<String, JSONArray>> paymentMasterData) {
