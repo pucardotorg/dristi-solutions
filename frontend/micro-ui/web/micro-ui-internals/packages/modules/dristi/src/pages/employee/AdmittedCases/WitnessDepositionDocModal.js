@@ -122,7 +122,7 @@ function WitnessDepositionDocModal({
         actionSaveLabel={saveLabel}
         hideSubmit={!Boolean(saveLabel)}
         actionSaveOnSubmit={handleSubmit}
-        popupStyles={{ width: "70vw", minHeight: "75vh", maxheight: "90vh" }}
+        popupStyles={{ width: "70vw", minHeight: "75vh", maxHeight: "90vh" }}
         headerBarMainStyle={{ minHeight: "50px" }}
         className={"review-submission-appl-modal bail-bond"}
         style={{ backgroundColor: "#007e7e !important" }}
