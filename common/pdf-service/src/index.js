@@ -136,16 +136,8 @@ var defaultFontMapping = {
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
-  or_IN: 'BalooBhaina',
-  mr_In: "ManjiriMalyalam",
+  or_IN: 'BalooBhaina'
 }
-
-const getFontForKey = (key, locale) => {
-  if(["digitisation-plea", "digitisation-examination-of-accused", "new-witness-deposition"].includes(key)) {
-     return defaultFontMapping["mr_In"];
-   }
-   return defaultFontMapping[locale];
-};
 
 const printer = new pdfMakePrinter(fontDescriptors);
 const uuidv4 = require("uuid/v4");
@@ -929,7 +921,7 @@ export const createAndSave = async (
       formatconfigCopy = {
         ...formatconfigCopy,
         defaultStyle: {
-          font: getFontForKey(key, locale),
+          font: defaultFontMapping[locale],
         },
       }
       
@@ -1465,7 +1457,7 @@ const prepareBulk = async (
           formatconfigCopy = {
             ...formatconfigCopy,
             defaultStyle: {
-              font: getFontForKey(key, locale),
+              font: defaultFontMapping[locale],
             },
           }
 
