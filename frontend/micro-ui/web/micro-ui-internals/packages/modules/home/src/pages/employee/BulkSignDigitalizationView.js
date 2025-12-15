@@ -1,4 +1,4 @@
-import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -8,8 +8,8 @@ import { digitalizationService } from "@egovernments/digit-ui-module-orders/src/
 import axios from "axios";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
-import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
+import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -57,6 +57,10 @@ function BulkSignDigitalizationView() {
   const hasSignFormsAccess = useMemo(() => {
     return isPleaApprover || isExaminationApprover || isMediationApprover;
   }, [isPleaApprover, isExaminationApprover, isMediationApprover]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -379,7 +383,23 @@ function BulkSignDigitalizationView() {
           }
         />
       )}
-      {showBulkSignSuccessModal && <OrderIssueBulkSuccesModal t={t} history={history} bulkSignOrderListLength={signedList?.length} />}
+      {showBulkSignSuccessModal && (
+        <Modal
+          actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
+          actionSaveOnSubmit={() => history.replace(homePath)}
+          className={"orders-issue-bulk-success-modal"}
+        >
+          <div>
+            <Banner
+              whichSvg={"tick"}
+              successful={true}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED_BULK_DOCUMENTS")} ${numberToWords(signedList?.length)} ${t("SIGNED_FORM_DOCUEMNTS")} `}
+              headerStyles={{ fontSize: "32px" }}
+              style={{ minWidth: "100%" }}
+            ></Banner>
+          </div>
+        </Modal>
+      )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
