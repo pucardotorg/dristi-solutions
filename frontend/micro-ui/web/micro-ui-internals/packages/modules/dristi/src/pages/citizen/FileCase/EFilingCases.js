@@ -2172,23 +2172,23 @@ function EFilingCases({ path }) {
       ) {
         isValidationError = true;
       }
-     if (
-  formdata
-  ?.filter((data) => data.isenabled)
-  ?.some((data) =>
-  ageValidation({
-  formData: data?.data,
-  selected: "respondentAge",
-  setFormErrors: setFormErrors.current,
-  clearFormDataErrors:clearFormDataErrors.current,
-  })
-  )
-  ) {
-  isValidationError = isValidationError || true;
-  }
-  if(isValidationError){
-  return;
-  }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "respondentAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
+        return;
+      }
     }
  
     if (
