@@ -1408,7 +1408,7 @@ export const onDocumentUpload = async (documentType = "Document", fileData, file
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   } catch (error) {
-    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType);
+    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType, error?.response?.data?.Errors?.[0]?.code);
   }
 };
 
