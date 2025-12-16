@@ -66,6 +66,7 @@ import {
   itemTextConfig,
   configsCaseSettlementAccept,
   configsCaseSettlementReject,
+  configsAbateCase,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -153,6 +154,7 @@ const configKeys = {
   MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER: configsMoveCaseOutOfLongPendingRegister,
   COST: configsCost,
   WITNESS_BATTA: configsWitnessBatta,
+  ABATE_CASE: configsAbateCase,
 };
 
 const stateSlaMap = {
@@ -191,6 +193,7 @@ const stateSlaMap = {
   COST: 3,
   WITNESS_BATTA: 3,
   DRAFT_IN_PROGRESS: 2,
+  ABATE_CASE: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -935,6 +938,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `DISMISS_CASE`,
@@ -952,6 +956,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
@@ -975,6 +980,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `TAKE_COGNIZANCE`,
@@ -992,6 +998,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
           orderTypes
@@ -1015,6 +1022,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `TAKE_COGNIZANCE`,
@@ -1033,6 +1041,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
@@ -1054,6 +1063,7 @@ const GenerateOrdersV2 = () => {
               `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
               `COST`,
               `WITNESS_BATTA`,
+              `ABATE_CASE`,
             ]
           : [
               `SUMMONS`,
@@ -1068,6 +1078,7 @@ const GenerateOrdersV2 = () => {
               `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
               `COST`,
               `WITNESS_BATTA`,
+              `ABATE_CASE`,
             ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
@@ -1091,6 +1102,7 @@ const GenerateOrdersV2 = () => {
                 `MOVE_CASE_TO_LONG_PENDING_REGISTER`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `SUMMONS`,
@@ -1108,6 +1120,7 @@ const GenerateOrdersV2 = () => {
                 `MOVE_CASE_TO_LONG_PENDING_REGISTER`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
@@ -1130,6 +1143,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `SUMMONS`,
@@ -1146,6 +1160,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
@@ -2234,6 +2249,12 @@ const GenerateOrdersV2 = () => {
           newApplicationDetails?.additionalDetails?.formdata?.initialHearingDate ||
           "";
         setValueRef?.current?.[index]?.("originalHearingDate", updatedFormdata.originalHearingDate);
+      }
+      if (currentOrderType === "ABATE_CASE") {
+        updatedFormdata.wasDisposalContested = {
+          code: "UNCONTESTED",
+          name: "UNCONTESTED",
+        };
       }
       // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
       return {
