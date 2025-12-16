@@ -147,6 +147,10 @@ public class CronJobScheduler {
 
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
+            if(hearingLink == null){
+                log.error("VC link shortened URL not configured in MDMS Hearing master");
+                return;
+            }
             log.info("Sending notifications for hearings scheduled tomorrow");
             RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
             List<Future<Boolean>> futures = new ArrayList<>();
@@ -284,7 +288,12 @@ public class CronJobScheduler {
         for(CourtCase courtCase : cases){
             for(AdvocateMapping advocate: courtCase.getRepresentatives()){
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
-                String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                JsonNode additionalDetails = advocateNode.path("additionalDetails");
+                if(additionalDetails.isMissingNode() || !additionalDetails.has("uuid")){
+                    log.warn("Advocate missing uuid in additionalDetails for case {}", courtCase.getFilingNumber());
+                    continue;
+                }
+                String uuid = additionalDetails.get("uuid").asText();
 
                 advocateCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
@@ -300,7 +309,12 @@ public class CronJobScheduler {
         for(CourtCase courtCase : cases){
             for(Party litigant: courtCase.getLitigants()){
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
-                String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
+                JsonNode additionalDetails = litigantNode.path("additionalDetails");
+                if(additionalDetails.isMissingNode() || !additionalDetails.has("uuid")){
+                    log.warn("Litigant missing uuid in additionalDetails for case {}", courtCase.getFilingNumber());
+                    continue;
+                }
+                String uuid = additionalDetails.get("uuid").asText();
 
                 litigantCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
