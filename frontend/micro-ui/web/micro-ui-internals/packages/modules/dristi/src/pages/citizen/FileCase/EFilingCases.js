@@ -2394,7 +2394,7 @@ function EFilingCases({ path }) {
                 authToken: Digit.UserService.getUser().access_token,
                 userInfo: Digit.UserService.getUser()?.info,
                 msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-                apiId: "Rainmaker",
+                apiId: "Dristi",
               },
             },
             { responseType: "blob" } // Important: Set responseType to handle binary data
@@ -2972,7 +2972,7 @@ function EFilingCases({ path }) {
             authToken: Digit.UserService.getUser().access_token,
             userInfo: Digit.UserService.getUser()?.info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         { responseType: "blob" } // Important: Set responseType to handle binary data
