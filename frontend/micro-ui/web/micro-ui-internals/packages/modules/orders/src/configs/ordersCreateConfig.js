@@ -6205,3 +6205,36 @@ export const configsWitnessBatta = [
     ],
   },
 ];
+
+export const configsAbateCase = [
+  {
+    body: [
+      {
+        label: "WAS_DISPOSAL_CONTESTED_OR_UNCONTESTED",
+        isMandatory: true,
+        key: "wasDisposalContested",
+        schemaKeyPath: "orderDetails.wasDisposalContested",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "wasDisposalContested",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "CONTESTED",
+              name: "CONTESTED",
+            },
+            {
+              code: "UNCONTESTED",
+              name: "UNCONTESTED",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
