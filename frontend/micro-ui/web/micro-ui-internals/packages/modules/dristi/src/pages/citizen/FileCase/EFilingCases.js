@@ -2176,7 +2176,7 @@ function EFilingCases({ path }) {
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {
-          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+          message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
@@ -2242,7 +2242,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          toast.error(`${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
