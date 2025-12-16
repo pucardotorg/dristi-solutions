@@ -2255,6 +2255,7 @@ const GenerateOrdersV2 = () => {
           code: "UNCONTESTED",
           name: "UNCONTESTED",
         };
+        setValueRef?.current?.[index]?.("wasDisposalContested", updatedFormdata.wasDisposalContested);
       }
       // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
       return {
