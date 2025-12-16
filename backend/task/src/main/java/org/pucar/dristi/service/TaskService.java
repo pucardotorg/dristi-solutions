@@ -1122,10 +1122,14 @@ public class TaskService {
 
                 enrichmentUtil.enrichAuditDetailsForUpdate(task, request.getRequestInfo());
 
-                producer.push(config.getTaskUpdatePendingCollectionTopic(), TaskRequest.builder()
+                TaskRequest taskRequest = TaskRequest.builder()
                         .task(task)
                         .requestInfo(request.getRequestInfo())
-                        .build());
+                        .build();
+
+                closeEnvelopePendingTask(taskRequest);
+
+                producer.push(config.getTaskUpdatePendingCollectionTopic(), taskRequest);
 
                 log.info("Successfully updated isPendingCollection to false for task: {}", updateTask.getTaskNumber());
 
