@@ -18,6 +18,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const name = "Signature";
   const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
@@ -55,6 +56,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const cleanString = (input) => {
@@ -77,6 +79,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -198,6 +201,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
     />
   );
 }

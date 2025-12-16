@@ -91,6 +91,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [allHearings, setAllHearings] = useState(bulkAllHearingsData || []);
   const [loading, setIsLoader] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -181,6 +182,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -448,6 +450,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -647,6 +650,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (

@@ -136,6 +136,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [bulkSignatureData, setBulkSignatureData] = useState({});
   const [isBulkSigned, setIsBulkSigned] = useState(false);
   const [bulkSignatureId, setBulkSignatureId] = useState("");
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
@@ -908,6 +909,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onBulkSignatureSubmit = async () => {
@@ -921,6 +923,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } catch (error) {
         setBulkSignatureData({});
         setIsBulkSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -1712,6 +1715,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          fileUploadError={fileUploadError}
         />
       )}
       {showErrorToast && (
