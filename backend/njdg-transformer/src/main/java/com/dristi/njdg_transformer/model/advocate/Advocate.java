@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package com.dristi.njdg_transformer.model.advocate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;

@@ -472,7 +472,7 @@ public class CaseRepository {
             return 1;
         } catch (DataAccessException e) {
             log.error("Failed to get next sr_no for CINO: {} | error: {}", cino, e.getMessage(), e);
-            return 1; // Default fallback
+            return 1;
         }
     }
 

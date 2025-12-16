@@ -466,4 +466,7 @@ public class Configuration {
 
 	@Value("${open.hearing.topic}")
 	private String openHearingTopic;
+
+	@Value("${case.conversion.topic}")
+	private String caseConversionTopic;
 }
