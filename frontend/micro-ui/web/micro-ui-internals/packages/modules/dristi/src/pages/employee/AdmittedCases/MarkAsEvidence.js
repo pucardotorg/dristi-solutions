@@ -443,7 +443,7 @@ const MarkAsEvidence = ({
       };
       const witnessList = response?.criteria[0]?.responseList[0]?.witnessDetails?.map((witness) => {
         const data = witness || {};
-        return (data?.witnessTag && hasNumberSuffix(data?.witnessTag))
+        return data?.witnessTag && hasNumberSuffix(data?.witnessTag)
           ? {
               witnessTag: data.witnessTag || "",
               firstName: data.firstName || "",
@@ -451,13 +451,14 @@ const MarkAsEvidence = ({
               middleName: data.middleName || "",
               fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
               code: data.witnessTag,
-              displayName: data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
+              displayName:
+                data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
             }
           : null;
       });
       const LitigantList = (response?.criteria?.[0]?.responseList?.[0]?.litigants || [])?.map((litigant) => {
         const data = litigant?.additionalDetails?.tag || null;
-        return (data && hasNumberSuffix(data))
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: litigant?.additionalDetails?.fullName,
@@ -468,7 +469,7 @@ const MarkAsEvidence = ({
       });
       const advList = (response?.criteria?.[0]?.responseList?.[0]?.representatives || [])?.map((adv) => {
         const data = adv?.additionalDetails?.tag || null;
-        return (data && hasNumberSuffix(data))
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: adv?.additionalDetails?.advocateName,
@@ -479,7 +480,7 @@ const MarkAsEvidence = ({
       });
       const poaList = (response?.criteria?.[0]?.responseList?.[0]?.poaHolders || [])?.map((poa) => {
         const data = poa?.additionalDetails?.tag || null;
-        return (data && hasNumberSuffix(data))
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: poa?.name,
@@ -492,9 +493,12 @@ const MarkAsEvidence = ({
       const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
 
       const evidenceTag = evidenceDetails?.tag || sessionData?.tag;
+      const isDeletedDraft = evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT" || sessionData?.evidenceMarkedStatus === "DELETED_DRAFT";
 
-      if (evidenceTag) {
+      if (evidenceTag && !isDeletedDraft) {
         setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
+      } else {
+        setWitnessTag(null);
       }
       if (evidenceDetails?.isEvidence && !evidenceDetails?.additionalDetails?.botd) {
         getAdiaryEntries(response?.criteria[0]?.responseList[0]?.cmpNumber || filingNumber);
@@ -681,7 +685,11 @@ const MarkAsEvidence = ({
         setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag?.value}${evidenceNumber}`);
         setTaggedEvidenceNumber(`${evidenceTag?.value}${evidenceNumber}`);
         await handleMarkEvidence(
-          evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
+          evidenceDetails?.evidenceMarkedStatus === null
+            ? MarkAsEvidenceAction?.CREATE
+            : evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT"
+            ? MarkAsEvidenceAction.RECREATE
+            : MarkAsEvidenceAction?.SAVEDRAFT
         ).then((res) => {
           if (res) {
             setStepper(1);
