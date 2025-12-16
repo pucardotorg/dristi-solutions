@@ -533,8 +533,10 @@ export const UICustomizations = {
         completeStatusData = compStatus ? [compStatus] : sentData;
       }
       let resolvedApplicationStatus = "";
-      if (activeTabIndex === 1) resolvedApplicationStatus = "SIGN_PENDING";
+      if (activeTabIndex === 0 || activeTabIndex === 1) resolvedApplicationStatus = "SIGN_PENDING";
       else if (activeTabIndex === 2) resolvedApplicationStatus = "SIGNED";
+      const initialIsPending = requestCriteria?.body?.criteria?.isPendingCollection;
+      const resolvedIsPendingCollection = typeof initialIsPending === "boolean" ? initialIsPending : activeTabIndex === 0 ? true : false;
 
       return {
         ...requestCriteria,
@@ -549,6 +551,7 @@ export const UICustomizations = {
             ...(hearingDate !== null && { hearingDate }),
             ...(courtId && { courtId }),
             applicationStatus: resolvedApplicationStatus,
+            isPendingCollection: resolvedIsPendingCollection,
           },
           tenantId,
           pagination: {

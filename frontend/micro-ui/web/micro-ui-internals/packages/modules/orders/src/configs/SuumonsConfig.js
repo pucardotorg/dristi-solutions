@@ -76,6 +76,7 @@ export const SummonsTabsConfig = {
           criteria: {
             applicationStatus: "SIGN_PENDING",
             completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: true,
           },
         },
         masterName: "commonUiConfig",
@@ -233,6 +234,7 @@ export const SummonsTabsConfig = {
           criteria: {
             applicationStatus: "SIGN_PENDING",
             completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -521,6 +523,7 @@ export const SummonsTabsConfig = {
           criteria: {
             applicationStatus: "SIGNED",
             completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -769,6 +772,7 @@ export const SummonsTabsConfig = {
         requestBody: {
           criteria: {
             completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -970,6 +974,7 @@ export const SummonsTabsConfig = {
         requestBody: {
           criteria: {
             completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",

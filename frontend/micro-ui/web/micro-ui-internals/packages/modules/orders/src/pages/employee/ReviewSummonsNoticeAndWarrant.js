@@ -827,9 +827,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setShowBulkSendConfirmModal(true);
   }, [bulkSendList, t]);
 
-  const handleBulkPendingRpad = useCallback(() => {
+  const handleBulkPendingRpad = useCallback(async () => {
     const selectedItems = bulkRpadList?.filter((item) => item?.isSelected) || [];
-    if (selectedItems.length === 0) {
+    if (!selectedItems?.length) {
       setShowErrorToast({
         message: t("NO_DOCUMENTS_SELECTED"),
         error: true,
@@ -839,15 +839,26 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }, 5000);
       return;
     }
-    // [TODO: add success condition based on API response]
-    setShowErrorToast({
-      message: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY"),
-      error: false,
-    });
-    setTimeout(() => {
-      setShowErrorToast(null);
-    }, 5000);
-  }, [bulkRpadList, t]);
+    try {
+      const payload = {
+        tasks: selectedItems.map((item) => ({
+          tenantId: tenantId,
+          taskNumber: item?.taskNumber,
+        })),
+      };
+
+      await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+
+      const total = selectedItems.length;
+      setShowErrorToast({ message: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total }), error: false });
+      setTimeout(() => setShowErrorToast(null), 3000);
+      setBulkRpadList((prev) => prev?.filter((i) => !selectedItems.some((s) => s.taskNumber === i.taskNumber)) || []);
+      setReload((prev) => !prev);
+    } catch (error) {
+      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
+      setTimeout(() => setShowErrorToast(null), 5000);
+    }
+  }, [bulkRpadList, t, tenantId]);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
