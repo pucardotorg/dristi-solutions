@@ -47,8 +47,7 @@ class TransformerPropertiesTest {
                 "http://individual",
                 "/individual/v1/_search",
                 "Asia/Kolkata",
-                allowedTenantIds,
-                "Hearing on {hearingDate} adjourned to {nextDate}"
+                allowedTenantIds
         );
 
         assertEquals("http://filestore", properties.getFileStoreHost());
@@ -74,7 +73,6 @@ class TransformerPropertiesTest {
         assertEquals("/individual/v1/_search", properties.getIndividualSearchPath());
         assertEquals("Asia/Kolkata", properties.getApplicationZoneId());
         assertEquals(allowedTenantIds, properties.getAllowedTenantIds());
-        assertEquals("Hearing on {hearingDate} adjourned to {nextDate}", properties.getNotificationOrderBusinessTemplate());
     }
 
     @Test

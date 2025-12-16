@@ -8,11 +8,12 @@ import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
-import com.dristi.njdg_transformer.model.order.Notification;
-import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.service.*;
+import com.dristi.njdg_transformer.service.AdvocateService;
+import com.dristi.njdg_transformer.service.CaseService;
+import com.dristi.njdg_transformer.service.HearingService;
+import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,9 +49,6 @@ class NJDGControllerTest {
 
     @Mock
     private ObjectMapper objectMapper;
-
-    @Mock
-    private OrderNotificationService orderNotificationService;
 
     @InjectMocks
     private NJDGController njdgController;
@@ -309,111 +307,6 @@ class NJDGControllerTest {
                 .thenThrow(new RuntimeException("Processing error"));
 
         ResponseEntity<?> response = njdgController.processAndUpdateAdvocates(advocateRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    }
-
-    // Tests for processBusinessDayOrders endpoint
-    @Test
-    void testProcessBusinessDayOrders_Success() {
-        Order order = new Order();
-        order.setOrderNumber("ORD-001");
-        order.setFilingNumber("FN-001");
-
-        OrderRequest orderRequest = new OrderRequest();
-        orderRequest.setOrder(order);
-        orderRequest.setRequestInfo(requestInfo);
-
-        doNothing().when(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
-
-        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
-    }
-
-    @Test
-    void testProcessBusinessDayOrders_NullOrder() {
-        OrderRequest orderRequest = new OrderRequest();
-        orderRequest.setOrder(null);
-        orderRequest.setRequestInfo(requestInfo);
-
-        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(orderNotificationService, never()).processOrdersWithHearings(any(), any());
-    }
-
-    @Test
-    void testProcessBusinessDayOrders_Error() {
-        Order order = new Order();
-        order.setOrderNumber("ORD-001");
-
-        OrderRequest orderRequest = new OrderRequest();
-        orderRequest.setOrder(order);
-        orderRequest.setRequestInfo(requestInfo);
-
-        doThrow(new RuntimeException("Processing error"))
-                .when(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
-
-        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    }
-
-    // Tests for processOrderNotification endpoint
-    @Test
-    void testProcessOrderNotification_Success() {
-        Notification notification = Notification.builder()
-                .notificationNumber("NOT-001")
-                .tenantId("kl.kollam")
-                .courtId("COURT-001")
-                .createdDate(System.currentTimeMillis())
-                .build();
-        notification.addCaseNumberItem("CASE-001");
-
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(notification)
-                .requestInfo(requestInfo)
-                .build();
-
-        doNothing().when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
-
-        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
-    }
-
-    @Test
-    void testProcessOrderNotification_NullNotification() {
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(null)
-                .requestInfo(requestInfo)
-                .build();
-
-        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(orderNotificationService, never()).processNotificationOrders(any(), any());
-    }
-
-    @Test
-    void testProcessOrderNotification_Error() {
-        Notification notification = Notification.builder()
-                .notificationNumber("NOT-001")
-                .tenantId("kl.kollam")
-                .build();
-
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(notification)
-                .requestInfo(requestInfo)
-                .build();
-
-        doThrow(new RuntimeException("Processing error"))
-                .when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
-
-        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
