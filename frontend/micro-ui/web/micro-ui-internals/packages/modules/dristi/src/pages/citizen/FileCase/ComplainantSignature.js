@@ -196,6 +196,7 @@ const ComplainantSignature = ({ path }) => {
   const [isDocumentUpload, setDocumentUpload] = useState(false);
   const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -241,6 +242,7 @@ const ComplainantSignature = ({ path }) => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -253,6 +255,7 @@ const ComplainantSignature = ({ path }) => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -1114,6 +1117,7 @@ const ComplainantSignature = ({ path }) => {
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
           onSubmit={onSubmit}
+          fileUploadError={fileUploadError}
         />
       )}
       {isEditCaseModal && (

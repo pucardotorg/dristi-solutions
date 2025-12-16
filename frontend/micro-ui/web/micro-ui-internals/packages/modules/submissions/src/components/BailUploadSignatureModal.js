@@ -29,6 +29,7 @@ const BailUploadSignatureModal = ({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
 
@@ -61,6 +62,7 @@ const BailUploadSignatureModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -73,6 +75,7 @@ const BailUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -114,6 +117,7 @@ const BailUploadSignatureModal = ({
           showDownloadText={true}
           fileStoreId={bailBondFileStoreId}
           cancelLabel={"SUBMIT"}
+          fileUploadError={fileUploadError}
         />
       )}
     </React.Fragment>
