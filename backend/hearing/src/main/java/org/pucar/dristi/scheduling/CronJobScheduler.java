@@ -11,30 +11,23 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.JsonUtil;
 import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.RequestInfoGenerator;
-import org.pucar.dristi.util.UserUtil;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingCriteria;
 import org.pucar.dristi.web.models.HearingSearchRequest;
-import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.web.models.cases.AdvocateMapping;
 import org.pucar.dristi.web.models.cases.CourtCase;
-import org.pucar.dristi.web.models.orders.OrderCriteria;
-import org.pucar.dristi.web.models.orders.OrderListResponse;
-import org.pucar.dristi.web.models.orders.OrderSearchRequest;
+import org.pucar.dristi.web.models.cases.Party;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -59,6 +52,7 @@ import static org.pucar.dristi.config.ServiceConstants.HEARINGS_SCHEDULED_TOMORR
 import static org.pucar.dristi.config.ServiceConstants.HEARING_LINK_MASTER_NAME;
 import static org.pucar.dristi.config.ServiceConstants.HEARING_MODULE_NAME;
 import static org.pucar.dristi.config.ServiceConstants.SCHEDULED;
+import static org.pucar.dristi.config.ServiceConstants.SHORTENED_URL_PATH_PARAM;
 
 @Component
 @Slf4j
@@ -72,9 +66,6 @@ public class CronJobScheduler {
     private final ExecutorService executorService;
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
-    private final UserUtil userUtil;
-    private final OrderUtil orderUtil;
-    private final AdvocateUtil advocateUtil;
     private final IndividualService individualService;
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
@@ -83,17 +74,14 @@ public class CronJobScheduler {
 
 
     @Autowired
-    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, UserUtil userUtil, OrderUtil orderUtil, AdvocateUtil advocateUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil, ObjectMapper objectMapper) {
+    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil, ObjectMapper objectMapper) {
         this.hearingRepository = hearingRepository;
         this.requestInfoGenerator = requestInfoGenerator;
         this.smsNotificationService = smsNotificationService;
         this.config = config;
         this.caseUtil = caseUtil;
-        this.userUtil = userUtil;
-        this.orderUtil = orderUtil;
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.dateUtil = dateUtil;
-        this.advocateUtil = advocateUtil;
         this.individualService = individualService;
         this.mdmsUtil = mdmsUtil;
         this.jsonUtil = jsonUtil;
@@ -107,8 +95,15 @@ public class CronJobScheduler {
                 .get(HEARING_MODULE_NAME)
                 .get(HEARING_LINK_MASTER_NAME);
 
-        Object data = hearingLinkArray.get(0);
-        hearingLink = jsonUtil.getNestedValue(data, List.of("link"), String.class);
+        for(Object item: hearingLinkArray){
+            String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
+            // URL shortening service adds this param in every url
+            if(link!=null && link.contains(SHORTENED_URL_PATH_PARAM)){
+                log.info("VC link shortened url: {}", link);
+                hearingLink = link;
+                break;
+            }
+        }
     }
 
     public void sendNotificationOnHearingsHeldToday() {
@@ -126,18 +121,18 @@ public class CronJobScheduler {
                 List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-               advocates.forEach(advocate -> {
+               for(Individual advocate: advocates){
                    List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(advocate, advocateCases, requestInfo));
                    futures.add(future);
-               });
+               }
 
                // Send sms to litigants
-                litigants.forEach(litigant -> {
+                for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
                     Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(litigant, litigantCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 // Wait for all tasks to complete
                 handleFutureResults(futures);
@@ -164,18 +159,18 @@ public class CronJobScheduler {
                 List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-                advocates.forEach(individual -> {
-                    List<CourtCase> advocateCases = advocateCaseMap.get(individual.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(individual, advocateCases, requestInfo));
+                for(Individual advocate: advocates){
+                    List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(advocate, advocateCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 // Send sms to litigants
-                litigants.forEach(litigant -> {
+                for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
                     Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(litigant, litigantCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 handleFutureResults(futures);
 
@@ -264,7 +259,7 @@ public class CronJobScheduler {
         Set<String> filingNumbers = hearings.stream()
                 .map(hearing -> hearing.getFilingNumber().get(0))
                 .collect(Collectors.toSet());
-        filingNumbers.forEach(filingNumber -> {
+        for(String filingNumber : filingNumbers){
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(filingNumber)
                     .defaultFields(false)
@@ -277,7 +272,7 @@ public class CronJobScheduler {
             JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(courtCaseNode, CourtCase.class);
             cases.add(courtCase);
-        });
+        }
 
 
         return cases;
@@ -286,32 +281,32 @@ public class CronJobScheduler {
 
     private Map<String, List<CourtCase>> getAdvocateCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
-        cases.forEach(courtCase -> {
-            courtCase.getRepresentatives().forEach(advocate -> {
+        for(CourtCase courtCase : cases){
+            for(AdvocateMapping advocate: courtCase.getRepresentatives()){
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
                 String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
 
                 advocateCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
                         .add(courtCase);
-            });
-        });
+            }
+        }
 
         return advocateCaseMap;
     }
 
     private Map<String, List<CourtCase>> getLitigantCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
-        cases.forEach(courtCase -> {
-            courtCase.getLitigants().forEach(litigant -> {
+        for(CourtCase courtCase : cases){
+            for(Party litigant: courtCase.getLitigants()){
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
                 String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
 
                 litigantCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
                         .add(courtCase);
-            });
-        });
+            }
+        }
 
         return litigantCaseMap;
     }
@@ -361,9 +356,11 @@ public class CronJobScheduler {
 
     private List<Hearing> getHearingsScheduledTomorrow(RequestInfo requestInfo){
         ZoneId zoneId = ZoneId.of(config.getZoneId());
-        Long tomorrow = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(1));
+        Long tomorrowStart = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(1));
+        Long tomorrowEnd = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(2)) - 1L;
         HearingCriteria hearingCriteria = HearingCriteria.builder()
-                .fromDate(tomorrow)
+                .fromDate(tomorrowStart)
+                .toDate(tomorrowEnd)
                 .status(SCHEDULED)
                 .build();
 
