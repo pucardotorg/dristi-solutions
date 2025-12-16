@@ -1,4 +1,4 @@
-CREATE TABLE dristi_case_conversion ADD COLUMN (
+CREATE TABLE dristi_case_conversion (
     tenantId varchar(64),
     caseId varchar(64),
     filingNumber varchar(64),
