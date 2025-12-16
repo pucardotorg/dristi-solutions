@@ -18,4 +18,7 @@ public class HearingDraftOrder {
 
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
+
+    @JsonProperty("hearingType")
+    private String hearingType = null;
 }

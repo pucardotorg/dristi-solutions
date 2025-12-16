@@ -17,6 +17,8 @@ import pucar.service.OrderService;
 import pucar.util.ResponseInfoFactory;
 import pucar.web.models.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("")
@@ -51,15 +53,33 @@ public class OrderApiController {
     @RequestMapping(value = "/v1/getDraftOrder", method = RequestMethod.POST)
     public ResponseEntity<DraftOrderResponse> getDraftOrder(@Parameter(in = ParameterIn.DEFAULT, description = "Check Draft order for hearing Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody HearingDraftOrderRequest request) {
         String hearingNumber = request.getHearingDraftOrder().getHearingNumber();
+        String hearingType = request.getHearingDraftOrder().getHearingType();
         String filingNumber = request.getHearingDraftOrder().getFilingNumber();
         String cnrNumber = request.getHearingDraftOrder().getCnrNumber();
         String tenantId = request.getHearingDraftOrder().getTenantId();
 
-        Order order = orderService.createDraftOrder(hearingNumber, tenantId, filingNumber, cnrNumber, request.getRequestInfo());
+        Order order = orderService.createDraftOrder(hearingNumber, hearingType, tenantId, filingNumber, cnrNumber, request.getRequestInfo());
         DraftOrderResponse response = DraftOrderResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true))
                 .order(order)
                 .build();
         return ResponseEntity.accepted().body(response);
+    }
+
+    @RequestMapping(value = "/v1/getBotdOrders", method = RequestMethod.POST)
+    public ResponseEntity<BotdOrderResponse> getBotdOrders(@Parameter(in = ParameterIn.DEFAULT, description = "Check Botd Order for Order Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody BotdOrderRequest request) {
+
+        String filingNumber = request.getCriteria().getFilingNumber();
+        String tenantId = request.getCriteria().getTenantId();
+        String orderNumber = request.getCriteria().getOrderNumber();
+
+        BotdOrderListResponse botdOrderListResponse = orderService.getBotdOrders(tenantId, filingNumber, orderNumber, request.getPagination(), request.getRequestInfo());
+
+        BotdOrderResponse response = BotdOrderResponse.builder()
+                .responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true))
+                .botdOrderList(botdOrderListResponse.getBotdOrderList())
+                .pagination(botdOrderListResponse.getPagination())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(value = "/v1/_runCronJob")
