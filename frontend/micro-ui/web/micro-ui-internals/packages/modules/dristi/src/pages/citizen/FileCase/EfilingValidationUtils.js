@@ -1099,23 +1099,23 @@ export const ageValidation = ({ formData, selected, setFormErrors, clearFormData
     clearFormDataErrors("poaAge");
   }
   else
-    if (selected === "complainantAge"){
-    const complainantAge = parseInt(formData?.complainantAge, 10);
-    if (complainantAge < 18 || complainantAge > 999) {
-      setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" }); 
-      return true;
-    } 
-    clearFormDataErrors("complainantAge"); 
-  }
-  else
-    if (selected === "respondentAge"){
-    const respondentAge = parseInt(formData?.respondentAge, 10);
-    if (respondentAge < 18 || respondentAge > 999) {
-      setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" }); 
-      return true;
-    } 
-    clearFormDataErrors("respondentAge"); 
-  } 
+    if (selected === "complainantAge") {
+      const complainantAge = parseInt(formData?.complainantAge, 10);
+      if (complainantAge < 18 || complainantAge > 999) {
+        setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" });
+        return true;
+      }
+      clearFormDataErrors("complainantAge");
+    }
+    else
+      if (selected === "respondentAge") {
+        const respondentAge = parseInt(formData?.respondentAge, 10);
+        if (respondentAge < 18 || respondentAge > 999) {
+          setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" });
+          return true;
+        }
+        clearFormDataErrors("respondentAge");
+      }
 }
 
 
