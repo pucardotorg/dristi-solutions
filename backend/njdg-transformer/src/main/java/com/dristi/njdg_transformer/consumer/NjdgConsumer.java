@@ -395,6 +395,10 @@ public class NjdgConsumer {
 
             log.info("Processing case conversion details | CINO: {}", caseTypeDetails.getCino());
 
+            Integer srNo = caseRepository.getNextSrNoForCaseConversion(caseTypeDetails.getCino());
+            caseTypeDetails.setSrNo(srNo);
+            log.debug("Assigned sr_no: {} for CINO: {}", srNo, caseTypeDetails.getCino());
+
             caseRepository.insertCaseConversionDetails(caseTypeDetails);
             log.info("Successfully processed case conversion | CINO: {}", caseTypeDetails.getCino());
         } catch (Exception e) {
