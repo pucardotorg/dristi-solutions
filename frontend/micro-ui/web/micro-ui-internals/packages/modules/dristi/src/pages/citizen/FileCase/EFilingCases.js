@@ -66,7 +66,14 @@ import isMatch from "lodash/isMatch";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import { getFilingType, getSuffixByBusinessCode, TaskManagementWorkflowState } from "../../../Utils";
+import {
+  getComplainants,
+  getComplainantSideAdvocates,
+  getComplainantsSidePoAHolders,
+  getFilingType,
+  getSuffixByBusinessCode,
+  TaskManagementWorkflowState,
+} from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
@@ -614,14 +621,36 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress, judgeObj, scrutinyObj, selected]);
 
-  useEffect(() => {
-    const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-    setIsFilingParty(filingParty);
+  const allComplainantSideUuids = useMemo(() => {
+    const complainants = getComplainants(caseDetails);
+    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
+    const advocates = getComplainantSideAdvocates(caseDetails) || [];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
+    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+  }, [caseDetails]);
 
-    if (caseDetails && !filingParty && !isLoading) {
-      history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+  useEffect(() => {
+    if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
+      // In draft stage, only the party who created the case can have the edit access.
+      const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
+      setIsFilingParty(filingParty);
+      if (caseDetails && !filingParty && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
     }
-  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid]);
+    if (caseDetails?.status === "CASE_REASSIGNED") {
+      // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
+      const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
+      setIsFilingParty(isCaseCorrectionAllowed);
+      if (caseDetails && !isCaseCorrectionAllowed && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
+    }
+    //If already other party changed the case stage -> redirect accordingly after refetching case data.
+    if ([CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_RE_E_SIGN]?.includes(caseDetails?.status)) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}`);
+    }
+  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids]);
 
   const completedComplainants = useMemo(() => {
     // check TODO: apply filter for formdata which is enabled and completed
@@ -2124,14 +2153,14 @@ function EFilingCases({ path }) {
             ageValidation({
               formData: data?.data,
               selected: "poaAge",
-            setFormErrors: setFormErrors.current,
-            clearFormDataErrors:clearFormDataErrors.current,
-          })
-        )
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
       ) {
-        isValidationError = isValidationError|| true;
+        isValidationError = isValidationError || true;
       }
-      if(isValidationError){
+      if (isValidationError) {
         return;
       }
       if (
