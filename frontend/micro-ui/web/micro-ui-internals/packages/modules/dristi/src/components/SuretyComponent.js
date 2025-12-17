@@ -4,6 +4,7 @@ import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import CustomEmailTextInput from "../pages/citizen/registration/CustomEmailTextInput";
 import AddressBailBond from "./AddressBailBond";
+import { sanitizeData } from "../Utils";
 
 const CloseBtn = () => {
   return (
@@ -73,8 +74,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
     updateFormData(updatedFormInstances);
   }
 
-  const handleChange = (e, input, formIndex) => {
-    let { value } = e.target;
+  const handleChange = (value, input, formIndex) => {
     setValue(value, input.key, input, formIndex);
   };
 
@@ -134,7 +134,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                             name={input.name}
                             value={obj?.[input?.name] ? obj?.[input?.name] : ""}
                             onChange={(e) => {
-                              const newValue = e.target.value;
+                              const newValue = sanitizeData(e.target.value);
                               const regex = input?.validation?.pattern;
                               if (input?.key === "email") {
                                 if (newValue) {
@@ -148,9 +148,9 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                                 } else {
                                   clearErrors(`${input?.key}_${formIndex}`);
                                 }
-                                handleChange(e, input, formIndex);
+                                handleChange(newValue, input, formIndex);
                               } else if (!regex || newValue === "" || new RegExp(regex).test(newValue)) {
-                                handleChange(e, input, formIndex);
+                                handleChange(newValue, input, formIndex);
                               }
                             }}
                             disable={input?.isDisabled}
