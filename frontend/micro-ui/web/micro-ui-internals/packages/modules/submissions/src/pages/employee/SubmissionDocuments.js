@@ -352,7 +352,8 @@ const SubmissionDocuments = ({ path }) => {
       }
     } catch (error) {
       console.error("Error occured", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      setShowErrorToast({ label: t(errorCode || "SOMETHING_WENT_WRONG"), error: true });
     }
   };
 
