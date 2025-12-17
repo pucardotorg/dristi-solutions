@@ -3331,7 +3331,7 @@ function EFilingCases({ path }) {
             !isDisableAllFieldsMode &&
             !optionalFieldModalAlreadyViewed && (
               <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}                
                 headerBarEnd={
                   <CloseBtn
                     onClick={() => {
