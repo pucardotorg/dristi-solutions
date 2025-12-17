@@ -18,6 +18,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { use } from "react";
+import { runComprehensiveSanitizer } from "../../../Utils";
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -103,6 +104,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
