@@ -4,6 +4,7 @@ import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { CloseBtn, Heading } from "../utils/orderUtils";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -48,6 +49,7 @@ const AddOrderTypeModal = ({
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    runComprehensiveSanitizer({ formData, setValue });
 
     const currentOrderType = orderType?.code || "";
 
