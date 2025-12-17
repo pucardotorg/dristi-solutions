@@ -695,6 +695,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
       }
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+
+      if (currentConfig?.label === "PENDING_RPAD_COLLECTION") {
+        const payload = {
+          tasks: [
+            {
+              tenantId,
+              taskNumber: rowData?.taskNumber,
+            },
+          ],
+        };
+
+        await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+      }
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
         signatureId !== "" || localStorageID
@@ -726,6 +740,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setIsSigned(true);
         setActionModalType("SIGNED");
       }
+
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         const { data: tasksData } = await refetch();
         if (tasksData) {
@@ -859,6 +874,29 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setTimeout(() => setShowErrorToast(null), 5000);
     }
   }, [bulkRpadList, t, tenantId]);
+
+  const handleSinglePendingRpad = useCallback(async () => {
+    try {
+      const payload = {
+        tasks: [
+          {
+            tenantId: tenantId,
+            taskNumber: rowData?.taskNumber,
+          },
+        ],
+      };
+
+      await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+
+      setShowErrorToast({ message: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
+      setTimeout(() => setShowErrorToast(null), 3000);
+      setShowActionModal(false);
+      setReload((prev) => !prev);
+    } catch (error) {
+      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
+      setTimeout(() => setShowErrorToast(null), 5000);
+    }
+  }, [tenantId, rowData?.taskNumber, t]);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -1348,6 +1386,128 @@ const ReviewSummonsNoticeAndWarrant = () => {
     orderType,
   ]);
 
+  const pendingRpadModalConfig = useMemo(() => {
+    return {
+      handleClose: handleClose,
+      heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
+      actionSaveLabel:
+        (rowData?.taskType === "ATTACHMENT" && hasSignAttachmentAccess) ||
+        (rowData?.taskType === "PROCLAMATION" && hasSignProclamationAccess) ||
+        (rowData?.taskType === "SUMMONS" && hasSignSummonsAccess) ||
+        (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
+        (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
+        isJudge
+          ? t("E_SIGN_TEXT")
+          : null,
+      actionCancelLabel: t("SEND_FOR_SIGN"),
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          type: "document",
+          modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
+          actionSaveOnSubmit: () => {},
+          actionCancelOnSubmit: handleSinglePendingRpad,
+          hideSubmit:
+            isTypist ||
+            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+              rowData?.documentStatus === "SIGN_PENDING" &&
+              !isJudge),
+        },
+        {
+          heading: { label: t("ADD_SIGNATURE") },
+          actionSaveLabel:
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
+          actionCancelLabel: t("BACK"),
+          modalBody: (
+            <div>
+              <AddSignatureComponent
+                t={t}
+                isSigned={isSigned}
+                setIsSigned={setIsSigned}
+                handleSigned={() => setIsSigned(true)}
+                rowData={rowData}
+                setSignatureId={setSignatureId}
+                signatureId={signatureId}
+                deliveryChannel={deliveryChannel}
+              />
+            </div>
+          ),
+          isDisabled: !isSigned ? true : false,
+          actionSaveOnSubmit: handleSubmitEsign,
+          async: true,
+        },
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+          ? [
+              {
+                type: isIcops?.state === "failed" ? "failure" : "success",
+                hideSubmit: true,
+                heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
+                actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
+                modalBody:
+                  isIcops?.state === "failed" ? (
+                    <div style={{ margin: "25px" }}>
+                      <h1>{isIcops?.message}</h1>
+                    </div>
+                  ) : isIcops?.state === "success" ? (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={t("CS_COMMON_CLOSE")}
+                      // closeButtonText={}
+                      // closeButtonAction={false}
+                      submitButtonAction={() => {
+                        setShowActionModal(false);
+                        setReload(!reload);
+                      }}
+                      t={t}
+                      submissionData={submissionDataIcops}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                    />
+                  ) : (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
+                      closeButtonAction={handleClose}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
+                      t={t}
+                      submissionData={submissionData}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                      isSubmitting={isSubmitting}
+                    />
+                  ),
+              },
+            ]
+          : [{}]),
+      ],
+    };
+  }, [
+    handleClose,
+    t,
+    rowData,
+    infos,
+    documents,
+    links,
+    isJudge,
+    deliveryChannel,
+    isSigned,
+    signatureId,
+    handleSubmitEsign,
+    isIcops,
+    successMessage,
+    handleSubmit,
+    submissionData,
+    orderType,
+    handleSinglePendingRpad,
+  ]);
+
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
@@ -1646,9 +1806,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       ? signedModalConfig
                       : config?.label === "SENT"
                       ? sentModalConfig
-                      : // : config?.label === "PENDING_RPAD_COLLECTION"   [TODO : add modal for single click on rpad tab]
-                        // ? pendingRpadModalConfig
-                        signedModalConfig
+                      : config?.label === "PENDING_RPAD_COLLECTION" && actionModalType === "SIGN_PENDING"
+                      ? pendingRpadModalConfig
+                      : config?.label === "PENDING_RPAD_COLLECTION" && actionModalType !== "SIGN_PENDING"
+                      ? signedModalConfig
+                      : signedModalConfig
                   }
                   currentStep={step}
                 />
