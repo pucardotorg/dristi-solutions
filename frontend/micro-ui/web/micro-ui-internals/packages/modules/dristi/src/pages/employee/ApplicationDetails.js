@@ -341,6 +341,7 @@ const ApplicationDetails = ({ location, match }) => {
                 <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
                 <TextArea
                   rows={"3"}
+                  value={reasons}
                   onChange={(e) => {
                     const newValue = sanitizeData(e.target.value);
                     setReasons(newValue);
