@@ -10,6 +10,7 @@ import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { set } from "lodash";
+import { sanitizeData } from "../../../Utils";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -1043,7 +1044,7 @@ const MarkAsEvidence = ({
                 className={evidenceDetails?.isEvidence && !currentDiaryEntry ? "text-input disabled" : "text-input"}
                 type="text"
                 value={businessOfDay}
-                onChange={(e) => setBusinessOfDay(e.target.value)}
+                onChange={(e) => setBusinessOfDay(sanitizeData(e.target.value))}
                 disabled={evidenceDetails?.isEvidence && !currentDiaryEntry}
                 style={{ minWidth: 120, textAlign: "start", marginBottom: "0px" }}
               />
