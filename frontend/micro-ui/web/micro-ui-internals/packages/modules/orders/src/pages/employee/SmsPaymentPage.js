@@ -149,9 +149,9 @@ const SmsPaymentPage = () => {
         name = party?.partyName;
       } else {
         name =
-          party?.partyName && party?.witnessDesignation
-            ? `${party?.partyName} (${party?.witnessDesignation})`
-            : party?.partyName || party?.witnessDesignation;
+          party?.partyName?.trim() && party?.witnessDesignation
+            ? `${party?.partyName?.trim()} (${party?.witnessDesignation})`
+            : party?.partyName?.trim() || party?.witnessDesignation;
       }
 
       return {
