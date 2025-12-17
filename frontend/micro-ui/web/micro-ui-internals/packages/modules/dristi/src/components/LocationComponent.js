@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError, RadioButtons } from "@egovernments/digit-ui-react-components";
 import LocationSearch, { defaultCoordinates } from "./LocationSearch";
 import Axios from "axios";
-import { formatAddress } from "../Utils";
+import { formatAddress, sanitizeData } from "../Utils";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -231,7 +231,7 @@ const LocationComponent = ({
                       if (input?.isFormatRequired) {
                         value = formatAddress(value);
                       }
-                      setValue(value, input.name, input?.autoFill);
+                      setValue(sanitizeData(value), input.name, input?.autoFill);
                     }}
                     disable={input.isDisabled || disable}
                     defaultValue={undefined}

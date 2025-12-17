@@ -445,16 +445,6 @@ export const runComprehensiveSanitizer = ({ formData, setValue }) => {
       }
     }
 
-    if (Array.isArray(originalValue)) {
-      originalValue.forEach((item, index) => {
-        runComprehensiveSanitizer({
-          formData: item,
-          setValue,
-        });
-      });
-      return;
-    }
-
     if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key)) {
       runComprehensiveSanitizer({
         formData: originalValue,
