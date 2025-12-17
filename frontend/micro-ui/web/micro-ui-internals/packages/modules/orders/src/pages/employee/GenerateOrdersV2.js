@@ -2251,11 +2251,11 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("originalHearingDate", updatedFormdata.originalHearingDate);
       }
       if (currentOrderType === "ABATE_CASE") {
-        updatedFormdata.wasDisposalContested = {
+        updatedFormdata.natureOfDisposal = {
           code: "UNCONTESTED",
           name: "UNCONTESTED",
         };
-        setValueRef?.current?.[index]?.("wasDisposalContested", updatedFormdata.wasDisposalContested);
+        setValueRef?.current?.[index]?.("natureOfDisposal", updatedFormdata.natureOfDisposal);
       }
       // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
       return {
