@@ -910,7 +910,7 @@ const MarkAsEvidence = ({
                     className="text-input"
                     type="text"
                     value={evidenceNumber}
-                    onChange={(e) => setEvidenceNumber(e.target.value)}
+                    onChange={(e) => setEvidenceNumber(sanitizeData(e.target.value))}
                     maxlength={63}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
