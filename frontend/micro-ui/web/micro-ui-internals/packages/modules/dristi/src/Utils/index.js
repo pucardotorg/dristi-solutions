@@ -499,3 +499,63 @@ export const _getDigitilizationPatiresName = (data) => {
     );
   }
 };
+
+export const getComplainants = (caseDetails) => {
+  return (
+    caseDetails?.litigants
+      ?.filter((item) => item?.partyType?.includes("complainant"))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+        const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+        if (poaHolder) {
+          return {
+            name: `${fullName} (Complainant, PoA Holder)`,
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+          };
+        }
+        return {
+          name: `${fullName} (Complainant)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "complainant",
+        };
+      }) || []
+  );
+};
+
+//poa holders who are associated with complainants.
+export const getComplainantsSidePoAHolders = (caseDetails, complainants) => {
+  const complainantIds = new Set(complainants?.map((c) => c?.individualId));
+  return (
+    caseDetails?.poaHolders
+      ?.filter(
+        (item) =>
+          !complainantIds.has(
+            item?.individualId && !item?.representingLitigants?.some((lit) => !complainants?.some((c) => c?.individualId === lit?.individualId))
+          )
+      )
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.name);
+        return {
+          name: `${fullName} (PoA Holder)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "Complainant's poaHolder",
+        };
+      }) || []
+  );
+};
+
+//advocates who are associated with complainants.
+export const getComplainantSideAdvocates = (caseDetails) => {
+  return caseDetails?.representatives
+    ?.filter((rep) => rep?.representing?.every((lit) => lit?.partyType?.includes("complainant")))
+    ?.map((rep) => {
+      return {
+        name: rep?.additionalDetails?.advocateName,
+        partyUuid: rep?.additionalDetails?.uuid,
+        partyType: "advocate",
+      };
+    });
+};
