@@ -57,6 +57,10 @@ public class EvidenceQueryBuilder {
             List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
             Boolean isActive = criteria.getIsActive();
+            String citizenUserUuid = null;
+            if (!criteria.getIsCourtEmployee()) {
+                citizenUserUuid = criteria.getUserUuid();
+            }
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -79,7 +83,23 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteriaList(status, query, preparedStmtList, firstCriteria, "art.status", preparedStmtArgList);
             firstCriteria = addArtifactCriteriaList(workflowStatus, query, preparedStmtList, firstCriteria, "art.evidenceMarkedStatus", preparedStmtArgList);
             firstCriteria = addArtifactCriteria(isActive, query,"art.isActive = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
-            addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
+            firstCriteria = addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- Exclude bail application evidences if isHideBailCaseBundle is true ----------
+            if (Boolean.TRUE.equals(criteria.getIsHideBailCaseBundle())) {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("(art.application IS NULL OR art.application NOT IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber))");
+                preparedStmtList.add(REQUEST_FOR_BAIL);
+                preparedStmtArgList.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- REQUEST_FOR_BAIL evidence visibility ----------
+            applyRequestForBailEvidenceVisibility(
+                    query, firstCriteria, citizenUserUuid,
+                    preparedStmtList, preparedStmtArgList);
 
             return query.toString();
         } catch (Exception e) {
@@ -172,7 +192,7 @@ public class EvidenceQueryBuilder {
         queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();
     }
-    void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
+    boolean addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             if (Boolean.TRUE.equals(fuzzySearch)) {
@@ -184,7 +204,9 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(criteria);
                 preparedStmtArgList.add(Types.VARCHAR);
             }
+            firstCriteria = false;
         }
+        return firstCriteria;
     }
     boolean addArtifactCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String criteriaClause,List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
@@ -224,6 +246,42 @@ public class EvidenceQueryBuilder {
             firstCriteria = false;
         }
         return firstCriteria;
+    }
+
+    // TODO : need
+    private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+
+        // If user info is missing, do not restrict visibility
+        if (userUuid == null || userUuid.isEmpty()) {
+            return;
+        }
+
+        addClauseIfRequired(query, firstCriteria);
+
+        query.append("(")
+                .append("art.application IS NULL ")
+                .append("OR ")
+                .append("art.application NOT IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber) ")
+                .append("OR ")
+                .append("art.application IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber ")
+                .append("AND ")
+                .append("(")
+                .append("app.onBehalfOf @> ?::jsonb ")
+                .append("OR app.createdBy = ?)")
+                .append(")")
+                .append(")");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add("[\"" + userUuid + "\"]");
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(userUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
     }
 
     public String getTotalCountQuery(String baseQuery) {
