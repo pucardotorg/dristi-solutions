@@ -2253,7 +2253,7 @@ const GenerateOrdersV2 = () => {
       if (currentOrderType === "ABATE_CASE") {
         updatedFormdata.natureOfDisposal = {
           code: "UNCONTESTED",
-          name: "UNCONTESTED",
+          name: "Uncontested",
         };
         setValueRef?.current?.[index]?.("natureOfDisposal", updatedFormdata.natureOfDisposal);
       }
