@@ -5,12 +5,12 @@
   "uniqueIdentifier": "2776",
   "data": {
     "id": 2776,
-    "url": "/application/v1/bulk-pending-collection-update", // TODO : need to assign this (EMPLOYEE)
+    "url": "/task/v1/bulk-pending-collection-update",
     "code": "2776",
-    "name": "application bulk pending collection update",
-    "displayName": "application bulk pending collection update",
+    "name": "task bulk pending collection update",
+    "displayName": "task bulk pending collection update",
     "orderNumber": 0,
-    "serviceCode": "application"
+    "serviceCode": "task"
   },
   "isActive": true
 }
