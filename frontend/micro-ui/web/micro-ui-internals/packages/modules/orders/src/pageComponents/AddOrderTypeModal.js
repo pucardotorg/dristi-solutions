@@ -326,6 +326,21 @@ const AddOrderTypeModal = ({
     return bt;
   }, [newCurrentOrder]);
 
+  const defaultNatureOfDisposal = useMemo(() => {
+    const natureOfDisposal = newCurrentOrder?.additionalDetails?.formdata?.natureOfDisposal;
+    if (natureOfDisposal == null)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    if (typeof natureOfDisposal === "object" && Object?.keys(natureOfDisposal)?.length === 0)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    return natureOfDisposal;
+  }, [newCurrentOrder]);
+
   return (
     <React.Fragment>
       <Modal
@@ -417,6 +432,7 @@ const AddOrderTypeModal = ({
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
                       ...(orderType?.code === "ACCEPT_BAIL" && { bailType: initialBailType }),
+                      ...(orderType?.code === "ABATE_CASE" && { natureOfDisposal: defaultNatureOfDisposal }),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}
