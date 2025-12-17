@@ -6212,13 +6212,13 @@ export const configsAbateCase = [
       {
         label: "WAS_DISPOSAL_CONTESTED_OR_UNCONTESTED",
         isMandatory: true,
-        key: "wasDisposalContested",
-        schemaKeyPath: "orderDetails.wasDisposalContested",
-        transformer: "mdmsDropdown",
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "customDropdown",
         type: "dropdown",
         populators: {
           styles: { maxWidth: "100%" },
-          name: "wasDisposalContested",
+          name: "natureOfDisposal",
           optionsKey: "code",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
@@ -6226,11 +6226,11 @@ export const configsAbateCase = [
           options: [
             {
               code: "CONTESTED",
-              name: "CONTESTED",
+              name: "Contested",
             },
             {
               code: "UNCONTESTED",
-              name: "UNCONTESTED",
+              name: "Uncontested",
             },
           ],
         },
