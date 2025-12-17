@@ -1141,6 +1141,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ]
             : [
                 `SUMMONS`,
@@ -1157,6 +1158,7 @@ const GenerateOrdersV2 = () => {
                 `ATTACHMENT`,
                 `COST`,
                 `WITNESS_BATTA`,
+                `ABATE_CASE`,
               ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
