@@ -491,6 +491,12 @@ async function processBailDocuments(
       ];
     }
   }
+  if (bailApplicationSection?.length === 0 && bailBondSection?.length === 0) {
+    const bailDocumentIndexSection = indexCopy?.sections?.find(
+      (section) => section.name === "baildocument"
+    );
+    bailDocumentIndexSection.lineItems = [];
+  }
 }
 
 module.exports = {
