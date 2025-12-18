@@ -271,7 +271,7 @@ const MarkAsEvidence = ({
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           Evidence: {
             courtId: courtId,
