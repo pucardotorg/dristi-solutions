@@ -666,7 +666,7 @@ const MarkAsEvidence = ({
       await DRISTIService.updateEvidence({ artifact: payload }, {}).then((res) => {
         setEvidenceDetails(res?.artifact);
       });
-
+      setEvidenceNumberError("");
       return true;
     } catch (error) {
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
