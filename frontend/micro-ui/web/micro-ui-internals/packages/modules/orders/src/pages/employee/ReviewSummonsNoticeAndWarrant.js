@@ -703,7 +703,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           ],
         };
 
-        await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+        try {
+          await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+        } catch (rpadError) {
+          console.error("Failed to update RPAD pending collection:", rpadError);
+          setShowErrorToast({ message: t("FAILED_TO_UPDATE_RPAD_COLLECTION"), error: true });
+          setTimeout(() => setShowErrorToast(null), 5000);
+          return { continue: false };
+        }
       }
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
@@ -1881,7 +1888,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       <path d="M12 10.5v6" stroke="#1D7AEA" strokeWidth="1.2" strokeLinecap="round" />
                       <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
                     </svg>
-                    {selectedRpadCount} Processes Selected
+                    {selectedRpadCount} {t("PROCESSES_SELECTED")}
                   </div>
                 )}
                 <SubmitBar

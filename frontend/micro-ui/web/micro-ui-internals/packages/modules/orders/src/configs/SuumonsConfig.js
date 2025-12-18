@@ -94,6 +94,20 @@ export const SummonsTabsConfig = {
             minReqFields: 0,
             defaultValues: defaultSearchValues,
             fields: [
+              // hidden
+              {
+                type: "component",
+                component: "CustomSortComponent",
+                isMandatory: false,
+                disable: false,
+                name: "Issue Date",
+                key: "sortCaseListByDate",
+                sortBy: "createdDate",
+                showIcon: true,
+                icon: "UpDownArrowIcon",
+                populators: {},
+                hideInForm: true,
+              },
               // process type
               {
                 label: "PROCESS_TYPE",
