@@ -340,7 +340,7 @@ const ComplainantSignature = ({ path }) => {
     const complainants = getComplainants(caseDetails);
     const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
     const advocates = getComplainantSideAdvocates(caseDetails) || [];
-    const allParties = [...complainants, poaHolders, ...advocates];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
 
     return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
   }, [caseDetails]);
@@ -360,6 +360,16 @@ const ComplainantSignature = ({ path }) => {
   useEffect(() => {
     if ([CaseWorkflowState?.DRAFT_IN_PROGRESS, CaseWorkflowState.CASE_REASSIGNED]?.includes(caseDetails?.status)) {
       history.replace(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${caseId}&selected=complainantDetails`);
+    } else if (
+      caseDetails?.status &&
+      ![
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
+      history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
     }
   }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids, userInfoType]);
 
@@ -934,7 +944,20 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || uploadDoc;
+    return (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status) &&
+      (isEsignSuccess ||
+        isCurrentAdvocateSigned ||
+        isCurrentLitigantSigned ||
+        isCurrentPoaSigned ||
+        (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
+        uploadDoc)
+    );
   };
 
   useEffect(() => {
