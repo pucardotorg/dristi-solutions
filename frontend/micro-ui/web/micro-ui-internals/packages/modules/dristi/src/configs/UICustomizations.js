@@ -1280,6 +1280,9 @@ export const UICustomizations = {
         case "EVIDENCE_NUMBER":
           return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
+          if (row?.evidenceMarkedStatus === "DELETED_DRAFT") {
+            return "";
+          }
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip
               text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
@@ -1311,7 +1314,7 @@ export const UICustomizations = {
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+          ? (row?.evidenceMarkedStatus !== null && row?.evidenceMarkedStatus !== "DELETED_DRAFT") || row.isEvidence
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",
@@ -1354,6 +1357,21 @@ export const UICustomizations = {
             ]
           : []),
 
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
+        !row?.isVoid &&
+        row?.evidenceMarkedStatus &&
+        ["DRAFT", "DRAFT_IN_PROGRESS"].includes(row?.evidenceMarkedStatus)
+          ? [
+              {
+                label: "DELETE_EVIDENCE_DRAFT",
+                id: "delete_evidence_draft",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
         {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
