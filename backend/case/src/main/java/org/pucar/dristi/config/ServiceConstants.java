@@ -51,6 +51,7 @@ public class ServiceConstants {
     public static final String UPDATE_CASE_ERR = "UPDATE_CASE_ERR";
     public static final String UPDATE_CASE_WITHOUT_WORKFLOW_ERR = "UPDATE_CASE_WITHOUT_WORKFLOW_ERR";
     public static final String UPDATE_LPR_CASE_ERR = "UPDATE_LPR_CASE_ERR";
+    public static final String CASE_CONVERSION_ERR = "CASE_CONVERSION_ERR";
     public static final String EDIT_CASE_ERR = "EDIT_CASE_ERR";
     public static final String ADD_WITNESS_TO_CASE_ERR = "ADD_WITNESS_TO_CASE_ERR";
     public static final String CREATE_WITNESS_ERR = "CREATE_WITNESS_ERR";
@@ -255,6 +256,8 @@ public class ServiceConstants {
 
     public static final String ERRORS_PENDING = "ERRORS_PENDING";
     public static final String SCHEDULED = "SCHEDULED";
+    public static final String FILING = "FILING";
+    public static final String LP = "LP";
     private ServiceConstants() {
     }
 }

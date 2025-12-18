@@ -371,6 +371,7 @@ const DocumentsV2 = ({
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
                   ...(caseCourtId && { courtId: caseCourtId }),
+                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },

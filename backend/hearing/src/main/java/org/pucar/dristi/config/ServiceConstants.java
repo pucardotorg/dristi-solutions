@@ -191,4 +191,6 @@ public class ServiceConstants {
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
 
     public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
+
+    public static final String SHORTENED_URL_PATH_PARAM = "shorturl?code=";
 }
