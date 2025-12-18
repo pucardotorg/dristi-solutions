@@ -58,6 +58,7 @@ async function processPendingApplicationsSection(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -75,6 +76,7 @@ async function processPendingApplicationsSection(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -91,6 +93,7 @@ async function processPendingApplicationsSection(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -342,6 +345,8 @@ async function processPendingApplicationsSection(
     } else {
       pendingApplicationsIndexSection.lineItems = [];
     }
+  } else {
+    pendingApplicationsIndexSection.lineItems = [];
   }
 }
 
