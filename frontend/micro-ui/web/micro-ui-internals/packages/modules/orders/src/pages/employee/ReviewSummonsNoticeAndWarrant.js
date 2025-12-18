@@ -320,7 +320,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: tenantId,
         })),
         RequestInfo: {
-          apiId: "Rainmaker",
+          apiId: "Dristi",
           authToken: authToken,
           userInfo: userInfo,
           msgId: `${Date.now()}|${window?.Digit?.i18n?.language || "en_IN"}`,

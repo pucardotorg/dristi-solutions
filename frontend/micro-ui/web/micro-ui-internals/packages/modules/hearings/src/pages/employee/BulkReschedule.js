@@ -494,7 +494,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
