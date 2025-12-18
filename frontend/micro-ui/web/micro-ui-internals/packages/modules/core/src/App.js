@@ -64,17 +64,17 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     }
   }, [pathname]);
 
-  useEffect(() => {
-    // Track web vitals
-    const reportWebVitals = ({ name, delta, id, value }) => {
-      trackEvent(name, value, "Performance_Metrics");
-    };
+  // useEffect(() => {
+  //   // Track web vitals
+  //   const reportWebVitals = ({ name, delta, id, value }) => {
+  //     trackEvent(name, value, "Performance_Metrics");
+  //   };
 
-    // Measure and report web vitals
-    getFID(reportWebVitals);
-    getLCP(reportWebVitals);
-    getFCP(reportWebVitals);
-  }, [pathname, search]);
+  //   // Measure and report web vitals
+  //   getFID(reportWebVitals);
+  //   getLCP(reportWebVitals);
+  //   getFCP(reportWebVitals);
+  // }, [pathname, search]);
 
   useEffect(() => {
     const handleResize = () => {

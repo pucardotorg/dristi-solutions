@@ -119,7 +119,6 @@ const isMobileDevice = (options = {}) => {
 
 // Event tracking
 export const trackEvent = (eventName, eventValue, eventCategory, extraParams) => {
-  if (isProd) {
   //Only run this in production
     window.gtag('event', eventName, {
       ...(eventValue && { value: eventValue }),
@@ -128,5 +127,4 @@ export const trackEvent = (eventName, eventValue, eventCategory, extraParams) =>
       ...(extraParams && { ...extraParams }),
       deviceType: isMobileDevice()
     });
-  }
 };
