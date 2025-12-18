@@ -111,7 +111,7 @@ public class ApplicationEnrichment {
                     currentYear;
             // this is done to maintain current sequence till the end of the year
             // it should be removed for the first deployment of 2026
-            if("2025".equals(currentYear)){
+            if (configuration.getCmpTenantOverrideYear().equals(currentYear)) {
                 tenantId = courtId;
             }
             String idName = configuration.getCmpConfig();
