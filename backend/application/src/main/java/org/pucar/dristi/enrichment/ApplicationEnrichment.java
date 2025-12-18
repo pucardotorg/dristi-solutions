@@ -7,6 +7,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,14 @@ public class ApplicationEnrichment {
     private final IdgenUtil idgenUtil;
     private final Configuration configuration;
     private final CaseUtil caseUtil;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration, CaseUtil caseUtil) {
+    public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration, CaseUtil caseUtil, DateUtil dateUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
+        this.dateUtil = dateUtil;
     }
 
     public void enrichApplication(ApplicationRequest applicationRequest) {
@@ -102,9 +105,12 @@ public class ApplicationEnrichment {
                 log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
                 throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: " + applicationRequest.getApplication().getFilingNumber());
             }
+            String tenantId = courtId + "_" +
+                    applicationRequest.getApplication().getFilingNumber().replace("-", "") + "_" +
+                    dateUtil.getCurrentYear();
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
-            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), courtId, idName, idFormat, 1, false);
+            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             applicationRequest.getApplication().setApplicationCMPNumber(cmpNumberIdList.get(0));
         } catch (CustomException e) {
             log.error("Custom Exception while enriching application number by CMP number: {}", e.toString());
