@@ -173,6 +173,7 @@ public class ServiceConstants {
 	public static final String UPDATE_CASE_ERR="UPDATE_CASE_ERR";
 	public static final String CREATE = "CREATE";
 	public static final String SAVE_DRAFT = "SAVE_DRAFT";
+	public static final String DELETE_DRAFT = "DELETE_DRAFT";
 	public static final String SUBMIT = "SUBMIT";
 	public static final String PROSECUTION_WITNESS="PW";
 	public static final String DEFENCE_WITNESS="DW";
