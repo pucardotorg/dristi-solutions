@@ -63,7 +63,6 @@ export const SummonsTabsConfig = {
     {
       label: "PENDING_RPAD_COLLECTION",
       type: "search",
-      // TODO : API integration for rpad
       apiDetails: {
         serviceName: "/task/v1/table/search",
         requestParam: {
@@ -105,7 +104,6 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "orderType",
                   optionsKey: "name",
-                  // defaultValue: { code: "", name: "PROCESS_TYPE" },
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
@@ -129,9 +127,7 @@ export const SummonsTabsConfig = {
                 type: "dropdown",
                 populators: {
                   name: "channel",
-                  // optionsKey: "channel",
                   optionsKey: "displayLabel",
-                  // defaultValue: { code: "", displayLabel: "DELIVERY_CHANNEL" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
@@ -152,7 +148,7 @@ export const SummonsTabsConfig = {
                 label: "CS_CASE_NAME_ID",
                 isMandatory: false,
                 type: "text",
-                key: "searchText", // seach text
+                key: "searchText",
                 disable: false,
                 populators: {
                   name: "searchText",

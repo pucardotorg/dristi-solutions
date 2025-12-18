@@ -130,7 +130,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [bulkRpadList, setBulkRpadList] = useState([]);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [showBulkSendConfirmModal, setShowBulkSendConfirmModal] = useState(false);
-  const [showBulkRpadConfirmModal, setShowBulkRpadConfirmModal] = useState(false);
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const [isBulkSending, setIsBulkSending] = useState(false);
   const [showBulkSignatureModal, setShowBulkSignatureModal] = useState(false);
@@ -140,9 +139,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
-  useEffect(() => {
-    console.log("bulkRpadList changed:", bulkRpadList);
-  }, [bulkRpadList]);
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
   const { uploadDocuments } = useDocumentUpload();
@@ -1119,11 +1115,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
     setAllSelectedPolice(isPolice ? true : false);
   }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
+
   const handleBulkDownload = useCallback(async () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = bulkSendList?.some((item) => item?.isSelected && item?.documentStatus === "SIGNED") || currentConfig?.label === "SIGNED";
-      const isPendingRpadTab = bulkRpadList?.some((item) => item?.isSelected) || currentConfig?.label === "PENDING_RPAD_COLLECTION"; // TODO : add document status
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       const selectedItems = isSignedTab
         ? bulkSendList?.filter((item) => item?.isSelected) || []
@@ -1144,9 +1141,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const downloadPromises = selectedItems.map(async (item, index) => {
         const fileStoreId = isSignedTab
           ? item?.documents?.filter((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore
-          : // : isPendingRpadTab
-            // ? item?.documents?.filter((doc) => doc?.documentType === "PENDING_RPAD_DOCUMENT")?.[0]?.fileStore // [TODO : change document type]
-            item?.documents?.[0]?.fileStore;
+          : item?.documents?.[0]?.fileStore;
         if (!fileStoreId) throw new Error("No fileStoreId");
         if (fileStoreId) {
           const rawOrderType = (item?.orderType || item?.taskType || "document").toString();
@@ -1245,6 +1240,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [
     bulkSignList,
     bulkSendList,
+    bulkRpadList,
     tenantId,
     downloadPdf,
     t,
@@ -1278,7 +1274,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
         (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
         isJudge
-          ? t("E_SIGN_TEXT")
+          ? t("PROCEED_TO_SIGN")
           : null,
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
@@ -1397,7 +1393,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
         (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
         isJudge
-          ? t("E_SIGN_TEXT")
+          ? t("PROCEED_TO_SIGN")
           : null,
       actionCancelLabel: t("SEND_FOR_SIGN"),
       isStepperModal: true,
@@ -1660,6 +1656,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return result;
   }, [bulkSignList, bulkSendList, bulkRpadList, activeTabIndex, isJudge, courtId]);
 
+  const selectedRpadCount = useMemo(() => {
+    try {
+      return bulkRpadList?.filter((item) => item?.isSelected)?.length || 0;
+    } catch (e) {
+      return 0;
+    }
+  }, [bulkRpadList]);
+
   const config = useMemo(() => {
     const updateTaskFunc = (taskData, checked) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
@@ -1848,7 +1852,38 @@ const ReviewSummonsNoticeAndWarrant = () => {
           )}
           {config?.label === "PENDING_RPAD_COLLECTION" && (
             <div className={"bulk-submit-bar"}>
-              <div style={{ justifyContent: "space-between", width: "fit-content", display: "flex", gap: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                {selectedRpadCount > 0 && (
+                  <div
+                    className="bulk-info-text"
+                    style={{
+                      boxSizing: "border-box",
+                      display: "inline-flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: 12,
+                      width: 206,
+                      height: 40,
+                      background: "#FFFFFF",
+                      border: "0.4px solid #E2E8F0",
+                      borderRadius: 4,
+                      color: "#0A0A0A",
+                      fontFamily: "Roboto, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      fontSize: 16,
+                      lineHeight: "19px",
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+                      <circle cx="12" cy="12" r="10" stroke="#1D7AEA" strokeWidth="1.2" fill="#EFF6FF" />
+                      <path d="M12 10.5v6" stroke="#1D7AEA" strokeWidth="1.2" strokeLinecap="round" />
+                      <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
+                    </svg>
+                    {selectedRpadCount} Processes Selected
+                  </div>
+                )}
                 <SubmitBar
                   label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
                   onSubmit={handleBulkDownload}
