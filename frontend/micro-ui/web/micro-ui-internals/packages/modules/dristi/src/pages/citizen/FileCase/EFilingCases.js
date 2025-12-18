@@ -647,7 +647,14 @@ function EFilingCases({ path }) {
       }
     }
     //If already other party changed the case stage -> redirect accordingly after refetching case data.
-    if ([CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_RE_E_SIGN]?.includes(caseDetails?.status)) {
+    if (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}`);
     }
   }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids]);
@@ -2536,17 +2543,26 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         }
 
-        await refetchCaseData();
+        const updatedCaseResponse = await refetchCaseData();
+        const updatedCaseDetails = updatedCaseResponse?.data?.criteria[0].responseList[0];
         const caseData =
-          caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-          caseDetails?.caseDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.caseDetails?.[nextSelected]?.formdata ||
           (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
 
         setFormdata(caseData);
         setIsDisabled(false);
         setPrevSelected(selected);
 
-        if (selected !== "reviewCaseFile") {
+        if (
+          selected !== "reviewCaseFile" &&
+          ![
+            CaseWorkflowState?.PENDING_RE_SIGN,
+            CaseWorkflowState.PENDING_RE_E_SIGN,
+            CaseWorkflowState.PENDING_E_SIGN,
+            CaseWorkflowState.PENDING_SIGN,
+          ]?.includes(updatedCaseDetails?.status)
+        ) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
@@ -3358,7 +3374,7 @@ function EFilingCases({ path }) {
             !isDisableAllFieldsMode &&
             !optionalFieldModalAlreadyViewed && (
               <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}                
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
                 headerBarEnd={
                   <CloseBtn
                     onClick={() => {
