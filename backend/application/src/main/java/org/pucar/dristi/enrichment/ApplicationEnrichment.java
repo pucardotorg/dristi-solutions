@@ -105,9 +105,15 @@ public class ApplicationEnrichment {
                 log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
                 throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: " + applicationRequest.getApplication().getFilingNumber());
             }
+            String currentYear = dateUtil.getCurrentYear();
             String tenantId = courtId + "_" +
                     applicationRequest.getApplication().getFilingNumber().replace("-", "") + "_" +
-                    dateUtil.getCurrentYear();
+                    currentYear;
+            // this is done to maintain current sequence till the end of the year
+            // it should be removed for the first deployment of 2026
+            if("2025".equals(currentYear)){
+                tenantId = courtId;
+            }
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
