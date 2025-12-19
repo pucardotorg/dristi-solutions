@@ -188,7 +188,7 @@ jobs:
           ls -1
 
       - name: Deploy to Kubernetes
-        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service/action.yaml@Solutions-Pipeline
+        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
         with:
           environment: ${{ needs.check-diff.outputs.deployment_env }}
           service_group: ${{ env.service_group }}
