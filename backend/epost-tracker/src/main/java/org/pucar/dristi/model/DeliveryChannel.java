@@ -35,4 +35,8 @@ public class DeliveryChannel {
 
     @JsonProperty("fees")
     private Double fees;
+
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection;
+
 }
