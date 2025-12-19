@@ -62,6 +62,7 @@ public class TaskCreationService {
     private final PendingTaskUtil pendingTaskUtil;
     private final UserUtil userUtil;
     private final SmsNotificationService smsNotificationService;
+    private final HrmsUtil hrmsUtil;
 
     public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
         log.info("Starting follow-up task generation for filing number: {} with {} parties", 
@@ -114,7 +115,7 @@ public class TaskCreationService {
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
 
             log.info("Building case details and complainant details");
-            CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails, taskManagement.getOrderItemId());
+            CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails, taskManagement.getOrderItemId(), requestInfo);
             ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
             
             log.info("Building summon and notice details for {} party", partyType);
@@ -270,7 +271,7 @@ public class TaskCreationService {
 
     // ---- Builders ---- //
 
-    private CaseDetails buildCaseDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails, String itemId) {
+    private CaseDetails buildCaseDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails, String itemId, RequestInfo requestInfo) {
 
         String hearingDateStr;
 
@@ -288,8 +289,41 @@ public class TaskCreationService {
                 .courtAddress((String) courtDetails.get("address"))
                 .courtId((String) courtDetails.get("code"))
                 .hearingNumber(order.getHearingNumber())
-                .judgeName(configuration.getJudgeName())
+                .judgeName(getJudgeName((String) courtDetails.get("code"), requestInfo))
                 .build();
+    }
+
+    private String getJudgeName(String code, RequestInfo requestInfo) {
+        if (code == null || code.isEmpty()) {
+            log.warn("Court code is null or empty, returning default judge name");
+            return configuration.getJudgeName();
+        }
+
+        try {
+            JsonNode judgeDetails = hrmsUtil.getJudgeForCourtroom(requestInfo, code);
+
+            if (judgeDetails == null) {
+                log.warn("No judge details found for courtroom: {}, returning default judge name", code);
+                return configuration.getJudgeName();
+            }
+
+            JsonNode userNode = judgeDetails.get("user");
+            if (userNode == null || userNode.isNull()) {
+                log.warn("User node is null in judge details for courtroom: {}, returning default judge name", code);
+                return configuration.getJudgeName();
+            }
+
+            JsonNode nameNode = userNode.get("name");
+            if (nameNode == null || nameNode.isNull() || nameNode.asText().isEmpty()) {
+                log.warn("Name is null or empty in judge details for courtroom: {}, returning default judge name", code);
+                return configuration.getJudgeName();
+            }
+
+            return nameNode.asText();
+        } catch (Exception e) {
+            log.error("Error fetching judge name for courtroom: {}, returning default judge name", code, e);
+            return configuration.getJudgeName();
+        }
     }
 
     private TaskDetails buildSummonAndNoticeDetails(Order order, CourtCase courtCase, String partyType, String itemId) {
@@ -431,6 +465,7 @@ public class TaskCreationService {
                 }
                 if (REGISTERED_POST.equalsIgnoreCase(channel.getChannelCode())) {
                     channel.setChannelCode(RPAD);
+                    channel.setIsPendingCollection(true);
                 }
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
@@ -444,6 +479,7 @@ public class TaskCreationService {
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
                                 .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
+                                .isPendingCollection(channel != null && RPAD.equalsIgnoreCase(channel.getChannelCode()))
                                 .build())
                         .build());
             }
@@ -635,6 +671,7 @@ public class TaskCreationService {
                         .channelName(EMAIL)
                         .channelCode(EMAIL)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(emailChannel);
             }
@@ -643,6 +680,7 @@ public class TaskCreationService {
                         .channelName(SMS)
                         .channelCode(SMS)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(smsChannel);
             }
@@ -653,6 +691,7 @@ public class TaskCreationService {
                         .channelName(EMAIL)
                         .channelCode(EMAIL)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(emailChannel);
             }
@@ -661,6 +700,7 @@ public class TaskCreationService {
                         .channelName(SMS)
                         .channelCode(SMS)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(smsChannel);
             }

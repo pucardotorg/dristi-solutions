@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
@@ -139,5 +140,10 @@ public class TaskRegistrationEnrichment {
             log.error("Error enriching task application upon update :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Exception in task enrichment service during task update process: " + e.getMessage());
         }
+    }
+
+    public void enrichAuditDetailsForUpdate(Task task, RequestInfo requestInfo) {
+        task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
     }
 }

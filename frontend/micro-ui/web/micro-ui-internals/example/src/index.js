@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
+import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
 import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submissions";
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
@@ -53,6 +54,7 @@ const initDigitUI = () => {
     commonUiConfig: UICustomizations,
   };
   window?.Digit.ComponentRegistryService.setupRegistry({});
+  setupRequestInterceptor();
   initCoreComponents();
   initDRISTIComponents();
   initOrdersComponents();

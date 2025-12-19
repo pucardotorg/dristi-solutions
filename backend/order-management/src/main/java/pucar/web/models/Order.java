@@ -36,6 +36,9 @@ public class Order {
     @NotNull
     private String tenantId = null;
 
+    @JsonProperty("courtId")
+    private String courtId = null;
+
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
@@ -48,6 +51,9 @@ public class Order {
     @JsonProperty("hearingNumber")
     @Valid
     private String hearingNumber = null;
+
+    @JsonProperty("hearingType")
+    private String hearingType = null;
 
     @JsonProperty("scheduledHearingNumber")
     @Valid

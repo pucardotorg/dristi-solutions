@@ -484,3 +484,72 @@ export const getOrderActionName = (applicationType, type) => {
       return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
   }
 };
+
+export const _getDigitilizationPatiresName = (data) => {
+  if (data?.type === "PLEA") {
+    return data?.pleaDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "EXAMINATION_OF_ACCUSED") {
+    return data?.examinationOfAccusedDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "MEDIATION") {
+    return (
+      data?.mediationDetails?.partyDetails
+        ?.map((p) => p.partyName)
+        ?.filter(Boolean)
+        ?.join(", ") || ""
+    );
+  }
+};
+
+export const getComplainants = (caseDetails) => {
+  return (
+    caseDetails?.litigants
+      ?.filter((item) => item?.partyType?.includes("complainant"))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+        const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+        if (poaHolder) {
+          return {
+            name: `${fullName} (Complainant, PoA Holder)`,
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+          };
+        }
+        return {
+          name: `${fullName} (Complainant)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "complainant",
+        };
+      }) || []
+  );
+};
+
+//poa holders who are associated with complainants.
+export const getComplainantsSidePoAHolders = (caseDetails, complainants) => {
+  return (
+    caseDetails?.poaHolders
+      ?.filter((item) => item?.representingLitigants?.every((rep) => complainants?.find((c) => c?.individualId === rep?.individualId)))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.name);
+        return {
+          name: `${fullName} (PoA Holder)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "Complainant's poaHolder",
+        };
+      }) || []
+  );
+};
+
+//advocates who are associated with complainants.
+export const getComplainantSideAdvocates = (caseDetails) => {
+  return caseDetails?.representatives
+    ?.filter((rep) => rep?.representing?.every((lit) => lit?.partyType?.includes("complainant")))
+    ?.map((rep) => {
+      return {
+        name: rep?.additionalDetails?.advocateName,
+        partyUuid: rep?.additionalDetails?.uuid,
+        partyType: "advocate",
+      };
+    });
+};

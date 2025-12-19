@@ -96,6 +96,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
         Hearing hearing = hearings.get(0);
 
         order.setHearingNumber(hearing.getHearingId());
+        order.setHearingType(hearing.getHearingType());
 
         Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
         if (time != null) {

@@ -408,7 +408,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-           // List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -452,6 +452,7 @@ public class CaseService {
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
+                updateCaseConversion(caseRequest);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
@@ -468,10 +469,11 @@ public class CaseService {
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
                 caseRequest.getCases().setCaseType(CMP);
+                updateCaseConversion(caseRequest);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-           // removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -569,6 +571,18 @@ public class CaseService {
         if (updateCase == null || existingCase == null) {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
+        // Safely get the document list using Optional
+        List<Document> documents = Optional.ofNullable(updateCase.getDocuments())
+                .orElse(Collections.emptyList());
+
+        // Collect docs with getToDelete() == true
+        List<Document> docsToDelete = documents.stream()
+                .filter(doc -> Boolean.TRUE.equals(doc.getToDelete()))
+                .toList();
+
+        // Remove documents marked for delete (only if list is modifiable)
+        Optional.ofNullable(updateCase.getDocuments())
+                .ifPresent(list -> list.removeIf(doc -> Boolean.TRUE.equals(doc.getToDelete())));
 
         Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
         Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
@@ -590,6 +604,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
+        documentsToDelete.addAll(docsToDelete);
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));
@@ -6209,7 +6224,7 @@ public class CaseService {
                 courtCase.setStage(courtCase.getStageBackup());
                 courtCase.setSubstage(courtCase.getSubstageBackup());
             }
-
+            updateCaseConversion(caseRequest);
             producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
@@ -6352,5 +6367,72 @@ public class CaseService {
         } catch (Exception e) {
             log.error("Failed to enrich additional details for address", e);
         }
+    }
+
+    public void updateCaseConversion(CaseRequest caseRequest) {
+        log.info("Starting case conversion update.");
+        
+        try {
+            CourtCase courtCase = caseRequest.getCases();
+            String filingNumber = courtCase.getFilingNumber();
+            String caseType = courtCase.getCaseType();
+
+            CaseConversionDetails caseConversionDetails = buildCaseConversionDetails(courtCase, caseType);
+            
+            CaseConversionRequest caseConversionRequest = CaseConversionRequest.builder()
+                    .requestInfo(caseRequest.getRequestInfo())
+                    .caseConversionDetails(caseConversionDetails)
+                    .build();
+            
+            producer.push(config.getCaseConversionTopic(), caseConversionRequest);
+            
+            log.info("Case conversion pushed to Kafka | filingNumber: {} | convertedFrom: {} | convertedTo: {} | preCaseNumber: {} | postCaseNumber: {}",
+                    filingNumber, caseConversionDetails.getConvertedFrom(), caseConversionDetails.getConvertedTo(),
+                    caseConversionDetails.getPreCaseNumber(), caseConversionDetails.getPostCaseNumber());
+            
+        } catch (Exception e) {
+            log.error("Error during case conversion | filingNumber: {} | error: {}", 
+                    caseRequest != null && caseRequest.getCases() != null ? caseRequest.getCases().getFilingNumber() : "unknown", 
+                    e.getMessage());
+        }
+    }
+    
+    private CaseConversionDetails buildCaseConversionDetails(CourtCase courtCase, String caseType) {
+        CaseConversionDetails caseConversionDetails = CaseConversionDetails.builder()
+                .caseId(courtCase.getId().toString())
+                .filingNumber(courtCase.getFilingNumber())
+                .cnrNumber(courtCase.getCnrNumber())
+                .tenantId(courtCase.getTenantId())
+                .build();
+        
+        Long dateOfConversion = dateUtil.getEpochFromLocalDate(LocalDate.now());
+        
+        if (CMP.equalsIgnoreCase(caseType) && courtCase.getCmpNumber() != null) {
+            caseConversionDetails.setConvertedFrom(FILING);
+            caseConversionDetails.setConvertedTo(CMP);
+            caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
+            caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
+            caseConversionDetails.setDateOfConversion(dateOfConversion);
+        } else if (Boolean.TRUE.equals(courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+            caseConversionDetails.setConvertedFrom(ST);
+            caseConversionDetails.setConvertedTo(LP);
+            caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());
+            caseConversionDetails.setPostCaseNumber(courtCase.getLprNumber());
+            caseConversionDetails.setDateOfConversion(dateOfConversion);
+        } else if (courtCase.getLprNumber() != null && courtCase.getCourtCaseNumberBackup() != null && courtCase.getCourtCaseNumber() != null) {
+            caseConversionDetails.setConvertedFrom(LP);
+            caseConversionDetails.setConvertedTo(ST);
+            caseConversionDetails.setPreCaseNumber(courtCase.getLprNumber());
+            caseConversionDetails.setPostCaseNumber(courtCase.getCourtCaseNumber());
+            caseConversionDetails.setDateOfConversion(dateOfConversion);
+        } else if (ST.equalsIgnoreCase(caseType) && courtCase.getCourtCaseNumber() != null) {
+            caseConversionDetails.setConvertedFrom(CMP);
+            caseConversionDetails.setConvertedTo(ST);
+            caseConversionDetails.setPreCaseNumber(courtCase.getCmpNumber());
+            caseConversionDetails.setPostCaseNumber(courtCase.getCourtCaseNumber());
+            caseConversionDetails.setDateOfConversion(dateOfConversion);
+        }
+        
+        return caseConversionDetails;
     }
 }

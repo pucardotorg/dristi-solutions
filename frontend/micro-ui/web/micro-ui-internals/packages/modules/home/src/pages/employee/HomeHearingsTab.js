@@ -55,9 +55,6 @@ const HomeHearingsTab = ({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
-
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -268,6 +265,7 @@ const HomeHearingsTab = ({
                   filingNumber: hearingDetails?.filingNumber,
                   tenantId: hearingDetails?.tenantId,
                   hearingNumber: hearingDetails?.hearingNumber,
+                  hearingType: hearingDetails?.hearingType,
                 },
               },
               {}
@@ -525,7 +523,7 @@ const HomeHearingsTab = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                ...(!isJudge && { width: "170px" }),
+                width: "170px",
               }}
             >
               <span
@@ -538,23 +536,20 @@ const HomeHearingsTab = ({
               >
                 {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
               </span>
-
-              {!isJudge && (
-                <span
-                  title={hearingDetails?.orderStatus?.toLowerCase() === "signed" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
-                  style={{
-                    borderRadius: "50%",
-                    padding: "10px",
-                    background: hearingDetails?.orderStatus?.toLowerCase() === "signed" ? "#F0FDF4" : "#FEE2E2",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  {hearingDetails?.orderStatus?.toLowerCase() === "signed" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
-                </span>
-              )}
+              <span
+                title={hearingDetails?.orderStatus?.toLowerCase() === "signed" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
+                style={{
+                  borderRadius: "50%",
+                  padding: "10px",
+                  background: hearingDetails?.orderStatus?.toLowerCase() === "signed" ? "#F0FDF4" : "#FEE2E2",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+              >
+                {hearingDetails?.orderStatus?.toLowerCase() === "signed" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
+              </span>
             </div>
           </td>
           <td
@@ -787,7 +782,7 @@ const HomeHearingsTab = ({
                 <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
-                <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
+                <th>{t("CS_COMMON_ADVOCATES")} </th>
                 <th>{t("PURPOSE")}</th>
                 <th>{t("STATUS")}</th>
                 <th>{t("ACTIONS")}</th>

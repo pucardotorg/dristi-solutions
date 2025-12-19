@@ -46,6 +46,10 @@ public class BailSearchCriteria {
     @JsonProperty("suretyMobileNumber")
     private String suretyMobileNumber;
 
+    // TODO : remove this, this is temporary fix (#5016)
+    @JsonProperty("owner")
+    private String owner;
+
     @JsonProperty("status")
     private List<String> status;
 

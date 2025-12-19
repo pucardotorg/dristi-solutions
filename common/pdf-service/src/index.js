@@ -121,6 +121,12 @@ var fontDescriptors = {
     bold: "src/fonts/malayalam-sangam-mn-bold.ttf",
     italics: "src/fonts/Roboto-Italic.ttf",
     bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
+  },
+  ManjiriMalyalam: {
+    normal: "src/fonts/Manjari-Regular.ttf",
+    bold: "src/fonts/Manjari-Bold.ttf",
+    italics: "src/fonts/Roboto-Italic.ttf",
+    bolditalics: "src/fonts/Roboto-BoldItalic.ttf",
   }
 };
 

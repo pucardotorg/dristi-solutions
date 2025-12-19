@@ -24,6 +24,7 @@ const BailEsignModal = ({
   mobileNumber,
   forWitnessDeposition = false,
   handleMockESign,
+  customizedNote,
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [isSigned, setIsSigned] = useState(false);
@@ -66,7 +67,7 @@ const BailEsignModal = ({
         <InfoCard
           variant={"default"}
           label={t("PLEASE_NOTE")}
-          additionalElements={[<p>{forWitnessDeposition ? t("WITNESS_DEPOSITION_POPUP_NOTES") : t("BAIL_BOND_WITNESS_POPUP_NOTES")}</p>]}
+          additionalElements={[<p>{customizedNote ? t(customizedNote) : t("BAIL_BOND_WITNESS_POPUP_NOTES")}</p>]}
           inline
           textStyle={{}}
           className={`custom-info-card`}
