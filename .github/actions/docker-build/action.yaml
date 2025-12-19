@@ -16,10 +16,6 @@ inputs:
   docker_password:
     description: Docker registry password.
     required: true
-  docker_user:
-    description: Docker registry username.
-    required: false
-    default: venkatramireddyb
 
 outputs:
   image_tag:
