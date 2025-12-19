@@ -181,12 +181,6 @@ jobs:
         run: |
           echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
-      - name: Clean up dristi-Solutions repo
-        run: |
-          cd ..
-          rm -rf dristi-solutions
-          ls -1
-
       - name: Deploy to Kubernetes
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
         with:
