@@ -1,8 +1,10 @@
 package com.dristi.njdg_transformer.consumer;
 
+import com.dristi.njdg_transformer.model.order.Notification;
+import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.service.HearingService;
+import com.dristi.njdg_transformer.service.OrderNotificationService;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.dristi.njdg_transformer.utils.JsonUtil;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
@@ -34,9 +36,9 @@ public class OrderConsumer {
 
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
-    private final HearingService hearingService;
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
+    private final OrderNotificationService orderNotificationService;
 
     @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}", groupId = "transformer-order")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -46,10 +48,67 @@ public class OrderConsumer {
 
         try {
             processOrder(payload);
+            processOrderForHearing(payload);
             log.info("Successfully processed order message | topic: {} | messageId: {}", topic, messageId);
         } catch (Exception e) {
             log.error("Failed to process order message | topic: {} | messageId: {} | error: {}",
                     topic, messageId, e.getMessage(), e);
+        }
+    }
+
+    private void processOrderForHearing(ConsumerRecord<String, Object> payload) {
+        log.info("Starting order processing for hearing...");
+        String orderId = null;
+        String status = null;
+
+        try {
+            OrderRequest orderRequest = parsePayload(payload);
+            Order order = orderRequest.getOrder();
+            orderId = order.getOrderNumber();
+            status = order.getStatus();
+
+            log.info("Processing order for hearing | orderId: {} | status: {}", orderId, status);
+
+            if(PUBLISHED_ORDER.equalsIgnoreCase(order.getStatus())) {
+                if(order.getHearingNumber() != null && order.getItemText() != null) {
+                    orderNotificationService.processBusinessDayOrders(order, orderRequest.getRequestInfo());
+                } else {
+                    orderNotificationService.processAsyncOrders(order, orderRequest.getRequestInfo());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing order for hearing | orderId: {} | status: {} | error: {}",
+                    orderId, status, e.getMessage(), e);
+            throw new RuntimeException("Order processing failed", e);
+        }
+    }
+
+    @KafkaListener(topics = "#{'${kafka.notification.order.topic}'.split(',')}", groupId = "transformer-notification-order")
+    public void listenNotificationOrder(ConsumerRecord<String, Object> payload) {
+        log.info("Received notification order message | topic: {} | messageId: {} | partition: {} | offset: {}",
+                payload.topic(), getMessageId(payload), payload.partition(), payload.offset());
+        try {
+            processNotificationOrder(payload);
+        } catch (Exception e) {
+            log.error("Error processing notification order | topic: {} | messageId: {} | error: {}",
+                    payload.topic(), getMessageId(payload), e.getMessage(), e);
+        }
+    }
+
+    private void processNotificationOrder(ConsumerRecord<String, Object> payload) {
+        log.info("Starting notification order processing...");
+
+        try {
+            NotificationRequest notificationRequest = objectMapper.readValue(payload.value().toString(), NotificationRequest.class);
+            Notification notification = notificationRequest.getNotification();
+            String status = notification.getStatus();
+
+            if(PUBLISHED_ORDER.equalsIgnoreCase(status)) {
+                orderNotificationService.processNotificationOrders(notification, notificationRequest.getRequestInfo());
+            }
+        } catch (Exception e) {
+            log.error("Error processing notification order | error: {}", e.getMessage(), e);
+            throw new RuntimeException("Notification order processing failed", e);
         }
     }
 
@@ -85,10 +144,6 @@ public class OrderConsumer {
                 log.info("Order does not meet processing criteria | orderId: {} | orderType: {}",
                         orderId, order.getOrderType());
             }
-            if(order.getHearingNumber() != null && order.getItemText() != null) {
-                hearingService.processBusinessOrder(order, orderRequest.getRequestInfo());
-            }
-
         } catch (Exception e) {
             log.error("Error processing order | orderId: {} | status: {} | error: {}", orderId, status, e.getMessage(), e);
             throw new RuntimeException("Order processing failed", e);
@@ -126,50 +181,6 @@ public class OrderConsumer {
             }
         }
         return false;
-    }
-
-    private List<Order> getCompositeItems(Order order) {
-        log.info("Enriching composite items for order | orderNumber: {} | orderType: {}", order.getOrderNumber(), order.getOrderType());
-
-        Object compositeItemsObj = order.getCompositeItems();
-        ObjectNode orderNode = convertOrderToNode(order);
-
-        List<Order> compositeItemsList = new ArrayList<>();
-        try {
-            JsonNode compositeArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItemsObj));
-
-            for (JsonNode item : compositeArray) {
-                String orderType = item.get("orderType").asText();
-                JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
-
-                orderNode.put("orderType", orderType);
-                orderNode.set("orderDetails", orderDetails);
-
-                compositeItemsList.add(objectMapper.convertValue(orderNode, Order.class));
-            }
-
-            log.info("Successfully enriched composite items | orderNumber: {}", order.getOrderNumber());
-        } catch (Exception e) {
-            log.error("Error enriching composite items | orderNumber: {}", order.getOrderNumber(), e);
-            throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error enriching composite items");
-        }
-
-        return compositeItemsList;
-    }
-
-    private ObjectNode convertOrderToNode(Order order) {
-        try {
-            String jsonString = objectMapper.writeValueAsString(order);
-            JsonNode node = objectMapper.readTree(jsonString);
-            if (node.isObject()) {
-                return (ObjectNode) node;
-            } else {
-                throw new CustomException("ORDER_CONVERSION_ERROR", "Order is not a JSON object");
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Error converting order to JSON", e);
-            throw new CustomException("ORDER_CONVERSION_ERROR", "Error converting order to JSON");
-        }
     }
 
     private String getOutcomeValue(String orderType, String tenantId, RequestInfo requestInfo) {

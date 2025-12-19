@@ -34,4 +34,6 @@ public class ServiceConstants {
     public static final String WITHDRAW_CASE = "WITHDRAWAL";
     public static final String WITHDRAWAL_ACCEPT = "WITHDRAWAL_ACCEPT";
     public static final String APPROVED = "APPROVED";
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String SCHEDULED = "SCHEDULED";
 }
