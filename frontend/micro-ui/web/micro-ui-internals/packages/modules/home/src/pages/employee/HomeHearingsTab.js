@@ -782,7 +782,7 @@ const HomeHearingsTab = ({
                 <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
-                <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
+                <th>{t("CS_COMMON_ADVOCATES")} </th>
                 <th>{t("PURPOSE")}</th>
                 <th>{t("STATUS")}</th>
                 <th>{t("ACTIONS")}</th>
