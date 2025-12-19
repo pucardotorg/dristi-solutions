@@ -20,6 +20,8 @@ export const CaseWorkflowState = {
   CASE_DISMISSED: "CASE_DISMISSED",
   PENDING_E_SIGN: "PENDING_E-SIGN",
   PENDING_RE_E_SIGN: "PENDING_RE_E-SIGN",
+  PENDING_SIGN: "PENDING_SIGN",
+  PENDING_RE_SIGN: "PENDING_RE_SIGN",
 };
 
 export const CaseWorkflowAction = {

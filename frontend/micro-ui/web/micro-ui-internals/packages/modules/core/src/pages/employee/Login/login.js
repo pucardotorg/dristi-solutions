@@ -94,7 +94,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
             authToken: tokens?.access_token,
             userInfo: info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         {

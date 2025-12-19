@@ -149,7 +149,7 @@ function ReviewSubmissionModal({
             authToken: Digit.UserService.getUser().access_token,
             userInfo: Digit.UserService.getUser()?.info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         responseType: "blob",

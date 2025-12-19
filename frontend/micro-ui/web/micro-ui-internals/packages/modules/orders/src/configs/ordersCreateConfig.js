@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`, `ABATE_CASE`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -6200,6 +6200,39 @@ export const configsWitnessBatta = [
               masterName: "minTodayDateValidation",
             },
           },
+        },
+      },
+    ],
+  },
+];
+
+export const configsAbateCase = [
+  {
+    body: [
+      {
+        label: "WAS_DISPOSAL_CONTESTED_OR_UNCONTESTED",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "customDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "natureOfDisposal",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "CONTESTED",
+              name: "Contested",
+            },
+            {
+              code: "UNCONTESTED",
+              name: "Uncontested",
+            },
+          ],
         },
       },
     ],

@@ -9,6 +9,7 @@ import { getDate } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
+import { DRISTIService } from "../../../services";
 
 const DocumentsV2 = ({
   caseDetails,
@@ -76,6 +77,44 @@ const DocumentsV2 = ({
         console.error("error: ", error);
         setShowErrorToast({ label: t("DELTED_SUCCESSFULLY"), error: true });
       }
+    }
+  };
+
+  const evidenceDeleteFunc = async (row) => {
+    try {
+      const courtId = row?.courtId;
+      const filingNo = row?.filingNumber || filingNumber;
+      const artifactNum = row?.artifactNumber;
+
+      const searchRes = await DRISTIService.searchEvidence(
+        {
+          criteria: {
+            courtId: courtId,
+            filingNumber: filingNo,
+            artifactNumber: artifactNum,
+            tenantId,
+          },
+          tenantId,
+        },
+        {}
+      );
+
+      const existing = searchRes?.artifacts?.[0];
+      if (!existing) return;
+
+      const payload = {
+        ...existing,
+        isEvidenceMarkedFlow: true,
+        workflow: {
+          action: "DELETE_DRAFT",
+        },
+      };
+      await DRISTIService.updateEvidence({ artifact: payload }, {});
+      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+    } catch (error) {
+      console.error("Error deleting evidence draft:", error);
+      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true });
     }
   };
 
@@ -310,6 +349,8 @@ const DocumentsV2 = ({
         setShowVoidModal(true);
       } else if ("download_filing" === item.id) {
         downloadPdf(tenantId, row?.file?.fileStore);
+      } else if ("delete_evidence_draft" === item.id) {
+        evidenceDeleteFunc(row);
       }
     };
 
@@ -330,6 +371,7 @@ const DocumentsV2 = ({
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
                   ...(caseCourtId && { courtId: caseCourtId }),
+                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },

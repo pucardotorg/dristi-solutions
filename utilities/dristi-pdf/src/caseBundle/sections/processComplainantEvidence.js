@@ -104,6 +104,7 @@ async function processComplainantEvidence(
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -233,13 +234,11 @@ async function processComplainantEvidence(
     }
   }
 
-  if (complainantEvidenceLineItems.length > 0) {
-    const complainantEvidenceIndexSection = indexCopy.sections?.find(
-      (section) => section.name === "complainantevidence"
-    );
-    complainantEvidenceIndexSection.lineItems =
-      complainantEvidenceLineItems?.filter(Boolean);
-  }
+  const complainantEvidenceIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "complainantevidence"
+  );
+  complainantEvidenceIndexSection.lineItems =
+    complainantEvidenceLineItems?.filter(Boolean);
 }
 
 module.exports = {
