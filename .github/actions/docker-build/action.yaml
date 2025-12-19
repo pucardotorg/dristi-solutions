@@ -29,8 +29,6 @@ runs:
     - name: Check files
       shell: bash
       run: |
-        ls -1
-        pwd
         echo "Checking files for service ${{ inputs.service_name }}"
         if [[ ! -f "build/config.json" ]]; then
           echo "build/config.json not found"

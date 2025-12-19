@@ -180,3 +180,22 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+
+      - name: Clean up dristi-Solutions repo
+        run: |
+          cd ..
+          rm -rf dristi-solutions
+          ls -1
+
+      - name: Deploy to Kubernetes
+        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service/action.yaml@Solutions-Pipeline
+        with:
+          environment: ${{ needs.check-diff.outputs.deployment_env }}
+          service_group: ${{ env.service_group }}
+          service_name: ${{ matrix.service }}
+          image_tag: ${{ steps.docker_build.outputs.image_tag }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          public_age_key: ${{ secrets.PUBLIC_AGE_KEY }}
+          private_age_key: ${{ secrets.PRIVATE_AGE_KEY }}
+          env_file: ${{ vars.HELMFILE_ENV }}
+          checkout_ref: ${{ vars.devops_branch }}
