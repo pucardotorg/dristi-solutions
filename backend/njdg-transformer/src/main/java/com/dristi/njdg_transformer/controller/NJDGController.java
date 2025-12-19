@@ -11,24 +11,17 @@ import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.AdvocateService;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.dristi.njdg_transformer.repository.OrderRepository;
 
 import java.util.*;
 
@@ -153,6 +146,35 @@ public class NJDGController {
         } catch (Exception e) {
             log.error("Error processing advocate: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AdvocateDetails());
+        }
+    }
+
+    @PostMapping("_processbusinessorders")
+    public ResponseEntity<?> processBusinessDayOrders(@Valid @RequestBody OrderRequest orderRequest) {
+        String orderNumber = orderRequest.getOrder() != null ? orderRequest.getOrder().getOrderNumber() : null;
+        
+        log.info("Received request to process business day order | orderNumber: {}", orderNumber);
+        
+        try {
+            Order order = orderRequest.getOrder();
+            if (order == null) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Order is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            //todo: process business day orders
+            //todo: process async orders
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Business day order processed successfully");
+            response.put("orderNumber", orderNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error processing business day order | orderNumber: {} | error: {}", 
+                    orderNumber, e.getMessage(), e);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Failed to process business day order: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 

@@ -55,4 +55,7 @@ public class HearingDetails {
 
     @JsonProperty("nextPurpose")
     private String nextPurpose;
+
+    @JsonProperty("orderId")
+    private String orderId;
 }

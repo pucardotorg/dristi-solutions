@@ -52,10 +52,6 @@ public class HearingService {
                 return hearingDetail;
             }
         }
-        int nextSrNo = hearingDetails.stream()
-                .mapToInt(HearingDetails::getSrNo)
-                .max()
-                .orElse(0) + 1;
 
         // Use hearing startTime (createdDate equivalent) for hearing processing
         LocalDate searchDate = formatDate(hearing.getStartTime());
@@ -66,7 +62,6 @@ public class HearingService {
         // Create new hearing detail
         HearingDetails newHearingDetail = HearingDetails.builder()
                 .cino(cino)
-                .srNo(nextSrNo)
                 .desgName(designationMaster.getDesgName())
                 .hearingDate(formatDate(hearing.getStartTime()))
                 .nextDate(hearing.getNextHearingDate() != null ? formatDate(hearing.getNextHearingDate()) : getNextDateFromOrder(hearing, requestInfo)) // Set next date from scheduled hearing or null
