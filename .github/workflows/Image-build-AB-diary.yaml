@@ -168,3 +168,14 @@ jobs:
           branch: ${{ needs.check-diff.outputs.repo_branch }}
           repo: "pucardotorg/dristi-solutions"
           ghub_token: ${{ secrets.GHUB_TOKEN }}
+
+      - name: Docker Build
+        id: docker_build
+        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
+        with:
+          service_name: ${{ matrix.service }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Print docker image
+        run: |
+          echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }}"
