@@ -174,7 +174,7 @@ jobs:
         uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
         with:
           service_name: ${{ matrix.service }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+          docker_password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Print docker image
         run: |
