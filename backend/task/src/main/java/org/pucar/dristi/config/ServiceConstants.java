@@ -208,4 +208,7 @@ public class ServiceConstants {
     public static final String TASKS_BULK_SIGN_EXCEPTION = "TASKS_BULK_SIGN_EXCEPTION";
 
     public static final String PROCESS_FEE_PAYMENT = "PROCESS_FEE_PAYMENT";
+
+    public static final String TASK_NOT_FOUND = "TASK_NOT_FOUND";
+    public static final String INVALID_DELIVERY_CHANNEL = "INVALID_DELIVERY_CHANNEL";
 }

@@ -1056,7 +1056,7 @@ public class TaskService {
             
             if (tasks == null || tasks.isEmpty()) {
                 log.error("No task found with taskNumber: {}", taskNumber);
-                throw new CustomException("TASK_NOT_FOUND", 
+                throw new CustomException(TASK_NOT_FOUND, 
                         "No task found with taskNumber: " + taskNumber);
             }
             
@@ -1091,4 +1091,55 @@ public class TaskService {
                     "Error processing task details: " + e.getMessage());
         }
     }
+
+    public List<BulkPendingCollectionUpdate> bulkUpdatePendingCollection(BulkPendingCollectionUpdateRequest request) {
+        for (BulkPendingCollectionUpdate updateTask : request.getTasks()) {
+            try {
+                TaskSearchRequest taskSearchRequest = new TaskSearchRequest();
+                taskSearchRequest.setCriteria(TaskCriteria.builder()
+                        .taskNumber(updateTask.getTaskNumber())
+                        .tenantId(updateTask.getTenantId())
+                        .build());
+                taskSearchRequest.setRequestInfo(new RequestInfo());
+
+                List<Task> tasks = searchTask(taskSearchRequest);
+                if (tasks.isEmpty()) {
+                    throw new CustomException(TASK_NOT_FOUND, "Task not found with task number: " + updateTask.getTaskNumber());
+                }
+
+                Task task = tasks.get(0);
+
+                if (!isRPADdeliveryChannel(task)) {
+                    throw new CustomException(INVALID_DELIVERY_CHANNEL, "Task delivery channel is not RPAD for task number: " + updateTask.getTaskNumber());
+                }
+
+                JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+                if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+                    ObjectNode deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+                    deliveryChannels.put("isPendingCollection", false);
+                    task.setTaskDetails(taskDetails);
+                }
+
+                enrichmentUtil.enrichAuditDetailsForUpdate(task, request.getRequestInfo());
+
+                TaskRequest taskRequest = TaskRequest.builder()
+                        .task(task)
+                        .requestInfo(request.getRequestInfo())
+                        .build();
+
+                closeEnvelopePendingTask(taskRequest);
+
+                producer.push(config.getTaskUpdatePendingCollectionTopic(), taskRequest);
+
+                log.info("Successfully updated isPendingCollection to false for task: {}", updateTask.getTaskNumber());
+
+            } catch (Exception e) {
+                log.error("Error updating isPendingCollection for task: {}", updateTask.getTaskNumber(), e);
+                updateTask.setErrorMessage(e.getMessage());
+                updateTask.setSuccess(false);
+            }
+        }
+        return request.getTasks();
+    }
+
 }

@@ -45,4 +45,7 @@ public class TaskCaseSearchCriteria {
     @JsonProperty("hearingDate")
     private Long hearingDate = null;
 
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection;
+
 }
