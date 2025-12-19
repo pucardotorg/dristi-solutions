@@ -120,30 +120,31 @@ jobs:
       - name: set deployment environment
         id: set_deployment_environment
         run: |
-          deployment_env=""
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            deployment_env="${{ inputs.deployment_env }}"
-          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
-            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
-              deployment_env="demo"
-            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
-              deployment_env="dev"
-            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
-              deployment_env="qa"
-            fi
-          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
-            if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
-              deployment_env="demo"
-            elif [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
-              deployment_env="dev"
-            elif [[ "${{ github.event.pull_request.base.ref }}" == "release/*" ]]; then
-              deployment_env="qa"
-            else
-              deployment_env="dev"
-            fi
+          EVENT="${{ github.event_name }}"
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          REF_NAME="${{ github.ref_name }}"
+          ENV_VALUE=""
+
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
+            ENV_VALUE="${{ inputs.deployment_env }}"
+          elif [[ "$EVENT" == "pull_request" ]]; then
+            case "$BASE_REF" in
+              main)          ENV_VALUE="demo" ;;
+              develop)       ENV_VALUE="dev" ;;
+              release/*)     ENV_VALUE="qa" ;;
+              *)             ENV_VALUE="dev" ;;
+            esac
+          elif [[ "$EVENT" == "push" ]]; then
+            case "$REF_NAME" in
+              main)          ENV_VALUE="demo" ;;
+              develop)       ENV_VALUE="dev" ;;
+              release/*)     ENV_VALUE="qa" ;;
+              *)             ENV_VALUE="dev" ;;
+            esac
           fi
-          echo "deployment_env set to $deployment_env"
-          echo "deployment_env=$deployment_env" >> $GITHUB_ENV
+          echo "Final Determined Env: $ENV_VALUE"
+          echo "deployment_env=$ENV_VALUE" >> $GITHUB_ENV
+          echo "deployment_env=$ENV_VALUE" >> $GITHUB_OUTPUT
 
   build-deploy:
     runs-on: ubuntu-latest
@@ -176,6 +177,6 @@ jobs:
           service_name: ${{ matrix.service }}
           docker_password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Print docker image
+      - name: Deployment Summary
         run: |
-          echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }}"
+          echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
