@@ -238,4 +238,5 @@ public class ServiceConstants {
 
 	public static final String Trial = "Trial";
 	public static final String DOCUMENT_SUBMITTED = "DOCUMENT_SUBMITTED";
+	public static final String REQUEST_FOR_BAIL = "REQUEST_FOR_BAIL";
 }
