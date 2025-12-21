@@ -1785,6 +1785,70 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewWarrantAccess,
     hasViewNoticeAccess,
   ]);
+
+  // Step 1: Add checkbox to header of SELECT column
+  useEffect(() => {
+    const injectHeaderCheckbox = () => {
+      // Find the table header row - look for th elements or header cells
+      const tableHeaders = document.querySelectorAll('th, [role="columnheader"]');
+
+      // Find the SELECT column header (first column)
+      let selectHeader = null;
+      for (let i = 0; i < tableHeaders.length; i++) {
+        const header = tableHeaders[i];
+        const headerText = header.textContent?.trim() || "";
+        // Check if this is the SELECT column (first column, usually empty or has SELECT text)
+        if (i === 0 || headerText === "" || headerText.toLowerCase().includes("select")) {
+          selectHeader = header;
+          break;
+        }
+      }
+
+      if (selectHeader) {
+        // Check if checkbox already exists
+        const existingCheckbox = selectHeader.querySelector('input[type="checkbox"]');
+        if (!existingCheckbox) {
+          // Create checkbox element
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "custom-checkbox header-checkbox";
+          checkbox.style.cssText = "cursor: pointer; width: 20px; height: 20px;";
+
+          // Clear header content and add checkbox
+          selectHeader.innerHTML = "";
+          selectHeader.appendChild(checkbox);
+        }
+      }
+    };
+
+    // Try to inject immediately
+    injectHeaderCheckbox();
+
+    // Also try after a short delay to handle async table rendering
+    const timeoutId = setTimeout(() => {
+      injectHeaderCheckbox();
+    }, 100);
+
+    // Use MutationObserver to watch for table changes
+    const observer = new MutationObserver(() => {
+      injectHeaderCheckbox();
+    });
+
+    // Observe the inbox-search-wrapper container for changes
+    const container = document.querySelector(".inbox-search-wrapper");
+    if (container) {
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [reload, activeTabIndex, config]);
+
   return (
     <React.Fragment>
       {isLoading ? (
