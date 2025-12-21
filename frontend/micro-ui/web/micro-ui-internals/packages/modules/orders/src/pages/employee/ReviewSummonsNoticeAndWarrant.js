@@ -1787,45 +1787,52 @@ const ReviewSummonsNoticeAndWarrant = () => {
   ]);
 
   // Step 1: Add checkbox to header of SELECT column
-  // Step 2 & 3: Make header checkbox control first row and update state
-  // Step 4: When first row checkbox is clicked individually, uncheck header checkbox
+  // Step 2 & 3: Make header checkbox control all rows and update state
+  // Step 4 & 5: When any row checkbox is clicked individually, uncheck header checkbox
   useEffect(() => {
     // Flag to track programmatic clicks from header (to avoid unchecking header)
     let isHeaderControlledClick = false;
 
-    // Click handler for header checkbox
+    // Click handler for header checkbox - controls ALL visible row checkboxes
     const handleHeaderCheckboxClick = (e) => {
       e.stopPropagation();
       const headerCheckbox = e.target;
       const shouldBeChecked = headerCheckbox.checked;
 
-      // Find the first row checkbox
+      // Find all row checkboxes in the table
       const tableBody = document.querySelector("tbody");
       if (tableBody) {
-        const firstRow = tableBody.querySelector("tr");
-        if (firstRow) {
-          const firstRowCheckbox = firstRow.querySelector('input[type="checkbox"]');
-          if (firstRowCheckbox) {
-            // Check if we need to toggle the first row checkbox
-            const isCurrentlyChecked = firstRowCheckbox.checked;
-            if (isCurrentlyChecked !== shouldBeChecked) {
-              // Set flag to indicate this is a header-controlled click
-              isHeaderControlledClick = true;
-              // Click the first row checkbox to trigger BulkCheckbox's onChange handler
-              // This will call colData?.updateOrderFunc(rowData, !checked) and update state
-              firstRowCheckbox.click();
-              // Reset flag after a short delay
-              setTimeout(() => {
-                isHeaderControlledClick = false;
-              }, 100);
-            }
+        const allRows = tableBody.querySelectorAll("tr");
+        const checkboxesToClick = [];
+
+        // Collect all checkboxes that need to be toggled
+        allRows.forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && rowCheckbox.checked !== shouldBeChecked) {
+            checkboxesToClick.push(rowCheckbox);
           }
+        });
+
+        // Set flag to indicate these are header-controlled clicks
+        if (checkboxesToClick.length > 0) {
+          isHeaderControlledClick = true;
+
+          // Click each checkbox to trigger BulkCheckbox's onChange handler
+          // This will call colData?.updateOrderFunc(rowData, !checked) for each row
+          checkboxesToClick.forEach((checkbox) => {
+            checkbox.click();
+          });
+
+          // Reset flag after all clicks are processed
+          setTimeout(() => {
+            isHeaderControlledClick = false;
+          }, 200);
         }
       }
     };
 
-    // Click handler for first row checkbox - uncheck header when clicked individually
-    const handleFirstRowCheckboxClick = (e) => {
+    // Click handler for any row checkbox - uncheck header when clicked individually
+    const handleRowCheckboxClick = (e) => {
       // Only uncheck header if this is NOT a header-controlled click
       if (!isHeaderControlledClick) {
         // Find the header checkbox
@@ -1878,37 +1885,37 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
     };
 
-    // Function to attach handler to first row checkbox
-    const attachFirstRowCheckboxHandler = () => {
+    // Function to attach handlers to ALL row checkboxes
+    const attachRowCheckboxHandlers = () => {
       const tableBody = document.querySelector("tbody");
       if (tableBody) {
-        const firstRow = tableBody.querySelector("tr");
-        if (firstRow) {
-          const firstRowCheckbox = firstRow.querySelector('input[type="checkbox"]');
-          if (firstRowCheckbox && !firstRowCheckbox.hasAttribute("data-first-row-handler-attached")) {
+        const allRows = tableBody.querySelectorAll("tr");
+        allRows.forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && !rowCheckbox.hasAttribute("data-row-handler-attached")) {
             // Mark as having handler attached
-            firstRowCheckbox.setAttribute("data-first-row-handler-attached", "true");
+            rowCheckbox.setAttribute("data-row-handler-attached", "true");
             // Add click handler to uncheck header when clicked individually
-            firstRowCheckbox.addEventListener("click", handleFirstRowCheckboxClick);
+            rowCheckbox.addEventListener("click", handleRowCheckboxClick);
           }
-        }
+        });
       }
     };
 
     // Try to inject immediately
     injectHeaderCheckbox();
-    attachFirstRowCheckboxHandler();
+    attachRowCheckboxHandlers();
 
     // Also try after a short delay to handle async table rendering
     const timeoutId = setTimeout(() => {
       injectHeaderCheckbox();
-      attachFirstRowCheckboxHandler();
+      attachRowCheckboxHandlers();
     }, 100);
 
     // Use MutationObserver to watch for table changes
     const observer = new MutationObserver(() => {
       injectHeaderCheckbox();
-      attachFirstRowCheckboxHandler();
+      attachRowCheckboxHandlers();
     });
 
     // Observe the inbox-search-wrapper container for changes
