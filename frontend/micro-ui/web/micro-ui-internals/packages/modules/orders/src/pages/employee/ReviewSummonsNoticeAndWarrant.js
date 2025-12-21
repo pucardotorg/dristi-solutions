@@ -1786,9 +1786,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewNoticeAccess,
   ]);
 
-  // Step 1: Add checkbox to header of SELECT column
-  // Step 2 & 3: Make header checkbox control all rows and update state
-  // Step 4 & 5: When any row checkbox is clicked individually, uncheck header checkbox
+  // Header checkbox functionality: Controls all visible row checkboxes.
+  // When header is checked/unchecked, all rows follow. When any individual row checkbox is clicked,
+  // the header unchecks to switch control to individual selection mode.
   useEffect(() => {
     // Flag to track programmatic clicks from header (to avoid unchecking header)
     let isHeaderControlledClick = false;
