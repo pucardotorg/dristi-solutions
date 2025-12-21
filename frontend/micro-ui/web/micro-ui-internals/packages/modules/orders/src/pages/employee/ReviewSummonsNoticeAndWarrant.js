@@ -1787,7 +1787,33 @@ const ReviewSummonsNoticeAndWarrant = () => {
   ]);
 
   // Step 1: Add checkbox to header of SELECT column
+  // Step 2 & 3: Make header checkbox control first row and update state
   useEffect(() => {
+    // Click handler for header checkbox
+    const handleHeaderCheckboxClick = (e) => {
+      e.stopPropagation();
+      const headerCheckbox = e.target;
+      const shouldBeChecked = headerCheckbox.checked;
+
+      // Find the first row checkbox
+      const tableBody = document.querySelector("tbody");
+      if (tableBody) {
+        const firstRow = tableBody.querySelector("tr");
+        if (firstRow) {
+          const firstRowCheckbox = firstRow.querySelector('input[type="checkbox"]');
+          if (firstRowCheckbox) {
+            // Check if we need to toggle the first row checkbox
+            const isCurrentlyChecked = firstRowCheckbox.checked;
+            if (isCurrentlyChecked !== shouldBeChecked) {
+              // Click the first row checkbox to trigger BulkCheckbox's onChange handler
+              // This will call colData?.updateOrderFunc(rowData, !checked) and update state
+              firstRowCheckbox.click();
+            }
+          }
+        }
+      }
+    };
+
     const injectHeaderCheckbox = () => {
       // Find the table header row - look for th elements or header cells
       const tableHeaders = document.querySelectorAll('th, [role="columnheader"]');
@@ -1813,10 +1839,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
           checkbox.type = "checkbox";
           checkbox.className = "custom-checkbox header-checkbox";
           checkbox.style.cssText = "cursor: pointer; width: 20px; height: 20px;";
+          checkbox.setAttribute("data-header-checkbox", "true");
+
+          // Add click handler
+          checkbox.addEventListener("click", handleHeaderCheckboxClick);
 
           // Clear header content and add checkbox
           selectHeader.innerHTML = "";
           selectHeader.appendChild(checkbox);
+        } else if (!existingCheckbox.hasAttribute("data-header-checkbox")) {
+          // Checkbox exists but doesn't have handler, add it
+          existingCheckbox.setAttribute("data-header-checkbox", "true");
+          existingCheckbox.addEventListener("click", handleHeaderCheckboxClick);
         }
       }
     };
