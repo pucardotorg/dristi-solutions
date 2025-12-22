@@ -33,7 +33,8 @@ public class HearingConsumer {
                 topic, messageId, payload.partition(), payload.offset());
         
         try {
-            processAndUpdateHearing(payload);
+            //Not needed now as all hearings are processed via orders
+//            processAndUpdateHearing(payload);
             log.info("Successfully processed hearing message on topic: {} | messageId: {}", topic, messageId);
         } catch (Exception e){
             log.error("Failed to process hearing message on topic: {} | messageId: {} | error: {}", 

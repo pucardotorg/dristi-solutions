@@ -472,7 +472,7 @@ public class CaseRepository {
             return 1;
         } catch (DataAccessException e) {
             log.error("Failed to get next sr_no for CINO: {} | error: {}", cino, e.getMessage(), e);
-            return 1; // Default fallback
+            return 1;
         }
     }
 
@@ -501,6 +501,7 @@ public class CaseRepository {
             preparedStmtList.add(caseTypeDetails.getNewFilNo());
             preparedStmtList.add(caseTypeDetails.getNewFilYear());
             preparedStmtList.add(caseTypeDetails.getJocode());
+            preparedStmtList.add(caseTypeDetails.getConvertedAt());
             
             // Set parameter types
             preparedStmtArgsList.add(Types.VARCHAR);    // cino
@@ -518,6 +519,7 @@ public class CaseRepository {
             preparedStmtArgsList.add(Types.INTEGER);    // newfil_no
             preparedStmtArgsList.add(Types.SMALLINT);   // newfil_year
             preparedStmtArgsList.add(Types.VARCHAR);    // jocode
+            preparedStmtArgsList.add(Types.TIMESTAMP);  // converted_at
             
             jdbcTemplate.update(insertQuery, preparedStmtList.toArray(),
                     preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
