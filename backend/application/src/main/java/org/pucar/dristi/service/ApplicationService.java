@@ -121,7 +121,9 @@ public class ApplicationService {
 
             if (PENDINGPAYMENT.equalsIgnoreCase(application.getStatus())) {
                 List<Document> documents = application.getDocuments();
-                if(documents!=null) {
+                if (documents == null || documents.isEmpty()) {
+                    log.info("No documents found for application {}", application.getApplicationNumber());
+                }else {
                     List<Document> unsignedDocuments = documents.stream()
                             .filter(doc -> !"SIGNED".equalsIgnoreCase(doc.getDocumentType()))
                             .toList();
