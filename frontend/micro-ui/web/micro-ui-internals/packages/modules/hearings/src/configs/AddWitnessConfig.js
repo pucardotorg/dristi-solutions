@@ -163,7 +163,7 @@ const createWitnessConfig = (index) => [
                 max: "9999999",
                 title: "",
                 errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "[0-9]+$",
+                pattern: "/^[1-9][0-9]{5}$/i",
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
@@ -203,6 +203,7 @@ const createWitnessConfig = (index) => [
               label: "CITY/TOWN",
               validation: {
                 isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
                 patternType: "Name",
                 errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
               },
