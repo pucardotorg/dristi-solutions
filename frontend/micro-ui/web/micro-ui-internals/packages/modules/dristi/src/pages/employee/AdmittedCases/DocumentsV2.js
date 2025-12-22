@@ -371,7 +371,6 @@ const DocumentsV2 = ({
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
                   ...(caseCourtId && { courtId: caseCourtId }),
-                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },
@@ -413,6 +412,7 @@ const DocumentsV2 = ({
                 criteria: {
                   ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
+                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },
