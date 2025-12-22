@@ -9,12 +9,10 @@ import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
+import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.service.AdvocateService;
-import com.dristi.njdg_transformer.service.CaseService;
-import com.dristi.njdg_transformer.service.HearingService;
-import com.dristi.njdg_transformer.service.OrderService;
+import com.dristi.njdg_transformer.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +36,7 @@ public class NJDGController {
     private final HearingService hearingService;
     private final AdvocateService advocateService;
     private final ObjectMapper objectMapper;
+    private final OrderNotificationService orderNotificationService;
 
     /**
      * Process and upsert a court case into NJDG format
@@ -162,9 +161,8 @@ public class NJDGController {
                 response.put("message", "Order is required");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-            //todo: process business day orders
-            //todo: process async orders
             Map<String, String> response = new HashMap<>();
+            orderNotificationService.processOrdersWithHearings(order, orderRequest.getRequestInfo());
             response.put("message", "Business day order processed successfully");
             response.put("orderNumber", orderNumber);
             return ResponseEntity.ok(response);
@@ -174,6 +172,39 @@ public class NJDGController {
                     orderNumber, e.getMessage(), e);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Failed to process business day order: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @PostMapping("_processordernotification")
+    public ResponseEntity<?> processOrderNotification(@Valid @RequestBody NotificationRequest notificationRequest) {
+        String notificationNumber = notificationRequest.getNotification() != null ? 
+                notificationRequest.getNotification().getNotificationNumber() : null;
+        
+        log.info("Received request to process order notification | notificationNumber: {}", notificationNumber);
+        
+        try {
+            if (notificationRequest.getNotification() == null) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Notification is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            orderNotificationService.processNotificationOrders(
+                    notificationRequest.getNotification(), 
+                    notificationRequest.getRequestInfo()
+            );
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Order notification processed successfully");
+            response.put("notificationNumber", notificationNumber);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Error processing order notification | notificationNumber: {} | error: {}", 
+                    notificationNumber, e.getMessage(), e);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Failed to process order notification: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }

@@ -127,7 +127,7 @@ public class OrderConsumer {
 
             log.info("Processing order | orderId: {} | status: {}", orderId, status);
 
-            if (!PUBLISHED_ORDER.equals(status)) {
+            if (!PUBLISHED_ORDER.equalsIgnoreCase(status)) {
                 log.info("Skipping order processing | orderId: {} | status: {} | expectedStatus: {}",
                         orderId, status, PUBLISHED_ORDER);
                 return;
