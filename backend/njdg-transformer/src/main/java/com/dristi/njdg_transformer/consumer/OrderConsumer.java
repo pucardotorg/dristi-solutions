@@ -70,11 +70,7 @@ public class OrderConsumer {
             log.info("Processing order for hearing | orderId: {} | status: {}", orderId, status);
 
             if(PUBLISHED_ORDER.equalsIgnoreCase(order.getStatus())) {
-                if(order.getHearingNumber() != null && order.getItemText() != null) {
-                    orderNotificationService.processBusinessDayOrders(order, orderRequest.getRequestInfo());
-                } else {
-                    orderNotificationService.processAsyncOrders(order, orderRequest.getRequestInfo());
-                }
+                orderNotificationService.processOrdersWithHearings(order, orderRequest.getRequestInfo());
             }
         } catch (Exception e) {
             log.error("Error processing order for hearing | orderId: {} | status: {} | error: {}",
