@@ -54,19 +54,21 @@ class HearingConsumerTest {
 
     @Test
     void testListen_CompletedHearing_Success() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class))).thenReturn(hearingRequest);
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenReturn(new HearingDetails());
-
+        // Note: Hearing processing via listen() is currently disabled (commented out)
+        // The listener logs the message but does not process it
+        // Hearings are now processed via orders instead
+        
         hearingConsumer.listen(consumerRecord, "hearing-topic");
 
-        verify(hearingService).processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class));
+        // No service call expected as processing is disabled
+        verify(hearingService, never()).processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class));
     }
 
     @Test
     void testListen_NonCompletedHearing_Skipped() throws Exception {
+        // Note: Hearing processing via listen() is currently disabled
+        // This test verifies the listener does not process any hearings
         hearing.setStatus("SCHEDULED");
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class))).thenReturn(hearingRequest);
 
         hearingConsumer.listen(consumerRecord, "hearing-topic");
 
@@ -75,9 +77,9 @@ class HearingConsumerTest {
 
     @Test
     void testListen_ExceptionHandling() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class)))
-                .thenThrow(new RuntimeException("Parse error"));
-
+        // Note: Hearing processing via listen() is currently disabled
+        // The listener only logs and doesn't throw exceptions
+        
         assertDoesNotThrow(() -> hearingConsumer.listen(consumerRecord, "hearing-topic"));
         verify(hearingService, never()).processAndUpdateHearings(any(), any());
     }

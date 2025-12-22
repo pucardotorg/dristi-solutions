@@ -47,7 +47,8 @@ class TransformerPropertiesTest {
                 "http://individual",
                 "/individual/v1/_search",
                 "Asia/Kolkata",
-                allowedTenantIds
+                allowedTenantIds,
+                "order.notification.template"
         );
 
         assertEquals("http://filestore", properties.getFileStoreHost());

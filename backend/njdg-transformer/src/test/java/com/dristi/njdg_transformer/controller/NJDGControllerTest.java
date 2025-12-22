@@ -8,11 +8,14 @@ import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingRequest;
+import com.dristi.njdg_transformer.model.order.Notification;
+import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.service.AdvocateService;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.service.HearingService;
+import com.dristi.njdg_transformer.service.OrderNotificationService;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
@@ -26,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,6 +53,9 @@ class NJDGControllerTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private OrderNotificationService orderNotificationService;
 
     @InjectMocks
     private NJDGController njdgController;
@@ -309,5 +316,135 @@ class NJDGControllerTest {
         ResponseEntity<?> response = njdgController.processAndUpdateAdvocates(advocateRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    // ========== Tests for processBusinessDayOrders ==========
+
+    @Test
+    void testProcessBusinessDayOrders_Success() {
+        Order order = new Order();
+        order.setOrderNumber("ORD-001");
+        order.setStatus("PUBLISHED");
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setOrder(order);
+        orderRequest.setRequestInfo(requestInfo);
+
+        doNothing().when(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
+
+        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Business day order processed successfully", responseBody.get("message"));
+        assertEquals("ORD-001", responseBody.get("orderNumber"));
+        verify(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
+    }
+
+    @Test
+    void testProcessBusinessDayOrders_NullOrder() {
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setOrder(null);
+        orderRequest.setRequestInfo(requestInfo);
+
+        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Order is required", responseBody.get("message"));
+        verify(orderNotificationService, never()).processOrdersWithHearings(any(), any());
+    }
+
+    @Test
+    void testProcessBusinessDayOrders_Exception() {
+        Order order = new Order();
+        order.setOrderNumber("ORD-001");
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setOrder(order);
+        orderRequest.setRequestInfo(requestInfo);
+
+        doThrow(new RuntimeException("Processing error"))
+                .when(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
+
+        ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to process business day order"));
+    }
+
+    // ========== Tests for processOrderNotification ==========
+
+    @Test
+    void testProcessOrderNotification_Success() {
+        Notification notification = new Notification();
+        notification.setNotificationNumber("NOTIF-001");
+        notification.setStatus("PUBLISHED");
+
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(notification);
+        notificationRequest.setRequestInfo(requestInfo);
+
+        doNothing().when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
+
+        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Order notification processed successfully", responseBody.get("message"));
+        assertEquals("NOTIF-001", responseBody.get("notificationNumber"));
+        verify(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
+    }
+
+    @Test
+    void testProcessOrderNotification_NullNotification() {
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(null);
+        notificationRequest.setRequestInfo(requestInfo);
+
+        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Notification is required", responseBody.get("message"));
+        verify(orderNotificationService, never()).processNotificationOrders(any(), any());
+    }
+
+    @Test
+    void testProcessOrderNotification_Exception() {
+        Notification notification = new Notification();
+        notification.setNotificationNumber("NOTIF-001");
+
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(notification);
+        notificationRequest.setRequestInfo(requestInfo);
+
+        doThrow(new RuntimeException("Processing error"))
+                .when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
+
+        ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to process order notification"));
     }
 }
