@@ -3,6 +3,8 @@ package com.dristi.njdg_transformer.controller;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.advocate.Advocate;
 import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
+import com.dristi.njdg_transformer.model.cases.CaseConversionDetails;
+import com.dristi.njdg_transformer.model.cases.CaseConversionRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
@@ -446,5 +448,83 @@ class NJDGControllerTest {
         @SuppressWarnings("unchecked")
         Map<String, String> responseBody = (Map<String, String>) response.getBody();
         assertTrue(responseBody.get("message").contains("Failed to process order notification"));
+    }
+
+    // ========== Tests for updateCaseConversionDetails ==========
+
+    @Test
+    void testUpdateCaseConversionDetails_Success() {
+        CaseConversionDetails conversionDetails = CaseConversionDetails.builder()
+                .cnrNumber("CNR-001")
+                .filingNumber("KL-000001-2024")
+                .convertedFrom("CMP")
+                .convertedTo("ST")
+                .preCaseNumber("CMP/001/2024")
+                .postCaseNumber("ST/001/2024")
+                .build();
+
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(conversionDetails)
+                .requestInfo(requestInfo)
+                .build();
+
+        doNothing().when(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Case conversion details updated successfully", responseBody.get("message"));
+        assertEquals("CNR-001", responseBody.get("cnrNumber"));
+        assertEquals("KL-000001-2024", responseBody.get("filingNumber"));
+        verify(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+    }
+
+    @Test
+    void testUpdateCaseConversionDetails_NullConversionDetails() {
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(null)
+                .requestInfo(requestInfo)
+                .build();
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Case conversion details are required", responseBody.get("message"));
+        verify(caseService, never()).updateCaseConversionDetails(any());
+    }
+
+    @Test
+    void testUpdateCaseConversionDetails_Exception() {
+        CaseConversionDetails conversionDetails = CaseConversionDetails.builder()
+                .cnrNumber("CNR-001")
+                .filingNumber("KL-000001-2024")
+                .convertedFrom("CMP")
+                .convertedTo("ST")
+                .build();
+
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(conversionDetails)
+                .requestInfo(requestInfo)
+                .build();
+
+        doThrow(new RuntimeException("Processing error"))
+                .when(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to update case conversion details"));
     }
 }
