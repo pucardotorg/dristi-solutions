@@ -698,7 +698,7 @@ export const updateProfileData = async ({
       comment: [],
       workflow: {
         id: "workflow123",
-        action: SubmissionWorkflowAction.CREATE,
+        action: SubmissionWorkflowAction.SUBMIT,
         status: "in_progress",
         comments: "Workflow comments",
         documents: [{}],

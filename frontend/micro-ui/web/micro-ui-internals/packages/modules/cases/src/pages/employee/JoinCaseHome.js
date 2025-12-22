@@ -1328,6 +1328,19 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
             const ownerName = cleanString(userInfo?.name);
 
+            const documents =
+              taskDetails?.individualDetails?.map((res, index) => {
+                const poaDoc = res?.poaAuthDocument || {};
+                return {
+                  documentType: poaDoc?.documentType,
+                  fileStore: poaDoc?.fileStore,
+                  documentName:poaDoc?.additionalDetails?.documentName,
+                  additionalDetails: {
+                    name: poaDoc?.additionalDetails?.documentName,
+                  },
+                };
+              }) || [];
+
             const applicationReqBody = {
               tenantId,
               application: {
@@ -1366,7 +1379,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   owner: removeInvalidNameParts(ownerName),
                   onBehalOfName: removeInvalidNameParts(ownerName),
                 },
-                documents: [],
+                documents: [...documents],
                 onBehalfOf: [userInfo?.uuid],
                 comment: [],
                 applicationDetails: {
@@ -1375,7 +1388,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 },
                 workflow: {
                   id: "workflow123",
-                  action: SubmissionWorkflowAction.CREATE,
+                  action: SubmissionWorkflowAction.SUBMIT,
                   status: "in_progress",
                   comments: "Workflow comments",
                   documents: [{}],
@@ -1384,17 +1397,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             };
 
             const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
-            const documents =
-              taskDetails?.individualDetails?.map((res, index) => {
-                const poaDoc = res?.poaAuthDocument || {};
-                return {
-                  documentType: poaDoc?.documentType,
-                  fileStore: poaDoc?.fileStore,
-                  additionalDetails: {
-                    name: poaDoc?.additionalDetails?.documentName,
-                  },
-                };
-              }) || [];
 
             let evidenceReqBodyList = documents?.map((docs) => {
               return {

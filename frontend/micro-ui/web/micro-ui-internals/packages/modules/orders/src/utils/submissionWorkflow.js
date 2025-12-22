@@ -5,6 +5,7 @@ export const SubmissionWorkflowAction = {
   ABANDON: "ABANDON",
   APPROVE: "APPROVE",
   SET_TERM_BAIL: "SEND_BACK",
+  SUBMIT: "SUBMIT",
 };
 export const SubmissionWorkflowState = {
   PENDINGSUBMISSION: "PENDINGSUBMISSION",
