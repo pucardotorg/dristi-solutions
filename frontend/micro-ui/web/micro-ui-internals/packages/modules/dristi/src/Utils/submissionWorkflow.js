@@ -53,4 +53,5 @@ export const MarkAsEvidenceAction = {
   ESIGN: "E-SIGN",
   BULKSIGN: "SUBMIT_BULK_E-SIGN",
   EDIT: "EDIT",
+  RECREATE: "RECREATE",
 };
