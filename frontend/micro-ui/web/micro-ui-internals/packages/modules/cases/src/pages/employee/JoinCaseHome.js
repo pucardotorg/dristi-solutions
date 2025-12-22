@@ -1397,28 +1397,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             };
 
             const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
-
-            let evidenceReqBodyList = documents?.map((docs) => {
-              return {
-                artifact: {
-                  artifactType: "DOCUMENTARY",
-                  caseId: caseDetails?.id,
-                  application: resApplication?.application?.applicationNumber,
-                  filingNumber: caseDetails?.filingNumber,
-                  tenantId,
-                  comments: [],
-                  file: docs,
-                  sourceType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANT" : "ACCUSED",
-                  sourceID: individualId,
-                  filingType: "APPLICATION",
-                  additionalDetails: {
-                    uuid: userInfo?.uuid,
-                  },
-                },
-              };
-            });
-
-            await Promise.allSettled(evidenceReqBodyList?.map((body) => DRISTIService.createEvidence(body)));
             if (resApplication) {
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
