@@ -53,21 +53,18 @@ class HearingConsumerTest {
     }
 
     @Test
-    void testListen_CompletedHearing_Success() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class))).thenReturn(hearingRequest);
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenReturn(new HearingDetails());
-
+    void testListen_CompletedHearing_NoProcessing() throws Exception {
+        // Hearing processing via listen is disabled - hearings are processed via orders now
         hearingConsumer.listen(consumerRecord, "hearing-topic");
 
-        verify(hearingService).processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class));
+        // Verify no service interaction since processAndUpdateHearing is commented out
+        verify(hearingService, never()).processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class));
     }
 
     @Test
-    void testListen_NonCompletedHearing_Skipped() throws Exception {
+    void testListen_NonCompletedHearing_NoProcessing() throws Exception {
         hearing.setStatus("SCHEDULED");
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class))).thenReturn(hearingRequest);
-
+        // Hearing processing via listen is disabled
         hearingConsumer.listen(consumerRecord, "hearing-topic");
 
         verify(hearingService, never()).processAndUpdateHearings(any(), any());
@@ -75,9 +72,7 @@ class HearingConsumerTest {
 
     @Test
     void testListen_ExceptionHandling() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(HearingRequest.class)))
-                .thenThrow(new RuntimeException("Parse error"));
-
+        // Even with any exception, listen should not throw since processing is disabled
         assertDoesNotThrow(() -> hearingConsumer.listen(consumerRecord, "hearing-topic"));
         verify(hearingService, never()).processAndUpdateHearings(any(), any());
     }
