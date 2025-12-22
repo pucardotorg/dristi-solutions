@@ -47,6 +47,7 @@ public class HearingRepository {
         preparedStmtList.add(hearingDetails.getHearingId());
         preparedStmtList.add(hearingDetails.getBusiness());
         preparedStmtList.add(hearingDetails.getCourtNo());
+        preparedStmtList.add(hearingDetails.getOrderId());
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.INTEGER);
         preparedStmtArgsList.add(Types.VARCHAR);
@@ -59,6 +60,7 @@ public class HearingRepository {
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.VARCHAR);
         preparedStmtArgsList.add(Types.INTEGER);
+        preparedStmtArgsList.add(Types.VARCHAR);
         jdbcTemplate.update(insertQuery, preparedStmtList.toArray(), preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());
     }
 

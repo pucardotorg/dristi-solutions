@@ -33,6 +33,7 @@ public class HearingDetailsRowMapper implements RowMapper<HearingDetails> {
         hearingDetails.setHearingId(rs.getString("hearing_id") != null ? rs.getString("hearing_id") : "");
         hearingDetails.setBusiness(rs.getString("business") != null ? rs.getString("business") : "");
         hearingDetails.setCourtNo(rs.getInt("court_no"));
+        hearingDetails.setOrderId(rs.getString("order_id"));
         return hearingDetails;
     }
 }
