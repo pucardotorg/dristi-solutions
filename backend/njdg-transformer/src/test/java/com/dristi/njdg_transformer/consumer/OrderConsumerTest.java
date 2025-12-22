@@ -3,7 +3,7 @@ package com.dristi.njdg_transformer.consumer;
 import com.dristi.njdg_transformer.model.InterimOrder;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.service.HearingService;
+import com.dristi.njdg_transformer.service.OrderNotificationService;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.dristi.njdg_transformer.utils.JsonUtil;
 import com.dristi.njdg_transformer.utils.MdmsUtil;
@@ -40,7 +40,7 @@ class OrderConsumerTest {
     private ObjectMapper objectMapper;
 
     @Mock
-    private HearingService hearingService;
+    private OrderNotificationService orderNotificationService;
 
     @Mock
     private MdmsUtil mdmsUtil;
@@ -183,7 +183,7 @@ class OrderConsumerTest {
 
         orderConsumer.listen(consumerRecord, "order-topic");
 
-        verify(hearingService).processBusinessOrder(any(Order.class), any(RequestInfo.class));
+        verify(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
     }
 
     @Test

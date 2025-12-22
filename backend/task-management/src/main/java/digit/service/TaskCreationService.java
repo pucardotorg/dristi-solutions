@@ -465,6 +465,7 @@ public class TaskCreationService {
                 }
                 if (REGISTERED_POST.equalsIgnoreCase(channel.getChannelCode())) {
                     channel.setChannelCode(RPAD);
+                    channel.setIsPendingCollection(true);
                 }
                 result.add(TaskDetails.builder()
                         .caseDetails(caseDetails)
@@ -478,6 +479,7 @@ public class TaskCreationService {
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
                                 .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
+                                .isPendingCollection(channel != null && RPAD.equalsIgnoreCase(channel.getChannelCode()))
                                 .build())
                         .build());
             }
@@ -669,6 +671,7 @@ public class TaskCreationService {
                         .channelName(EMAIL)
                         .channelCode(EMAIL)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(emailChannel);
             }
@@ -677,6 +680,7 @@ public class TaskCreationService {
                         .channelName(SMS)
                         .channelCode(SMS)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(smsChannel);
             }
@@ -687,6 +691,7 @@ public class TaskCreationService {
                         .channelName(EMAIL)
                         .channelCode(EMAIL)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(emailChannel);
             }
@@ -695,6 +700,7 @@ public class TaskCreationService {
                         .channelName(SMS)
                         .channelCode(SMS)
                         .fees("0")
+                        .isPendingCollection(false)
                         .build();
                 channels.add(smsChannel);
             }

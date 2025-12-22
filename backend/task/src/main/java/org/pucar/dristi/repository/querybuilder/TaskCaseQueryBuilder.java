@@ -157,6 +157,12 @@ public class TaskCaseQueryBuilder {
             preparedStmtList.add(taskCaseSearchCriteria.getHearingDate());
         }
 
+        if (taskCaseSearchCriteria.getIsPendingCollection() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" (task.taskDetails -> 'deliveryChannels' ->> 'isPendingCollection')::boolean = ? ");
+            preparedStmtList.add(taskCaseSearchCriteria.getIsPendingCollection());
+        }
+
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
             query.append("(")

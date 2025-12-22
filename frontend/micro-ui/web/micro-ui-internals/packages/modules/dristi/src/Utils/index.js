@@ -526,15 +526,9 @@ export const getComplainants = (caseDetails) => {
 
 //poa holders who are associated with complainants.
 export const getComplainantsSidePoAHolders = (caseDetails, complainants) => {
-  const complainantIds = new Set(complainants?.map((c) => c?.individualId));
   return (
     caseDetails?.poaHolders
-      ?.filter(
-        (item) =>
-          !complainantIds.has(
-            item?.individualId && !item?.representingLitigants?.some((lit) => !complainants?.some((c) => c?.individualId === lit?.individualId))
-          )
-      )
+      ?.filter((item) => item?.representingLitigants?.every((rep) => complainants?.find((c) => c?.individualId === rep?.individualId)))
       ?.map((item) => {
         const fullName = removeInvalidNameParts(item?.name);
         return {
