@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.consumer;
 
+import ch.qos.logback.core.encoder.EchoEncoder;
 import com.dristi.njdg_transformer.model.cases.*;
 import com.dristi.njdg_transformer.service.CaseService;
 import com.dristi.njdg_transformer.utils.CaseUtil;
@@ -14,6 +15,7 @@ import org.egov.common.contract.request.User;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -215,6 +217,24 @@ public class CaseConsumer {
         } catch (Exception e){
             log.error("Failed to process case status | filingNumber: {} | messageId: {} | error: {}", 
                      filingNumber, messageId, e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "update-case-conversion", groupId = "transformer-case")
+    public void listenCaseConversion(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String messageId = extractMessageId(payload);
+        String filingNumber = null;
+
+        log.info("Received case conversion message on topic: {} | messageId: {} | partition: {} | offset: {}",
+                topic, messageId, payload.partition(), payload.offset());
+
+        try {
+            CaseConversionRequest caseConversionRequest = objectMapper.readValue(payload.value().toString(), CaseConversionRequest.class);
+            filingNumber = caseConversionRequest.getCaseConversionDetails().getFilingNumber();
+            caseService.updateCaseConversionDetails(caseConversionRequest);
+            log.info("Successfully processed case conversion | messageId: {} | filingNumber: {}", messageId, filingNumber);
+        } catch (Exception e) {
+            log.error("Failed to process case conversion | messageId: {} | error: {}", messageId, e.getMessage(), e);
         }
     }
 }

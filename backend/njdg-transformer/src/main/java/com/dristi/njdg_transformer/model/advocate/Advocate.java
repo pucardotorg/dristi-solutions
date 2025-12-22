@@ -1,4 +1,3 @@
-
 package com.dristi.njdg_transformer.model.advocate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

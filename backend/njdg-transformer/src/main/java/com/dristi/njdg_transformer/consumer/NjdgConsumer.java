@@ -138,6 +138,9 @@ public class NjdgConsumer {
             log.info("Processing hearing details | CINO: {} | hearingId: {}", cino, hearingId);
 
             // Insert new hearing
+            List<HearingDetails> hearingDetailsList = hearingRepository.getHearingDetailsByCino(hearingDetails.getCino());
+            int maxSrNo = hearingDetailsList.stream().mapToInt(HearingDetails::getSrNo).max().orElse(0);
+            hearingDetails.setSrNo(maxSrNo + 1);
             hearingRepository.insertHearingDetails(hearingDetails);
             updateCasePurpose(cino, hearingDetails);
             log.info("Successfully inserted hearing | CINO: {} | hearingId: {}", cino, hearingId);
@@ -213,21 +216,6 @@ public class NjdgConsumer {
             log.info("Updated case record with hearing info | CINO: {}", cino);
         }
     }
-
-    @NotNull
-    private static HearingDetails getHearingDetails(HearingDetails existingHearingOpt, HearingDetails hearingDetails) {
-        existingHearingOpt.setHearingDate(hearingDetails.getHearingDate());
-        existingHearingOpt.setNextDate(existingHearingOpt.getNextDate() == null ? hearingDetails.getNextDate() : existingHearingOpt.getNextDate());
-        existingHearingOpt.setPurposeOfListing(hearingDetails.getPurposeOfListing());
-        existingHearingOpt.setJudgeCode(hearingDetails.getJudgeCode());
-        existingHearingOpt.setJoCode(hearingDetails.getJoCode());
-        existingHearingOpt.setDesgCode(hearingDetails.getDesgCode());
-        existingHearingOpt.setDesgName(hearingDetails.getDesgName());
-        existingHearingOpt.setBusiness(hearingDetails.getBusiness());
-        existingHearingOpt.setCourtNo(hearingDetails.getCourtNo());
-        return existingHearingOpt;
-    }
-
 
     @KafkaListener(topics = "save-extra-parties") 
     public void listenExtraParties(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -406,6 +394,10 @@ public class NjdgConsumer {
             CaseTypeDetails caseTypeDetails = objectMapper.readValue(payload.value().toString(), CaseTypeDetails.class);
 
             log.info("Processing case conversion details | CINO: {}", caseTypeDetails.getCino());
+
+            Integer srNo = caseRepository.getNextSrNoForCaseConversion(caseTypeDetails.getCino());
+            caseTypeDetails.setSrNo(srNo);
+            log.debug("Assigned sr_no: {} for CINO: {}", srNo, caseTypeDetails.getCino());
 
             caseRepository.insertCaseConversionDetails(caseTypeDetails);
             log.info("Successfully processed case conversion | CINO: {}", caseTypeDetails.getCino());

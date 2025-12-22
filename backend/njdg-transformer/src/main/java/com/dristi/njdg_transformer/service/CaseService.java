@@ -1,9 +1,8 @@
 package com.dristi.njdg_transformer.service;
 
-import com.dristi.njdg_transformer.model.NJDGTransformRecord;
-import com.dristi.njdg_transformer.model.PartyDetails;
-import com.dristi.njdg_transformer.model.Act;
-import com.dristi.njdg_transformer.model.HearingDetails;
+import com.dristi.njdg_transformer.model.*;
+import com.dristi.njdg_transformer.model.cases.CaseConversionDetails;
+import com.dristi.njdg_transformer.model.cases.CaseConversionRequest;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
 import com.dristi.njdg_transformer.model.enums.PartyType;
 import com.dristi.njdg_transformer.producer.Producer;
@@ -12,12 +11,16 @@ import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
 import com.dristi.njdg_transformer.service.interfaces.DataProcessor;
 import com.dristi.njdg_transformer.service.interfaces.PartyEnricher;
+import com.dristi.njdg_transformer.utils.NumberExtractor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,14 +41,15 @@ public class CaseService {
     private final PartyEnricher partyEnricher;
     private final DataProcessor extraPartiesProcessor;
     private final DataProcessor actsProcessor;
+    private final NumberExtractor numberExtractor;
 
     public CaseService(CaseRepository caseRepository,
-                      HearingRepository hearingRepository,
-                      Producer producer,
-                      CaseTransformer caseTransformer,
-                      @Qualifier("caseEnrichment") PartyEnricher partyEnricher,
-                      @Qualifier("extraPartiesProcessorImpl") DataProcessor extraPartiesProcessor,
-                      @Qualifier("actsProcessorImpl") DataProcessor actsProcessor) {
+                       HearingRepository hearingRepository,
+                       Producer producer,
+                       CaseTransformer caseTransformer,
+                       @Qualifier("caseEnrichment") PartyEnricher partyEnricher,
+                       @Qualifier("extraPartiesProcessorImpl") DataProcessor extraPartiesProcessor,
+                       @Qualifier("actsProcessorImpl") DataProcessor actsProcessor, NumberExtractor numberExtractor) {
         this.caseRepository = caseRepository;
         this.hearingRepository = hearingRepository;
         this.producer = producer;
@@ -53,6 +57,7 @@ public class CaseService {
         this.partyEnricher = partyEnricher;
         this.extraPartiesProcessor = extraPartiesProcessor;
         this.actsProcessor = actsProcessor;
+        this.numberExtractor = numberExtractor;
     }
 
     /**
@@ -186,6 +191,60 @@ public class CaseService {
             log.error("Error enriching NJDG record with related data for CINO: {}: {}", 
                      cino, e.getMessage(), e);
             throw new RuntimeException("Failed to enrich NJDG record with related data", e);
+        }
+    }
+
+    public void updateCaseConversionDetails(CaseConversionRequest caseConversionRequest) {
+        log.info("Updating case conversion details for filing number: {}", caseConversionRequest.getCaseConversionDetails().getFilingNumber());
+        if(CMP.equalsIgnoreCase(caseConversionRequest.getCaseConversionDetails().getConvertedFrom())
+            && ST.equalsIgnoreCase(caseConversionRequest.getCaseConversionDetails().getConvertedTo())){
+            NJDGTransformRecord record = caseRepository.findByCino(caseConversionRequest.getCaseConversionDetails().getCnrNumber());
+
+            if (record == null) {
+                log.error("No record found for CINO: {}", caseConversionRequest.getCaseConversionDetails().getCnrNumber());
+                throw new CustomException("CASE_NOT_FOUND", "No record found for CINO: " + caseConversionRequest.getCaseConversionDetails().getCnrNumber());
+            }
+            CaseConversionDetails caseConversionDetails = caseConversionRequest.getCaseConversionDetails();
+            CaseTypeDetails caseTypeDetails = CaseTypeDetails.builder()
+                    .cino(record.getCino())
+                    .jocode(record.getJocode())
+                    .oldRegCaseType(caseRepository.getCaseTypeCode(caseConversionDetails.getConvertedFrom()))
+                    .oldRegNo(numberExtractor.extractCaseNumber(caseConversionDetails.getPreCaseNumber()))
+                    .oldRegYear(extractRegYear(caseConversionDetails.getPreCaseNumber()))
+                    .newRegCaseType(caseRepository.getCaseTypeCode(caseConversionDetails.getConvertedTo()))
+                    .newRegNo(numberExtractor.extractCaseNumber(caseConversionDetails.getPostCaseNumber()))
+                    .newRegYear(extractRegYear(caseConversionDetails.getPostCaseNumber()))
+                    .convertedAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(caseConversionDetails.getDateOfConversion()), ZoneId.systemDefault()))
+                    .build();
+
+            producer.push("save-case-conversion-details", caseTypeDetails);
+        }
+    }
+
+    private Integer extractRegYear(String caseNumber) {
+        try {
+            if (caseNumber == null || caseNumber.trim().isEmpty()) {
+                log.warn("Case number is null or empty, returning default year 0");
+                return 0;
+            }
+
+            String[] parts = caseNumber.trim().split("/");
+            if (parts.length >= 3) {
+                String yearPart = parts[parts.length - 1];
+                Integer year = Integer.parseInt(yearPart);
+                log.info("Extracted year {} from case number: {}", year, caseNumber);
+                return year;
+            } else {
+                log.warn("Case number format invalid, expected format: type/number/year, got: {}", caseNumber);
+                return 0;
+            }
+
+        } catch (NumberFormatException e) {
+            log.error("Failed to parse year from case number: {} | error: {}", caseNumber, e.getMessage());
+            return 0;
+        } catch (Exception e) {
+            log.error("Unexpected error extracting year from case number: {} | error: {}", caseNumber, e.getMessage());
+            return 0;
         }
     }
 }

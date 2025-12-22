@@ -61,26 +61,10 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
             
             NJDGTransformRecord record = buildNJDGRecord(courtCase, judgeDetails, designationMaster, requestInfo);
-            CaseTypeDetails caseTypeDetails = getCaseTypeDetails(courtCase, record);
-
-            if(caseTypeDetails.getNewRegCaseType() != null && caseTypeDetails.getNewRegNo() != null && caseTypeDetails.getNewRegYear() != null) {
-                record.setCaseType(caseTypeDetails.getNewRegCaseType());
-                record.setRegNo(caseTypeDetails.getNewRegNo());
-                record.setRegYear(caseTypeDetails.getNewRegYear());
-            } else {
-                record.setCaseType(caseTypeDetails.getOldRegCaseType());
-                record.setRegNo(caseTypeDetails.getOldRegNo());
-                record.setRegYear(caseTypeDetails.getOldRegYear());
-            }
             enrichPoliceStationDetails(courtCase, record);
             log.info("Successfully transformed case CNR: {} to NJDG format", courtCase.getCnrNumber());
             if(caseRepository.findByCino(record.getCino()) == null){
                 caseRepository.insertRecord(record);
-            }
-
-            // Insert case conversion details only for ST cases
-            if(ST.equalsIgnoreCase(courtCase.getCaseType())){
-                insertCaseConversionDetails(courtCase, caseTypeDetails, judgeDetails);
             }
 
             return record;
@@ -146,6 +130,8 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                 .dateOfFiling(dateUtil.formatDate(courtCase.getFilingDate()))
                 .dtRegis(dateUtil.formatDate(courtCase.getRegistrationDate()))
                 .caseType(getCaseTypeValue(courtCase.getCaseType()))
+                .regNo(numberExtractor.extractCaseNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
+                .regYear(extractRegYear(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
                 .filNo(numberExtractor.extractFilingNumber(courtCase.getFilingNumber()))
                 .filYear(extractFilingYear(courtCase.getFilingNumber()))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
