@@ -163,7 +163,7 @@ const createWitnessConfig = (index) => [
                 max: "9999999",
                 title: "",
                 errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "/^[1-9][0-9]{5}$/i",
+                pattern: /^[1-9][0-9]{5}$/i,
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
