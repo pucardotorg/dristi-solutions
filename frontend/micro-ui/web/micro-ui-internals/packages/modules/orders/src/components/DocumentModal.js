@@ -77,7 +77,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
     }
   };
 
-  const modalClassName =
+  let modalClassName =
     config?.className ||
     (config?.isStepperModal
       ? config.steps[step]?.type === "document"
@@ -88,6 +88,11 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
       : config?.type === "document"
       ? "custom-modal-stepper"
       : "custom-modal-stepper-non-doc");
+
+  const currentHeading = config?.isStepperModal ? config?.steps?.[step]?.heading?.label : config?.heading?.label;
+  if (typeof currentHeading === "string" && /add\s*signature/i.test(currentHeading)) {
+    modalClassName = "add-signature-modal";
+  }
 
   return (
     <Modal
