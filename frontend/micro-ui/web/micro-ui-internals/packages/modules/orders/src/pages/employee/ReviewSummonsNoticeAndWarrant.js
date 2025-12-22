@@ -1298,8 +1298,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
+          type: "modal",
+          className: "add-signature-modal",
           actionSaveLabel:
-            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
@@ -1419,8 +1421,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
+          type: "modal",
+          className: "add-signature-modal",
           actionSaveLabel:
-            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
