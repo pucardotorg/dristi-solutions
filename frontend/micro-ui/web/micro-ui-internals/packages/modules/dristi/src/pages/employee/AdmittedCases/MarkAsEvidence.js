@@ -271,7 +271,7 @@ const MarkAsEvidence = ({
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           Evidence: {
             courtId: courtId,
@@ -645,17 +645,18 @@ const MarkAsEvidence = ({
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
-  const handleMarkEvidence = async (action, seal = null, isEvidence = false) => {
+  const handleMarkEvidence = async (action, seal = null, isEvidence = false, markedOverride = null) => {
     try {
+      const markedPart = markedOverride || `${evidenceTag?.value}${evidenceNumber}`;
       const payload = {
         ...evidenceDetails,
-        evidenceNumber: `${filingNumber}-${taggedEvidenceNumber || `${evidenceTag?.value}${evidenceNumber}`}`,
+        evidenceNumber: `${filingNumber}-${markedPart}`,
         isEvidenceMarkedFlow: action ? true : false,
         tag: witnessTag?.code,
         isEvidence: isEvidence,
         additionalDetails: {
           ...evidenceDetails?.additionalDetails,
-          botd: businessOfDay || `Document marked as evidence exhibit number ${taggedEvidenceNumber || `${evidenceTag?.value}${evidenceNumber}`}`,
+          botd: businessOfDay || `Document marked as evidence exhibit number ${markedPart}`,
           ownerName: ownerName,
         },
         ...(seal !== null && { seal }),
@@ -666,7 +667,7 @@ const MarkAsEvidence = ({
       await DRISTIService.updateEvidence({ artifact: payload }, {}).then((res) => {
         setEvidenceDetails(res?.artifact);
       });
-
+      setEvidenceNumberError("");
       return true;
     } catch (error) {
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
@@ -682,15 +683,17 @@ const MarkAsEvidence = ({
       setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
-        setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag?.value}${evidenceNumber}`);
-        setTaggedEvidenceNumber(`${evidenceTag?.value}${evidenceNumber}`);
-        await handleMarkEvidence(
+        const nextTagged = `${evidenceTag?.value}${evidenceNumber}`;
+        setBusinessOfDay(`Document marked as evidence exhibit number ${nextTagged}`);
+        setTaggedEvidenceNumber(nextTagged);
+
+        const nextAction =
           evidenceDetails?.evidenceMarkedStatus === null
             ? MarkAsEvidenceAction?.CREATE
             : evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT"
             ? MarkAsEvidenceAction.RECREATE
-            : MarkAsEvidenceAction?.SAVEDRAFT
-        ).then((res) => {
+            : MarkAsEvidenceAction?.SAVEDRAFT;
+        await handleMarkEvidence(nextAction, null, false, nextTagged).then((res) => {
           if (res) {
             setStepper(1);
           }
@@ -980,7 +983,7 @@ const MarkAsEvidence = ({
                     type="text"
                     value={evidenceNumber}
                     onChange={(e) => setEvidenceNumber(e.target.value)}
-                    maxlength={63}
+                    maxlength={10}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
                 </div>

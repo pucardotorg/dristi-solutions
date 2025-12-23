@@ -60,4 +60,7 @@ public class DeliveryChannel {
     @JsonProperty("deliveryChannelName")
     private String deliveryChannelName;
 
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection = false;
+
 }

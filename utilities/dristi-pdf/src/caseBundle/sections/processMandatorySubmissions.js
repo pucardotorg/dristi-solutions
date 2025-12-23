@@ -31,6 +31,8 @@ async function processMandatorySubmissions(
     sectionPosition
   );
 
+  const mandatorySubmissionsLineItems = [];
+
   if (mandatorySubmissionsSection?.length !== 0) {
     const section = mandatorySubmissionsSection[0];
 
@@ -54,7 +56,6 @@ async function processMandatorySubmissions(
     const orderList = resOrder?.data?.list;
 
     if (orderList?.length !== 0) {
-      const mandatorySubmissionsLineItems = [];
       await Promise.all(
         orderList?.map(async (order) => {
           const productionOfDocumentApplications = await search_application_v2(
@@ -210,14 +211,14 @@ async function processMandatorySubmissions(
           }
         })
       );
-
-      const mandatorySubmissionsIndexSection = indexCopy.sections?.find(
-        (section) => section.name === "mandatorysubmissions"
-      );
-      mandatorySubmissionsIndexSection.lineItems =
-        mandatorySubmissionsLineItems?.filter(Boolean);
     }
   }
+
+  const mandatorySubmissionsIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "mandatorysubmissions"
+  );
+  mandatorySubmissionsIndexSection.lineItems =
+    mandatorySubmissionsLineItems?.filter(Boolean);
 }
 
 module.exports = {

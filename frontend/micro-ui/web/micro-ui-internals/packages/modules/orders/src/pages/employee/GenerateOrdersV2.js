@@ -1063,7 +1063,6 @@ const GenerateOrdersV2 = () => {
               `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
               `COST`,
               `WITNESS_BATTA`,
-              `ABATE_CASE`,
             ]
           : [
               `SUMMONS`,
@@ -1078,7 +1077,6 @@ const GenerateOrdersV2 = () => {
               `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,
               `COST`,
               `WITNESS_BATTA`,
-              `ABATE_CASE`,
             ];
 
         updatedConfig[0].body[0].populators.mdmsConfig.select = `(data) => {return data['Order'].OrderType?.filter((item)=>${JSON.stringify(
