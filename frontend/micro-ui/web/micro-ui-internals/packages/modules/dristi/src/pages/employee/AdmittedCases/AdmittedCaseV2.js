@@ -11,7 +11,7 @@ import { TabSearchconfigNew } from "./AdmittedCasesConfig";
 import EvidenceModal from "./EvidenceModal";
 import ExtraComponent from "./ExtraComponent";
 import "./tabs.css";
-import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
+import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { OrderTypes, OrderWorkflowState } from "../../../Utils/orderWorkflow";
 import ScheduleHearing from "./ScheduleHearing";
 import ViewAllOrderDrafts from "./ViewAllOrderDrafts";
@@ -821,6 +821,30 @@ const AdmittedCaseV2 = () => {
     [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
+  const handleApplicationDeleteFunc = async (row) => {
+    try {
+      setLoader(true);
+      const reqBody = {
+        application: {
+          ...row,
+          workflow: { ...row?.workflow, documents: [{}], action: SubmissionWorkflowAction.DELETE },
+          tenantId,
+        },
+        tenantId,
+      };
+      await Digit.submissionService.updateApplication(reqBody, { tenantId });
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
+    } catch (error) {
+      console.error("error", error);
+      showToast({
+        isError: true,
+        message: t("SOMETHING_WENT_WRONG"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
@@ -837,7 +861,12 @@ const AdmittedCaseV2 = () => {
         );
       }
       if (
-        [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+        [
+          SubmissionWorkflowState.PENDINGPAYMENT,
+          SubmissionWorkflowState.PENDINGESIGN,
+          SubmissionWorkflowState.PENDINGSUBMISSION,
+          SubmissionWorkflowState.DRAFT_IN_PROGRESS,
+        ].includes(status)
       ) {
         if (createdByUuid === userInfo?.uuid) {
           history.push(
@@ -1241,13 +1270,29 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.searchResult,
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) =>
-                    column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
-                      ? { ...column, clickFunc: docSetFunc }
-                      : column.label === "OWNER"
-                      ? { ...column, parties: caseRelatedData.parties }
-                      : column
-                  ),
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                    switch (column.label) {
+                      case "DOCUMENT_TEXT":
+                      case "SUBMISSION_TYPE":
+                        return {
+                          ...column,
+                          clickFunc: docSetFunc,
+                        };
+                      case "CS_ACTIONS":
+                        return {
+                          ...column,
+                          clickFunc: handleApplicationDeleteFunc,
+                        };
+                      case "OWNER":
+                        return {
+                          ...column,
+                          parties: caseRelatedData.parties,
+                        };
+
+                      default:
+                        return column;
+                    }
+                  }),
                 },
               },
             },
