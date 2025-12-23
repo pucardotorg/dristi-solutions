@@ -1253,65 +1253,108 @@ const SubmissionsCreate = ({ path }) => {
         } catch (e) {}
       }
 
-      const applicationReqBody = {
-        tenantId,
-        application: {
-          ...applicationDetails,
-          ...applicationSchema,
-          tenantId,
-          filingNumber,
-          cnrNumber: caseDetails?.cnrNumber,
-          cmpNumber: caseDetails?.cmpNumber,
-          caseId: caseDetails?.id,
-          referenceId: isExtension ? null : orderDetails?.id || null,
-          createdDate: new Date().getTime(),
-          applicationType,
-          status: caseDetails?.status,
-          isActive: true,
-          createdBy: userInfo?.uuid,
-          statuteSection: { tenantId },
-          additionalDetails: {
-            formdata: {
-              ...filteredFormdata,
-              refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
-            },
-            ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
-            ...(isComposite
-              ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
-                  documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
-                }
-              : orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
-            onBehalOfName: formdata?.selectComplainant?.code,
-            partyType: sourceType?.toLowerCase(),
-            ...(orderDetails && isComposite
-              ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true && {
-                  respondingParty: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-                }
-              : orderDetails?.orderDetails?.isResponseRequired?.code === true && {
-                  respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-                }),
-            isResponseRequired:
-              orderDetails && !isExtension
-                ? isComposite
-                  ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
-                  : orderDetails?.orderDetails?.isResponseRequired?.code === true
-                : true,
-            ...(hearingId && { hearingId }),
-            owner: cleanString(userInfo?.name),
-          },
-          documents,
-          onBehalfOf: [formdata?.selectComplainant?.uuid],
-          comment: [],
-          workflow: {
-            action: action,
-          },
-        },
-      };
-
       let res = null;
       if (update) {
+        const applicationReqBody = {
+          tenantId,
+          application: {
+            ...applicationDetails,
+            ...applicationSchema,
+            applicationType,
+            additionalDetails: {
+              formdata: {
+                ...filteredFormdata,
+                refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+              },
+              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(isComposite
+                ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
+                    documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
+                  }
+                : orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
+              onBehalOfName: formdata?.selectComplainant?.code,
+              partyType: sourceType?.toLowerCase(),
+              ...(orderDetails && isComposite
+                ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true && {
+                    respondingParty: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                  }
+                : orderDetails?.orderDetails?.isResponseRequired?.code === true && {
+                    respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                  }),
+              isResponseRequired:
+                orderDetails && !isExtension
+                  ? isComposite
+                    ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
+                    : orderDetails?.orderDetails?.isResponseRequired?.code === true
+                  : true,
+              ...(hearingId && { hearingId }),
+              owner: cleanString(userInfo?.name),
+            },
+            documents,
+            onBehalfOf: [formdata?.selectComplainant?.uuid],
+            comment: [],
+            workflow: {
+              action: action,
+            },
+          },
+        };
         res = await submissionService.updateApplication(applicationReqBody, { tenantId });
       } else {
+        const applicationReqBody = {
+          tenantId,
+          application: {
+            ...applicationSchema,
+            tenantId,
+            filingNumber,
+            cnrNumber: caseDetails?.cnrNumber,
+            cmpNumber: caseDetails?.cmpNumber,
+            caseId: caseDetails?.id,
+            referenceId: isExtension ? null : orderDetails?.id || null,
+            createdDate: new Date().getTime(),
+            applicationType,
+            status: caseDetails?.status,
+            isActive: true,
+            createdBy: userInfo?.uuid,
+            statuteSection: { tenantId },
+            additionalDetails: {
+              formdata: {
+                ...filteredFormdata,
+                refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+              },
+              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(isComposite
+                ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
+                    documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
+                  }
+                : orderDetails?.additionalDetails?.formdata?.documentName && {
+                    documentName: orderDetails?.additionalDetails?.formdata?.documentName,
+                  }),
+              onBehalOfName: formdata?.selectComplainant?.code,
+              partyType: sourceType?.toLowerCase(),
+              ...(orderDetails && isComposite
+                ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true && {
+                    respondingParty: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                  }
+                : orderDetails?.orderDetails?.isResponseRequired?.code === true && {
+                    respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                  }),
+              isResponseRequired:
+                orderDetails && !isExtension
+                  ? isComposite
+                    ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
+                    : orderDetails?.orderDetails?.isResponseRequired?.code === true
+                  : true,
+              ...(hearingId && { hearingId }),
+              owner: cleanString(userInfo?.name),
+            },
+            documents,
+            onBehalfOf: [formdata?.selectComplainant?.uuid],
+            comment: [],
+            workflow: {
+              action: action,
+            },
+          },
+        };
         res = await submissionService.createApplication(applicationReqBody, { tenantId });
       }
       setLoader(false);
