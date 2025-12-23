@@ -50,6 +50,7 @@ import {
   handleDocumentUploadValidation,
   uploadDocumentsIfAny,
   restrictedApplicationTypes,
+  _getDefaultFormValue,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
@@ -631,7 +632,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
-      return applicationDetails?.additionalDetails?.formdata;
+      return _getDefaultFormValue(t, applicationDetails);
     } else if (!isCitizen && applicationTypeParam) {
       return {
         submissionType: {
@@ -816,6 +817,7 @@ const SubmissionsCreate = ({ path }) => {
     litigant,
     isComposite,
     compositeMandatorySubmissionItem,
+    _getDefaultFormValue,
   ]);
 
   const formKey = useMemo(
@@ -1805,7 +1807,7 @@ const SubmissionsCreate = ({ path }) => {
             label={t("REVIEW_SUBMISSION")}
             className={"submission-create"}
             secondaryLabel={t("SAVE_AS_DRAFT")}
-            showSecondaryLabel={true}
+            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : true}
             onSecondayActionClick={handleSaveDraft}
             config={modifiedFormConfig}
             defaultValues={defaultFormValue}

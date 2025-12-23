@@ -217,3 +217,66 @@ export const uploadDocumentsIfAny = async ({ documents, tenantId, documentsList 
 
   return Promise.all(uploadPromises);
 };
+
+const getSurety = (applicationDetails) => {
+  return Array.isArray(applicationDetails?.applicationDetails?.sureties)
+    ? applicationDetails?.applicationDetails?.sureties.map((s, index) => ({
+        id: s?.id || s?.index || null,
+        name: s?.name || "",
+        fatherName: s?.fatherName || "",
+        mobileNumber: s?.mobileNumber || "",
+        address: s?.address || {},
+        email: s?.email || "",
+        documents: [
+          ...(applicationDetails?.applicationDetails?.applicationDocuments?.filter((doc) => doc?.suretyIndex === s?.suretyIndex) || []),
+        ].map((d) => ({
+          ...d,
+          documentName: d?.documentTitle,
+          isActive: true,
+        })),
+      }))
+    : [];
+};
+
+export const _getDefaultFormValue = (t, applicationDetails) => {
+  if (applicationDetails?.applicationType === "REQUEST_FOR_BAIL") {
+    const sureties = getSurety(applicationDetails);
+    const formdata = {
+      ...applicationDetails?.additionalDetails?.formdata,
+      litigantFatherName:
+        applicationDetails?.applicationDetails?.litigantFatherName || applicationDetails?.additionalDetails?.formdata?.litigantFatherName || "",
+      reasonForApplicationOfBail: {
+        text:
+          applicationDetails?.applicationDetails?.reasonForApplicationOfBail ||
+          applicationDetails?.additionalDetails?.formdata?.reasonForApplicationOfBail?.text ||
+          "",
+      },
+      prayer: {
+        text: applicationDetails?.applicationDetails?.prayer || applicationDetails?.additionalDetails?.formdata?.prayer?.text || "",
+      },
+      addSurety: applicationDetails?.applicationDetails?.sureties?.length
+        ? { code: "YES", name: t("YES"), showSurety: true }
+        : { code: "NO", name: t("NO"), showSurety: false },
+      sureties: sureties?.map((surety) => ({
+        id: surety?.id,
+        name: surety?.name,
+        fatherName: surety?.fatherName,
+        mobileNumber: surety?.mobileNumber,
+        address: surety?.address,
+        email: surety?.email,
+        identityProof: {
+          document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
+        },
+        proofOfSolvency: {
+          document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
+        },
+        otherDocuments: {
+          document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
+        },
+      })),
+    };
+
+    return formdata;
+  }
+  return applicationDetails?.additionalDetails?.formdata || {};
+};
