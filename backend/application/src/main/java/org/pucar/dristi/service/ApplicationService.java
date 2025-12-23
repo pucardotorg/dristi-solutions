@@ -109,9 +109,11 @@ public class ApplicationService {
 
             }
             List<String> fileStoreIds = new ArrayList<>();
-            for(Document document : applicationRequest.getApplication().getDocuments()) {
-                if(!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
+            if(applicationRequest.getApplication().getDocuments()!=null) {
+                for (Document document : applicationRequest.getApplication().getDocuments()) {
+                    if (!document.getIsActive()) {
+                        fileStoreIds.add(document.getFileStore());
+                    }
                 }
             }
             if(!fileStoreIds.isEmpty()){
