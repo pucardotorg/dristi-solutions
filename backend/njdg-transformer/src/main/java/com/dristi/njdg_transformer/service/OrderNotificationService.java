@@ -247,9 +247,13 @@ public class OrderNotificationService {
                     .requestInfo(requestInfo)
                     .build();
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
+            if(hearings.isEmpty()) {
+                log.debug("No hearings found for caseNumber: {}", caseNumber);
+                return;
+            }
+            hearings.sort(Comparator.comparing(Hearing::getStartTime));
             for(Hearing hearing : hearings) {
-                if(caseNumber.equalsIgnoreCase(hearing.getCaseReferenceNumber())
-                    && SCHEDULED.equalsIgnoreCase(hearing.getStatus())) {
+                if(caseNumber.equalsIgnoreCase(hearing.getCaseReferenceNumber())) {
                     String cino = hearing.getCnrNumbers().get(0);
                     LocalDate hearingDate = formatDate(notification.getCreatedDate());
                     DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
@@ -273,6 +277,7 @@ public class OrderNotificationService {
                             .build();
 
                     producer.push("save-hearing-details", hearingDetails);
+                    break;
                 }
             }
         }
