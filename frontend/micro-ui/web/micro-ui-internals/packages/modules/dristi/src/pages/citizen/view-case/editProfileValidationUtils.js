@@ -698,7 +698,7 @@ export const updateProfileData = async ({
       comment: [],
       workflow: {
         id: "workflow123",
-        action: SubmissionWorkflowAction.CREATE,
+        action: SubmissionWorkflowAction.SUBMIT,
         status: "in_progress",
         comments: "Workflow comments",
         documents: [{}],
@@ -729,7 +729,6 @@ export const updateProfileData = async ({
     // });
 
     // history.goBack();
-    let evidenceReqBody = {};
 
     await DRISTIService.createProfileRequest(
       {
@@ -738,28 +737,7 @@ export const updateProfileData = async ({
       tenantId
     );
 
-    const res = await DRISTIService.createApplication(applicationReqBody, { tenantId });
-
-    docList?.forEach((docs) => {
-      evidenceReqBody = {
-        artifact: {
-          artifactType: "DOCUMENTARY",
-          caseId: caseDetails?.id,
-          application: res?.application?.applicationNumber,
-          filingNumber: caseDetails?.filingNumber,
-          tenantId,
-          comments: [],
-          file: docs,
-          sourceType,
-          sourceID: individualId,
-          filingType: filingType,
-          additionalDetails: {
-            uuid: userInfo?.uuid,
-          },
-        },
-      };
-      DRISTIService.createEvidence(evidenceReqBody);
-    });
+    const res = await DRISTIService.createApplication(applicationReqBody, { tenantId })
 
     return res;
   } catch (error) {

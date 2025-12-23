@@ -895,6 +895,9 @@ export const UICustomizations = {
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
+          if (column?.jsonPath === "applicationDraftDelete" && row.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
@@ -903,6 +906,19 @@ export const UICustomizations = {
       }
     },
     dropDownItems: (row, configs) => {
+      if (configs?.jsonPath === "applicationDraftDelete") {
+        return [
+          {
+            label: "CS_COMMON_DELETE",
+            id: "draft_order_delete",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
+            },
+          },
+        ];
+      }
       const formatDate = (date) => {
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");

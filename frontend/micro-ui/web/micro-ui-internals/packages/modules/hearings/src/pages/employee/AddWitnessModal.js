@@ -273,7 +273,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
                 status: caseDetails?.status,
 
                 workflow: {
-                  action: SubmissionWorkflowAction.CREATE,
+                  action: SubmissionWorkflowAction.SUBMIT,
                 },
               },
             },
