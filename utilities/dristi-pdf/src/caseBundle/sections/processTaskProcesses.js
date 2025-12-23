@@ -124,6 +124,8 @@ async function processTaskProcesses(
         })
       );
       processesIndexSection.lineItems = processesLineItems?.filter(Boolean);
+    } else {
+      processesIndexSection.lineItems = [];
     }
   } else {
     processesIndexSection.lineItems = [];
