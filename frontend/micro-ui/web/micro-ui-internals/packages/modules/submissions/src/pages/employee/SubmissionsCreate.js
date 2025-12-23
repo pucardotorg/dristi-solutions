@@ -1473,6 +1473,12 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleSaveDraft = async () => {
     try {
+      if (!formdata?.applicationType?.type) {
+        setFormErrors?.current("applicationType", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        setShowErrorToast({ label: t("CORE_REQUIRED_FIELD_ERROR_MESSAGE"), error: true });
+        return;
+      }
+
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
         const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata);
