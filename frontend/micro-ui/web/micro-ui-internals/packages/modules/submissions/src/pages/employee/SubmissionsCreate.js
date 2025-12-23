@@ -31,7 +31,7 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../d
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
-import { formatDate, getSuffixByBusinessCode } from "../../utils";
+import { getSuffixByBusinessCode } from "../../utils";
 import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
@@ -51,6 +51,7 @@ import {
   uploadDocumentsIfAny,
   restrictedApplicationTypes,
   _getDefaultFormValue,
+  formatDate,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
@@ -1271,7 +1272,9 @@ const SubmissionsCreate = ({ path }) => {
                 ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
                     documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
                   }
-                : orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
+                : orderDetails?.additionalDetails?.formdata?.documentName && {
+                    documentName: orderDetails?.additionalDetails?.formdata?.documentName,
+                  }),
               onBehalOfName: formdata?.selectComplainant?.code,
               partyType: sourceType?.toLowerCase(),
               ...(orderDetails && isComposite
@@ -1634,19 +1637,19 @@ const SubmissionsCreate = ({ path }) => {
           }
           ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
-            await createPendingTask({
+            (await createPendingTask({
               refId: `${itemId ? `${itemId}_` : ""}${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
               ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
-            });
+            }));
           ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
-            await createPendingTask({
+            (await createPendingTask({
               refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
-            });
+            }));
         }
       }
       const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
