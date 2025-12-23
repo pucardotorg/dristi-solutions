@@ -513,7 +513,7 @@ const SubmissionsCreate = ({ path }) => {
 
   useEffect(() => {
     if (applicationDetails) {
-      if (showModal) {
+      if (showModal && applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         setShowReviewModal(true);
         return;
       }
