@@ -42,6 +42,7 @@ public class EvidenceSearchCriteria {
     private List<String> workflowStatus = new ArrayList<>();
     private String evidenceNumber;
     private Boolean isActive = true;
+    private Boolean isHideBailCaseBundle = false;
 
     @JsonIgnore
     private String userUuid;

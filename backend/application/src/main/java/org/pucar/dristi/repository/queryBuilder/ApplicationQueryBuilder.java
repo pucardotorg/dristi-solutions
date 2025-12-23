@@ -58,7 +58,7 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList,String userUuid) {
         try {
             StringBuilder query = new StringBuilder(BASE_APP_QUERY);
             query.append(FROM_APP_TABLE);
@@ -82,6 +82,22 @@ public class ApplicationQueryBuilder {
                 addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             }
 
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- Exclude bail applications if isCaseBundle is true ----------
+            if (Boolean.TRUE.equals(applicationCriteria.getIsHideBailCaseBundle())) {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("app.applicationType != ?");
+                preparedStmtList.add(REQUEST_FOR_BAIL);
+                preparedStmtArgList.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- REQUEST_FOR_BAIL visibility ----------
+            applyRequestForBailVisibility(
+                    query, firstCriteria, userUuid,
+                    preparedStmtList, preparedStmtArgList);
+
             return query.toString();
         }
         catch (Exception e) {
@@ -89,6 +105,42 @@ public class ApplicationQueryBuilder {
             throw new CustomException(APPLICATION_SEARCH_QUERY_EXCEPTION,"Error occurred while building the application search query: "+ e.getMessage());
         }
     }
+
+    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+
+        // If user info is missing, do not restrict visibility
+        if (userUuid == null || userUuid.isEmpty()) {
+            return;
+        }
+
+        addClauseIfRequired(query, firstCriteria);
+
+        query.append("(")
+                .append("app.applicationType != ? ")
+                .append("OR ")
+                .append("(")
+                .append("app.applicationType = ? ")
+                .append("AND ")
+                .append("(")
+                .append("app.onBehalfOf @> ?::jsonb ")
+                .append("OR app.createdBy = ?")
+                .append(")")
+                .append(")")
+                .append(")");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add("[\"" + userUuid + "\"]");
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(userUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+    }
+
     boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
