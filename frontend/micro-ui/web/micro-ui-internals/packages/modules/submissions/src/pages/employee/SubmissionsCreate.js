@@ -631,7 +631,10 @@ const SubmissionsCreate = ({ path }) => {
   }, [applicationType, orderDetails, orderNumber, orderRefNumber, referenceId, isComposite, compositeMandatorySubmissionItem]);
 
   const defaultFormValue = useMemo(() => {
-    if (applicationDetails?.additionalDetails?.formdata) {
+    if (
+      applicationDetails?.additionalDetails?.formdata &&
+      (formdata.applicationType ? formdata?.applicationType?.type === applicationDetails?.additionalDetails?.formdata?.applicationType?.type : true)
+    ) {
       return _getDefaultFormValue(t, applicationDetails);
     } else if (!isCitizen && applicationTypeParam) {
       return {
@@ -799,7 +802,8 @@ const SubmissionsCreate = ({ path }) => {
       };
     }
   }, [
-    applicationDetails?.additionalDetails?.formdata,
+    applicationDetails,
+    formdata,
     isCitizen,
     applicationTypeParam,
     hearingId,
@@ -807,22 +811,22 @@ const SubmissionsCreate = ({ path }) => {
     applicationTypeUrl,
     orderNumber,
     applicationType,
-    orderDetails?.orderType,
-    orderDetails?.additionalDetails?.formdata?.submissionDeadline,
-    orderDetails?.additionalDetails?.formdata?.documentType,
-    orderDetails?.orderNumber,
-    isExtension,
+    t,
     complainantsList,
-    latestExtensionOrder,
-    litigant,
     isComposite,
     compositeMandatorySubmissionItem,
-    _getDefaultFormValue,
+    orderDetails,
+    compositeWarrantItem,
+    compositeSetTermBailItem,
+    isExtension,
+    latestExtensionOrder,
+    litigant,
+    itemId,
   ]);
 
   const formKey = useMemo(
     () =>
-      defaultFormValue?.applicationType?.code +
+      defaultFormValue?.applicationType?.type +
       (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name) +
       isDelayApplicationPending,
     [defaultFormValue, isDelayApplicationPending]
