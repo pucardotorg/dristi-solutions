@@ -128,29 +128,31 @@ public class ApplicationService {
                             .filter(doc -> !"SIGNED".equalsIgnoreCase(doc.getDocumentType()))
                             .toList();
                     for (Document doc : unsignedDocuments) {
-                        EvidenceRequest evidenceRequest = new EvidenceRequest();
-                        evidenceRequest.setRequestInfo(applicationRequest.getRequestInfo());
-                        Artifact artifact = new Artifact();
+                        if(doc.getIsActive()) {
+                            EvidenceRequest evidenceRequest = new EvidenceRequest();
+                            evidenceRequest.setRequestInfo(applicationRequest.getRequestInfo());
+                            Artifact artifact = new Artifact();
 
-                        artifact.setArtifactType("DOCUMENTARY");
-                        artifact.setSourceType(extractPartyType(application.getAdditionalDetails()));
-                        artifact.setSourceID(getIndividualId(application.getAdditionalDetails()));
-                        artifact.setFilingType("APPLICATION");
-                        artifact.setFilingNumber(application.getFilingNumber());
-                        artifact.setTenantId(application.getTenantId());
-                        artifact.setApplication(application.getApplicationNumber());
-                        artifact.setComments(application.getComment());
-                        artifact.setCaseId(application.getCaseId());
-                        artifact.setFile(doc);
+                            artifact.setArtifactType("DOCUMENTARY");
+                            artifact.setSourceType(extractPartyType(application.getAdditionalDetails()));
+                            artifact.setSourceID(getIndividualId(application.getAdditionalDetails()));
+                            artifact.setFilingType("APPLICATION");
+                            artifact.setFilingNumber(application.getFilingNumber());
+                            artifact.setTenantId(application.getTenantId());
+                            artifact.setApplication(application.getApplicationNumber());
+                            artifact.setComments(application.getComment());
+                            artifact.setCaseId(application.getCaseId());
+                            artifact.setFile(doc);
 
-                        ObjectNode additionalDetails = objectMapper.createObjectNode();
-                        if (applicationRequest.getRequestInfo().getUserInfo() != null)
-                            additionalDetails.put("uuid", applicationRequest.getRequestInfo().getUserInfo().getUuid());
+                            ObjectNode additionalDetails = objectMapper.createObjectNode();
+                            if (applicationRequest.getRequestInfo().getUserInfo() != null)
+                                additionalDetails.put("uuid", applicationRequest.getRequestInfo().getUserInfo().getUuid());
 
-                        artifact.setAdditionalDetails(additionalDetails);
-                        evidenceRequest.setArtifact(artifact);
+                            artifact.setAdditionalDetails(additionalDetails);
+                            evidenceRequest.setArtifact(artifact);
 
-                        evidenceUtil.createEvidence(evidenceRequest);
+                            evidenceUtil.createEvidence(evidenceRequest);
+                        }
                     }
                 }
             }
