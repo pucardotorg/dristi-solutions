@@ -836,7 +836,7 @@ export const UICustomizations = {
             // if (requestCriteria.url.split("/").includes("order")) {
             return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
               ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
+              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
               ? {
                   ...data,
                   applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
