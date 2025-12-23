@@ -376,6 +376,8 @@ async function processDisposedApplications(
       );
       applicationsIndexSection.lineItems =
         applicationLineItems?.filter(Boolean);
+    } else {
+      applicationsIndexSection.lineItems = [];
     }
   } else {
     applicationsIndexSection.lineItems = [];
