@@ -1462,6 +1462,25 @@ const SubmissionsCreate = ({ path }) => {
         const res = await submitSubmission({ update: false, action });
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
+          if (action === SubmissionWorkflowAction.SUBMIT) {
+            if (isCitizen) {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
+              });
+            } else if (hasSubmissionRole) {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
+                isAssignedRole: true,
+                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+              });
+            }
+          }
           history.replace(
             orderNumber
               ? `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&orderNumber=${orderNumber}&showModal=true`
