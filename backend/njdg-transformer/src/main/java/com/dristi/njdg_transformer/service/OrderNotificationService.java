@@ -68,8 +68,8 @@ public class OrderNotificationService {
         // Purpose of listing: determined by hearing number and order category
         String purposeOfListing = determinePurposeOfListing(order, allHearings);
 
-        // Next date and next purpose: from scheduled hearing after order created date
-        Hearing scheduledHearing = findScheduledHearingAfterDate(allHearings, order.getCreatedDate());
+        // Next date and next purpose: from hearing after order created date
+        Hearing scheduledHearing = findHearingAfterDate(allHearings, order.getCreatedDate());
         LocalDate nextDate = scheduledHearing != null ? formatDate(scheduledHearing.getStartTime()) : null;
         String nextPurpose = scheduledHearing != null ? 
                 getPurposeOfListingValue(scheduledHearing) : "0";
@@ -113,7 +113,12 @@ public class OrderNotificationService {
                 .build();
 
         List<Hearing> hearings = hearingUtil.fetchHearingDetails(searchRequest);
-        return hearings != null ? hearings : List.of();
+        if (hearings == null || hearings.isEmpty()) {
+            return List.of();
+        }
+        return hearings.stream()
+                .sorted(Comparator.comparing(Hearing::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -168,16 +173,15 @@ public class OrderNotificationService {
     }
 
     /**
-     * Find scheduled hearing with startTime after the given date.
+     * Find hearing with startTime after the given date.
      */
-    private Hearing findScheduledHearingAfterDate(List<Hearing> hearings, Long orderCreatedDate) {
+    private Hearing findHearingAfterDate(List<Hearing> hearings, Long orderCreatedDate) {
         if (orderCreatedDate == null) {
             return null;
         }
         return hearings.stream()
-                .filter(h -> SCHEDULED.equalsIgnoreCase(h.getStatus()))
-                .filter(h -> h.getStartTime() != null && h.getStartTime() > orderCreatedDate)
-                .min(Comparator.comparing(Hearing::getStartTime))
+                .filter(h -> h.getStartTime() != null && h.getStartTime() >= orderCreatedDate)
+                .findFirst()
                 .orElse(null);
     }
 
