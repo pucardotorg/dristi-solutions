@@ -249,7 +249,7 @@ public class OrderNotificationService {
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
             if(hearings.isEmpty()) {
                 log.debug("No hearings found for caseNumber: {}", caseNumber);
-                return;
+                break;
             }
             hearings.sort(Comparator.comparing(Hearing::getStartTime));
             for(Hearing hearing : hearings) {
