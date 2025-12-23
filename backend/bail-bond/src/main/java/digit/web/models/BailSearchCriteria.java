@@ -120,4 +120,8 @@ public class BailSearchCriteria {
     @JsonProperty("fuzzySearch")
     private Boolean fuzzySearch=false;
 
+    // TODO : remove this, this is temporary fix (#5016)
+    @JsonProperty("owner")
+    private String owner;
+
 }
