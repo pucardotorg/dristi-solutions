@@ -69,6 +69,7 @@ const SubmissionsCreate = ({ path }) => {
     litigant,
     litigantIndId,
     itemId,
+    showModal,
   } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -512,6 +513,11 @@ const SubmissionsCreate = ({ path }) => {
 
   useEffect(() => {
     if (applicationDetails) {
+      if (showModal) {
+        setShowReviewModal(true);
+        return;
+      }
+
       if ([SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(applicationDetails?.status)) {
         setShowReviewModal(true);
         return;
@@ -1456,10 +1462,10 @@ const SubmissionsCreate = ({ path }) => {
         const res = await submitSubmission({ update: false, action });
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
-          history.push(
+          history.replace(
             orderNumber
-              ? `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&orderNumber=${orderNumber}`
-              : `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}`
+              ? `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&orderNumber=${orderNumber}&showModal=true`
+              : `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&showModal=true`
           );
         }
       }
@@ -1493,7 +1499,7 @@ const SubmissionsCreate = ({ path }) => {
         const res = await submitSubmission({ update: false, action: SubmissionWorkflowAction.SAVEDRAFT });
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
-          history.push(
+          history.replace(
             orderNumber
               ? `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&orderNumber=${orderNumber}`
               : `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}`
@@ -1519,6 +1525,10 @@ const SubmissionsCreate = ({ path }) => {
               `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
             );
           });
+        } else if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS && showModal) {
+          history.replace(
+            `/${window?.contextPath}/${userType}/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
+          );
         } else if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
           setShowReviewModal(!showReviewModal);
         } else {
