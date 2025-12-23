@@ -42,10 +42,10 @@ const GenericUploadSignatureModal = ({
           {
             name: name,
             type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
+            uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
             maxFileSize: 5,
             maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
+            fileTypes: ["PDF"],
             isMultipleUpload: false,
           },
         ],
