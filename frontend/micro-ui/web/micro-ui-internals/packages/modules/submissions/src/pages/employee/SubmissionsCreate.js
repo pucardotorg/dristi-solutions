@@ -1355,6 +1355,10 @@ const SubmissionsCreate = ({ path }) => {
       const reqBody = {
         application: {
           ...applicationDetails,
+          additionalDetails: {
+            ...applicationDetails?.additionalDetails,
+            ...(action === SubmissionWorkflowAction.ESIGN ? { individualId: individualId } : {}), //  required in backend for evidence creation
+          },
           documents: documentsFile ? [...documents, ...documentsFile] : documents,
           workflow: { ...applicationDetails?.workflow, documents: [{}], action },
           tenantId,
