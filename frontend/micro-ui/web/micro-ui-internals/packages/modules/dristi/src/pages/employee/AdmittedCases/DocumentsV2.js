@@ -412,6 +412,7 @@ const DocumentsV2 = ({
                 criteria: {
                   ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
+                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },
