@@ -102,7 +102,7 @@ export const onDocumentUpload = async (fileData, filename, tenantId) => {
 };
 
 // move to utils
-export const replaceUploadedDocsWithCombinedFile = async (t, formData) => {
+export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId) => {
   if (formData?.supportingDocuments?.length) {
     for (let index = 0; index < formData.supportingDocuments.length; index++) {
       const doc = formData?.supportingDocuments[index];
@@ -111,7 +111,7 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData) => {
           const docTitle = doc?.documentTitle;
           const combinedDocName = docTitle ? `${docTitle}.pdf` : `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
           const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
-          const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
+          const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName, tenantId);
           const file = {
             documentType: docs?.fileType,
             fileStore: docs?.file?.files?.[0]?.fileStoreId,

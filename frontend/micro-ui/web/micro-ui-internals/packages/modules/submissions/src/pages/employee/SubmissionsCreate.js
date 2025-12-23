@@ -1492,7 +1492,7 @@ const SubmissionsCreate = ({ path }) => {
     try {
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata);
+        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId);
         setFormdata(updatedFormData);
       }
 
@@ -1549,7 +1549,7 @@ const SubmissionsCreate = ({ path }) => {
 
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata);
+        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId);
         setFormdata(updatedFormData);
       }
 
@@ -1616,7 +1616,7 @@ const SubmissionsCreate = ({ path }) => {
               stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
             });
             if (applicationType === "DELAY_CONDONATION")
-              createPendingTask({
+              await createPendingTask({
                 name: "Create DCA Applications",
                 status: "CREATE_DCA_SUBMISSION",
                 refId: `DCA_${filingNumber}`,
@@ -1634,7 +1634,7 @@ const SubmissionsCreate = ({ path }) => {
           }
           ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
-            createPendingTask({
+            await createPendingTask({
               refId: `${itemId ? `${itemId}_` : ""}${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
@@ -1642,7 +1642,7 @@ const SubmissionsCreate = ({ path }) => {
             });
           ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
-            createPendingTask({
+            await createPendingTask({
               refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
@@ -1824,7 +1824,7 @@ const SubmissionsCreate = ({ path }) => {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
-          createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
+          await createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
         } else {
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
