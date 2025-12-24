@@ -94,4 +94,6 @@ public class TransformerProperties {
     @Value("${app.allowed.tenant.ids:}")
     private Set<String> allowedTenantIds;
 
+    @Value("${notification.order.business.template}")
+    private String notificationOrderBusinessTemplate;
 }

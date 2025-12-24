@@ -983,7 +983,7 @@ const MarkAsEvidence = ({
                     type="text"
                     value={evidenceNumber}
                     onChange={(e) => setEvidenceNumber(e.target.value)}
-                    maxlength={63}
+                    maxlength={10}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
                 </div>
