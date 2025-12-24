@@ -87,6 +87,9 @@ runs:
       run: |
         echo ""
         ls reports
+        echo ""
+        pwd
+        echo ""
         find . -name "dependency-check-report.sarif"
       shell: bash
 
