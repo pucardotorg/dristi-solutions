@@ -190,6 +190,12 @@ public class OrderNotificationService {
      * If hearing summary is not null, use it. Otherwise, use itemText via compileItemText.
      */
     private String determineBusiness(Order order, List<Hearing> allHearings) {
+        // First check in item text
+        String compiledItemText = compileItemText(order.getItemText());
+        if (compiledItemText != null) {
+            return compiledItemText;
+        }
+
         // Check if order has hearing number and that hearing has a summary
         if (order.getHearingNumber() != null) {
             Optional<Hearing> matchingHearing = allHearings.stream()
@@ -200,8 +206,7 @@ public class OrderNotificationService {
                 return matchingHearing.get().getHearingSummary();
             }
         }
-        // Fallback to compileItemText with order's itemText
-        return compileItemText(order.getItemText());
+        return null;
     }
 
     /**
