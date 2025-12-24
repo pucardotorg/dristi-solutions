@@ -170,26 +170,26 @@ jobs:
           repo: "pucardotorg/dristi-solutions"
           ghub_token: ${{ secrets.GHUB_TOKEN }}
 
-      - name: Docker Build
-        id: docker_build
-        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
-        with:
-          service_name: ${{ matrix.service }}
-          docker_password: ${{ secrets.ACR_PASSWORD }}
+      # - name: Docker Build
+      #   id: docker_build
+      #   uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
+      #   with:
+      #     service_name: ${{ matrix.service }}
+      #     docker_password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Deployment Summary
-        run: |
-          echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+      # - name: Deployment Summary
+      #   run: |
+      #     echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
-      - name: Deploy to Kubernetes
-        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
-        with:
-          environment: ${{ needs.check-diff.outputs.deployment_env }}
-          service_group: ${{ env.service_group }}
-          service_name: ${{ matrix.service }}
-          image_tag: ${{ steps.docker_build.outputs.image_tag }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          public_age_key: ${{ secrets.PUBLIC_AGE_KEY }}
-          private_age_key: ${{ secrets.PRIVATE_AGE_KEY }}
-          env_file: ${{ vars.HELMFILE_ENV }}
-          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+      # - name: Deploy to Kubernetes
+      #   uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+      #   with:
+      #     environment: ${{ needs.check-diff.outputs.deployment_env }}
+      #     service_group: ${{ env.service_group }}
+      #     service_name: ${{ matrix.service }}
+      #     image_tag: ${{ steps.docker_build.outputs.image_tag }}
+      #     kubeconfig: ${{ secrets.KUBECONFIG }}
+      #     public_age_key: ${{ secrets.PUBLIC_AGE_KEY }}
+      #     private_age_key: ${{ secrets.PRIVATE_AGE_KEY }}
+      #     env_file: ${{ vars.HELMFILE_ENV }}
+      #     checkout_ref: ${{ vars.DEVOPS_BRANCH }}
