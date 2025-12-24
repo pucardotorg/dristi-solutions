@@ -85,6 +85,7 @@ runs:
 
     - name: Build and analyze for ${{ inputs.service_name }}
       if: ${{ env.language == 'java' }}
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
