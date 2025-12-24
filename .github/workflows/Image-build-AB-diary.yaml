@@ -180,7 +180,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          echo "Docker image build: ${{ inputs.service_name }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+          echo "Docker image build: docker.io/venkatramireddyb${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
       - name: Deploy to Kubernetes
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
