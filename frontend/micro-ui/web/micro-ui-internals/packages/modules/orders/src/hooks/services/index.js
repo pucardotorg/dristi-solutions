@@ -12,7 +12,7 @@ export const ordersService = {
     }),
   addOrderItem: (data, params) =>
     Request({
-      url: Urls.orders.orderAddItem,
+      url: Urls.orders.orderManagementAddItem,
       useCache: false,
       userService: true,
       data,
@@ -210,6 +210,25 @@ export const orderManagementService = {
   updateSignedOrders: (data, params) =>
     Request({
       url: Urls.orderManagement.updateSignedOrders,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};
+
+export const digitalizationService = {
+  getDigitalizedDocumentsToSign: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.getDigitalizedDocumentsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedDigitalizedDocuments: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.updateSignedDigitalizedDocuments,
       useCache: false,
       userService: true,
       data,

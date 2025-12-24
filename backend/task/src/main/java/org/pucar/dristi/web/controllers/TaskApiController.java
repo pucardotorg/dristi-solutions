@@ -144,4 +144,16 @@ public class TaskApiController {
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/v1/bulk-pending-collection-update", method = RequestMethod.POST)
+    public ResponseEntity<BulkPendingCollectionUpdateResponse> bulkPendingCollectionUpdatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Bulk update isPendingCollection to false", schema = @Schema()) @Valid @RequestBody BulkPendingCollectionUpdateRequest body) {
+        List<BulkPendingCollectionUpdate> tasks = taskService.bulkUpdatePendingCollection(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        BulkPendingCollectionUpdateResponse response = BulkPendingCollectionUpdateResponse.builder()
+                .tasks(tasks)
+                .responseInfo(responseInfo)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

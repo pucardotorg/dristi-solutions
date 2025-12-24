@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.pucar.dristi.config.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -13,6 +14,12 @@ import java.util.Date;
 @Slf4j
 @Component
 public class DateUtil {
+
+    private final Configuration configuration;
+
+    public DateUtil(Configuration configuration) {
+        this.configuration = configuration;
+    }
     /**
      * Converts a "HH:mm:ss" time string to a Date object representing that time today
      */
@@ -28,5 +35,9 @@ public class DateUtil {
         return Instant.ofEpochMilli(startTime)
                 .atZone(ZoneId.of("Asia/Kolkata"))
                 .toLocalDate();
+    }
+
+    public Long getEpochFromLocalDate(LocalDate date) {
+        return date.atStartOfDay(ZoneId.of(configuration.getZoneId())).toInstant().toEpochMilli();
     }
 }

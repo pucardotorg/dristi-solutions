@@ -19,6 +19,10 @@ async function processTaskProcesses(
     "processes"
   );
 
+  const processesIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "processes"
+  );
+
   if (processesSection?.length !== 0) {
     const resTask = await search_table_task(
       tenantId,
@@ -119,11 +123,12 @@ async function processTaskProcesses(
           }
         })
       );
-      const processesIndexSection = indexCopy.sections?.find(
-        (section) => section.name === "processes"
-      );
       processesIndexSection.lineItems = processesLineItems?.filter(Boolean);
+    } else {
+      processesIndexSection.lineItems = [];
     }
+  } else {
+    processesIndexSection.lineItems = [];
   }
 }
 

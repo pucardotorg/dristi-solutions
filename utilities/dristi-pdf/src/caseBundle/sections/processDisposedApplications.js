@@ -49,6 +49,10 @@ async function processDisposedApplications(
     sectionPosition
   );
 
+  const applicationsIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "applications"
+  );
+
   if (applicationSection?.length !== 0) {
     const section = applicationSection[0];
     const completedApplications = await search_application_v2(
@@ -59,6 +63,7 @@ async function processDisposedApplications(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -75,6 +80,7 @@ async function processDisposedApplications(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -368,12 +374,13 @@ async function processDisposedApplications(
           };
         })
       );
-      const applicationsIndexSection = indexCopy.sections?.find(
-        (section) => section.name === "applications"
-      );
       applicationsIndexSection.lineItems =
         applicationLineItems?.filter(Boolean);
+    } else {
+      applicationsIndexSection.lineItems = [];
     }
+  } else {
+    applicationsIndexSection.lineItems = [];
   }
 }
 

@@ -1163,6 +1163,11 @@ export const TabSearchconfigNew = {
                 jsonPath: "documents",
                 additionalCustomization: true,
               },
+              {
+                label: "CS_ACTIONS",
+                jsonPath: "applicationDraftDelete",
+                additionalCustomization: true,
+              }
             ],
 
             enableColumnSort: true,

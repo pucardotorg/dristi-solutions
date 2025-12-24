@@ -62,7 +62,7 @@ const AddOrderTypeModal = ({
 
     if (currentOrderType && ["COST", "WITNESS_BATTA"].includes(currentOrderType)) {
       if (typeof formData?.amount === "string") {
-let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
+        let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
         if (cleanedAmount === "-") cleanedAmount = "";
         if (cleanedAmount !== formData.amount) {
           setValue("amount", cleanedAmount);
@@ -79,7 +79,6 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
         clearFormErrors?.current?.[index]?.("amount");
       }
     }
-
 
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
@@ -327,6 +326,21 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
     return bt;
   }, [newCurrentOrder]);
 
+  const defaultNatureOfDisposal = useMemo(() => {
+    const natureOfDisposal = newCurrentOrder?.additionalDetails?.formdata?.natureOfDisposal;
+    if (natureOfDisposal == null)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    if (typeof natureOfDisposal === "object" && Object?.keys(natureOfDisposal)?.length === 0)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    return natureOfDisposal;
+  }, [newCurrentOrder]);
+
   return (
     <React.Fragment>
       <Modal
@@ -340,18 +354,40 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
             <div className="view-order order-type-form-modal">
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
+                const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
-                let effectiveConfig = isAcceptBail
-                  ? (modifiedFormConfig || []).map((cfg) => ({
-                      ...cfg,
-                      body: cfg.body.filter((field) => {
-                        if (field.key === "noOfSureties") return showSuretyFields;
-                        return true;
-                      }),
-                    }))
-                  : modifiedFormConfig;
+                const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+                let effectiveConfig = modifiedFormConfig;
+
+                if (isAcceptBail) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.filter((field) => {
+                      if (field?.key === "noOfSureties") return showSuretyFields;
+                      return true;
+                    }),
+                  }));
+                } else if (isReferralToADR) {
+                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
+                  const hideForMediationEndKeys = ["dateOfEndADR"];
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.map((field) => {
+                      const shouldHide =
+                        (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+                      return {
+                        ...field,
+                        populators: {
+                          ...field?.populators,
+                          hideInForm: shouldHide,
+                        },
+                      };
+                    }),
+                  }));
+                }
 
                 if (isAcceptBail && bailTypeCode === "SURETY") {
                   const CheckboxRow = () => (
@@ -396,6 +432,7 @@ let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
                       ...(orderType?.code === "ACCEPT_BAIL" && { bailType: initialBailType }),
+                      ...(orderType?.code === "ABATE_CASE" && { natureOfDisposal: defaultNatureOfDisposal }),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}

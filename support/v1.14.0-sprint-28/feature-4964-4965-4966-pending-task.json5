@@ -1,0 +1,159 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "37",
+    "data": {
+      "id": "37",
+      "actor": "Judge/CMO",
+      "state": "PENDING_UPLOAD",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Upload Document For Mediation",
+      "closerAction": [
+        "UPLOAD"
+      ],
+      "triggerAction": [
+        "INITIATE_UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-mediation"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "36",
+    "data": {
+      "id": "36",
+      "actor": "Judge/CMO",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review request for Mediation",
+      "closerAction": [
+        "SIGN"
+      ],
+      "defaultRoles": [],
+      "triggerAction": [
+        "E-SIGN_COMPLETE",
+        "SKIP_SIGN_AND_SUBMIT"
+      ],
+      "workflowModule": "digitalized-document-mediation"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "31",
+    "data": {
+      "id": "31",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Confirm request for Mediation",
+      "closerAction": [
+        "E-SIGN_COMPLETE"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN",
+        "E-SIGN"
+      ],
+      "workflowModule": "digitalized-document-mediation",
+      "referenceEntityTypeNameMapping": []
+    },
+    "isActive": true
+  },
+  {
+    "id": "c695e0a6-f3cb-4a77-bfe6-c48d43ace724",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "35",
+    "data": {
+      "id": "35",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Sign Recorded Plea",
+      "closerAction": [
+        "E-SIGN"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN"
+      ],
+      "workflowModule": "digitalized-document-plea"
+    },
+    "isActive": true
+  },
+  {
+    "id": "e0950629-c17f-4795-9304-d8e39fe4eb6d",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "34",
+    "data": {
+      "id": "34",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review Accused Plea",
+      "closerAction": [
+        "SIGN"
+      ],
+      "triggerAction": [
+        "E-SIGN",
+        "UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-plea"
+    },
+    "isActive": true
+  },
+  {
+    "id": "980f6374-e2f3-4d4a-9e0c-775b5e9dd0b2",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "33",
+    "data": {
+      "id": "33",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review the examination",
+      "closerAction": [
+        "SIGN"
+      ],
+      "triggerAction": [
+        "E-SIGN",
+        "UPLOAD"
+      ],
+      "workflowModule": "digitalized-document-examination"
+    },
+    "isActive": true
+  },
+  {
+    "id": "b33f8e67-9da8-4313-a018-e9d1460adb35",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "32",
+    "data": {
+      "id": "32",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Sign S351 Examination",
+      "closerAction": [
+        "E-SIGN"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN"
+      ],
+      "workflowModule": "digitalized-document-examination"
+    },
+    "isActive": true
+  }
+]

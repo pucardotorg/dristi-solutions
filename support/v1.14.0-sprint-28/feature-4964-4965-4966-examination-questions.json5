@@ -1,0 +1,50 @@
+[
+  {
+    "id": "f1ec1dfd-3bdb-478d-bd07-e8656654b467",
+    "tenantId": "kl",
+    "schemaCode": "Examination-Of-Accused.Examination-Questions",
+    "uniqueIdentifier": "Q4",
+    "data": {
+      "code": "Q4",
+      "label": "Were you outside the town on the day of incident?",
+      "title": "Out of station"
+    },
+    "isActive": true
+  },
+  {
+    "id": "a6a1fdb9-be05-4f3b-b323-8bacf3ab06ac",
+    "tenantId": "kl",
+    "schemaCode": "Examination-Of-Accused.Examination-Questions",
+    "uniqueIdentifier": "Q3",
+    "data": {
+      "code": "Q3",
+      "label": "Did anyone threaten you to stay silent?",
+      "title": "threat"
+    },
+    "isActive": true
+  },
+  {
+    "id": "bf352438-9763-4d6a-b58f-8c4ebd968eb7",
+    "tenantId": "kl",
+    "schemaCode": "Examination-Of-Accused.Examination-Questions",
+    "uniqueIdentifier": "Q2",
+    "data": {
+      "code": "Q2",
+      "label": "Are you sure you want to stay silent?",
+      "title": "silence"
+    },
+    "isActive": true
+  },
+  {
+    "id": "745d7079-58b7-44dc-8611-c522549f220e",
+    "tenantId": "kl",
+    "schemaCode": "Examination-Of-Accused.Examination-Questions",
+    "uniqueIdentifier": "Q1",
+    "data": {
+      "code": "Q1",
+      "label": "Where were you on the night of the incident?",
+      "title": "whereabouts"
+    },
+    "isActive": true
+  }
+]

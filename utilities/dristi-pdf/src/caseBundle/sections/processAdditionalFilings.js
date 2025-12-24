@@ -47,6 +47,7 @@ async function processAdditionalFilings(
         evidenceStatus: false,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -67,6 +68,7 @@ async function processAdditionalFilings(
         evidenceStatus: false,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -187,6 +189,8 @@ async function processAdditionalFilings(
     } else {
       additionalFilingsIndexSection.lineItems = [];
     }
+  } else {
+    additionalFilingsIndexSection.lineItems = [];
   }
 }
 

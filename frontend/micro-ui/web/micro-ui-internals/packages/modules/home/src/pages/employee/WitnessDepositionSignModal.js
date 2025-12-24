@@ -269,6 +269,7 @@ export const WitnessDepositionSignModal = ({
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.artifactNumber) {
@@ -349,12 +350,13 @@ export const WitnessDepositionSignModal = ({
         action: witnessDepositionWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      setWitnessDepositionSignedPdf(newFilestore);
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setWitnessDepositionSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 

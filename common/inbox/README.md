@@ -5,7 +5,6 @@ and returns applications and workflow data in paginated manner. The service also
 
 ### Service Dependencies
 
-
 - workflow-v2
 - user-service
 - egov-searcher

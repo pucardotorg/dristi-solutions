@@ -11,7 +11,7 @@ import { TabSearchconfigNew } from "./AdmittedCasesConfig";
 import EvidenceModal from "./EvidenceModal";
 import ExtraComponent from "./ExtraComponent";
 import "./tabs.css";
-import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
+import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { OrderTypes, OrderWorkflowState } from "../../../Utils/orderWorkflow";
 import ScheduleHearing from "./ScheduleHearing";
 import ViewAllOrderDrafts from "./ViewAllOrderDrafts";
@@ -58,6 +58,7 @@ import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/em
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
+import ExaminationDrawer from "./ExaminationDrawer";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -174,7 +175,7 @@ const AdmittedCaseV2 = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
@@ -190,6 +191,7 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -240,6 +242,7 @@ const AdmittedCaseV2 = () => {
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
   const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
+  const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -247,6 +250,7 @@ const AdmittedCaseV2 = () => {
   const isJudge = userRoles?.includes("JUDGE_ROLE");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
+  const submissionService = useMemo(() => Digit.ComponentRegistryService.getComponent("submissionService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
   const EditSendBackModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EditSendBackModal") || {}, []);
   const [loader, setLoader] = useState(false);
@@ -267,6 +271,7 @@ const AdmittedCaseV2 = () => {
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
   const [deleteOrder, setDeleteOrder] = useState(null);
+  const [deleteApplication, setDeleteApplication] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -834,7 +839,12 @@ const AdmittedCaseV2 = () => {
         );
       }
       if (
-        [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+        [
+          SubmissionWorkflowState.PENDINGPAYMENT,
+          SubmissionWorkflowState.PENDINGESIGN,
+          SubmissionWorkflowState.PENDINGSUBMISSION,
+          SubmissionWorkflowState.DRAFT_IN_PROGRESS,
+        ].includes(status)
       ) {
         if (createdByUuid === userInfo?.uuid) {
           history.push(
@@ -924,6 +934,10 @@ const AdmittedCaseV2 = () => {
           message: t("SOMETHING_WENT_WRONG"),
         });
       }
+    };
+
+    const handleApplicationDeleteFunc = async (row) => {
+      setDeleteApplication(row);
     };
 
     const takeActionFunc = (hearingData) => {
@@ -1238,13 +1252,29 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.searchResult,
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) =>
-                    column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
-                      ? { ...column, clickFunc: docSetFunc }
-                      : column.label === "OWNER"
-                      ? { ...column, parties: caseRelatedData.parties }
-                      : column
-                  ),
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                    switch (column.label) {
+                      case "DOCUMENT_TEXT":
+                      case "SUBMISSION_TYPE":
+                        return {
+                          ...column,
+                          clickFunc: docSetFunc,
+                        };
+                      case "CS_ACTIONS":
+                        return {
+                          ...column,
+                          clickFunc: handleApplicationDeleteFunc,
+                        };
+                      case "OWNER":
+                        return {
+                          ...column,
+                          parties: caseRelatedData.parties,
+                        };
+
+                      default:
+                        return column;
+                    }
+                  }),
                 },
               },
             },
@@ -2665,6 +2695,8 @@ const AdmittedCaseV2 = () => {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
+      } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
+        setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
@@ -2677,6 +2709,9 @@ const AdmittedCaseV2 = () => {
         setShowAddWitnessModal(true);
       } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
         handleCaseTransition(option.value);
+      } else if (option.value === "RECORD_PLEA") {
+        history.push(`/${window?.contextPath}/employee/submissions/record-plea?filingNumber=${filingNumber}`);
+        return;
       }
     },
     [
@@ -2822,6 +2857,7 @@ const AdmittedCaseV2 = () => {
                 filingNumber,
                 tenantId,
                 hearingNumber: currentInProgressHearing?.hearingId,
+                hearingType: currentInProgressHearing?.hearingType,
               },
             },
             {}
@@ -3073,6 +3109,14 @@ const AdmittedCaseV2 = () => {
         label: "VIEW_CALENDAR",
         requiredRoles: [],
       },
+      {
+        label: "RECORD_PLEA",
+        requiredRoles: ["PLEA_CREATOR", "PLEA_EDITOR"],
+      },
+      {
+        label: "RECORD_EXAMINATION_OF_ACCUSED",
+        requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // TODO: update this when backend validation is done.
+      },
     ],
     []
   );
@@ -3115,6 +3159,11 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ]
           : [
               {
@@ -3132,6 +3181,11 @@ const AdmittedCaseV2 = () => {
               {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
+              },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
               },
             ];
       } else
@@ -3172,6 +3226,11 @@ const AdmittedCaseV2 = () => {
           {
             value: "TAKE_WITNESS_DEPOSITION",
             label: "TAKE_WITNESS_DEPOSITION",
+          },
+          { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+          {
+            value: "RECORD_EXAMINATION_OF_ACCUSED",
+            label: "RECORD_EXAMINATION_OF_ACCUSED",
           },
         ];
     } else return [];
@@ -3459,6 +3518,32 @@ const AdmittedCaseV2 = () => {
     }
   };
 
+  const handleDeleteApplication = async () => {
+    try {
+      setLoader(true);
+      const reqBody = {
+        application: {
+          ...deleteApplication,
+          workflow: { ...deleteApplication?.workflow, documents: [{}], action: SubmissionWorkflowAction.DELETE },
+          tenantId,
+        },
+        tenantId,
+      };
+      await submissionService.updateApplication(reqBody, { tenantId });
+      setDeleteApplication(null);
+      // history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showToast({
+        isError: true,
+        message: t("SOMETHING_WENT_WRONG"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -3491,7 +3576,10 @@ const AdmittedCaseV2 = () => {
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
         setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
+        setShowExaminationModal={setShowExaminationModal}
+        setDocumentCounter={setDocumentCounter}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -3767,7 +3855,8 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && !caseDetails?.courtCaseNumber?.includes("ST/") && (
+              caseDetails?.courtCaseNumber &&
+              !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />
@@ -4340,6 +4429,22 @@ const AdmittedCaseV2 = () => {
           courtId={courtId}
         />
       )}
+      {showExaminationModal && (
+        <ExaminationDrawer
+          isOpen={showExaminationModal}
+          onClose={() => {
+            setShowExaminationModal(false);
+            setExaminationDocumentNumber(null);
+            refetchCaseData();
+            sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+            onTabChange(0, {}, "Documents");
+          }}
+          tenantId={tenantId}
+          documentNumber={examinationDocumentNumber}
+          caseId={caseId}
+          courtId={courtId}
+        />
+      )}
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
         <PaymentDemandModal
           t={t}
@@ -4401,15 +4506,26 @@ const AdmittedCaseV2 = () => {
           }}
         ></AddWitnessModal>
       )}
-      {deleteOrder !== null && (
+      {(deleteOrder !== null || deleteApplication !== null) && (
         <EditSendBackModal
           t={t}
-          handleCancel={() => !loader && setDeleteOrder(null)}
-          handleSubmit={() => handleDeleteOrder()}
+          handleCancel={() => {
+            if (!loader) {
+              setDeleteOrder(null);
+              setDeleteApplication(null);
+            }
+          }}
+          handleSubmit={() => {
+            if (deleteOrder) {
+              handleDeleteOrder();
+            } else if (deleteApplication) {
+              handleDeleteApplication();
+            }
+          }}
           headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
           saveLabel={"GENERATE_ORDER_DELETE"}
           cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
-          contentText={"ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER"}
+          contentText={deleteOrder ? "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER" : "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_APPLICATION"}
           className={"edit-send-back-modal"}
           submitButtonStyle={{ backgroundColor: "#C7222A" }}
           loader={loader}
