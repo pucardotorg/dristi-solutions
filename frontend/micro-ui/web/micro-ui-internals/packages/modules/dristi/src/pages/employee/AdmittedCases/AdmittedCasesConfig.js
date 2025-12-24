@@ -816,6 +816,13 @@ export const TabSearchconfigNew = {
                     masterName: "HearingType",
                     moduleName: "Hearing",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Hearing'].HearingType
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -965,6 +972,13 @@ export const TabSearchconfigNew = {
                     masterName: "OrderStatus",
                     moduleName: "Order",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Order'].OrderStatus
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -1078,6 +1092,13 @@ export const TabSearchconfigNew = {
                     masterName: "ApplicationType",
                     moduleName: "Application",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Application'].ApplicationType
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -1108,6 +1129,13 @@ export const TabSearchconfigNew = {
                     masterName: "ApplicationStatus",
                     moduleName: "Application",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Application'].ApplicationStatus
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },

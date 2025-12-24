@@ -73,7 +73,7 @@ export const DocumentSearchConfig = {
                     moduleName: "Evidence",
                     localePrefix: "EVIDENCE_TYPE",
                     select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
+                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };}).sort((a,b) => a.name.localeCompare(b.name));}",
                     // localePrefix: "SUBMISSION_TYPE",
                   },
                 },
@@ -287,7 +287,8 @@ export const DocumentSearchConfig = {
                   mdmsConfig: {
                     masterName: "DigitalizationForm",
                     moduleName: "Order",
-                    select: "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};});}",
+                    select:
+                      "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};}).sort((a,b) => a.name.localeCompare(b.name));}",
                   },
                 },
               },

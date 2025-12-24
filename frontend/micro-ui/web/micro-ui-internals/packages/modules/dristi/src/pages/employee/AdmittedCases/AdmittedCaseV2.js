@@ -1045,10 +1045,12 @@ const AdmittedCaseV2 = () => {
                           populators: {
                             name: "parties",
                             optionsKey: "name",
-                            options: caseRelatedData.parties.map((party) => ({
-                              code: removeInvalidNameParts(party.name),
-                              name: removeInvalidNameParts(party.name),
-                            })),
+                            options: caseRelatedData.parties
+                              .map((party) => ({
+                                code: removeInvalidNameParts(party.name),
+                                name: removeInvalidNameParts(party.name),
+                              }))
+                              .sort((a, b) => a.name.localeCompare(b.name)),
                           },
                         }
                       : field
@@ -1237,11 +1239,13 @@ const AdmittedCaseV2 = () => {
                       populators: {
                         name: "owner",
                         optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => ({
-                          code: removeInvalidNameParts(party.name),
-                          name: removeInvalidNameParts(party.name),
-                          value: party.additionalDetails?.uuid,
-                        })),
+                        options: caseRelatedData.parties
+                          .map((party) => ({
+                            code: removeInvalidNameParts(party.name),
+                            name: removeInvalidNameParts(party.name),
+                            value: party.additionalDetails?.uuid,
+                          }))
+                          .sort((a, b) => a.name.localeCompare(b.name)),
                       },
                     },
                     ...tabConfig.sections.search.uiConfig.fields,
