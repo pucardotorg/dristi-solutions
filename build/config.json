@@ -1,5 +1,6 @@
 {
     "ab-diary": {
+        "service_group": "core-services",
         "db_source_path": "backend/ab-diary/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/ab-diary",
@@ -7,6 +8,7 @@
         "version": "17"
     },
     "advocate": {
+        "service_group": "core-services",
         "db_source_path": "backend/advocate/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/advocate",
@@ -14,6 +16,7 @@
         "version": "17"
     },
     "analytics": {
+        "service_group": "core-services",
         "db_source_path": "backend/analytics/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/analytics",
@@ -21,6 +24,7 @@
         "version": "17"
     },
     "application": {
+        "service_group": "core-services",
         "db_source_path": "backend/application/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/application",
@@ -28,6 +32,7 @@
         "version": "17"
     },
     "bail-bond": {
+        "service_group": "core-services",
         "db_source_path": "backend/bail-bond/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/bail-bond",
@@ -35,6 +40,7 @@
         "version": "17"
     },
     "case": {
+        "service_group": "core-services",
         "db_source_path": "backend/case/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/case",
@@ -42,6 +48,7 @@
         "version": "17"
     },
     "casemanagement": {
+        "service_group": "core-services",
         "db_source_path": "backend/casemanagement/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/casemanagement",
@@ -49,6 +56,7 @@
         "version": "17"
     },
     "digitalized-documents": {
+        "service_group": "core-services",
         "db_source_path": "backend/digitalized-documents/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digitalized-documents",
@@ -56,6 +64,7 @@
         "version": "17"
     },
     "dristi-case-pdf": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "backend/dristi-case-pdf/Dockerfile",
         "service_source_path": "backend/dristi-case-pdf",
@@ -64,6 +73,7 @@
         "sonar_sources": ""
     },
     "epost-tracker": {
+        "service_group": "core-services",
         "db_source_path": "backend/epost-tracker/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/epost-tracker",
@@ -71,6 +81,7 @@
         "version": "17"
     },
     "esign-interceptor": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/esign-interceptor",
@@ -78,6 +89,7 @@
         "version": "17"
     },
     "e-sign-svc": {
+        "service_group": "core-services",
         "db_source_path": "backend/e-sign-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/e-sign-svc",
@@ -85,6 +97,7 @@
         "version": "17"
     },
     "evidence": {
+        "service_group": "core-services",
         "db_source_path": "backend/evidence/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/evidence",
@@ -92,6 +105,7 @@
         "version": "17"
     },
     "hearing": {
+        "service_group": "core-services",
         "db_source_path": "backend/hearing/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/hearing",
@@ -99,6 +113,7 @@
         "version": "17"
     },
     "hearing-management": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/hearing-management",
@@ -106,6 +121,7 @@
         "version": "17"
     },
     "icops-integration": {
+        "service_group": "core-services",
         "db_source_path": "backend/icops_integration-kerala/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/icops_integration-kerala",
@@ -113,6 +129,7 @@
         "version": "17"
     },
     "inportal-survey": {
+        "service_group": "core-services",
         "db_source_path": "backend/inportal-survey/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/inportal-survey",
@@ -120,6 +137,7 @@
         "version": "17"
     },
     "kerala-sms": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/kerala-sms",
@@ -127,6 +145,7 @@
         "version": "17"
     },
     "njdg-transformer": {
+        "service_group": "core-services",
         "db_source_path": "backend/njdg-transformer/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/njdg-transformer",
@@ -134,6 +153,7 @@
         "version": "17"
     },
     "notification": {
+        "service_group": "core-services",
         "db_source_path": "backend/Notification/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/Notification",
@@ -141,6 +161,7 @@
         "version": "17"
     },
     "ocr-service": {
+        "service_group": "core-services",
         "db_source_path": "backend/ocr-service/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/ocr-service",
@@ -148,6 +169,7 @@
         "version": "17"
     },
     "openapi": {
+        "service_group": "core-services",
         "db_source_path": "backend/openapi/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/openapi",
@@ -155,6 +177,7 @@
         "version": "17"
     },
     "opencv": {
+        "service_group": "core-services",
         "db_source_path": "backend/opencv-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/opencv-svc",
@@ -162,6 +185,7 @@
         "version": "3.12"
     },
     "order": {
+        "service_group": "core-services",
         "db_source_path": "backend/order/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/order",
@@ -169,6 +193,7 @@
         "version": "17"
     },
     "order-management": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/order-management",
@@ -176,6 +201,7 @@
         "version": "17"
     },
     "payment-calculator": {
+        "service_group": "core-services",
         "db_source_path": "backend/payment-calculator-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/payment-calculator-svc",
@@ -183,6 +209,7 @@
         "version": "17"
     },
     "sbi-svc": {
+        "service_group": "core-services",
         "db_source_path": "backend/sbi-backend/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/sbi-backend",
@@ -190,6 +217,7 @@
         "version": "17"
     },
     "sbi-webpage": {
+        "service_group": "core-services",
         "db_source_path": "backend/sbi-webpage/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/sbi-webpage",
@@ -198,6 +226,7 @@
         "sonar_sources": ""
     },
     "scheduler": {
+        "service_group": "core-services",
         "db_source_path": "backend/scheduler-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/scheduler-svc",
@@ -205,6 +234,7 @@
         "version": "17"
     },
     "summons-svc": {
+        "service_group": "core-services",
         "db_source_path": "backend/summons-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/summons-svc",
@@ -212,6 +242,7 @@
         "version": "17"
     },
     "task": {
+        "service_group": "core-services",
         "db_source_path": "backend/task/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/task",
@@ -219,6 +250,7 @@
         "version": "17"
     },
     "task-management": {
+        "service_group": "core-services",
         "db_source_path": "backend/task-management/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/task-management",
@@ -226,6 +258,7 @@
         "version": "17"
     },
     "transformer": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/transformer",
@@ -233,6 +266,7 @@
         "version": "17"
     },
     "etreasury": {
+        "service_group": "core-services",
         "db_source_path": "backend/treasury-backend/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/treasury-backend",
@@ -240,6 +274,7 @@
         "version": "17"
     },
     "epayments": {
+        "service_group": "core-services",
         "db_source_path": "backend/treasury-webpage/src/main/resources/db",
         "dockerfile_path": "backend/treasury-webpage/Dockerfile",
         "service_source_path": "backend/treasury-webpage",
@@ -248,6 +283,7 @@
         "sonar_sources": ""
     },
     "billing-service": {
+        "service_group": "core-services",
         "db_source_path": "common/billing-service/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/billing-service",
@@ -255,6 +291,7 @@
         "version": "17"
     },
     "collection-services": {
+        "service_group": "core-services",
         "db_source_path": "common/collection-services/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/collection-services",
@@ -262,6 +299,7 @@
         "version": "17"
     },
     "egov-apportion-service": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-apportion-service/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-apportion-service",
@@ -269,6 +307,7 @@
         "version": "17"
     },
     "egov-filestore": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-filestore/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-filestore",
@@ -276,6 +315,7 @@
         "version": "17"
     },
     "egov-hrms": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-hrms/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-hrms",
@@ -283,6 +323,7 @@
         "version": "17"
     },
     "egov-idgen": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-idgen/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-idgen",
@@ -290,6 +331,7 @@
         "version": "17"
     },
     "egov-indexer": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-indexer/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-indexer",
@@ -297,6 +339,7 @@
         "version": "17"
     },
     "egov-localization": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-localization/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-localization",
@@ -304,6 +347,7 @@
         "version": "17"
     },
     "egov-mdms-service": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-mdms-service/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-mdms-service",
@@ -311,6 +355,7 @@
         "version": "17"
     },
     "egov-notification-mail": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-notification-mail",
@@ -318,6 +363,7 @@
         "version": "17"
     },
     "egov-url-shortening": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-url-shortening/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-url-shortening",
@@ -325,6 +371,7 @@
         "version": "17"
     },
     "egov-user": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-user/src/main/resources/db",
         "dockerfile_path": "build/maven-java8/Dockerfile",
         "service_source_path": "common/egov-user",
@@ -332,6 +379,7 @@
         "version": "8"
     },
     "egov-workflow-v2": {
+        "service_group": "core-services",
         "db_source_path": "common/egov-workflow-v2/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/egov-workflow-v2",
@@ -339,6 +387,7 @@
         "version": "17"
     },
     "inbox": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven-java8/Dockerfile",
         "service_source_path": "common/inbox",
@@ -346,6 +395,7 @@
         "version": "8"
     },
     "individual": {
+        "service_group": "core-services",
         "db_source_path": "common/individual/src/main/resources/db",
         "dockerfile_path": "build/maven-java8/Dockerfile",
         "service_source_path": "common/individual",
@@ -353,6 +403,7 @@
         "version": "8"
     },
     "lock-svc": {
+        "service_group": "core-services",
         "db_source_path": "common/lock-svc/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/lock-svc",
@@ -360,6 +411,7 @@
         "version": "17"
     },
     "pdf-service": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "common/pdf-service/Dockerfile",
         "service_source_path": "common/pdf-service",
@@ -368,6 +420,7 @@
         "sonar_sources": "src"
     },
     "sunbirdrc-credential-service": {
+        "service_group": "core-services",
         "db_source_path": "common/sunbirdrc-credential-service/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/sunbirdrc-credential-service",
@@ -375,6 +428,7 @@
         "version": "17"
     },
     "user-otp": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "common/user-otp",
@@ -382,6 +436,7 @@
         "version": "17"
     },
     "digit-ui": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "frontend/micro-ui/web/docker/Dockerfile",
         "service_source_path": "frontend/micro-ui",
@@ -391,6 +446,7 @@
 
     },
     "dristi-pdf": {
+        "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "utilities/dristi-pdf/Dockerfile",
         "service_source_path": "utilities/dristi-pdf",
