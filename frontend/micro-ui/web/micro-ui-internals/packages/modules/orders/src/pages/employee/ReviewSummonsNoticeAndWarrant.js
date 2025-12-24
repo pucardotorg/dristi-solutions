@@ -1849,6 +1849,24 @@ const ReviewSummonsNoticeAndWarrant = () => {
     };
 
     const injectHeaderCheckbox = () => {
+      // Only show header checkbox for tabs that need it (PENDING_SIGN, SIGNED, PENDING_RPAD_COLLECTION)
+      // Hide it for SENT and COMPLETED tabs
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+      const currentTabLabel = currentConfig?.label || config?.label;
+      const tabsWithHeaderCheckbox = ["PENDING_SIGN", "SIGNED", "PENDING_RPAD_COLLECTION"];
+
+      if (!tabsWithHeaderCheckbox.includes(currentTabLabel)) {
+        // Remove header checkbox if it exists for tabs that shouldn't have it
+        const existingHeaderCheckbox = document.querySelector('input[type="checkbox"][data-header-checkbox="true"]');
+        if (existingHeaderCheckbox) {
+          const selectHeader = existingHeaderCheckbox.closest('th, [role="columnheader"]');
+          if (selectHeader) {
+            selectHeader.innerHTML = "";
+          }
+        }
+        return;
+      }
+
       // Find the table header row - look for th elements or header cells
       const tableHeaders = document.querySelectorAll('th, [role="columnheader"]');
 
@@ -1935,7 +1953,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, [reload, activeTabIndex, config]);
+  }, [reload, activeTabIndex, config, isJudge, courtId]);
 
   return (
     <React.Fragment>
