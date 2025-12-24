@@ -90,13 +90,15 @@ runs:
         echo ""
         pwd
         echo ""
+        echo ${{ github.workspace }}
+        echo ""
         find . -name "dependency-check-report.sarif"
       shell: bash
 
     - name: Upload SARIF result to GitHub
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ./reports/dependency-check-report.sarif
+        sarif_file: /home/runner/work/dristi-solutions/dristi-solutions/reports/dependency-check-report.sarif
       if: ${{ env.language == 'java' }}
 
     - name: Build and analyze (Java)
