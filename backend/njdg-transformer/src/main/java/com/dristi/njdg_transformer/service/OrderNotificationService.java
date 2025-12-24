@@ -253,7 +253,8 @@ public class OrderNotificationService {
             }
             hearings.sort(Comparator.comparing(Hearing::getStartTime));
             for(Hearing hearing : hearings) {
-                if(caseNumber.equalsIgnoreCase(hearing.getCaseReferenceNumber())) {
+                if(caseNumber.equalsIgnoreCase(hearing.getCaseReferenceNumber()) ||
+                    caseNumber.equalsIgnoreCase(hearing.getCmpNumber())) {
                     String cino = hearing.getCnrNumbers().get(0);
                     LocalDate hearingDate = formatDate(notification.getCreatedDate());
                     DesignationMaster designationMaster = caseRepository.getDesignationMaster(JUDGE_DESIGNATION);
