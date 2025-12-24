@@ -2786,6 +2786,7 @@ const GenerateOrdersV2 = () => {
               channelName: channelTypeEnum?.[item?.type]?.type,
               fees: courtFees,
               channelCode: channelTypeEnum?.[item?.type]?.code,
+              isPendingCollection: channelTypeEnum?.[item?.type]?.code === "RPAD" ? true : false,
             };
 
             let address = {};

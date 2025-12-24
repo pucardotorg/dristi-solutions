@@ -91,6 +91,7 @@ function ReviewDocumentSubmissionModal({
           <DocViewerWrapper
             docWidth={"100%"}
             docHeight={"fit-content"}
+            errorHeight={"460px"}
             tenantId={tenantId}
             showDownloadOption={false}
             docViewerStyle={{ maxWidth: "100%", width: "100%", padding: "0px 16px 24px 16px" }}
