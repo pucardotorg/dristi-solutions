@@ -60,11 +60,14 @@ async function processExamination(
     return;
 
   const allDocumentsLineItems = [];
+  let docketIndex = 0;
   for (let i = 0; i < sortedSection?.length; i++) {
     const section = sortedSection[i];
     const documents = filteredDocuments(section.doctype);
-    if (!documents || documents.length === 0) continue;
-
+    if (!documents || documents?.length === 0) {
+      continue;
+    }
+    docketIndex++;
     const digitizedDocumentsLineItems = await Promise.all(
       documents.map(async (data, index) => {
         if (!data?.documents || data.documents.length === 0) return null;
@@ -95,7 +98,6 @@ async function processExamination(
             ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
             : "";
 
-          const docketIndex = i + 1;
           const documentPath = `${dynamicSectionNumber}.${docketIndex} ${section.Items} in ${dynamicSectionNumber} ${section.section}`;
 
           newFileStoreId = await applyDocketToDocument(

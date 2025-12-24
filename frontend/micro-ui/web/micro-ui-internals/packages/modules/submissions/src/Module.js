@@ -11,6 +11,7 @@ import WitnessDepositionLoginPage from "./pages/employee/WitnessDepositionLoginP
 import WitnessDepositionSignaturePage from "./pages/employee/WitnessDepositionSignaturePage";
 import DigitizedDocumentLoginPage from "./pages/employee/DigitizedDocumentLoginPage";
 import DigitizedDocumentsSignaturePage from "./pages/employee/DigitizedDocumentsSignaturePage";
+import { submissionService } from "./hooks/services";
 
 export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -39,6 +40,7 @@ const componentsToRegister = {
   WitnessDepositionSignaturePage,
   DigitizedDocumentLoginPage,
   DigitizedDocumentsSignaturePage,
+  submissionService,
 };
 
 export const initSubmissionsComponents = () => {
