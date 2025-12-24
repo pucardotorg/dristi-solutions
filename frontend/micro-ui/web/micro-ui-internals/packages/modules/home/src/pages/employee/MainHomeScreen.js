@@ -904,7 +904,7 @@ const MainHomeScreen = () => {
             mdmsConfig: {
               masterName: "SubStage",
               moduleName: "case",
-              select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+              select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a, b) => a.code.localeCompare(b.code));}",
             },
           },
         },
@@ -939,7 +939,7 @@ const MainHomeScreen = () => {
             masterName: "ApplicationType",
             moduleName: "Application",
             select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       });

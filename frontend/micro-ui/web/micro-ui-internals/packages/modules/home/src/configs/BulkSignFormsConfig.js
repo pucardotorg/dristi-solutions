@@ -46,7 +46,8 @@ export const bulkSignFormsConfig = {
               mdmsConfig: {
                 masterName: "DigitalizationForm",
                 moduleName: "Order",
-                select: "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};});}",
+                select:
+                  "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};}).sort((a, b) => a.code.localeCompare(b.code));}",
               },
             },
           },
