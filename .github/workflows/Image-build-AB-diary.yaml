@@ -192,4 +192,4 @@ jobs:
           public_age_key: ${{ secrets.PUBLIC_AGE_KEY }}
           private_age_key: ${{ secrets.PRIVATE_AGE_KEY }}
           env_file: ${{ vars.HELMFILE_ENV }}
-          checkout_ref: ${{ vars.devops_branch }}
+          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
