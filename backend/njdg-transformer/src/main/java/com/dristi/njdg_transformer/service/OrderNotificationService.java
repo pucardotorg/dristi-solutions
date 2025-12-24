@@ -180,7 +180,7 @@ public class OrderNotificationService {
             return null;
         }
         return hearings.stream()
-                .filter(h -> h.getStartTime() != null && h.getStartTime() >= orderCreatedDate)
+                .filter(h -> h.getStartTime() != null && h.getStartTime() > orderCreatedDate)
                 .findFirst()
                 .orElse(null);
     }
