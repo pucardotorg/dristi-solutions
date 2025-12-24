@@ -170,25 +170,25 @@ jobs:
           repo: "pucardotorg/dristi-solutions"
           ghub_token: ${{ secrets.GHUB_TOKEN }}
 
-      - name: Docker Build
-        id: docker_build
-        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
-        with:
-          service_name: ${{ matrix.service }}
-          docker_password: ${{ secrets.ACR_PASSWORD }}
+      # - name: Docker Build
+      #   id: docker_build
+      #   uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
+      #   with:
+      #     service_name: ${{ matrix.service }}
+      #     docker_password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Deployment Summary
-        run: |
-          echo "Docker image build: docker.io/venkatramireddyb${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+      # - name: Deployment Summary
+      #   run: |
+      #     echo "Docker image build: docker.io/venkatramireddyb${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
-      - name: Deploy to Kubernetes
-        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
-        with:
-          environment: ${{ needs.check-diff.outputs.deployment_env }}
-          service_group: ${{ env.service_group }}
-          service_name: ${{ matrix.service }}
-          image_tag: ${{ steps.docker_build.outputs.image_tag }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          env_file: ${{ vars.HELMFILE_ENV }}
-          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
-          sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+      # - name: Deploy to Kubernetes
+      #   uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+      #   with:
+      #     environment: ${{ needs.check-diff.outputs.deployment_env }}
+      #     service_group: ${{ env.service_group }}
+      #     service_name: ${{ matrix.service }}
+      #     image_tag: ${{ steps.docker_build.outputs.image_tag }}
+      #     kubeconfig: ${{ secrets.KUBECONFIG }}
+      #     env_file: ${{ vars.HELMFILE_ENV }}
+      #     checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+      #     sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
