@@ -59,6 +59,7 @@ import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
 import ExaminationDrawer from "./ExaminationDrawer";
+import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -277,6 +278,10 @@ const AdmittedCaseV2 = () => {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
+
+  const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
+  const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
+  const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -1027,21 +1032,34 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: tabConfig.sections.search.uiConfig.fields.map((field) =>
-                    field.key === "parties"
-                      ? {
-                          ...field,
-                          populators: {
-                            name: "parties",
-                            optionsKey: "name",
-                            options: caseRelatedData.parties.map((party) => ({
+                  fields: tabConfig.sections.search.uiConfig.fields.map((field) => {
+                    if (field.key === "parties") {
+                      return {
+                        ...field,
+                        populators: {
+                          name: "parties",
+                          optionsKey: "name",
+                          options: caseRelatedData.parties
+                            .map((party) => ({
                               code: removeInvalidNameParts(party.name),
                               name: removeInvalidNameParts(party.name),
-                            })),
-                          },
-                        }
-                      : field
-                  ),
+                            }))
+                            .sort((a, b) => a.name.localeCompare(b.name)),
+                        },
+                      };
+                    }
+
+                    if (field.key === "type") {
+                      return {
+                        ...field,
+                        populators: {
+                          ...field.populators,
+                          options: orderTypeOptions || [],
+                        },
+                      };
+                    }
+                    return field;
+                  }),
                 },
               },
               searchResult: {
@@ -1101,7 +1119,18 @@ const AdmittedCaseV2 = () => {
                         })),
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
+                    ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                      if (field.key === "hearingType") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            options: hearingTypeOptions || [],
+                          },
+                        };
+                      }
+                      return field;
+                    }),
                   ],
                 },
               },
@@ -1226,14 +1255,28 @@ const AdmittedCaseV2 = () => {
                       populators: {
                         name: "owner",
                         optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => ({
-                          code: removeInvalidNameParts(party.name),
-                          name: removeInvalidNameParts(party.name),
-                          value: party.additionalDetails?.uuid,
-                        })),
+                        options: caseRelatedData.parties
+                          .map((party) => ({
+                            code: removeInvalidNameParts(party.name),
+                            name: removeInvalidNameParts(party.name),
+                            value: party.additionalDetails?.uuid,
+                          }))
+                          .sort((a, b) => a.name.localeCompare(b.name)),
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
+                    ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                      if (field.key === "applicationType") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            options: applicationTypeOptions || [],
+                          },
+                        };
+                      }
+
+                      return field;
+                    }),
                   ],
                 },
               },
@@ -1285,6 +1328,9 @@ const AdmittedCaseV2 = () => {
     downloadPdf,
     ordersService,
     caseCourtId,
+    orderTypeOptions,
+    applicationTypeOptions,
+    hearingTypeOptions,
   ]);
 
   const handleEvidenceAction = async () => {

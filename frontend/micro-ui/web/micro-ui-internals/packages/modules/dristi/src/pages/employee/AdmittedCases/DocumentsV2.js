@@ -48,6 +48,32 @@ const DocumentsV2 = ({
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const [showErrorToast, setShowErrorToast] = useState(null);
 
+  const { data: evidenceTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Evidence", [{ name: "EvidenceType" }], {
+    select: (data) => {
+      return data?.["Evidence"]?.EvidenceType || [];
+    },
+  });
+
+  const evidenceTypeOptions = useMemo(() => {
+    if (!evidenceTypeData) return [];
+
+    return evidenceTypeData
+      ?.map((item) => {
+        const name = item?.subtype && item?.subtype.trim() !== "" ? `${item?.type}_${item?.subtype}` : item?.type;
+
+        return {
+          ...item,
+          name: name,
+          // label: t(`EVIDENCE_TYPE_${name}`),
+        };
+      })
+      ?.sort((a, b) => {
+        const nameA = t(a?.name);
+        const nameB = t(b?.name);
+        return nameA?.localeCompare(nameB);
+      });
+  }, [evidenceTypeData, t]);
+
   const ditilizationDeleteFunc = async (history, column, row, item) => {
     if (item.id === "draft_ditilization_delete") {
       const documentNumber = row?.documentNumber;
@@ -380,7 +406,20 @@ const DocumentsV2 = ({
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: [...tabConfig.sections.search.uiConfig.fields],
+                  fields: [
+                    ...tabConfig?.sections?.search?.uiConfig?.fields?.map?.((field) => {
+                      if (field.key === "artifactType") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            options: evidenceTypeOptions || [],
+                          },
+                        };
+                      }
+                      return field;
+                    }),
+                  ],
                 },
               },
               searchResult: {
@@ -503,7 +542,7 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isCitizen]);
+  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,

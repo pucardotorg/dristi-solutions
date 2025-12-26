@@ -38,6 +38,7 @@ import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
 import { useSurveyManager } from "./dristi/useSurveyManager.js";
 import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
+import useSortedMDMSData from "./dristi/useSortedMDMSData.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -172,6 +173,7 @@ const dristi = {
   useEtreasuryCreateDemand,
   useSurveyManager,
   useSearchTaskMangementService,
+  useSortedMDMSData,
 };
 
 const Hooks = {

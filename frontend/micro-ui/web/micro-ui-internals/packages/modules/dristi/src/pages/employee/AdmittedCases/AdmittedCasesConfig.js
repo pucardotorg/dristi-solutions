@@ -812,11 +812,7 @@ export const TabSearchconfigNew = {
                 populators: {
                   name: "hearingType",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "HearingType",
-                    moduleName: "Hearing",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               // {
@@ -946,11 +942,7 @@ export const TabSearchconfigNew = {
                 populators: {
                   name: "type",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "OrderType",
-                    moduleName: "Order",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               {
@@ -965,6 +957,13 @@ export const TabSearchconfigNew = {
                     masterName: "OrderStatus",
                     moduleName: "Order",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Order'].OrderStatus
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -1074,11 +1073,7 @@ export const TabSearchconfigNew = {
                 populators: {
                   name: "applicationType",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "ApplicationType",
-                    moduleName: "Application",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               // {
@@ -1108,6 +1103,13 @@ export const TabSearchconfigNew = {
                     masterName: "ApplicationStatus",
                     moduleName: "Application",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Application'].ApplicationStatus
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
