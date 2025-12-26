@@ -179,7 +179,7 @@ export const TabLitigantSearchConfig = {
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -385,7 +385,7 @@ export const TabLitigantSearchConfig = {
                     masterName: "OutcomeType",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];});}",
+                      "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];}).sort((a,b) => a.outcome.localeCompare(b.outcome));}",
                   },
                   styles: {
                     maxWidth: "250px",
