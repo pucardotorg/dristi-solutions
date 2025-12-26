@@ -647,8 +647,8 @@ const HomeHearingsTab = ({
                 option={
                   hearingTypeOptions?.Hearing?.HearingType
                     ? hearingTypeOptions?.Hearing?.HearingType.sort((a, b) => {
-                        const stringA = t(a);
-                        const stringB = t(b);
+                        const stringA = t(a?.code);
+                        const stringB = t(b?.code);
                         return stringA.localeCompare(stringB);
                       })
                     : []
