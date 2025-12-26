@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SelectMultiUpload from "./SelectMultiUpload";
 import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 
@@ -105,6 +105,10 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
     updateFormData(updatedFormInstances);
   }
 
+  useEffect(() => {
+    setFormInstances(formData?.[config?.key] || [{}]);
+  }, [config?.key, formData]);
+
   return (
     <React.Fragment>
       <style>
@@ -157,7 +161,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                   <SelectMultiUpload
                     config={input}
                     t={t}
-                    formData={formInstances[formIndex]?.[config?.key]}
+                    formData={formInstances[formIndex]}
                     onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
                     errors={errors}
                   />
