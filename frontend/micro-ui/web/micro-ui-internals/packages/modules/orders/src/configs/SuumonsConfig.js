@@ -10,6 +10,14 @@ const defaultSearchValues = {
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
+export const defaultSearchValuesForPendingRpad = {
+  searchText: "",
+  orderType: "",
+  channel: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
+  hearingDate: "",
+  compStatus: "",
+};
+
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
   hearingDate: "",
@@ -92,7 +100,7 @@ export const SummonsTabsConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: defaultSearchValuesForPendingRpad,
             fields: [
               // hidden
               {
@@ -134,7 +142,7 @@ export const SummonsTabsConfig = {
                   className: "custom-dropdown-color",
                 },
               },
-              // Delivery channel
+              // Delivery channel - Only show RPAD for PENDING_RPAD_COLLECTION tab
               {
                 label: "DELIVERY_CHANNEL",
                 isMandatory: false,
@@ -143,11 +151,11 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "channel",
                   optionsKey: "displayLabel",
+                  defaultValue: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
                   mdmsConfig: {
                     moduleName: "payment",
                     masterName: "paymentType",
-                    select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
+                    select: "(data) => { return [{ code: 'RPAD', name: 'RPAD', displayLabel: 'RPAD' }]; }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
