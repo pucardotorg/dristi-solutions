@@ -68,14 +68,7 @@ export const DocumentSearchConfig = {
                 populators: {
                   name: "artifactType",
                   optionsKey: "name",
-                  mdmsConfig: {
-                    masterName: "EvidenceType",
-                    moduleName: "Evidence",
-                    localePrefix: "EVIDENCE_TYPE",
-                    select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };}).sort((a,b) => a.name.localeCompare(b.name));}",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               {

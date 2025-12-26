@@ -141,6 +141,28 @@ const MainHomeScreen = () => {
     setUpdateCounter((prev) => prev + 1);
   }, [config]);
 
+  const { data: applicationTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Application", [{ name: "ApplicationType" }], {
+    select: (data) => {
+      return data?.["Application"]?.ApplicationType || [];
+    },
+  });
+
+  const applicationTypeOptions = useMemo(() => {
+    if (!applicationTypeData) return [];
+
+    return applicationTypeData
+      .filter((item) => !["RE_SCHEDULE", "DELAY_CONDONATION"].includes(item.type))
+      .map((item) => {
+        const i18nKey = `APPLICATION_TYPE_${item.type}`;
+        return {
+          ...item,
+          name: i18nKey,
+          label: t(i18nKey),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [applicationTypeData, t]);
+
   // useEffect(() => {
   //   if (activeTab !== homeActiveTab) {
   //     history.replace(location.pathname, {
@@ -935,12 +957,7 @@ const MainHomeScreen = () => {
         populators: {
           name: "referenceEntityType",
           optionsKey: "name",
-          mdmsConfig: {
-            masterName: "ApplicationType",
-            moduleName: "Application",
-            select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };}).sort((a, b) => a.name.localeCompare(b.name));}",
-          },
+          options: applicationTypeOptions || [],
         },
       });
     }
@@ -990,7 +1007,7 @@ const MainHomeScreen = () => {
       },
     };
     setConfig(updatedConfig);
-  }, [activeTab]);
+  }, [activeTab, applicationTypeOptions]);
 
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
