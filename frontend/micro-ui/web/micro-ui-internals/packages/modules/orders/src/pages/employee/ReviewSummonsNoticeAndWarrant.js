@@ -333,26 +333,30 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const data = await processManagementService.bulkSend(payload, {});
         const tasks = Array.isArray(data?.bulkSendTasks) ? data.bulkSendTasks : null;
         if (tasks) {
-          const successful = tasks.filter((t) => t?.success).length;
-          const failed = tasks.length - successful;
-          return { successful, failed, total: tasks.length };
+          const successfulTaskNumbers = tasks.filter((t) => t?.success).map((t) => t?.taskNumber);
+          const failedTaskNumbers = tasks.filter((t) => !t?.success).map((t) => t?.taskNumber);
+          const successful = successfulTaskNumbers.length;
+          const failed = failedTaskNumbers.length;
+          return { successful, failed, total: tasks.length, successfulTaskNumbers, failedTaskNumbers };
         }
         const results = Array.isArray(data?.results) ? data?.results : null;
         if (results) {
-          const successful = results.filter((r) => r?.success).length;
-          const failed = results.length - successful;
-          return { successful, failed, total: results.length };
+          const successfulTaskNumbers = results.filter((r) => r?.success).map((r) => r?.taskNumber || r?.orderNumber);
+          const failedTaskNumbers = results.filter((r) => !r?.success).map((r) => r?.taskNumber || r?.orderNumber);
+          const successful = successfulTaskNumbers.length;
+          const failed = failedTaskNumbers.length;
+          return { successful, failed, total: results.length, successfulTaskNumbers, failedTaskNumbers };
         }
         if (typeof data?.success === "boolean") {
           const successful = data.success ? selectedItems.length : 0;
           const failed = data.success ? 0 : selectedItems.length;
-          return { successful, failed, total: selectedItems.length };
+          return { successful, failed, total: selectedItems.length, successfulTaskNumbers: [], failedTaskNumbers: [] };
         }
 
         // If structure is unknown, treat as failure rather than optimistic success
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return { successful: 0, failed: selectedItems.length, total: selectedItems.length, successfulTaskNumbers: [], failedTaskNumbers: [] };
       } catch (error) {
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return { successful: 0, failed: selectedItems.length, total: selectedItems.length, successfulTaskNumbers: [], failedTaskNumbers: [] };
       }
     },
     [tenantId]
@@ -1073,9 +1077,58 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
         if (policeTasks.length > 0) {
           try {
-            await callBulkSendApi(policeTasks);
+            const sendResult = await callBulkSendApi(policeTasks);
+            const { successful = 0, failed = 0, total = policeTasks.length, failedTaskNumbers = [], successfulTaskNumbers = [] } = sendResult || {};
+
+            if (successful > 0) {
+              setShowErrorToast({ message: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
+              setTimeout(() => setShowErrorToast(null), 3000);
+            }
+
+            if (failed > 0) {
+              setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
+              setTimeout(() => setShowErrorToast(null), 5000);
+
+              // Pre-select failed POLICE tasks in bulkSendList for retry with documentStatus as SIGNED
+              const failedItems = policeTasks.filter((it) => failedTaskNumbers.includes(it?.taskNumber)).map((it) => ({
+                ...it,
+                isSelected: true,
+                documentStatus: "SIGNED",
+                documents: (Array.isArray(it?.documents) ? it.documents : []).map((doc) => ({ ...doc, documentType: "SIGNED_TASK_DOCUMENT" })),
+              }));
+
+              if (failedItems.length > 0) {
+                setBulkSendList((prev) => {
+                  const prevArr = Array.isArray(prev) ? prev : [];
+                  const map = new Map(prevArr.map((p) => [p?.taskNumber, p]));
+                  failedItems.forEach((ns) => {
+                    const existing = map.get(ns?.taskNumber) || {};
+                    map.set(ns?.taskNumber, { ...existing, ...ns, isSelected: true });
+                  });
+                  return Array.from(map.values());
+                });
+              }
+            }
           } catch (err) {
             console.error("Bulk send for POLICE tasks failed:", err);
+            // In case of unexpected failures, preselect all policeTasks for retry
+            const fallbackItems = policeTasks.map((it) => ({
+              ...it,
+              isSelected: true,
+              documentStatus: "SIGNED",
+              documents: (Array.isArray(it?.documents) ? it.documents : []).map((doc) => ({ ...doc, documentType: "SIGNED_TASK_DOCUMENT" })),
+            }));
+            setBulkSendList((prev) => {
+              const prevArr = Array.isArray(prev) ? prev : [];
+              const map = new Map(prevArr.map((p) => [p?.taskNumber, p]));
+              fallbackItems.forEach((ns) => {
+                const existing = map.get(ns?.taskNumber) || {};
+                map.set(ns?.taskNumber, { ...existing, ...ns, isSelected: true });
+              });
+              return Array.from(map.values());
+            });
+            setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
+            setTimeout(() => setShowErrorToast(null), 5000);
           }
         }
         try {
