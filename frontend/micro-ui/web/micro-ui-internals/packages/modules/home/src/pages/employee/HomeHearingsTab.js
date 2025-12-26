@@ -615,8 +615,6 @@ const HomeHearingsTab = ({
     history.push(homePath);
   }
 
-  console.log("hearingTypeOptions?.Hearing?.HearingType", hearingTypeOptions?.Hearing?.HearingType);
-
   return (
     <div className="full-height-container">
       <div className="header">{t("ALL_HEARINGS")}</div>
