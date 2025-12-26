@@ -31,7 +31,7 @@ class ApplicationQueryBuilderTest {
     }
     @Mock
     private Pagination pagination;
-    private static final String BASE_APPLICATION_EXIST_QUERY = "SELECT COUNT(*) FROM dristi_application app WHERE ";
+    private static final String BASE_APPLICATION_EXIST_QUERY = "SELECT COUNT(*) FROM dristi_application app WHERE app.status <> 'DELETED' AND ";
 
     @Test
     void testGetApplicationSearchQuery() {
@@ -41,7 +41,7 @@ class ApplicationQueryBuilderTest {
 
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
-        String expectedQuery = " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber, app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby, app.onbehalfof as onbehalfof, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber, app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive, app.additionaldetails as additionaldetails, app.applicationcmpnumber as applicationcmpnumber, app.reason_for_application as reason_for_application, app.application_details as application_details, app.createdby as createdby, app.lastmodifiedby as lastmodifiedby, app.createdtime as createdtime, app.lastmodifiedtime as lastmodifiedtime, app.status as status  FROM dristi_application app WHERE app.id = ? AND app.tenantId = ?";
+        String expectedQuery = " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber, app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby, app.onbehalfof as onbehalfof, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber, app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive, app.additionaldetails as additionaldetails, app.applicationcmpnumber as applicationcmpnumber, app.reason_for_application as reason_for_application, app.application_details as application_details, app.createdby as createdby, app.lastmodifiedby as lastmodifiedby, app.createdtime as createdtime, app.lastmodifiedtime as lastmodifiedtime, app.status as status  FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = ? AND app.tenantId = ?";
         String actualQuery = applicationQueryBuilder.getApplicationSearchQuery(criteria, preparedStmtList,preparedStmtArgList, null);
 
         assertEquals(expectedQuery, actualQuery);
@@ -424,24 +424,24 @@ class ApplicationQueryBuilderTest {
 
     @Test
     void getTotalCountQuery_ShouldReturnCorrectQuery_WhenBaseQueryIsNotNull() {
-        String baseQuery = "SELECT * FROM dristi_application app WHERE app.id = '111'";
+        String baseQuery = "SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111'";
 
         String query = applicationQueryBuilder.getTotalCountQuery(baseQuery);
 
-        String expectedQuery = "SELECT COUNT(*) FROM (SELECT * FROM dristi_application app WHERE app.id = '111') total_result";
+        String expectedQuery = "SELECT COUNT(*) FROM (SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111') total_result";
 
         assertEquals(expectedQuery, query);
     }
 
     @Test
     void addPagination_Query_ShouldReturnCorrectQuery_WhenPageSizeAndPageNumberAreNotNull() {
-        String query = "SELECT * FROM dristi_application app WHERE app.id = '111'";
+        String query = "SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111'";
         pagination.setLimit(2d);
         pagination.setOffSet(0d);
         List<Object> preparedStmtList = new ArrayList<>();
         String paginatedQuery = applicationQueryBuilder.addPaginationQuery(query, pagination, preparedStmtList,new ArrayList<>());
 
-        String expectedQuery = "SELECT * FROM dristi_application app WHERE app.id = '111' LIMIT ? OFFSET ?";
+        String expectedQuery = "SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111' LIMIT ? OFFSET ?";
 
         assertEquals(expectedQuery, paginatedQuery);
         assertEquals(2, preparedStmtList.size());
