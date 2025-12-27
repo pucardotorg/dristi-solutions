@@ -2040,8 +2040,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       alignItems: "center",
                       gap: 8,
                       padding: 12,
-                      width: 206,
+                      minWidth: 206,
                       height: 40,
+                      whiteSpace: "nowrap",
                       background: "#FFFFFF",
                       border: "0.4px solid #E2E8F0",
                       borderRadius: 4,
@@ -2053,12 +2054,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       lineHeight: "19px",
                     }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ display: "block", flexShrink: 0 }}
+                    >
                       <circle cx="12" cy="12" r="10" stroke="#1D7AEA" strokeWidth="1.2" fill="#EFF6FF" />
                       <path d="M12 10.5v6" stroke="#1D7AEA" strokeWidth="1.2" strokeLinecap="round" />
                       <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
                     </svg>
-                    {selectedRpadCount} {t("PROCESSES_SELECTED")}
+                    <span style={{ whiteSpace: "nowrap" }}>
+                      {selectedRpadCount} {t("PROCESSES_SELECTED")}
+                    </span>
                   </div>
                 )}
                 <SubmitBar
