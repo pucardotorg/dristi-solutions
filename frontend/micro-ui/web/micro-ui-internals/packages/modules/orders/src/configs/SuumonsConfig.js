@@ -152,11 +152,7 @@ export const SummonsTabsConfig = {
                   name: "channel",
                   optionsKey: "displayLabel",
                   defaultValue: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
-                  mdmsConfig: {
-                    moduleName: "payment",
-                    masterName: "paymentType",
-                    select: "(data) => { return [{ code: 'RPAD', name: 'RPAD', displayLabel: 'RPAD' }]; }",
-                  },
+                  options: [{ code: "RPAD", name: "RPAD", displayLabel: "RPAD" }],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
