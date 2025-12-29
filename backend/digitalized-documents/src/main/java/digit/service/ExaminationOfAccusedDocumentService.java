@@ -157,8 +157,8 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         RequestInfo requestInfo = request.getRequestInfo();
 
         JsonNode courtCase = caseUtil.getCaseFromFilingNumber(requestInfo, request.getDigitalizedDocument().getCaseFilingNumber());
-        String cmpNumber = courtCase.path("cmpNumber").asText();
-        String courtCaseNumber = courtCase.path("courtCaseNumber").asText();
+        String cmpNumber = courtCase.path("cmpNumber").asText(null);
+        String courtCaseNumber = courtCase.path("courtCaseNumber").asText(null);
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                 .tenantId(request.getDigitalizedDocument().getTenantId())
