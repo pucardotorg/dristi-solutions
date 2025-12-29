@@ -205,9 +205,17 @@ public class DigitalizedDocumentService {
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocumentData, "signed_digitalized_document.pdf");
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-                    Object documentAdditionalDetails = document.getDocuments().get(0).getAdditionalDetails();
+                    List<Document> existingDocuments = document.getDocuments();
+                    if (existingDocuments == null || existingDocuments.isEmpty()) {
+                        throw new CustomException("DOCUMENT_UPDATE_ERROR", "No documents found in digitalized document");
+                   }
+                    Object documentAdditionalDetails = existingDocuments.get(0).getAdditionalDetails();
                     JsonNode documentAdditionalDetailsJsonNode = objectMapper.convertValue(documentAdditionalDetails, JsonNode.class);
                     String documentName = documentAdditionalDetailsJsonNode.path("name").asText();
+                    if (documentName == null || documentName.trim().isEmpty()) {
+                        log.error("Name not set for document {}", documentNumber);
+                        documentName = "signed_digitalized_document.pdf";
+                    }
 
                     // Create signed document
                     Document signedDoc = Document.builder()
