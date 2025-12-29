@@ -1,5 +1,7 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
@@ -46,20 +48,23 @@ public class DigitalizedDocumentService {
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final DigitalizedDocumentRepository repository;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory, 
-                                     ESignUtil eSignUtil,
-                                     FileStoreUtil fileStoreUtil,
-                                     CipherUtil cipherUtil,
-                                     XmlRequestGenerator xmlRequestGenerator,
-                                     DigitalizedDocumentRepository repository) {
+    public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory,
+                                      ESignUtil eSignUtil,
+                                      FileStoreUtil fileStoreUtil,
+                                      CipherUtil cipherUtil,
+                                      XmlRequestGenerator xmlRequestGenerator,
+                                      DigitalizedDocumentRepository repository,
+                                      ObjectMapper objectMapper) {
         this.serviceFactory = serviceFactory;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.repository = repository;
+        this.objectMapper = objectMapper;
     }
 
     public DigitalizedDocument createDigitalizedDocument(DigitalizedDocumentRequest digitalizedDocumentRequest) {
@@ -200,12 +205,16 @@ public class DigitalizedDocumentService {
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocumentData, "signed_digitalized_document.pdf");
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
+                    Object documentAdditionalDetails = document.getDocuments().get(0).getAdditionalDetails();
+                    JsonNode documentAdditionalDetailsJsonNode = objectMapper.convertValue(documentAdditionalDetails, JsonNode.class);
+                    String documentName = documentAdditionalDetailsJsonNode.path("name").asText();
+
                     // Create signed document
                     Document signedDoc = Document.builder()
                             .documentType("SIGNED_DIGITALIZED_DOCUMENT")
                             .fileStore(fileStoreId)
                             .isActive(true)
-                            .additionalDetails(Map.of("name", "signed_digitalized_document.pdf"))
+                            .additionalDetails(Map.of("name", documentName))
                             .build();
 
                     // Update document's documents list
