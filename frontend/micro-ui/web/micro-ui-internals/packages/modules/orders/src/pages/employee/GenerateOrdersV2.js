@@ -2940,7 +2940,11 @@ const GenerateOrdersV2 = () => {
         const isResponseRequired = order.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code;
         actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
       }
-      const isMediationChanged = getMediationChangedFlag(order?.orderDetails, { ...orderSchema?.orderDetails, parties });
+      const isMediationChanged = getMediationChangedFlag(order?.orderDetails, {
+        ...orderSchema?.orderDetails,
+        mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
+        parties,
+      });
 
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
