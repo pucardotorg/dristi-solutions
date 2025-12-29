@@ -82,7 +82,11 @@ export const addOrderItem = async (
       caseDetails?.filingNumber;
 
     const oldItem = currentOrder?.compositeItems?.find((compItem) => compItem?.id === item?.id);
-    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, { ...orderSchema?.orderDetails, parties });
+    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, {
+      ...orderSchema?.orderDetails,
+      mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
+      parties,
+    });
     const orderSchemaUpdated = {
       ...orderSchema,
       orderDetails: {
