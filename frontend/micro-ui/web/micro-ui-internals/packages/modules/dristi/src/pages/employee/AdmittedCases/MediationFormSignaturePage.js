@@ -150,7 +150,7 @@ const MediationFormSignaturePage = () => {
     }
   }, [mediationOrderData]);
 
-  const updateMediationDocument = async (digitalizationAction) => {
+  const updateMediationDocument = async (digitalizationAction, fileStoreId) => {
     try {
       const parties = digitalizationServiceDetails?.mediationDetails?.partyDetails || [];
       const isESign = digitalizationAction === MediationWorkflowAction.E_SIGN || digitalizationAction === MediationWorkflowAction.SIGN;
@@ -174,11 +174,11 @@ const MediationFormSignaturePage = () => {
             ...digitalizationServiceDetails?.mediationDetails,
             partyDetails: updatedPartyDetails,
           },
-          ...(signatureDocumentId && {
+          ...((signatureDocumentId || fileStoreId) && {
             documents: [
               {
                 ...digitalizationServiceDetails?.documents?.[0],
-                fileStore: signatureDocumentId,
+                fileStore: signatureDocumentId || fileStoreId,
                 documentType: "SIGNED",
               },
             ],
@@ -218,7 +218,7 @@ const MediationFormSignaturePage = () => {
         const uploadedFile = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         const uploadedFileStoreId = uploadedFile?.[0]?.fileStoreId;
         setSignatureDocumentId(uploadedFileStoreId);
-        await updateMediationDocument(MediationWorkflowAction.UPLOAD);
+        await updateMediationDocument(MediationWorkflowAction.UPLOAD, uploadedFileStoreId);
       } catch (error) {
         console.error("error", error);
         setFormData({});
