@@ -333,26 +333,61 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const data = await processManagementService.bulkSend(payload, {});
         const tasks = Array.isArray(data?.bulkSendTasks) ? data.bulkSendTasks : null;
         if (tasks) {
-          const successful = tasks.filter((t) => t?.success).length;
-          const failed = tasks.length - successful;
-          return { successful, failed, total: tasks.length };
+          // Handle both 'success' and 'isSuccess' field names (Jackson serializes isSuccess as success)
+          const successfulTasks = tasks.filter((t) => t?.success === true || t?.isSuccess === true);
+          const failedTasks = tasks.filter((t) => t?.success === false || t?.isSuccess === false || (!t?.success && !t?.isSuccess));
+          const successful = successfulTasks.length;
+          const failed = failedTasks.length;
+          return {
+            successful,
+            failed,
+            total: tasks.length,
+            successfulTasks: successfulTasks.map((t) => t?.taskNumber),
+            failedTasks: failedTasks.map((t) => ({ taskNumber: t?.taskNumber, errorMessage: t?.errorMessage })),
+          };
         }
         const results = Array.isArray(data?.results) ? data?.results : null;
         if (results) {
-          const successful = results.filter((r) => r?.success).length;
-          const failed = results.length - successful;
-          return { successful, failed, total: results.length };
+          const successfulTasks = results.filter((r) => r?.success === true || r?.isSuccess === true);
+          const failedTasks = results.filter((r) => r?.success === false || r?.isSuccess === false || (!r?.success && !r?.isSuccess));
+          const successful = successfulTasks.length;
+          const failed = failedTasks.length;
+          return {
+            successful,
+            failed,
+            total: results.length,
+            successfulTasks: successfulTasks.map((r) => r?.taskNumber),
+            failedTasks: failedTasks.map((r) => ({ taskNumber: r?.taskNumber, errorMessage: r?.errorMessage })),
+          };
         }
         if (typeof data?.success === "boolean") {
           const successful = data.success ? selectedItems.length : 0;
           const failed = data.success ? 0 : selectedItems.length;
-          return { successful, failed, total: selectedItems.length };
+          return {
+            successful,
+            failed,
+            total: selectedItems.length,
+            successfulTasks: data.success ? selectedItems.map((i) => i?.taskNumber) : [],
+            failedTasks: data.success ? [] : selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: "Unknown error" })),
+          };
         }
 
         // If structure is unknown, treat as failure rather than optimistic success
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return {
+          successful: 0,
+          failed: selectedItems.length,
+          total: selectedItems.length,
+          successfulTasks: [],
+          failedTasks: selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: "Unknown response structure" })),
+        };
       } catch (error) {
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return {
+          successful: 0,
+          failed: selectedItems.length,
+          total: selectedItems.length,
+          successfulTasks: [],
+          failedTasks: selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: error?.message || "API call failed" })),
+        };
       }
     },
     [tenantId]
@@ -1071,13 +1106,57 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
 
         const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
+
+        // Track which tasks should be removed from bulkSignList
+        const tasksToRemove = new Set();
+        let policeBulkSendResult = null;
+
         if (policeTasks.length > 0) {
           try {
-            await callBulkSendApi(policeTasks);
+            policeBulkSendResult = await callBulkSendApi(policeTasks);
+
+            // Only remove successfully sent police tasks from bulkSignList
+            if (policeBulkSendResult?.successfulTasks) {
+              policeBulkSendResult.successfulTasks.forEach((taskNumber) => {
+                tasksToRemove.add(taskNumber);
+              });
+            }
+
+            // Show error message if any police tasks failed
+            if (policeBulkSendResult?.failed > 0) {
+              const failedTaskNumbers = policeBulkSendResult.failedTasks?.map((t) => t.taskNumber).join(", ") || "";
+              setShowErrorToast({
+                message:
+                  t("FAILED_TO_SEND_POLICE_TASKS", {
+                    failed: policeBulkSendResult.failed,
+                    total: policeBulkSendResult.total,
+                    taskNumbers: failedTaskNumbers,
+                  }) ||
+                  `Failed to send ${policeBulkSendResult.failed} out of ${policeBulkSendResult.total} police tasks. Task numbers: ${failedTaskNumbers}`,
+                error: true,
+              });
+              setTimeout(() => {
+                setShowErrorToast(null);
+              }, 5000);
+            }
           } catch (err) {
             console.error("Bulk send for POLICE tasks failed:", err);
+            // If the API call itself fails, don't remove any police tasks
+            setShowErrorToast({
+              message: t("FAILED_TO_SEND_POLICE_TASKS_API_ERROR") || "Failed to send police tasks. Please try again.",
+              error: true,
+            });
+            setTimeout(() => {
+              setShowErrorToast(null);
+            }, 5000);
           }
         }
+
+        // Add all non-police tasks to removal list (they go to bulkSendList)
+        nonPoliceTasks.forEach((task) => {
+          tasksToRemove.add(task?.taskNumber);
+        });
+
         try {
           const preselectedForSend = nonPoliceTasks.map((it) => ({
             ...it,
@@ -1098,7 +1177,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return Array.from(map.values());
           });
 
-          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !selectedItems.some((s) => s.taskNumber === p.taskNumber)) : []));
+          // Only remove tasks that were successfully processed (non-police + successfully sent police tasks)
+          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !tasksToRemove.has(p.taskNumber)) : []));
           setReload((prev) => prev + 1);
           setShowBulkSignSuccessModal(true);
         } catch (e) {
