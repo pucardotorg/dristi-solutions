@@ -52,6 +52,7 @@ import {
   restrictedApplicationTypes,
   _getDefaultFormValue,
   formatDate,
+  _getFinalDocumentList,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
@@ -1075,30 +1076,37 @@ const SubmissionsCreate = ({ path }) => {
             otherDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Other Documents"}.pdf`));
         });
       }
-
       let documents = [];
       if (applicationType !== "REQUEST_FOR_BAIL") {
         const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
-          ? formdata?.supportingDocuments?.map((supportDocs) => ({
-              fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
-              fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-              name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
-              additionalDetails: {
-                ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
-                documentType: supportDocs?.documentType?.code,
-                documentTitle: supportDocs?.documentTitle,
-              },
-            })) || []
-          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
-              fileType: item?.document?.documentType,
-              fileStore: item?.document?.fileStore,
-              name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
-              additionalDetails: {
-                ...item?.document?.additionalDetails,
-                documentType: item?.documentType?.code,
-                documentTitle: item?.documentTitle,
-              },
-            })) || [];
+          ? formdata?.supportingDocuments?.map((supportDocs) => {
+              const uploadedDoc = supportDocs?.submissionDocuments?.uploadedDocs?.[0];
+              if (!uploadedDoc?.fileStore) return [];
+              return {
+                fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+                fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+                name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
+                additionalDetails: {
+                  ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+                  documentType: supportDocs?.documentType?.code,
+                  documentTitle: supportDocs?.documentTitle,
+                },
+              };
+            }) || []
+          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => {
+              const uploadedDoc = item?.document;
+              if (!uploadedDoc?.fileStore) return [];
+              return {
+                fileType: item?.document?.documentType,
+                fileStore: item?.document?.fileStore,
+                name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
+                additionalDetails: {
+                  ...item?.document?.additionalDetails,
+                  documentType: item?.documentType?.code,
+                  documentTitle: item?.documentTitle,
+                },
+              };
+            }) || [];
 
         // const documentres =
         //   (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name, tenantId)))) || [];
@@ -1308,7 +1316,7 @@ const SubmissionsCreate = ({ path }) => {
               ...(hearingId && { hearingId }),
               owner: cleanString(userInfo?.name),
             },
-            documents,
+            documents: _getFinalDocumentList(applicationDetails, documents),
             onBehalfOf: [formdata?.selectComplainant?.uuid],
             comment: [],
             workflow: {
