@@ -1,0 +1,87 @@
+//for the below businessService update the workflow
+//voluntary-application-submission-bail-documents
+//voluntary-application-submission-bail
+//application-order-submission-default
+//application-order-submission-feedback
+//application-voluntary-submission
+
+//New state added DRAFT_IN_PROGRESS
+{
+  "auditDetails": {
+    "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+    "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+    "createdTime": 1767352294752,
+    "lastModifiedTime": 1767352294752
+  },
+  "uuid": "3dc3539f-2d5e-4cd2-b913-76bcfe8c8b11",
+  "tenantId": "kl",
+  "businessServiceId": "355f8913-5451-4ece-b442-ef0bfdcd7f8c",
+  "sla": 86400000,
+  "state": "DRAFT_IN_PROGRESS",
+  "applicationStatus": "INWORKFLOW",
+  "docUploadRequired": false,
+  "isStartState": false,
+  "isTerminateState": false,
+  "isStateUpdatable": true,
+  "actions": [
+    {
+      "auditDetails": {
+        "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1767352294752,
+        "lastModifiedTime": 1767352294752
+      },
+      "uuid": "02d1ccd1-a707-4455-8d69-1da1f0a7fad4",
+      "tenantId": "kl",
+      "currentState": "3dc3539f-2d5e-4cd2-b913-76bcfe8c8b11",
+      "action": "SAVE_DRAFT",
+      "nextState": "3dc3539f-2d5e-4cd2-b913-76bcfe8c8b11",
+      "roles": [
+        "SUBMISSION_CREATOR",
+        "SYSTEM",
+        "SYSTEM_ADMIN"
+      ],
+      "active": true
+    },
+    {
+      "auditDetails": {
+        "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1767352294752,
+        "lastModifiedTime": 1767352294752
+      },
+      "uuid": "c8a9688c-f3e7-4331-ba71-37e32694c159",
+      "tenantId": "kl",
+      "currentState": "3dc3539f-2d5e-4cd2-b913-76bcfe8c8b11",
+      "action": "DELETE",
+      "nextState": "26d08812-b15a-44b8-a881-7f086e9ac137",
+      "roles": [
+        "SUBMISSION_CREATOR"
+      ],
+      "active": true
+    },
+    {
+      "auditDetails": {
+        "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1767352294752,
+        "lastModifiedTime": 1767352294752
+      },
+      "uuid": "b31ec591-4643-4a33-8553-1f91fe06c8c4",
+      "tenantId": "kl",
+      "currentState": "3dc3539f-2d5e-4cd2-b913-76bcfe8c8b11",
+      "action": "SUBMIT",
+      "nextState": "b295d363-909b-4d1d-94af-1a9064a50a24",
+      "roles": [
+        "SUBMISSION_CREATOR",
+        "SYSTEM",
+        "SYSTEM_ADMIN"
+      ],
+      "active": true
+    }
+  ]
+}
+
+//CREATE action renamed to SAVE_DRAFT and nextstate will be DRAFT_IN_PROGRESS
+//SUBMIT action added as initial action
+//EDIT action added to PENDINGSUBMISSION or PENDINGESIGN states depending on the businessService which will have DRAFT_IN_PROGRESS next state
