@@ -201,7 +201,7 @@ public class ApplicationQueryBuilder {
 
     private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
         if (isFirstCriteria) {
-            query.append(" WHERE ");
+            query.append(" WHERE app.status <> 'DELETED' AND ");
         } else {
             query.append(" AND ");
         }
