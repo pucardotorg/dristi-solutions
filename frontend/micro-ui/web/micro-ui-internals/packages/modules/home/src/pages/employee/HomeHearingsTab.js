@@ -110,7 +110,7 @@ const HomeHearingsTab = ({
         id: status?.id,
         code: status?.code,
         name: status?.code !== "IN_PROGRESS" ? status?.code : "ON_GOING_HEARING",
-      }))?.sort((a, b) => a.id - b.id) || []
+      }))?.sort((a, b) => a.code.localeCompare(b.code)) || []
     );
   }, [hearingTypeOptions]);
 
@@ -644,7 +644,15 @@ const HomeHearingsTab = ({
               <Dropdown
                 t={t}
                 placeholder={`${t("PURPOSE")}`}
-                option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
+                option={
+                  hearingTypeOptions?.Hearing?.HearingType
+                    ? hearingTypeOptions?.Hearing?.HearingType.sort((a, b) => {
+                        const stringA = t(a?.code);
+                        const stringB = t(b?.code);
+                        return stringA.localeCompare(stringB);
+                      })
+                    : []
+                }
                 selected={filters?.purpose}
                 optionKey={"code"}
                 select={(e) => {
