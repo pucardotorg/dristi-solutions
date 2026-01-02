@@ -50,4 +50,7 @@ public class DeliveryChannel {
     @JsonProperty("channelDeliveryTime")
     private String channelDeliveryTime;
 
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection;
+
 }

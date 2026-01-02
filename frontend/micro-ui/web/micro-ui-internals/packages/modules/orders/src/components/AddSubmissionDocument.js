@@ -66,6 +66,18 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
 
   function setValue(value, name, input, index) {
     const updatedFormInstances = [...formInstances];
+
+    if (name === "document" && !value) {
+      const existingDoc = updatedFormInstances[index]?.[config.key]?.document;
+      if (existingDoc?.fileStore) {
+        return;
+      }
+
+      const existingFormDataDoc = formData?.[config.key]?.submissionDocuments?.[index]?.document;
+      if (existingFormDataDoc?.fileStore) {
+        value = existingFormDataDoc;
+      }
+    }
     if (!updatedFormInstances[index][config.key]) {
       updatedFormInstances[index][config.key] = {};
     }
@@ -76,6 +88,15 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   }
 
   const getFileStoreData = async (filesData, input, index) => {
+    if (!filesData?.length || filesData.length === 0) {
+      const existingDoc = formInstances[index]?.[config.key]?.document;
+      const existingFormDataDoc = formData?.[config.key]?.submissionDocuments?.[index]?.document;
+
+      if (existingDoc?.fileStore || existingFormDataDoc?.fileStore) {
+        return;
+      }
+    }
+
     const numberOfFiles = filesData.length;
     let documents = [];
     if (numberOfFiles > 0 && !filesData?.[0]?.[1]?.fileStore) {
@@ -144,6 +165,23 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       return formInstance.submissionDocuments?.document && showDocument(formInstance.submissionDocuments.document);
     });
   }, [formInstances, showDocument]);
+
+  useEffect(() => {
+    const submissionDocs = formData?.[config?.key]?.submissionDocuments;
+    if (submissionDocs && Array.isArray(submissionDocs) && submissionDocs.length > 0) {
+      const hasRealDocData = submissionDocs.some((doc) => doc?.document?.fileStore);
+
+      if (hasRealDocData) {
+        const updatedInstances = submissionDocs.map((doc) => ({
+          [config.key]: doc,
+        }));
+
+        if (!isEqual(formInstances, updatedInstances)) {
+          setFormInstances(updatedInstances);
+        }
+      }
+    }
+  }, [formData, config.key]);
 
   return (
     <React.Fragment>

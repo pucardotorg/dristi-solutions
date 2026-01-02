@@ -106,6 +106,9 @@ function ReviewSubmissionModal({
   documents = [],
   setApplicationPdfFileStoreId,
   courtId,
+  cancelLabel,
+  handleSubmit,
+  handleCancel
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -194,28 +197,11 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={applicationType !== "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && t("CS_COMMON_BACK")}
-      actionCancelOnSubmit={handleBack}
+      actionCancelLabel={t(cancelLabel)}
+      actionCancelOnSubmit={handleCancel}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
-      actionSaveOnSubmit={() => {
-        const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
-
-        onDocumentUpload(pdfFile, pdfFile.name)
-          .then((document) => {
-            const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-            if (fileStoreId) {
-              setApplicationPdfFileStoreId(fileStoreId);
-            }
-          })
-          .then(() => {
-            setShowsignatureModal(true);
-            setShowReviewModal(false);
-          })
-          .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-          });
-      }}
+      actionSaveOnSubmit={() => handleSubmit({applicationPreviewPdf, applicationPreviewFileName})}
       className={"review-submission-appl-modal"}
     >
       <div className="review-submission-appl-body-main">

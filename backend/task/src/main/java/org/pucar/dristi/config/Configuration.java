@@ -95,6 +95,9 @@ public class Configuration {
     @Value("${task.kafka.create.topic}")
     private String taskCreateTopic;
 
+    @Value("${task.kafka.update.pending.collection.topic}")
+    private String taskUpdatePendingCollectionTopic;
+
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
 
