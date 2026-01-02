@@ -287,6 +287,7 @@ public class CronJobScheduler {
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
             if(courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()){
+                log.info("Representatives list is null for case {}", courtCase.getFilingNumber());
                 continue;
             }
             for(AdvocateMapping advocate: courtCase.getRepresentatives()){
@@ -311,6 +312,7 @@ public class CronJobScheduler {
         Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
             if(courtCase.getLitigants() == null || courtCase.getLitigants().isEmpty()){
+                log.info("Litigants list is null for case {}", courtCase.getFilingNumber());
                 continue;
             }
             for(Party litigant: courtCase.getLitigants()){
