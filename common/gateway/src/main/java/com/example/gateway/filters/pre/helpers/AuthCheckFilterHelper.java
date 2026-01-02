@@ -46,6 +46,11 @@ public class AuthCheckFilterHelper implements RewriteFunction<Map, Map> {
             requestInfo.setUserInfo(userUtils.getUser(requestInfo.getAuthToken(), serverWebExchange));
             body.put(REQUEST_INFO_FIELD_NAME_PASCAL_CASE, requestInfo);
 
+            // Store user UUID in exchange attributes for rate limiting
+            if (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                serverWebExchange.getAttributes().put("USER_UUID", requestInfo.getUserInfo().getUuid());
+            }
+
             if (centralInstanceUtil.getIsEnvironmentCentralInstance()) {
 
                 Set<String> tenantIds = commonUtils.validateRequestAndSetRequestTenantId(serverWebExchange, body);
