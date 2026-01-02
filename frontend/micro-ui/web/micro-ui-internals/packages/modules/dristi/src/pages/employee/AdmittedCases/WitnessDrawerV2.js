@@ -1313,7 +1313,7 @@ const WitnessDrawerV2 = ({
                   <CardLabel className="case-input-label">{t("ALL_PARTIES")}</CardLabel>
                   <Dropdown
                     t={t}
-                    option={options}
+                    option={options?.sort((a, b) => a?.label?.localeCompare(b?.label))}
                     optionKey={"label"}
                     select={handleDropdownChange}
                     freeze={true}
@@ -1326,7 +1326,7 @@ const WitnessDrawerV2 = ({
                   <CardLabel className="case-input-label">{t("WITNESS_MARKED_AS")}</CardLabel>
                   <Dropdown
                     t={t}
-                    option={witnessTypeOptions}
+                    option={witnessTypeOptions?.sort((a, b) => a?.label?.localeCompare(b?.label))}
                     optionKey={"label"}
                     select={handleWitnessTypeChange}
                     freeze={true}
