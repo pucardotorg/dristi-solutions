@@ -286,6 +286,9 @@ public class CronJobScheduler {
     private Map<String, List<CourtCase>> getAdvocateCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
+            if(courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()){
+                continue;
+            }
             for(AdvocateMapping advocate: courtCase.getRepresentatives()){
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
                 JsonNode additionalDetails = advocateNode.path("additionalDetails");
@@ -307,6 +310,9 @@ public class CronJobScheduler {
     private Map<String, List<CourtCase>> getLitigantCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
+            if(courtCase.getLitigants() == null || courtCase.getLitigants().isEmpty()){
+                continue;
+            }
             for(Party litigant: courtCase.getLitigants()){
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
                 JsonNode additionalDetails = litigantNode.path("additionalDetails");
