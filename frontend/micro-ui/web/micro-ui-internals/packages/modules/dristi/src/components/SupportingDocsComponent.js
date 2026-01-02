@@ -13,7 +13,9 @@ const CloseBtn = () => {
   );
 };
 const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
+  const [formInstances, setFormInstances] = useState(() => {
+    return formData?.[config?.key] || [{}];
+  });
   const disable = config?.disable;
 
   const inputs = useMemo(
@@ -70,7 +72,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
   const updateFormData = (updatedFormInstances) => {
     onSelect(
       config.key,
-      updatedFormInstances.map((instance) => instance[config.key] || {})
+      updatedFormInstances.map((instance) => instance || {})
     );
   };
 
@@ -85,22 +87,24 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
   function setValue(value, name, input, index) {
     const updatedFormInstances = [...formInstances];
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
+    if (!updatedFormInstances[index]) {
+      updatedFormInstances[index] = {};
     }
-    updatedFormInstances[index][config.key][name] = value;
-
+    updatedFormInstances[index][name] = value;
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   }
 
   function uploadedDocs(value, inputDocs, name, index) {
     const updatedFormInstances = [...formInstances];
-
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
+    if (!updatedFormInstances[index]) {
+      updatedFormInstances[index] = {};
     }
-    updatedFormInstances[index][config.key][value] = inputDocs;
+
+    updatedFormInstances[index] = {
+      ...updatedFormInstances[index],
+      [name]: inputDocs,
+    };
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   }
