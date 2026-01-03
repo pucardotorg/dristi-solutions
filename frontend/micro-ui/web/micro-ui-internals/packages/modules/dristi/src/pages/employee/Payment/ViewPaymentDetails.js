@@ -33,7 +33,7 @@ const paymentOptionConfig = {
   mdmsConfig: {
     masterName: "OfflinePaymentMode",
     moduleName: "case",
-    select: "(data) => {return data['case'].OfflinePaymentMode?.map((item) => {return item;});}",
+    select: "(data) => { return data['case'].OfflinePaymentMode?.sort((a,b)=>a.name.localeCompare(b.name)).map(item => item); }",
   },
   styles: {
     width: "100%",

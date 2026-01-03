@@ -14,13 +14,6 @@ export const applicationTypeConfig = [
           optionsKey: "code",
           error: "required ",
           styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "OrderType",
-            localePrefix: "ORDER_TYPE",
-            select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`, `ABATE_CASE`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
-          },
         },
       },
     ],
@@ -458,6 +451,7 @@ export const configsOrderMandatorySubmissions = [
             moduleName: "Order",
             masterName: "DocumentType",
             localePrefix: "",
+            select: "(data) => data['Order'].DocumentType?.sort((a,b)=>a.value.localeCompare(b.value)).map(item => item)",
           },
         },
       },
@@ -841,7 +835,7 @@ export const configsOrderTranferToADR = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "ADRMode",
-            select: "(data) => {return data['Order'].ADRMode?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].ADRMode?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -999,11 +993,6 @@ export const configsScheduleHearingDate = [
           required: true,
           isMandatory: true,
           hideInForm: false,
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -1165,11 +1154,6 @@ export const configsScheduleNextHearingDate = [
           isMandatory: true,
           hideInForm: false,
           styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -1516,11 +1500,6 @@ export const configsRescheduleHearingDate = [
           required: true,
           isMandatory: true,
           hideInForm: false,
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -2563,7 +2542,7 @@ export const configsCaseTransferAccept = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -2878,7 +2857,7 @@ export const configsCaseSettlementAccept = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "SettlementMechanism",
-            select: "(data) => {return data['Order'].SettlementMechanism?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].SettlementMechanism?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -2925,7 +2904,7 @@ export const configsCaseSettlementAccept = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -3062,7 +3041,7 @@ export const configsCaseSettlementReject = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "SettlementMechanism",
-            select: "(data) => {return data['Order'].SettlementMechanism?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].SettlementMechanism?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -3306,7 +3285,8 @@ export const configsIssueNotice = [
           mdmsConfig: {
             moduleName: "Notice",
             masterName: "NoticeType",
-            select: "(data) => {return data?.['Notice']?.NoticeType?.map((item) => {return {...item, code: item?.type}})}",
+            select:
+              "(data) => {return data?.['Notice']?.NoticeType?.sort((a,b)=>a.type.localeCompare(b.type)).map((item) => {return {...item, code: item?.type}})}",
           },
         },
       },
@@ -3688,7 +3668,7 @@ export const configsCaseWithdrawalAccept = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -3896,6 +3876,7 @@ export const configsBail = [
             masterName: "BailType",
             moduleName: "Order",
             localePrefix: "BAIL_TYPE",
+            select: "(data) => data['Order'].BailType?.sort((a,b)=>a.type.localeCompare(b.type)).map(item => item)",
           },
         },
       },
@@ -3930,7 +3911,8 @@ export const configsBail = [
                 mdmsConfig: {
                   moduleName: "Application",
                   masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Application'].DocumentType?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                 },
               },
             },
@@ -4126,7 +4108,7 @@ export const configsCreateOrderWarrant = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "WarrantType",
-            select: "(data) => {return data['Order'].WarrantType?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].WarrantType?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -4703,7 +4685,7 @@ export const configsJudgement = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "Findings",
-            select: "(data) => {return data['Order'].Findings?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].Findings?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -4724,7 +4706,7 @@ export const configsJudgement = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -4861,13 +4843,6 @@ export const configsIssueBailAcceptance = [
           required: true,
           isMandatory: true,
           defaultValue: { code: "SURETY", name: "SURETY" },
-          mdmsConfig: {
-            masterName: "BailType",
-            moduleName: "Order",
-            localePrefix: "BAIL_TYPE",
-            select:
-              "(data) => {return data['Order'].BailType?.map((item) => {if (item.type === 'BAIL_BOND') { return { ...item, code: item.type, name: 'PERSONAL' }; } return { ...item, code: item.type, name: item.type };});}",
-          },
         },
       },
       {
@@ -5544,7 +5519,7 @@ export const configsDismissCase = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -5634,33 +5609,7 @@ export const configsApproveRejectLitigantDetailsChange = [
 
 export const configsCreateOrderProclamation = [
   {
-    defaultValues: {
-      orderType: {
-        id: 43,
-        type: "PROCLAMATION",
-        isactive: true,
-        code: "PROCLAMATION",
-      },
-    },
     body: [
-      {
-        isMandatory: true,
-        key: "Order Type",
-        type: "dropdown",
-        label: "ORDER_TYPE",
-        disable: true,
-        populators: {
-          name: "orderType",
-          optionsKey: "code",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            masterName: "OrderType",
-            moduleName: "Order",
-            localePrefix: "ORDER_TYPE",
-          },
-        },
-      },
       {
         label: "DATE_OF_HEARING",
         isMandatory: true,
@@ -5953,11 +5902,6 @@ export const purposeOfHearingConfig = {
     required: true,
     isMandatory: true,
     hideInForm: false,
-    mdmsConfig: {
-      masterName: "HearingType",
-      moduleName: "Hearing",
-      localePrefix: "HEARING_PURPOSE",
-    },
   },
 };
 

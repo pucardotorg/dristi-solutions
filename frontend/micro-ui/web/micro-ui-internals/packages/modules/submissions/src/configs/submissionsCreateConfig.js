@@ -50,9 +50,22 @@ export const applicationTypeConfig = [
           mdmsConfig: {
             masterName: "ApplicationType",
             moduleName: "Application",
-            // localePrefix: "APPLICATION_TYPE",
-            select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}", //name: 'APPLICATION_TYPE_'+item.type
+            select: `(data) => {
+              return data['Application'].ApplicationType
+                ?.filter((item) => ![
+                  'ADDING_WITNESSES',
+                  'EXTENSION_SUBMISSION_DEADLINE',
+                  'DOCUMENT',
+                  'RE_SCHEDULE',
+                  'CHECKOUT_REQUEST',
+                  'SUBMIT_BAIL_DOCUMENTS',
+                  'APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS'
+                ].includes(item.type))
+                .map((item) => {
+                  return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };
+                })
+                .sort((a, b) => a.name.localeCompare(b.name)); 
+            }`,
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -200,7 +213,8 @@ export const configsRescheduleRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -425,7 +439,8 @@ export const configsCheckoutRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -683,7 +698,8 @@ export const configsExtensionSubmissionDeadline = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ExtensionReason",
-            select: "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -1020,7 +1036,8 @@ export const configsProductionOfDocuments = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                 },
               },
             },
@@ -1262,7 +1279,8 @@ export const configsCaseWithdrawal = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReasonForWithdrawal",
-            select: "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -2367,7 +2385,8 @@ export const submitDocsForBail = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },
@@ -2554,7 +2573,8 @@ export const submitDelayCondonation = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },

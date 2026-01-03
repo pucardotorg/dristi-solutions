@@ -896,7 +896,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                   <div style={{ width: "450px" }}>
                     <Dropdown
                       t={t}
-                      option={options}
+                      option={options?.sort((a, b) => a?.label?.localeCompare(b?.label))}
                       optionKey={"label"}
                       select={handleDropdownChange}
                       freeze={true}

@@ -1273,7 +1273,7 @@ const TasksComponent = ({
                   </CardLabel>
                   <Dropdown
                     t={t}
-                    option={options}
+                    option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
                     optionKey={"name"}
                     selected={taskType}
                     select={(value) => {
