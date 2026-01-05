@@ -733,6 +733,7 @@ const EvidenceModal = ({
                   docWidth={"calc(80vw * 62 / 100)"}
                   showDownloadOption={false}
                   docHeight={"unset"}
+                  errorHeight={"460px"}
                   documentName={docs?.additionalDetails?.name}
                 />
               </div>
