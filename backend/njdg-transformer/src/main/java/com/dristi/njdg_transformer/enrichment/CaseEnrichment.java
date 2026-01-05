@@ -148,13 +148,6 @@ public class CaseEnrichment implements PartyEnricher {
         }
         for (JsonNode formDataNode : formDataArray) {
             JsonNode dataNode = formDataNode.path("data");
-            String formIndividualId = dataNode.path(verificationKey)
-                    .path("individualDetails")
-                    .path("individualId")
-                    .asText(null);
-
-            if (!individualId.equals(formIndividualId)) continue;
-
             String fullName;
             String ageStr;
             String address = null;
