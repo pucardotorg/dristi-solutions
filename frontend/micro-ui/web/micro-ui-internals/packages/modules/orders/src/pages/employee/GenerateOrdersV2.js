@@ -1069,6 +1069,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "WARRANT",
                 "OTHERS",
@@ -1082,6 +1083,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "SCHEDULE_OF_HEARING_DATE",
                 "WARRANT",
@@ -1100,6 +1102,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1117,6 +1120,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1139,6 +1143,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1155,6 +1160,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1175,6 +1181,7 @@ const GenerateOrdersV2 = () => {
       applyOrderTypes([
         "SUMMONS",
         "NOTICE",
+        "DISMISS_CASE",
         "SECTION_202_CRPC",
         "MANDATORY_SUBMISSIONS_RESPONSES",
         "REFERRAL_CASE_TO_ADR",
