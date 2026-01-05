@@ -3,11 +3,13 @@ import React, { useRef, useState } from "react";
 import { poaApplicationConfig } from "../../../configs/poaApplicationConfig";
 import isEqual from "lodash/isEqual";
 import { useEffect } from "react";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
 const POAInfo = ({ t, poaJoinedParties, setIsDisabled, onProceed, goBack, isApiCalled, isDisabled, setFormData, formdata }) => {
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
+    runComprehensiveSanitizer({ formData, setValue });
     if (!isEqual(formData, formdata)) {
       setFormData(formData);
     }
