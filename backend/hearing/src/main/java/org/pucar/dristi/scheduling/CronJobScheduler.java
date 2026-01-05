@@ -188,6 +188,7 @@ public class CronJobScheduler {
         log.info("Sending updates on hearings held today");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
@@ -228,6 +229,7 @@ public class CronJobScheduler {
         log.info("Sending updates on hearings scheduled tomorrow");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
