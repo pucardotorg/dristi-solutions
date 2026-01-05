@@ -1,12 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { CloseBtn, Heading } from "../utils/orderUtils";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
-import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -57,6 +54,7 @@ const AddOrderTypeModal = ({
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    runComprehensiveSanitizer({ formData, setValue });
 
     const currentOrderType = orderType?.code || "";
 

@@ -1,9 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { sanitizeData } from "../Utils";
 
 const CustomTextArea = (props) => {
   const handleChange = (event) => {
-    const newText = event.target.value;
+    const newText = sanitizeData(event.target.value);
     props.onTextChange(newText);
   };
   return (
