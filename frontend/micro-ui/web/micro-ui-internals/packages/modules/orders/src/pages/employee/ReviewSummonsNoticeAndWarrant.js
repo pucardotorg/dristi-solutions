@@ -1137,9 +1137,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   const signedTaskFromResponse = signedList?.find((st) => st?.taskNumber === taskNumber);
                   if (signedTaskFromResponse) {
                     // Get fileStore ID from signed task documents
-                    const signedDocument = signedTaskFromResponse?.documents?.find(
-                      (doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT"
-                    );
+                    const signedDocument = signedTaskFromResponse?.documents?.find((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT");
                     successfullySentPoliceTasks.push({
                       ...policeTask,
                       documentStatus: "SIGNED",
@@ -1160,10 +1158,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     successfullySentPoliceTasks.push({
                       ...policeTask,
                       documentStatus: "SIGNED",
-                      documents: policeTask?.documents?.map((doc) => ({
-                        ...doc,
-                        documentType: "SIGNED_TASK_DOCUMENT",
-                      })) || [],
+                      documents:
+                        policeTask?.documents?.map((doc) => ({
+                          ...doc,
+                          documentType: "SIGNED_TASK_DOCUMENT",
+                        })) || [],
                     });
                   }
                 }
@@ -1266,7 +1265,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         : isPendingRpadTab
         ? bulkRpadList?.filter((item) => item?.isSelected) || []
         : bulkSignList?.filter((item) => item?.isSelected) || [];
-      
+
       // If success modal is showing and no items selected, check for successfully signed police tasks
       if (showBulkSignSuccessModal && selectedItems.length === 0 && successfullySignedPoliceTasks.length > 0) {
         selectedItems = successfullySignedPoliceTasks;
