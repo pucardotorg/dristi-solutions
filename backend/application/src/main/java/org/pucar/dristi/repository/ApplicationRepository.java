@@ -47,7 +47,7 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String userUuid = getCitizenUserUuid(applicationSearchRequest);
-            String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, userUuid);
+            String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, userUuid,applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());
             log.info("Final application search query: {}", applicationQuery);
             if(applicationSearchRequest.getPagination() !=  null) {

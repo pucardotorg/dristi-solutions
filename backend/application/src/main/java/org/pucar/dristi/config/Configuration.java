@@ -264,4 +264,11 @@ public class Configuration {
     @Value("${egov.idgen.cmp.tenant.override.year}")
     private String cmpTenantOverrideYear;
 
+    // evidence
+    @Value("${egov.evidence.host}")
+    private String evidenceServiceHost;
+
+    @Value("${egov.evidence.create.path}")
+    private String evidenceServiceCreatePath;
+
 }
