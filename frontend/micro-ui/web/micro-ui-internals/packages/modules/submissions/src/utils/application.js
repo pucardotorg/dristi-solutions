@@ -285,7 +285,6 @@ export const _getDefaultFormValue = (t, applicationDetails) => {
 };
 
 export const _getFinalDocumentList = (applicationDetails, documents) => {
-  debugger;
   const applicationDocs = applicationDetails?.documents || [];
   const uploadedDocs = documents || [];
 
