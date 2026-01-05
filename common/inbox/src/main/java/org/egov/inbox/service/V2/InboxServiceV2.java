@@ -360,9 +360,7 @@ public class InboxServiceV2 {
         validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
         hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
-        List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        SearchResponse searchResponse = SearchResponse.builder().data(data).build();
-        return searchResponse;
+        return getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
     }
 
     public ActionCategorySearchResponse getSpecificFieldsActionFromESIndex(SearchRequest searchRequest) {
@@ -394,6 +392,9 @@ public class InboxServiceV2 {
         }
         if (indexSearchCriteria.getSearchOtherApplications() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchOtherApplications(), inboxQueryConfiguration, response::setOtherApplicationsData);
+        }
+        if (indexSearchCriteria.getSearchNoticeAndSummons() != null) {
+            populateActionCategoryDataWithoutGrouping(searchRequest, indexSearchCriteria.getSearchNoticeAndSummons(), inboxQueryConfiguration, response::setNoticeAndSummonsData);
         }
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
@@ -515,6 +516,46 @@ public class InboxServiceV2 {
         setter.accept(criteria);
     }
 
+    private void populateActionCategoryDataWithoutGrouping(SearchRequest searchRequest,
+                                                           Criteria criteria,
+                                                           InboxQueryConfiguration config,
+                                                           Consumer<Criteria> setter) {
+
+        Map<String, Object> searchCriteria = searchRequest
+                .getIndexSearchCriteria()
+                .getModuleSearchCriteria();
+
+        // Always add actionCategory
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+        putOrRemove(searchCriteria, "stateSla", criteria.getDate());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            // Get total count without pagination for unfiltered results
+            Integer unfilteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+            criteria.setTotalCount(unfilteredTotalCount);
+        }
+
+        // Optional fields
+        putOrRemove(searchCriteria, "searchableFields", criteria.getSearchableFields());
+        putOrRemove(searchCriteria, "status", criteria.getStatus());
+        putOrRemove(searchCriteria, "referenceEntityType", criteria.getReferenceEntityType());
+        putOrRemove(searchCriteria, "substage", criteria.getSubstage());
+
+        // Get total count without pagination for filtered results
+        Integer filteredTotalCount = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        criteria.setCount(filteredTotalCount);
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setTotalCount(filteredTotalCount);
+        } else {
+            // Get paginated data for filtered results
+            List<Data> filtered = getDataFromSimpleSearch(searchRequest, config.getIndex()).getData();
+            criteria.setData(filtered);
+        }
+
+        setter.accept(criteria);
+    }
+
     /**
      * Helper to either put a value into the map if not null,
      * or remove the key if the value is null.
@@ -528,7 +569,20 @@ public class InboxServiceV2 {
     }
 
 
-    private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
+    private Integer getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE, false);
+        StringBuilder uri = getURI(index, COUNT_PATH);
+        Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        Integer totalCount = 0;
+        if (response.containsKey(COUNT_CONSTANT)) {
+            totalCount = (Integer) response.get(COUNT_CONSTANT);
+        } else {
+            throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
+        }
+        return totalCount;
+    }
+
+    private SearchResponse getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
@@ -538,8 +592,8 @@ public class InboxServiceV2 {
         }
         StringBuilder uri = getURI(index, SEARCH_PATH);
         Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
-        List<Data> dataList = parseSearchResponseForSimpleSearch(result);
-        return dataList;
+        SearchResponse searchResponse = parseSearchResponseForSimpleSearch(result);
+        return searchResponse;
     }
 
     private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
@@ -586,11 +640,16 @@ public class InboxServiceV2 {
         return paginatedDataResponse;
     }
 
-    private List<Data> parseSearchResponseForSimpleSearch(Object result) {
+    private SearchResponse parseSearchResponseForSimpleSearch(Object result) {
         Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
+        int totalCount = extractTotalHits(hits);
+        SearchResponse searchResponse = SearchResponse.builder()
+                .totalCount(totalCount)
+                .build();
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
         if (CollectionUtils.isEmpty(nestedHits)) {
-            return new ArrayList<>();
+            searchResponse.setData(Collections.emptyList());
+            return searchResponse;
         }
 
         List<Data> dataList = new ArrayList<>();
@@ -602,8 +661,8 @@ public class InboxServiceV2 {
             data.setFields(fields);
             dataList.add(data);
         });
-
-        return dataList;
+        searchResponse.setData(dataList);
+        return searchResponse;
     }
 
     private List<Field> getFieldsFromDataObject(Map<String, Object> dataObject) {
@@ -686,4 +745,19 @@ public class InboxServiceV2 {
         });
         return inboxItemList;
     }
+
+    public static Integer extractTotalHits(Map<String, Object> hits) {
+        if (hits == null) return 0;
+
+        Object totalObj = hits.get("total");
+        if (!(totalObj instanceof Map)) return 0;
+
+        Map<?, ?> totalMap = (Map<?, ?>) totalObj;
+
+        Object valueObj = totalMap.get("value");
+        if (!(valueObj instanceof Number)) return 0;
+
+        return ((Number) valueObj).intValue();
+    }
+
 }

@@ -30,7 +30,7 @@ async function processComplainantEvidence(
     "complainantevidence"
   );
 
-  const sectionPosition = indexCopy.sections.findIndex(
+  const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "complainantevidence"
   );
 
@@ -104,6 +104,7 @@ async function processComplainantEvidence(
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: section.sorton,
@@ -152,8 +153,8 @@ async function processComplainantEvidence(
             } else if (sourceRepresentative) {
               const docketNameOfComplainants = sourceRepresentative.representing
                 ?.map((lit) => lit.additionalDetails.fullName)
-                .filter(Boolean)
-                .join(", ");
+                ?.filter(Boolean)
+                ?.join(", ");
               docketNameOfFiling =
                 sourceRepresentative.additionalDetails?.advocateName || "";
               docketCounselFor = `COUNSEL FOR THE ${evidence.sourceType} - ${docketNameOfComplainants}`;
@@ -233,13 +234,11 @@ async function processComplainantEvidence(
     }
   }
 
-  if (complainantEvidenceLineItems.length > 0) {
-    const complainantEvidenceIndexSection = indexCopy.sections.find(
-      (section) => section.name === "complainantevidence"
-    );
-    complainantEvidenceIndexSection.lineItems =
-      complainantEvidenceLineItems.filter(Boolean);
-  }
+  const complainantEvidenceIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "complainantevidence"
+  );
+  complainantEvidenceIndexSection.lineItems =
+    complainantEvidenceLineItems?.filter(Boolean);
 }
 
 module.exports = {

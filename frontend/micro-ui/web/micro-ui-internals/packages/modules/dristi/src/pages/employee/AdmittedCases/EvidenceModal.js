@@ -1,4 +1,4 @@
-import { CloseSvg, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -15,13 +15,12 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
+import { cleanString, getDate, getOrderActionName, getOrderTypes, removeInvalidNameParts, setApplicationStatus } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
-import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 import DOMPurify from "dompurify";
 
 const stateSla = {
@@ -70,7 +69,6 @@ const EvidenceModal = ({
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
-  const [isDisabled, setIsDisabled] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
@@ -148,8 +146,9 @@ const EvidenceModal = ({
       }
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
-        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-        !isBail
+        [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
+        // &&
+        // !isBail
       );
     } else {
       if (modalType === "Documents") {
@@ -215,8 +214,9 @@ const EvidenceModal = ({
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions" &&
-      !isBail
+      modalType === "Submissions"
+      // &&
+      // !isBail
     ) {
       return t("REJECT");
     }
@@ -633,61 +633,6 @@ const EvidenceModal = ({
     await handleMarkEvidence();
   };
 
-  const getOrderTypes = (applicationType, type) => {
-    switch (applicationType) {
-      case "RE_SCHEDULE":
-        return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
-      case "WITHDRAWAL":
-        return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
-      case "TRANSFER":
-        return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
-      case "SETTLEMENT":
-        return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
-      case "BAIL_BOND":
-        return "BAIL";
-      case "SURETY":
-        return "BAIL";
-      case "REQUEST_FOR_BAIL":
-      case "SUBMIT_BAIL_DOCUMENTS":
-        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-      case "EXTENSION_SUBMISSION_DEADLINE":
-        return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
-      case "CHECKOUT_REQUEST":
-        return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
-      case "DELAY_CONDONATION":
-        return "ACCEPTANCE_REJECTION_DCA";
-      default:
-        return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
-    }
-  };
-
-  const getOrderActionName = (applicationType, type) => {
-    switch (applicationType) {
-      case "RE_SCHEDULE":
-        return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
-      case "WITHDRAWAL":
-        return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
-      case "TRANSFER":
-        return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
-      case "SETTLEMENT":
-        return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
-      case "BAIL_BOND":
-        return "ORDER_FOR_BAIL";
-      case "SURETY":
-        return "ORDER_FOR_BAIL";
-      case "EXTENSION_SUBMISSION_DEADLINE":
-        return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
-      case "REQUEST_FOR_BAIL":
-      case "SUBMIT_BAIL_DOCUMENTS":
-        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-      case "CHECKOUT_REQUEST":
-        return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
-      case "DELAY_CONDONATION":
-        return "ACCEPTANCE_REJECTION_DCA";
-      default:
-        return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
-    }
-  };
   const isMandatoryOrderCreation = useMemo(() => {
     const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
     const type = showConfirmationModal?.type;
@@ -800,48 +745,6 @@ const EvidenceModal = ({
     );
   }, [modalType, currentDiaryEntry, artifact, tenantId, documentSubmission, allCombineDocs, isLoading, t]);
 
-  const setApplicationStatus = (type, applicationType) => {
-    if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
-      return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
-    }
-    if (["DELAY_CONDONATION"].includes(applicationType)) {
-      return type === "accept" ? "APPROVED" : "REJECTED";
-    }
-    return type === "accept" ? "APPROVED" : "REJECTED";
-  };
-
-  const checkOrderTypeValidation = (a, b) => {
-    let errorObj = { isIncompatible: false, isDuplicate: false };
-    for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
-      const currentObj = compositeOrderAllowedTypes?.[i];
-      if (currentObj?.orderTypes?.includes(a)) {
-        if (currentObj?.unAllowedOrderTypes?.includes(b)) {
-          if (a === b) {
-            errorObj.isDuplicate = true;
-          } else {
-            errorObj.isIncompatible = true;
-          }
-          break;
-        }
-      }
-    }
-    return errorObj;
-  };
-
-  const checkOrderValidation = (orderType, compositeOrderObj) => {
-    if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
-      const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
-      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
-      return isIncompatible || isDuplicate;
-    }
-    return compositeOrderObj?.compositeItems?.some((item) => {
-      if (!item?.isEnabled) return false;
-      const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
-      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
-      return isIncompatible || isDuplicate;
-    });
-  };
-
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
@@ -888,149 +791,8 @@ const EvidenceModal = ({
           hearingNumber: hearingNumber,
         }),
       };
-      const isSameOrder =
-        compositeOrderObj?.orderCategory === "COMPOSITE"
-          ? compositeOrderObj?.compositeItems?.some(
-              (item) => item?.isEnabled && item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
-            )
-          : compositeOrderObj?.additionalDetails?.formdata?.refApplicationId === refApplicationId;
-      const isNewOrder = isSameOrder || checkOrderValidation(orderType, compositeOrderObj);
 
-      if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {
-        try {
-          let response;
-          if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
-            const compositeItems = [
-              {
-                orderType: compositeOrderObj?.orderType,
-                orderSchema: {
-                  applicationNumber: compositeOrderObj?.applicationNumber,
-                  orderDetails: compositeOrderObj?.orderDetails,
-                  additionalDetails: {
-                    ...compositeOrderObj?.additionalDetails,
-                    hearingNumber: compositeOrderObj?.hearingNumber,
-                    linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
-                    applicationNumber: compositeOrderObj?.applicationNumber,
-                    applicationCMPNumber: applicationCMPNumber,
-                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
-                  },
-                },
-              },
-              {
-                orderType: orderType,
-                orderSchema: {
-                  additionalDetails: additionalDetails,
-                  orderDetails: {
-                    ...(parties || {}),
-                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
-                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
-                    applicationNumber: refApplicationId,
-                    applicationCMPNumber: applicationCMPNumber,
-                    caseNumber: caseNumber,
-                    ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
-                  },
-                  ...(linkedOrderNumber && { linkedOrderNumber }),
-                  ...(applicationNumber && {
-                    applicationNumber: applicationNumber,
-                  }),
-                },
-              },
-            ];
-            const payload = {
-              order: {
-                ...compositeOrderObj,
-                additionalDetails: null,
-                orderDetails: null,
-                orderType: null,
-                orderCategory: "COMPOSITE",
-                orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
-                compositeItems,
-                ...(linkedOrderNumber && { linkedOrderNumber }),
-                workflow: {
-                  action: OrderWorkflowAction.SAVE_DRAFT,
-                  comments: "Creating order",
-                  assignes: null,
-                  rating: null,
-                  documents: [{}],
-                },
-              },
-            };
-            if (compositeOrderObj?.orderNumber) {
-              response = await ordersService.addOrderItem(payload, { tenantId });
-            } else {
-              response = await ordersService.createOrder(payload, { tenantId });
-            }
-          } else {
-            const compositeItems = [
-              ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled && item?.orderType),
-              {
-                orderType: orderType,
-                orderSchema: {
-                  additionalDetails: additionalDetails,
-                  orderDetails: {
-                    ...(parties || {}),
-                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
-                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
-                    applicationNumber: refApplicationId,
-                    applicationCMPNumber: applicationCMPNumber,
-                    caseNumber: caseNumber,
-                  },
-                  ...(linkedOrderNumber && { linkedOrderNumber }),
-                  ...(applicationNumber && {
-                    applicationNumber: applicationNumber,
-                  }),
-                },
-              },
-            ];
-            const payload = {
-              order: {
-                ...compositeOrderObj,
-                additionalDetails: null,
-                orderDetails: null,
-                orderType: null,
-                compositeItems,
-                workflow: {
-                  action: OrderWorkflowAction.SAVE_DRAFT,
-                  comments: "Creating order",
-                  assignes: null,
-                  rating: null,
-                  documents: [{}],
-                },
-                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(linkedOrderNumber && { linkedOrderNumber }),
-              },
-            };
-            if (compositeOrderObj?.orderNumber) {
-              response = await ordersService.addOrderItem(payload, { tenantId });
-            } else {
-              response = await ordersService.createOrder(payload, { tenantId });
-            }
-          }
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: `${compositeOrderObj?.orderTitle}`,
-              entityType: "order-default",
-              referenceId: `MANUAL_${response?.order?.orderNumber}`,
-              status: "DRAFT_IN_PROGRESS",
-              assignedTo: [],
-              assignedRole: ["PENDING_TASK_ORDER"],
-              cnrNumber,
-              filingNumber,
-              caseId,
-              caseTitle: caseData?.title,
-              isCompleted: false,
-              stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-              additionalDetails: { orderType },
-              tenantId,
-            },
-          });
-          history.replace(
-            `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
-          );
-        } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
-      } else if (generateOrder) {
+      if (generateOrder) {
         const reqbody = {
           order: {
             createdDate: null,
@@ -1057,7 +819,6 @@ const EvidenceModal = ({
             additionalDetails: additionalDetails,
             orderDetails: {
               ...(parties || {}),
-              ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
               applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
               applicationNumber: refApplicationId,
               applicationCMPNumber: applicationCMPNumber,
@@ -1069,7 +830,8 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          // const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
@@ -1095,6 +857,7 @@ const EvidenceModal = ({
               tenantId,
             },
           });
+          sessionStorage.setItem("currentOrderType", orderType);
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {}
       } else {
@@ -1165,17 +928,13 @@ const EvidenceModal = ({
       }
       if (isBail) {
         await handleApplicationAction(true, "accept");
-      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+      } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "accept");
       } else {
         if (modalType === "Documents") {
-          //need to add logic for bitd save
           setShow(false);
           setShowMakeAsEvidenceModal(true);
-        } else {
-          setShowConfirmationModal({ type: "accept" });
         }
-        // modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) :;
       }
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
@@ -1212,9 +971,9 @@ const EvidenceModal = ({
     if (userType === "employee") {
       if (isBail) {
         await handleApplicationAction(true, "reject");
-      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+      } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "reject");
-      } else setShowConfirmationModal({ type: "reject" });
+      }
     } else {
       try {
         await handleDeleteApplication();

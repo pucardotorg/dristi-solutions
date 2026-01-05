@@ -115,6 +115,15 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
             "BAIL_BOND_CREATOR",
             "BAIL_BOND_VIEWER",
             "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -209,6 +218,15 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
             "BAIL_BOND_CREATOR",
             "BAIL_BOND_VIEWER",
             "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -283,8 +301,12 @@ export const searchIndividualUserWithUuid = async (uuid, tenantId) => {
   return individualData;
 };
 
-export const getFullName = (seperator, ...strings) => {
-  return strings.filter(Boolean).join(seperator);
+export const getFullName = (separator, ...strings) => {
+  return strings
+    ?.map((s) => s?.trim())
+    ?.filter(Boolean)
+    ?.join(separator)
+    ?.trim();
 };
 
 export const createShorthand = (fullname) => {

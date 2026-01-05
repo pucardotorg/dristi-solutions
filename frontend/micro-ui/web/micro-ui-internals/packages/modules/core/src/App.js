@@ -119,7 +119,17 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   };
 
   const { t } = useTranslation();
-  const openMobileViewRoutes = [`/home/bail-bond-sign`, `/home/evidence-sign`, `/home/bail-bond-login`, `/home/evidence-login`];
+  const openMobileViewRoutes = [
+    `/home/bail-bond-sign`,
+    `/home/evidence-sign`,
+    `/home/bail-bond-login`,
+    `/home/evidence-login`,
+    `/home/digitalized-document-sign`,
+    `/home/digitalized-document-login`,
+    `/home/payment-login`,
+    `/home/sms-payment`,
+    `/home/access-expired`,
+  ];
   const mobileResponsive = openMobileViewRoutes.some((path) => pathname.includes(path)) || pathname === "/ui/citizen/dristi";
   if (isMobileView && !mobileResponsive) {
     return (

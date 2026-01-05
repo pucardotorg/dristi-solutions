@@ -88,6 +88,7 @@ public class HearingUpdateConsumer {
             String hearingStatus = hearingRequest.getHearing().getStatus();
             if (hearingStatus.equalsIgnoreCase(COMPLETED) || hearingStatus.equalsIgnoreCase(ABANDONED)) {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
+                orderUtil.closeActivePaymentPendingTasksOfProcesses(hearingRequest);
             }
             if (hearingStatus.equalsIgnoreCase(COMPLETED)) {
                 String filingNumber = hearingRequest.getHearing().getFilingNumber() != null && !hearingRequest.getHearing().getFilingNumber().isEmpty()
@@ -96,7 +97,7 @@ public class HearingUpdateConsumer {
                 String cnrNumber = hearingRequest.getHearing().getCnrNumbers() != null && !hearingRequest.getHearing().getCnrNumbers().isEmpty()
                         ? hearingRequest.getHearing().getCnrNumbers().get(0)
                         : null;
-                hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
+                hearingService.createDraftOrder(hearingRequest.getHearing().getHearingId(), hearingRequest.getHearing().getHearingType(), hearingRequest.getHearing().getTenantId(), filingNumber, cnrNumber, hearingRequest.getRequestInfo());
                 checkAndCreatePendingTasks(hearingRequest);
             }
             log.info("Updated hearings");

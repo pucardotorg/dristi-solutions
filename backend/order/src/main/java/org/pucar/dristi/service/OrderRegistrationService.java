@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -13,7 +12,9 @@ import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.HearingUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -32,6 +33,8 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class OrderRegistrationService {
 
+    private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
     private OrderRegistrationValidator validator;
 
     private OrderRegistrationEnrichment enrichmentUtil;
@@ -53,7 +56,7 @@ public class OrderRegistrationService {
     private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -65,6 +68,8 @@ public class OrderRegistrationService {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.fileStoreUtil = fileStoreUtil;
+        this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -76,6 +81,7 @@ public class OrderRegistrationService {
             enrichmentUtil.enrichItemTextForIntermediateOrder(body);
 
             workflowUpdate(body);
+            callNotificationService(body, body.getOrder().getStatus(), body.getOrder().getOrderType());
 
             producer.push(config.getSaveOrderKafkaTopic(), body);
 
@@ -283,44 +289,14 @@ public class OrderRegistrationService {
     private String getMessageCode(String orderType, String updatedStatus, Boolean hearingCompleted, String submissionType, String purpose) {
 
         log.info("Operation: getMessageCode for OrderType: {}, UpdatedStatus: {}, HearingCompleted: {}, SubmissionType: {}, Purpose: {}", orderType, updatedStatus, hearingCompleted, submissionType, purpose);
-//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-//            return EXAMINATION_UNDER_S351_BNSS_SCHEDULED;
-//        }
-//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_ACCUSED) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-//            return EVIDENCE_ACCUSED_PUBLISHED;
-//        }
-//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_COMPLAINANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-//            return EVIDENCE_COMPLAINANT_PUBLISHED;
-//        }
-//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(APPEARANCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-//            return APPEARANCE_PUBLISHED;
-//        }
-        if (orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return NEXT_HEARING_SCHEDULED;
-        }
-//        if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-//            return ADMISSION_HEARING_SCHEDULED;
-//        }
-        if (orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return CASE_DECISION_AVAILABLE;
+        if(SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType)){
+            return HEARING_SCHEDULED;
         }
         if (orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return HEARING_RESCHEDULED;
         }
-        if (orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return WARRANT_ISSUED;
-        }
         if (orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return SUMMONS_ISSUED;
-        }
-        if (hearingCompleted && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return ORDER_PUBLISHED;
-        }
-        if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return EVIDENCE_REQUESTED;
-        }
-        if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return ADDITIONAL_INFORMATION_MESSAGE;
         }
         if (orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NOTICE_ISSUED;
@@ -354,8 +330,12 @@ public class OrderRegistrationService {
 
             String receiver = getReceiverParty(messageCode);
 
-            Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
-
+            Set<String> litigantIndividualIds = extractLitigantIndividualIds(caseDetails, receiver);
+            Set<String> individualIds = new HashSet<>(litigantIndividualIds);
+            if(shouldSendSMSToAdvocate(messageCode)){
+                Set<String> advocateIndividualIds = extractAdvocateIndividualIds(caseDetails, receiver);
+                individualIds.addAll(advocateIndividualIds);
+            }
             if (receiver == null || receiver.equalsIgnoreCase(COMPLAINANT)) {
                 extractPowerOfAttorneyIds(caseDetails, individualIds);
             }
@@ -365,11 +345,32 @@ public class OrderRegistrationService {
                     : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
                     : "";
 
+            String hearingNumber = orderRequest.getOrder().getHearingNumber();
+            HearingCriteria criteria = HearingCriteria.builder()
+                    .hearingId(hearingNumber)
+                    .status(OPT_OUT)
+                    .build();
+            Pagination pagination = Pagination.builder()
+                    .sortBy("startTime")
+                    .order(OrderPagination.DESC)
+                    .build();
+            HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
+                    .criteria(criteria)
+                    .pagination(pagination)
+                    .build();
+            Hearing hearing = hearingUtil.getHearings(hearingSearchRequest)
+                    .getHearingList()
+                    .get(0);
+            long oldHearingStartTime = hearing.getStartTime();
+            String oldHearingDate = dateUtil.getFormattedDateFromEpoch(oldHearingStartTime, YYYY_MM_DD);
+
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(hearingDate)
                     .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").textValue() : "")
+                    .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").textValue() : "")
+                    .oldHearingDate(oldHearingDate)
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             if (receiver != null && receiver.equalsIgnoreCase(RESPONDENT)) {
@@ -380,12 +381,16 @@ public class OrderRegistrationService {
             }
 
             for (String number : phonenumbers) {
-                notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+                notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number, orderRequest.getOrder());
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private boolean shouldSendSMSToAdvocate(String messageCode){
+        return List.of(HEARING_SCHEDULED, HEARING_RESCHEDULED, ORDER_ISSUED).contains(messageCode);
     }
 
     private static String getReceiverParty(String messageCode) {
@@ -436,17 +441,17 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public  Set<String> extractLitigantIndividualIds(JsonNode caseDetails, String receiver) {
+
         JsonNode litigantNode = caseDetails.get("litigants");
-        JsonNode representativeNode = caseDetails.get("representatives");
-        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
         Set<String> uuids = new HashSet<>();
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
+                String uuid = node.path("additionalDetails").get("uuid").asText();
                 String partyType = node.get("partyType").asText().toLowerCase();
-                if (partyType.contains(partyTypeToMatch)) {
-                    String uuid = node.path("additionalDetails").get("uuid").asText();
+                if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
                     if (!uuid.isEmpty()) {
                         uuids.add(uuid);
                     }
@@ -454,12 +459,21 @@ public class OrderRegistrationService {
             }
         }
 
+        return uuids;
+    }
+
+    public Set<String> extractAdvocateIndividualIds(JsonNode caseDetails,String receiver) {
+
+        JsonNode representativeNode = caseDetails.get("representatives");
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
+        Set<String> uuids = new HashSet<>();
+
         if (representativeNode.isArray()) {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if (partyType.contains(partyTypeToMatch)) {
+                    if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
                         if (!uuid.isEmpty()) {
                             uuids.add(uuid);
@@ -468,6 +482,7 @@ public class OrderRegistrationService {
                 }
             }
         }
+
         return uuids;
     }
 
@@ -480,6 +495,69 @@ public class OrderRegistrationService {
                     individualIds.add(individualId);
                 }
             }
+        }
+    }
+
+    /**
+     * Process order details request containing additionalDetails, compositeItems, orderNumber and uniqueId
+     * @param request OrderDetailsRequest containing RequestInfo and OrderDetailsDTO
+     * @return processed OrderDetailsDTO
+     */
+    public OrderDetailsDTO processOrderDetails(OrderDetailsRequest request) {
+        try {
+            OrderDetailsDTO orderDetailsDTO = request.getOrderDetailsDTO();
+            String orderNumber = orderDetailsDTO.getOrderNumber();
+            String uniqueId = orderDetailsDTO.getUniqueId();
+            
+            log.info("Processing order details for orderNumber: {} and uniqueId: {}", orderNumber, uniqueId);
+            
+            // Search for the order using orderNumber
+            OrderSearchRequest searchRequest = new OrderSearchRequest();
+            OrderCriteria criteria = new OrderCriteria();
+            criteria.setOrderNumber(orderNumber);
+            searchRequest.setCriteria(criteria);
+
+            searchRequest.setRequestInfo(request.getRequestInfo());
+            
+            List<Order> orders = searchOrder(searchRequest);
+            
+            if (orders == null || orders.isEmpty()) {
+                log.error("No order found with orderNumber: {}", orderNumber);
+                throw new CustomException("ORDER_NOT_FOUND", 
+                        "No order found with orderNumber: " + orderNumber);
+            }
+            
+            Order order = orders.get(0);
+            orderDetailsDTO.setAuditDetails(order.getAuditDetails());
+
+            orderDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            orderDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            
+            // Log the order details
+            log.info("Order details before update for order number: {}, additionalDetails: {}, compositeItems: {}", 
+                    orderNumber, 
+                    order.getAdditionalDetails() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getAdditionalDetails()) : "null",
+                    order.getCompositeItems() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getCompositeItems()) : "null");
+            
+            // Create a request to push to Kafka topic
+            OrderDetailsRequest kafkaRequest = OrderDetailsRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .orderDetailsDTO(orderDetailsDTO)
+                    .build();
+            
+            producer.push(config.getOrderUpdateUniqueIdTopic(), kafkaRequest);
+
+            log.info("Order details after update for order number: {}, additionalDetails: {}, compositeItems: {}", orderNumber, orderDetailsDTO.getAdditionalDetails(), orderDetailsDTO.getCompositeItems());
+            
+            return orderDetailsDTO;
+            
+        } catch (CustomException e) {
+            log.error("Custom exception while processing order details", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing order details", e);
+            throw new CustomException("ORDER_DETAILS_PROCESSING_ERROR", 
+                    "Error processing order details: " + e.getMessage());
         }
     }
 

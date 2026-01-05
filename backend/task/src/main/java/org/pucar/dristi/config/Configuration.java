@@ -95,8 +95,14 @@ public class Configuration {
     @Value("${task.kafka.create.topic}")
     private String taskCreateTopic;
 
+    @Value("${task.kafka.update.pending.collection.topic}")
+    private String taskUpdatePendingCollectionTopic;
+
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
+
+    @Value("${task.kafka.update.uniqueid.topic}")
+    private String taskUpdateUniqueIdTopic;
 
     @Value("${egov.courtId}")
     private String courtId;
@@ -264,6 +270,9 @@ public class Configuration {
 
     @Value("${egov.sms.notification.warrant.issued.success.template.id}")
     private String smsNotificationWarrantIssueSuccess;
+
+    @Value("${egov.sms.notification.process.fee.payment.template.id}")
+    private String smsNotificationProcessFeePaymentTemplateId;
 
     //Individual Service
     @Value("${egov.individual.host}")

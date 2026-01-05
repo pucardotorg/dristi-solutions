@@ -12,7 +12,7 @@ export const ordersService = {
     }),
   addOrderItem: (data, params) =>
     Request({
-      url: Urls.orders.orderAddItem,
+      url: Urls.orders.orderManagementAddItem,
       useCache: false,
       userService: true,
       data,
@@ -115,6 +115,22 @@ export const EpostService = {
       data,
       params,
     }),
+  epostUser: (data, params) =>
+    Request({
+      url: Urls.Epost.mdmsSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
+  ePostDownloadReports: (data, params) =>
+    Request({
+      url: Urls.Epost.EpostReportDownload,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
@@ -201,6 +217,25 @@ export const orderManagementService = {
     }),
 };
 
+export const digitalizationService = {
+  getDigitalizedDocumentsToSign: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.getDigitalizedDocumentsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedDigitalizedDocuments: (data, params) =>
+    Request({
+      url: Urls.digitalizationService.updateSignedDigitalizedDocuments,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};
+
 export const processManagementService = {
   getProcessToSign: (data, params) =>
     Request({
@@ -223,6 +258,131 @@ export const processManagementService = {
       url: Urls.processManagement.bulkSend,
       useCache: false,
       userService: true,
+      data,
+      params,
+    }),
+};
+
+export const openApiService = {
+  searchOpenApiOrders: (data, params) =>
+    Request({
+      url: Urls.openApi.searchOrders,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  createTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.openApi.taskManagementCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  updateTaskManagementService: (data, params) => {
+    return Request({
+      url: Urls.openApi.taskManagementUpdate,
+      useCache: false,
+      userService: false,
+      data: data,
+      params,
+    });
+  },
+  searchTaskManagementService: (data, params) =>
+    Request({
+      url: Urls.openApi.taskManagementSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getSummonsPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.openApi.summonsPayment,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getTreasuryPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.openApi.getTreasuryPaymentBreakup,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callFetchBill: (data, params) =>
+    Request({
+      url: Urls.openApi.fetchBill,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callETreasury: (data, params) =>
+    Request({
+      url: Urls.openApi.eTreasury,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  callSearchBill: (data, params) =>
+    Request({
+      url: Urls.openApi.searchBill,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  fetchBillFileStoreId: (data, params) =>
+    Request({
+      url: Urls.openApi.billFileStoreId,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseLock: (data, params) =>
+    Request({
+      url: Urls.openApi.setCaseLock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getPaymentLockStatus: (data, params) =>
+    Request({
+      url: Urls.openApi.getPaymentLockStatus,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseUnlock: (data, params) =>
+    Request({
+      url: Urls.openApi.setCaseUnlock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  addAddress: (data, params) =>
+    Request({
+      url: Urls.openApi.addAddress,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  offlinePayment: (data, params) =>
+    Request({
+      url: Urls.openApi.offlinePayment,
+      useCache: false,
+      userService: false,
       data,
       params,
     }),

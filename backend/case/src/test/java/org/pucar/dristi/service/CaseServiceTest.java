@@ -114,6 +114,12 @@ public class CaseServiceTest {
     @Mock
     private FileStoreUtil fileStoreUtil;
 
+    @Mock
+    private DateUtil dateUtil;
+
+    @Mock
+    private InboxUtil inboxUtil;
+
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -175,7 +181,8 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil);
+        OrderUtil orderUtil = new OrderUtil(null, null, null);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil);
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
@@ -1649,6 +1656,218 @@ public class CaseServiceTest {
         courtCase.setTenantId("pb.amritsar");
         courtCase.setAdditionalDetails(new HashMap<>());
         return courtCase;
+    }
+
+
+    @Test
+    void testUpdateCaseConversion_CMPConversion_Success() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-001");
+        courtCase.setCnrNumber("CNR-2024-001");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber("CMP-2024-001");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+        verify(dateUtil, times(1)).getEpochFromLocalDate(any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_STConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-002");
+        courtCase.setCnrNumber("CNR-2024-002");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setCmpNumber("CMP-2024-002");
+        courtCase.setCourtCaseNumber("ST-2024-002");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_LPRConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-003");
+        courtCase.setCnrNumber("CNR-2024-003");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setIsLPRCase(true);
+        courtCase.setCourtCaseNumber("ST-2024-003");
+        courtCase.setLprNumber("LPR-2024-003");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_LPToSTConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-004");
+        courtCase.setCnrNumber("CNR-2024-004");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setIsLPRCase(false);
+        courtCase.setLprNumber("LPR-2024-004");
+        courtCase.setCourtCaseNumberBackup("ST-2024-004-BACKUP");
+        courtCase.setCourtCaseNumber("ST-2024-004-NEW");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_NoMatchingConversionType() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-005");
+        courtCase.setCnrNumber("CNR-2024-005");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("UNKNOWN");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should still push to Kafka even without conversion details set
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_ExceptionHandling() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-006");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber("CMP-2024-006");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doThrow(new RuntimeException("Kafka error")).when(producer).push(anyString(), any());
+
+        // Act - should not throw exception due to try-catch
+        assertDoesNotThrow(() -> caseService.updateCaseConversion(caseRequest));
+
+        // Assert
+        verify(producer, times(1)).push(anyString(), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_CMPWithNullCmpNumber_NoConversion() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-007");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber(null); // CMP number is null
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should push but without conversion details set (convertedFrom/To will be null)
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_STWithNullCourtCaseNumber_FallbackToLPRCheck() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-008");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setCourtCaseNumber(null);
+        courtCase.setIsLPRCase(true);
+        courtCase.setLprNumber("LPR-2024-008");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should match LPR case conversion (ST -> LP)
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+        verify(dateUtil, times(1)).getEpochFromLocalDate(any());
     }
 
 }

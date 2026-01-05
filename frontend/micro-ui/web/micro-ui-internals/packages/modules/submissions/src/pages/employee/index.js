@@ -9,7 +9,8 @@ import SubmissionDocuments from "./SubmissionDocuments";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import BreadCrumbSubmissions from "../../components/BreadCrumbSubmissions";
-import GenerateBailBond from "./GenerateBailBond";
+import GenerateBailBondV2 from "./GenerateBailBondV2";
+import PleaSubmission from "./PleaSubmission";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -79,7 +80,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/submissions-create`} component={() => <SubmissionsCreate path={path} />} />
         <PrivateRoute path={`${path}/submit-document`} component={() => <SubmissionDocuments path={path} />} />
         <PrivateRoute path={`${path}/submissions-search`} component={() => <SubmissionsSearch></SubmissionsSearch>} />
-        <PrivateRoute path={`${path}/bail-bond`} component={() => <GenerateBailBond></GenerateBailBond>} />
+        <PrivateRoute path={`${path}/bail-bond`} component={() => <GenerateBailBondV2 />} />
+        <PrivateRoute path={`${path}/record-plea`} component={() => <PleaSubmission />} />
       </AppContainer>
     </Switch>
   );

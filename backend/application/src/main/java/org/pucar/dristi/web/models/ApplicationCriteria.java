@@ -60,4 +60,9 @@ public class ApplicationCriteria {
     @JsonProperty("isFuzzySearch")
     private Boolean isFuzzySearch = false;
 
+    // TODO : remove this, this is temporary fix (#5016)
+    @JsonProperty("isHideBailCaseBundle")
+    private Boolean isHideBailCaseBundle = false;
+
+
 }

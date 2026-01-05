@@ -153,6 +153,37 @@ export const channelTypeEnum = {
   "E-mail": { code: "EMAIL", type: "Email" },
 };
 
+export const getMediationChangedFlag = (orderDetails, newOrderDetails) => {
+  if (newOrderDetails?.adrMode !== "MEDIATION") return false;
+  if (!orderDetails) return true;
+
+  const keysToCheck = ["adrMode", "parties", "hearingDate", "modeOfSigning", "mediationCentre"];
+
+  let isMediationChanged = false;
+
+  for (const key of keysToCheck) {
+    const oldValue = orderDetails[key];
+    const newValue = newOrderDetails[key];
+
+    if (key === "parties") {
+      const oldLen = Array?.isArray(oldValue) ? oldValue?.length : 0;
+      const newLen = Array?.isArray(newValue) ? newValue?.length : 0;
+
+      if (oldLen !== newLen) {
+        isMediationChanged = true;
+        break;
+      }
+    } else {
+      if (JSON?.stringify(oldValue) !== JSON?.stringify(newValue)) {
+        isMediationChanged = true;
+        break;
+      }
+    }
+  }
+
+  return isMediationChanged;
+};
+
 export const getParties = (type, orderSchema, allParties) => {
   let parties = [];
   if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
@@ -162,12 +193,14 @@ export const getParties = (type, orderSchema, allParties) => {
       ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
       ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
     ];
-  } else if (["WARRANT", "SUMMONS", "NOTICE", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
+  } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(type)) {
     parties = orderSchema?.orderDetails?.respondentName?.name
       ? [orderSchema?.orderDetails?.respondentName?.name]
       : orderSchema?.orderDetails?.respondentName
       ? [orderSchema?.orderDetails?.respondentName]
       : [];
+  } else if (["SUMMONS", "NOTICE"].includes(type)) {
+    parties = orderSchema?.orderDetails?.respondentName;
   } else if (type === "SECTION_202_CRPC") {
     parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
   } else if (
@@ -177,6 +210,38 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
   } else if (["COST", "WITNESS_BATTA"]?.includes(type)) {
     parties = [orderSchema?.orderDetails?.paymentToBeMadeBy, orderSchema?.orderDetails.paymentToBeMadeTo];
+  } else if (type === "REFERRAL_CASE_TO_ADR") {
+    const complainants = allParties
+      ?.filter((party) => party?.partyType === "complainant")
+      .sort((a, b) => (a?.partyUuid || "").localeCompare(b?.partyUuid || ""));
+
+    const respondents = allParties
+      ?.filter((party) => party?.partyType === "respondent" && party?.isJoined === true)
+      .sort((a, b) => (a?.partyUuid || "").localeCompare(b?.partyUuid || ""));
+
+    const updatedComplainants = [...complainants]?.map((party, index) => ({
+      partyName: party?.name?.replace(/\s*\(.*?\)\s*/g, "")?.trim(),
+      partyType: party?.partyType,
+      partyIndex: index + 1,
+      poaUuid: party?.poaUuid,
+      userUuid: party?.partyUuid,
+      uniqueId: party?.partyUuid,
+      mobileNumber: party?.mobileNumber,
+    }));
+
+    const updatedRespondents = [...respondents]?.map((party, index) => ({
+      partyName: party?.name?.replace(/\s*\(.*?\)\s*/g, "")?.trim(),
+      partyType: party?.partyType,
+      partyIndex: index + 1,
+      poaUuid: party?.poaUuid,
+      userUuid: party?.partyUuid,
+      uniqueId: party?.partyUuid,
+      mobileNumber: party?.mobileNumber,
+    }));
+
+    parties = [...updatedComplainants, ...updatedRespondents];
+
+    return parties;
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;
@@ -215,26 +280,41 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  if (currentOrderType === "NOTICE") {
-    if (formData?.noticeOrder?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
-      hasError = true;
+  if (currentOrderType === "ACCEPT_BAIL") {
+    const bt = formData?.bailType;
+    const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
+    const isSurety = bailTypeCode === "SURETY";
+
+    if (isSurety) {
+      const suretiesNum = Number(formData?.noOfSureties);
+      const isInvalidSureties = !Number.isFinite(suretiesNum) || suretiesNum <= 0;
+      if (isInvalidSureties) {
+        setFormErrors?.current?.[index]?.("noOfSureties", { message: t?.("CORE_REQUIRED_FIELD_ERROR") });
+        hasError = true;
+      }
     }
   }
 
-  if (currentOrderType === "SUMMONS") {
-    if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
-      hasError = true;
-    } else if (
-      formData?.SummonsOrder?.selectedChannels?.some(
-        (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
-      )
-    ) {
-      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
-      hasError = true;
-    }
-  }
+  // if (currentOrderType === "NOTICE") {
+  //   if (formData?.noticeOrder?.selectedChannels?.length === 0) {
+  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
+  //     hasError = true;
+  //   }
+  // }
+
+  // if (currentOrderType === "SUMMONS") {
+  //   if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
+  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
+  //     hasError = true;
+  //   } else if (
+  //     formData?.SummonsOrder?.selectedChannels?.some(
+  //       (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+  //     )
+  //   ) {
+  //     setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+  //     hasError = true;
+  //   }
+  // }
 
   if (currentOrderType === "WARRANT") {
     if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
@@ -326,7 +406,25 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
       }
 
       for (let p = 0; p < configForThisItem?.length; p++) {
-        const body = configForThisItem?.[p]?.body || [];
+        let body = configForThisItem?.[p]?.body || [];
+        if (orderType === "REFERRAL_CASE_TO_ADR") {
+          const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+          const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
+          const hideForMediationEndKeys = ["dateOfEndADR"];
+
+          body = body.map((field) => {
+            const shouldHide =
+              (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+            return {
+              ...field,
+              populators: {
+                ...field?.populators,
+                hideInForm: shouldHide,
+              },
+            };
+          });
+        }
         for (let k = 0; k < body.length; k++) {
           const field = body[k];
           if (field?.populators?.hideInForm) continue;
@@ -335,6 +433,19 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
             itemErrors.push({
               key: field?.label || field?.key,
               errorMessage: "THIS_IS_MANDATORY_FIELD",
+            });
+          }
+        }
+      }
+
+      if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
+        const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
+        if (currentOrder?.nextHearingDate && hearingDate) {
+          const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+          if (dateChanged) {
+            itemErrors?.push({
+              key: "DATE_OF_HEARING",
+              errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
             });
           }
         }
@@ -373,7 +484,24 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
     }
 
     for (let p = 0; p < configForThisItem?.length; p++) {
-      const body = configForThisItem?.[p]?.body || [];
+      let body = configForThisItem?.[p]?.body || [];
+      if (orderType === "REFERRAL_CASE_TO_ADR") {
+        const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+        const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
+        const hideForMediationEndKeys = ["dateOfEndADR"];
+
+        body = body.map((field) => {
+          const shouldHide = (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+          return {
+            ...field,
+            populators: {
+              ...field?.populators,
+              hideInForm: shouldHide,
+            },
+          };
+        });
+      }
       for (let k = 0; k < body.length; k++) {
         const field = body[k];
         if (field?.populators?.hideInForm) continue;
@@ -382,6 +510,19 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
           itemErrors.push({
             key: field?.label || field?.key,
             errorMessage: "THIS_IS_MANDATORY_FIELD",
+          });
+        }
+      }
+    }
+
+    if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
+      const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
+      if (currentOrder?.nextHearingDate && hearingDate) {
+        const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+        if (dateChanged) {
+          itemErrors?.push({
+            key: "DATE_OF_HEARING",
+            errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
           });
         }
       }
@@ -406,6 +547,11 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
   },
   {
+    key: "accept_bail_singleton",
+    orderTypes: ["ACCEPT_BAIL"],
+    unAllowedOrderTypes: ["ACCEPT_BAIL"],
+  },
+  {
     key: "no_restriction",
     orderTypes: [
       "NOTICE",
@@ -414,7 +560,7 @@ export const compositeOrderAllowedTypes = [
       "SUMMONS",
       "MANDATORY_SUBMISSIONS_RESPONSES",
       "SECTION_202_CRPC",
-      "ACCEPT_BAIL",
+      // "ACCEPT_BAIL",
       "PROCLAMATION",
       "ATTACHMENT",
       "COST",

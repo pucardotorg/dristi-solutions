@@ -130,7 +130,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()) || (COMPLETED.equalsIgnoreCase(application.getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(application.getApplicationType()))) {
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())) {
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
@@ -139,7 +139,7 @@ public class PaymentUpdateService {
                 try{
                     log.info("Sending SMS for application [{}]", application.getApplicationNumber());
                     getSmsAfterPayment(applicationRequest, applicationType);
-                    smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
+                    smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType, false);
                     log.info("SMS sent for application [{}]", application.getApplicationNumber());
                 } catch (Exception e) {
                     log.error("Error while sending SMS for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);

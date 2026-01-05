@@ -1,0 +1,21 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "BillingService.BusinessService",
+  "uniqueIdentifier": "task-management-payment",
+  "data": {
+    "code": "task-management-payment",
+    "billGineiURL": "N/A",
+    "businessService": "task-management-payment",
+    "demandUpdateTime": 604800000,
+    "isAdvanceAllowed": false,
+    "minAmountPayable": 0,
+    "partPaymentAllowed": false,
+    "isVoucherCreationEnabled": false,
+    "collectionModesNotAllowed": [
+      "OFFLINE_NEFT",
+      "OFFLINE_RTGS",
+      "POSTAL_ORDER"
+    ]
+  },
+  "isActive": true
+}

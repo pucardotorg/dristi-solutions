@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
@@ -57,13 +58,14 @@ public class TaskService {
     private final ESignUtil eSignUtil;
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
+    private final UserUtil userUtil;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, UserUtil userUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -82,6 +84,7 @@ public class TaskService {
         this.eSignUtil = eSignUtil;
         this.cipherUtil = cipherUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
+        this.userUtil = userUtil;
     }
 
     @Autowired
@@ -508,7 +511,26 @@ public class TaskService {
                 individualIds = extractIndividualIds(caseDetails,accusedName);
             }
 
+            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+                individualIds.clear();
+                Object workflowAdditionalDetailsObj = taskRequest.getTask().getWorkflow().getAdditionalDetails();
+                JsonNode workflowAdditionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(workflowAdditionalDetailsObj));
+                ArrayNode litigants = (ArrayNode) workflowAdditionalDetails.get("litigants");
+                for(JsonNode litigant : litigants) {
+                    individualIds.add(litigant.asText());
+                }
+            }
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
+            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+                CourtCase courtCase = objectMapper.convertValue(caseDetails, CourtCase.class);
+                List<String> advocateIds = courtCase.getRepresentatives().stream()
+                        .map(AdvocateMapping::getAdvocateId)
+                        .toList();
+                List<User> advocates = userUtil.getUserListFromUserUuid(advocateIds);
+                advocates.forEach(advocate -> {
+                    phoneNumbers.add(advocate.getMobileNumber());
+                });
+            }
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
@@ -605,31 +627,6 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
-        if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
-            return NOTICE_DELIVERED;
-        }
-        if (NOTICE.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
-            return NOTICE_NOT_DELIVERED;
-        }
-        if (SUMMON.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
-            return SUMMONS_DELIVERED;
-        }
-        if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
-            return SUMMONS_NOT_DELIVERED;
-        }
-        boolean b = WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType);
-        if (b && PENDING_PAYMENT.equalsIgnoreCase(status)) {
-            return WARRANT_ISSUED;
-        }
-        if (b && WARRANT_SENT.equalsIgnoreCase(status)) {
-            return WARRANT_ISSUE_SUCCESS;
-        }
-        if (b && EXECUTED.equalsIgnoreCase(status)) {
-            return WARRANT_DELIVERED;
-        }
-        if (b && NOT_EXECUTED.equalsIgnoreCase(status)) {
-            return WARRANT_NOT_DELIVERED;
-        }
         return null;
     }
 
@@ -1034,4 +1031,115 @@ public class TaskService {
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         return sdf.format(date);
     }
+
+    /**
+     * Process task details request containing taskDetails, taskNumber and uniqueId
+     * @param request TaskDetailsRequest containing RequestInfo and TaskDetailsDTO
+     * @return processed TaskDetailsDTO
+     */
+    public TaskDetailsDTO processTaskDetails(TaskDetailsRequest request) {
+        try {
+            TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
+            String taskNumber = taskDetailsDTO.getTaskNumber();
+            String uniqueId = taskDetailsDTO.getUniqueId();
+            
+            log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
+            
+            // Search for the task using taskNumber
+            TaskSearchRequest searchRequest = new TaskSearchRequest();
+            searchRequest.setCriteria(TaskCriteria.builder()
+                    .taskNumber(taskNumber)
+                    .build());
+            searchRequest.setRequestInfo(request.getRequestInfo());
+            
+            List<Task> tasks = searchTask(searchRequest);
+            
+            if (tasks == null || tasks.isEmpty()) {
+                log.error("No task found with taskNumber: {}", taskNumber);
+                throw new CustomException(TASK_NOT_FOUND, 
+                        "No task found with taskNumber: " + taskNumber);
+            }
+            
+            Task task = tasks.get(0);
+            Object taskDetails = task.getTaskDetails();
+            taskDetailsDTO.setAuditDetails(task.getAuditDetails());
+
+            taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            
+            // Log the taskDetails
+            log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
+            
+            // Create a request to push to Kafka topic
+            TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .taskDetailsDTO(taskDetailsDTO)
+                    .build();
+            
+            producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
+
+            log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
+            
+            return taskDetailsDTO;
+            
+        } catch (CustomException e) {
+            log.error("Custom exception while processing task details", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing task details", e);
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
+                    "Error processing task details: " + e.getMessage());
+        }
+    }
+
+    public List<BulkPendingCollectionUpdate> bulkUpdatePendingCollection(BulkPendingCollectionUpdateRequest request) {
+        for (BulkPendingCollectionUpdate updateTask : request.getTasks()) {
+            try {
+                TaskSearchRequest taskSearchRequest = new TaskSearchRequest();
+                taskSearchRequest.setCriteria(TaskCriteria.builder()
+                        .taskNumber(updateTask.getTaskNumber())
+                        .tenantId(updateTask.getTenantId())
+                        .build());
+                taskSearchRequest.setRequestInfo(new RequestInfo());
+
+                List<Task> tasks = searchTask(taskSearchRequest);
+                if (tasks.isEmpty()) {
+                    throw new CustomException(TASK_NOT_FOUND, "Task not found with task number: " + updateTask.getTaskNumber());
+                }
+
+                Task task = tasks.get(0);
+
+                if (!isRPADdeliveryChannel(task)) {
+                    throw new CustomException(INVALID_DELIVERY_CHANNEL, "Task delivery channel is not RPAD for task number: " + updateTask.getTaskNumber());
+                }
+
+                JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+                if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+                    ObjectNode deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+                    deliveryChannels.put("isPendingCollection", false);
+                    task.setTaskDetails(taskDetails);
+                }
+
+                enrichmentUtil.enrichAuditDetailsForUpdate(task, request.getRequestInfo());
+
+                TaskRequest taskRequest = TaskRequest.builder()
+                        .task(task)
+                        .requestInfo(request.getRequestInfo())
+                        .build();
+
+                closeEnvelopePendingTask(taskRequest);
+
+                producer.push(config.getTaskUpdatePendingCollectionTopic(), taskRequest);
+
+                log.info("Successfully updated isPendingCollection to false for task: {}", updateTask.getTaskNumber());
+
+            } catch (Exception e) {
+                log.error("Error updating isPendingCollection for task: {}", updateTask.getTaskNumber(), e);
+                updateTask.setErrorMessage(e.getMessage());
+                updateTask.setSuccess(false);
+            }
+        }
+        return request.getTasks();
+    }
+
 }

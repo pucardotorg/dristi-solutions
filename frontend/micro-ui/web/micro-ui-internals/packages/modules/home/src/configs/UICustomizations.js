@@ -10,6 +10,8 @@ import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/component
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
+import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
+import { formatDateWithTime } from "../../../orders/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -53,45 +55,78 @@ const handleNavigate = (path) => {
 export const UICustomizations = {
   EpostTrackingUiConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const ePostTrackerSearchCriteria = {
-        ...requestCriteria?.body?.ePostTrackerSearchCriteria,
-        processNumber: requestCriteria?.state?.searchForm?.processNumber ? requestCriteria?.state?.searchForm?.processNumber : "",
-        deliveryStatusList: requestCriteria?.state?.searchForm?.deliveryStatusList?.selected
-          ? [requestCriteria?.state?.searchForm?.deliveryStatusList?.selected]
-          : requestCriteria?.body?.ePostTrackerSearchCriteria.deliveryStatusList,
-        pagination: {
-          sortBy: requestCriteria?.state?.searchForm?.pagination?.sortBy
-            ? requestCriteria?.state?.searchForm?.pagination?.sortBy
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.sortBy,
-          orderBy: requestCriteria?.state?.searchForm?.pagination?.order
-            ? requestCriteria?.state?.searchForm?.pagination?.order
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.orderBy,
-        },
-      };
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ePostTrackerSearchCriteria,
-          processNumber: "",
-          deliveryStatusList: {},
-          pagination: {
-            sortBy: "",
-            order: "",
-          },
         },
         config: {
           ...requestCriteria?.config,
+          select: (data) => {
+            const hasResults = data?.EPostTracker?.length > 0;
+            window.sessionStorage.setItem("epostSearchHasResults", hasResults ? "true" : "false");
+            window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+            return {
+              ...data,
+              count: data?.pagination?.totalCount || data?.length,
+            };
+          },
         },
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
-        case "Delivery Status":
+        case "SPEED_POST_ID":
+          return t(value) || t("NOT_ASSIGNED");
+        case "STATUS":
           return t(value);
+        case "CS_ACTIONS":
+          return <OverlayDropdown column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "CS_ACTIONS_PENCIL":
+          return <PencilIconEdit column={column} row={row} master="commonUiConfig" module="EpostTrackingUiConfig" />;
+        case "TOTAL_CHARGES":
+          return value ? `${Math.round(value)}/-` : "-";
+        case "BOOKING_DATE":
+        case "BOOKING_DATE_TIME":
+          return formatDateWithTime(value) || "-";
+        case "RECIEVED_DATE":
+          return formatDateWithTime(value) || "-";
+        case "ADDRESS":
+          return `${row?.respondentName}, ${value}` || "-";
+        case "TASK_TYPE":
+          return t(value) || t("ES_COMMON_NA");
         default:
           return t("ES_COMMON_NA");
       }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "PRINT_DOCUMENT",
+          id: "print_document",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+        {
+          label: "UPDATE_STATUS",
+          id: "update_status",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
+    },
+    actionItems: (row, column) => {
+      return [
+        {
+          label: "PENCIL_EDIT",
+          id: "pencil_edit",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   SearchHearingsConfig: {
@@ -220,7 +255,8 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
+      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -315,7 +351,8 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const caseId = row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
+      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -413,7 +450,8 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
+      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -495,8 +533,10 @@ export const UICustomizations = {
         completeStatusData = compStatus ? [compStatus] : sentData;
       }
       let resolvedApplicationStatus = "";
-      if (activeTabIndex === 0) resolvedApplicationStatus = "SIGN_PENDING";
-      else if (activeTabIndex === 1) resolvedApplicationStatus = "SIGNED";
+      if (activeTabIndex === 0 || activeTabIndex === 1) resolvedApplicationStatus = "SIGN_PENDING";
+      else if (activeTabIndex === 2) resolvedApplicationStatus = "SIGNED";
+      const initialIsPending = requestCriteria?.body?.criteria?.isPendingCollection;
+      const resolvedIsPendingCollection = typeof initialIsPending === "boolean" ? initialIsPending : activeTabIndex === 0 ? true : false;
 
       return {
         ...requestCriteria,
@@ -511,6 +551,7 @@ export const UICustomizations = {
             ...(hearingDate !== null && { hearingDate }),
             ...(courtId && { courtId }),
             applicationStatus: resolvedApplicationStatus,
+            isPendingCollection: resolvedIsPendingCollection,
           },
           tenantId,
           pagination: {
@@ -533,7 +574,8 @@ export const UICustomizations = {
       const taskDetails = handleTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
-      const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
+      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -550,7 +592,7 @@ export const UICustomizations = {
           }
           return t(value);
         case "DELIEVERY_CHANNEL":
-          return taskDetails?.deliveryChannels?.channelName || "N/A";
+          return taskDetails?.deliveryChannels?.channelName === "EPOST" ? t("CS_POST") : t(taskDetails?.deliveryChannels?.channelName) || "N/A";
         case "DELIEVRY_DATE":
           return delieveryDate || "-";
         case "HEARING_DATE":
@@ -639,6 +681,105 @@ export const UICustomizations = {
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "CS_ACTIONS":
           return <OverlayDropdown position="relative" column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
+        default:
+          break;
+      }
+    },
+    dropDownItems: (row, column, t) => {
+      return [
+        {
+          label: t("DELETE_BULK_ORDER"),
+          id: "delete_order",
+          hide: false,
+          disabled: false,
+          action: (history, column, row, item) => {
+            column?.clickFunc(row);
+          },
+        },
+      ];
+    },
+  },
+
+  bulkSignFormsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const caseTitle = sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle") || requestCriteria?.state?.searchForm?.caseTitle;
+      const type = requestCriteria?.state?.searchForm?.type;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkDigitizationSignList = additionalDetails?.setbulkDigitizationSignList;
+      const setDigitizationPaginationData = additionalDetails?.setDigitizationPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkDigitalDocumentSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+      const digitizationSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: "PENDING_REVIEW",
+        ...(type && { type: type?.code }),
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+        ...(courtId && { courtId }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const ditilizationItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkDigitalDocumentSignlimit");
+            sessionStorage.removeItem("bulkDigitalDocumentSignoffset");
+            if (sessionStorage.getItem("bulkDigitalDocumentSignCaseTitle")) {
+              sessionStorage.removeItem("bulkDigitalDocumentSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkDigitizationSignList) setbulkDigitizationSignList(ditilizationItems);
+            if (setDigitizationPaginationData) setDigitizationPaginationData({ limit: limit, offset: offset, caseTitle: digitizationSignCaseTitle });
+
+            return {
+              ...data,
+              items: ditilizationItems,
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "PROCESS_TYPE":
+          return t(value);
+        case "DATE_CREATED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         default:
           break;
       }

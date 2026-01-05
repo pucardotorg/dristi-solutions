@@ -1,6 +1,7 @@
 import get from "lodash/get";
 import set from "lodash/set";
 import { getFormattedName } from "../utils";
+import { formatDate } from "../utils/orderUtils";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -98,6 +99,14 @@ export const UICustomizations = {
           return date ? new Date(date).toISOString().split("T")[0] : null;
         },
       },
+      customDate: {
+        formToSchema: (dateString) => {
+          return dateString ? formatDate(new Date(dateString), "DD-MM-YYYY") : null;
+        },
+        schemaToForm: (date) => {
+          return date ? new Date(date).toISOString().split("T")[0] : null;
+        },
+      },
       customDropdown: {
         formToSchema: (optionOrOptions) => {
           if (Array.isArray(optionOrOptions)) {
@@ -133,6 +142,29 @@ export const UICustomizations = {
         },
         schemaToForm: (value) => {
           throw new Error("Not implemented");
+        },
+      },
+      noticeOrderPartyName: {
+        formToSchema: (value) => {
+          try {
+            if (!Array?.isArray(value?.party) || value?.party?.length === 0) return [];
+
+            return value?.party?.map((p) => {
+              const isWitness = p?.data?.partyType?.toLowerCase() === "witness";
+              const partyTypeLabel = isWitness ? "(witness)" : null;
+
+              return getFormattedName(
+                p?.data?.firstName,
+                p?.data?.middleName,
+                p?.data?.lastName,
+                isWitness ? p?.data?.witnessDesignation : null,
+                partyTypeLabel
+              );
+            });
+          } catch (error) {
+            console.error("Error in parsing party name", error);
+            return [];
+          }
         },
       },
       customTextArea: {

@@ -9,7 +9,7 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -53,6 +53,46 @@ const getCaseNumber = (billDetails = {}) => {
   if (isValid(filingNumber)) return filingNumber;
 
   return "";
+};
+
+const normalizeItems = (items = []) => {
+  return items?.map?.((item) => {
+    const obj = {};
+
+    item?.fields?.forEach?.(({ key, value }) => {
+      const cleanedKey = key.replace("digitalizedDocumentDetails.", "");
+
+      const parts = cleanedKey.split(".");
+      let current = obj;
+
+      parts.forEach((part, index) => {
+        const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+
+        if (arrayMatch) {
+          const prop = arrayMatch[1];
+          const idx = Number(arrayMatch[2]);
+
+          current[prop] = current[prop] || [];
+          current[prop][idx] = current[prop][idx] || {};
+
+          if (index === parts.length - 1) {
+            current[prop][idx] = value;
+          } else {
+            current = current[prop][idx];
+          }
+        } else {
+          if (index === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      });
+    });
+
+    return obj;
+  });
 };
 
 export const UICustomizations = {
@@ -796,7 +836,7 @@ export const UICustomizations = {
             // if (requestCriteria.url.split("/").includes("order")) {
             return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
               ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
+              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
               ? {
                   ...data,
                   applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
@@ -855,6 +895,9 @@ export const UICustomizations = {
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
+          if (column?.jsonPath === "applicationDraftDelete" && row.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
@@ -863,6 +906,19 @@ export const UICustomizations = {
       }
     },
     dropDownItems: (row, configs) => {
+      if (configs?.jsonPath === "applicationDraftDelete") {
+        return [
+          {
+            label: "CS_COMMON_DELETE",
+            id: "draft_order_delete",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
+            },
+          },
+        ];
+      }
       const formatDate = (date) => {
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -1240,6 +1296,9 @@ export const UICustomizations = {
         case "EVIDENCE_NUMBER":
           return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
+          if (row?.evidenceMarkedStatus === "DELETED_DRAFT") {
+            return "";
+          }
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip
               text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
@@ -1271,7 +1330,7 @@ export const UICustomizations = {
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+          ? (row?.evidenceMarkedStatus !== null && row?.evidenceMarkedStatus !== "DELETED_DRAFT") || row.isEvidence
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",
@@ -1314,6 +1373,21 @@ export const UICustomizations = {
             ]
           : []),
 
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
+        !row?.isVoid &&
+        row?.evidenceMarkedStatus &&
+        ["DRAFT", "DRAFT_IN_PROGRESS"].includes(row?.evidenceMarkedStatus)
+          ? [
+              {
+                label: "DELETE_EVIDENCE_DRAFT",
+                id: "delete_evidence_draft",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
         {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
@@ -2167,6 +2241,15 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: activeTab === "NOTICE_SUMMONS_MANAGEMENT" ? false : true,
+              actionCategory: "Notice and Summons Management",
+              ...(activeTab === "NOTICE_SUMMONS_MANAGEMENT" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2183,6 +2266,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2191,6 +2275,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2209,6 +2294,19 @@ export const UICustomizations = {
                     if (!acc.advocateDetails) acc.advocateDetails = {};
                     acc.advocateDetails[subKey] = curr.value;
                   }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
+                } else if (key === "additionalDetails.partyType") {
+                  acc.partyType = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
@@ -2225,12 +2323,22 @@ export const UICustomizations = {
                 createdTime: result?.createdTime,
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                partyUniqueIds: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
+                partyType: result?.partyType,
+                processType: result?.name?.trim()?.split(" ")?.pop(),
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
+              return {
+                TotalCount: data?.noticeAndSummonsData?.count,
+                data: data?.noticeAndSummonsData?.data?.map((item) => processFields(item.fields)),
               };
             } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
@@ -2265,6 +2373,27 @@ export const UICustomizations = {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const caseId = row?.caseNumber || row?.filingNumber;
+      const getDaysDiff = (value) => {
+        const createdAt = new Date(value);
+        const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+
+        const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+        return Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      };
+      const renderDaysDiff = (value) => {
+        const days = getDaysDiff(value);
+        return (
+          <span
+            style={{
+              color: days > 2 ? "#9E400A" : undefined,
+              fontWeight: days > 2 ? 500 : 400,
+            }}
+          >
+            {days}
+          </span>
+        );
+      };
+
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2278,7 +2407,7 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link
@@ -2328,11 +2457,9 @@ export const UICustomizations = {
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_DAYS_FILING":
-          const createdAt = new Date(value);
-          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
-          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
-          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+          return renderDaysDiff(value);
+        case "CS_DAYS_REGISTRATION":
+          return renderDaysDiff(value);
         case "APPLICATION_TYPE":
           return t(value);
         default:
@@ -2365,6 +2492,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
               actionCategory: "Register cases",
+            },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Notice and Summons Management",
             },
             searchBailBonds: {
               date: currentDateInMs,
@@ -2420,6 +2552,7 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
@@ -2428,6 +2561,7 @@ export const UICustomizations = {
               REGISTRATION: registerCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2559,6 +2693,73 @@ export const UICustomizations = {
         default:
           return value ? value : "-";
       }
+    },
+  },
+
+  DigitalizationConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const courtId = localStorage.getItem("courtId");
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const isCitizen = userRoles?.includes("CITIZEN");
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Digitalized Document Service",
+            moduleSearchCriteria: {
+              ...(requestCriteria.body.SearchCriteria.moduleSearchCriteria || {}),
+              ...(courtId ? { courtId } : {}),
+              ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
+              ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
+              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const normalized = normalizeItems(data?.data || []);
+            return { documents: normalized, totalCount: data?.totalCount || normalized?.length };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          const newValue = value === "MEDIATION" ? "MEDIATION_FORM" : value;
+          return (
+            <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={newValue} showAsHeading={true} isDigitilization={true} />
+          );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return _getDigitilizationPatiresName(row);
+        case "CS_ACTIONS":
+          if (row?.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="DigitalizationConfig" />;
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_ditilization_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
     },
   },
   patternValidation: (key) => {

@@ -16,6 +16,10 @@ async function processOrders(
     "orders"
   );
 
+  const ordersIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "orders"
+  );
+
   if (processesSection?.length !== 0) {
     const section = processesSection[0];
     const resOrder = await search_order_v2(
@@ -38,7 +42,7 @@ async function processOrders(
 
     if (orderList.length !== 0) {
       const ordersLineItems = await Promise.all(
-        orderList.map(async (order, index) => {
+        orderList?.map(async (order, index) => {
           if (order?.documents?.length !== 0) {
             const fileStoreId = order?.documents?.find(
               (doc) => doc?.documentType === "SIGNED"
@@ -59,11 +63,10 @@ async function processOrders(
           }
         })
       );
-      const ordersIndexSection = indexCopy.sections.find(
-        (section) => section.name === "orders"
-      );
-      ordersIndexSection.lineItems = ordersLineItems.filter(Boolean);
+      ordersIndexSection.lineItems = ordersLineItems?.filter(Boolean);
     }
+  } else {
+    ordersIndexSection.lineItems = [];
   }
 }
 

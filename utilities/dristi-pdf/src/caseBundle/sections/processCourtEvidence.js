@@ -96,6 +96,7 @@ async function processCourtEvidence(
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       {
         sortBy: courtEvidenceSection[0].sorton,
@@ -144,13 +145,10 @@ async function processCourtEvidence(
     }
   }
 
-  if (courtEvidenceLineItems.length > 0) {
-    const courtEvidenceIndexSection = indexCopy.sections.find(
-      (section) => section.name === "courtevidence"
-    );
-    courtEvidenceIndexSection.lineItems =
-      courtEvidenceLineItems.filter(Boolean);
-  }
+  const courtEvidenceIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "courtevidence"
+  );
+  courtEvidenceIndexSection.lineItems = courtEvidenceLineItems?.filter(Boolean);
 }
 
 module.exports = {

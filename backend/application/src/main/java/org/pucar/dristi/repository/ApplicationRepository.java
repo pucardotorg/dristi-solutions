@@ -45,7 +45,9 @@ public class ApplicationRepository {
 
             List<Object> preparedStmtListDoc;
 
-            String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList);
+            // TODO : remove this, this is temporary fix (#5016)
+            String userUuid = getCitizenUserUuid(applicationSearchRequest);
+            String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, userUuid,applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());
             log.info("Final application search query: {}", applicationQuery);
             if(applicationSearchRequest.getPagination() !=  null) {
@@ -98,6 +100,20 @@ public class ApplicationRepository {
             log.error("Error while fetching application list {}", e.getMessage());
             throw new CustomException(APPLICATION_SEARCH_ERR,"Error while fetching application list: "+e.getMessage());
         }
+    }
+
+    // TODO : remove this, this is temporary fix (#5016)
+    private String getCitizenUserUuid(ApplicationSearchRequest applicationSearchRequest) {
+        String userUuid = null;
+        if (applicationSearchRequest.getRequestInfo() != null
+                && applicationSearchRequest.getRequestInfo().getUserInfo() != null
+                && applicationSearchRequest.getRequestInfo().getUserInfo().getUuid() != null) {
+            boolean isCitizen = CITIZEN_LOWER.equalsIgnoreCase(applicationSearchRequest.getRequestInfo().getUserInfo().getType());
+            if (isCitizen) {
+                userUuid = applicationSearchRequest.getRequestInfo().getUserInfo().getUuid();
+            }
+        }
+        return userUuid;
     }
 
     public Integer getTotalCountApplication(String baseQuery, List<Object> preparedStmtList) {

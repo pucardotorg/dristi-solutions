@@ -1,0 +1,28 @@
+[
+  {
+    id: "475562bb-771e-478a-b1e0-972907c0e7d2",
+    tenantId: "kl",
+    schemaCode: "Order.Findings",
+    uniqueIdentifier: "7",
+    data: {
+      id: 7,
+      code: "PARTIALLYACQUITTED",
+      name: "PARTIALLYACQUITTED",
+      isactive: true,
+    },
+    isActive: true,
+  },
+  {
+    id: "608debb5-23a6-41a4-8701-904ceef838fc",
+    tenantId: "kl",
+    schemaCode: "Order.Findings",
+    uniqueIdentifier: "6",
+    data: {
+      id: 6,
+      code: "ACQUITTED",
+      name: "ACQUITTED",
+      isactive: true,
+    },
+    isActive: true,
+  },
+]

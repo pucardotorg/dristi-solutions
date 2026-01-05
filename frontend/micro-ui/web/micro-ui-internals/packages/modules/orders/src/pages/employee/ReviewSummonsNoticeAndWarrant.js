@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Header, ActionBar, InboxSearchComposer, SubmitBar, Toast, CloseSvg, BreadCrumb, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
-import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
 import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
 import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
@@ -14,7 +13,7 @@ import { ordersService, taskService, processManagementService } from "../../hook
 import axios from "axios";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
-import { convertToDateInputFormat, formatDate } from "../../utils/index";
+import { convertToDateInputFormat, formatDate, getPartyNameForInfos } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
@@ -128,6 +127,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
+  const [bulkRpadList, setBulkRpadList] = useState([]);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [showBulkSendConfirmModal, setShowBulkSendConfirmModal] = useState(false);
   const [isBulkLoading, setIsBulkLoading] = useState(false);
@@ -234,6 +234,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     Boolean(tasksData && courtId)
   );
 
+  const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
+
   const compositeItem = useMemo(
     () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === tasksData?.list[0]?.additionalDetails?.itemId),
     [orderData, tasksData]
@@ -320,7 +322,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: tenantId,
         })),
         RequestInfo: {
-          apiId: "Rainmaker",
+          apiId: "Dristi",
           authToken: authToken,
           userInfo: userInfo,
           msgId: `${Date.now()}|${window?.Digit?.i18n?.language || "en_IN"}`,
@@ -518,6 +520,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setActiveTabIndex(n);
     setBulkSignList([]);
     setBulkSendList([]);
+    setBulkRpadList([]);
     setReload(!reload);
   };
 
@@ -550,7 +553,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -561,7 +564,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -582,7 +585,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -593,13 +596,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -612,7 +615,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData, nextHearingDate]);
+  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -689,6 +692,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
       }
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+
+      if (currentConfig?.label === "PENDING_RPAD_COLLECTION") {
+        const payload = {
+          tasks: [
+            {
+              tenantId,
+              taskNumber: rowData?.taskNumber,
+            },
+          ],
+        };
+
+        try {
+          await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+        } catch (rpadError) {
+          console.error("Failed to update RPAD pending collection:", rpadError);
+          setShowErrorToast({ message: t("FAILED_TO_UPDATE_RPAD_COLLECTION"), error: true });
+          setTimeout(() => setShowErrorToast(null), 5000);
+          return { continue: false };
+        }
+      }
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
         signatureId !== "" || localStorageID
@@ -720,6 +744,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setIsSigned(true);
         setActionModalType("SIGNED");
       }
+
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         const { data: tasksData } = await refetch();
         if (tasksData) {
@@ -805,6 +830,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setShowBulkSignConfirmModal(true);
   }, [bulkSignList, t, hasSignAttachmentAccess, hasSignProclamationAccess, hasSignSummonsAccess, hasSignWarrantAccess, hasSignNoticeAccess]);
+
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
@@ -819,6 +845,62 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
     setShowBulkSendConfirmModal(true);
   }, [bulkSendList, t]);
+
+  const handleBulkPendingRpad = useCallback(async () => {
+    const selectedItems = bulkRpadList?.filter((item) => item?.isSelected) || [];
+    if (!selectedItems?.length) {
+      setShowErrorToast({
+        message: t("NO_DOCUMENTS_SELECTED"),
+        error: true,
+      });
+      setTimeout(() => {
+        setShowErrorToast(null);
+      }, 5000);
+      return;
+    }
+    try {
+      const payload = {
+        tasks: selectedItems.map((item) => ({
+          tenantId: tenantId,
+          taskNumber: item?.taskNumber,
+        })),
+      };
+
+      await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+
+      const total = selectedItems.length;
+      setShowErrorToast({ message: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total }), error: false });
+      setTimeout(() => setShowErrorToast(null), 3000);
+      setBulkRpadList((prev) => prev?.filter((i) => !selectedItems.some((s) => s.taskNumber === i.taskNumber)) || []);
+      setReload((prev) => !prev);
+    } catch (error) {
+      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
+      setTimeout(() => setShowErrorToast(null), 5000);
+    }
+  }, [bulkRpadList, t, tenantId]);
+
+  const handleSinglePendingRpad = useCallback(async () => {
+    try {
+      const payload = {
+        tasks: [
+          {
+            tenantId: tenantId,
+            taskNumber: rowData?.taskNumber,
+          },
+        ],
+      };
+
+      await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
+
+      setShowErrorToast({ message: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
+      setTimeout(() => setShowErrorToast(null), 3000);
+      setShowActionModal(false);
+      setReload((prev) => !prev);
+    } catch (error) {
+      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
+      setTimeout(() => setShowErrorToast(null), 5000);
+    }
+  }, [tenantId, rowData?.taskNumber, t]);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -930,7 +1012,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleActualBulkSign = useCallback(async () => {
     setIsBulkLoading(true);
 
-    const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
+    let selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
@@ -959,13 +1041,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
           tenantId: item?.tenantId || tenantId,
           errorMsg: item?.errorMsg || null,
         }));
-        await processManagementService.updateSignedProcess(
+        const signedResponse = await processManagementService.updateSignedProcess(
           {
             RequestInfo: {},
             signedTasks: signedTasksPayload,
           },
           {}
         );
+        const signedList = signedResponse?.tasks || signedResponse?.orders;
+        selectedItems = selectedItems?.filter((item) => signedList?.some((signed) => signed?.taskNumber === item?.taskNumber));
+
+        if (selectedItems?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: true,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
         setShowErrorToast({
           message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
           error: false,
@@ -1029,13 +1125,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
     const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
     setAllSelectedPolice(isPolice ? true : false);
   }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
+
   const handleBulkDownload = useCallback(async () => {
     try {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = bulkSendList?.some((item) => item?.isSelected && item?.documentStatus === "SIGNED") || currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       const selectedItems = isSignedTab
         ? bulkSendList?.filter((item) => item?.isSelected) || []
+        : isPendingRpadTab
+        ? bulkRpadList?.filter((item) => item?.isSelected) || []
         : bulkSignList?.filter((item) => item?.isSelected) || [];
 
       if (selectedItems.length === 0) {
@@ -1136,9 +1236,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }, 5000);
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       if (isSignedTab) {
         setBulkSendList([]);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList([]);
       } else {
         setBulkSignList([]);
       }
@@ -1147,6 +1250,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [
     bulkSignList,
     bulkSendList,
+    bulkRpadList,
     tenantId,
     downloadPdf,
     t,
@@ -1156,6 +1260,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     isJudge,
     setBulkSendList,
     setBulkSignList,
+    setBulkRpadList,
     setReload,
   ]);
 
@@ -1179,7 +1284,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
         (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
         isJudge
-          ? t("E_SIGN_TEXT")
+          ? t("PROCEED_TO_SIGN")
           : null,
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
@@ -1196,8 +1301,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
+          type: "modal",
+          className: "add-signature-modal",
           actionSaveLabel:
-            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("CONFIRM_SIGN"),
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
@@ -1285,6 +1392,130 @@ const ReviewSummonsNoticeAndWarrant = () => {
     handleSubmit,
     submissionData,
     orderType,
+  ]);
+
+  const pendingRpadModalConfig = useMemo(() => {
+    return {
+      handleClose: handleClose,
+      heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
+      actionSaveLabel:
+        (rowData?.taskType === "ATTACHMENT" && hasSignAttachmentAccess) ||
+        (rowData?.taskType === "PROCLAMATION" && hasSignProclamationAccess) ||
+        (rowData?.taskType === "SUMMONS" && hasSignSummonsAccess) ||
+        (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
+        (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
+        isJudge
+          ? t("PROCEED_TO_SIGN")
+          : null,
+      actionCancelLabel: t("SEND_FOR_SIGN"),
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          type: "document",
+          modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
+          actionSaveOnSubmit: () => {},
+          actionCancelOnSubmit: handleSinglePendingRpad,
+          hideSubmit:
+            isTypist ||
+            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+              rowData?.documentStatus === "SIGN_PENDING" &&
+              !isJudge),
+        },
+        {
+          heading: { label: t("ADD_SIGNATURE") },
+          type: "modal",
+          className: "add-signature-modal",
+          actionSaveLabel:
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
+          actionCancelLabel: t("BACK"),
+          modalBody: (
+            <div>
+              <AddSignatureComponent
+                t={t}
+                isSigned={isSigned}
+                setIsSigned={setIsSigned}
+                handleSigned={() => setIsSigned(true)}
+                rowData={rowData}
+                setSignatureId={setSignatureId}
+                signatureId={signatureId}
+                deliveryChannel={deliveryChannel}
+              />
+            </div>
+          ),
+          isDisabled: !isSigned ? true : false,
+          actionSaveOnSubmit: handleSubmitEsign,
+          async: true,
+        },
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+          ? [
+              {
+                type: isIcops?.state === "failed" ? "failure" : "success",
+                hideSubmit: true,
+                heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
+                actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
+                modalBody:
+                  isIcops?.state === "failed" ? (
+                    <div style={{ margin: "25px" }}>
+                      <h1>{isIcops?.message}</h1>
+                    </div>
+                  ) : isIcops?.state === "success" ? (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={t("CS_COMMON_CLOSE")}
+                      // closeButtonText={}
+                      // closeButtonAction={false}
+                      submitButtonAction={() => {
+                        setShowActionModal(false);
+                        setReload(!reload);
+                      }}
+                      t={t}
+                      submissionData={submissionDataIcops}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                    />
+                  ) : (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
+                      closeButtonAction={handleClose}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
+                      t={t}
+                      submissionData={submissionData}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                      isSubmitting={isSubmitting}
+                    />
+                  ),
+              },
+            ]
+          : [{}]),
+      ],
+    };
+  }, [
+    handleClose,
+    t,
+    rowData,
+    infos,
+    documents,
+    links,
+    isJudge,
+    deliveryChannel,
+    isSigned,
+    signatureId,
+    handleSubmitEsign,
+    isIcops,
+    successMessage,
+    handleSubmit,
+    submissionData,
+    orderType,
+    handleSinglePendingRpad,
   ]);
 
   const handleCloseActionModal = useCallback(() => {
@@ -1403,6 +1634,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     (form) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
       if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
         const updatedData = form.searchResult.map((item) => ({
           ...item,
@@ -1411,6 +1643,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
         if (isSignedTab) {
           setBulkSendList(updatedData);
+        } else if (isPendingRpadTab) {
+          setBulkRpadList(updatedData);
         } else {
           setBulkSignList(updatedData);
         }
@@ -1418,6 +1652,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
       if (isSignedTab) {
         setBulkSendList([]);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList([]);
       } else {
         setBulkSignList([]);
       }
@@ -1427,16 +1663,26 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const hasNoSelectedItems = useMemo(() => {
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-    const currentList = currentConfig?.label === "PENDING_SIGN" ? bulkSignList : bulkSendList;
+    const currentList =
+      currentConfig?.label === "PENDING_SIGN" ? bulkSignList : currentConfig?.label === "PENDING_RPAD_COLLECTION" ? bulkRpadList : bulkSendList;
     const selectedItems = currentList?.filter((item) => item?.isSelected) || [];
     const result = !currentList || currentList?.length === 0 || currentList?.every((item) => !item?.isSelected);
     return result;
-  }, [bulkSignList, bulkSendList, activeTabIndex, isJudge, courtId]);
+  }, [bulkSignList, bulkSendList, bulkRpadList, activeTabIndex, isJudge, courtId]);
+
+  const selectedRpadCount = useMemo(() => {
+    try {
+      return bulkRpadList?.filter((item) => item?.isSelected)?.length || 0;
+    } catch (e) {
+      return 0;
+    }
+  }, [bulkRpadList]);
 
   const config = useMemo(() => {
     const updateTaskFunc = (taskData, checked) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
+      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
       const updateList = (prev) => {
         if (!prev || prev.length === 0) {
@@ -1459,6 +1705,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       if (isSignedTab) {
         setBulkSendList(updateList);
+      } else if (isPendingRpadTab) {
+        setBulkRpadList(updateList);
       } else {
         setBulkSignList(updateList);
       }
@@ -1544,17 +1792,183 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewWarrantAccess,
     hasViewNoticeAccess,
   ]);
+
+  // Header checkbox functionality: Controls all visible row checkboxes.
+  // When header is checked/unchecked, all rows follow. When any individual row checkbox is clicked,
+  // the header unchecks to switch control to individual selection mode.
+  useEffect(() => {
+    // Flag to track programmatic clicks from header (to avoid unchecking header)
+    let isHeaderControlledClick = false;
+
+    // Click handler for header checkbox - controls ALL visible row checkboxes
+    const handleHeaderCheckboxClick = (e) => {
+      e.stopPropagation();
+      const headerCheckbox = e.target;
+      const shouldBeChecked = headerCheckbox.checked;
+
+      // Find all row checkboxes in the table
+      const tableBody = document.querySelector("tbody");
+      if (tableBody) {
+        const allRows = tableBody.querySelectorAll("tr");
+        const checkboxesToClick = [];
+
+        // Collect all checkboxes that need to be toggled
+        allRows.forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && rowCheckbox.checked !== shouldBeChecked) {
+            checkboxesToClick.push(rowCheckbox);
+          }
+        });
+
+        // Set flag to indicate these are header-controlled clicks
+        if (checkboxesToClick.length > 0) {
+          isHeaderControlledClick = true;
+
+          // Click each checkbox to trigger BulkCheckbox's onChange handler
+          // This will call colData?.updateOrderFunc(rowData, !checked) for each row
+          checkboxesToClick.forEach((checkbox) => {
+            checkbox.click();
+          });
+
+          // Reset flag after all clicks are processed
+          setTimeout(() => {
+            isHeaderControlledClick = false;
+          }, 200);
+        }
+      }
+    };
+
+    // Click handler for any row checkbox - uncheck header when clicked individually
+    const handleRowCheckboxClick = (e) => {
+      // Only uncheck header if this is NOT a header-controlled click
+      if (!isHeaderControlledClick) {
+        // Find the header checkbox
+        const headerCheckbox = document.querySelector('input[type="checkbox"][data-header-checkbox="true"]');
+        if (headerCheckbox && headerCheckbox.checked) {
+          // Uncheck the header checkbox - control is now individual
+          headerCheckbox.checked = false;
+        }
+      }
+    };
+
+    const injectHeaderCheckbox = () => {
+      // Only show header checkbox for tabs that need it (PENDING_SIGN, SIGNED, PENDING_RPAD_COLLECTION)
+      // Hide it for SENT and COMPLETED tabs
+      const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+      const currentTabLabel = currentConfig?.label || config?.label;
+      const tabsWithHeaderCheckbox = ["PENDING_SIGN", "SIGNED", "PENDING_RPAD_COLLECTION"];
+
+      if (!tabsWithHeaderCheckbox.includes(currentTabLabel)) {
+        // Remove header checkbox if it exists for tabs that shouldn't have it
+        const existingHeaderCheckbox = document.querySelector('input[type="checkbox"][data-header-checkbox="true"]');
+        if (existingHeaderCheckbox) {
+          const selectHeader = existingHeaderCheckbox.closest('th, [role="columnheader"]');
+          if (selectHeader) {
+            selectHeader.innerHTML = "";
+          }
+        }
+        return;
+      }
+
+      // Find the table header row - look for th elements or header cells
+      const tableHeaders = document.querySelectorAll('th, [role="columnheader"]');
+
+      // Find the SELECT column header (first column)
+      let selectHeader = null;
+      for (let i = 0; i < tableHeaders.length; i++) {
+        const header = tableHeaders[i];
+        const headerText = header.textContent?.trim() || "";
+        // Check if this is the SELECT column (first column, usually empty or has SELECT text)
+        if (i === 0 || headerText === "" || headerText.toLowerCase().includes("select")) {
+          selectHeader = header;
+          break;
+        }
+      }
+
+      if (selectHeader) {
+        // Check if checkbox already exists
+        const existingCheckbox = selectHeader.querySelector('input[type="checkbox"]');
+        if (!existingCheckbox) {
+          // Create checkbox element
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "custom-checkbox header-checkbox";
+          checkbox.style.cssText = "cursor: pointer; width: 20px; height: 20px;";
+          checkbox.setAttribute("data-header-checkbox", "true");
+
+          // Add click handler
+          checkbox.addEventListener("click", handleHeaderCheckboxClick);
+
+          // Clear header content and add checkbox
+          selectHeader.innerHTML = "";
+          selectHeader.appendChild(checkbox);
+        } else if (!existingCheckbox.hasAttribute("data-header-checkbox")) {
+          // Checkbox exists but doesn't have handler, add it
+          existingCheckbox.setAttribute("data-header-checkbox", "true");
+          existingCheckbox.addEventListener("click", handleHeaderCheckboxClick);
+        }
+      }
+    };
+
+    // Function to attach handlers to ALL row checkboxes
+    const attachRowCheckboxHandlers = () => {
+      const tableBody = document.querySelector("tbody");
+      if (tableBody) {
+        const allRows = tableBody.querySelectorAll("tr");
+        allRows.forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && !rowCheckbox.hasAttribute("data-row-handler-attached")) {
+            // Mark as having handler attached
+            rowCheckbox.setAttribute("data-row-handler-attached", "true");
+            // Add click handler to uncheck header when clicked individually
+            rowCheckbox.addEventListener("click", handleRowCheckboxClick);
+          }
+        });
+      }
+    };
+
+    // Try to inject immediately
+    injectHeaderCheckbox();
+    attachRowCheckboxHandlers();
+
+    // Also try after a short delay to handle async table rendering
+    const timeoutId = setTimeout(() => {
+      injectHeaderCheckbox();
+      attachRowCheckboxHandlers();
+    }, 100);
+
+    // Use MutationObserver to watch for table changes
+    const observer = new MutationObserver(() => {
+      injectHeaderCheckbox();
+      attachRowCheckboxHandlers();
+    });
+
+    // Observe the inbox-search-wrapper container for changes
+    const container = document.querySelector(".inbox-search-wrapper");
+    if (container) {
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [reload, activeTabIndex, config, isJudge, courtId]);
+
   return (
     <React.Fragment>
       {isLoading ? (
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={`bulk-esign-order-view  ${activeTabIndex === 0 || activeTabIndex === 1 ? "select" : ""}`}>
+          <div className={`bulk-esign-order-view  ${["PENDING_SIGN", "SIGNED", "PENDING_RPAD_COLLECTION"].includes(config?.label) ? "select" : ""}`}>
             <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
               {t("REVIEW_PROCESS")}
             </div>
-            <div className="inbox-search-wrapper">
+            <div className="review-process-page inbox-search-wrapper">
               <InboxSearchComposer
                 key={`inbox-composer-${reload}`}
                 configs={config}
@@ -1565,7 +1979,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 onFormValueChange={onFormValueChange}
                 customStyle={sectionsParentStyle}
               ></InboxSearchComposer>
-              {/* (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) */}
               {showActionModal && (
                 <DocumentModal
                   config={
@@ -1577,6 +1990,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       ? signedModalConfig
                       : config?.label === "SENT"
                       ? sentModalConfig
+                      : config?.label === "PENDING_RPAD_COLLECTION" && actionModalType === "SIGN_PENDING"
+                      ? pendingRpadModalConfig
+                      : config?.label === "PENDING_RPAD_COLLECTION" && actionModalType !== "SIGN_PENDING"
+                      ? signedModalConfig
                       : signedModalConfig
                   }
                   currentStep={step}
@@ -1610,6 +2027,60 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 {hasEditTaskAccess && (
                   <SubmitBar label={t("SEND_SELECTED_DOCUMENTS")} onSubmit={handleBulkSend} disabled={hasNoSelectedItems || isBulkSending} />
                 )}
+              </div>
+            </div>
+          )}
+          {config?.label === "PENDING_RPAD_COLLECTION" && (
+            <div className={"bulk-submit-bar"}>
+              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                {selectedRpadCount > 0 && (
+                  <div
+                    className="bulk-info-text"
+                    style={{
+                      boxSizing: "border-box",
+                      display: "inline-flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: 12,
+                      minWidth: 206,
+                      height: 40,
+                      whiteSpace: "nowrap",
+                      background: "#FFFFFF",
+                      border: "0.4px solid #E2E8F0",
+                      borderRadius: 4,
+                      color: "#0A0A0A",
+                      fontFamily: "Roboto, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      fontSize: 16,
+                      lineHeight: "19px",
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ display: "block", flexShrink: 0 }}
+                    >
+                      <circle cx="12" cy="12" r="10" stroke="#1D7AEA" strokeWidth="1.2" fill="#EFF6FF" />
+                      <path d="M12 10.5v6" stroke="#1D7AEA" strokeWidth="1.2" strokeLinecap="round" />
+                      <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
+                    </svg>
+                    <span style={{ whiteSpace: "nowrap" }}>
+                      {selectedRpadCount} {t("PROCESSES_SELECTED")}
+                    </span>
+                  </div>
+                )}
+                <SubmitBar
+                  label={t("DOWNLOAD_SELECTED_DOCUMENTS")}
+                  onSubmit={handleBulkDownload}
+                  disabled={hasNoSelectedItems}
+                  style={{ width: "auto" }}
+                />
+                {canSign && <SubmitBar label={t("SEND_FOR_BULK_SIGN")} onSubmit={handleBulkPendingRpad} disabled={hasNoSelectedItems} />}
               </div>
             </div>
           )}
@@ -1680,7 +2151,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <Banner
               whichSvg={"tick"}
               successful={true}
-              message={t("YOU_HAVE_SUCCESSFULLY_SIGNED_ALL_THE_MARKED_DOCUMENT")}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${bulkSendList?.length} ${t("MARKED_DOCUMENT")}`}
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%", marginTop: "0px" }}
             />

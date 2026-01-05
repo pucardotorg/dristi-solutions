@@ -22,15 +22,17 @@ async function processVakalatSection(
     "vakalat"
   );
 
-  const section = vakalatnamaSection[0];
-
-  const sectionPosition = indexCopy.sections.findIndex(
+  const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "vakalat"
   );
 
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
     sectionPosition
+  );
+
+  const vakalatsIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "vakalat"
   );
 
   const litigants = courtCase?.litigants?.map((litigant) => ({
@@ -45,9 +47,11 @@ async function processVakalatSection(
 
   const vakalatMap = new Map();
 
-  if (vakalatnamaSection && Array.isArray(litigants)) {
+  if (vakalatnamaSection?.length !== 0 && Array.isArray(litigants)) {
+    const section = vakalatnamaSection[0];
+
     litigants
-      .map((litigant) => {
+      ?.map((litigant) => {
         // const representation = representative.representing[0];
         if (litigant.representatives.length === 0) {
           const fileStoreId = litigant?.documents?.[0]?.fileStore;
@@ -99,14 +103,14 @@ async function processVakalatSection(
           }
         }
       })
-      .filter(Boolean);
+      ?.filter(Boolean);
 
     const vakalats = Array.from(vakalatMap.values());
 
     vakalats.sort((a, b) => a.dateOfAddition - b.dateOfAddition);
 
     const vakalatLineItems = await Promise.all(
-      vakalats.map(async (vakalat, index) => {
+      vakalats?.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
           const documentPath = `${dynamicSectionNumber}.${index + 1} ${
             vakalat.heading
@@ -151,13 +155,9 @@ async function processVakalatSection(
         }
       })
     );
-
-    // update index
-
-    const vakalatsIndexSection = indexCopy.sections.find(
-      (section) => section.name === "vakalat"
-    );
-    vakalatsIndexSection.lineItems = vakalatLineItems.filter(Boolean);
+    vakalatsIndexSection.lineItems = vakalatLineItems?.filter(Boolean);
+  } else {
+    vakalatsIndexSection.lineItems = [];
   }
 }
 

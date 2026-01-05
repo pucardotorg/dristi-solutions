@@ -20,6 +20,48 @@ const CloseBtn = (props) => {
   );
 };
 
+const getStyles = (key) => {
+  const styles = {
+    container: {
+      position: "relative",
+      padding: "16px 24px",
+      background: "#f7f5f3",
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "20px",
+      alignItems: "flex-start",
+    },
+
+    infoRow: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: "10px",
+    },
+
+    infoKey: {
+      width: "fit-content",
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 700,
+      lineHeight: "18.75px",
+      color: "#0a0a0a",
+    },
+
+    infoValue: {
+      width: "fit-content",
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 400,
+      lineHeight: "18.75px",
+      color: "#3d3c3c",
+    },
+  };
+
+  return styles[key];
+};
+
 // sort the Documents Based on DocumentOrder
 const _getSortedByOrder = (documents) => {
   return documents?.sort((a, b) => {
@@ -64,6 +106,9 @@ function ReviewSubmissionModal({
   documents = [],
   setApplicationPdfFileStoreId,
   courtId,
+  cancelLabel,
+  handleSubmit,
+  handleCancel
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -107,7 +152,7 @@ function ReviewSubmissionModal({
             authToken: Digit.UserService.getUser().access_token,
             userInfo: Digit.UserService.getUser()?.info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         responseType: "blob",
@@ -152,81 +197,53 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={applicationType !== "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && t("CS_COMMON_BACK")}
-      actionCancelOnSubmit={handleBack}
+      actionCancelLabel={t(cancelLabel)}
+      actionCancelOnSubmit={handleCancel}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
-      actionSaveOnSubmit={() => {
-        const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
-
-        onDocumentUpload(pdfFile, pdfFile.name)
-          .then((document) => {
-            const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-            if (fileStoreId) {
-              setApplicationPdfFileStoreId(fileStoreId);
-            }
-          })
-          .then(() => {
-            setShowsignatureModal(true);
-            setShowReviewModal(false);
-          })
-          .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-          });
-      }}
+      actionSaveOnSubmit={() => handleSubmit({applicationPreviewPdf, applicationPreviewFileName})}
       className={"review-submission-appl-modal"}
     >
       <div className="review-submission-appl-body-main">
         <div className="application-details">
-          <div className="application-info" style={{ flexWrap: "wrap" }}>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("APPLICATION_TYPE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{t(applicationType)}</h3>
-              </div>
+          <div style={getStyles("container")}>
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("APPLICATION_TYPE")}</h3>
+              <h3 style={getStyles("infoValue")}>{t(applicationType)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SUBMISSION_DATE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{convertToDateInputFormat(submissionDate)}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SUBMISSION_DATE")}</h3>
+              <h3 style={getStyles("infoValue")}>{convertToDateInputFormat(submissionDate)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SENDER")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{sender || application?.additionalDetails?.owner || ""}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
+              <h3 style={getStyles("infoValue")}>{sender || application?.additionalDetails?.owner || ""}</h3>
             </div>
+
             {additionalDetails && (
-              <div className="info-row">
-                <div className="info-key">
-                  <h3>{t("ADDITIONAL_DETAILS")}</h3>
-                </div>
-                <div className="info-value">
-                  <h3>{t(additionalDetails)}</h3>
-                </div>
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("ADDITIONAL_DETAILS")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
               </div>
             )}
           </div>
+
           <div className="application-view">
             {showDocument}
-            {_getSortedByOrder(documents)?.map((docs) => (
-              <DocViewerWrapper
-                key={docs.fileStore}
-                fileStoreId={docs.fileStore}
-                tenantId={tenantId}
-                docWidth="100%"
-                docHeight="unset"
-                showDownloadOption={false}
-                documentName={docs.fileName}
-              />
-            ))}
+            {applicationPreviewPdf &&
+              _getSortedByOrder(documents)?.map((docs) => (
+                <DocViewerWrapper
+                  key={docs.fileStore}
+                  fileStoreId={docs.fileStore}
+                  tenantId={tenantId}
+                  docWidth="100%"
+                  docHeight="unset"
+                  showDownloadOption={false}
+                  documentName={docs?.fileName || docs?.additionalDetails?.name || docs?.name}
+                />
+              ))}
           </div>
         </div>
       </div>

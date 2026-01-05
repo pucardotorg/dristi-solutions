@@ -14,13 +14,6 @@ export const applicationTypeConfig = [
           optionsKey: "code",
           error: "required ",
           styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "OrderType",
-            localePrefix: "ORDER_TYPE",
-            select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
-          },
         },
       },
     ],
@@ -104,6 +97,7 @@ export const configs = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "orderAdditionalNotes",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -297,6 +291,7 @@ export const configsOrderSection202CRPC = [
         key: "lawSections",
         schemaKeyPath: "orderDetails.sectionOfLaw",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -366,6 +361,7 @@ export const configsOrderSection202CRPC = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -455,6 +451,7 @@ export const configsOrderMandatorySubmissions = [
             moduleName: "Order",
             masterName: "DocumentType",
             localePrefix: "",
+            select: "(data) => data['Order'].DocumentType?.sort((a,b)=>a.value.localeCompare(b.value)).map(item => item)",
           },
         },
       },
@@ -800,6 +797,7 @@ export const configsOrderSubmissionExtension = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -821,73 +819,6 @@ export const configsOrderTranferToADR = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId", hideInForm: true },
-      },
-      {
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        label: "JUDGE_NAME",
-        isMandatory: true,
-        key: "judgeName",
-        type: "text",
-        populators: { name: "judgeName", hideInForm: true },
-      },
-      {
-        label: "DATE_OF_ORDER",
-        isMandatory: true,
-        key: "dateOfOrder",
-        type: "date",
-        populators: { name: "dateOfOrder", hideInForm: true },
-      },
-      {
-        label: "DATE_END_ADR",
-        isMandatory: true,
-        key: "dateOfEndADR",
-        schemaKeyPath: "orderDetails.dateOfEndADR",
-        transformer: "date",
-        type: "date",
-        populators: {
-          name: "dateOfEndADR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
-      {
         label: "ADR_MODE",
         isMandatory: true,
         key: "ADRMode",
@@ -904,37 +835,104 @@ export const configsOrderTranferToADR = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "ADRMode",
-            select: "(data) => {return data['Order'].ADRMode?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].ADRMode?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
       {
-        label: "JUDGE_DESIGNATION",
+        label: "DATE_END_ADR",
         isMandatory: true,
-        key: "judgeDesignation",
-        type: "text",
-        populators: { name: "judgeDesignation", hideInForm: true },
-      },
-    ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
+        key: "dateOfEndADR",
+        schemaKeyPath: "orderDetails.dateOfEndADR",
+        transformer: "date",
+        type: "date",
         populators: {
-          inputs: [
+          name: "dateOfEndADR",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+      {
+        type: "date",
+        label: "DATE_OF_NEXT_HEARING",
+        key: "hearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "DATE_OF_NEXT_HEARING_TOOLTIP",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "hearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "MEDIATION_CENTRE",
+        isMandatory: true,
+        key: "mediationCentre",
+        schemaKeyPath: "orderDetails.mediationCentre",
+        transformer: "customDropdown",
+        type: "dropdown",
+        populators: {
+          name: "mediationCentre",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%", paddingBottom: "8px" },
+          required: true,
+          isMandatory: true,
+          options: [
             {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
+              code: "KOLLAM_MEDIATION_CENTRE",
+              name: "KOLLAM_MEDIATION_CENTRE",
             },
           ],
-          hideInForm: true,
+        },
+      },
+      {
+        label: "MODE_OF_MEDIATION_SIGNING",
+        isMandatory: true,
+        key: "modeOfSigning",
+        schemaKeyPath: "orderDetails.modeOfSigning",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "modeOfSigning",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          styles: { marginBottom: "16px", paddingBottom: "14px" },
+          customStyle: { marginBottom: "0px" },
+          options: [
+            {
+              code: "E_SIGN",
+              name: "INITIATE_E-SIGN",
+            },
+            {
+              code: "UPLOAD_SIGNED_COPY",
+              name: "INITIATE_UPLOAD",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "CustomText",
+        key: "mediationNote",
+        populators: {
+          customStyle: { marginBottom: "0px" },
+          inputs: [
+            {
+              textStyles: { color: "#2563EB" },
+              infoText: "MEDIATION_REFERRAL_FORM_NOTE",
+            },
+          ],
         },
       },
     ],
@@ -995,11 +993,6 @@ export const configsScheduleHearingDate = [
           required: true,
           isMandatory: true,
           hideInForm: false,
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -1089,6 +1082,7 @@ export const configsScheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1160,11 +1154,6 @@ export const configsScheduleNextHearingDate = [
           isMandatory: true,
           hideInForm: false,
           styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -1294,6 +1283,7 @@ export const configsScheduleNextHearingDate = [
         component: "SelectCustomTextArea",
         key: "hearingSummary",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1314,6 +1304,7 @@ export const configsScheduleNextHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1362,6 +1353,7 @@ export const configsRejectRescheduleHeadingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1410,6 +1402,7 @@ export const configsRejectCheckout = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1507,11 +1500,6 @@ export const configsRescheduleHearingDate = [
           required: true,
           isMandatory: true,
           hideInForm: false,
-          mdmsConfig: {
-            masterName: "HearingType",
-            moduleName: "Hearing",
-            localePrefix: "HEARING_PURPOSE",
-          },
         },
       },
       {
@@ -1569,6 +1557,7 @@ export const configsRescheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1707,6 +1696,7 @@ export const configCheckout = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1827,6 +1817,7 @@ export const configsInitiateRescheduleHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1921,6 +1912,7 @@ export const configsAssignDateToRescheduledHearing = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2015,6 +2007,7 @@ export const configsAssignNewHearingDate = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2086,6 +2079,7 @@ export const configRejectSubmission = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           hideInForm: true,
           inputs: [
@@ -2185,6 +2179,7 @@ export const configsVoluntarySubmissionStatus = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2312,6 +2307,7 @@ export const configsCaseTransfer = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2361,6 +2357,7 @@ export const configsCaseTransfer = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2487,6 +2484,7 @@ export const configsCaseTransferAccept = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2527,6 +2525,27 @@ export const configsCaseTransferAccept = [
           },
         },
       },
+      {
+        label: "NATURE_OF_DISPOSAL",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "natureOfDisposal",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "natureOfDisposal",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
+        },
+      },
     ],
   },
   {
@@ -2536,6 +2555,7 @@ export const configsCaseTransferAccept = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2663,6 +2683,7 @@ export const configsCaseTransferReject = [
         transformer: "customTextArea",
         isMandatory: true,
         disable: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2712,6 +2733,7 @@ export const configsCaseTransferReject = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2747,7 +2769,7 @@ export const configsCaseTransferReject = [
   },
 ];
 
-export const configsCaseSettlement = [
+export const configsCaseSettlementAccept = [
   {
     body: [
       {
@@ -2835,7 +2857,191 @@ export const configsCaseSettlement = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "SettlementMechanism",
-            select: "(data) => {return data['Order'].SettlementMechanism?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].SettlementMechanism?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
+        },
+      },
+      {
+        label: "SETTLEMENT_IMPLEMETED",
+        isMandatory: true,
+        key: "settlementImplemented",
+        schemaKeyPath: "orderDetails.isSettlementImplemented",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "settlementImplemented",
+          optionsKey: "name",
+          title: "",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "Yes",
+              name: "ES_COMMON_YES",
+            },
+            {
+              code: "No",
+              name: "ES_COMMON_NO",
+            },
+          ],
+        },
+      },
+      {
+        label: "NATURE_OF_DISPOSAL",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "natureOfDisposal",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "natureOfDisposal",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+          hideInForm: true,
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "JUDGE_NAME",
+        isMandatory: true,
+        key: "judgeName",
+        type: "text",
+        populators: { name: "judgeName", hideInForm: true },
+      },
+      {
+        label: "JUDGE_DESIGNATION",
+        isMandatory: true,
+        key: "judgeDesignation",
+        type: "text",
+        populators: { name: "judgeDesignation", hideInForm: true },
+      },
+    ],
+  },
+];
+
+export const configsCaseSettlementReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "COURT_NAME",
+        isMandatory: true,
+        key: "courtName",
+        type: "text",
+        populators: { name: "courtName", hideInForm: true },
+      },
+      {
+        label: "CASE_NAME",
+        isMandatory: true,
+        key: "caseName",
+        type: "text",
+        populators: { name: "caseName", hideInForm: true },
+      },
+      {
+        label: "CNR_NUMBER",
+        isMandatory: true,
+        key: "cnrNumber",
+        type: "text",
+        populators: { name: "cnrNumber", hideInForm: true },
+      },
+      {
+        label: "DATE_OF_ORDER",
+        isMandatory: true,
+        key: "dateOfOrder",
+        type: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "ONLY_CURRENT_AND_PAST_DATES_ARE_ALLOWED",
+        populators: {
+          name: "dateOfOrder",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "maxTodayDateValidation",
+            },
+          },
+          hideInForm: true,
+        },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "SETTLEMENT_AGREEMENT_DATE",
+        isMandatory: true,
+        key: "settlementAgreementDate",
+        schemaKeyPath: "orderDetails.settlementDate",
+        transformer: "date",
+        type: "date",
+        populators: {
+          name: "settlementAgreementDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "SETTLEMENT_MECHANISM",
+        isMandatory: true,
+        key: "settlementMechanism",
+        schemaKeyPath: "orderDetails.settlementMechanism",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "settlementMechanism",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "SettlementMechanism",
+            select: "(data) => {return data['Order'].SettlementMechanism?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -2874,6 +3080,7 @@ export const configsCaseSettlement = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2935,10 +3142,10 @@ export const configsIssueSummons = [
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "SummonsOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_SUMMON",
         populators: {
           inputs: [
@@ -2946,10 +3153,7 @@ export const configsIssueSummons = [
               name: "select party",
               type: "dropdown",
               addWitness: true,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },
@@ -3005,6 +3209,7 @@ export const configsIssueSummons = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3080,17 +3285,18 @@ export const configsIssueNotice = [
           mdmsConfig: {
             moduleName: "Notice",
             masterName: "NoticeType",
-            select: "(data) => {return data?.['Notice']?.NoticeType?.map((item) => {return {...item, code: item?.type}})}",
+            select:
+              "(data) => {return data?.['Notice']?.NoticeType?.sort((a,b)=>a.type.localeCompare(b.type)).map((item) => {return {...item, code: item?.type}})}",
           },
         },
       },
       {
         isMandatory: true,
         type: "component",
-        component: "SummonsOrderComponent",
+        component: "NoticeSummonPartyComponent",
         key: "noticeOrder",
         schemaKeyPath: "orderDetails.respondentName",
-        transformer: "summonsOrderPartyName",
+        transformer: "noticeOrderPartyName",
         label: "PARTY_TO_NOTICE",
         populators: {
           inputs: [
@@ -3098,10 +3304,7 @@ export const configsIssueNotice = [
               name: "select party",
               type: "dropdown",
               addWitness: false,
-            },
-            {
-              name: "select deleivery channels",
-              type: "checkbox",
+              allowMultiSelect: true,
             },
           ],
         },
@@ -3157,6 +3360,7 @@ export const configsIssueNotice = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3270,6 +3474,7 @@ export const configsIssueOfWarrants = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3432,6 +3637,7 @@ export const configsCaseWithdrawalAccept = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3443,6 +3649,27 @@ export const configsCaseWithdrawalAccept = [
             },
           ],
           hideInForm: true,
+        },
+      },
+      {
+        label: "NATURE_OF_DISPOSAL",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "natureOfDisposal",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "natureOfDisposal",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
         },
       },
     ],
@@ -3500,6 +3727,7 @@ export const configsCaseWithdrawalReject = [
         component: "SelectCustomTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3545,6 +3773,7 @@ export const configsOthers = [
         component: "SelectCustomTextArea",
         key: "otherDetails",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -3647,6 +3876,7 @@ export const configsBail = [
             masterName: "BailType",
             moduleName: "Order",
             localePrefix: "BAIL_TYPE",
+            select: "(data) => data['Order'].BailType?.sort((a,b)=>a.type.localeCompare(b.type)).map(item => item)",
           },
         },
       },
@@ -3681,7 +3911,8 @@ export const configsBail = [
                 mdmsConfig: {
                   moduleName: "Application",
                   masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Application'].DocumentType?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                 },
               },
             },
@@ -3877,7 +4108,7 @@ export const configsCreateOrderWarrant = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "WarrantType",
-            select: "(data) => {return data['Order'].WarrantType?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].WarrantType?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -3921,6 +4152,7 @@ export const configsCreateOrderWarrant = [
         component: "SelectCustomTextArea",
         key: "warrantText",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4453,7 +4685,28 @@ export const configsJudgement = [
           mdmsConfig: {
             moduleName: "Order",
             masterName: "Findings",
-            select: "(data) => {return data['Order'].Findings?.map((item) => {return item;});}",
+            select: "(data) => {return data['Order'].Findings?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
+        },
+      },
+      {
+        label: "NATURE_OF_DISPOSAL",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "natureOfDisposal",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "natureOfDisposal",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
           },
         },
       },
@@ -4548,6 +4801,15 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4576,16 +4838,11 @@ export const configsIssueBailAcceptance = [
         populators: {
           styles: { maxWidth: "100%" },
           name: "bailType",
-          optionsKey: "type",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
-          mdmsConfig: {
-            masterName: "BailType",
-            moduleName: "Order",
-            localePrefix: "BAIL_TYPE",
-            select: "(data) => {return data['Order'].BailType?.map((item) => {return {...item, code: item.type};});}",
-          },
+          defaultValue: { code: "SURETY", name: "SURETY" },
         },
       },
       {
@@ -4604,7 +4861,7 @@ export const configsIssueBailAcceptance = [
       {
         type: "number",
         label: "NO_OF_SURETIES",
-        isMandatory: true,
+        isMandatory: false,
         key: "noOfSureties",
         schemaKeyPath: "orderDetails.noOfSureties",
         populators: {
@@ -4649,6 +4906,7 @@ export const configsIssueBailAcceptance = [
         // schemaKeyPath: "orderDetails.bailSummary",
         // transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4669,6 +4927,7 @@ export const configsIssueBailAcceptance = [
         isMandatory: false,
         // schemaKeyPath: "orderDetails.otherConditions",
         // transformer: "customTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4706,6 +4965,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailParty",
         disable: true,
         populators: {
+          hideInForm: true,
           name: "bailParty",
           styles: { maxWidth: "100%" },
           error: "required ",
@@ -4718,6 +4978,7 @@ export const configsIssueBailReject = [
         schemaKeyPath: "orderDetails.bailSummaryCircumstancesReject",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4753,11 +5014,13 @@ export const configsIssueBailReject = [
               },
             },
           ],
+          hideInForm: true,
         },
       },
     ],
   },
 ];
+
 export const configsSetTermBail = [
   {
     body: [
@@ -4784,6 +5047,7 @@ export const configsSetTermBail = [
         isMandatory: true,
         schemaKeyPath: "orderDetails.bailSummaryCircumstancesTerms",
         transformer: "customTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4803,6 +5067,7 @@ export const configsSetTermBail = [
         isMandatory: true,
         schemaKeyPath: "orderDetails.additionalCommentsTermsOfBail",
         transformer: "customTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4864,6 +5129,7 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.reasonForSeekingDca",
         // transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4883,6 +5149,7 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
         // transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4902,6 +5169,7 @@ export const configsAcceptRejectDelayCondonation = [
         // schemaKeyPath: "orderDetails.additionalCommentsDca",
         // transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4980,6 +5248,7 @@ export const configsAdmitDismissCase = [
         schemaKeyPath: "orderDetails.reasonForAdmitDismissCase",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4998,6 +5267,7 @@ export const configsAdmitDismissCase = [
         schemaKeyPath: "orderDetails.additionalCommentsAdmitDismissCase",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5050,6 +5320,7 @@ export const replaceAdvocateConfig = [
         schemaKeyPath: "orderDetails.reasonForWithdrawal",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5069,6 +5340,7 @@ export const replaceAdvocateConfig = [
         // schemaKeyPath: "orderDetails.additionalComments",
         // transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5122,6 +5394,7 @@ export const configsAdmitCase = [
         // schemaKeyPath: "orderDetails.reasonForAdmitCase",
         // transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5141,6 +5414,7 @@ export const configsAdmitCase = [
         // schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
         // transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5194,6 +5468,7 @@ export const configsDismissCase = [
         // schemaKeyPath: "orderDetails.reasonForDismissCase",
         // transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5213,6 +5488,7 @@ export const configsDismissCase = [
         // schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
         // transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5224,6 +5500,27 @@ export const configsDismissCase = [
             },
           ],
           hideInForm: true,
+        },
+      },
+      {
+        label: "NATURE_OF_DISPOSAL",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "natureOfDisposal",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "natureOfDisposal",
+            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+          },
         },
       },
     ],
@@ -5273,6 +5570,7 @@ export const configsApproveRejectLitigantDetailsChange = [
         schemaKeyPath: "orderDetails.reasonForLitigantDetailsChange",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5291,6 +5589,7 @@ export const configsApproveRejectLitigantDetailsChange = [
         // schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
         // transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5310,33 +5609,7 @@ export const configsApproveRejectLitigantDetailsChange = [
 
 export const configsCreateOrderProclamation = [
   {
-    defaultValues: {
-      orderType: {
-        id: 43,
-        type: "PROCLAMATION",
-        isactive: true,
-        code: "PROCLAMATION",
-      },
-    },
     body: [
-      {
-        isMandatory: true,
-        key: "Order Type",
-        type: "dropdown",
-        label: "ORDER_TYPE",
-        disable: true,
-        populators: {
-          name: "orderType",
-          optionsKey: "code",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            masterName: "OrderType",
-            moduleName: "Order",
-            localePrefix: "ORDER_TYPE",
-          },
-        },
-      },
       {
         label: "DATE_OF_HEARING",
         isMandatory: true,
@@ -5375,6 +5648,7 @@ export const configsCreateOrderProclamation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "proclamationText",
+        isInfinite: true,
         // isMandatory: true,
         populators: {
           inputs: [
@@ -5460,6 +5734,7 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "chargeDays",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5476,6 +5751,7 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "district",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5492,6 +5768,7 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "village",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5508,6 +5785,7 @@ export const configsCreateOrderAttachment = [
         component: "SelectCustomTextArea",
         key: "attachmentText",
         // isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5534,6 +5812,7 @@ export const configsMoveCaseToLongPendingRegister = [
         schemaKeyPath: "orderDetails.comments",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5585,6 +5864,7 @@ export const configsMoveCaseOutOfLongPendingRegister = [
         schemaKeyPath: "orderDetails.comments",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -5622,11 +5902,6 @@ export const purposeOfHearingConfig = {
     required: true,
     isMandatory: true,
     hideInForm: false,
-    mdmsConfig: {
-      masterName: "HearingType",
-      moduleName: "Hearing",
-      localePrefix: "HEARING_PURPOSE",
-    },
   },
 };
 
@@ -5742,6 +6017,9 @@ export const configsCost = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
           prefix: "",
+          validation: {
+            pattern: "^[0-9]+(\\.[0-9]{0,2})?$",
+          },
         },
       },
       {
@@ -5866,6 +6144,39 @@ export const configsWitnessBatta = [
               masterName: "minTodayDateValidation",
             },
           },
+        },
+      },
+    ],
+  },
+];
+
+export const configsAbateCase = [
+  {
+    body: [
+      {
+        label: "WAS_DISPOSAL_CONTESTED_OR_UNCONTESTED",
+        isMandatory: true,
+        key: "natureOfDisposal",
+        schemaKeyPath: "orderDetails.natureOfDisposal",
+        transformer: "customDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "natureOfDisposal",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "CONTESTED",
+              name: "Contested",
+            },
+            {
+              code: "UNCONTESTED",
+              name: "Uncontested",
+            },
+          ],
         },
       },
     ],

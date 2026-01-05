@@ -8,6 +8,7 @@ import { submissionService } from "../../../../submissions/src/hooks/services/in
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
+import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 
 const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
   const { t } = useTranslation();
@@ -22,6 +23,8 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
   const [isWitnessAdding, setIsWitnessAdding] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [currentFormErrors, setCurrentFormErrors] = useState({});
+  const [addressErrors, setAddressError] = useState([]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -88,6 +91,13 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       });
     });
   }, [formConfigs, t]);
+
+  const addressConfig = useMemo(() => {
+    const addressConfig = formConfigs?.[0]
+      ?.find((conf) => conf?.body?.some((b) => b?.key === "addressDetails"))
+      ?.body.find((b) => b?.key === "addressDetails");
+    return addressConfig;
+  }, [formConfigs]);
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -264,7 +274,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
                 status: caseDetails?.status,
 
                 workflow: {
-                  action: SubmissionWorkflowAction.CREATE,
+                  action: SubmissionWorkflowAction.SUBMIT,
                 },
               },
             },
@@ -285,6 +295,59 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       setShowErrorToast({ label: t("ERROR_ADDING_WITNESS"), error: true });
     } finally {
       setIsWitnessAdding(false);
+    }
+  };
+
+  const checkNameValidation = ({ formData, setValue, clearErrors, formState }) => {
+    const formDataCopy = structuredClone(formData);
+    for (const key in formDataCopy) {
+      if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        const oldValue = formDataCopy[key];
+        let value = oldValue;
+        if (typeof value === "string") {
+          if (value.length > 100) {
+            value = value.slice(0, 100);
+          }
+
+          let updatedValue = formatName(value);
+          if (updatedValue !== oldValue) {
+            const element = document.querySelector(`[name="${key}"]`);
+            const start = element?.selectionStart;
+            const end = element?.selectionEnd;
+            setValue(key, updatedValue);
+            setTimeout(() => {
+              element?.setSelectionRange(start, end);
+            }, 0);
+          }
+          if (updatedValue !== "" && ["firstName", "witnessDesignation"].includes(key)) {
+            if (formState?.errors?.firstName) {
+              clearErrors("firstName");
+            }
+            if (formState?.errors?.witnessDesignation) {
+              clearErrors("witnessDesignation");
+            }
+          }
+        }
+      }
+      if (["witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        const oldValue = formDataCopy[key];
+        let value = oldValue;
+
+        let updatedValue = value?.replace(/\D/g, "");
+        // Convert to number and restrict value to 150
+        if (updatedValue && parseInt(updatedValue, 10) > 150) {
+          updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
+        }
+        if (updatedValue !== oldValue) {
+          const element = document?.querySelector(`[name="${key}"]`);
+          const start = element?.selectionStart;
+          const end = element?.selectionEnd;
+          setValue(key, updatedValue);
+          setTimeout(() => {
+            element?.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
     }
   };
 
@@ -398,12 +461,64 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
     }
   };
 
+  function validateAddressDetails(addressDetails = [], config, formIndex) {
+    const fieldConfigs = config?.populators?.inputs || [];
+
+    setAddressError((prevErrors = {}) => {
+      const updatedErrors = { ...prevErrors };
+      const formErrors = [];
+
+      addressDetails?.forEach((addressItem, addressIndex) => {
+        const fieldErrors = {};
+        const address = addressItem?.addressDetails || {};
+
+        fieldConfigs?.forEach((field) => {
+          const { name, validation = {} } = field;
+          const value = address?.[name];
+
+          if (!value) return;
+
+          if (validation?.pattern) {
+            const regex = new RegExp(validation?.pattern);
+            if (!regex?.test(value)) {
+              fieldErrors[name] = validation?.errMsg;
+              return;
+            }
+          }
+
+          if (validation?.minlength && value?.length < validation?.minlength) {
+            fieldErrors[name] = validation?.errMsg;
+            return;
+          }
+
+          if (validation?.maxlength && value?.length > validation?.maxlength) {
+            fieldErrors[name] = validation?.errMsg;
+            return;
+          }
+        });
+
+        if (Object?.keys(fieldErrors)?.length > 0) {
+          formErrors[addressIndex] = fieldErrors;
+        }
+      });
+
+      if (formErrors?.length > 0) {
+        updatedErrors[formIndex] = formErrors;
+      } else {
+        delete updatedErrors[formIndex];
+      }
+
+      return updatedErrors;
+    });
+  }
+
   const onFormValueChange = useCallback(
     (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
       // Ensure we have valid form data
       if (!isEqual(formData, witnessFormList?.[index]?.data)) {
         runComprehensiveSanitizer({ formData, setValue });
         setWitnessFormList((prevData) => prevData?.map((item, i) => (i === index ? { ...item, data: formData } : item)));
+        checkNameValidation({ formData, setValue, clearErrors, formState });
         checkDuplicateMobileEmailValidation({
           formData,
           setError,
@@ -411,9 +526,11 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           formdata: witnessFormList,
           caseDetails,
         });
+        setCurrentFormErrors(formState?.errors || {});
+        validateAddressDetails(formData?.addressDetails || [], addressConfig, index);
       }
     },
-    [witnessFormList, caseDetails]
+    [witnessFormList, caseDetails, addressConfig]
   );
 
   return (
@@ -440,6 +557,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
         headerBarMain={<h1 className="heading-m">{t("ADD_WITNESS_DETAILS")}</h1>}
         headerBarEnd={<CloseBtn onClick={onCancel} />}
         actionSaveOnSubmit={handleReviewDetails}
+        isDisabled={Object?.keys(currentFormErrors)?.length > 0 || Object?.keys(addressErrors)?.length > 0}
         actionSaveLabel={t("REVIEW_WITNESS_DETAILS")}
         actionCancelLabel={t("WITNESS_CANCEL")}
         actionCancelOnSubmit={onCancel}

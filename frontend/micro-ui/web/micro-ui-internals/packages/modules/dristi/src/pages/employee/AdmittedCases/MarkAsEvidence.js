@@ -9,8 +9,8 @@ import { Urls } from "../../../hooks";
 import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { set } from "lodash";
 import { sanitizeData } from "../../../Utils";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -160,6 +160,8 @@ const MarkAsEvidence = ({
   const history = useHistory();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [witnessTag, setWitnessTag] = useState(null);
+  const [evidenceTag, setEvidenceTag] = useState({ tagLabel: "", value: "" });
+  const [taggedEvidenceNumber, setTaggedEvidenceNumber] = useState("");
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const isFormValid = useMemo(() => {
@@ -210,9 +212,28 @@ const MarkAsEvidence = ({
       owner: evidenceDetails?.owner,
     };
   }, [evidenceDetails]);
-  const evidenceTag = useMemo(() => {
-    return EvidenceNumberFormat?.data?.find((item) => item?.sourceType === evidenceDetails?.sourceType)?.evidenceTag || "";
-  }, [evidenceDetails, EvidenceNumberFormat]);
+
+  const evitanceTagOptions = useMemo(() => {
+    return (
+      EvidenceNumberFormat?.data?.map((item) => {
+        return {
+          tagLabel: item?.evidenceTag,
+          value: item?.evidenceTag,
+        };
+      }) || []
+    );
+  }, [EvidenceNumberFormat]);
+
+  useEffect(() => {
+    const tag = EvidenceNumberFormat?.data?.find((item) => item?.sourceType === evidenceDetails?.sourceType)?.evidenceTag;
+    if (tag && tag !== evidenceTag?.value) {
+      setEvidenceTag({ tagLabel: tag, value: tag });
+    }
+  }, [EvidenceNumberFormat, evidenceDetails]); // evidence?.value dependency is excluded on purpose, DO NOT ADD IT..
+
+  const disableEvidenceTagDropDown = useMemo(() => {
+    return ["ACCUSED", "COMPLAINANT"]?.includes(evidenceDetails?.sourceType);
+  }, [evidenceDetails?.sourceType]);
 
   const onDocumentUpload = async (fileData, filename) => {
     try {
@@ -250,11 +271,11 @@ const MarkAsEvidence = ({
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           Evidence: {
             courtId: courtId,
-            markedAs: `${evidenceTag}${evidenceNumber}`,
+            markedAs: `${taggedEvidenceNumber || `${evidenceTag?.value}${evidenceNumber}`}`,
             caseNumber:
               (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
               caseDetails?.courtCaseNumber ||
@@ -333,6 +354,27 @@ const MarkAsEvidence = ({
     }
   };
 
+  const getCustomTaggedEvidenceNumber = (evidenceNumber, filingNumber) => {
+    try {
+      if (typeof evidenceNumber !== "string" || typeof filingNumber !== "string") {
+        throw new Error("Both evidenceNumber and filingNumber must be strings");
+      }
+
+      if (evidenceNumber.length > 1) {
+        if (filingNumber && evidenceNumber.startsWith(filingNumber) && evidenceNumber.length > filingNumber.length + 2) {
+          return evidenceNumber.slice(filingNumber.length + 1).trim();
+        } else {
+          return evidenceNumber;
+        }
+      }
+
+      return evidenceNumber;
+    } catch (error) {
+      console.error("Error getting custom evidence number:", error);
+      return null;
+    }
+  };
+
   const getEvidenceDetails = async () => {
     try {
       setLoader(true);
@@ -393,23 +435,29 @@ const MarkAsEvidence = ({
         },
         {}
       );
+      // Check if tag ends with a number
+      const hasNumberSuffix = (tag) => {
+        if (!tag || !tag.trim()) return false;
+        return /\d+$/.test(tag);
+      };
       const witnessList = response?.criteria[0]?.responseList[0]?.witnessDetails?.map((witness) => {
         const data = witness || {};
-        return data?.witnessTag
+        return data?.witnessTag && hasNumberSuffix(data?.witnessTag)
           ? {
               witnessTag: data.witnessTag || "",
               firstName: data.firstName || "",
               lastName: data.lastName || "",
               middleName: data.middleName || "",
-              fullName: getFullName(" ", data.firstName, data.middleName, data.lastName),
+              fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
               code: data.witnessTag,
-              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.middleName, data.lastName) + ")",
+              displayName:
+                data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
             }
           : null;
       });
       const LitigantList = (response?.criteria?.[0]?.responseList?.[0]?.litigants || [])?.map((litigant) => {
         const data = litigant?.additionalDetails?.tag || null;
-        return data
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: litigant?.additionalDetails?.fullName,
@@ -420,7 +468,7 @@ const MarkAsEvidence = ({
       });
       const advList = (response?.criteria?.[0]?.responseList?.[0]?.representatives || [])?.map((adv) => {
         const data = adv?.additionalDetails?.tag || null;
-        return data
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: adv?.additionalDetails?.advocateName,
@@ -431,7 +479,7 @@ const MarkAsEvidence = ({
       });
       const poaList = (response?.criteria?.[0]?.responseList?.[0]?.poaHolders || [])?.map((poa) => {
         const data = poa?.additionalDetails?.tag || null;
-        return data
+        return data && hasNumberSuffix(data)
           ? {
               witnessTag: data || "",
               fullName: poa?.name,
@@ -444,9 +492,12 @@ const MarkAsEvidence = ({
       const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
 
       const evidenceTag = evidenceDetails?.tag || sessionData?.tag;
+      const isDeletedDraft = evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT" || sessionData?.evidenceMarkedStatus === "DELETED_DRAFT";
 
-      if (evidenceTag) {
+      if (evidenceTag && !isDeletedDraft) {
         setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
+      } else {
+        setWitnessTag(null);
       }
       if (evidenceDetails?.isEvidence && !evidenceDetails?.additionalDetails?.botd) {
         getAdiaryEntries(response?.criteria[0]?.responseList[0]?.cmpNumber || filingNumber);
@@ -534,6 +585,8 @@ const MarkAsEvidence = ({
         const customEvidenceNumber = getCustomEvidenceNumber(sessionData.evidenceNumber, sessionData?.filingNumber);
 
         setEvidenceNumber(customEvidenceNumber);
+        const customTaggedEvidenceNumber = getCustomTaggedEvidenceNumber(evidenceDetailsObj?.evidenceNumber, evidenceDetailsObj?.filingNumber);
+        setTaggedEvidenceNumber(customTaggedEvidenceNumber);
       }
 
       // Set business of day from session storage
@@ -575,6 +628,8 @@ const MarkAsEvidence = ({
         const customEvidenceNumber = getCustomEvidenceNumber(evidenceDetailsObj?.evidenceNumber, evidenceDetailsObj?.filingNumber);
 
         setEvidenceNumber(customEvidenceNumber);
+        const customTaggedEvidenceNumber = getCustomTaggedEvidenceNumber(evidenceDetailsObj?.evidenceNumber, evidenceDetailsObj?.filingNumber);
+        setTaggedEvidenceNumber(customTaggedEvidenceNumber);
 
         // Set business of day from props
         setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || null);
@@ -584,22 +639,23 @@ const MarkAsEvidence = ({
     if (filingNumber) {
       getCaseDetails();
     }
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t, evidenceTag]);
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t]);
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
-  const handleMarkEvidence = async (action, seal = null, isEvidence = false) => {
+  const handleMarkEvidence = async (action, seal = null, isEvidence = false, markedOverride = null) => {
     try {
+      const markedPart = markedOverride || `${evidenceTag?.value}${evidenceNumber}`;
       const payload = {
         ...evidenceDetails,
-        evidenceNumber: `${filingNumber}-${evidenceTag}${evidenceNumber}`,
+        evidenceNumber: `${filingNumber}-${markedPart}`,
         isEvidenceMarkedFlow: action ? true : false,
         tag: witnessTag?.code,
         isEvidence: isEvidence,
         additionalDetails: {
           ...evidenceDetails?.additionalDetails,
-          botd: businessOfDay || `Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`,
+          botd: businessOfDay || `Document marked as evidence exhibit number ${markedPart}`,
           ownerName: ownerName,
         },
         ...(seal !== null && { seal }),
@@ -610,7 +666,7 @@ const MarkAsEvidence = ({
       await DRISTIService.updateEvidence({ artifact: payload }, {}).then((res) => {
         setEvidenceDetails(res?.artifact);
       });
-
+      setEvidenceNumberError("");
       return true;
     } catch (error) {
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
@@ -626,10 +682,17 @@ const MarkAsEvidence = ({
       setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
-        setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
-        await handleMarkEvidence(
-          evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
-        ).then((res) => {
+        const nextTagged = `${evidenceTag?.value}${evidenceNumber}`;
+        setBusinessOfDay(`Document marked as evidence exhibit number ${nextTagged}`);
+        setTaggedEvidenceNumber(nextTagged);
+
+        const nextAction =
+          evidenceDetails?.evidenceMarkedStatus === null
+            ? MarkAsEvidenceAction?.CREATE
+            : evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT"
+            ? MarkAsEvidenceAction.RECREATE
+            : MarkAsEvidenceAction?.SAVEDRAFT;
+        await handleMarkEvidence(nextAction, null, false, nextTagged).then((res) => {
           if (res) {
             setStepper(1);
           }
@@ -899,19 +962,27 @@ const MarkAsEvidence = ({
               <LabelFieldPair>
                 <CardLabel className="case-input-label">{t("EVIDENCE_NUMBER")}</CardLabel>
                 <div style={{ display: "flex", gap: "10px" }}>
-                  <TextInput
-                    className="disabled text-input"
-                    type="text"
-                    value={t(evidenceTag)}
-                    disabled
-                    style={{ textAlign: "start", marginBottom: "0px" }}
+                  <Dropdown
+                    t={t}
+                    option={evitanceTagOptions}
+                    selected={evidenceTag}
+                    optionKey={"tagLabel"}
+                    select={(e) => {
+                      setEvidenceTag(e);
+                    }}
+                    disable={disableEvidenceTagDropDown}
+                    topbarOptionsClassName={"top-bar-option"}
+                    style={{
+                      marginBottom: "1px",
+                      width: "100%",
+                    }}
                   />
                   <TextInput
                     className="text-input"
                     type="text"
                     value={evidenceNumber}
                     onChange={(e) => setEvidenceNumber(sanitizeData(e.target.value))}
-                    maxlength={63}
+                    maxlength={10}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
                 </div>
@@ -1034,7 +1105,7 @@ const MarkAsEvidence = ({
                   <h3>{t("EVIDENCE_NUMBER")}</h3>
                 </div>
                 <div className="info-value" style={{ flex: 1, maxWidth: "300px", overflowY: "auto" }}>
-                  <h3>{`${evidenceTag}${evidenceNumber}`}</h3>
+                  <h3>{`${taggedEvidenceNumber}`}</h3>
                 </div>
               </div>
             </div>

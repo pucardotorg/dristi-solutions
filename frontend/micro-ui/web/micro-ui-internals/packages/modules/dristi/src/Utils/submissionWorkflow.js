@@ -7,6 +7,9 @@ export const SubmissionWorkflowAction = {
   APPROVE: "APPROVE",
   DELETE: "DELETE",
   PAY: "PAY",
+  SAVEDRAFT: "SAVE_DRAFT",
+  EDIT: "EDIT",
+  SUBMIT: "SUBMIT",
 };
 export const SubmissionWorkflowState = {
   PENDINGSUBMISSION: "PENDINGSUBMISSION",
@@ -20,6 +23,7 @@ export const SubmissionWorkflowState = {
   ABATED: "ABATED",
   REJECTED: "REJECTED",
   DOC_UPLOAD: "DOCUMENT_UPLOAD",
+  DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
 };
 
 export const SubmissionDocumentsWorkflowState = {
@@ -53,4 +57,5 @@ export const MarkAsEvidenceAction = {
   ESIGN: "E-SIGN",
   BULKSIGN: "SUBMIT_BULK_E-SIGN",
   EDIT: "EDIT",
+  RECREATE: "RECREATE",
 };

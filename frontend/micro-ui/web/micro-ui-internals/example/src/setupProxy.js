@@ -138,6 +138,11 @@ module.exports = function (app) {
     "/bail-bond",
     "/bail-bond/v1/_updateSignedBails",
     "/bail-bond/v1/_getBailsToSign",
+    "/inportal-survey/v1/eligibility",
+    "/inportal-survey/v1/feedback",
+    "/inportal-survey/v1/remind-me-later",
+    "/task-management",
+    "/digitalized-documents",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

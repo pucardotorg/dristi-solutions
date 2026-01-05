@@ -17,8 +17,8 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { use } from "react";
 import { runComprehensiveSanitizer } from "../../../Utils";
+import { getComplainants, getComplainantSideAdvocates, getComplainantsSidePoAHolders } from "../../../Utils";
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -161,6 +161,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     caseFetchResponse,
     caseDetailsAdmitted,
   ]);
+
+  const allComplainantSideUuids = useMemo(() => {
+    const complainants = getComplainants(caseDetails);
+    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
+    const advocates = getComplainantSideAdvocates(caseDetails) || [];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
+    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+  }, [caseDetails]);
   const filingNumberRef = useRef(null);
 
   useEffect(() => {
@@ -483,9 +491,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
 
     return DRISTIService.caseUpdateService(
       {
@@ -495,7 +500,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }),
             ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),

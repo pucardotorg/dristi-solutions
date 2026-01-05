@@ -74,6 +74,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   useEffect(() => {
     const fetchBailBondData = async () => {
@@ -255,6 +256,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
@@ -290,21 +292,25 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
   const onESignClick = useCallback(() => {
-    try {
-      setLoader(true);
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      try {
+        setLoader(true);
 
-      sessionStorage.setItem("bailBondStepper", stepper);
-      sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
-      sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
-      if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
-      if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
-      if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
-      handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
-    } catch (error) {
-      console.error("E-sign navigation error:", error);
-      setLoader(false);
-    } finally {
-      setLoader(false);
+        sessionStorage.setItem("bailBondStepper", stepper);
+        sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
+        sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
+        if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
+        if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
+        if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
+        handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
+      } catch (error) {
+        console.error("E-sign navigation error:", error);
+        setLoader(false);
+      } finally {
+        setLoader(false);
+      }
     }
   }, [stepper, effectiveRowData, bailBondPaginationData, handleEsign, selectedBailBondFilestoreid]);
 
@@ -322,12 +328,13 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         Action: bailBondWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      setBailBondSignedPdf(newFilestore);
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setBailBondSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 

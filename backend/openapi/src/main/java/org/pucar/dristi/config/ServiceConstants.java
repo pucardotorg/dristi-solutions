@@ -60,9 +60,13 @@ public class ServiceConstants {
     public static final String OPENAPI_MODULE_NAME = "Openapi Service";
 
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String COURT_CASE_JSON_PATH="$.criteria[0].responseList[0]";
+    public static final String ERROR_CASE_SEARCH = "error executing case search query";
+
 
     public static final String ERROR_WHILE_FETCHING_FROM_BAIL = "ERROR_WHILE_FETCHING_FROM_BAIL";
     public static final String BAIL_NOT_FOUND_EXCEPTION = "BAIL_NOT_FOUND_EXCEPTION";
+    public static final String ORDER_NOT_FOUND_EXCEPTION = "ORDER_NOT_FOUND_EXCEPTION";
 
     public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
 
@@ -93,5 +97,9 @@ public class ServiceConstants {
     public static final String DISPOSED = "DISPOSED";
 
     public static final String PENDING = "PENDING";
+
+    public static final String DIGITALIZE_SERVICE_EXCEPTION = "DIGITALIZE_SERVICE_EXCEPTION";
+
+    public static final String DIGITALIZE_UPDATE_EXCEPTION = "DIGITALIZE_UPDATE_EXCEPTION";
 
 }

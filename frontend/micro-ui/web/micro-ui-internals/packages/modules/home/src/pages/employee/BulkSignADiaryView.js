@@ -141,12 +141,10 @@ function BulkSignADiaryView() {
       } catch (error) {
         console.error("Error :", error);
       } finally {
-        if (entryDate !== date) {
-          setEntryDate(date);
-        }
+        setEntryDate(date);
       }
     },
-    [tenantId, courtId, entryDate]
+    [tenantId, courtId]
   );
 
   const config = useMemo(() => {
@@ -264,7 +262,7 @@ function BulkSignADiaryView() {
         setDiaryEntries: setDiaryEntries,
       },
     };
-  }, [isSelectedDataSigned]);
+  }, []);
 
   const MemoInboxSearchComposer = useMemo(() => {
     return (

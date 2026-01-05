@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
@@ -142,7 +143,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateEvidence_Other() {
+    void testCreateEvidence_Other() throws Exception {
         artifact.setArtifactType("OTHER");
         when(mdmsUtil.fetchMdmsData(any(), any(), any(), any())).thenReturn(mockMdmsData);
         when(objectMapper.convertValue(any(), eq(JSONObject.class))).thenReturn((JSONObject) mockMdmsData.get("FilingTypeModule").get("FilingTypeMaster").get(0));
@@ -494,6 +495,7 @@ class EvidenceServiceTest {
         EvidenceRequest request = buildEvidenceRequest();
         Artifact artifact = new Artifact(); // mock artifact
         artifact.setArtifactNumber("AR124");
+        artifact.setEvidenceNumber("FN123-EV123");
 
         // Simulate duplicate found
         when(evidenceService.searchEvidence(any(), any(), any()))
@@ -504,7 +506,7 @@ class EvidenceServiceTest {
             evidenceService.checkUniqueEvidenceNumberForCase(request);
         });
 
-        assertTrue(ex.getMessage().contains("Evidence Number EV123 already exists for case: FN123"));
+        assertTrue(ex.getMessage().contains("Evidence Number FN123-EV123 already exists for case: FN123"));
     }
 
 
@@ -521,7 +523,7 @@ class EvidenceServiceTest {
     private EvidenceRequest buildEvidenceRequest() {
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("FN123");
-        artifact.setEvidenceNumber("EV123");
+        artifact.setEvidenceNumber("FN123-EV123");
         artifact.setArtifactNumber("AR123");
 
         RequestInfo requestInfo = new RequestInfo();

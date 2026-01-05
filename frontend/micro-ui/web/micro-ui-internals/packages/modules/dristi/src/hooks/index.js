@@ -7,6 +7,7 @@ import useIndividualService from "./dristi/useIndividualService";
 import { DRISTIService } from "../services";
 import useGetEvidence from "./dristi/useGetEvidence";
 import useGetOrders from "./dristi/useGetOrders";
+import useGetBotdOrders from "./dristi/useGetBotdOrders";
 import useGetSubmissions from "./dristi/useGetSubmissions";
 import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
@@ -35,6 +36,9 @@ import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 import useFetchBill from "./dristi/useFetchBill.js";
+import { useSurveyManager } from "./dristi/useSurveyManager.js";
+import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
+import useSortedMDMSData from "./dristi/useSortedMDMSData.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -58,12 +62,16 @@ export const Urls = {
     evidenceSearch: "/evidence/v1/_search",
     evidenceCreate: "/evidence/v1/_create",
     evidenceUpdate: "/evidence/v1/_update",
+    searchDigitizedDocument: "/digitalized-documents/v1/_search",
+    createDigitizedDocument: "/digitalized-documents/v1/_create",
+    updateDigitizedDocument: "/digitalized-documents/v1/_update",
     searchHearings: "/hearing/v1/search",
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
     getDraftOrder: "/order-management/v1/getDraftOrder",
     demandCreate: "/billing-service/demand/_create",
     ordersSearch: "/order/v1/search",
+    botdOrdersSearch: "/order-management/v1/getBotdOrders",
     ordersCreate: "/order/v1/create",
     submissionsSearch: "/application/v1/search",
     submissionsUpdate: "/application/v1/update",
@@ -72,6 +80,9 @@ export const Urls = {
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
     applicationCreate: "/application/v1/create",
+    eligibility: "/inportal-survey/v1/eligibility",
+    feedback: "/inportal-survey/v1/feedback",
+    remindMeLater: "/inportal-survey/v1/remind-me-later",
 
     //Solutions
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",
@@ -99,12 +110,14 @@ export const Urls = {
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
     taskSearch: "/task/v1/search",
+    searchBailBonds: "/bail-bond/v1/_search",
   },
   case: {
     addWitness: "/case/v1/add/witness",
     addNewWitness: "/case/v2/add/witness",
     taskCreate: "/task/v1/create",
     searchTasks: "/task/v1/search",
+    addAddress: "/case/v1/address/_add",
   },
   hearing: {
     hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
@@ -113,6 +126,15 @@ export const Urls = {
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
+  taskManagement: {
+    taskManagementCreate: "/task-management/v1/_create",
+    taskManagementUpdate: "/task-management/v1/_update",
+    taskManagementSearch: "/task-management/v1/_search",
+    createOfflinePayment: "/analytics/offline-payment/_create",
+  },
+  digitalization: {
+    examinationPreviewPdf: "/egov-pdf/digitisation",
+  },
 };
 
 const dristi = {
@@ -128,6 +150,7 @@ const dristi = {
   useCreateHearings,
   useGetEvidence,
   useGetOrders,
+  useGetBotdOrders,
   useGetSubmissions,
   useApplicationDetails,
   useEvidenceDetails,
@@ -148,6 +171,9 @@ const dristi = {
   useGetAllAdvocates,
   useSearchADiaryService,
   useEtreasuryCreateDemand,
+  useSurveyManager,
+  useSearchTaskMangementService,
+  useSortedMDMSData,
 };
 
 const Hooks = {

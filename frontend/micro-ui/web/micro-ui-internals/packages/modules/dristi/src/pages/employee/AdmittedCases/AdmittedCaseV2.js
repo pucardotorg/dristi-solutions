@@ -11,7 +11,7 @@ import { TabSearchconfigNew } from "./AdmittedCasesConfig";
 import EvidenceModal from "./EvidenceModal";
 import ExtraComponent from "./ExtraComponent";
 import "./tabs.css";
-import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
+import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { OrderTypes, OrderWorkflowState } from "../../../Utils/orderWorkflow";
 import ScheduleHearing from "./ScheduleHearing";
 import ViewAllOrderDrafts from "./ViewAllOrderDrafts";
@@ -23,6 +23,7 @@ import HearingTranscriptModal from "./HearingTranscriptModal";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
+import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import {
   admitCaseSubmitConfig,
   scheduleCaseAdmissionConfig,
@@ -37,6 +38,7 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
@@ -55,6 +57,9 @@ import MarkAsEvidence from "./MarkAsEvidence";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import WitnessDrawerV2 from "./WitnessDrawerV2";
 import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
+import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
+import ExaminationDrawer from "./ExaminationDrawer";
+import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -171,7 +176,7 @@ const AdmittedCaseV2 = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
@@ -187,6 +192,7 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -237,6 +243,7 @@ const AdmittedCaseV2 = () => {
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
   const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
+  const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -244,6 +251,7 @@ const AdmittedCaseV2 = () => {
   const isJudge = userRoles?.includes("JUDGE_ROLE");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
+  const submissionService = useMemo(() => Digit.ComponentRegistryService.getComponent("submissionService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
   const EditSendBackModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EditSendBackModal") || {}, []);
   const [loader, setLoader] = useState(false);
@@ -264,6 +272,7 @@ const AdmittedCaseV2 = () => {
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
   const [deleteOrder, setDeleteOrder] = useState(null);
+  const [deleteApplication, setDeleteApplication] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -271,6 +280,10 @@ const AdmittedCaseV2 = () => {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
+
+  const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
+  const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
+  const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -491,6 +504,36 @@ const AdmittedCaseV2 = () => {
     [reps]
   );
 
+  const witnesses = useMemo(() => {
+    return (
+      caseDetails?.witnessDetails?.map((data) => {
+        const fullName = getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null);
+        return {
+          ...data,
+          name: fullName,
+          partyType: "witness",
+        };
+      }) || []
+    );
+  }, [caseDetails]);
+
+  const unJoinedLitigant = useMemo(() => {
+    return (
+      caseDetails?.additionalDetails?.respondentDetails?.formdata
+        ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
+        ?.map((data) => {
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
+          return {
+            ...data,
+            name: `${fullName} (Accused)`,
+            code: fullName,
+            partyType: "respondent",
+            uniqueId: data?.uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails]);
+
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
   const complainants = useMemo(() => {
@@ -653,11 +696,11 @@ const AdmittedCaseV2 = () => {
       cnrNumber,
       title: caseDetails?.caseTitle || "",
       stage: caseDetails?.stage,
-      parties: [...finalLitigantsData, ...finalRepresentativesData],
+      parties: [...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses],
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, unJoinedLitigant, witnesses, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -801,7 +844,12 @@ const AdmittedCaseV2 = () => {
         );
       }
       if (
-        [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+        [
+          SubmissionWorkflowState.PENDINGPAYMENT,
+          SubmissionWorkflowState.PENDINGESIGN,
+          SubmissionWorkflowState.PENDINGSUBMISSION,
+          SubmissionWorkflowState.DRAFT_IN_PROGRESS,
+        ].includes(status)
       ) {
         if (createdByUuid === userInfo?.uuid) {
           history.push(
@@ -891,6 +939,10 @@ const AdmittedCaseV2 = () => {
           message: t("SOMETHING_WENT_WRONG"),
         });
       }
+    };
+
+    const handleApplicationDeleteFunc = async (row) => {
+      setDeleteApplication(row);
     };
 
     const takeActionFunc = (hearingData) => {
@@ -991,21 +1043,34 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: tabConfig.sections.search.uiConfig.fields.map((field) =>
-                    field.key === "parties"
-                      ? {
-                          ...field,
-                          populators: {
-                            name: "parties",
-                            optionsKey: "name",
-                            options: caseRelatedData.parties.map((party) => ({
+                  fields: tabConfig.sections.search.uiConfig.fields.map((field) => {
+                    if (field.key === "parties") {
+                      return {
+                        ...field,
+                        populators: {
+                          name: "parties",
+                          optionsKey: "name",
+                          options: caseRelatedData.parties
+                            .map((party) => ({
                               code: removeInvalidNameParts(party.name),
                               name: removeInvalidNameParts(party.name),
-                            })),
-                          },
-                        }
-                      : field
-                  ),
+                            }))
+                            .sort((a, b) => a.name.localeCompare(b.name)),
+                        },
+                      };
+                    }
+
+                    if (field.key === "type") {
+                      return {
+                        ...field,
+                        populators: {
+                          ...field.populators,
+                          options: orderTypeOptions || [],
+                        },
+                      };
+                    }
+                    return field;
+                  }),
                 },
               },
               searchResult: {
@@ -1065,7 +1130,18 @@ const AdmittedCaseV2 = () => {
                         })),
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
+                    ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                      if (field.key === "hearingType") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            options: hearingTypeOptions || [],
+                          },
+                        };
+                      }
+                      return field;
+                    }),
                   ],
                 },
               },
@@ -1190,14 +1266,28 @@ const AdmittedCaseV2 = () => {
                       populators: {
                         name: "owner",
                         optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => ({
-                          code: removeInvalidNameParts(party.name),
-                          name: removeInvalidNameParts(party.name),
-                          value: party.additionalDetails?.uuid,
-                        })),
+                        options: caseRelatedData.parties
+                          .map((party) => ({
+                            code: removeInvalidNameParts(party.name),
+                            name: removeInvalidNameParts(party.name),
+                            value: party.additionalDetails?.uuid,
+                          }))
+                          .sort((a, b) => a.name.localeCompare(b.name)),
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
+                    ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                      if (field.key === "applicationType") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field.populators,
+                            options: applicationTypeOptions || [],
+                          },
+                        };
+                      }
+
+                      return field;
+                    }),
                   ],
                 },
               },
@@ -1205,13 +1295,29 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.searchResult,
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) =>
-                    column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
-                      ? { ...column, clickFunc: docSetFunc }
-                      : column.label === "OWNER"
-                      ? { ...column, parties: caseRelatedData.parties }
-                      : column
-                  ),
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                    switch (column.label) {
+                      case "DOCUMENT_TEXT":
+                      case "SUBMISSION_TYPE":
+                        return {
+                          ...column,
+                          clickFunc: docSetFunc,
+                        };
+                      case "CS_ACTIONS":
+                        return {
+                          ...column,
+                          clickFunc: handleApplicationDeleteFunc,
+                        };
+                      case "OWNER":
+                        return {
+                          ...column,
+                          parties: caseRelatedData.parties,
+                        };
+
+                      default:
+                        return column;
+                    }
+                  }),
                 },
               },
             },
@@ -1249,6 +1355,9 @@ const AdmittedCaseV2 = () => {
     downloadPdf,
     ordersService,
     caseCourtId,
+    orderTypeOptions,
+    applicationTypeOptions,
+    hearingTypeOptions,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -2361,135 +2470,6 @@ const AdmittedCaseV2 = () => {
     }
   };
 
-  const onSubmit = async () => {
-    switch (primaryAction.action) {
-      case "REGISTER":
-        break;
-      case "ADMIT":
-        if ((isDelayApplicationPending || isDelayCondonationApplicable) && !isDelayApplicationCompleted) {
-          setIsOpenDCA(true);
-        } else {
-          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-          setModalInfo({ type: "admitCase", page: 0 });
-          setShowModal(true);
-        }
-        break;
-      case "ISSUE_ORDER":
-        const { hearingDate, hearingNumber } = await getHearingData();
-        if (hearingNumber) {
-          const {
-            list: [orderData],
-          } = await Digit.ordersService.searchOrder({
-            tenantId,
-            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
-            pagination: { limit: 1, offset: 0 },
-          });
-          if (
-            (orderData?.orderCategory === "COMPOSITE" && orderData?.compositeItems?.some((item) => item?.orderType === "NOTICE")) ||
-            orderData?.orderType === "NOTICE"
-          ) {
-            history.push(
-              `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
-              {
-                caseId: caseId,
-                tab: "Orders",
-              }
-            );
-          } else {
-            handleIssueNotice(hearingDate, hearingNumber);
-          }
-        }
-        break;
-      case "SCHEDULE_ADMISSION_HEARING":
-        setShowScheduleHearingModal(true);
-        setCreateAdmissionOrder(true);
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  const onSaveDraft = async () => {
-    if ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status)) {
-      const { hearingDate, hearingNumber } = await getHearingData();
-      if (hearingNumber) {
-        const date = new Date(hearingDate);
-        const requestBody = {
-          order: {
-            createdDate: null,
-            tenantId: tenantId,
-            hearingNumber: hearingNumber,
-            filingNumber: filingNumber,
-            cnrNumber: cnrNumber,
-            statuteSection: {
-              tenantId: tenantId,
-            },
-            orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-            orderCategory: "INTERMEDIATE",
-            orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-            status: "",
-            isActive: true,
-            workflow: {
-              action: OrderWorkflowAction.SAVE_DRAFT,
-              comments: "Creating order",
-              assignes: null,
-              rating: null,
-              documents: [{}],
-            },
-            documents: [],
-            additionalDetails: {
-              formdata: {
-                orderType: {
-                  type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  isactive: true,
-                  code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                },
-                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                  date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                }`,
-              },
-            },
-          },
-        };
-        ordersService
-          .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
-          .then((res) => {
-            history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`, {
-              caseId: caseDetails?.id,
-              tab: "Orders",
-            });
-          })
-          .catch((err) => {
-            console.error("Error while creating order", err);
-            showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
-          });
-      }
-    } else {
-      setShowModal(true);
-      setSubmitModalInfo({
-        ...scheduleCaseSubmitConfig,
-        caseInfo: [...caseInfo],
-        shortCaseInfo: [
-          {
-            key: "CASE_NUMBER",
-            value: caseDetails?.caseNumber,
-          },
-          {
-            key: "COURT_NAME",
-            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
-          },
-          {
-            key: "CASE_TYPE",
-            value: "NIA S138",
-          },
-        ],
-      });
-      setModalInfo({ type: "schedule", page: 0 });
-    }
-  };
-
   const handleMakeSubmission = useCallback(() => {
     history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
@@ -2540,17 +2520,121 @@ const AdmittedCaseV2 = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
+  const pipComplainants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const pipAccuseds = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const complainantsList = useMemo(() => {
+    const loggedinUserUuid = userInfo?.uuid;
+    // If logged in person is an advocate
+    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
+    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+
+    if (isAdvocateLoggedIn) {
+      return isAdvocateLoggedIn?.representing?.map((r) => {
+        return {
+          code: r?.additionalDetails?.fullName,
+          name: r?.additionalDetails?.fullName,
+          uuid: r?.additionalDetails?.uuid,
+        };
+      });
+    } else if (isPipLoggedIn) {
+      return [
+        {
+          code: isPipLoggedIn?.additionalDetails?.fullName,
+          name: isPipLoggedIn?.additionalDetails?.fullName,
+          uuid: isPipLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    } else if (accusedLoggedIn) {
+      return [
+        {
+          code: accusedLoggedIn?.additionalDetails?.fullName,
+          name: accusedLoggedIn?.additionalDetails?.fullName,
+          uuid: accusedLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    }
+    return [];
+  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+
   const handleCitizenAction = useCallback(
-    (option) => {
-      if (option.value === "RAISE_APPLICATION") {
-        history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
-      } else if (option.value === "SUBMIT_DOCUMENTS") {
-        history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
-      } else if (option.value === "GENERATE_BAIL_BOND") {
-        history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
+    async (option) => {
+      try {
+        if (option.value === "RAISE_APPLICATION") {
+          history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+        } else if (option.value === "SUBMIT_DOCUMENTS") {
+          history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+        } else if (option.value === "GENERATE_BAIL_BOND") {
+          if (complainantsList?.length === 1) {
+            setApiCalled(true);
+            const res = await DRISTIService?.getPendingTaskService(
+              {
+                SearchCriteria: {
+                  tenantId,
+                  moduleName: "Pending Tasks Service",
+                  moduleSearchCriteria: {
+                    isCompleted: false,
+                    ...(isCitizen && { assignedTo: userInfo?.uuid }),
+                    ...(courtId && { courtId }),
+                    filingNumber,
+                    entityType: "bail bond",
+                  },
+                  limit: 1000,
+                  offset: 0,
+                },
+              },
+              { tenantId }
+            );
+            const pendingTaskResponse = res?.data || [];
+            const pendingTaskDetails = convertTaskResponseToPayload(pendingTaskResponse);
+
+            if (pendingTaskResponse?.length > 0 && pendingTaskDetails?.additionalDetails?.bailbondId) {
+              history.push(
+                `/${window?.contextPath}/citizen/submissions/bail-bond/view?filingNumber=${filingNumber}&bailBondId=${pendingTaskDetails?.additionalDetails?.bailbondId}`
+              );
+            } else if (pendingTaskResponse?.length > 0) {
+              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`, {
+                state: {
+                  params: {
+                    actualReferenceId: pendingTaskDetails?.referenceId,
+                  },
+                },
+              });
+            } else {
+              history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
+            }
+          } else {
+            history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error handling citizen action:", error);
+        showToast({ isError: true, message: "BAIL_BOND_SEARCH_FAILED" });
+      } finally {
+        setApiCalled(false);
       }
     },
-    [filingNumber, history]
+    [history, filingNumber]
   );
 
   const handleCourtAction = useCallback(() => {
@@ -2657,6 +2741,8 @@ const AdmittedCaseV2 = () => {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
+      } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
+        setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
@@ -2669,6 +2755,9 @@ const AdmittedCaseV2 = () => {
         setShowAddWitnessModal(true);
       } else if (option.value === "PASS_OVER_START_NEXT_HEARING" || option.value === "CS_CASE_END_START_NEXT_HEARING") {
         handleCaseTransition(option.value);
+      } else if (option.value === "RECORD_PLEA") {
+        history.push(`/${window?.contextPath}/employee/submissions/record-plea?filingNumber=${filingNumber}`);
+        return;
       }
     },
     [
@@ -2814,6 +2903,7 @@ const AdmittedCaseV2 = () => {
                 filingNumber,
                 tenantId,
                 hearingNumber: currentInProgressHearing?.hearingId,
+                hearingType: currentInProgressHearing?.hearingType,
               },
             },
             {}
@@ -3065,6 +3155,14 @@ const AdmittedCaseV2 = () => {
         label: "VIEW_CALENDAR",
         requiredRoles: [],
       },
+      {
+        label: "RECORD_PLEA",
+        requiredRoles: ["PLEA_CREATOR", "PLEA_EDITOR"],
+      },
+      {
+        label: "RECORD_EXAMINATION_OF_ACCUSED",
+        requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // TODO: update this when backend validation is done.
+      },
     ],
     []
   );
@@ -3078,10 +3176,7 @@ const AdmittedCaseV2 = () => {
                 value: "NEXT_HEARING",
                 label: "NEXT_HEARING",
               },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
+
               {
                 value: "GENERATE_ORDER",
                 label: "GENERATE_ORDER",
@@ -3110,6 +3205,11 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ]
           : [
               {
@@ -3128,6 +3228,11 @@ const AdmittedCaseV2 = () => {
                 value: "TAKE_WITNESS_DEPOSITION",
                 label: "TAKE_WITNESS_DEPOSITION",
               },
+              { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+              {
+                value: "RECORD_EXAMINATION_OF_ACCUSED",
+                label: "RECORD_EXAMINATION_OF_ACCUSED",
+              },
             ];
       } else
         return [
@@ -3136,10 +3241,6 @@ const AdmittedCaseV2 = () => {
                 {
                   value: "END_HEARING",
                   label: "END_HEARING",
-                },
-                {
-                  value: "GENERATE_ORDER",
-                  label: "GENERATE_ORDER",
                 },
                 {
                   value: "SUBMIT_DOCUMENTS",
@@ -3171,6 +3272,11 @@ const AdmittedCaseV2 = () => {
           {
             value: "TAKE_WITNESS_DEPOSITION",
             label: "TAKE_WITNESS_DEPOSITION",
+          },
+          { value: "RECORD_PLEA", label: "RECORD_PLEA" },
+          {
+            value: "RECORD_EXAMINATION_OF_ACCUSED",
+            label: "RECORD_EXAMINATION_OF_ACCUSED",
           },
         ];
     } else return [];
@@ -3458,6 +3564,32 @@ const AdmittedCaseV2 = () => {
     }
   };
 
+  const handleDeleteApplication = async () => {
+    try {
+      setLoader(true);
+      const reqBody = {
+        application: {
+          ...deleteApplication,
+          workflow: { ...deleteApplication?.workflow, documents: [{}], action: SubmissionWorkflowAction.DELETE },
+          tenantId,
+        },
+        tenantId,
+      };
+      await submissionService.updateApplication(reqBody, { tenantId });
+      setDeleteApplication(null);
+      // history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showToast({
+        isError: true,
+        message: t("SOMETHING_WENT_WRONG"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -3490,7 +3622,10 @@ const AdmittedCaseV2 = () => {
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
         setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
+        setShowExaminationModal={setShowExaminationModal}
+        setDocumentCounter={setDocumentCounter}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -3641,6 +3776,14 @@ const AdmittedCaseV2 = () => {
                               onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
                               style={{ boxShadow: "none" }}
                             ></Button>
+                            {!hasHearingPriorityView && userRoles?.includes("ORDER_CREATOR") && (
+                              <Button
+                                variation={"outlined"}
+                                label={t("CS_CASE_GENERATE_ORDER")}
+                                onButtonClick={() => handleEmployeeAction({ value: "GENERATE_ORDER" })}
+                                style={{ boxShadow: "none" }}
+                              ></Button>
+                            )}
                             {hasHearingPriorityView && hasHearingEditAccess && (
                               <Button
                                 variation={"outlined"}
@@ -3746,13 +3889,20 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
+            {caseDetails?.courtCaseNumber && caseDetails?.courtCaseNumber?.includes("ST/") && (
+              <React.Fragment>
+                <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+                <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             {caseDetails?.isLPRCase ? (
               <React.Fragment>
                 <div className="sub-details-text">{caseDetails?.lprNumber}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             ) : (
-              caseDetails?.courtCaseNumber && (
+              caseDetails?.courtCaseNumber &&
+              !caseDetails?.courtCaseNumber?.includes("ST/") && (
                 <React.Fragment>
                   <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
                   <hr className="vertical-line" />
@@ -4325,6 +4475,22 @@ const AdmittedCaseV2 = () => {
           courtId={courtId}
         />
       )}
+      {showExaminationModal && (
+        <ExaminationDrawer
+          isOpen={showExaminationModal}
+          onClose={() => {
+            setShowExaminationModal(false);
+            setExaminationDocumentNumber(null);
+            refetchCaseData();
+            sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
+            onTabChange(0, {}, "Documents");
+          }}
+          tenantId={tenantId}
+          documentNumber={examinationDocumentNumber}
+          caseId={caseId}
+          courtId={courtId}
+        />
+      )}
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
         <PaymentDemandModal
           t={t}
@@ -4386,15 +4552,26 @@ const AdmittedCaseV2 = () => {
           }}
         ></AddWitnessModal>
       )}
-      {deleteOrder !== null && (
+      {(deleteOrder !== null || deleteApplication !== null) && (
         <EditSendBackModal
           t={t}
-          handleCancel={() => !loader && setDeleteOrder(null)}
-          handleSubmit={() => handleDeleteOrder()}
+          handleCancel={() => {
+            if (!loader) {
+              setDeleteOrder(null);
+              setDeleteApplication(null);
+            }
+          }}
+          handleSubmit={() => {
+            if (deleteOrder) {
+              handleDeleteOrder();
+            } else if (deleteApplication) {
+              handleDeleteApplication();
+            }
+          }}
           headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
           saveLabel={"GENERATE_ORDER_DELETE"}
           cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
-          contentText={"ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER"}
+          contentText={deleteOrder ? "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ORDER" : "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_APPLICATION"}
           className={"edit-send-back-modal"}
           submitButtonStyle={{ backgroundColor: "#C7222A" }}
           loader={loader}

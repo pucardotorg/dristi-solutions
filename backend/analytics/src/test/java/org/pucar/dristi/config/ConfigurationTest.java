@@ -26,6 +26,8 @@ class ConfigurationTest {
         ReflectionTestUtils.setField(configuration, "orderBusinessServices", "orderService1,orderService2");
         ReflectionTestUtils.setField(configuration, "aDiaryBusinessServices", "aDiaryService1,aDiaryService2");
         ReflectionTestUtils.setField(configuration, "bailBondBusinessServices", "bailBondService1,bailBondService2");
+        ReflectionTestUtils.setField(configuration, "taskManagementBusinessServices", "taskManagementService1,taskManagementService2");
+        ReflectionTestUtils.setField(configuration, "digitalizedDocumentsBusinessServices", "digitalizedDocumentService1,digitalizedDocumentService2");
     }
 
     @Test
