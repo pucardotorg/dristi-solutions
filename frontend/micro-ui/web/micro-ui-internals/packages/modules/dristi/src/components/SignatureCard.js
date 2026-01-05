@@ -17,7 +17,7 @@ function SignatureCard({ input, data, t, index, onSelect, formData, configKey, h
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
+            maxFileSize: 10,
             maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,

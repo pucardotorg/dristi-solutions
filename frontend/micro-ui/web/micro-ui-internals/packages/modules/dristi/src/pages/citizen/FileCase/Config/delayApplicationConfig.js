@@ -125,7 +125,7 @@ const delayApplicationFormConfig = [
               name: "document",
               type: "DragDropComponent",
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
-              maxFileSize: 50,
+              maxFileSize: 10,
               documentHeader: "CS_DELAY_CONDONATION_APPLICATION",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_50",

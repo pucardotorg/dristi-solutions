@@ -969,7 +969,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             name: "Signature",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
+            maxFileSize: 10,
             maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
             fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
             isMultipleUpload: false,

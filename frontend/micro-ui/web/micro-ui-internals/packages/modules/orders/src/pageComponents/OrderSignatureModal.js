@@ -55,7 +55,7 @@ function OrderSignatureModal({
             // documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
+            maxFileSize: 10,
             maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,

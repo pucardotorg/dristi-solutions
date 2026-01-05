@@ -432,7 +432,7 @@ export const registerRespondentConfig = {
                 documentHeader: "COMPANY_DOCUMENT_DETAILS",
                 type: "DragDropComponent",
                 uploadGuidelines: "UPLOAD_DOC_50",
-                maxFileSize: 50,
+                maxFileSize: 10,
                 maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                 fileTypes: ["JPG", "PDF"],
                 isMultipleUpload: false,

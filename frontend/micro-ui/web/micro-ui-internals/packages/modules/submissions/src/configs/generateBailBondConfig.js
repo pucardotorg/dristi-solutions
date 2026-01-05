@@ -275,7 +275,7 @@ export const bailBondConfig = [
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
@@ -300,7 +300,7 @@ export const bailBondConfig = [
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
@@ -326,7 +326,7 @@ export const bailBondConfig = [
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {

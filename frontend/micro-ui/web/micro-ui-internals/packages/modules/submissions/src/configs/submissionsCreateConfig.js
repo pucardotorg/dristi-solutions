@@ -1770,7 +1770,7 @@ export const configsOthers = [
               documentHeader: "OTHERS_DOCUMENT",
               documentHeaderStyle: { fontSize: "19px", fontWeight: 700 },
               type: "DragDropComponent",
-              maxFileSize: 50,
+              maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               fileTypes: ["PDF", "JPEG", "PNG", "JPG"],
               uploadGuidelines: "UPLOAD_PDF_JPEG_50",
@@ -2168,7 +2168,7 @@ export const requestForBail = [
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
@@ -2193,7 +2193,7 @@ export const requestForBail = [
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
@@ -2219,7 +2219,7 @@ export const requestForBail = [
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
@@ -2417,7 +2417,7 @@ export const submitDocsForBail = [
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2605,7 +2605,7 @@ export const submitDelayCondonation = [
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
+                    maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
                     textAreaStyle: {
                       fontSize: "16px",

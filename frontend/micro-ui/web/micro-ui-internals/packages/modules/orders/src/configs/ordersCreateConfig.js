@@ -5005,7 +5005,7 @@ export const configsIssueBailReject = [
               textAreaHeader: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
+              maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               textAreaStyle: {
                 fontSize: "16px",
@@ -5837,7 +5837,7 @@ export const configsMoveCaseToLongPendingRegister = [
               documentHeader: "IDENTITY_PROOF",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
+              maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               isMultipleUpload: true,
               popupModuleMianStyles: { maxHeight: "100%" },
