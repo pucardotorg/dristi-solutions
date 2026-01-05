@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
@@ -15,10 +16,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.Resource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +38,8 @@ class DigitalizedDocumentServiceTest {
     @Mock private CipherUtil cipherUtil;
     @Mock private XmlRequestGenerator xmlRequestGenerator;
     @Mock private DigitalizedDocumentRepository repository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks private DigitalizedDocumentService service;
 
@@ -57,6 +63,8 @@ class DigitalizedDocumentServiceTest {
                 .requestInfo(RequestInfo.builder().userInfo(User.builder().uuid("u1").build()).build())
                 .digitalizedDocument(document)
                 .build();
+
+        ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
     }
 
     @Test
@@ -169,6 +177,11 @@ class DigitalizedDocumentServiceTest {
                 .build());
 
         // Repo returns an existing doc
+        Map<String, String> documentAdditionalDetails = new HashMap<>();
+        documentAdditionalDetails.put("name", "CF1-DD1");
+        Document signedDocument = Document.builder()
+                .additionalDetails(documentAdditionalDetails)
+                .build();
         DigitalizedDocument existing = DigitalizedDocument.builder()
                 .type(TypeEnum.PLEA)
                 .tenantId("t1")
@@ -176,6 +189,7 @@ class DigitalizedDocumentServiceTest {
                 .caseFilingNumber("CF1")
                 .courtId("court")
                 .auditDetails(AuditDetails.builder().build())
+                .documents(Collections.singletonList(signedDocument))
                 .build();
         when(repository.getDigitalizedDocumentByDocumentNumber(eq("DN"), eq("t1"))).thenReturn(existing);
 
