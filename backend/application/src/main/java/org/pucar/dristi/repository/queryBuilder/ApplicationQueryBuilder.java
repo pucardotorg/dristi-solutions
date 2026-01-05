@@ -1,6 +1,7 @@
 package org.pucar.dristi.repository.queryBuilder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.ApplicationCriteria;
 import org.pucar.dristi.web.models.Pagination;
@@ -58,7 +59,7 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String userUuid) {
+    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String userUuid, RequestInfo requestInfo) {
         try {
             StringBuilder query = new StringBuilder(BASE_APP_QUERY);
             query.append(FROM_APP_TABLE);
@@ -88,6 +89,14 @@ public class ApplicationQueryBuilder {
                 addClauseIfRequired(query, firstCriteria);
                 query.append("app.applicationType != ?");
                 preparedStmtList.add(REQUEST_FOR_BAIL);
+                preparedStmtArgList.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
+                preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
                 firstCriteria = false;
             }
