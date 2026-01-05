@@ -169,7 +169,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           caseNumber: caseNumber,
           witnessType: witnessEvidence.tag,
           partyName,
-          witnessName: witnessEvidence.sourceName,
+          witnessName: witnessEvidence.additionalDetails.witnessDetails.name,
           witnessFatherName: "",
           witnessAddress:
             witnessEvidence.additionalDetails.witnessDetails.address,
@@ -184,6 +184,8 @@ const witnessDeposition = async (req, res, qrCode) => {
           witnessPlaceholder: "Deponent",
           judgePlaceholder: "Judicial Magistrate of First Class",
           qrCodeUrl: base64Url,
+          designation:
+            witnessEvidence.additionalDetails.witnessDetails.designation,
         },
       ],
     };
