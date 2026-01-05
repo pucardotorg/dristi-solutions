@@ -235,7 +235,7 @@ public class OrderNotificationService {
         criteria.setProcessSearchCriteria(processCriteria);
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(order.getFilingNumber()));
+        moduleSearchCriteria.put("id", order.getOrderNumber());
         moduleSearchCriteria.put("tenantId", order.getTenantId());
         moduleSearchCriteria.put("status", Collections.singletonList(PUBLISHED_ORDER));
 
