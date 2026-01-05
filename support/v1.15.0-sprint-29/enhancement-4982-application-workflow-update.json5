@@ -402,6 +402,7 @@
     "business": "application",
     "businessServiceSla": 518400000,
     "states": [
+      //new state DRAFT_IN_PROGRESS
       {
         "auditDetails": {
           "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -495,6 +496,7 @@
         "isTerminateState": false,
         "isStateUpdatable": true,
         "actions": [
+          //CREATE renamed to SAVE_DRAFT
           {
             "auditDetails": {
               "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
@@ -512,6 +514,7 @@
             ],
             "active": true
           },
+          //new action SUBMIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -568,6 +571,7 @@
             ],
             "active": true
           },
+          //new action EDIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -952,6 +956,7 @@
     "business": "application",
     "businessServiceSla": 30,
     "states": [
+      //new state DRAFT_IN_PROGRESS
       {
         "auditDetails": {
           "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -1045,6 +1050,7 @@
         "isTerminateState": false,
         "isStateUpdatable": true,
         "actions": [
+          //new action SUBMIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -1064,6 +1070,8 @@
             ],
             "active": true
           },
+          //CREATE renamed to SAVE_DRAFT
+
           {
             "auditDetails": {
               "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
@@ -1135,6 +1143,7 @@
             ],
             "active": true
           },
+          //new action EDIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -1404,6 +1413,7 @@
     "business": "application",
     "businessServiceSla": 30,
     "states": [
+      //new state DRAFT_IN_PROGRESS
       {
         "auditDetails": {
           "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -1497,6 +1507,7 @@
         "isTerminateState": false,
         "isStateUpdatable": true,
         "actions": [
+          //CREATE renamed to SAVE_DRAFT
           {
             "auditDetails": {
               "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
@@ -1514,6 +1525,7 @@
             ],
             "active": true
           },
+          //new action SUBMIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
@@ -1553,6 +1565,7 @@
         "isTerminateState": false,
         "isStateUpdatable": true,
         "actions": [
+          //new action EDIT
           {
             "auditDetails": {
               "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
