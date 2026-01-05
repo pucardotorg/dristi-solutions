@@ -36,35 +36,7 @@ const DocViewerWrapper = ({
 
   const headers = { "auth-token": token };
 
-  // -----------------------------------------------
   // FETCH FUNCTION WITH RETRY SUPPORT
-  // -----------------------------------------------
-  // const fetchRemoteDoc = useCallback(async () => {
-  //   if (!fileStoreId) return;
-
-  //   setLoading(true);
-  //   setDocError(null);
-
-  //   try {
-  //     const res = await fetch(uri, { headers });
-
-  //     if (!res.ok) {
-  //       const errText = await res.text().catch(() => "Error fetching file");
-  //       throw { status: res.status, message: errText };
-  //     }
-
-  //     const blob = await res.blob();
-  //     const blobUrl = URL.createObjectURL(blob);
-  //     setDocUrl(blobUrl);
-  //   } catch (err) {
-  //     setDocError(err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [fileStoreId, uri]);
-
-  const hasTriedOnce = React.useRef(false);
-
   const fetchRemoteDoc = useCallback(async () => {
     if (!fileStoreId) return;
 
@@ -72,28 +44,23 @@ const DocViewerWrapper = ({
     setDocError(null);
 
     try {
-      // Simulate failure on first load
-      let fetchHeaders = headers;
-      if (!hasTriedOnce.current) {
-        console.warn("Simulating failure on first fetch...");
-        fetchHeaders = {}; // invalid headers to force error
-      }
-
-      const res = await fetch(uri, { headers: fetchHeaders });
-
-      // mark as attempted
-      hasTriedOnce.current = true;
+      const res = await fetch(uri, { headers });
 
       if (!res.ok) {
         const errText = await res.text().catch(() => "Error fetching file");
-        throw { status: res.status, message: errText };
+        const error = new Error(errText);
+        error.status = res.status;
+        throw error;
       }
 
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
       setDocUrl(blobUrl);
     } catch (err) {
-      setDocError(err);
+      setDocError({
+        status: err.status,
+        message: err.message,
+      });
     } finally {
       setLoading(false);
     }
