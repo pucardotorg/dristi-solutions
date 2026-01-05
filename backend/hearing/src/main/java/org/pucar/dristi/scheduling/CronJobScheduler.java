@@ -191,6 +191,7 @@ public class CronJobScheduler {
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             String filingNumber = firstCase.getFilingNumber();
             Hearing hearing = getNextScheduledHearing(filingNumber, requestInfo);
             if(hearing == null){
@@ -201,6 +202,7 @@ public class CronJobScheduler {
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .hearingDate(String.valueOf(hearing.getStartTime()))
                     .build();
 
@@ -229,11 +231,12 @@ public class CronJobScheduler {
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
-
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .link(hearingLink)
                     .build();
 
