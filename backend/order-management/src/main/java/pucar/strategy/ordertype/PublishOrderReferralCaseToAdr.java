@@ -217,7 +217,7 @@ public class PublishOrderReferralCaseToAdr implements OrderUpdateStrategy {
                     .id(UUID.randomUUID().toString())
                     .isActive(true)
                     .fileStore(fileStoreId)
-                    .additionalDetails(Map.of("name", "mediation_document"))
+                    .additionalDetails(Map.of("name", "Mediation.pdf"))
                     .build();
 
             // Attach document to digitalized document
