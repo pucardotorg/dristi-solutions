@@ -42,9 +42,9 @@ const submissionDocumentConfig = [
               isMandatory: true,
               textAreaHeader: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               textAreaStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
