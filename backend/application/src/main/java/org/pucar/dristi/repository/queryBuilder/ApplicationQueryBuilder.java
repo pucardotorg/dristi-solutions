@@ -78,9 +78,9 @@ public class ApplicationQueryBuilder {
             firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
             if (applicationCriteria.getIsFuzzySearch() == null || !applicationCriteria.getIsFuzzySearch()) {
-                addCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
+               firstCriteria = addCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
             } else {
-                addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
+               firstCriteria = addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
             }
 
             // TODO : remove this, this is temporary fix (#5016)
@@ -176,13 +176,15 @@ public class ApplicationQueryBuilder {
         return firstCriteria;
     }
 
-    void addPartialCriteria(String criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    boolean addPartialCriteria(String criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             query.append("app.applicationNumber").append(" LIKE ?");
             preparedStmtList.add("%" + criteria + "%"); // Add wildcard characters for partial match
             preparedStmtArgList.add(Types.VARCHAR); // Add wildcard characters for partial match
+            firstCriteria = false;
         }
+        return firstCriteria;
     }
 
     boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
