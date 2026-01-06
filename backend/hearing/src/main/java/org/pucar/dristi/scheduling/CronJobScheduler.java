@@ -378,23 +378,44 @@ public class CronJobScheduler {
 
     private String getHearingLink(){
 
-        String hearingLink = null;
-        Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(null, config.getTenantId(), HEARING_MODULE_NAME, Collections.singletonList(HEARING_LINK_MASTER_NAME));
-        JSONArray hearingLinkArray = mdmsResponse
-                .get(HEARING_MODULE_NAME)
-                .get(HEARING_LINK_MASTER_NAME);
-
-        for(Object item: hearingLinkArray){
-            String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
-            // URL shortening service adds this param in every url
-            if(link!=null && link.contains(SHORTENED_URL_PATH_PARAM)){
-                log.info("VC link shortened url: {}", link);
-                hearingLink = link;
-                break;
+        try {
+            Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
+            requestInfoGenerator.createInternalRequestInfo(),
+            config.getTenantId(),
+            HEARING_MODULE_NAME,
+            Collections.singletonList(HEARING_LINK_MASTER_NAME));
+            if (mdmsResponse == null || !mdmsResponse.containsKey(HEARING_MODULE_NAME)) {
+                log.error("MDMS response is null or missing hearing module");
+                return null;
             }
-        }
 
-        return hearingLink;
+            Map<String, JSONArray> hearingModule = mdmsResponse.get(HEARING_MODULE_NAME);
+            if (hearingModule == null || !hearingModule.containsKey(HEARING_LINK_MASTER_NAME)) {
+                log.error("Hearing module is null or missing hearing link master");
+                return null;
+            }
+
+            JSONArray hearingLinkArray = hearingModule.get(HEARING_LINK_MASTER_NAME);
+            if (hearingLinkArray == null || hearingLinkArray.isEmpty()) {
+                log.error("Hearing link array is null or empty");
+                return null;
+            }
+
+            for(Object item: hearingLinkArray){
+                String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
+                // URL shortening service adds this param in every url
+                if(link != null && link.contains(SHORTENED_URL_PATH_PARAM)){
+                    log.info("VC link shortened url: {}", link);
+                    return link;
+                    }
+            }
+
+            log.warn("No shortened URL found in hearing link array");
+            return null;
+            } catch (Exception e) {
+            log.error("Error fetching hearing link from MDMS", e);
+            return null;
+        }
     }
 
     /**
