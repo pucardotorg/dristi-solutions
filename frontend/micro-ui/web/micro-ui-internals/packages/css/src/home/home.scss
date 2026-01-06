@@ -702,9 +702,11 @@
   .submit-bar {
     box-shadow: none;
     width: fit-content;
+    min-width: 220px;
     padding: 8px 24px;
     header {
       line-height: 24px;
+      white-space: nowrap;
     }
   }
 }
