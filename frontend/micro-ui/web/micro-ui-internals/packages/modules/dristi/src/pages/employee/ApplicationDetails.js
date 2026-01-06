@@ -10,6 +10,7 @@ import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
+import { sanitizeData } from "../../Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -236,7 +237,14 @@ const ApplicationDetails = ({ location, match }) => {
         content: fileName,
       },
       {
-        doc: <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} docViewerCardClassName={"doc-card"}></DocViewerWrapper>,
+        doc: (
+          <DocViewerWrapper
+            fileStoreId={fileStoreId}
+            tenantId={tenantId}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          ></DocViewerWrapper>
+        ),
         image: true,
       },
     ];
@@ -254,6 +262,7 @@ const ApplicationDetails = ({ location, match }) => {
             tenantId={tenantId}
             displayFilename={identifierIdDetails?.filename}
             docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
           />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
@@ -338,7 +347,15 @@ const ApplicationDetails = ({ location, match }) => {
             >
               <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
                 <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
-                <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
+                <TextArea
+                  rows={"3"}
+                  value={reasons}
+                  onChange={(e) => {
+                    const newValue = sanitizeData(e.target.value);
+                    setReasons(newValue);
+                  }}
+                  style={{ maxWidth: "100%", height: "auto" }}
+                ></TextArea>
               </Card>
             </Modal>
           )}

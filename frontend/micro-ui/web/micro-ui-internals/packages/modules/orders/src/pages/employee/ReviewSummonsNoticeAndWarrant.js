@@ -128,6 +128,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
   const [bulkRpadList, setBulkRpadList] = useState([]);
+  const [successfullySignedCount, setSuccessfullySignedCount] = useState(0);
+  const [successfullySignedPoliceTasks, setSuccessfullySignedPoliceTasks] = useState([]);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [showBulkSendConfirmModal, setShowBulkSendConfirmModal] = useState(false);
   const [isBulkLoading, setIsBulkLoading] = useState(false);
@@ -136,6 +138,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [bulkSignatureData, setBulkSignatureData] = useState({});
   const [isBulkSigned, setIsBulkSigned] = useState(false);
   const [bulkSignatureId, setBulkSignatureId] = useState("");
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [allSelectedPolice, setAllSelectedPolice] = useState(false);
 
@@ -333,26 +336,61 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const data = await processManagementService.bulkSend(payload, {});
         const tasks = Array.isArray(data?.bulkSendTasks) ? data.bulkSendTasks : null;
         if (tasks) {
-          const successful = tasks.filter((t) => t?.success).length;
-          const failed = tasks.length - successful;
-          return { successful, failed, total: tasks.length };
+          // Handle both 'success' and 'isSuccess' field names (Jackson serializes isSuccess as success)
+          const successfulTasks = tasks.filter((t) => t?.success === true || t?.isSuccess === true);
+          const failedTasks = tasks.filter((t) => t?.success === false || t?.isSuccess === false || (!t?.success && !t?.isSuccess));
+          const successful = successfulTasks.length;
+          const failed = failedTasks.length;
+          return {
+            successful,
+            failed,
+            total: tasks.length,
+            successfulTasks: successfulTasks.map((t) => t?.taskNumber),
+            failedTasks: failedTasks.map((t) => ({ taskNumber: t?.taskNumber, errorMessage: t?.errorMessage })),
+          };
         }
         const results = Array.isArray(data?.results) ? data?.results : null;
         if (results) {
-          const successful = results.filter((r) => r?.success).length;
-          const failed = results.length - successful;
-          return { successful, failed, total: results.length };
+          const successfulTasks = results.filter((r) => r?.success === true || r?.isSuccess === true);
+          const failedTasks = results.filter((r) => r?.success === false || r?.isSuccess === false || (!r?.success && !r?.isSuccess));
+          const successful = successfulTasks.length;
+          const failed = failedTasks.length;
+          return {
+            successful,
+            failed,
+            total: results.length,
+            successfulTasks: successfulTasks.map((r) => r?.taskNumber),
+            failedTasks: failedTasks.map((r) => ({ taskNumber: r?.taskNumber, errorMessage: r?.errorMessage })),
+          };
         }
         if (typeof data?.success === "boolean") {
           const successful = data.success ? selectedItems.length : 0;
           const failed = data.success ? 0 : selectedItems.length;
-          return { successful, failed, total: selectedItems.length };
+          return {
+            successful,
+            failed,
+            total: selectedItems.length,
+            successfulTasks: data.success ? selectedItems.map((i) => i?.taskNumber) : [],
+            failedTasks: data.success ? [] : selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: "Unknown error" })),
+          };
         }
 
         // If structure is unknown, treat as failure rather than optimistic success
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return {
+          successful: 0,
+          failed: selectedItems.length,
+          total: selectedItems.length,
+          successfulTasks: [],
+          failedTasks: selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: "Unknown response structure" })),
+        };
       } catch (error) {
-        return { successful: 0, failed: selectedItems.length, total: selectedItems.length };
+        return {
+          successful: 0,
+          failed: selectedItems.length,
+          total: selectedItems.length,
+          successfulTasks: [],
+          failedTasks: selectedItems.map((i) => ({ taskNumber: i?.taskNumber, errorMessage: error?.message || "API call failed" })),
+        };
       }
     },
     [tenantId]
@@ -500,16 +538,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
     sessionStorage.removeItem("homeActiveTab");
     setShowActionModal(false);
     setShowBulkSendConfirmModal(false);
+    setShowBulkSignSuccessModal(false);
+    // Reset successfully signed count and police tasks when closing
+    setSuccessfullySignedCount(0);
+    setSuccessfullySignedPoliceTasks([]);
     // If navigated via deep-link, go back to listing route without forcing a data reload
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
 
     // Determine current tab label to decide whether to reload
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
     const isPendingSignTab = currentConfig?.label === "PENDING_SIGN";
+    const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
+    const isSignedTab = currentConfig?.label === "SIGNED";
 
-    // Do NOT trigger reload for Pending Sign tab (to preserve selections),
-    // keep existing behavior for other tabs if needed
-    if (!isPendingSignTab) {
+    // Do NOT trigger reload for Pending Sign, Pending RPAD Collection, and Signed tabs (to preserve search criteria and selections)
+    if (!isPendingSignTab && !isPendingRpadTab && !isSignedTab) {
       setReload(!reload);
     }
   }, [taskNumber, history, isJudge, courtId, activeTabIndex, reload]);
@@ -990,6 +1033,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onBulkSignatureSubmit = async () => {
@@ -1003,6 +1047,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } catch (error) {
         setBulkSignatureData({});
         setIsBulkSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -1059,8 +1104,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
           return;
         }
 
+        // Calculate total successfully signed count (both police and non-police)
+        const totalSignedCount = responseArray?.filter((item) => item?.signed === true)?.length || selectedItems.length;
+        setSuccessfullySignedCount(totalSignedCount);
+
         setShowErrorToast({
-          message: t("BULK_SIGN_SUCCESS", { count: responseArray?.length || selectedItems.length }),
+          message: t("BULK_SIGN_SUCCESS", { count: totalSignedCount }),
           error: false,
         });
 
@@ -1071,13 +1120,96 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
 
         const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
+
+        // Track which tasks should be removed from bulkSignList
+        const tasksToRemove = new Set();
+        let policeBulkSendResult = null;
+        const successfullySentPoliceTasks = [];
+
         if (policeTasks.length > 0) {
           try {
-            await callBulkSendApi(policeTasks);
+            policeBulkSendResult = await callBulkSendApi(policeTasks);
+
+            // Only remove successfully sent police tasks from bulkSignList
+            if (policeBulkSendResult?.successfulTasks) {
+              policeBulkSendResult.successfulTasks.forEach((taskNumber) => {
+                tasksToRemove.add(taskNumber);
+                // Find the corresponding police task to store for download
+                const policeTask = policeTasks.find((pt) => pt?.taskNumber === taskNumber);
+                if (policeTask) {
+                  // Get the signed task from signedResponse which contains the fileStore ID
+                  const signedTaskFromResponse = signedList?.find((st) => st?.taskNumber === taskNumber);
+                  if (signedTaskFromResponse) {
+                    // Get fileStore ID from signed task documents
+                    const signedDocument = signedTaskFromResponse?.documents?.find((doc) => doc?.documentType === "SIGNED_TASK_DOCUMENT");
+                    successfullySentPoliceTasks.push({
+                      ...policeTask,
+                      documentStatus: "SIGNED",
+                      documents: signedDocument
+                        ? [
+                            {
+                              fileStore: signedDocument?.fileStore,
+                              documentType: "SIGNED_TASK_DOCUMENT",
+                            },
+                          ]
+                        : policeTask?.documents?.map((doc) => ({
+                            ...doc,
+                            documentType: "SIGNED_TASK_DOCUMENT",
+                          })) || [],
+                    });
+                  } else {
+                    // Fallback: use original task with updated document type
+                    successfullySentPoliceTasks.push({
+                      ...policeTask,
+                      documentStatus: "SIGNED",
+                      documents:
+                        policeTask?.documents?.map((doc) => ({
+                          ...doc,
+                          documentType: "SIGNED_TASK_DOCUMENT",
+                        })) || [],
+                    });
+                  }
+                }
+              });
+            }
+            // Store successfully sent police tasks for download
+            setSuccessfullySignedPoliceTasks(successfullySentPoliceTasks);
+
+            // Show error message if any police tasks failed
+            if (policeBulkSendResult?.failed > 0) {
+              const failedTaskNumbers = policeBulkSendResult.failedTasks?.map((t) => t.taskNumber).join(", ") || "";
+              setShowErrorToast({
+                message:
+                  t("FAILED_TO_SEND_POLICE_TASKS", {
+                    failed: policeBulkSendResult.failed,
+                    total: policeBulkSendResult.total,
+                    taskNumbers: failedTaskNumbers,
+                  }) ||
+                  `Failed to send ${policeBulkSendResult.failed} out of ${policeBulkSendResult.total} police tasks. Task numbers: ${failedTaskNumbers}`,
+                error: true,
+              });
+              setTimeout(() => {
+                setShowErrorToast(null);
+              }, 5000);
+            }
           } catch (err) {
             console.error("Bulk send for POLICE tasks failed:", err);
+            // If the API call itself fails, don't remove any police tasks
+            setShowErrorToast({
+              message: t("FAILED_TO_SEND_POLICE_TASKS_API_ERROR") || "Failed to send police tasks. Please try again.",
+              error: true,
+            });
+            setTimeout(() => {
+              setShowErrorToast(null);
+            }, 5000);
           }
         }
+
+        // Add all non-police tasks to removal list (they go to bulkSendList)
+        nonPoliceTasks.forEach((task) => {
+          tasksToRemove.add(task?.taskNumber);
+        });
+
         try {
           const preselectedForSend = nonPoliceTasks.map((it) => ({
             ...it,
@@ -1098,8 +1230,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return Array.from(map.values());
           });
 
-          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !selectedItems.some((s) => s.taskNumber === p.taskNumber)) : []));
+          // Only remove tasks that were successfully processed (non-police + successfully sent police tasks)
+          setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !tasksToRemove.has(p.taskNumber)) : []));
           setReload((prev) => prev + 1);
+          // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
@@ -1129,11 +1263,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const isSignedTab = bulkSendList?.some((item) => item?.isSelected && item?.documentStatus === "SIGNED") || currentConfig?.label === "SIGNED";
       const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
 
-      const selectedItems = isSignedTab
+      // If showing success modal and we have successfully signed police tasks, include them for download
+      let selectedItems = isSignedTab
         ? bulkSendList?.filter((item) => item?.isSelected) || []
         : isPendingRpadTab
         ? bulkRpadList?.filter((item) => item?.isSelected) || []
         : bulkSignList?.filter((item) => item?.isSelected) || [];
+
+      // If success modal is showing and no items selected, check for successfully signed police tasks
+      if (showBulkSignSuccessModal && selectedItems.length === 0 && successfullySignedPoliceTasks.length > 0) {
+        selectedItems = successfullySignedPoliceTasks;
+      }
 
       if (selectedItems.length === 0) {
         setShowErrorToast({
@@ -1259,6 +1399,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setBulkSignList,
     setBulkRpadList,
     setReload,
+    showBulkSignSuccessModal,
+    successfullySignedPoliceTasks,
   ]);
 
   const handleBulkSignConfirm = useCallback(() => {
@@ -1413,6 +1555,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
           actionCancelOnSubmit: handleSinglePendingRpad,
+          cancelTheme: "primary",
           hideSubmit:
             isTypist ||
             ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
@@ -2148,7 +2291,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             <Banner
               whichSvg={"tick"}
               successful={true}
-              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${bulkSendList?.length} ${t("MARKED_DOCUMENT")}`}
+              message={`${t("YOU_HAVE_SUCCESSFULLY_SIGNED")} ${successfullySignedCount || bulkSendList?.length || 0} ${t("MARKED_DOCUMENT")}`}
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%", marginTop: "0px" }}
             />
@@ -2183,6 +2326,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          fileUploadError={fileUploadError}
         />
       )}
       {showErrorToast && (
