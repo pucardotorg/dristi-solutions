@@ -1,5 +1,6 @@
 import React, { useEffect, useReducer, useState } from "react";
 import UploadFile from "./UploadFile";
+import isEqual from "lodash/isEqual";
 
 const displayError = ({ t, error, name }, customErrorMsg) => (
   <span style={{ display: "flex", flexDirection: "column" }}>
@@ -85,7 +86,7 @@ const MultiUploadWrapper = ({
   multiple = true,
 }) => {
   const FILES_UPLOADED = "FILES_UPLOADED";
-  const RESET_FILE = "RESET";
+  const RESET_FILE = "RESET_FILE";
   const TARGET_FILE_REMOVAL = "TARGET_FILE_REMOVAL";
 
   const [fileErrors, setFileErrors] = useState([]);
@@ -135,10 +136,15 @@ const MultiUploadWrapper = ({
   const [state, dispatch] = useReducer(uploadReducer, [...setuploadedstate]);
 
   useEffect(() => {
-    if (multiple) {
-      dispatch({ type: "RESET", payload: [...setuploadedstate] });
+    // 1. Check if the incoming data from parent is different from our local state
+    // 2. We use isEqual to compare values, not object references
+    if (!isEqual(state, setuploadedstate)) {
+      dispatch({ 
+        type: "RESET_FILE", 
+        payload: [...setuploadedstate] 
+      });
     }
-  }, [multiple, JSON.stringify(setuploadedstate)]);
+  }, [JSON.stringify(setuploadedstate)]);
 
   const onUploadMultipleFiles = async (e) => {
     setEnableButton(false);
