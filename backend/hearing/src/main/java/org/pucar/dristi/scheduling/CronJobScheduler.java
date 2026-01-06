@@ -2,7 +2,6 @@ package org.pucar.dristi.scheduling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -52,7 +51,6 @@ import static org.pucar.dristi.config.ServiceConstants.HEARINGS_SCHEDULED_TOMORR
 import static org.pucar.dristi.config.ServiceConstants.HEARING_LINK_MASTER_NAME;
 import static org.pucar.dristi.config.ServiceConstants.HEARING_MODULE_NAME;
 import static org.pucar.dristi.config.ServiceConstants.SCHEDULED;
-import static org.pucar.dristi.config.ServiceConstants.SHORTENED_URL_PATH_PARAM;
 
 @Component
 @Slf4j
@@ -401,18 +399,17 @@ public class CronJobScheduler {
                 return null;
             }
 
-            for(Object item: hearingLinkArray){
-                String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
-                // URL shortening service adds this param in every url
-                if(link != null && link.contains(SHORTENED_URL_PATH_PARAM)){
-                    log.info("VC link shortened url: {}", link);
-                    return link;
-                    }
+            String shortenedUrl = jsonUtil.getNestedValue(hearingLinkArray.get(0), List.of("shortenedUrl"), String.class);
+
+            if(shortenedUrl != null){
+                log.info("VC link shortened url: {}", shortenedUrl);
+                return shortenedUrl;
             }
 
-            log.warn("No shortened URL found in hearing link array");
+            log.error("No shortened URL found in hearing link array");
             return null;
-            } catch (Exception e) {
+
+        } catch (Exception e) {
             log.error("Error fetching hearing link from MDMS", e);
             return null;
         }
