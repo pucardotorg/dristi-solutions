@@ -20,6 +20,7 @@ export const CustomMultiSelectDropdown = React.memo(({
   options = [],
   optionsKey = "label",
   displayKey = "code",
+  filterKey = "label",
   selected = [],
   onSelect,
   defaultLabel = "",
@@ -57,14 +58,14 @@ export const CustomMultiSelectDropdown = React.memo(({
   const filtered = useMemo(() => {
     const q = (searchQuery || "").toLowerCase();
     if (!q) return options;
-    return options.filter((o) => (t(o?.[optionsKey]) || "").toString().toLowerCase().includes(q));
-  }, [options, searchQuery, t, optionsKey]);
+    return options.filter((o) => (t(o?.[filterKey]) || "").toString().toLowerCase().includes(q));
+  }, [options, searchQuery, t, filterKey]);
 
   function toggleOption(option) {
-    const exists = localSelected?.some((s) => s?.[optionsKey] === option?.[optionsKey]);
+    const exists = localSelected?.some((s) => s?.[filterKey] === option?.[filterKey]);
     let updated;
     if (exists) {
-      updated = localSelected.filter((s) => s?.[optionsKey] !== option?.[optionsKey]);
+      updated = localSelected.filter((s) => s?.[filterKey] !== option?.[filterKey]);
     } else {
       updated = [...(localSelected || []), option];
     }
@@ -154,7 +155,7 @@ export const CustomMultiSelectDropdown = React.memo(({
           style={{ maxHeight: 300, overflow: "auto", border: "1px solid #E3E3E3", borderRadius: 4, marginTop: 4, background: "#fff" }}
         >
           {filtered?.map((option, idx) => {
-            const checked = !!localSelected?.find((s) => s?.[optionsKey] === option?.[optionsKey]);
+            const checked = !!localSelected?.find((s) => s?.[filterKey] === option?.[filterKey]);
             return (
               <label key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer" }}>
                 <input type="checkbox" checked={checked} onChange={() => toggleOption(option)} style={{ margin: 0, width: 18, height: 18 }} />

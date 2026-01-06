@@ -547,10 +547,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     // Determine current tab label to decide whether to reload
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
     const isPendingSignTab = currentConfig?.label === "PENDING_SIGN";
+    const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
+    const isSignedTab = currentConfig?.label === "SIGNED";
 
-    // Do NOT trigger reload for Pending Sign tab (to preserve selections),
-    // keep existing behavior for other tabs if needed
-    if (!isPendingSignTab) {
+    // Do NOT trigger reload for Pending Sign, Pending RPAD Collection, and Signed tabs (to preserve search criteria and selections)
+    if (!isPendingSignTab && !isPendingRpadTab && !isSignedTab) {
       setReload(!reload);
     }
   }, [taskNumber, history, isJudge, courtId, activeTabIndex, reload]);
@@ -1010,8 +1011,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             name: "Signature",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
             isMultipleUpload: false,
           },
@@ -1551,6 +1552,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
           actionCancelOnSubmit: handleSinglePendingRpad,
+          cancelTheme: "primary",
           hideSubmit:
             isTypist ||
             ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&

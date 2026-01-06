@@ -21,6 +21,7 @@ const MediationFormSignaturePage = () => {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo?.type]);
   const isMediationApprover = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_APPROVER"]?.includes(role?.code)), [userInfo?.roles]);
+  const isMediationCreator = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_CREATOR"]?.includes(role?.code)), [userInfo?.roles]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -73,8 +74,8 @@ const MediationFormSignaturePage = () => {
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -460,7 +461,7 @@ const MediationFormSignaturePage = () => {
               )}
             </div>
             <div style={{ flex: 1 }} title={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED && t("ORDER_ALREADY_PUBLISHED")}>
-              {isMediationApprover && (
+              {isMediationCreator && (
                 <Button
                   className={"edit-button"}
                   variation="secondary"
@@ -509,9 +510,9 @@ const MediationFormSignaturePage = () => {
                     onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
                   />
                 )}
-                {((isMediationApprover && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_UPLOAD) || isCitizen) && (
+                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_UPLOAD) || isCitizen) && (
                   <Button
-                    label={isMediationApprover ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
+                    label={isMediationCreator ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
                     variation={"secondary"}
                     style={{ boxShadow: "none", backgroundColor: "#fff", padding: "8px 24px", width: "fit-content" }}
                     textStyles={{
@@ -523,7 +524,7 @@ const MediationFormSignaturePage = () => {
                       color: "#007E7E",
                     }}
                     onButtonClick={() => {
-                      if (isMediationApprover) {
+                      if (isMediationCreator) {
                         setShowUploadSignatureModal(true);
                       } else {
                         history.goBack();
