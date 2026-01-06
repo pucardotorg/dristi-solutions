@@ -548,10 +548,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     // Determine current tab label to decide whether to reload
     const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
     const isPendingSignTab = currentConfig?.label === "PENDING_SIGN";
+    const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
+    const isSignedTab = currentConfig?.label === "SIGNED";
 
-    // Do NOT trigger reload for Pending Sign tab (to preserve selections),
-    // keep existing behavior for other tabs if needed
-    if (!isPendingSignTab) {
+    // Do NOT trigger reload for Pending Sign, Pending RPAD Collection, and Signed tabs (to preserve search criteria and selections)
+    if (!isPendingSignTab && !isPendingRpadTab && !isSignedTab) {
       setReload(!reload);
     }
   }, [taskNumber, history, isJudge, courtId, activeTabIndex, reload]);
