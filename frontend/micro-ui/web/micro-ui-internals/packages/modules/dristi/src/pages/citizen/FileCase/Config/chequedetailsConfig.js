@@ -46,8 +46,8 @@ export const chequeDetailsFormConfig = [
               maxFileSize: 10,
               documentHeader: "CS_BOUNCED_CHEQUE",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
             }
           ]
         },
@@ -296,9 +296,9 @@ export const chequeDetailsFormConfig = [
               maxFileSize: 10,
               documentHeader: "CS_PROOF_DEPOSIT_CHEQUE",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               infoTooltipMessage: "CS_PROOF_DEPOSIT_CHEQUE",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
             }
           ]
         },
@@ -351,9 +351,9 @@ export const chequeDetailsFormConfig = [
               maxFileSize: 10,
               documentHeader: "CS_CHEQUE_RETURN_MEMO",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               infoTooltipMessage: "CS_CHEQUE_RETURN_MEMO",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB"
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
             }
           ]
         },

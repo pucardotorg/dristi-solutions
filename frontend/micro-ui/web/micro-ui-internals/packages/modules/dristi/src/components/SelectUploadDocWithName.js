@@ -38,7 +38,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           documentHeader: "header",
           type: "DragDropComponent",
           maxFileSize: 10,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: false,
         },

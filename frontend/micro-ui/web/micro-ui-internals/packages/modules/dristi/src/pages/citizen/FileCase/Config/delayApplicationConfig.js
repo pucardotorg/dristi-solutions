@@ -128,7 +128,7 @@ const delayApplicationFormConfig = [
               maxFileSize: 10,
               documentHeader: "CS_DELAY_CONDONATION_APPLICATION",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               infoTooltipMessage: "CS_DELAY_CONDONATION_APPLICATION",
               maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
             },

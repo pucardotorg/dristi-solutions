@@ -92,7 +92,7 @@ export const delayAppConfig = [
               isOptional: "CS_IS_OPTIONAL",
               infoTooltipMessage: "AADHAR",
               type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
               fileTypes: ["JPG", "PDF"],
