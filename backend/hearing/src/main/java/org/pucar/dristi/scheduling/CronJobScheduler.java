@@ -70,7 +70,6 @@ public class CronJobScheduler {
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private String hearingLink;
 
 
     @Autowired
@@ -86,24 +85,6 @@ public class CronJobScheduler {
         this.mdmsUtil = mdmsUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-    }
-
-    @PostConstruct
-    public void init() {
-        Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(null, config.getTenantId(), HEARING_MODULE_NAME, Collections.singletonList(HEARING_LINK_MASTER_NAME));
-        JSONArray hearingLinkArray = mdmsResponse
-                .get(HEARING_MODULE_NAME)
-                .get(HEARING_LINK_MASTER_NAME);
-
-        for(Object item: hearingLinkArray){
-            String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
-            // URL shortening service adds this param in every url
-            if(link!=null && link.contains(SHORTENED_URL_PATH_PARAM)){
-                log.info("VC link shortened url: {}", link);
-                hearingLink = link;
-                break;
-            }
-        }
     }
 
     public void sendNotificationOnHearingsHeldToday() {
@@ -147,6 +128,7 @@ public class CronJobScheduler {
 
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
+            String hearingLink = getHearingLink();
             if(hearingLink == null){
                 log.error("VC link shortened URL not configured in MDMS Hearing master");
                 return;
@@ -165,14 +147,14 @@ public class CronJobScheduler {
                 // Send sms to advocates
                 for(Individual advocate: advocates){
                     List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(advocate, advocateCases, requestInfo));
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, advocate, advocateCases, requestInfo));
                     futures.add(future);
                 }
 
                 // Send sms to litigants
                 for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(litigant, litigantCases, requestInfo));
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, litigant, litigantCases, requestInfo));
                     futures.add(future);
                 }
 
@@ -225,7 +207,7 @@ public class CronJobScheduler {
         }
     }
 
-    private Boolean sendSMSForHearingsScheduledTomorrow(Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
+    private Boolean sendSMSForHearingsScheduledTomorrow(String hearingLink, Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
         log.info("Sending updates on hearings scheduled tomorrow");
         try{
             int caseCount = cases.size();
@@ -392,6 +374,27 @@ public class CronJobScheduler {
                 .build();
 
         return fetchHearings(requestInfo, hearingCriteria, null);
+    }
+
+    private String getHearingLink(){
+
+        String hearingLink = null;
+        Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(null, config.getTenantId(), HEARING_MODULE_NAME, Collections.singletonList(HEARING_LINK_MASTER_NAME));
+        JSONArray hearingLinkArray = mdmsResponse
+                .get(HEARING_MODULE_NAME)
+                .get(HEARING_LINK_MASTER_NAME);
+
+        for(Object item: hearingLinkArray){
+            String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
+            // URL shortening service adds this param in every url
+            if(link!=null && link.contains(SHORTENED_URL_PATH_PARAM)){
+                log.info("VC link shortened url: {}", link);
+                hearingLink = link;
+                break;
+            }
+        }
+
+        return hearingLink;
     }
 
     /**
