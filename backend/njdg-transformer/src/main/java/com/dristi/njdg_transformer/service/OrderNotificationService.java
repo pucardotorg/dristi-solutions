@@ -53,7 +53,7 @@ public class OrderNotificationService {
 
         // Fetch all hearings for the case using filing number
         List<Hearing> allHearings = fetchAllHearingsForCase(order, requestInfo);
-        log.debug("Fetched {} hearings for filing number: {}", allHearings.size(), order.getFilingNumber());
+        log.info("Fetched {} hearings for filing number: {}", allHearings.size(), order.getFilingNumber());
 
         String cino = order.getCnrNumber();
         LocalDate searchDate = formatDate(order.getCreatedDate());
@@ -137,14 +137,14 @@ public class OrderNotificationService {
                 if (orderDate != null) {
                     LocalDate hearingDate = formatDate(matchingHearing.get().getStartTime());
                     if (hearingDate != null && hearingDate.isEqual(orderDate)) {
-                        log.debug("Found matching hearing for hearingNumber: {} | hearingType: {}",
+                        log.info("Found matching hearing for hearingNumber: {} | hearingType: {}",
                                 order.getHearingNumber(), matchingHearing.get().getHearingType());
                         return getPurposeOfListingValue(matchingHearing.get());
                     }
                     log.info("Hearing found by ID {} but date {} does not match order date {}. Trying to find hearing by date.",
                             order.getHearingNumber(), hearingDate, orderDate);
                 } else {
-                    log.debug("Order date is null, using matching hearing for hearingNumber: {}", order.getHearingNumber());
+                    log.info("Order date is null, using matching hearing for hearingNumber: {}", order.getHearingNumber());
                     return getPurposeOfListingValue(matchingHearing.get());
                 }
             } else {
@@ -160,7 +160,7 @@ public class OrderNotificationService {
                         .findFirst();
 
                 if (dateMatchingHearing.isPresent()) {
-                    log.debug("Found matching hearing for order date: {} | hearingType: {}",
+                    log.info("Found matching hearing for order date: {} | hearingType: {}",
                             orderDate, dateMatchingHearing.get().getHearingType());
                     return getPurposeOfListingValue(dateMatchingHearing.get());
                 }
@@ -170,13 +170,13 @@ public class OrderNotificationService {
         // Hearing number is null - check order category
         if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
             // Use order type for intermediate orders
-            log.debug("Using order type for INTERMEDIATE order | orderType: {}", order.getOrderType());
+            log.info("Using order type for INTERMEDIATE order | orderType: {}", order.getOrderType());
             return getPurposeOfListingValue(Hearing.builder().hearingType(order.getOrderType()).build());
         } else if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
             // Find last completed hearing by startTime
             Hearing lastCompletedHearing = findLastCompletedHearing(allHearings);
             if (lastCompletedHearing != null) {
-                log.debug("Using last completed hearing type for COMPOSITE order | hearingType: {}", 
+                log.info("Using last completed hearing type for COMPOSITE order | hearingType: {}", 
                         lastCompletedHearing.getHearingType());
                 return getPurposeOfListingValue(lastCompletedHearing);
             }
@@ -301,7 +301,7 @@ public class OrderNotificationService {
      */
     private void updateExistingHearingsNextDate(String cino, Hearing scheduledHearing) {
         if (scheduledHearing == null) {
-            log.debug("No scheduled hearing found, skipping next date update for cino: {}", cino);
+            log.info("No scheduled hearing found, skipping next date update for cino: {}", cino);
             return;
         }
 
@@ -314,7 +314,7 @@ public class OrderNotificationService {
                 hearingDetails.setNextDate(scheduledNextDate);
                 hearingDetails.setNextPurpose(scheduledNextPurpose != null ? scheduledNextPurpose : "0");
                 producer.push("update-hearing-details", hearingDetails);
-                log.debug("Updated hearing details with next date | cino: {} | srNo: {} | nextDate: {}", 
+                log.info("Updated hearing details with next date | cino: {} | srNo: {} | nextDate: {}", 
                         cino, hearingDetails.getSrNo(), scheduledNextDate);
             }
         }
@@ -332,7 +332,7 @@ public class OrderNotificationService {
                     .build();
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
             if(hearings.isEmpty()) {
-                log.debug("No hearings found for caseNumber: {}", caseNumber);
+                log.info("No hearings found for caseNumber: {}", caseNumber);
                 break;
             }
             hearings.sort(Comparator.comparing(Hearing::getStartTime));
