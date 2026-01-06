@@ -195,7 +195,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
