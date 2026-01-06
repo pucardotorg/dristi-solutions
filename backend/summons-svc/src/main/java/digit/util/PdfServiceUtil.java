@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 
@@ -59,7 +60,7 @@ public class PdfServiceUtil {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            SummonsPdf summonsPdf = createSummonsPdfFromTask(taskRequest.getTask());
+            SummonsPdf summonsPdf = createSummonsPdfFromTask(taskRequest);
 
             if (SUMMON.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
                 var summonDetails = taskRequest.getTask().getTaskDetails().getSummonDetails();
@@ -193,7 +194,8 @@ public class PdfServiceUtil {
         return locationBasedJurisdiction.getNearestPoliceStation().getStation();
     }
 
-    private SummonsPdf createSummonsPdfFromTask(Task task) {
+    private SummonsPdf createSummonsPdfFromTask(TaskRequest taskRequest) {
+        Task task = taskRequest.getTask();
         Long issueDate = null;
         String docSubType = null;
         if (NOTICE.equals(task.getTaskType())) {
@@ -236,6 +238,15 @@ public class PdfServiceUtil {
                 .map(Object::toString)
                 .orElse("");
         String respondentName = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), task);
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        String witnessRespondentName = null;
+        String witnessRespondentDesignation = null;
+
+        if(docSubType.equals(WITNESS)) {
+            witnessRespondentName = getWitnessFullName(caseDetails, task.getTaskDetails().getWitnessDetails().getUniqueId());
+            witnessRespondentDesignation = getWitnessDesignation(caseDetails, task.getTaskDetails().getWitnessDetails().getUniqueId());
+        }
         String respondentAddress = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
         Address address = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
         return SummonsPdf.builder()
@@ -250,6 +261,8 @@ public class PdfServiceUtil {
                 .courtName(courtName == null ? config.getCourtName(): courtName)
                 .hearingDate(hearingDateString)
                 .respondentName(respondentName)
+                .witnessRespondentName(witnessRespondentName)
+                .witnessRespondentDesignation(witnessRespondentDesignation)
                 .respondentAddress(respondentAddress)
                 .complainantName(complainantName)
                 .complainantAddress(complainantAddress)
@@ -262,6 +275,60 @@ public class PdfServiceUtil {
                 .infoPdfUrl(config.getInfoPdfUrl())
                 .helplineNumber(config.getHelplineNumber())
                 .build();
+    }
+
+    public String getWitnessFullName(JsonNode caseDetails, String uniqueId) {
+        JsonNode witnessDetailsArray = caseDetails.get("witnessDetails");
+
+        if (witnessDetailsArray == null || !witnessDetailsArray.isArray()) {
+            return null;
+        }
+
+        for (JsonNode witness : witnessDetailsArray) {
+            String witnessUniqueId = witness.has("uniqueId") ? witness.get("uniqueId").asText() : null;
+
+            if (uniqueId.equals(witnessUniqueId)) {
+                String firstName = witness.has("firstName") && !witness.get("firstName").isNull()
+                        ? witness.get("firstName").asText()
+                        : "";
+                String middleName = witness.has("middleName") && !witness.get("middleName").isNull()
+                        ? witness.get("middleName").asText()
+                        : "";
+                String lastName = witness.has("lastName") && !witness.get("lastName").isNull()
+                        ? witness.get("lastName").asText()
+                        : "";
+
+                List<String> nameParts = Stream.of(firstName, middleName, lastName)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
+
+                return nameParts.isEmpty()? null : String.join(" ", nameParts);
+            }
+        }
+
+        return null; // uniqueId not found
+    }
+
+    public String getWitnessDesignation(JsonNode caseDetails, String uniqueId) {
+        JsonNode witnessDetailsArray = caseDetails.get("witnessDetails");
+
+        if (witnessDetailsArray == null || !witnessDetailsArray.isArray()) {
+            return null;
+        }
+
+        for (JsonNode witness : witnessDetailsArray) {
+            String witnessUniqueId = witness.has("uniqueId") ? witness.get("uniqueId").asText() : null;
+
+            if (uniqueId.equals(witnessUniqueId)) {
+                if (witness.has("witnessDesignation") && !witness.get("witnessDesignation").isNull()) {
+                    return witness.get("witnessDesignation").textValue();
+                }
+                return null;
+            }
+        }
+
+        return null; // uniqueId not found
     }
 
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Task task) {
