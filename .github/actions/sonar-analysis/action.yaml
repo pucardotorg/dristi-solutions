@@ -60,7 +60,7 @@ runs:
         SONAR_TOKEN: ${{ inputs.sonar_token }}
       shell: bash
       run: |
-        npx sonar-scanner -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
+        npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
       working-directory: ${{ env.service_source_path }}
 
     - name: Set up JDK 17
@@ -120,3 +120,4 @@ runs:
         # FIX: Use env context for service_source_path
 
         mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }}
+
