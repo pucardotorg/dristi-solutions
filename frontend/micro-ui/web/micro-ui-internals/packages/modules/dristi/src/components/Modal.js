@@ -79,11 +79,19 @@ const Modal = ({
             >
               {actionCancelLabel && !hideCancel ? (
                 <ButtonSelector
-                  textStyles={{ margin: "0px", color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E", ...(actionCancelTextStyle ? actionCancelTextStyle : {}) }}
+                  textStyles={{
+                    margin: "0px",
+                    color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
+                    ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
+                  }}
                   theme={cancelTheme || "border"}
                   label={actionCancelLabel}
                   onSubmit={actionCancelOnSubmit}
-                  style={cancelTheme === "primary" ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) } : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }}
+                  style={
+                    cancelTheme === "primary"
+                      ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                      : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                  }
                   ButtonBody={cancelButtonBody}
                   isDisabled={isBackButtonDisabled}
                   textClassName={cancelTextClassName}
