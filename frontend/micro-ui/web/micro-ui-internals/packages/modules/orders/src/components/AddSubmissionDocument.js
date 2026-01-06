@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
-import isEqual from "lodash/isEqual";
-import { max } from "lodash";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = () => {
@@ -35,7 +33,9 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       ],
     [config?.populators?.inputs]
   );
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key]?.submissionDocuments || [{}]);
+  const [formInstances, setFormInstances] = useState(() => {
+    return formData?.[config?.key]?.submissionDocuments || [{}];
+  });
 
   const addAnotherForm = () => {
     setFormInstances([...formInstances, {}]);
@@ -44,7 +44,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   const updateFormData = (updatedFormInstances) => {
     onSelect(config.key, {
       ...formData[config.key],
-      submissionDocuments: updatedFormInstances.map((instance) => instance[config.key]),
+      submissionDocuments: updatedFormInstances,
     });
   };
 
@@ -66,36 +66,25 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   };
 
   function setValue(value, name, input, index) {
-    const updatedFormInstances = [...formInstances];
-
-    if (name === "document" && !value) {
-      const existingDoc = updatedFormInstances[index]?.[config.key]?.document;
-      if (existingDoc?.fileStore) {
-        return;
-      }
-
-      const existingFormDataDoc = formData?.[config.key]?.submissionDocuments?.[index]?.document;
-      if (existingFormDataDoc?.fileStore) {
-        value = existingFormDataDoc;
-      }
-    }
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
-    }
-    updatedFormInstances[index][config.key][name] = value;
+    const formValue = formData?.[config.key]?.submissionDocuments || [{}];
+    const updatedFormInstances = [...formValue];
+    updatedFormInstances[index] = {
+      ...updatedFormInstances[index],
+      [name]: value,
+    };
 
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   }
 
   const getFileStoreData = async (filesData, input, index) => {
-    if (!filesData?.length || filesData.length === 0) {
-      const existingDoc = formInstances[index]?.[config.key]?.document;
-      const existingFormDataDoc = formData?.[config.key]?.submissionDocuments?.[index]?.document;
+    if (Array.isArray(filesData) && filesData.length === 0) {
+      setValue([], input.name, input, index);
+      return;
+    }
 
-      if (existingDoc?.fileStore || existingFormDataDoc?.fileStore) {
-        return;
-      }
+    if (!filesData?.length) {
+      return;
     }
 
     const numberOfFiles = filesData.length;
@@ -162,31 +151,14 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   );
 
   const memoizedDocuments = useMemo(() => {
-    return formInstances.map((formInstance, index) => {
-      return formInstance.submissionDocuments?.document && showDocument(formInstance.submissionDocuments.document);
+    return formInstances?.map((formInstance, index) => {
+      return formInstance?.document && showDocument(formInstance?.document);
     });
   }, [formInstances, showDocument]);
 
-  useEffect(() => {
-    const submissionDocs = formData?.[config?.key]?.submissionDocuments;
-    if (submissionDocs && Array.isArray(submissionDocs) && submissionDocs.length > 0) {
-      const hasRealDocData = submissionDocs.some((doc) => doc?.document?.fileStore);
-
-      if (hasRealDocData) {
-        const updatedInstances = submissionDocs.map((doc) => ({
-          [config.key]: doc,
-        }));
-
-        if (!isEqual(formInstances, updatedInstances)) {
-          setFormInstances(updatedInstances);
-        }
-      }
-    }
-  }, [formData, config.key]);
-
   return (
     <React.Fragment>
-      {formInstances.map((formInstance, index) => (
+      {formInstances?.map((formInstance, index) => (
         <div key={index}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
             <p style={{ fontSize: "24px", fontWeight: 700 }}>{`Submission Document (${index + 1})`}</p>
@@ -198,7 +170,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
           </div>
 
           {inputs?.map((input, idx) => {
-            const docObj = formInstances?.[index]?.documentTitle ? formInstances[index] : formInstances[index]?.submissionDocuments;
+            const docObj = formData?.[config?.key]?.submissionDocuments?.[index];
             let currentValue = (formData[index] && formData[index][config.key] && formData[index][config.key][input.name]) || "";
             return (
               <React.Fragment key={idx}>
@@ -213,7 +185,11 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         tenantId={window?.Digit.ULBService.getCurrentTenantId()}
                         getFormState={(fileData) => getFileStoreData(fileData, input, index)}
                         showHintBelow={input?.showHintBelow ? true : false}
-                        setuploadedstate={docObj ? (docObj?.document ? [[docObj?.document?.additionalDetails?.name, docObj?.document]] : []) : []}
+                        setuploadedstate={
+                          docObj?.document && Object.keys(docObj.document).length > 0
+                            ? [[docObj.document.additionalDetails?.name, docObj.document]]
+                            : []
+                        }
                         allowedFileTypesRegex={input.allowedFileTypes}
                         allowedMaxSizeInMB={input.allowedMaxSizeInMB || "5"}
                         hintText={input.hintText}
@@ -224,13 +200,14 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         displayName={docObj?.document?.additionalDetails?.name || ""}
                         disable={disable}
                         uploadDivStyle={input?.uploadDivStyle}
+                        multiple={true}
                       />
                     )}
                     {input?.type === "text" && (
                       <TextInput
                         className="field desktop-w-full"
                         key={input.name}
-                        value={docObj?.documentTitle ? docObj.documentTitle : ""}
+                        value={docObj?.[input.name] || ""}
                         onChange={(e) => {
                           const newValue = sanitizeData(e.target.value)
                           setValue(newValue, input.name, input, index);
@@ -251,7 +228,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         t={t}
                         label={input.name}
                         type={input.type}
-                        value={docObj?.documentType}
+                        value={docObj?.[input.name]}
                         onChange={(e) => {
                           setValue(e, input.name, input, index);
                         }}
@@ -280,7 +257,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
               </React.Fragment>
             );
           })}
-          {formInstances.length > 0 && memoizedDocuments[index]}
+          {formInstances?.length > 0 && memoizedDocuments[index]}
         </div>
       ))}
       {isImageModalOpen && (
@@ -298,7 +275,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       )}
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
+          {formInstances?.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
         </button>
       )}
     </React.Fragment>
