@@ -1551,6 +1551,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
           actionCancelOnSubmit: handleSinglePendingRpad,
+          cancelTheme: "primary",
           hideSubmit:
             isTypist ||
             ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
