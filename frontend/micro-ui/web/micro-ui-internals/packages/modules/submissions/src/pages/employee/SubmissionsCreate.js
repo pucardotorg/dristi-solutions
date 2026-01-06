@@ -32,7 +32,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getFilingType, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -671,6 +671,7 @@ const SubmissionsCreate = ({ path }) => {
             name: `APPLICATION_TYPE_${applicationTypeParam}`,
           },
         }),
+        prayer: { text: "" },
       };
     } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
       let selectComplainant = null;
@@ -689,6 +690,7 @@ const SubmissionsCreate = ({ path }) => {
         },
         applicationDate: formatDate(new Date()),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
+        prayer: { text: "" },
       };
     } else if (orderNumber) {
       if ((isComposite ? compositeMandatorySubmissionItem : orderDetails)?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
@@ -729,6 +731,7 @@ const SubmissionsCreate = ({ path }) => {
               : orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+            prayer: { text: "" },
           };
         } else {
           const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
@@ -749,6 +752,7 @@ const SubmissionsCreate = ({ path }) => {
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+            prayer: { text: "" },
           };
         }
       } else if ((isComposite ? compositeWarrantItem : orderDetails)?.orderType === orderTypes.WARRANT) {
@@ -763,6 +767,7 @@ const SubmissionsCreate = ({ path }) => {
           },
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
+          prayer: { text: "" },
         };
       } else if ((isComposite ? compositeSetTermBailItem : orderDetails)?.orderType === orderTypes.SET_BAIL_TERMS) {
         const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
@@ -781,6 +786,7 @@ const SubmissionsCreate = ({ path }) => {
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+          prayer: { text: "" },
         };
       } else {
         return {
@@ -789,6 +795,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION",
           },
           applicationDate: formatDate(new Date()),
+          prayer: { text: "" },
         };
       }
     } else if (applicationType) {
@@ -814,6 +821,7 @@ const SubmissionsCreate = ({ path }) => {
           : {}),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
         ...(formdata || {}),
+        prayer: { text: "" },
       };
     } else {
       return {
@@ -822,6 +830,7 @@ const SubmissionsCreate = ({ path }) => {
           name: "APPLICATION",
         },
         applicationDate: formatDate(new Date()),
+        prayer: { text: "" },
       };
     }
   }, [
@@ -856,6 +865,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    runComprehensiveSanitizer({ formData, setValue });
     if (
       applicationType &&
       ![
@@ -1112,21 +1122,26 @@ const SubmissionsCreate = ({ path }) => {
         //   (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name, tenantId)))) || [];
         let file = null;
         const uploadedDocumentList = [...(documentsList || []), ...applicationDocuments];
-        uploadedDocumentList.forEach((res, index) => {
-          const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
-          file = {
-            documentType: res?.fileType,
-            fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
-            documentOrder: index,
-            fileName: resolvedName,
-            additionalDetails: {
-              name: resolvedName,
-              documentType: res?.additionalDetails?.documentType,
-              documentTitle: res?.additionalDetails?.documentTitle,
-            },
-          };
-          documents.push(file);
-        });
+        if (uploadedDocumentList.length > 0) {
+          uploadedDocumentList.forEach((res, index) => {
+            const fileStore = res?.fileStore || res?.file?.files?.[0]?.fileStoreId;
+            if (!fileStore) return;
+            const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
+            const file = {
+              documentType: res?.fileType,
+              fileStore: fileStore,
+              documentOrder: index,
+              fileName: resolvedName,
+              additionalDetails: {
+                name: resolvedName,
+                documentType: res?.additionalDetails?.documentType,
+                documentTitle: res?.additionalDetails?.documentTitle,
+              },
+            };
+
+            documents.push(file);
+          });
+        }
       }
 
       let applicationSchema = {};

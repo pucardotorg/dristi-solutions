@@ -4,7 +4,7 @@ import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-re
 import { useTranslation } from "react-i18next";
 import isEqual from "lodash/isEqual";
 import ReviewDocumentSubmissionModal from "../../components/ReviewDocumentSubmissionModal";
-import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getFilingType, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import SubmissionDocumentSuccessModal from "../../components/SubmissionDocumentSuccessModal";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
@@ -354,7 +354,8 @@ const SubmissionDocuments = ({ path }) => {
       }
     } catch (error) {
       console.error("Error occured", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      setShowErrorToast({ label: t(errorCode || "SOMETHING_WENT_WRONG"), error: true });
     }
   };
 
@@ -393,6 +394,7 @@ const SubmissionDocuments = ({ path }) => {
   }
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    runComprehensiveSanitizer({ formData, setValue });
     if (formData?.submissionDocuments?.uploadedDocs?.length > 0 && Object.keys(formState?.errors).includes("uploadedDocs")) {
       clearErrors("uploadedDocs");
     } else if (
@@ -468,6 +470,7 @@ const SubmissionDocuments = ({ path }) => {
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
+  
   return (
     <React.Fragment>
       <style>

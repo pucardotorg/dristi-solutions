@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.Tika;
@@ -17,16 +19,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
+@Slf4j
 public class StorageValidator {
 
-	private FileStoreConfig fileStoreConfig;
+	private final FileStoreConfig fileStoreConfig;
+    private final ClamAVValidator clamAVValidator;
 
 	
 	@Autowired
-	public StorageValidator(FileStoreConfig fileStoreConfig) {
-		super();
-		this.fileStoreConfig = fileStoreConfig;
-	}
+	public StorageValidator(FileStoreConfig fileStoreConfig, ClamAVValidator clamAVValidator) {
+        this.fileStoreConfig = fileStoreConfig;
+        this.clamAVValidator = clamAVValidator;
+    }
 
 	private static final Map<String, byte[]> MAGIC_NUMBERS = new HashMap<>();
 
@@ -44,34 +48,96 @@ public class StorageValidator {
 			
 		String extension = (FilenameUtils.getExtension(artifact.getMultipartFile().getOriginalFilename())).toLowerCase();
 		validateFileExtention(extension);
-		validateContentType(artifact.getFileContentInString(), extension);
+		validateContentType(artifact, extension);
 		validateInputContentType(artifact);
+		if ("pdf".equals(extension) && fileStoreConfig.isPdfScanEnabled()) {
+			validatePdfSecurity(artifact);
+		}
 		validateMagicNumber(artifact.getMultipartFile(), extension);
 		validateFileSize(artifact.getMultipartFile());
-	}
-	
-	private void validateFileExtention(String extension) {
+        validateVirusScan(artifact);
+    }
+
+    private void validateVirusScan(Artifact artifact) {
+        try {
+            boolean safe = clamAVValidator.isFileSafe(artifact.getMultipartFile().getInputStream());
+            if (!safe) {
+                throw new CustomException("EG_FILESTORE_VIRUS_FOUND", "File contains a virus");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void validateFileExtention(String extension) {
 		if(!fileStoreConfig.getAllowedFormatsMap().containsKey(extension)) {
 			throw new CustomException("EG_FILESTORE_INVALID_INPUT","Inalvid input provided for file : " + extension + ", please upload any of the allowed formats : " + fileStoreConfig.getAllowedKeySet());
 		}
 	}
 	
-	private void validateContentType(String inputStreamAsString, String extension) {
-		
-		String inputFormat = null;
+	private void validateContentType(Artifact artifact, String extension) {
+		String detectedMime = null;
 		Tika tika = new Tika();
-		try {
-			
-			InputStream ipStreamForValidation = IOUtils.toInputStream(inputStreamAsString, fileStoreConfig.getImageCharsetType());
-			inputFormat = tika.detect(ipStreamForValidation);
-			ipStreamForValidation.close();
+		try (InputStream is = artifact.getMultipartFile().getInputStream()) {
+			detectedMime = tika.detect(is, artifact.getMultipartFile().getOriginalFilename());
 		} catch (IOException e) {
 			throw new CustomException("EG_FILESTORE_PARSING_ERROR","not able to parse the input please upload a proper file of allowed type : " + e.getMessage());
 		}
-		
-		if (!fileStoreConfig.getAllowedFormatsMap().get(extension).contains(inputFormat)) {
+
+		if (!fileStoreConfig.getAllowedFormatsMap().get(extension).contains(detectedMime)) {
 			throw new CustomException("EG_FILESTORE_INVALID_INPUT", "Inalvid input provided for file, the extension does not match the file format. Please upload any of the allowed formats : "
-							+ fileStoreConfig.getAllowedKeySet());
+					+ fileStoreConfig.getAllowedKeySet());
+		}
+	}
+
+	private void validatePdfSecurity(Artifact artifact) {
+		try {
+			PdfSecurityScanner.Result r = PdfSecurityScanner.scan(artifact.getMultipartFile());
+			if (fileStoreConfig.isPdfDisallowJavascript() && r.hasJavaScript()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains JavaScript actions which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowOpenAction() && r.hasOpenAction()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains OpenAction which is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowAA() && r.hasAA()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains additional actions (AA) which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowLaunch() && r.hasLaunch()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains Launch actions which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowEmbeddedFiles() && r.hasEmbeddedFiles()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains embedded files which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowRichMedia() && r.hasRichMedia()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains RichMedia which is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowAcroform() && r.hasAcroForm() &&
+					(r.hasJavaScript() || r.hasAA() || r.hasLaunch() || r.hasXfa())) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains harmful AcroForm content which is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowFileAttachments() && r.hasFileAttachments()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains file attachments which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowEncrypted() && r.isEncrypted()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "Encrypted PDF is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowXfa() && r.hasXfa()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains XFA which is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowStreamJavascript() && r.hasJsInStreams()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains JavaScript in streams which is disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowObjectStreams() && r.hasObjStm()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains object streams (ObjStm) which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowXrefStreams() && r.hasXRefStream()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains cross-reference streams (XRef) which are disallowed");
+			}
+			if (fileStoreConfig.isPdfDisallowSuspiciousFilters() && r.hasSuspiciousFilters()) {
+				throw new CustomException("EG_FILESTORE_PDF_UNSAFE", "PDF contains suspicious filters which are disallowed");
+			}
+		} catch (IOException e) {
+			throw new CustomException("EG_FILESTORE_PDF_SCAN_ERROR", "Failed to scan PDF for unsafe features: " + e.getMessage());
 		}
 	}
 
