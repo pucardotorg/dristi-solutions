@@ -162,7 +162,7 @@ jobs:
           echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
 
       - name: Sonar Analysis
-        uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop-actions-pr-test
+        uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop
         with:
           service_name: ${{ matrix.service }}
           sonar_token: ${{ secrets.SONAR_TOKEN_BEEHYV }}
@@ -172,7 +172,7 @@ jobs:
 
       - name: Docker Build
         id: docker_build
-        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-pr-test
+        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop
         with:
           service_name: ${{ matrix.service }}
           docker_password: ${{ secrets.ACR_PASSWORD }}
