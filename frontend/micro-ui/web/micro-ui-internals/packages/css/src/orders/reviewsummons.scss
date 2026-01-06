@@ -517,6 +517,37 @@ $date-input-color: #000;
 }
 @media screen and (max-width: 2000px) {
   .review-process-page.inbox-search-wrapper {
+      // Align header checkbox horizontally with row checkboxes for PENDING_SIGN, SIGNED, and PENDING_RPAD_COLLECTION tabs
+      table {
+        thead {
+          th:first-child {
+            text-align: left;
+            
+            .header-checkbox,
+            input[type="checkbox"][data-header-checkbox="true"],
+            input[type="checkbox"].header-checkbox {
+              width: 20px !important;
+              height: 20px !important;
+              margin: 0;
+              vertical-align: middle;
+            }
+          }
+        }
+        
+        tbody {
+          td:first-child {
+            text-align: left;
+            
+            input[type="checkbox"] {
+              width: 20px !important;
+              height: 20px !important;
+              margin: 0;
+              vertical-align: middle;
+            }
+          }
+        }
+      }
+      
       .inbox-search-component-wrapper {
         .search-wrapper {
           .search-field-wrapper.search.custom-both-clear-search {
