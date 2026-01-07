@@ -2258,7 +2258,6 @@ const AdmittedCaseV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
-
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
     const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
@@ -2581,15 +2580,14 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
-    const [data, setData] = useState([]);
+  const [data, setData] = useState([]);
 
   const fetchInbox = useCallback(async () => {
     try {
-      debugger;
       // Use the date from currentInProgressHearing or todayScheduledHearing, default to today
-      const targetDate = currentInProgressHearing?.startTime || currentScheduledHearing?.startTime || new Date().toISOString().split('T')[0];
+      const targetDate = currentInProgressHearing?.startTime || currentScheduledHearing?.startTime || new Date().toISOString().split("T")[0];
       const targetDateTime = new Date(targetDate);
-      
+
       // Set fromDate to start of the target day
       const fromDate = new Date(targetDateTime.setHours(0, 0, 0, 0)).getTime();
       // Set toDate to end of the target day
@@ -2620,7 +2618,6 @@ const AdmittedCaseV2 = () => {
     } finally {
     }
   }, [currentInProgressHearing, currentScheduledHearing]);
-  
 
   useEffect(() => {
     fetchInbox();
@@ -2672,7 +2669,8 @@ const AdmittedCaseV2 = () => {
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
         const index = validData?.findIndex(
-          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
+          (item) =>
+            item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
         );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
@@ -3838,7 +3836,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={
-                                  currentScheduledHearing?.startTime 
+                                  currentScheduledHearing?.startTime
                                     ? `${t("CS_CASE_NEXT_HEARING")} (${new Date(currentScheduledHearing.startTime).toLocaleDateString()})`
                                     : t("CS_CASE_NEXT_HEARING")
                                 }
