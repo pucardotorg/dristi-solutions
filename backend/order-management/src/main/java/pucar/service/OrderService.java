@@ -63,10 +63,6 @@ public class OrderService {
         Long now = dateUtil.getEPochFromLocalDate(today);
         request.getOrder().setCreatedDate(now);
         OrderResponse orderResponse = orderUtil.createOrder(request);
-
-        if (request.getOrder().getHearingNumber() != null) {
-            hearingUtil.updateOpenHearingOrderStatusForDraftOrder(request.getOrder());
-        }
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
@@ -180,6 +176,8 @@ public class OrderService {
             OrderRequest orderRequest = OrderRequest.builder()
                     .requestInfo(requestInfo).order(order).build();
             orderResponse = orderUtil.createOrder(orderRequest);
+            hearingUtil.updateOpenHearingOrderStatusForDraftOrder(order);
+
             log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
         }
 
@@ -194,7 +192,7 @@ public class OrderService {
                 .tenantId(tenantId)
                 .build();
 
-        if(pagination == null){
+        if (pagination == null) {
             pagination = Pagination.builder().limit(100.0).offSet(0.0).build();
         }
 
@@ -212,16 +210,16 @@ public class OrderService {
                 botdOrders.add(botdOrderSummary);
             }
         }
-        
+
         Integer totalCount = orderListResponse != null ? orderListResponse.getTotalCount() : 0;
-        Pagination responsePagination = orderListResponse != null && orderListResponse.getPagination() != null 
-                ? orderListResponse.getPagination() 
+        Pagination responsePagination = orderListResponse != null && orderListResponse.getPagination() != null
+                ? orderListResponse.getPagination()
                 : pagination;
-        
+
         if (responsePagination != null) {
             responsePagination.setTotalCount(totalCount.doubleValue());
         }
-        
+
         return BotdOrderListResponse.builder()
                 .botdOrderList(botdOrders)
                 .totalCount(totalCount)
@@ -231,7 +229,7 @@ public class OrderService {
 
     private BotdOrderSummary buildBotdOrderSummary(Order order, RequestInfo requestInfo) {
         String businessOfTheDay = orderUtil.getBusinessOfTheDay(order, requestInfo);
-        
+
         return BotdOrderSummary.builder()
                 .orderNumber(order.getOrderNumber())
                 .orderTitle(order.getOrderTitle())

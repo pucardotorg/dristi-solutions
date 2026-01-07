@@ -474,7 +474,7 @@ public class HearingUtil {
         if (openHearingList != null && !openHearingList.isEmpty()) {
             openHearingList.get(0).setOrderStatus(OrderStatus.NOT_CREATED);
         }
-        log.info("Updated open hearing index with orderStatus NO_CREATED");
+        log.info("Updated open hearing index with orderStatus NOT_CREATED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 
