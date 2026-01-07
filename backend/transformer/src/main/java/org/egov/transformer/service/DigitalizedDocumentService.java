@@ -103,11 +103,11 @@ public class DigitalizedDocumentService {
         switch (digitalizedDocument.getType()){
             case EXAMINATION_OF_ACCUSED -> {
                 enrichAssignedRolesForExamination(digitalizedDocument);
-                enrichAssignedToForExamination(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs);
+                enrichAssignedToForExamination(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs, complainantUUIDs, complainantAdvocateUUIDs, complainantPoaUUIDs);
             }
             case PLEA -> {
                 enrichAssignedRolesForPlea(digitalizedDocument);
-                enrichAssignedToForPlea(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs);
+                enrichAssignedToForPlea(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs, complainantUUIDs, complainantAdvocateUUIDs, complainantPoaUUIDs);
             }
             case MEDIATION -> {
                 enrichAssignedRolesForMediation(digitalizedDocument);
@@ -130,16 +130,24 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedRoles(assignedRoles);
     }
 
-    public void enrichAssignedToForExamination(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs){
+    public void enrichAssignedToForExamination(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs, List<String> complainantUUIDs, List<String> complainantAdvocateUUIDs, List<String> complainantPoaUUIDs){
         List<String> assignedTo = new ArrayList<>();
         String status = digitalizedDocument.getStatus();
         log.info("Enriching assigned to for examination document {} for status {}", digitalizedDocument.getDocumentNumber(), status);
         switch (status){
             case DRAFT_IN_PROGRESS -> {} // citizens do not have access in this stage
-            case PENDING_E_SIGN, PENDING_REVIEW, COMPLETED -> {
+            case PENDING_E_SIGN, PENDING_REVIEW -> {
                 assignedTo.addAll(accusedUUIDs);
                 assignedTo.addAll(accusedAdvocateUUIDs);
                 assignedTo.addAll(accusedPoaUUIDs);
+            }
+            case COMPLETED -> {
+                assignedTo.addAll(accusedUUIDs);
+                assignedTo.addAll(accusedAdvocateUUIDs);
+                assignedTo.addAll(accusedPoaUUIDs);
+                assignedTo.addAll(complainantUUIDs);
+                assignedTo.addAll(complainantAdvocateUUIDs);
+                assignedTo.addAll(complainantPoaUUIDs);
             }
             default -> {}
         }
@@ -159,16 +167,24 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedRoles(assignedRoles);
     }
 
-    public void enrichAssignedToForPlea(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs){
+    public void enrichAssignedToForPlea(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs, List<String> complainantUUIDs, List<String> complainantAdvocateUUIDs, List<String> complainantPoaUUIDs){
         List<String> assignedTo = new ArrayList<>();
         String status = digitalizedDocument.getStatus();
         log.info("Enriching assigned to for plea document {} for status {}", digitalizedDocument.getDocumentNumber(), status);
         switch (status){
             case DRAFT_IN_PROGRESS -> {} // citizens do not have access in this stage
-            case PENDING_E_SIGN, PENDING_REVIEW, COMPLETED -> {
+            case PENDING_E_SIGN, PENDING_REVIEW-> {
                 assignedTo.addAll(accusedUUIDs);
                 assignedTo.addAll(accusedAdvocateUUIDs);
                 assignedTo.addAll(accusedPoaUUIDs);
+            }
+            case COMPLETED -> {
+                assignedTo.addAll(accusedUUIDs);
+                assignedTo.addAll(accusedAdvocateUUIDs);
+                assignedTo.addAll(accusedPoaUUIDs);
+                assignedTo.addAll(complainantUUIDs);
+                assignedTo.addAll(complainantAdvocateUUIDs);
+                assignedTo.addAll(complainantPoaUUIDs);
             }
             default -> {}
         }
