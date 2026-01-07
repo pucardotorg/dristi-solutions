@@ -143,7 +143,7 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
         label = getFormattedName(firstName, middleName, lastName, null, partyTypeLabel);
       }
 
-      return { label, value: user };
+      return { label, code: user?.data?.uniqueId, value: user };
     });
   }, [t, userList]);
 
@@ -160,6 +160,7 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
       const label = getFormattedName(firstName, middleName, lastName, witnessDesignation, partyTypeLabel);
       return {
         label,
+        code: partyObj?.data?.uniqueId,
         value: partyObj,
       };
     });
@@ -186,6 +187,8 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
               <CustomMultiSelectDropdown
                 t={t}
                 displayKey="label"
+                optionsKey="label"
+                filterKey="code"
                 options={partyOptions}
                 selected={selectedParty}
                 onSelect={handleDropdownChange}
