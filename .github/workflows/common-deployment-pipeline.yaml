@@ -31,6 +31,7 @@ on:
 
 jobs:
   check-diff:
+    name: Check Differences
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
@@ -146,7 +147,7 @@ jobs:
           echo "deployment_env=$ENV_VALUE" >> $GITHUB_OUTPUT
 
   build-deploy:
-    name: ${{ matrix.service }} - Pipeline
+    name: ${{ matrix.service }} - CI/CD
     runs-on: ubuntu-latest
     needs: check-diff
     continue-on-error: true
