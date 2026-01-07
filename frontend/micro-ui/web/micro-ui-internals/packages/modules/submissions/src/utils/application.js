@@ -106,21 +106,24 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId)
   if (formData?.supportingDocuments?.length) {
     for (let index = 0; index < formData.supportingDocuments.length; index++) {
       const doc = formData?.supportingDocuments[index];
-      if (doc?.submissionDocuments?.uploadedDocs?.length) {
-        try {
-          const docTitle = doc?.documentTitle;
-          const combinedDocName = docTitle ? `${docTitle}.pdf` : `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
-          const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
-          const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName, tenantId);
-          const file = {
-            documentType: docs?.fileType,
-            fileStore: docs?.file?.files?.[0]?.fileStoreId,
-            additionalDetails: { name: docs?.filename || combinedDocName },
-          };
-          doc.submissionDocuments.uploadedDocs = [file];
-        } catch (error) {
-          console.error("Error combining or uploading documents for index:", index, error);
-          throw new Error("Failed to combine and update uploaded documents.");
+      if (doc?.submissionDocuments?.uploadedDocs?.length > 0) {
+        const hasFileTypeDoc = doc?.submissionDocuments?.uploadedDocs?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+        if (hasFileTypeDoc) {
+          try {
+            const docTitle = doc?.documentTitle;
+            const combinedDocName = docTitle ? `${docTitle}.pdf` : `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
+            const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
+            const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName, tenantId);
+            const file = {
+              documentType: docs?.fileType,
+              fileStore: docs?.file?.files?.[0]?.fileStoreId,
+              additionalDetails: { name: docs?.filename || combinedDocName },
+            };
+            doc.submissionDocuments.uploadedDocs = [file];
+          } catch (error) {
+            console.error("Error combining or uploading documents for index:", index, error);
+            throw new Error("Failed to combine and update uploaded documents.");
+          }
         }
       }
     }
@@ -279,4 +282,29 @@ export const _getDefaultFormValue = (t, applicationDetails) => {
     return formdata;
   }
   return applicationDetails?.additionalDetails?.formdata || {};
+};
+
+export const _getFinalDocumentList = (applicationDetails, documents) => {
+  const applicationDocs = applicationDetails?.documents || [];
+  const uploadedDocs = documents || [];
+
+  const uploadedDocMap = new Map(uploadedDocs?.map((doc) => [doc?.fileStore, doc]));
+
+  const finalDocuments = [];
+
+  for (const appDoc of applicationDocs) {
+    const isPresent = uploadedDocMap?.has(appDoc?.fileStore);
+
+    finalDocuments.push({
+      ...appDoc,
+      isActive: isPresent,
+    });
+
+    if (isPresent) {
+      uploadedDocMap?.delete(appDoc?.fileStore);
+    }
+  }
+
+  finalDocuments.push(...uploadedDocMap?.values());
+  return finalDocuments;
 };

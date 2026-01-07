@@ -10,6 +10,14 @@ const defaultSearchValues = {
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
+export const defaultSearchValuesForPendingRpad = {
+  searchText: "",
+  orderType: "",
+  channel: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
+  hearingDate: "",
+  compStatus: "",
+};
+
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
   hearingDate: "",
@@ -92,7 +100,7 @@ export const SummonsTabsConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: defaultSearchValuesForPendingRpad,
             fields: [
               // hidden
               {
@@ -121,7 +129,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -133,7 +142,7 @@ export const SummonsTabsConfig = {
                   className: "custom-dropdown-color",
                 },
               },
-              // Delivery channel
+              // Delivery channel - Only show RPAD for PENDING_RPAD_COLLECTION tab
               {
                 label: "DELIVERY_CHANNEL",
                 isMandatory: false,
@@ -142,12 +151,8 @@ export const SummonsTabsConfig = {
                 populators: {
                   name: "channel",
                   optionsKey: "displayLabel",
-                  mdmsConfig: {
-                    moduleName: "payment",
-                    masterName: "paymentType",
-                    select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
-                  },
+                  defaultValue: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
+                  options: [{ code: "RPAD", name: "RPAD", displayLabel: "RPAD" }],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
@@ -298,7 +303,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -349,7 +355,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "ESignPendingStatus",
-                    select: "(data) => {return data['Order'].ESignPendingStatus?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].ESignPendingStatus?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -376,7 +383,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -612,7 +619,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -639,7 +647,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -836,7 +844,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -863,7 +872,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -1038,7 +1047,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                     // moduleName: "Order,Notice",
                     // masterName: "CourtStaffOrderType,NoticeType",
                     // select:
@@ -1072,7 +1082,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -1099,7 +1109,7 @@ export const SummonsTabsConfig = {
                     masterName: "SentStatus",
                     // select: "(data) => {return data['Order'].SentStatus?.map((item) => {return item;});}",
                     select:
-                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`].includes(item.code));}",
+                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`].includes(item.code)).sort((a, b) => a.name.localeCompare(b.name));}",
                     //  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
                   },
                   optionsCustomStyle: {

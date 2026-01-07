@@ -733,7 +733,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         title: "PLEA",
         hasChildren: true,
         children: pleaDocumentsList.map((doc, index) => {
-          console.log("doc", doc);
           const partyName = _getDigitilizationPatiresName(doc);
           return {
             id: `plea-${index + 1}`,

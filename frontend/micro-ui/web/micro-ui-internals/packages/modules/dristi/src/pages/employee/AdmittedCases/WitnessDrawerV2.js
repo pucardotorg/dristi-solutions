@@ -422,6 +422,7 @@ const WitnessDrawerV2 = ({
           name: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation, "(Witness)"),
           age: witness?.witnessAge || "",
           gender: witness?.gender,
+          witnessName: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName),
           designation: witness?.witnessDesignation || "",
           address,
           uniqueId,
@@ -684,6 +685,7 @@ const WitnessDrawerV2 = ({
                   designation: party?.designation || "",
                   age: party?.age || "",
                   ownerType: party?.ownerType || "",
+                  name: party?.witnessName || "",
                 },
               },
               isEvidenceMarkedFlow: false,
@@ -729,6 +731,7 @@ const WitnessDrawerV2 = ({
                 designation: party?.designation || "",
                 age: party?.age || "",
                 ownerType: party?.ownerType || "",
+                name: party?.witnessName || "",
               },
             },
             comments: [],
@@ -1078,6 +1081,7 @@ const WitnessDrawerV2 = ({
                   designation: party?.designation || "",
                   age: party?.age || "",
                   ownerType: party?.ownerType || "",
+                  name: party?.witnessName || "",
                 },
               },
               isEvidenceMarkedFlow: false,
@@ -1127,6 +1131,7 @@ const WitnessDrawerV2 = ({
                 designation: party?.designation || "",
                 age: party?.age || "",
                 ownerType: party?.ownerType || "",
+                name: party?.witnessName || "",
               },
             },
             comments: [],
@@ -1313,7 +1318,7 @@ const WitnessDrawerV2 = ({
                   <CardLabel className="case-input-label">{t("ALL_PARTIES")}</CardLabel>
                   <Dropdown
                     t={t}
-                    option={options}
+                    option={options?.sort((a, b) => a?.label?.localeCompare(b?.label))}
                     optionKey={"label"}
                     select={handleDropdownChange}
                     freeze={true}
@@ -1326,7 +1331,7 @@ const WitnessDrawerV2 = ({
                   <CardLabel className="case-input-label">{t("WITNESS_MARKED_AS")}</CardLabel>
                   <Dropdown
                     t={t}
-                    option={witnessTypeOptions}
+                    option={witnessTypeOptions?.sort((a, b) => a?.label?.localeCompare(b?.label))}
                     optionKey={"label"}
                     select={handleWitnessTypeChange}
                     freeze={true}

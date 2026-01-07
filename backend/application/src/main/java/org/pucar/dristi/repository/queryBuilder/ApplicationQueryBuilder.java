@@ -1,6 +1,7 @@
 package org.pucar.dristi.repository.queryBuilder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.ApplicationCriteria;
 import org.pucar.dristi.web.models.Pagination;
@@ -58,7 +59,7 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String userUuid) {
+    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String userUuid, RequestInfo requestInfo) {
         try {
             StringBuilder query = new StringBuilder(BASE_APP_QUERY);
             query.append(FROM_APP_TABLE);
@@ -77,9 +78,9 @@ public class ApplicationQueryBuilder {
             firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
 
             if (applicationCriteria.getIsFuzzySearch() == null || !applicationCriteria.getIsFuzzySearch()) {
-                addCriteria(applicationCriteria.getApplicationNumber() , query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
+                firstCriteria = addCriteria(applicationCriteria.getApplicationNumber() , query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
             } else {
-                addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
+                firstCriteria = addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             }
 
             // TODO : remove this, this is temporary fix (#5016)
@@ -88,6 +89,14 @@ public class ApplicationQueryBuilder {
                 addClauseIfRequired(query, firstCriteria);
                 query.append("app.applicationType != ?");
                 preparedStmtList.add(REQUEST_FOR_BAIL);
+                preparedStmtArgList.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
+                preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
                 firstCriteria = false;
             }
@@ -167,13 +176,15 @@ public class ApplicationQueryBuilder {
         return firstCriteria;
     }
 
-    void addPartialCriteria(String criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    boolean addPartialCriteria(String criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             query.append("app.applicationNumber").append(" LIKE ?");
             preparedStmtList.add("%" + criteria + "%"); // Add wildcard characters for partial match
             preparedStmtArgList.add(Types.VARCHAR); // Add wildcard characters for partial match
+            firstCriteria = false;
         }
+        return firstCriteria;
     }
 
     boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
@@ -200,7 +211,7 @@ public class ApplicationQueryBuilder {
 
     private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
         if (isFirstCriteria) {
-            query.append(" WHERE ");
+            query.append(" WHERE app.status <> 'DELETED' AND ");
         } else {
             query.append(" AND ");
         }

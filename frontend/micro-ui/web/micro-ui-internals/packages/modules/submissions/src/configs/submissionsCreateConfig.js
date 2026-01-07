@@ -50,9 +50,22 @@ export const applicationTypeConfig = [
           mdmsConfig: {
             masterName: "ApplicationType",
             moduleName: "Application",
-            // localePrefix: "APPLICATION_TYPE",
-            select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}", //name: 'APPLICATION_TYPE_'+item.type
+            select: `(data) => {
+              return data['Application'].ApplicationType
+                ?.filter((item) => ![
+                  'ADDING_WITNESSES',
+                  'EXTENSION_SUBMISSION_DEADLINE',
+                  'DOCUMENT',
+                  'RE_SCHEDULE',
+                  'CHECKOUT_REQUEST',
+                  'SUBMIT_BAIL_DOCUMENTS',
+                  'APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS'
+                ].includes(item.type))
+                .map((item) => {
+                  return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };
+                })
+                .sort((a, b) => a.name.localeCompare(b.name)); 
+            }`,
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -200,7 +213,8 @@ export const configsRescheduleRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -425,7 +439,8 @@ export const configsCheckoutRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -683,7 +698,8 @@ export const configsExtensionSubmissionDeadline = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ExtensionReason",
-            select: "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -872,11 +888,11 @@ export const configsDocumentSubmission = [
               documentHeader: "DOCUMENT",
               documentHeaderStyle: { fontSize: "16px", fontWeight: 400, marginBottom: 0 },
               type: "DragDropComponent",
-              maxFileSize: 25,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               fileTypes: ["TXT", "DOC", "PDF", "DOCX", "PNG", "JPG", "JPEG"],
               isMultipleUpload: false,
-              uploadGuidelines: "UPLOAD_PDF_JPEG_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               headerClassName: "dristi-font-bold",
             },
           ],
@@ -1020,7 +1036,8 @@ export const configsProductionOfDocuments = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                 },
               },
             },
@@ -1262,7 +1279,8 @@ export const configsCaseWithdrawal = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReasonForWithdrawal",
-            select: "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -1752,8 +1770,8 @@ export const configsOthers = [
               documentHeader: "OTHERS_DOCUMENT",
               documentHeaderStyle: { fontSize: "19px", fontWeight: 700 },
               type: "DragDropComponent",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               fileTypes: ["PDF", "JPEG", "PNG", "JPG"],
               uploadGuidelines: "UPLOAD_PDF_JPEG_50",
               headerClassName: "dristi-font-bold",
@@ -2149,9 +2167,9 @@ export const requestForBail = [
                     isMandatory: true,
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2174,9 +2192,9 @@ export const requestForBail = [
                     isMandatory: true,
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2200,9 +2218,9 @@ export const requestForBail = [
                     isOptional: "CS_IS_OPTIONAL",
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2367,7 +2385,8 @@ export const submitDocsForBail = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },
@@ -2397,9 +2416,9 @@ export const submitDocsForBail = [
                     isMandatory: true,
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
@@ -2554,7 +2573,8 @@ export const submitDelayCondonation = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },
@@ -2584,9 +2604,9 @@ export const submitDelayCondonation = [
                     isMandatory: true,
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,

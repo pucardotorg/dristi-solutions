@@ -293,6 +293,7 @@ function CourierService({
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="deliveryChannelName"
                 displayKey="channelCode"
+                filterKey="deliveryChannelName"
                 disable={isDisableAllFields || processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
                 active={noticeActive}
                 setActive={setNoticeActive}
@@ -337,6 +338,7 @@ function CourierService({
                 }}
                 optionsKey="deliveryChannelName"
                 displayKey="channelCode"
+                filterKey="deliveryChannelName"
                 disable={
                   isDisableAllFields ||
                   processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0 ||

@@ -2,7 +2,6 @@ package org.pucar.dristi.scheduling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -52,7 +51,6 @@ import static org.pucar.dristi.config.ServiceConstants.HEARINGS_SCHEDULED_TOMORR
 import static org.pucar.dristi.config.ServiceConstants.HEARING_LINK_MASTER_NAME;
 import static org.pucar.dristi.config.ServiceConstants.HEARING_MODULE_NAME;
 import static org.pucar.dristi.config.ServiceConstants.SCHEDULED;
-import static org.pucar.dristi.config.ServiceConstants.SHORTENED_URL_PATH_PARAM;
 
 @Component
 @Slf4j
@@ -70,7 +68,6 @@ public class CronJobScheduler {
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private String hearingLink;
 
 
     @Autowired
@@ -86,24 +83,6 @@ public class CronJobScheduler {
         this.mdmsUtil = mdmsUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-    }
-
-    @PostConstruct
-    public void init() {
-        Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(null, config.getTenantId(), HEARING_MODULE_NAME, Collections.singletonList(HEARING_LINK_MASTER_NAME));
-        JSONArray hearingLinkArray = mdmsResponse
-                .get(HEARING_MODULE_NAME)
-                .get(HEARING_LINK_MASTER_NAME);
-
-        for(Object item: hearingLinkArray){
-            String link = jsonUtil.getNestedValue(item, List.of("link"), String.class);
-            // URL shortening service adds this param in every url
-            if(link!=null && link.contains(SHORTENED_URL_PATH_PARAM)){
-                log.info("VC link shortened url: {}", link);
-                hearingLink = link;
-                break;
-            }
-        }
     }
 
     public void sendNotificationOnHearingsHeldToday() {
@@ -147,6 +126,7 @@ public class CronJobScheduler {
 
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
+            String hearingLink = getHearingLink();
             if(hearingLink == null){
                 log.error("VC link shortened URL not configured in MDMS Hearing master");
                 return;
@@ -165,14 +145,14 @@ public class CronJobScheduler {
                 // Send sms to advocates
                 for(Individual advocate: advocates){
                     List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(advocate, advocateCases, requestInfo));
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, advocate, advocateCases, requestInfo));
                     futures.add(future);
                 }
 
                 // Send sms to litigants
                 for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(litigant, litigantCases, requestInfo));
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, litigant, litigantCases, requestInfo));
                     futures.add(future);
                 }
 
@@ -188,9 +168,11 @@ public class CronJobScheduler {
         log.info("Sending updates on hearings held today");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             String filingNumber = firstCase.getFilingNumber();
             Hearing hearing = getNextScheduledHearing(filingNumber, requestInfo);
             if(hearing == null){
@@ -201,6 +183,7 @@ public class CronJobScheduler {
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .hearingDate(String.valueOf(hearing.getStartTime()))
                     .build();
 
@@ -222,18 +205,20 @@ public class CronJobScheduler {
         }
     }
 
-    private Boolean sendSMSForHearingsScheduledTomorrow(Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
+    private Boolean sendSMSForHearingsScheduledTomorrow(String hearingLink, Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
         log.info("Sending updates on hearings scheduled tomorrow");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
-
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .link(hearingLink)
                     .build();
 
@@ -286,6 +271,10 @@ public class CronJobScheduler {
     private Map<String, List<CourtCase>> getAdvocateCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
+            if(courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()){
+                log.info("Representatives list is null for case {}", courtCase.getFilingNumber());
+                continue;
+            }
             for(AdvocateMapping advocate: courtCase.getRepresentatives()){
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
                 JsonNode additionalDetails = advocateNode.path("additionalDetails");
@@ -307,6 +296,10 @@ public class CronJobScheduler {
     private Map<String, List<CourtCase>> getLitigantCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
         for(CourtCase courtCase : cases){
+            if(courtCase.getLitigants() == null || courtCase.getLitigants().isEmpty()){
+                log.info("Litigants list is null for case {}", courtCase.getFilingNumber());
+                continue;
+            }
             for(Party litigant: courtCase.getLitigants()){
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
                 JsonNode additionalDetails = litigantNode.path("additionalDetails");
@@ -379,6 +372,47 @@ public class CronJobScheduler {
                 .build();
 
         return fetchHearings(requestInfo, hearingCriteria, null);
+    }
+
+    private String getHearingLink(){
+
+        try {
+            Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
+            requestInfoGenerator.createInternalRequestInfo(),
+            config.getTenantId(),
+            HEARING_MODULE_NAME,
+            Collections.singletonList(HEARING_LINK_MASTER_NAME));
+            if (mdmsResponse == null || !mdmsResponse.containsKey(HEARING_MODULE_NAME)) {
+                log.error("MDMS response is null or missing hearing module");
+                return null;
+            }
+
+            Map<String, JSONArray> hearingModule = mdmsResponse.get(HEARING_MODULE_NAME);
+            if (hearingModule == null || !hearingModule.containsKey(HEARING_LINK_MASTER_NAME)) {
+                log.error("Hearing module is null or missing hearing link master");
+                return null;
+            }
+
+            JSONArray hearingLinkArray = hearingModule.get(HEARING_LINK_MASTER_NAME);
+            if (hearingLinkArray == null || hearingLinkArray.isEmpty()) {
+                log.error("Hearing link array is null or empty");
+                return null;
+            }
+
+            String shortenedUrl = jsonUtil.getNestedValue(hearingLinkArray.get(0), List.of("shortenedUrl"), String.class);
+
+            if(shortenedUrl != null){
+                log.info("VC link shortened url: {}", shortenedUrl);
+                return shortenedUrl;
+            }
+
+            log.error("No shortened URL found in hearing link array");
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error fetching hearing link from MDMS", e);
+            return null;
+        }
     }
 
     /**

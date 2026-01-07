@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -12,6 +13,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.EvidenceUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
@@ -40,6 +42,7 @@ public class ApplicationService {
     private final SmsNotificationUtil smsNotificationUtil;
     private final ObjectMapper objectMapper;
     private final FileStoreUtil fileStoreUtil;
+    private final EvidenceUtil evidenceUtil;
 
     @Autowired
     public ApplicationService(
@@ -48,7 +51,7 @@ public class ApplicationService {
             ApplicationRepository applicationRepository,
             WorkflowService workflowService,
             Configuration config,
-            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil) {
+            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, EvidenceUtil evidenceUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.applicationRepository = applicationRepository;
@@ -58,6 +61,7 @@ public class ApplicationService {
         this.smsNotificationUtil = smsNotificationUtil;
         this.objectMapper = objectMapper;
         this.fileStoreUtil = fileStoreUtil;
+        this.evidenceUtil = evidenceUtil;
     }
 
     public Application createApplication(ApplicationRequest body) {
@@ -105,15 +109,56 @@ public class ApplicationService {
 
             }
             List<String> fileStoreIds = new ArrayList<>();
-            for(Document document : applicationRequest.getApplication().getDocuments()) {
-                if(!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
+            if(applicationRequest.getApplication().getDocuments()!=null) {
+                for (Document document : applicationRequest.getApplication().getDocuments()) {
+                    if (!document.getIsActive()) {
+                        fileStoreIds.add(document.getFileStore());
+                    }
                 }
             }
             if(!fileStoreIds.isEmpty()){
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
                 log.info("Deleted files for application with ids: {}", fileStoreIds);
             }
+
+            if (PENDINGPAYMENT.equalsIgnoreCase(application.getStatus())) {
+                List<Document> documents = application.getDocuments();
+                if (documents == null || documents.isEmpty()) {
+                    log.info("No documents found for application {}", application.getApplicationNumber());
+                }else {
+                    List<Document> unsignedDocuments = documents.stream()
+                            .filter(doc -> !"SIGNED".equalsIgnoreCase(doc.getDocumentType()))
+                            .toList();
+                    for (Document doc : unsignedDocuments) {
+                        if(doc.getIsActive()) {
+                            EvidenceRequest evidenceRequest = new EvidenceRequest();
+                            evidenceRequest.setRequestInfo(applicationRequest.getRequestInfo());
+                            Artifact artifact = new Artifact();
+
+                            artifact.setArtifactType("DOCUMENTARY");
+                            artifact.setSourceType(extractPartyType(application.getAdditionalDetails()));
+                            artifact.setSourceID(getIndividualId(application.getAdditionalDetails()));
+                            artifact.setFilingType("APPLICATION");
+                            artifact.setFilingNumber(application.getFilingNumber());
+                            artifact.setTenantId(application.getTenantId());
+                            artifact.setApplication(application.getApplicationNumber());
+                            artifact.setComments(application.getComment());
+                            artifact.setCaseId(application.getCaseId());
+                            artifact.setFile(doc);
+
+                            ObjectNode additionalDetails = objectMapper.createObjectNode();
+                            if (applicationRequest.getRequestInfo().getUserInfo() != null)
+                                additionalDetails.put("uuid", applicationRequest.getRequestInfo().getUserInfo().getUuid());
+
+                            artifact.setAdditionalDetails(additionalDetails);
+                            evidenceRequest.setArtifact(artifact);
+
+                            evidenceUtil.createEvidence(evidenceRequest);
+                        }
+                    }
+                }
+            }
+
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), false);
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
@@ -133,6 +178,45 @@ public class ApplicationService {
             throw new CustomException(UPDATE_APPLICATION_ERR, "Error occurred while updating application: " + e.getMessage());
         }
     }
+
+    private String getIndividualId(Object additionalDetails) {
+        if (additionalDetails == null) {
+            return null;
+        }
+
+        try {
+            JsonNode rootNode = objectMapper.valueToTree(additionalDetails);
+            JsonNode individualIdNode = rootNode.path("individualId");
+
+            return individualIdNode.isMissingNode() || individualIdNode.isNull()
+                    ? null
+                    : individualIdNode.asText();
+
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to extract individualId from additionalDetails", e);
+            return null;
+        }
+    }
+
+    private String extractPartyType(Object additionalDetails) {
+        if (additionalDetails == null) {
+            return null;
+        }
+
+        try {
+            JsonNode rootNode = objectMapper.valueToTree(additionalDetails);
+            JsonNode partyTypeNode = rootNode.path("partyType");
+
+            return partyTypeNode.isMissingNode() || partyTypeNode.isNull()
+                    ? null
+                    : partyTypeNode.asText().toLowerCase();
+
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to extract partyType from additionalDetails", e);
+            return null;
+        }
+    }
+
 
     private <T> void filterDocuments(List<T> entities,
                                      Function<T, List<Document>> getDocs,

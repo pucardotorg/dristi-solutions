@@ -52,6 +52,7 @@ import {
   restrictedApplicationTypes,
   _getDefaultFormValue,
   formatDate,
+  _getFinalDocumentList,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
@@ -398,9 +399,24 @@ const SubmissionsCreate = ({ path }) => {
                   ...input.populators,
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
-                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS","APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",${
-                      !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
-                    }].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}`, // name: 'APPLICATION_TYPE_'+item.type
+                    select: `(data) => {
+                      return data['Application'].ApplicationType
+                        ?.filter((item) => ![
+                          "ADDING_WITNESSES",
+                          "EXTENSION_SUBMISSION_DEADLINE",
+                          "DOCUMENT",
+                          "RE_SCHEDULE",
+                          "CHECKOUT_REQUEST",
+                          "SUBMIT_BAIL_DOCUMENTS",
+                          "CORRECTION_IN_COMPLAINANT_DETAILS",
+                          "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                          ${!BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? '"REQUEST_FOR_BAIL"' : '""'}
+                        ].includes(item.type))
+                        .map((item) => {
+                          return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };
+                        })
+                        .sort((a, b) => a.name.localeCompare(b.name));
+                    }`, // name: 'APPLICATION_TYPE_'+item.type
                   },
                 },
               };
@@ -655,6 +671,7 @@ const SubmissionsCreate = ({ path }) => {
             name: `APPLICATION_TYPE_${applicationTypeParam}`,
           },
         }),
+        prayer: { text: "" },
       };
     } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
       let selectComplainant = null;
@@ -673,6 +690,7 @@ const SubmissionsCreate = ({ path }) => {
         },
         applicationDate: formatDate(new Date()),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
+        prayer: { text: "" },
       };
     } else if (orderNumber) {
       if ((isComposite ? compositeMandatorySubmissionItem : orderDetails)?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
@@ -713,6 +731,7 @@ const SubmissionsCreate = ({ path }) => {
               : orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+            prayer: { text: "" },
           };
         } else {
           const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
@@ -733,6 +752,7 @@ const SubmissionsCreate = ({ path }) => {
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+            prayer: { text: "" },
           };
         }
       } else if ((isComposite ? compositeWarrantItem : orderDetails)?.orderType === orderTypes.WARRANT) {
@@ -747,6 +767,7 @@ const SubmissionsCreate = ({ path }) => {
           },
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
+          prayer: { text: "" },
         };
       } else if ((isComposite ? compositeSetTermBailItem : orderDetails)?.orderType === orderTypes.SET_BAIL_TERMS) {
         const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
@@ -765,6 +786,7 @@ const SubmissionsCreate = ({ path }) => {
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
+          prayer: { text: "" },
         };
       } else {
         return {
@@ -773,6 +795,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION",
           },
           applicationDate: formatDate(new Date()),
+          prayer: { text: "" },
         };
       }
     } else if (applicationType) {
@@ -798,6 +821,7 @@ const SubmissionsCreate = ({ path }) => {
           : {}),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
         ...(formdata || {}),
+        prayer: { text: "" },
       };
     } else {
       return {
@@ -806,6 +830,7 @@ const SubmissionsCreate = ({ path }) => {
           name: "APPLICATION",
         },
         applicationDate: formatDate(new Date()),
+        prayer: { text: "" },
       };
     }
   }, [
@@ -1060,50 +1085,62 @@ const SubmissionsCreate = ({ path }) => {
             otherDocs.forEach((d) => pushIfFile(documentsList, d, `Surety${sIdx + 1} ${d?.documentName || "Other Documents"}.pdf`));
         });
       }
-
       let documents = [];
       if (applicationType !== "REQUEST_FOR_BAIL") {
         const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
-          ? formdata?.supportingDocuments?.map((supportDocs) => ({
-              fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
-              fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-              name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
-              additionalDetails: {
-                ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
-                documentType: supportDocs?.documentType?.code,
-                documentTitle: supportDocs?.documentTitle,
-              },
-            })) || []
-          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
-              fileType: item?.document?.documentType,
-              fileStore: item?.document?.fileStore,
-              name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
-              additionalDetails: {
-                ...item?.document?.additionalDetails,
-                documentType: item?.documentType?.code,
-                documentTitle: item?.documentTitle,
-              },
-            })) || [];
+          ? formdata?.supportingDocuments?.map((supportDocs) => {
+              const uploadedDoc = supportDocs?.submissionDocuments?.uploadedDocs?.[0];
+              if (!uploadedDoc?.fileStore) return [];
+              return {
+                fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+                fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+                name: supportDocs?.documentTitle || supportDocs?.documentType?.code || "supportingDocument",
+                additionalDetails: {
+                  ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+                  documentType: supportDocs?.documentType?.code,
+                  documentTitle: supportDocs?.documentTitle,
+                },
+              };
+            }) || []
+          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => {
+              const uploadedDoc = item?.document;
+              if (!uploadedDoc?.fileStore) return [];
+              return {
+                fileType: item?.document?.documentType,
+                fileStore: item?.document?.fileStore,
+                name: item?.documentTitle || item?.documentType?.code || "submissionDocument",
+                additionalDetails: {
+                  ...item?.document?.additionalDetails,
+                  documentType: item?.documentType?.code,
+                  documentTitle: item?.documentTitle,
+                },
+              };
+            }) || [];
 
         // const documentres =
         //   (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name, tenantId)))) || [];
         let file = null;
         const uploadedDocumentList = [...(documentsList || []), ...applicationDocuments];
-        uploadedDocumentList.forEach((res, index) => {
-          const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
-          file = {
-            documentType: res?.fileType,
-            fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
-            documentOrder: index,
-            fileName: resolvedName,
-            additionalDetails: {
-              name: resolvedName,
-              documentType: res?.additionalDetails?.documentType,
-              documentTitle: res?.additionalDetails?.documentTitle,
-            },
-          };
-          documents.push(file);
-        });
+        if (uploadedDocumentList.length > 0) {
+          uploadedDocumentList.forEach((res, index) => {
+            const fileStore = res?.fileStore || res?.file?.files?.[0]?.fileStoreId;
+            if (!fileStore) return;
+            const resolvedName = res?.filename || res?.additionalDetails?.name || res?.name;
+            const file = {
+              documentType: res?.fileType,
+              fileStore: fileStore,
+              documentOrder: index,
+              fileName: resolvedName,
+              additionalDetails: {
+                name: resolvedName,
+                documentType: res?.additionalDetails?.documentType,
+                documentTitle: res?.additionalDetails?.documentTitle,
+              },
+            };
+
+            documents.push(file);
+          });
+        }
       }
 
       let applicationSchema = {};
@@ -1293,7 +1330,7 @@ const SubmissionsCreate = ({ path }) => {
               ...(hearingId && { hearingId }),
               owner: cleanString(userInfo?.name),
             },
-            documents,
+            documents: _getFinalDocumentList(applicationDetails, documents),
             onBehalfOf: [formdata?.selectComplainant?.uuid],
             comment: [],
             workflow: {
