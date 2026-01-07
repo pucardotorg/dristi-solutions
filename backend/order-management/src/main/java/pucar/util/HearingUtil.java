@@ -450,7 +450,7 @@ public class HearingUtil {
         if (openHearingList != null && !openHearingList.isEmpty()) {
             openHearingList.get(0).setOrderStatus(OrderStatus.SIGNED);
         }
-        log.info("Update open hearing index with orderStatus");
+        log.info("Update open hearing index with orderStatus SIGNED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 
@@ -474,7 +474,7 @@ public class HearingUtil {
         if (openHearingList != null && !openHearingList.isEmpty()) {
             openHearingList.get(0).setOrderStatus(OrderStatus.NOT_CREATED);
         }
-        log.info("Updated open hearing index with orderStatus DRAFT");
+        log.info("Updated open hearing index with orderStatus NO_CREATED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 }
