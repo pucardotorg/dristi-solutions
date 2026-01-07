@@ -477,4 +477,16 @@ public class HearingUtil {
         log.info("Updated open hearing index with orderStatus NO_CREATED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
+
+    public void updateOpenHearingOrderStatusForPendingSignOrder(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest :: {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.PENDING_SIGN);
+        }
+        log.info("Updated open hearing index with orderStatus PENDING_SIGN");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
+    }
 }

@@ -102,6 +102,10 @@ public class OrderService {
             hearingUtil.updateOpenHearingOrderStatusForDeletedOrder(request.getOrder());
         }
 
+        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+            hearingUtil.updateOpenHearingOrderStatusForPendingSignOrder(request.getOrder());
+        }
+
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
