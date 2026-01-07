@@ -8,15 +8,12 @@ import com.dristi.njdg_transformer.model.cases.CaseConversionRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
-import com.dristi.njdg_transformer.model.hearing.Hearing;
-import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.Notification;
 import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
 import com.dristi.njdg_transformer.service.AdvocateService;
 import com.dristi.njdg_transformer.service.CaseService;
-import com.dristi.njdg_transformer.service.HearingService;
 import com.dristi.njdg_transformer.service.OrderNotificationService;
 import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,9 +43,6 @@ class NJDGControllerTest {
 
     @Mock
     private OrderService orderService;
-
-    @Mock
-    private HearingService hearingService;
 
     @Mock
     private AdvocateService advocateService;
@@ -167,46 +161,6 @@ class NJDGControllerTest {
                 .thenReturn(new ResponseEntity<>(new InterimOrder(), HttpStatus.BAD_REQUEST));
 
         ResponseEntity<InterimOrder> response = njdgController.processAndUpdateOrder(orderRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    }
-
-    @Test
-    void testProcessAndUpdateHearing_Success() {
-        Hearing hearing = new Hearing();
-        hearing.setHearingId("H-001");
-        hearing.setStatus("COMPLETED");
-        hearing.setCnrNumbers(Collections.singletonList("CNR-001"));
-
-        HearingRequest hearingRequest = new HearingRequest();
-        hearingRequest.setHearing(hearing);
-        hearingRequest.setRequestInfo(requestInfo);
-
-        HearingDetails hearingDetails = new HearingDetails();
-        hearingDetails.setCino("CNR-001");
-
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenReturn(hearingDetails);
-
-        ResponseEntity<HearingDetails> response = njdgController.processAndUpdateHearing(hearingRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-    }
-
-    @Test
-    void testProcessAndUpdateHearing_Error() {
-        Hearing hearing = new Hearing();
-        hearing.setHearingId("H-001");
-
-        HearingRequest hearingRequest = new HearingRequest();
-        hearingRequest.setHearing(hearing);
-        hearingRequest.setRequestInfo(requestInfo);
-
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenThrow(new RuntimeException("Processing error"));
-
-        ResponseEntity<HearingDetails> response = njdgController.processAndUpdateHearing(hearingRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }

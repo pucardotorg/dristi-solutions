@@ -7,25 +7,24 @@ import com.dristi.njdg_transformer.model.JudgeDetails;
 import com.dristi.njdg_transformer.model.hearing.Hearing;
 import com.dristi.njdg_transformer.model.hearing.HearingCriteria;
 import com.dristi.njdg_transformer.model.hearing.HearingSearchRequest;
+import com.dristi.njdg_transformer.model.inbox.*;
 import com.dristi.njdg_transformer.model.order.Notification;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.utils.HearingUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.dristi.njdg_transformer.utils.InboxUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.*;
@@ -40,7 +39,7 @@ public class OrderNotificationService {
     private final TransformerProperties properties;
     private final HearingRepository hearingRepository;
     private final Producer producer;
-    private final ObjectMapper objectMapper;
+    private final InboxUtil inboxUtil;
 
     /**
      * Process orders by fetching all hearings for the case using filing number.
@@ -54,7 +53,7 @@ public class OrderNotificationService {
 
         // Fetch all hearings for the case using filing number
         List<Hearing> allHearings = fetchAllHearingsForCase(order, requestInfo);
-        log.debug("Fetched {} hearings for filing number: {}", allHearings.size(), order.getFilingNumber());
+        log.info("Fetched {} hearings for filing number: {}", allHearings.size(), order.getFilingNumber());
 
         String cino = order.getCnrNumber();
         LocalDate searchDate = formatDate(order.getCreatedDate());
@@ -67,15 +66,13 @@ public class OrderNotificationService {
 
         // Purpose of listing: determined by hearing number and order category
         String purposeOfListing = determinePurposeOfListing(order, allHearings);
+        String business = determineBusiness(order);
 
         // Next date and next purpose: from hearing after order created date
         Hearing scheduledHearing = findHearingAfterDate(allHearings, order.getCreatedDate());
         LocalDate nextDate = scheduledHearing != null ? formatDate(scheduledHearing.getStartTime()) : null;
         String nextPurpose = scheduledHearing != null ? 
                 getPurposeOfListingValue(scheduledHearing) : "0";
-
-        // Business: hearing summary if not null, otherwise itemText via compileItemText
-        String business = determineBusiness(order, allHearings);
 
         HearingDetails hearingDetails = HearingDetails.builder()
                 .cino(cino)
@@ -129,29 +126,57 @@ public class OrderNotificationService {
      */
     private String determinePurposeOfListing(Order order, List<Hearing> allHearings) {
         if (order.getHearingNumber() != null) {
+            LocalDate orderDate = formatDate(order.getCreatedDate());
+
             // Find the hearing matching order's hearing number
             Optional<Hearing> matchingHearing = allHearings.stream()
                     .filter(h -> order.getHearingNumber().equals(h.getHearingId()))
                     .findFirst();
             
             if (matchingHearing.isPresent()) {
-                log.debug("Found matching hearing for hearingNumber: {} | hearingType: {}", 
-                        order.getHearingNumber(), matchingHearing.get().getHearingType());
-                return getPurposeOfListingValue(matchingHearing.get());
+                if (orderDate != null) {
+                    LocalDate hearingDate = formatDate(matchingHearing.get().getStartTime());
+                    if (hearingDate != null && hearingDate.isEqual(orderDate)) {
+                        log.info("Found matching hearing for hearingNumber: {} | hearingType: {}",
+                                order.getHearingNumber(), matchingHearing.get().getHearingType());
+                        return getPurposeOfListingValue(matchingHearing.get());
+                    }
+                    log.info("Hearing found by ID {} but date {} does not match order date {}. Trying to find hearing by date.",
+                            order.getHearingNumber(), hearingDate, orderDate);
+                } else {
+                    log.info("Order date is null, using matching hearing for hearingNumber: {}", order.getHearingNumber());
+                    return getPurposeOfListingValue(matchingHearing.get());
+                }
+            } else {
+                log.warn("No matching hearing found for hearingNumber: {}", order.getHearingNumber());
             }
-            log.warn("No matching hearing found for hearingNumber: {}", order.getHearingNumber());
+
+            if (orderDate != null) {
+                Optional<Hearing> dateMatchingHearing = allHearings.stream()
+                        .filter(h -> {
+                            LocalDate hDate = formatDate(h.getStartTime());
+                            return hDate != null && hDate.isEqual(orderDate);
+                        })
+                        .findFirst();
+
+                if (dateMatchingHearing.isPresent()) {
+                    log.info("Found matching hearing for order date: {} | hearingType: {}",
+                            orderDate, dateMatchingHearing.get().getHearingType());
+                    return getPurposeOfListingValue(dateMatchingHearing.get());
+                }
+            }
         }
 
         // Hearing number is null - check order category
         if (INTERMEDIATE.equalsIgnoreCase(order.getOrderCategory())) {
             // Use order type for intermediate orders
-            log.debug("Using order type for INTERMEDIATE order | orderType: {}", order.getOrderType());
+            log.info("Using order type for INTERMEDIATE order | orderType: {}", order.getOrderType());
             return getPurposeOfListingValue(Hearing.builder().hearingType(order.getOrderType()).build());
         } else if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
             // Find last completed hearing by startTime
             Hearing lastCompletedHearing = findLastCompletedHearing(allHearings);
             if (lastCompletedHearing != null) {
-                log.debug("Using last completed hearing type for COMPOSITE order | hearingType: {}", 
+                log.info("Using last completed hearing type for COMPOSITE order | hearingType: {}", 
                         lastCompletedHearing.getHearingType());
                 return getPurposeOfListingValue(lastCompletedHearing);
             }
@@ -180,33 +205,87 @@ public class OrderNotificationService {
             return null;
         }
         return hearings.stream()
-                .filter(h -> h.getStartTime() != null && h.getStartTime() > orderCreatedDate)
+                .filter(h -> h.getStartTime() != null && formatDate(h.getStartTime()).isAfter(formatDate(orderCreatedDate)))
                 .findFirst()
                 .orElse(null);
     }
 
     /**
      * Determine business field value.
-     * If hearing summary is not null, use it. Otherwise, use itemText via compileItemText.
+     * use itemText via compileItemText.
      */
-    private String determineBusiness(Order order, List<Hearing> allHearings) {
-        // First check in item text
-        String compiledItemText = compileItemText(order.getItemText());
-        if (compiledItemText != null) {
-            return compiledItemText;
+    private String determineBusiness(Order order) {
+        if(order.getItemText() != null) {
+            return compileItemText(order.getItemText());
         }
+        InboxRequest inboxRequest = new InboxRequest();
+        InboxSearchCriteria criteria = new InboxSearchCriteria();
 
-        // Check if order has hearing number and that hearing has a summary
-        if (order.getHearingNumber() != null) {
-            Optional<Hearing> matchingHearing = allHearings.stream()
-                    .filter(h -> order.getHearingNumber().equals(h.getHearingId()))
-                    .findFirst();
-            
-            if (matchingHearing.isPresent() && matchingHearing.get().getHearingSummary() != null) {
-                return matchingHearing.get().getHearingSummary();
+        criteria.setTenantId(order.getTenantId());
+        OrderBy orderBy = new OrderBy();
+        orderBy.setOrder(com.dristi.njdg_transformer.model.enums.Order.DESC);
+        orderBy.setCode("Data.orderNotification.date");
+        criteria.setSortOrder(List.of(orderBy));
+        criteria.setLimit(properties.getLimit());
+        criteria.setOffset(properties.getOffset());
+
+        ProcessInstanceSearchCriteria processCriteria = new ProcessInstanceSearchCriteria();
+        processCriteria.setBusinessService(Collections.singletonList("notification"));
+        processCriteria.setModuleName("Transformer service");
+        criteria.setProcessSearchCriteria(processCriteria);
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("id", order.getOrderNumber());
+        moduleSearchCriteria.put("tenantId", order.getTenantId());
+        moduleSearchCriteria.put("status", Collections.singletonList(PUBLISHED_ORDER));
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+
+        inboxRequest.setInbox(criteria);
+
+        InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
+        List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
+        if(!orderDetailsList.isEmpty()) {
+            for (OrderDetails orderDetails : orderDetailsList) {
+                if (orderDetails.getOrderId() != null && orderDetails.getOrderId().equals(order.getOrderNumber())) {
+                    return orderDetails.getBusinessOfTheDay();
+                }
             }
         }
         return null;
+    }
+
+    private List<OrderDetails> getOrdersDetails(InboxResponse inboxResponse) {
+        List<OrderDetails> orderDetailsList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(inboxResponse.getItems())) {
+            for (Inbox inbox : inboxResponse.getItems()) {
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+
+                if (businessObject != null && businessObject.containsKey("orderNotification")) {
+                    Object orderNotificationObj = businessObject.get("orderNotification");
+
+                    if (orderNotificationObj instanceof Map) {
+                        Map<String, Object> orderNotification = (Map<String, Object>) orderNotificationObj;
+
+                        Object dateObj = orderNotification.get("date");
+                        Object businessOfDayObj = orderNotification.get("businessOfTheDay");
+                        Object orderId = orderNotification.get("id");
+
+                        if (dateObj != null) {
+                            OrderDetails orderDetails = new OrderDetails();
+                            orderDetails.setDate(Long.parseLong(dateObj.toString()));
+                            orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
+                            orderDetails.setOrderId(orderId != null ? orderId.toString() : null);
+
+                            orderDetailsList.add(orderDetails);
+                        }
+                    }
+                }
+            }
+        }
+
+        return orderDetailsList;
     }
 
     /**
@@ -222,7 +301,7 @@ public class OrderNotificationService {
      */
     private void updateExistingHearingsNextDate(String cino, Hearing scheduledHearing) {
         if (scheduledHearing == null) {
-            log.debug("No scheduled hearing found, skipping next date update for cino: {}", cino);
+            log.info("No scheduled hearing found, skipping next date update for cino: {}", cino);
             return;
         }
 
@@ -235,7 +314,7 @@ public class OrderNotificationService {
                 hearingDetails.setNextDate(scheduledNextDate);
                 hearingDetails.setNextPurpose(scheduledNextPurpose != null ? scheduledNextPurpose : "0");
                 producer.push("update-hearing-details", hearingDetails);
-                log.debug("Updated hearing details with next date | cino: {} | srNo: {} | nextDate: {}", 
+                log.info("Updated hearing details with next date | cino: {} | srNo: {} | nextDate: {}", 
                         cino, hearingDetails.getSrNo(), scheduledNextDate);
             }
         }
@@ -253,7 +332,7 @@ public class OrderNotificationService {
                     .build();
             List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
             if(hearings.isEmpty()) {
-                log.debug("No hearings found for caseNumber: {}", caseNumber);
+                log.info("No hearings found for caseNumber: {}", caseNumber);
                 break;
             }
             hearings.sort(Comparator.comparing(Hearing::getStartTime));

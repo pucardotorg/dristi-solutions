@@ -9,7 +9,6 @@ import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
 import com.dristi.njdg_transformer.model.cases.CaseConversionRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
-import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
@@ -34,7 +33,6 @@ public class NJDGController {
 
     private final CaseService caseService;
     private final OrderService orderService;
-    private final HearingService hearingService;
     private final AdvocateService advocateService;
     private final ObjectMapper objectMapper;
     private final OrderNotificationService orderNotificationService;
@@ -103,18 +101,6 @@ public class NJDGController {
         return orderService.processOrderRequest(orderRequest.getOrder(), orderRequest.getRequestInfo());
     }
 
-
-    @PostMapping("_processhearing")
-    public ResponseEntity<HearingDetails> processAndUpdateHearing(@Valid @RequestBody HearingRequest request) {
-        try {
-            HearingDetails hearingDetail = new HearingDetails();
-            hearingDetail = hearingService.processAndUpdateHearings(request.getHearing(), request.getRequestInfo());
-            return ResponseEntity.ok(hearingDetail);
-        } catch (Exception e) {
-            log.error("Error processing hearing: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new HearingDetails());
-        }
-    }
 
     @PostMapping("_search")
     public ResponseEntity<NJDGTransformRecord> getNjdgTransformRecord(@Valid @RequestParam String cino) {
