@@ -17,8 +17,6 @@ import org.springframework.util.MultiValueMap;
 
 import java.util.LinkedHashMap;
 
-import static com.pucar.drishti.config.ServiceConstants.AUTHORIZATION;
-
 @Service
 @Slf4j
 public class InterceptorService {
@@ -81,7 +79,7 @@ public class InterceptorService {
         headers.setCacheControl("no-cache");
         headers.setConnection("keep-alive");
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.add("Authorization", AUTHORIZATION);
+        headers.add("Authorization", configs.getAuthorization());
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
