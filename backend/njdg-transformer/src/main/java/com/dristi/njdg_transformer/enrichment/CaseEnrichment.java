@@ -60,17 +60,21 @@ public class CaseEnrichment implements PartyEnricher {
             List<Party> litigants = courtCase.getLitigants();
             if (litigants == null || litigants.isEmpty()) {
                 log.warn("No litigants found in court case CNR: {}", courtCase.getCnrNumber());
-                return;
+                litigants = Collections.emptyList();
             }
 
             Party primaryParty = findPrimaryParty(litigants, partyType);
-            if (primaryParty == null || primaryParty.getIndividualId() == null || primaryParty.getIndividualId().isEmpty()) {
-                log.warn("No primary {} with individualId found in case CNR: {}", 
+            String individualId = null;
+
+            if (primaryParty != null && primaryParty.getIndividualId() != null && !primaryParty.getIndividualId().isEmpty()) {
+                individualId = primaryParty.getIndividualId();
+            } else {
+                log.warn("No primary {} with individualId found in case CNR: {}",
                         partyType, courtCase.getCnrNumber());
-                return;
+                log.info("Proceeding with first element from formdata for {} fallback in case CNR: {}", partyType, courtCase.getCnrNumber());
             }
 
-            enrichPartyFormData(additionalDetails, record, primaryParty.getIndividualId(), partyType);
+            enrichPartyFormData(additionalDetails, record, individualId, partyType);
             log.info("Successfully enriched primary party details for party type: {} in case CNR: {}", 
                      partyType, courtCase.getCnrNumber());
             
@@ -153,7 +157,7 @@ public class CaseEnrichment implements PartyEnricher {
                     .path("individualId")
                     .asText(null);
 
-            if (!individualId.equals(formIndividualId)) continue;
+            if (individualId != null && !individualId.equals(formIndividualId)) continue;
 
             String fullName;
             String ageStr;
