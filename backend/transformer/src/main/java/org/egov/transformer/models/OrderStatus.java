@@ -4,7 +4,8 @@ public enum OrderStatus {
 
     PENDING_SIGN("PENDING_SIGN"),
     SIGNED("SIGNED"),
-    DRAFT("DRAFT");
+    DRAFT("DRAFT"),
+    NOT_CREATED("NOT_CREATED");
 
     private final String value;
 

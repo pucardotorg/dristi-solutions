@@ -472,7 +472,7 @@ public class HearingUtil {
         List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
 
         if (openHearingList != null && !openHearingList.isEmpty()) {
-            openHearingList.get(0).setOrderStatus(OrderStatus.DRAFT);
+            openHearingList.get(0).setOrderStatus(OrderStatus.NOT_CREATED);
         }
         log.info("Updated open hearing index with orderStatus DRAFT");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
