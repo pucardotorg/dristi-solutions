@@ -48,7 +48,11 @@ class TransformerPropertiesTest {
                 "/individual/v1/_search",
                 "Asia/Kolkata",
                 allowedTenantIds,
-                "order.notification.template"
+                "order.notification.template",
+                "http://inbox",
+                "/inbox/v1/_search",
+                10,
+                0
         );
 
         assertEquals("http://filestore", properties.getFileStoreHost());
@@ -74,6 +78,8 @@ class TransformerPropertiesTest {
         assertEquals("/individual/v1/_search", properties.getIndividualSearchPath());
         assertEquals("Asia/Kolkata", properties.getApplicationZoneId());
         assertEquals(allowedTenantIds, properties.getAllowedTenantIds());
+        assertEquals(10, properties.getLimit());
+        assertEquals(0, properties.getOffset());
     }
 
     @Test
@@ -101,6 +107,11 @@ class TransformerPropertiesTest {
                 .individualHost("http://individual")
                 .individualSearchPath("/individual/v1/_search")
                 .applicationZoneId("Asia/Kolkata")
+                .notificationOrderBusinessTemplate("order.notification.template")
+                .inboxHost("http://inbox")
+                .inboxSearchEndPoint("/inbox/v1/_search")
+                .limit(10)
+                .offset(0)
                 .build();
 
         assertEquals("http://filestore", properties.getFileStoreHost());
@@ -133,6 +144,11 @@ class TransformerPropertiesTest {
         properties.setIndividualHost("http://individual");
         properties.setIndividualSearchPath("/individual/v1/_search");
         properties.setApplicationZoneId("Asia/Kolkata");
+        properties.setNotificationOrderBusinessTemplate("order.notification.template");
+        properties.setInboxHost("http://inbox");
+        properties.setInboxSearchEndPoint("/inbox/v1/_search");
+        properties.setLimit(10);
+        properties.setOffset(0);
 
         Set<String> allowedTenantIds = new HashSet<>();
         allowedTenantIds.add("kl.kollam");
@@ -161,6 +177,8 @@ class TransformerPropertiesTest {
         assertEquals("/individual/v1/_search", properties.getIndividualSearchPath());
         assertEquals("Asia/Kolkata", properties.getApplicationZoneId());
         assertTrue(properties.getAllowedTenantIds().contains("kl.kollam"));
+        assertEquals(10, properties.getLimit());
+        assertEquals(0, properties.getOffset());
     }
 
     @Test

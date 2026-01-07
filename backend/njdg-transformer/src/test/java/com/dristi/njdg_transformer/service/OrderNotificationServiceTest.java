@@ -11,6 +11,8 @@ import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.utils.HearingUtil;
+import com.dristi.njdg_transformer.utils.InboxUtil;
+import com.dristi.njdg_transformer.model.inbox.InboxResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,9 @@ class OrderNotificationServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private InboxUtil inboxUtil;
 
     @InjectMocks
     private OrderNotificationService orderNotificationService;
@@ -98,6 +103,8 @@ class OrderNotificationServiceTest {
                 .startTime(System.currentTimeMillis() + 86400000L) // Tomorrow
                 .cnrNumbers(Collections.singletonList("CNR-001"))
                 .build();
+
+        lenient().when(inboxUtil.getOrders(any())).thenReturn(InboxResponse.builder().items(Collections.emptyList()).build());
     }
 
     @Test

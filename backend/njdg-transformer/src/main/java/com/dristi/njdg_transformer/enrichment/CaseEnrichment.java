@@ -168,7 +168,7 @@ public class CaseEnrichment implements PartyEnricher {
                 String middleName = dataNode.path("respondentMiddleName").asText("NULL");
                 String lastName = dataNode.path("respondentLastName").asText("NULL");
                 
-                log.debug("Respondent name fields - firstName: {}, middleName: {}, lastName: {}", 
+                log.info("Respondent name fields - firstName: {}, middleName: {}, lastName: {}", 
                     firstName, middleName, lastName);
                 
                 // Check if data is encrypted (contains | separator)
@@ -181,7 +181,7 @@ public class CaseEnrichment implements PartyEnricher {
                         dataNode.path("respondentMiddleName"),
                         dataNode.path("respondentLastName"));
                         
-                log.debug("Respondent fullName result: '{}'", fullName);
+                log.info("Respondent fullName result: '{}'", fullName);
                 ageStr = dataNode.path("respondentAge").asText(null);
                 JsonNode addressArray = dataNode.path("addressDetails");
                 if (addressArray.isArray() && !addressArray.isEmpty()) {
@@ -213,7 +213,7 @@ public class CaseEnrichment implements PartyEnricher {
                 .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.joining(" "));
         
-        log.debug("buildFullName result: '{}'", result);
+        log.info("buildFullName result: '{}'", result);
         return result;
     }
 

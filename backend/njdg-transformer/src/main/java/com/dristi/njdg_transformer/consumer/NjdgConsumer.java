@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +28,7 @@ public class NjdgConsumer {
     private final HearingRepository hearingRepository;
     private final AdvocateRepository advocateRepository;
 
-    @KafkaListener(topics = "save-case-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.case.details}'}")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         String cino = null;
@@ -87,7 +85,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-order-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.order.details}'}")
     public void listenOrder(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         String orderNo = null;
@@ -120,7 +118,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-hearing-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.hearing.details}'}")
     public void listenHearing(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         String cino = null;
@@ -151,7 +149,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "update-hearing-details")
+    @KafkaListener(topics = "#{'${kafka.topic.update.hearing.details}'}")
     public void updateHearingDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         String cino = null;
@@ -217,7 +215,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-extra-parties") 
+    @KafkaListener(topics = "#{'${kafka.topic.save.extra.parties}'}")
     public void listenExtraParties(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         int totalParties = 0;
@@ -256,7 +254,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-advocate-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.advocate.details}'}")
     public void listenAdvocates(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         Integer advocateCode = null;
@@ -278,7 +276,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "update-advocate-details")
+    @KafkaListener(topics = "#{'${kafka.topic.update.advocate.details}'}")
     public void listenAdvocateUpdates(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         Integer advocateCode = null;
@@ -302,7 +300,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-act-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.act.details}'}")
     public void listenActDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         Integer actCode = null;
@@ -324,7 +322,7 @@ public class NjdgConsumer {
         }
     }
 
-    @KafkaListener(topics = "save-extra-advocate-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.extra.advocate.details}'}")
     public void listenExtraAdvocateDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         int totalAdvocates = 0;
@@ -373,19 +371,17 @@ public class NjdgConsumer {
         }
         
         try {
-            Integer value = Integer.valueOf(purposeOfListing.trim());
             // Return 0 if the parsed value is 0 (default/invalid purpose code)
-            return (value == null || value == 0) ? 0 : value;
+            return Integer.valueOf(purposeOfListing.trim());
         } catch (NumberFormatException e) {
             log.warn("Invalid purpose of listing value: '{}', using default 0", purposeOfListing);
             return 0; // Default value for invalid format
         }
     }
 
-    @KafkaListener(topics = "save-case-conversion-details")
+    @KafkaListener(topics = "#{'${kafka.topic.save.case.conversion.details}'}")
     public void listenCaseConversionDetails(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
-        Integer caseConversionCode = null;
 
         log.info("Received case conversion details message on topic: {} | messageId: {} | partition: {} | offset: {}",
                 topic, messageId, payload.partition(), payload.offset());
@@ -397,13 +393,13 @@ public class NjdgConsumer {
 
             Integer srNo = caseRepository.getNextSrNoForCaseConversion(caseTypeDetails.getCino());
             caseTypeDetails.setSrNo(srNo);
-            log.debug("Assigned sr_no: {} for CINO: {}", srNo, caseTypeDetails.getCino());
+            log.info("Assigned sr_no: {} for CINO: {}", srNo, caseTypeDetails.getCino());
 
             caseRepository.insertCaseConversionDetails(caseTypeDetails);
             log.info("Successfully processed case conversion | CINO: {}", caseTypeDetails.getCino());
         } catch (Exception e) {
-            log.error("Failed to process case conversion | caseConversionCode: {} | messageId: {} | error: {}",
-                     caseConversionCode, messageId, e.getMessage(), e);
+            log.error("Failed to process case conversion | messageId: {} | error: {}",
+                      messageId, e.getMessage(), e);
         }
     }
 }
