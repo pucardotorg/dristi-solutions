@@ -34,6 +34,12 @@ export const formatDate = (date) => {
 
 const removeYearFromName = (name = "") => name.replace(/,\s*\d{4}$/, "");
 
+const DEFAULT_SELECTION_RULES = {
+  CASE_CATEGORY: (item) => item?.category?.toLowerCase() === "criminal",
+  CS_STATUS_ACT: (item) => item?.name?.toLowerCase()?.includes("negotiable"),
+  CS_SECTION: (item) => item?.sectionCode === "138" || item?.sectionHeading?.includes("138"),
+};
+
 function CaseType({ t }) {
   const { path } = useRouteMatch();
   const history = useHistory();
@@ -404,7 +410,9 @@ function CaseType({ t }) {
       const initialData = {};
       detailsCardList?.forEach((item) => {
         if (item?.subtext?.length) {
-          initialData[item?.header] = item?.subtext?.[0];
+          const matcher = DEFAULT_SELECTION_RULES[item.header];
+          const matchedValue = matcher ? item.subtext.find(matcher) : null;
+          initialData[item?.header] = matchedValue || item?.subtext?.[0];
         }
       });
 
