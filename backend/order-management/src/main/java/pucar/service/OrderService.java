@@ -63,6 +63,10 @@ public class OrderService {
         Long now = dateUtil.getEPochFromLocalDate(today);
         request.getOrder().setCreatedDate(now);
         OrderResponse orderResponse = orderUtil.createOrder(request);
+
+        if (request.getOrder().getHearingNumber() != null) {
+            hearingUtil.updateOpenHearingOrderStatusForDraftOrder(request.getOrder());
+        }
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
@@ -92,6 +96,10 @@ public class OrderService {
 
         if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
             hearingUtil.preProcessScheduleNextHearing(request);
+        }
+
+        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+            hearingUtil.updateOpenHearingOrderStatusForDeletedOrder(request.getOrder());
         }
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);

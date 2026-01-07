@@ -3,7 +3,8 @@ package org.egov.transformer.models;
 public enum OrderStatus {
 
     PENDING_SIGN("PENDING_SIGN"),
-    SIGNED("SIGNED");
+    SIGNED("SIGNED"),
+    DRAFT("DRAFT");
 
     private final String value;
 
