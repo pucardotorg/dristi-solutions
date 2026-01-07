@@ -233,7 +233,7 @@ const createWitnessConfig = (index) => [
       {
         key: "witnessAdditionalDetails",
         type: "component",
-        label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
+        label: "CS_ADD_WITNESS_ADDITIONAL_DETAIL",
         component: "SelectCustomTextArea",
         isInfinite: true,
         populators: {
@@ -243,7 +243,7 @@ const createWitnessConfig = (index) => [
               type: "TextAreaComponent",
               isOptional: true,
               placeholder: "CS_TEXTAREA_PLACEHOLDER_ADDITIONAL_DETAIL",
-              textAreaSubHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
+              textAreaSubHeader: "CS_ADD_WITNESS_ADDITIONAL_DETAIL",
               subHeaderClassName: "dristi-font-bold",
             },
           ],
