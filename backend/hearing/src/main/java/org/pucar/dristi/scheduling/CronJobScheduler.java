@@ -2,7 +2,6 @@ package org.pucar.dristi.scheduling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -11,30 +10,23 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.JsonUtil;
 import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.RequestInfoGenerator;
-import org.pucar.dristi.util.UserUtil;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingCriteria;
 import org.pucar.dristi.web.models.HearingSearchRequest;
-import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.web.models.cases.AdvocateMapping;
 import org.pucar.dristi.web.models.cases.CourtCase;
-import org.pucar.dristi.web.models.orders.OrderCriteria;
-import org.pucar.dristi.web.models.orders.OrderListResponse;
-import org.pucar.dristi.web.models.orders.OrderSearchRequest;
+import org.pucar.dristi.web.models.cases.Party;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -72,43 +64,25 @@ public class CronJobScheduler {
     private final ExecutorService executorService;
     private final DateUtil dateUtil;
     private final CaseUtil caseUtil;
-    private final UserUtil userUtil;
-    private final OrderUtil orderUtil;
-    private final AdvocateUtil advocateUtil;
     private final IndividualService individualService;
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
     private final ObjectMapper objectMapper;
-    private String hearingLink;
 
 
     @Autowired
-    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, UserUtil userUtil, OrderUtil orderUtil, AdvocateUtil advocateUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil, ObjectMapper objectMapper) {
+    public CronJobScheduler(HearingRepository hearingRepository, RequestInfoGenerator requestInfoGenerator, SmsNotificationService smsNotificationService, Configuration config, DateUtil dateUtil, CaseUtil caseUtil, IndividualService individualService, MdmsUtil mdmsUtil, JsonUtil jsonUtil, ObjectMapper objectMapper) {
         this.hearingRepository = hearingRepository;
         this.requestInfoGenerator = requestInfoGenerator;
         this.smsNotificationService = smsNotificationService;
         this.config = config;
         this.caseUtil = caseUtil;
-        this.userUtil = userUtil;
-        this.orderUtil = orderUtil;
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.dateUtil = dateUtil;
-        this.advocateUtil = advocateUtil;
         this.individualService = individualService;
         this.mdmsUtil = mdmsUtil;
         this.jsonUtil = jsonUtil;
         this.objectMapper = objectMapper;
-    }
-
-    @PostConstruct
-    public void init() {
-        Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(null, config.getTenantId(), HEARING_MODULE_NAME, Collections.singletonList(HEARING_LINK_MASTER_NAME));
-        JSONArray hearingLinkArray = mdmsResponse
-                .get(HEARING_MODULE_NAME)
-                .get(HEARING_LINK_MASTER_NAME);
-
-        Object data = hearingLinkArray.get(0);
-        hearingLink = jsonUtil.getNestedValue(data, List.of("link"), String.class);
     }
 
     public void sendNotificationOnHearingsHeldToday() {
@@ -126,18 +100,18 @@ public class CronJobScheduler {
                 List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-               advocates.forEach(advocate -> {
+               for(Individual advocate: advocates){
                    List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(advocate, advocateCases, requestInfo));
                    futures.add(future);
-               });
+               }
 
                // Send sms to litigants
-                litigants.forEach(litigant -> {
+                for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
                     Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsHeldToday(litigant, litigantCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 // Wait for all tasks to complete
                 handleFutureResults(futures);
@@ -152,6 +126,11 @@ public class CronJobScheduler {
 
     public void sendNotificationForHearingsScheduledTomorrow(){
         if(config.getIsSMSEnabled()){
+            String hearingLink = getHearingLink();
+            if(hearingLink == null){
+                log.error("VC link shortened URL not configured in MDMS Hearing master");
+                return;
+            }
             log.info("Sending notifications for hearings scheduled tomorrow");
             RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
             List<Future<Boolean>> futures = new ArrayList<>();
@@ -164,18 +143,18 @@ public class CronJobScheduler {
                 List<Individual> litigants = individualService.getIndividuals(requestInfo, new ArrayList<>(litigantCaseMap.keySet()));
 
                 // Send sms to advocates
-                advocates.forEach(individual -> {
-                    List<CourtCase> advocateCases = advocateCaseMap.get(individual.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(individual, advocateCases, requestInfo));
+                for(Individual advocate: advocates){
+                    List<CourtCase> advocateCases = advocateCaseMap.get(advocate.getUserUuid());
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, advocate, advocateCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 // Send sms to litigants
-                litigants.forEach(litigant -> {
+                for(Individual litigant: litigants){
                     List<CourtCase> litigantCases = litigantCaseMap.get(litigant.getUserUuid());
-                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(litigant, litigantCases, requestInfo));
+                    Future<Boolean> future = executorService.submit(() -> sendSMSForHearingsScheduledTomorrow(hearingLink, litigant, litigantCases, requestInfo));
                     futures.add(future);
-                });
+                }
 
                 handleFutureResults(futures);
 
@@ -189,9 +168,11 @@ public class CronJobScheduler {
         log.info("Sending updates on hearings held today");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             String filingNumber = firstCase.getFilingNumber();
             Hearing hearing = getNextScheduledHearing(filingNumber, requestInfo);
             if(hearing == null){
@@ -202,6 +183,7 @@ public class CronJobScheduler {
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .hearingDate(String.valueOf(hearing.getStartTime()))
                     .build();
 
@@ -223,18 +205,20 @@ public class CronJobScheduler {
         }
     }
 
-    private Boolean sendSMSForHearingsScheduledTomorrow(Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
+    private Boolean sendSMSForHearingsScheduledTomorrow(String hearingLink, Individual individual, List<CourtCase> cases, RequestInfo requestInfo) {
         log.info("Sending updates on hearings scheduled tomorrow");
         try{
             int caseCount = cases.size();
+            // In case of multiple hearings, case specific info is not sent so it suffices to extract info from the first case
             CourtCase firstCase = cases.get(0);
             String mobileNumber = individual.getMobileNumber();
             String cmpNumber = firstCase.getCmpNumber();
-
+            String courtCaseNumber = firstCase.getCourtCaseNumber();
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .tenantId(individual.getTenantId())
                     .caseCount(caseCount)
                     .cmpNumber(cmpNumber)
+                    .courtCaseNumber(courtCaseNumber)
                     .link(hearingLink)
                     .build();
 
@@ -264,7 +248,7 @@ public class CronJobScheduler {
         Set<String> filingNumbers = hearings.stream()
                 .map(hearing -> hearing.getFilingNumber().get(0))
                 .collect(Collectors.toSet());
-        filingNumbers.forEach(filingNumber -> {
+        for(String filingNumber : filingNumbers){
             CaseCriteria caseCriteria = CaseCriteria.builder()
                     .filingNumber(filingNumber)
                     .defaultFields(false)
@@ -277,7 +261,7 @@ public class CronJobScheduler {
             JsonNode courtCaseNode = caseUtil.searchCaseDetails(caseSearchRequest);
             CourtCase courtCase = objectMapper.convertValue(courtCaseNode, CourtCase.class);
             cases.add(courtCase);
-        });
+        }
 
 
         return cases;
@@ -286,32 +270,50 @@ public class CronJobScheduler {
 
     private Map<String, List<CourtCase>> getAdvocateCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> advocateCaseMap = new LinkedHashMap<>(); //preserves order
-        cases.forEach(courtCase -> {
-            courtCase.getRepresentatives().forEach(advocate -> {
+        for(CourtCase courtCase : cases){
+            if(courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()){
+                log.info("Representatives list is null for case {}", courtCase.getFilingNumber());
+                continue;
+            }
+            for(AdvocateMapping advocate: courtCase.getRepresentatives()){
                 JsonNode advocateNode = objectMapper.convertValue(advocate, JsonNode.class);
-                String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                JsonNode additionalDetails = advocateNode.path("additionalDetails");
+                if(additionalDetails.isMissingNode() || !additionalDetails.has("uuid")){
+                    log.warn("Advocate missing uuid in additionalDetails for case {}", courtCase.getFilingNumber());
+                    continue;
+                }
+                String uuid = additionalDetails.get("uuid").asText();
 
                 advocateCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
                         .add(courtCase);
-            });
-        });
+            }
+        }
 
         return advocateCaseMap;
     }
 
     private Map<String, List<CourtCase>> getLitigantCaseMap(List<CourtCase> cases){
         Map<String, List<CourtCase>> litigantCaseMap = new LinkedHashMap<>(); //preserves order
-        cases.forEach(courtCase -> {
-            courtCase.getLitigants().forEach(litigant -> {
+        for(CourtCase courtCase : cases){
+            if(courtCase.getLitigants() == null || courtCase.getLitigants().isEmpty()){
+                log.info("Litigants list is null for case {}", courtCase.getFilingNumber());
+                continue;
+            }
+            for(Party litigant: courtCase.getLitigants()){
                 JsonNode litigantNode = objectMapper.convertValue(litigant, JsonNode.class);
-                String uuid = litigantNode.path("additionalDetails").get("uuid").asText();
+                JsonNode additionalDetails = litigantNode.path("additionalDetails");
+                if(additionalDetails.isMissingNode() || !additionalDetails.has("uuid")){
+                    log.warn("Litigant missing uuid in additionalDetails for case {}", courtCase.getFilingNumber());
+                    continue;
+                }
+                String uuid = additionalDetails.get("uuid").asText();
 
                 litigantCaseMap
                         .computeIfAbsent(uuid, k -> new ArrayList<>())
                         .add(courtCase);
-            });
-        });
+            }
+        }
 
         return litigantCaseMap;
     }
@@ -361,13 +363,56 @@ public class CronJobScheduler {
 
     private List<Hearing> getHearingsScheduledTomorrow(RequestInfo requestInfo){
         ZoneId zoneId = ZoneId.of(config.getZoneId());
-        Long tomorrow = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(1));
+        Long tomorrowStart = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(1));
+        Long tomorrowEnd = dateUtil.getEPochFromLocalDate(LocalDate.now(zoneId).plusDays(2)) - 1L;
         HearingCriteria hearingCriteria = HearingCriteria.builder()
-                .fromDate(tomorrow)
+                .fromDate(tomorrowStart)
+                .toDate(tomorrowEnd)
                 .status(SCHEDULED)
                 .build();
 
         return fetchHearings(requestInfo, hearingCriteria, null);
+    }
+
+    private String getHearingLink(){
+
+        try {
+            Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
+            requestInfoGenerator.createInternalRequestInfo(),
+            config.getTenantId(),
+            HEARING_MODULE_NAME,
+            Collections.singletonList(HEARING_LINK_MASTER_NAME));
+            if (mdmsResponse == null || !mdmsResponse.containsKey(HEARING_MODULE_NAME)) {
+                log.error("MDMS response is null or missing hearing module");
+                return null;
+            }
+
+            Map<String, JSONArray> hearingModule = mdmsResponse.get(HEARING_MODULE_NAME);
+            if (hearingModule == null || !hearingModule.containsKey(HEARING_LINK_MASTER_NAME)) {
+                log.error("Hearing module is null or missing hearing link master");
+                return null;
+            }
+
+            JSONArray hearingLinkArray = hearingModule.get(HEARING_LINK_MASTER_NAME);
+            if (hearingLinkArray == null || hearingLinkArray.isEmpty()) {
+                log.error("Hearing link array is null or empty");
+                return null;
+            }
+
+            String shortenedUrl = jsonUtil.getNestedValue(hearingLinkArray.get(0), List.of("shortenedUrl"), String.class);
+
+            if(shortenedUrl != null){
+                log.info("VC link shortened url: {}", shortenedUrl);
+                return shortenedUrl;
+            }
+
+            log.error("No shortened URL found in hearing link array");
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error fetching hearing link from MDMS", e);
+            return null;
+        }
     }
 
     /**

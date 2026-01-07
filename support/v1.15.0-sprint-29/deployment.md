@@ -1,3 +1,4 @@
 1. need to restart the access-control service, order, analytics (check with nilesh once this)
 2. check weather the script for enriching pending collection tasks
-After running script to create shortened url, add it to Hearing master -> Hearinglink module and ensure the URL contains the parameter "shorturl?code=" for proper detection
+
+Recreate Hearing.HearingLink mdms schema, run script to create shortened url add it to Hearing master -> Hearinglink module in the shortenedUrl column
