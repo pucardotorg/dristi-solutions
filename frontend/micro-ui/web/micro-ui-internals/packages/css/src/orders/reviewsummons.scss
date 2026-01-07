@@ -517,7 +517,6 @@ $date-input-color: #000;
 }
 @media screen and (max-width: 2000px) {
   .review-process-page.inbox-search-wrapper {
-      // Align header checkbox horizontally with row checkboxes for PENDING_SIGN, SIGNED, and PENDING_RPAD_COLLECTION tabs
       table {
         thead {
           th:first-child {
