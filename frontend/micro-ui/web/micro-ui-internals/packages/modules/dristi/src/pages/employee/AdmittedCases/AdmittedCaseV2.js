@@ -357,72 +357,7 @@ const AdmittedCaseV2 = () => {
   });
 
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
-  const [data, setData] = useState([]);
 
-  const fetchInbox = useCallback(async () => {
-    try {
-      const now = new Date();
-      const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
-      const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
-
-      const payload = {
-        inbox: {
-          processSearchCriteria: {
-            businessService: ["hearing-default"],
-            moduleName: "Hearing Service",
-            tenantId: "kl",
-          },
-          moduleSearchCriteria: {
-            tenantId: "kl",
-            ...(fromDate && toDate ? { fromDate, toDate } : {}),
-          },
-          tenantId: "kl",
-          limit: 300,
-          offset: 0,
-        },
-      };
-
-      const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
-      setData(res?.items || []);
-    } catch (err) {
-      console.error("error", err);
-    } finally {
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchInbox();
-    const isBailBondPendingTaskPresent = async () => {
-      try {
-        const bailBondPendingTask = await HomeService.getPendingTaskService(
-          {
-            SearchCriteria: {
-              tenantId,
-              moduleName: "Pending Tasks Service",
-              moduleSearchCriteria: {
-                isCompleted: false,
-                assignedRole: [...roles], //judge.clerk,typist
-                filingNumber: filingNumber,
-                courtId: courtId,
-                entityType: "bail bond",
-              },
-              limit: 10000,
-              offset: 0,
-            },
-          },
-          { tenantId }
-        );
-        if (bailBondPendingTask?.data?.length > 0) {
-          setIsBailBondTaskExists(true);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    if (isEmployee) isBailBondPendingTaskPresent();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userType]);
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
@@ -2319,6 +2254,11 @@ const AdmittedCaseV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
+  const currentScheduledHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "SCHEDULED"), [
+    hearingDetails?.HearingList,
+  ]);
+
+
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
     const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
@@ -2641,13 +2581,89 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+    const [data, setData] = useState([]);
+
+  const fetchInbox = useCallback(async () => {
+    try {
+      debugger;
+      // Use the date from currentInProgressHearing or todayScheduledHearing, default to today
+      const targetDate = currentInProgressHearing?.startTime || currentScheduledHearing?.startTime || new Date().toISOString().split('T')[0];
+      const targetDateTime = new Date(targetDate);
+      
+      // Set fromDate to start of the target day
+      const fromDate = new Date(targetDateTime.setHours(0, 0, 0, 0)).getTime();
+      // Set toDate to end of the target day
+      const toDate = new Date(targetDateTime.setHours(23, 59, 59, 999)).getTime();
+
+      const payload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["hearing-default"],
+            moduleName: "Hearing Service",
+            tenantId: "kl",
+          },
+          moduleSearchCriteria: {
+            tenantId: "kl",
+            fromDate,
+            toDate,
+          },
+          tenantId: "kl",
+          limit: 300,
+          offset: 0,
+        },
+      };
+
+      const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+      setData(res?.items || []);
+    } catch (err) {
+      console.error("error", err);
+    } finally {
+    }
+  }, [currentInProgressHearing, currentScheduledHearing]);
+  
+
+  useEffect(() => {
+    fetchInbox();
+  }, [fetchInbox, currentInProgressHearing, currentScheduledHearing]);
+
+  useEffect(() => {
+    const isBailBondPendingTaskPresent = async () => {
+      try {
+        const bailBondPendingTask = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                assignedRole: [...roles], //judge.clerk,typist
+                filingNumber: filingNumber,
+                courtId: courtId,
+                entityType: "bail bond",
+              },
+              limit: 10000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+        if (bailBondPendingTask?.data?.length > 0) {
+          setIsBailBondTaskExists(true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (isEmployee) isBailBondPendingTaskPresent();
+  }, [userType, isEmployee, tenantId, roles, filingNumber, courtId]);
+
   const hideNextHearingButton = useMemo(() => {
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
-      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
     );
     return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing?.hearingId, todayScheduledHearing?.hearingId]);
+  }, [data, currentInProgressHearing?.hearingId, currentScheduledHearing?.hearingId]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2656,7 +2672,7 @@ const AdmittedCaseV2 = () => {
       } else {
         const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
         const index = validData?.findIndex(
-          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || currentScheduledHearing?.hearingId)
         );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
@@ -2697,7 +2713,7 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
+    [currentInProgressHearing?.hearingId, data, history, currentScheduledHearing?.hearingId, userType]
   );
 
   const handleCaseTransition = async (actionType) => {
@@ -3821,7 +3837,11 @@ const AdmittedCaseV2 = () => {
                             {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t("CS_CASE_NEXT_HEARING")}
+                                label={
+                                  currentScheduledHearing?.startTime 
+                                    ? `${t("CS_CASE_NEXT_HEARING")} (${new Date(currentScheduledHearing.startTime).toLocaleDateString()})`
+                                    : t("CS_CASE_NEXT_HEARING")
+                                }
                                 children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3829,7 +3849,7 @@ const AdmittedCaseV2 = () => {
                                     value: "NEXT_HEARING",
                                   })
                                 }
-                              ></Button>
+                              />
                             )}
                             <ActionButton
                               variation={"primary"}
