@@ -145,7 +145,6 @@ var defaultFontMapping = {
 }
 
 const printer = new pdfMakePrinter(fontDescriptors);
-const uuidv4 = require("uuid/v4");
 
 let mustache = require("mustache");
 mustache.escape = function (text) {
