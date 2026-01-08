@@ -109,4 +109,7 @@ public class TransformerProperties {
 
     @Value("${egov.inbox.search.offset}")
     private Integer offset;
+
+    @Value("${notification.order.processing.delay.ms}")
+    private Long notificationOrderProcessingDelay;
 }
