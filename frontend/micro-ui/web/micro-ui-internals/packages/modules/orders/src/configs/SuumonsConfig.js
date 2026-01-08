@@ -129,7 +129,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
