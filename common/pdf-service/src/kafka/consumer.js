@@ -81,11 +81,11 @@ consumerGroup.on("message", function(message) {
 });
 
 consumerGroup.on("error", function(err) {
-  console.log("Error:", err);
+  logger.error("Kafka consumer error", { error: err.message, stack: err.stack });
 });
 
 consumerGroup.on("offsetOutOfRange", function(err) {
-  console.log("offsetOutOfRange:", err);
+  logger.error("Kafka consumer offset out of range", { error: err.message });
 });
 
 }
