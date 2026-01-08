@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - release/*
+      - develop-actions-enhancement
   workflow_dispatch:
     inputs:
       services:
@@ -57,12 +58,12 @@ jobs:
 
       - name: checkout
         uses: actions/checkout@v4
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'workflow_dispatch'
         with:
           ref: ${{ env.BRANCH }}
 
       - name: check diff
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'workflow_dispatch'
         id: check_diff
         run: |
           git fetch --all --prune
@@ -161,6 +162,7 @@ jobs:
         run: |
           echo "Service Name: ${{ matrix.service }}"
           echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
+          echo "output from check-diff: ${{ needs.check-diff.outputs.matrix }}"
 
       - name: Sonar Analysis
         uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop
