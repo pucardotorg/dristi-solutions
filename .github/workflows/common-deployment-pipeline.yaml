@@ -62,7 +62,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         with:
           ref: ${{ env.BRANCH }}
-          depth: 0
+          fetch-depth: 0
 
       - name: Set Diff Range
         if: github.event_name != 'workflow_dispatch'
