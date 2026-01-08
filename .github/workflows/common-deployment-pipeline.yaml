@@ -83,8 +83,8 @@ jobs:
         run: |
           git fetch --all --prune
           
-          BASE="origin/${{ steps.diff_range.outputs.base_ref }}"
-          HEAD="origin/${{ steps.diff_range.outputs.head_ref }}"
+          BASE="${{ steps.diff_range.outputs.base_ref }}"
+          HEAD="${{ steps.diff_range.outputs.head_ref }}"
 
           git diff --name-only "$BASE" "$HEAD" > changed.txt
 
