@@ -62,6 +62,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         with:
           ref: ${{ env.BRANCH }}
+          depth: 0
 
       - name: Set Diff Range
         if: github.event_name != 'workflow_dispatch'
@@ -81,11 +82,10 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         id: check_diff
         run: |
-          git fetch --all --prune
-          
           BASE="${{ steps.diff_range.outputs.base_ref }}"
           HEAD="${{ steps.diff_range.outputs.head_ref }}"
-
+          
+          echo "performing git diff between $BASE and $HEAD"
           git diff --name-only "$BASE" "$HEAD" > changed.txt
 
           services=$(jq -r 'to_entries[] | "\(.key) \(.value.service_source_path)"' build/config.json |
