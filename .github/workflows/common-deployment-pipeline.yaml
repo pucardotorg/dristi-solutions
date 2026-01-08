@@ -82,6 +82,8 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         id: check_diff
         run: |
+          git fetch --all --prune
+
           BASE="${{ steps.diff_range.outputs.base_ref }}"
           HEAD="${{ steps.diff_range.outputs.head_ref }}"
           
