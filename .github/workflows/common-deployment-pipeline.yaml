@@ -29,7 +29,6 @@ on:
       - develop
       - release/*
       - develop-actions-enhancement
-      - develop-actions-enhancement
 
 
 jobs:
