@@ -107,8 +107,12 @@ public class CaseOverallStatusUtil {
                     return orderObject;
                 }
                 for (int i = 0; i < compositeItems.length(); i++) {
-                    JSONObject compositeItem = compositeItems.getJSONObject(i);
-                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE);
+					try{
+						JSONObject compositeItem = compositeItems.getJSONObject(i);
+						processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE);
+					} catch(Exception e){
+						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
+					}
                 }
 
             } else {
@@ -274,15 +278,14 @@ public class CaseOverallStatusUtil {
 		if (!"published".equalsIgnoreCase(status)) return null;
 
 		org.pucar.dristi.web.models.CaseOutcomeType caseOutcomeType = mdmsDataConfig.getCaseOutcomeTypeMap().get(orderType);
-        String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
-        NatureOfDisposal natureOfDisposal = parseNatureOfDisposal(natureOfDisposalStr);
-
         if (caseOutcomeType == null) {
 			log.info("CaseOutcomeType not found for orderType: {}", orderType);
 			return null;
 		}
 
 		try {
+			String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
+			NatureOfDisposal natureOfDisposal = parseNatureOfDisposal(natureOfDisposalStr);
 			if (caseOutcomeType.getIsJudgement()) {
 				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {

@@ -136,83 +136,18 @@
   }
 }
 
-.review-summon-warrant table thead tr > th:first-child {
-  position: relative !important;
-  vertical-align: middle !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  text-align: left !important;
-  padding-left: 22px !important;
-  gap: 6px !important;
+/* General override for InboxSearchComposer tables (applies when .review-summon-warrant is not present) */
+.inbox-search-wrapper table thead tr > th:first-child {
+  display: table-cell !important;
+  vertical-align: top !important;
 }
-
-.review-summon-warrant .review-process-page.inbox-search-wrapper table thead tr > th:first-child[style],
-.review-summon-warrant .review-process-page.inbox-search-wrapper table thead tr > th:first-child[style*="vertical-align"],
-.review-summon-warrant .review-process-page.inbox-search-wrapper table thead tr > th:first-child[style*="vertical-align: top"],
-.review-summon-warrant table thead tr > th:first-child[role="columnheader"][style*="vertical-align"] {
-  vertical-align: middle !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  padding-left: 22px !important;
-  text-align: left !important;
-}
-
-.review-summon-warrant table thead tr > th:first-child[style*="vertical-align"],
-.review-summon-warrant table thead tr > th:first-child[style*="vertical-align: top"] {
-  vertical-align: middle !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-}
-
-.review-summon-warrant .review-process-page.inbox-search-wrapper table thead tr > th:first-child,
-.review-summon-warrant .review-process-page.inbox-search-wrapper table tbody tr > td:first-child {
-  width: 64px !important;
-  min-width: 64px !important;
-  max-width: 64px !important;
-  overflow: visible !important;
-}
-
-.review-summon-warrant table thead tr > th:first-child .header-checkbox,
-.review-summon-warrant table thead tr > th:first-child input[type="checkbox"][data-header-checkbox="true"],
-.review-summon-warrant table thead tr > th:first-child input[type="checkbox"].header-checkbox,
-.review-summon-warrant table thead tr > th:first-child input.custom-checkbox.header-checkbox {
-  position: static !important;
-  top: auto !important;
-  left: 24px !important;
-  transform: none !important;
+.inbox-search-wrapper table thead tr > th:first-child input.custom-checkbox.header-checkbox,
+.inbox-search-wrapper table thead tr > th:first-child input.header-checkbox[data-header-checkbox="true"] {
   width: 20px !important;
   height: 20px !important;
-  margin: 0 !important;
-  align-self: center !important;
-  display: inline-block !important;
-}
-
-.review-summon-warrant table {
-  thead tr > th:nth-child(2) {
-    text-align: left !important;
-    padding-left: 6px !important;
-  }
-
-  tbody tr > td:nth-child(2) {
-    text-align: left !important;
-    padding-left: 6px !important;
-    max-width: 32vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    a {
-      display: inline-block;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-  }
+  margin: -1px 2px 1px 4px !important; /* align with header text baseline */
+  position: relative !important;
+  top: -2px !important;
 }
 
 /*
@@ -618,14 +553,13 @@ $date-input-color: #000;
       thead {
         tr > th:first-child {
           text-align: left;
-          vertical-align: middle !important;
+          vertical-align: top !important;
           &[style],
           &[style*="vertical-align"],
           &[style*="vertical-align: top"] {
-            vertical-align: middle !important;
+            vertical-align: top !important;
           }
-          display: flex !important;
-          align-items: center !important;
+          display: table-cell !important;
           position: relative;
 
           .header-checkbox,
@@ -637,17 +571,16 @@ $date-input-color: #000;
             min-height: 20px !important;
             max-width: 20px !important;
             max-height: 20px !important;
-            flex: 0 0 20px !important;
             inline-size: 20px !important;
             block-size: 20px !important;
             box-sizing: border-box !important;
             aspect-ratio: 1 / 1 !important;
             -webkit-appearance: none !important;
             appearance: none !important;
-            margin: 0 6px 0 24px;
+            margin: -2px 6px 0 24px; /* slight upward nudge for visual alignment */
             vertical-align: middle;
-            position: static !important;
-            top: auto !important;
+            position: relative !important;
+            top: -2px !important; /* precise visual alignment with header text */
             left: auto !important;
             transform: none !important;
           }
@@ -738,5 +671,18 @@ $date-input-color: #000;
         }
       }
     }
+  }
+  .review-summon-warrant table thead th:first-child {
+    display: table-cell !important;
+    vertical-align: top !important;
+    padding: 12px 16px !important;
+  }
+
+  .review-summon-warrant table thead th:first-child input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: -1px 2px 1px 4px;
+    position: relative;
+    top: -2px;
   }
 }

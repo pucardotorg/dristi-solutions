@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { getStringAddressDetails } = require("../utils/addressUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -102,6 +103,9 @@ const applicationWitnessDeposition = async (
 
     const witnessList = application?.additionalDetails?.witnessDetails?.map(
       (witness) => {
+        const addresses = witness?.data?.addressDetails?.map((address) => {
+          return getStringAddressDetails(address?.addressDetails);
+        });
         return {
           witnessName: [
             witness?.data?.firstName,
@@ -111,6 +115,7 @@ const applicationWitnessDeposition = async (
             ?.filter(Boolean)
             ?.join(" "),
           witnessDesignation: witness?.data?.witnessDesignation || "",
+          witnessAddresses: addresses || [],
           witnessAdditionalComments:
             witness?.data?.witnessAdditionalDetails?.text || "",
         };
