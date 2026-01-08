@@ -51,6 +51,10 @@ const initTokens = (stateCode) => {
 };
 
 const initDigitUI = () => {
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
   window.Digit.Customizations = {
     commonUiConfig: UICustomizations,
@@ -73,7 +77,7 @@ const initDigitUI = () => {
   ReactDOM.render(
     <>
       <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />
-      <ApiMonitorPanel />
+      {hasViewApiMonitorAccess && <ApiMonitorPanel />}
     </>,
     document.getElementById("root")
   );

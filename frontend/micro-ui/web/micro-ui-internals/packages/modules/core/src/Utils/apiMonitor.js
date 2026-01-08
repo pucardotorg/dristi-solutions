@@ -26,6 +26,8 @@ const config = {
   sensitiveFields: ["password", "token", "authToken", "authorization", "key", "secret"],
 };
 
+let interactionPending = false;
+
 // Storage for API call data
 const apiCallData = {
   calls: [], // Array of API call objects
@@ -143,6 +145,32 @@ const setupInterceptors = () => {
   // Request interceptor
   axios.interceptors.request.use(
     (config) => {
+      // Debug logging for filestore API calls
+      if (config.url && config.url.includes("/filestore/v1/files/")) {
+        console.log(`[API Monitor Debug] Request intercepted: ${config.url}`);
+        console.log(`[API Monitor Debug] Has params:`, !!config.params);
+        if (config.params) {
+          console.log(`[API Monitor Debug] Params:`, config.params);
+        }
+      }
+
+      // Skip filestore API calls with no fileStoreIds
+      const isFileStoreApi = config.url && config.url.includes("/filestore/v1/files/url");
+      if (isFileStoreApi && (!config.params || !config.params.fileStoreIds)) {
+        console.log(`[API Monitor Debug] Skipping URL API call: ${config.url}`);
+        // Skip monitoring for these calls
+        return config;
+      }
+
+      // 🔑 AUTO RESET LOGS ON NEW INTERACTION
+      if (interactionPending) {
+        apiCallData.calls = [];
+        apiCallData.startTime = Date.now();
+        interactionPending = false;
+
+        console.log("%c[API Monitor] New interaction detected → logs reset", "color:#38bdf8;font-weight:bold;");
+      }
+
       // Add timestamp to track duration
       config.metadata = { startTime: Date.now() };
 
@@ -156,6 +184,8 @@ const setupInterceptors = () => {
 
       // Log outgoing request
       logWithColors("OUT", method, url, null, null, requestSize, 0);
+
+      console.log("config.includeHeaders", config.includeHeaders, "h", config.includeFullPayload);
 
       // Store initial call data
       const callData = {
@@ -199,15 +229,53 @@ const setupInterceptors = () => {
   // Response interceptor
   axios.interceptors.response.use(
     (response) => {
+      // Debug logging for filestore API calls
+      if (response.config.url && response.config.url.includes("/filestore/v1/files/")) {
+        console.log(`[API Monitor Debug] Response intercepted: ${response.config.url}`);
+        console.log(`[API Monitor Debug] Has metadata:`, !!response.config.metadata);
+        console.log(`[API Monitor Debug] Status:`, response.status);
+      }
+
       // Skip if no metadata (not tracked by our request interceptor)
-      if (!response.config.metadata) {
+      // or if it's a filestore API call with no fileStoreIds
+      const isFileStoreApi = response.config.url && response.config.url.includes("/filestore/v1/files/url");
+      if (!response.config.metadata || (isFileStoreApi && (!response.config.params || !response.config.params.fileStoreIds))) {
+        if (response.config.url && response.config.url.includes("/filestore/v1/files/")) {
+          console.log(`[API Monitor Debug] Skipping response: ${response.config.url}`);
+        }
         return response;
       }
 
       try {
         // Calculate timing and sizes
         const duration = Date.now() - response.config.metadata.startTime;
-        const responseSize = calculateDataSize(response.data);
+
+        // Check for Content-Length header for file downloads
+        let responseSize = 0;
+        const contentLength = response.headers && response.headers["content-length"];
+        const contentType = response.headers && response.headers["content-type"];
+
+        // If it's a binary response or has content-length, use that value
+        if (contentLength) {
+          responseSize = parseInt(contentLength, 10);
+        } else if (
+          contentType &&
+          (contentType.includes("application/pdf") ||
+            contentType.includes("image/") ||
+            contentType.includes("application/octet-stream") ||
+            contentType.includes("application/zip"))
+        ) {
+          // For binary responses without content-length, try to get size from response data
+          if (response.data instanceof Blob || response.data instanceof ArrayBuffer) {
+            responseSize = response.data.size || response.data.byteLength || 0;
+          } else {
+            responseSize = calculateDataSize(response.data);
+          }
+        } else {
+          // Default calculation for JSON/text responses
+          responseSize = calculateDataSize(response.data);
+        }
+
         const requestSize = calculateDataSize(response.config.data);
 
         // Get request details
@@ -243,35 +311,39 @@ const setupInterceptors = () => {
         const response = error.response;
         const config = error.config;
 
-        if (config && config.metadata) {
-          // Calculate timing
-          const duration = Date.now() - config.metadata.startTime;
-          const method = (config.method && config.method.toUpperCase()) || "UNKNOWN";
-          const url = config.url;
-          const status = response && response.status;
-          const requestSize = calculateDataSize(config.data);
-          const responseSize = calculateDataSize(response && response.data);
+        // Skip if no metadata or if it's a filestore API call with no fileStoreIds
+        const isFileStoreApi = config && config.url && config.url.includes("/filestore/v1/files/url");
+        if (!config || !config.metadata || (isFileStoreApi && (!config.params || !config.params.fileStoreIds))) {
+          return Promise.reject(error);
+        }
 
-          // Log error
-          logWithColors("ERROR", method, url, status, duration, requestSize, responseSize, error);
+        // Calculate timing
+        const duration = Date.now() - config.metadata.startTime;
+        const method = (config.method && config.method.toUpperCase()) || "UNKNOWN";
+        const url = config.url;
+        const status = response && response.status;
+        const requestSize = calculateDataSize(config.data);
+        const responseSize = calculateDataSize(response && response.data);
 
-          // Find and update the stored call data
-          const callIndex = apiCallData.calls.findIndex((call) => call.method === method && call.url === url && !call.status);
+        // Log error
+        logWithColors("ERROR", method, url, status, duration, requestSize, responseSize, error);
 
-          if (callIndex !== -1) {
-            apiCallData.calls[callIndex] = {
-              ...apiCallData.calls[callIndex],
-              status: status || 0,
-              duration,
-              responseSize,
-              error: {
-                message: error.message,
-                code: error.code,
-                ...(response ? { responseStatus: response.status } : {}),
-              },
-              responseTimestamp: Date.now(),
-            };
-          }
+        // Find and update the stored call data
+        const callIndex = apiCallData.calls.findIndex((call) => call.method === method && call.url === url && !call.status);
+
+        if (callIndex !== -1) {
+          apiCallData.calls[callIndex] = {
+            ...apiCallData.calls[callIndex],
+            status: status || 0,
+            duration,
+            responseSize,
+            error: {
+              message: error.message,
+              code: error.code,
+              ...(response ? { responseStatus: response.status } : {}),
+            },
+            responseTimestamp: Date.now(),
+          };
         }
       } catch (e) {
         console.error("Error in API monitor error interceptor:", e);
@@ -283,10 +355,21 @@ const setupInterceptors = () => {
   );
 };
 
+const setupInteractionListeners = () => {
+  const markInteraction = () => {
+    interactionPending = true;
+  };
+
+  document.addEventListener("click", markInteraction, true);
+  document.addEventListener("keydown", markInteraction, true);
+  document.addEventListener("change", markInteraction, true);
+};
+
 // API Monitor public methods
 const apiMonitor = {
   // Initialize the API monitor
   init: () => {
+    setupInteractionListeners();
     setupInterceptors();
     console.log("%c[API Monitor] Initialized and monitoring API calls", "color: #4caf50; font-weight: bold;");
   },
@@ -380,6 +463,7 @@ const apiMonitor = {
           totalDataMB: "0",
           avgDuration: "0ms",
           avgCallSizeKB: "0",
+          totalTime: "0ms",
         },
         byPage: [],
         heaviestEndpoints: [],
@@ -393,8 +477,14 @@ const apiMonitor = {
     const errorCalls = calls.filter((call) => call.error || (call.status && call.status >= 400));
 
     const totalDataBytes = calls.reduce((sum, call) => sum + call.requestSize + (call.responseSize || 0), 0);
+    const totalRequestSize = calls.reduce((sum, call) => sum + call.requestSize, 0);
+    const totalResponseSize = calls.reduce((sum, call) => sum + (call.responseSize || 0), 0);
+    const totalRequestSizeKB = (totalRequestSize / 1024).toFixed(2);
+    const totalResponseSizeKB = (totalResponseSize / 1024).toFixed(2);
     const totalDataKB = (totalDataBytes / 1024).toFixed(2);
     const totalDataMB = (totalDataBytes / (1024 * 1024)).toFixed(2);
+
+    const totalTime = Math.round(completedCalls.reduce((sum, call) => sum + (call.duration || 0), 0));
 
     const avgDuration =
       completedCalls.length > 0 ? Math.round(completedCalls.reduce((sum, call) => sum + (call.duration || 0), 0) / completedCalls.length) : 0;
@@ -458,6 +548,11 @@ const apiMonitor = {
     const endpointStats = Object.values(endpointMap).map((endpoint) => {
       const completedEndpointCalls = endpoint.calls.filter((call) => call.status !== null);
 
+      const totalRequestSize = endpoint.calls.reduce((sum, call) => sum + call.requestSize, 0);
+      const totalResponseSize = endpoint.calls.reduce((sum, call) => sum + (call.responseSize || 0), 0);
+      const totalRequestSizeKB = (totalRequestSize / 1024).toFixed(2);
+      const totalResponseSizeKB = (totalResponseSize / 1024).toFixed(2);
+
       const totalSize = endpoint.calls.reduce((sum, call) => sum + call.requestSize + (call.responseSize || 0), 0);
       const totalSizeKB = (totalSize / 1024).toFixed(2);
       const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
@@ -479,6 +574,8 @@ const apiMonitor = {
         endpoint: endpoint.endpoint,
         callCount: endpoint.calls.length,
         totalSizeKB,
+        totalRequestSizeKB,
+        totalResponseSizeKB,
         totalSizeMB: totalSizeMB !== "0.00" ? totalSizeMB : undefined,
         avgResponseSizeKB: (avgResponseSize / 1024).toFixed(2),
         avgDuration: Math.round(avgDuration),
@@ -487,24 +584,25 @@ const apiMonitor = {
     });
 
     // Sort endpoints by different metrics
-    const heaviestEndpoints = [...endpointStats].sort((a, b) => parseFloat(b.totalSizeKB) - parseFloat(a.totalSizeKB)).slice(0, 10);
+    const heaviestEndpoints = [...endpointStats].sort((a, b) => parseFloat(b.totalSizeKB) - parseFloat(a.totalSizeKB));
 
-    const slowestEndpoints = [...endpointStats]
-      .filter((e) => e.avgDuration > 0)
-      .sort((a, b) => b.avgDuration - a.avgDuration)
-      .slice(0, 10);
+    const slowestEndpoints = [...endpointStats].filter((e) => e.avgDuration > 0).sort((a, b) => b.avgDuration - a.avgDuration);
 
-    const mostCalledEndpoints = [...endpointStats].sort((a, b) => b.callCount - a.callCount).slice(0, 10);
-
+    const mostCalledEndpoints = [...endpointStats].sort((a, b) => b.callCount - a.callCount);
     return {
       summary: {
         totalCalls: calls.length,
         totalErrors: errorCalls.length,
         errorRate: `${((errorCalls.length / calls.length) * 100).toFixed(2)}%`,
         totalDataKB,
+        totalRequestSizeKB,
+        totalResponseSizeKB,
         totalDataMB,
         avgDuration: `${avgDuration}ms`,
         avgCallSizeKB,
+        totalTime: `${totalTime}ms`,
+        urlPath: Object.values(pageMap)[0].page,
+        uniqueEndpoints: Object.values(pageMap)[0].endpoints.size,
       },
       byPage,
       heaviestEndpoints,
