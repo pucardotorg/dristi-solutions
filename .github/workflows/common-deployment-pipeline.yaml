@@ -70,8 +70,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # PR is open or synchronized
-            echo "base_ref=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
-            echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+            echo "base_ref="origin/${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+            echo "head_ref="origin/${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "push" ]; then
             # PR was merged OR a direct push occurred
             echo "base_ref=${{ github.event.before }}" >> $GITHUB_OUTPUT
