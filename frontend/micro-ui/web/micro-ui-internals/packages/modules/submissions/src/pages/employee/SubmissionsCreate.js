@@ -1602,6 +1602,7 @@ const SubmissionsCreate = ({ path }) => {
         const res = await submitSubmission({ update: false, action: SubmissionWorkflowAction.SAVEDRAFT });
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
+          sessionStorage.setItem("DRAFT_SAVED_SUCCESSFULLY", "success");
           history.replace(
             orderNumber
               ? `?filingNumber=${filingNumber}&applicationNumber=${newapplicationNumber}&orderNumber=${orderNumber}`
@@ -1893,6 +1894,14 @@ const SubmissionsCreate = ({ path }) => {
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+
+  useEffect(() => {
+    const saveDraft = sessionStorage.getItem("DRAFT_SAVED_SUCCESSFULLY");
+    if (saveDraft === "success") {
+      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+      sessionStorage.removeItem("DRAFT_SAVED_SUCCESSFULLY");
+    }
+  }, [t]);
 
   if (!filingNumber) {
     handleBack();
