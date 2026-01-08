@@ -57,9 +57,7 @@ import {
 
 let v8 = require("v8");
 let totalHeapSizeInGB = (((v8.getHeapStatistics().total_available_size) / 1024 / 1024 / 1024).toFixed(2));
-console.log(`*******************************************`);
-console.log(`Total Heap Size ~ ${totalHeapSizeInGB} GB`);
-console.log(`*******************************************`);
+logger.info("Service starting", { heapSizeGB: totalHeapSizeInGB });
 
 
 
@@ -169,7 +167,7 @@ let borderLayout = {
  * @param {*} errorCallback - callback when error
  * @param {*} tenantId - tenantID
  */
-const createPdfBinary = async (
+export const createPdfBinary = async (
   key,
   listDocDefinition,
   entityIds,
@@ -183,14 +181,17 @@ const createPdfBinary = async (
   documentType,
   moduleName,
   headers,
-  isconsolidated
+  isconsolidated,
+  requestId
 ) => {
   try {
     let noOfDefinitions = listDocDefinition.length;
 
     var jobid = `${key}${new Date().getTime()}`;
+    logger.info("PDF job created", { requestId, jobId: jobid, fileCount: noOfDefinitions });
+    logger.info("Initiating PDF generation", { requestId, jobId: jobid });
     if (noOfDefinitions == 0) {
-      logger.error("no file generated for pdf");
+      logger.error("No file generated for PDF", { requestId, jobId: jobid });
       errorCallback({
         message: " error: no file generated for pdf"
       });
@@ -199,26 +200,22 @@ const createPdfBinary = async (
       var dbInsertBulkRecords = [];
       // instead of awaiting the promise, use process.nextTick to asynchronously upload the receipt
       //
-      process.nextTick(function () {
-        uploadFiles(
-            dbInsertSingleRecords,
-            dbInsertBulkRecords,
-            formatconfig,
+      logger.info("Initiating async file upload", { requestId, jobId: jobid });
+    process.nextTick(function () {
+      uploadFiles(
             listDocDefinition,
             key,
-            isconsolidated,
+            tenantId,
             jobid,
-            noOfDefinitions,
             entityIds,
             starttime,
-            successCallback,
-            errorCallback,
-            tenantId,
             totalobjectcount,
             userid,
             documentType,
             moduleName,
-            headers
+            headers,
+            isconsolidated,
+            requestId
           )
       });
     }
@@ -233,24 +230,19 @@ const createPdfBinary = async (
 };
 
 const uploadFiles = async (
-  dbInsertSingleRecords,
-  dbInsertBulkRecords,
-  formatconfig,
   listDocDefinition,
   key,
-  isconsolidated,
+  tenantId,
   jobid,
-  noOfDefinitions,
   entityIds,
   starttime,
-  successCallback,
-  errorCallback,
-  tenantId,
-  totalobjectcount,
+  totalcount,
   userid,
   documentType,
   moduleName,
-  headers
+  headers,
+  isconsolidated,
+  requestId
 ) => {
   let convertedListDocDefinition = [];
   let listOfFilestoreIds = [];
@@ -267,14 +259,14 @@ const uploadFiles = async (
     convertedListDocDefinition = [...listDocDefinition];
   }
 
+  logger.info("File upload started", { requestId, jobId: jobid, fileCount: convertedListDocDefinition.length });
+
   convertedListDocDefinition.forEach(function (docDefinition, i) {
     // making copy because createPdfKitDocument function modifies passed object and this object is used
     // in multiple places
     var objectCopy = JSON.parse(JSON.stringify(docDefinition));
     // restoring footer because JSON.stringify destroys function() values
-    objectCopy.footer = convertFooterStringtoFunctionIfExist(
-      formatconfig.footer
-    );
+    objectCopy.footer = convertFooterStringtoFunctionIfExist(formatconfig.footer);
     const doc = printer.createPdfKitDocument(objectCopy);
     let fileNameAppend = "-" + new Date().getTime();
     // let filename="src/pdfs/"+key+" "+fileNameAppend+".pdf"
@@ -292,8 +284,10 @@ const uploadFiles = async (
     doc.on("end", function () {
       // console.log("enddddd "+cr++);
       var data = Buffer.concat(chunks);
+      logger.info("Uploading file to filestore", { requestId, jobId: jobid, filename, fileIndex: `${listOfFilestoreIds.length + 1}/${convertedListDocDefinition.length}` });
       fileStoreAPICall(filename, tenantId, data, headers)
         .then((result) => {
+          logger.info("File uploaded successfully", { requestId, jobId: jobid, filestoreId: result, filename });
           listOfFilestoreIds.push(result);
           if (!isconsolidated) {
             dbInsertSingleRecords.push({
@@ -316,10 +310,10 @@ const uploadFiles = async (
             // insertStoreIds(jobid,entityIds[i],[result],tenantId,starttime,successCallback,errorCallback,1,false);
           } else if (
             isconsolidated &&
-            listOfFilestoreIds.length == noOfDefinitions
+            listOfFilestoreIds.length == convertedListDocDefinition.length
           ) {
             // insertStoreIds("",);
-            // logger.info("PDF uploaded to filestore");
+            logger.info("All files uploaded, publishing to Kafka", { requestId, jobId: jobid, filestoreIds: listOfFilestoreIds });
             dbInsertBulkRecords.push({
               jobid,
               id: uuidv4(),
@@ -331,14 +325,14 @@ const uploadFiles = async (
               tenantId,
               createdtime: starttime,
               endtime: new Date().getTime(),
-              totalcount: totalobjectcount,
+              totalcount: totalcount,
               key,
               documentType,
               moduleName
             });
           }
           if (
-            dbInsertSingleRecords.length == totalobjectcount || 
+            dbInsertSingleRecords.length == totalcount || 
             dbInsertBulkRecords.length == 1
           ) {
             insertStoreIds(
@@ -349,7 +343,7 @@ const uploadFiles = async (
               starttime,
               successCallback,
               errorCallback,
-              totalobjectcount,
+              totalcount,
               key,
               documentType,
               moduleName
@@ -357,7 +351,7 @@ const uploadFiles = async (
           }
         })
         .catch((err) => {
-          logger.error(err.stack || err);
+          logger.error("File upload failed", { requestId, jobId: jobid, filename, error: err.message, stack: err.stack });
           errorCallback({
             message: "error occurred while uploading pdf: " + (typeof err === "string") ?
               err :
@@ -373,6 +367,12 @@ app.post(
   "/pdf-service/v1/_create",
   asyncHandler(async (req, res) => {
     let requestInfo;
+    const requestId = req.requestId;
+    const key = get(req.query || req, "key");
+    const tenantId = get(req.query || req, "tenantId");
+    
+    logger.info("Request received", { requestId, endpoint: "/pdf-service/v1/_create", key, tenantId });
+    
     try {
       requestInfo = get(req.body, "RequestInfo");
       await createAndSave(
@@ -380,6 +380,14 @@ app.post(
         res,
         (response) => {
           // doc successfully created
+          const duration = new Date().getTime() - (response.starttime || 0);
+          logger.info("Request completed successfully", { 
+            requestId, 
+            jobId: response.jobid, 
+            filestoreIds: response.filestoreIds, 
+            totalcount: response.totalcount,
+            duration: `${duration}ms`
+          });
           res.status(201);
           res.json({
             ResponseInfo: requestInfo,
@@ -396,6 +404,7 @@ app.post(
           });
         },
         (error) => {
+          logger.error("Request failed in createPdfBinary", { requestId, error: error.message });
           res.status(400);
           // doc creation error
           res.json({
@@ -406,7 +415,7 @@ app.post(
       );
       //
     } catch (error) {
-      logger.error(error.stack || error);
+      logger.error("Request failed with exception", { requestId, error: error.message, stack: error.stack });
       res.status(400);
       res.json({
         ResponseInfo: requestInfo,
@@ -420,10 +429,13 @@ app.post(
   "/pdf-service/v1/_createnosave",
   asyncHandler(async (req, res) => {
     let requestInfo;
+    const requestId = req.requestId;
     try {
       var starttime = new Date().getTime();
       let key = req.query.key;
       let tenantId = req.query.tenantId;
+      
+      logger.info("Request received", { requestId, endpoint: "/pdf-service/v1/_createnosave", key, tenantId });
       var formatconfig = formatConfigMap[key];
       var dataconfig = dataConfigMap[key];
       var headers = JSON.parse(JSON.stringify(req.headers));
@@ -431,7 +443,6 @@ app.post(
         headers['tenantId']=headers.tenantid;
       }
 
-      logger.info("received createnosave request on key: " + key);
       requestInfo = get(req.body, "RequestInfo");
       //
       let isConsolidated = get(req.query, "isconsolidated");
@@ -455,7 +466,7 @@ app.post(
           headers,
           isConsolidated
         );
-        // restoring footer function
+        // restoring footer because JSON.stringify destroys function() values
         formatConfigByFile[0].footer = convertFooterStringtoFunctionIfExist(formatconfig.footer);
         const doc = printer.createPdfKitDocument(formatConfigByFile[0]);
         let fileNameAppend = "-" + new Date().getTime();
@@ -473,9 +484,8 @@ app.post(
             "Content-disposition": "attachment;filename=" + filename,
             "Content-Length": data.length,
           });
-          logger.info(
-            `createnosave success for pdf with key: ${key}, entityId ${entityIds}`
-          );
+          const duration = new Date().getTime() - starttime;
+          logger.info("Request completed successfully", { requestId, key, entityIds, duration: `${duration}ms` });
           res.end(Buffer.from(data, "binary"));
         });
         doc.end();
@@ -553,7 +563,7 @@ app.post(
         );
       }
     } catch (error) {
-      logger.error(error.stack || error);
+      logger.error("Search request failed", { requestId, error: error.message, stack: error.stack });
       res.status(400);
       res.json({
         ResponseInfo: requestInfo,
@@ -904,9 +914,8 @@ export const createAndSave = async (
     );
 
     // logger.info(`Applied templating engine on ${moduleObjectsArray.length} objects output will be in ${formatConfigByFile.length} files`);
-    logger.info(
-      `Applied templating engine on ${totalobjectcount} objects output will be in ${formatConfigByFile.length} files`
-    );
+    const requestId = req.requestId;
+    logger.info("Template rendering completed", { requestId, objectCount: totalobjectcount, fileCount: formatConfigByFile.length });
     // var util = require('util');
     // fs.writeFileSync('./data.txt', util.inspect(JSON.stringify(formatconfig)) , 'utf-8');
     //function to download pdf automatically
@@ -925,6 +934,7 @@ export const createAndSave = async (
         },
       }
       
+    logger.info("PDF generation started", { requestId, key, fileCount: formatConfigByFile.length });
     createPdfBinary(
       key,
       formatConfigByFile,
@@ -939,7 +949,8 @@ export const createAndSave = async (
       documentType,
       moduleName,
       headers,
-      isConsolidated
+      isConsolidated,
+      requestId
     ).catch((err) => {
       logger.error(err.stack || err);
       errorCallback({
@@ -1277,6 +1288,7 @@ const handleDerivedMapping = (dataconfig, variableTovalueMap) => {
 };
 
 const validateRequest = (req, res, key, tenantId, requestInfo) => {
+  const requestId = req.requestId;
   let errorMessage = "";
   if (key == undefined || key.trim() === "") {
     errorMessage += " key is missing,";
@@ -1294,6 +1306,7 @@ const validateRequest = (req, res, key, tenantId, requestInfo) => {
     errorMessage += ` no config found for key ${key}`;
   }
   if (res && errorMessage !== "") {
+    logger.error("Validation failed", { requestId, key, tenantId, reason: errorMessage.trim() });
     res.status(400);
     res.json({
       message: errorMessage,
@@ -1301,6 +1314,7 @@ const validateRequest = (req, res, key, tenantId, requestInfo) => {
     });
     return false;
   } else {
+    logger.info("Validation passed", { requestId, key, tenantId });
     return true;
   }
 };
@@ -1409,6 +1423,8 @@ const prepareBulk = async (
   );
   if (Array.isArray(moduleObjectsArray) && moduleObjectsArray.length > 0) {
     totalobjectcount = moduleObjectsArray.length;
+    const requestId = req.requestId;
+    logger.info("Data extraction completed", { requestId, baseKeyPath, objectCount: totalobjectcount });
     for (var i = 0, len = moduleObjectsArray.length; i < len; i++) {
       let moduleObject = moduleObjectsArray[i];
       let entityKey = getValue(
