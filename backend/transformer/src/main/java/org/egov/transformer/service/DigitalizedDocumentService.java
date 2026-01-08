@@ -11,7 +11,6 @@ import org.egov.transformer.models.Party;
 import org.egov.transformer.models.PoaParty;
 import org.egov.transformer.models.digitalized_document.DigitalizedDocument;
 import org.egov.transformer.models.digitalized_document.DigitalizedDocumentRequest;
-import org.egov.transformer.models.digitalized_document.TypeEnum;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -84,34 +83,18 @@ public class DigitalizedDocumentService {
             return;
         }
 
-        List<String> accusedUUIDs = getLitigantUUIDS(courtCase, ACCUSED_PARTY_TYPE, digitalizedDocument);
-        List<String> accusedAdvocateUUIDs = getAdvocateUUIDS(courtCase, accusedUUIDs);
-        List<String> accusedPoaUUIDs = getPOAUUIDs(courtCase, accusedUUIDs);
-
-        List<String> complainantUUIDs = new ArrayList<>();
-        List<String> complainantAdvocateUUIDs = new ArrayList<>();
-        List<String> complainantPoaUUIDs = new ArrayList<>();
-
-        // complainant side parties are only required for mediation
-        if(digitalizedDocument.getType().equals(TypeEnum.MEDIATION)){
-            complainantUUIDs = getLitigantUUIDS(courtCase, COMPLAINANT_PARTY_TYPE, digitalizedDocument);
-            complainantAdvocateUUIDs = getAdvocateUUIDS(courtCase, complainantUUIDs);
-            complainantPoaUUIDs = getPOAUUIDs(courtCase, complainantUUIDs);
-        }
-
-
         switch (digitalizedDocument.getType()){
             case EXAMINATION_OF_ACCUSED -> {
                 enrichAssignedRolesForExamination(digitalizedDocument);
-                enrichAssignedToForExamination(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs, complainantUUIDs, complainantAdvocateUUIDs, complainantPoaUUIDs);
+                enrichAssignedToForExamination(digitalizedDocument, courtCase);
             }
             case PLEA -> {
                 enrichAssignedRolesForPlea(digitalizedDocument);
-                enrichAssignedToForPlea(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs, complainantUUIDs, complainantAdvocateUUIDs, complainantPoaUUIDs);
+                enrichAssignedToForPlea(digitalizedDocument, courtCase);
             }
             case MEDIATION -> {
                 enrichAssignedRolesForMediation(digitalizedDocument);
-                enrichAssignedToForMediation(digitalizedDocument, accusedUUIDs, accusedAdvocateUUIDs, accusedPoaUUIDs, complainantUUIDs, complainantAdvocateUUIDs, complainantPoaUUIDs);
+                enrichAssignedToForMediation(digitalizedDocument, courtCase);
             }
         }
 
@@ -130,10 +113,43 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedRoles(assignedRoles);
     }
 
-    public void enrichAssignedToForExamination(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs, List<String> complainantUUIDs, List<String> complainantAdvocateUUIDs, List<String> complainantPoaUUIDs){
+    public void enrichAssignedToForExamination(DigitalizedDocument digitalizedDocument, CourtCase courtCase){
         List<String> assignedTo = new ArrayList<>();
         String status = digitalizedDocument.getStatus();
         log.info("Enriching assigned to for examination document {} for status {}", digitalizedDocument.getDocumentNumber(), status);
+
+        List<String> accusedUUIDs = new ArrayList<>();
+        List<String> accusedAdvocateUUIDs;
+        List<String> accusedPoaUUIDs;
+
+        List<String> complainantUUIDs = new ArrayList<>();
+        List<String> complainantAdvocateUUIDs = new ArrayList<>();
+        List<String> complainantPoaUUIDs = new ArrayList<>();
+
+        if(COMPLETED.equals(digitalizedDocument.getStatus())){
+            // all accused parties should have access
+            accusedUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), ACCUSED_PARTY_TYPE);
+
+            // all complainant parties should have access
+            complainantUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), COMPLAINANT_PARTY_TYPE);
+            complainantAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, complainantUUIDs);
+            complainantPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, complainantUUIDs);
+        }
+        else {
+            // only the accused party for whom examination document was raised should have access in other stages
+            String accusedUniqueId = digitalizedDocument.getExaminationOfAccusedDetails().getAccusedUniqueId();
+            String accusedUUID = getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
+            if(accusedUUID != null){
+                accusedUUIDs.add(accusedUUID);
+            }
+
+            // no complainant parties should have access in other stages
+        }
+
+        accusedAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, accusedUUIDs);
+        accusedPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, accusedUUIDs);
+
+
         switch (status){
             case DRAFT_IN_PROGRESS -> {} // citizens do not have access in this stage
             case PENDING_E_SIGN, PENDING_REVIEW -> {
@@ -167,10 +183,41 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedRoles(assignedRoles);
     }
 
-    public void enrichAssignedToForPlea(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs, List<String> complainantUUIDs, List<String> complainantAdvocateUUIDs, List<String> complainantPoaUUIDs){
+    public void enrichAssignedToForPlea(DigitalizedDocument digitalizedDocument, CourtCase courtCase){
         List<String> assignedTo = new ArrayList<>();
         String status = digitalizedDocument.getStatus();
         log.info("Enriching assigned to for plea document {} for status {}", digitalizedDocument.getDocumentNumber(), status);
+
+        List<String> accusedUUIDs = new ArrayList<>();
+        List<String> accusedAdvocateUUIDs;
+        List<String> accusedPoaUUIDs;
+
+        List<String> complainantUUIDs = new ArrayList<>();
+        List<String> complainantAdvocateUUIDs = new ArrayList<>();
+        List<String> complainantPoaUUIDs = new ArrayList<>();
+
+        if(COMPLETED.equals(digitalizedDocument.getStatus())){
+            // all accused parties should have access in this stage
+            accusedUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), ACCUSED_PARTY_TYPE);
+
+            // all complainant parties should have access in this stage
+            complainantUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), COMPLAINANT_PARTY_TYPE);
+            complainantAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, complainantUUIDs);
+            complainantPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, complainantUUIDs);
+        }
+        else {
+            // only the party for whom examination document was raised should have access in other stages
+            String accusedUniqueId = digitalizedDocument.getPleaDetails().getAccusedUniqueId();
+            String accusedUUID = getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
+            if(accusedUUID != null){
+                accusedUUIDs.add(accusedUUID);
+            }
+
+            // no complainant parties should have access other stages
+        }
+        accusedAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, accusedUUIDs);
+        accusedPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, accusedUUIDs);
+
         switch (status){
             case DRAFT_IN_PROGRESS -> {} // citizens do not have access in this stage
             case PENDING_E_SIGN, PENDING_REVIEW-> {
@@ -204,10 +251,19 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedRoles(assignedRoles);
     }
 
-    public void enrichAssignedToForMediation(DigitalizedDocument digitalizedDocument, List<String> accusedUUIDs, List<String> accusedAdvocateUUIDs, List<String> accusedPoaUUIDs, List<String> complainantUUIDs, List<String> complainantAdvocateUUIDs, List<String> complainantPoaUUIDs){
+    public void enrichAssignedToForMediation(DigitalizedDocument digitalizedDocument, CourtCase courtCase){
         String status = digitalizedDocument.getStatus();
         log.info("Enriching assigned to for mediation document {} for status {}", digitalizedDocument.getDocumentNumber(), status);
         List<String> assignedTo = new ArrayList<>();
+
+        List<String> accusedUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), ACCUSED_PARTY_TYPE);
+        List<String> accusedAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, accusedUUIDs);
+        List<String> accusedPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, accusedUUIDs);
+
+        List<String> complainantUUIDs = getLitigantUUIDsForParty(courtCase.getLitigants(), COMPLAINANT_PARTY_TYPE);
+        List<String> complainantAdvocateUUIDs = getAdvocateUUIDSFromLitigantUUIDs(courtCase, complainantUUIDs);
+        List<String> complainantPoaUUIDs = getPOAUUIDsFromLitigantUUIDs(courtCase, complainantUUIDs);
+
         switch (status){
             case DRAFT_IN_PROGRESS, PENDING_UPLOAD -> {} // citizens do not have access in this stage
             case PENDING_E_SIGN, PENDING_REVIEW, COMPLETED -> {
@@ -224,53 +280,25 @@ public class DigitalizedDocumentService {
         digitalizedDocument.setAssignedTo(assignedTo);
     }
 
-    private List<String> getLitigantUUIDS(CourtCase courtCase, String partyType, DigitalizedDocument digitalizedDocument){
-        List<Party> litigants = courtCase.getLitigants();
-        if(litigants == null) return Collections.emptyList();
-
-        TypeEnum type = digitalizedDocument.getType();
-        switch (type){
-            case EXAMINATION_OF_ACCUSED -> {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() == null) {
-                    log.warn("ExaminationOfAccusedDetails is null for document {}", digitalizedDocument.getDocumentNumber());
-                    return Collections.emptyList();
+    private List<String> getLitigantUUIDsForParty(List<Party> litigants, String partyType){
+        List<String> litigantUUIDs = new ArrayList<>();
+        for(Party litigant: litigants) {
+            if(litigant.getPartyType().contains(partyType)){
+                Object additionalDetails = litigant.getAdditionalDetails();
+                JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+                String uuid = additionalDetailsNode.path("uuid").asText();
+                if (uuid.isEmpty()) {
+                    log.error("UUID not found for litigant");
+                    continue;
                 }
-                String accusedUniqueId = digitalizedDocument.getExaminationOfAccusedDetails().getAccusedUniqueId();
-                return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
-            }
-
-            case PLEA -> {
-                if (digitalizedDocument.getPleaDetails() == null) {
-                    log.warn("PleaDetails is null for document {}", digitalizedDocument.getDocumentNumber());
-                    return Collections.emptyList();
-                }
-                String accusedUniqueId = digitalizedDocument.getPleaDetails().getAccusedUniqueId();
-                return getAccusedUUIDFromUniqueId(courtCase, accusedUniqueId);
-            }
-
-            case MEDIATION -> {
-                List<String> litigantUUIDs = new ArrayList<>();
-                for(Party litigant: litigants) {
-                    if(litigant.getPartyType().contains(partyType)){
-                        Object additionalDetails = litigant.getAdditionalDetails();
-                        JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-                        String uuid = additionalDetailsNode.path("uuid").asText();
-                        if (uuid.isEmpty()) {
-                            log.warn("UUID not found for litigant");
-                            continue;
-                        }
-                        litigantUUIDs.add(uuid);
-                    }
-                }
-
-                return litigantUUIDs;
+                litigantUUIDs.add(uuid);
             }
         }
 
-        return Collections.emptyList();
+        return litigantUUIDs;
     }
 
-    private List<String> getAccusedUUIDFromUniqueId(CourtCase courtCase, String uniqueId){
+    private String getAccusedUUIDFromUniqueId(CourtCase courtCase, String uniqueId){
 
         JsonNode caseAdditionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
         JsonNode respondentDetailsFormDataNode = caseAdditionalDetailsNode
@@ -279,7 +307,7 @@ public class DigitalizedDocumentService {
 
         if(!doesJsonNodeContainElements(respondentDetailsFormDataNode)){
             log.info("No respondents present in the case");
-            return Collections.emptyList();
+            return null;
         }
 
         for(JsonNode respondentNode: respondentDetailsFormDataNode){
@@ -297,26 +325,33 @@ public class DigitalizedDocumentService {
 
                 if(individualId.isEmpty()){
                     log.info("Accused has not yet joined the case");
-                    return Collections.emptyList();
+                    return null;
                 }
 
-                return courtCase.getLitigants().stream()
+                List<String> uuids = courtCase.getLitigants().stream()
                         .filter(litigant -> individualId.equals(litigant.getIndividualId()))
                         .map(Party::getAdditionalDetails)
                         .map(additionalDetails -> objectMapper.convertValue(additionalDetails, JsonNode.class))
                         .map(additionalDetailsNode -> additionalDetailsNode.path("uuid").asText())
                         .toList();
+
+                if(uuids.isEmpty()){
+                    log.error("UniqueId {} does not map to any UUID in case {}", uniqueId, courtCase.getFilingNumber());
+                    return null;
+                }
+
+                return uuids.get(0);
             }
         }
 
-        return Collections.emptyList();
+        return null;
     }
 
     private boolean doesJsonNodeContainElements(JsonNode node){
         return node!= null && !node.isNull() && node.isArray() && !node.isEmpty();
     }
 
-    private List<String> getAdvocateUUIDS(CourtCase courtCase, List<String> litigantUUIDs){
+    private List<String> getAdvocateUUIDSFromLitigantUUIDs(CourtCase courtCase, List<String> litigantUUIDs){
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
         if(representatives == null) return Collections.emptyList();
 
@@ -338,7 +373,7 @@ public class DigitalizedDocumentService {
         return advocateUUIDs;
     }
 
-    private List<String> getPOAUUIDs(CourtCase courtCase, List<String> litigantUUIDs){
+    private List<String> getPOAUUIDsFromLitigantUUIDs(CourtCase courtCase, List<String> litigantUUIDs){
         List<POAHolder> poaHolders = courtCase.getPoaHolders();
         if(poaHolders == null) return Collections.emptyList();
 
@@ -351,7 +386,7 @@ public class DigitalizedDocumentService {
             JsonNode poaAdditionalDetailsNode = objectMapper.convertValue(poaAdditionalDetails, JsonNode.class);
             String poaUUID = poaAdditionalDetailsNode.path("uuid").asText();
             if (poaUUID.isEmpty()) {
-                log.warn("UUID not found for POA holder");
+                log.error("UUID not found for POA holder");
                 continue;
             }
 
