@@ -378,6 +378,7 @@ app.post(
     const tenantId = get(req.query || req, "tenantId");
     
     logger.info("Request received", { requestId, endpoint: "/pdf-service/v1/_create", key, tenantId });
+    logger.info("Request body", { requestId, body: req.body });
     
     try {
       requestInfo = get(req.body, "RequestInfo");
@@ -442,6 +443,7 @@ app.post(
       let tenantId = req.query.tenantId;
       
       logger.info("Request received", { requestId, endpoint: "/pdf-service/v1/_createnosave", key, tenantId });
+      logger.info("Request body", { requestId, body: req.body });
       var formatconfig = formatConfigMap[key];
       var dataconfig = dataConfigMap[key];
       var headers = JSON.parse(JSON.stringify(req.headers));
