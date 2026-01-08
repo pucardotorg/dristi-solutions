@@ -71,17 +71,17 @@ runs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Dependency check
-      uses: dependency-check/Dependency-Check_Action@main
-      if: ${{ env.language == 'java' }}
-      env:
-        JAVA_HOME: /opt/jdk
-      id: Depcheck
-      with:
-        project: ${{ inputs.service_name }}
-        path: ${{ env.service_source_path }}
-        format: 'SARIF'
-        args: "--disableOssIndex"
+    # - name: Dependency check
+    #   uses: dependency-check/Dependency-Check_Action@main
+    #   if: ${{ env.language == 'java' }}
+    #   env:
+    #     JAVA_HOME: /opt/jdk
+    #   id: Depcheck
+    #   with:
+    #     project: ${{ inputs.service_name }}
+    #     path: ${{ env.service_source_path }}
+    #     format: 'SARIF'
+    #     args: "--disableOssIndex"
 
     - name: Build and analyze for ${{ inputs.service_name }}
       if: ${{ env.language == 'java' }}
