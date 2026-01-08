@@ -28,6 +28,7 @@ on:
       - main
       - develop
       - release/*
+      - develop-actions-enhancement
 
 
 jobs:
@@ -62,14 +63,28 @@ jobs:
         with:
           ref: ${{ env.BRANCH }}
 
+      - name: Set Diff Range
+        if: github.event_name != 'workflow_dispatch'
+        id: diff_range
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # PR is open or synchronized
+            echo "base_ref=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
+            echo "head_ref=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            # PR was merged OR a direct push occurred
+            echo "base_ref=${{ github.event.before }}" >> $GITHUB_OUTPUT
+            echo "head_ref=${{ github.event.after }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: check diff
         if: github.event_name != 'workflow_dispatch'
         id: check_diff
         run: |
           git fetch --all --prune
           
-          BASE="origin/${{ github.event.pull_request.base.ref }}"
-          HEAD="origin/${{ github.event.pull_request.head.ref }}"
+          BASE="origin/${{ steps.diff_range.outputs.base_ref }}"
+          HEAD="origin/${{ steps.diff_range.outputs.head_ref }}"
 
           git diff --name-only "$BASE" "$HEAD" > changed.txt
 
