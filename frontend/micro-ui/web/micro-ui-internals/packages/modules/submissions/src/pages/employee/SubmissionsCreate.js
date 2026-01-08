@@ -865,7 +865,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    runComprehensiveSanitizer({ formData, setValue });
+    runComprehensiveSanitizer({ formData, setValue, ignoredKeys: ["prayer"] });
     if (
       applicationType &&
       ![
