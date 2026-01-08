@@ -53,7 +53,7 @@ jobs:
           fi 
 
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
+          echo "BRANCH=$BRANCH" >> $GITHUB_OUTPUT
           # show value *now* using shell variable
           echo "Set the branch for current job as $BRANCH"
 
@@ -178,6 +178,7 @@ jobs:
           echo "Service Name: ${{ matrix.service }}"
           echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
           echo "output from check-diff: ${{ needs.check-diff.outputs.matrix }}"
+          echo "repo_branch is ${{ needs.check-diff.outputs.repo_branch }}"
 
       - name: Sonar Analysis
         uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop
@@ -194,6 +195,7 @@ jobs:
         with:
           service_name: ${{ matrix.service }}
           docker_password: ${{ secrets.ACR_PASSWORD }}
+          branch: ${{ needs.check-diff.outputs.repo_branch }}
 
       - name: Deployment Summary
         run: |

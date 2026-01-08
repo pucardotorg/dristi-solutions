@@ -16,6 +16,9 @@ inputs:
   docker_password:
     description: Docker registry password.
     required: true
+  branch:
+    description: Branch name.
+    required: false
 
 outputs:
   image_tag:
@@ -52,6 +55,9 @@ runs:
         elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
           # Use branch name as version, replacing '/' with '-'
           VERSION=${GITHUB_REF#refs/heads/}
+          VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
+        elif [[ "${ inputs.branch}" != "" ]]; then
+          VERSION=${ inputs.branch}
           VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
         else
           VERSION="latest"  # Default version if not a tag or branch
