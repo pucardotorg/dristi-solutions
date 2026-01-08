@@ -126,7 +126,7 @@ jobs:
 
             # Export as matrix
             echo "matrix=$json" >> "$GITHUB_OUTPUT"
-          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+          else
             echo "Using matrix from check_diff step"
             MATRIX='${{ steps.check_diff.outputs.matrix }}'
             echo "Matrix JSON: $MATRIX"
