@@ -7,6 +7,7 @@ import path from "path";
 import fs, {
   exists
 } from "fs";
+import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import cors from "cors";
 import morgan from "morgan";
@@ -77,6 +78,12 @@ app.use(bodyParser.urlencoded({
   extended: true,
   parameterLimit:50000
 }));
+
+// Request correlation middleware
+app.use((req, res, next) => {
+  req.requestId = req.headers['x-request-id'] || req.headers['requestid'] || uuidv4();
+  next();
+});
 
 let maxPagesAllowed = envVariables.MAX_NUMBER_PAGES;
 let serverport = envVariables.SERVER_PORT;
