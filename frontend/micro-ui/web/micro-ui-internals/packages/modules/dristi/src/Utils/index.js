@@ -426,12 +426,15 @@ const RICH_TEXT_FIELDS = [
   "additionalInformation",
 ];
 
-export const runComprehensiveSanitizer = ({ formData, setValue }) => {
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
   if (!formData || typeof formData !== "object") return;
 
   Object.keys(formData).forEach((key) => {
     const originalValue = formData[key];
     if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
       const sanitizedValue = sanitizeData(originalValue);
       if (sanitizedValue !== originalValue) {
         const element = document?.querySelector(`[name="${key}"]`);
@@ -446,10 +449,11 @@ export const runComprehensiveSanitizer = ({ formData, setValue }) => {
       }
     }
 
-    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key)) {
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
       runComprehensiveSanitizer({
         formData: originalValue,
         setValue,
+        ignoredKeys,
       });
     }
   });
