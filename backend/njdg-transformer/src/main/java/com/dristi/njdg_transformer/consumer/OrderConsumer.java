@@ -105,6 +105,7 @@ public class OrderConsumer {
             if(PUBLISHED_ORDER.equalsIgnoreCase(status)) {
                 orderNotificationService.processNotificationOrders(notification, notificationRequest.getRequestInfo());
             }
+            log.info("Notification order processed successfully | status: {}", status);
         } catch (Exception e) {
             log.error("Error processing notification order | error: {}", e.getMessage(), e);
             throw new RuntimeException("Notification order processing failed", e);

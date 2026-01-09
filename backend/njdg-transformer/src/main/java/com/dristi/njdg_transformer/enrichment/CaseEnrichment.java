@@ -63,14 +63,19 @@ public class CaseEnrichment implements PartyEnricher {
                 return;
             }
 
-            Party primaryParty = findPrimaryParty(litigants, partyType);
-            if (primaryParty == null || primaryParty.getIndividualId() == null || primaryParty.getIndividualId().isEmpty()) {
-                log.warn("No primary {} with individualId found in case CNR: {}", 
-                        partyType, courtCase.getCnrNumber());
-                return;
+            String individualId = null;
+
+            if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType)) {
+                Party primaryParty = findPrimaryParty(litigants, partyType);
+                if (primaryParty == null || primaryParty.getIndividualId() == null || primaryParty.getIndividualId().isEmpty()) {
+                    log.warn("No primary {} with individualId found in case CNR: {}",
+                            partyType, courtCase.getCnrNumber());
+                    log.info("Proceeding with first element from formdata for {} fallback in case CNR: {}", partyType, courtCase.getCnrNumber());
+                }
+                individualId = primaryParty.getIndividualId();
             }
 
-            enrichPartyFormData(additionalDetails, record, primaryParty.getIndividualId(), partyType);
+            enrichPartyFormData(additionalDetails, record, individualId, partyType);
             log.info("Successfully enriched primary party details for party type: {} in case CNR: {}", 
                      partyType, courtCase.getCnrNumber());
             
@@ -153,35 +158,20 @@ public class CaseEnrichment implements PartyEnricher {
                     .path("individualId")
                     .asText(null);
 
-            if (!individualId.equals(formIndividualId)) continue;
+            if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType) && individualId != null && !individualId.equals(formIndividualId)) continue;
 
-            String fullName;
-            String ageStr;
+            String fullName = null;
+            String ageStr = "0";
             String address = null;
 
             if (COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType)) {
                 fullName = buildFullName(dataNode.path("firstName"), dataNode.path("middleName"), dataNode.path("lastName"));
                 ageStr = dataNode.path(ageKey).asText(null);
                 address = extractAddress(dataNode.path("addressDetails"));
-            } else  {
-                String firstName = dataNode.path("respondentFirstName").asText("NULL");
-                String middleName = dataNode.path("respondentMiddleName").asText("NULL");
-                String lastName = dataNode.path("respondentLastName").asText("NULL");
-                
-                log.info("Respondent name fields - firstName: {}, middleName: {}, lastName: {}", 
-                    firstName, middleName, lastName);
-                
-                // Check if data is encrypted (contains | separator)
-                if (firstName != null && firstName.contains("|")) {
-                    log.error("ENCRYPTED DATA DETECTED: Respondent firstName is encrypted: {}. " +
-                        "Data should be decrypted before reaching NJDG transformer!", firstName);
-                }
-                
+            } else if(RESPONDENT_PRIMARY.equalsIgnoreCase(partyType) && formDataNode.get("displayindex").asInt() == 0)  {
                 fullName = buildFullName(dataNode.path("respondentFirstName"),
                         dataNode.path("respondentMiddleName"),
                         dataNode.path("respondentLastName"));
-                        
-                log.info("Respondent fullName result: '{}'", fullName);
                 ageStr = dataNode.path("respondentAge").asText(null);
                 JsonNode addressArray = dataNode.path("addressDetails");
                 if (addressArray.isArray() && !addressArray.isEmpty()) {
@@ -311,15 +301,11 @@ public class CaseEnrichment implements PartyEnricher {
             JsonNode formDataArray = additionalDetails.path(primaryPartyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ? "complainantDetails" : "respondentDetails").path("formdata");
 
             int partyNo = 2;
-            boolean isRespondentType = primaryPartyType.equalsIgnoreCase(RESPONDENT_PRIMARY);
-            int startIndex = isRespondentType ? 1 : 0; // Skip first entry for respondent type
-            
-            for (int i = startIndex; i < formDataArray.size(); i++) {
+            for (int i = 0; i < formDataArray.size(); i++) {
                 JsonNode dataNode = formDataArray.get(i);
-                PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++, partyTypeEnum);
-                if (partyDetails != null) {
-                    partyDetailsList.add(partyDetails);
-                }
+                if (dataNode.get("displayindex").asInt() == 0) continue;
+                PartyDetails partyDetails = mapExtraPartyDetails(courtCase, dataNode, primaryPartyType, partyNo++);
+                partyDetailsList.add(partyDetails);
             }
         } catch (Exception e) {
             log.error("Error enriching extra parties: {}", e.getMessage());
@@ -327,34 +313,7 @@ public class CaseEnrichment implements PartyEnricher {
         return partyDetailsList;
     }
 
-    private PartyDetails mapExtraPartyDetails(CourtCase courtCase, JsonNode dataNode, String partyType, int partyNo, PartyType partyTypeEnum) {
-        String individualIdPath = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
-                "complainantVerification" : "respondentVerification";
-        String uniqueId = dataNode.path("data")
-                .path(individualIdPath)
-                .path("individualDetails")
-                .path("individualId")
-                .asText(null);
-        if (uniqueId == null || uniqueId.isEmpty()) {
-            uniqueId = dataNode.path("uniqueId").asText(null);
-        }
-        Party primaryParty = findPrimaryParty(courtCase.getLitigants(), partyType);
-        if (primaryParty != null && uniqueId.equalsIgnoreCase(primaryParty.getIndividualId())) {
-            log.info("Skipping party mapping - uniqueId {} matches primary party {} for case CNR: {}", 
-                     uniqueId, partyType, courtCase.getCnrNumber());
-            return null;
-        }
-//        List<PartyDetails> existingParties = repository.getPartyDetails(courtCase.getCnrNumber(), partyTypeEnum);
-//        for (PartyDetails pd : existingParties) {
-//            if (uniqueId.equalsIgnoreCase(pd.getPartyId())) {
-//                PartyDetails updated = partyType.equalsIgnoreCase(COMPLAINANT_PRIMARY) ?
-//                        updatePartyDetails(dataNode, pd, courtCase, true) :
-//                        updatePartyDetails(dataNode, pd, courtCase, false);
-//                updated.setPartyNo(partyNo);
-//                return updated;
-//            }
-//        }
-
+    private PartyDetails mapExtraPartyDetails(CourtCase courtCase, JsonNode dataNode, String partyType, int partyNo) {
         PartyDetails newParty = updatePartyDetails(dataNode, new PartyDetails(), courtCase, COMPLAINANT_PRIMARY.equalsIgnoreCase(partyType));
         newParty.setPartyNo(partyNo);
         return newParty;
