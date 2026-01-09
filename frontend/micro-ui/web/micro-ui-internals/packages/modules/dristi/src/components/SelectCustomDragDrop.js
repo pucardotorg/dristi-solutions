@@ -32,7 +32,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
   );
 };
 
-function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors }) {
+function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors, formDisbalityCount = false }) {
   const toast = useToast();
   const inputs = useMemo(
     () =>
@@ -134,7 +134,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                  {input?.isOptional && <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
                   <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}
@@ -151,13 +151,13 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 t={t}
                 uploadErrorInfo={fileErrors[index]}
                 input={input}
-                disableUploadDelete={config?.disable}
+                disableUploadDelete={config?.disable || formDisbalityCount}
               />
             ))}
 
             <div className={`file-uploader-div-main ${showFileUploader ? "show-file-uploader" : ""}`}>
               <FileUploader
-                disabled={config?.disable}
+                disabled={config?.disable || formDisbalityCount}
                 handleChange={(data) => {
                   handleChange(data, input);
                 }}

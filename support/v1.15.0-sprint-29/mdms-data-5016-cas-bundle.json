@@ -1,0 +1,46 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "CaseManagement",
+    "masterName": "case_bundle_master",
+    "mdmsPayload": {
+      "id": "be77b557-27eb-4812-a4c2-c3f73a9356bf",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_master",
+      "uniqueIdentifier": "38",
+      "data": {
+        "id": "38",
+        "name": "baildocument",
+        "Items": "Bail Applications",
+        "sorton": "applicationCMPNumber",
+        "doctype": "",
+        "section": "Bail",
+        "isactive": "no",
+        "docketpagerequired": "yes"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "CaseManagement",
+    "masterName": "case_bundle_master",
+    "mdmsPayload": {
+      "id": "ab8b3c5e-304f-4853-a811-de982ae0dfdf",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_master",
+      "uniqueIdentifier": "39",
+      "data": {
+        "id": "39",
+        "name": "bailbond",
+        "Items": "Bail Bonds",
+        "sorton": "bailCreatedTime",
+        "doctype": "",
+        "section": "Bail",
+        "isactive": "no",
+        "docketpagerequired": "yes"
+      },
+      "isActive": true
+    }
+  }
+]

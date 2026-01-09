@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -17,10 +17,10 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { use } from "react";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
-const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+import { runComprehensiveSanitizer } from "../../../Utils";
+import { getComplainants, getComplainantSideAdvocates, getComplainantsSidePoAHolders } from "../../../Utils";
+const judgeId = "JUDGE_ID";
+const benchId = "BENCH_ID";
 
 const downloadButtonStyle = {
   backgroundColor: "white",
@@ -91,12 +91,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [commentSendBack, setCommentSendBack] = useState("");
   const [toastMsg, setToastMsg] = useState(null);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const [loading, setLoading] = useState(false);
+  const courtId = localStorage.getItem("courtId");
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -104,6 +104,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
@@ -160,6 +161,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     caseFetchResponse,
     caseDetailsAdmitted,
   ]);
+
+  const allComplainantSideUuids = useMemo(() => {
+    const complainants = getComplainants(caseDetails);
+    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
+    const advocates = getComplainantSideAdvocates(caseDetails) || [];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
+    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+  }, [caseDetails]);
   const filingNumberRef = useRef(null);
 
   useEffect(() => {
@@ -272,6 +281,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const isDisabled = useMemo(() => totalErrors?.total > 0);
 
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
+
+  const transformedData = useCallback(
+    (input) => {
+      if (input?.key === "witnessDetails") {
+        return (caseDetails?.witnessDetails || [])?.map((details) => ({
+          data: { ...(details || {}) },
+        }));
+      }
+      return caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+    },
+    [caseDetails]
+  );
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
@@ -419,7 +440,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                     } else
                       return {
                         ...input,
-                        data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
+                        data: transformedData(input),
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                   }),
@@ -429,21 +450,22 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
+  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
 
   const primaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_REGISTER_CASE";
     }
     //write admission condition here
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
   const secondaryButtonLabel = useMemo(() => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       return "CS_SEND_BACK";
     }
-  }, [isScrutiny]);
+  }, [isScrutiny, caseDetails]);
 
   const updateCaseDetails = async (action, filterSigned = false) => {
+    setLoading(true);
     let filteredDocuments = caseDetails?.documents;
     if (filterSigned) {
       filteredDocuments = caseDetails?.documents?.filter(
@@ -469,9 +491,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
 
     return DRISTIService.caseUpdateService(
       {
@@ -481,7 +500,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }),
             ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),
@@ -493,14 +512,14 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handlePrimaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       // setActionModal("sendCaseBackPotential");
       setActionModal("registerCase");
     }
     // Write isAdmission condition here
   };
   const handleSecondaryButtonClick = () => {
-    if (isScrutiny) {
+    if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
       setActionModal("sendCaseBack");
     }
     // Write isAdmission condition here
@@ -601,12 +620,18 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
   const handleRegisterCase = () => {
     updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
-      setActionModal("caseRegisterSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseRegisterSuccess");
+      }, 2000);
     });
   };
   const handleSendCaseBack = () => {
     updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
-      setActionModal("caseSendBackSuccess");
+      setTimeout(() => {
+        setLoading(false);
+        setActionModal("caseSendBackSuccess");
+      }, 2000);
     });
   };
   const handlePotentialConfirm = () => {
@@ -683,7 +708,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     );
   };
 
-  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
+  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
 
@@ -859,6 +884,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "sendCaseBack" && (
             <SendCaseBackModal
+              loading={loading}
               comment={commentSendBack}
               setComment={setCommentSendBack}
               actionCancelLabel={"CS_COMMON_BACK"}
@@ -873,6 +899,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           )}
           {actionModal === "registerCase" && (
             <SendCaseBackModal
+              loading={loading}
               comment={comment}
               setComment={setComment}
               actionCancelLabel={"CS_COMMON_BACK"}

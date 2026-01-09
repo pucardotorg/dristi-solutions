@@ -48,6 +48,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
   const [isDownloading, setIsDownloading] = useState(false);
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
+  const [fileUploadError, setFileUploadError] = useState(null);
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -77,6 +78,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -89,6 +91,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -198,6 +201,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
     />
   );
 };

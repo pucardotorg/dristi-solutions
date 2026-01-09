@@ -86,6 +86,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     : null;
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
+  const isADiarySigned = history.location?.state?.aDiarySigned;
   const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
   const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
   const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
@@ -97,6 +98,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -182,6 +184,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -277,7 +280,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {
@@ -294,7 +297,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
       showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
       setStepper(0);
@@ -493,7 +496,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
@@ -594,6 +597,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -622,6 +626,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           setNewHearingData={setNewHearingData}
           newHearingData={newHearingData}
           bulkFormData={bulkFormData}
+          isADiarySigned={isADiarySigned}
         />
       )}
       {stepper === 2 && (
@@ -730,6 +735,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
 

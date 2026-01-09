@@ -96,5 +96,27 @@ public class    EvidenceRepository {
         log.info("Final count query :: {}", countQuery);
         return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
     }
-}
 
+    /**
+     * Fetches the next sequence value for the given sequence name without incrementing it.
+     * This method gets the next value without consuming/incrementing the sequence.
+     * 
+     * @param sequenceName the name of the sequence
+     * @return the next sequence value or 1 if sequence doesn't exist
+     */
+    public Integer getNextValForSequence(String sequenceName) {
+        try {
+            log.info("Getting next sequence value for sequence: {}", sequenceName);
+            
+            String sql = "SELECT last_value + 1 FROM " + sequenceName;
+            Integer nextValue = jdbcTemplate.queryForObject(sql, Integer.class);
+            log.info("Next sequence value for {}: {}", sequenceName, nextValue);
+            return nextValue;
+
+        } catch (Exception e) {
+            log.error("Error getting sequence value for {}: {}", sequenceName, e.getMessage());
+            log.warn("Returning default value 1 due to error or sequence not found");
+            return 1;
+        }
+    }
+}

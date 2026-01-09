@@ -29,7 +29,7 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   businessOfDay,
-  selectedOrder,
+  // selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -43,6 +43,9 @@ function OrderSignatureModal({
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
   const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -74,6 +77,7 @@ function OrderSignatureModal({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -89,6 +93,7 @@ function OrderSignatureModal({
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -97,6 +102,15 @@ function OrderSignatureModal({
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
+      handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
+    }
+  };
 
   return !openUploadSignatureModal ? (
     <Modal
@@ -129,19 +143,7 @@ function OrderSignatureModal({
           <div className="not-signed">
             <h1>{t("YOUR_SIGNATURE")}</h1>
             <div className="sign-button-wrap">
-              <Button
-                label={t("CS_ESIGN")}
-                onButtonClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  sessionStorage.setItem("businessOfTheDay", businessOfDay);
-                  sessionStorage.setItem("currentSelectedOrder", selectedOrder);
-                  handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
-                }}
-                className={"aadhar-sign-in"}
-                labelClassName={"aadhar-sign-in"}
-              />
+              <Button label={t("CS_ESIGN")} onButtonClick={handleClickEsign} className={"aadhar-sign-in"} labelClassName={"aadhar-sign-in"} />
               <Button
                 icon={<FileUploadIcon />}
                 label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
@@ -184,6 +186,7 @@ function OrderSignatureModal({
       formData={formData}
       onSubmit={onSubmit}
       isDisabled={loader}
+      fileUploadError={fileUploadError}
     />
   );
 }

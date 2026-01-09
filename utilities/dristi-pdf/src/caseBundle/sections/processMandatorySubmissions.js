@@ -22,7 +22,7 @@ async function processMandatorySubmissions(
     "mandatorysubmissions"
   );
 
-  const sectionPosition = indexCopy.sections.findIndex(
+  const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "mandatorysubmissions"
   );
 
@@ -30,6 +30,8 @@ async function processMandatorySubmissions(
     indexCopy,
     sectionPosition
   );
+
+  const mandatorySubmissionsLineItems = [];
 
   if (mandatorySubmissionsSection?.length !== 0) {
     const section = mandatorySubmissionsSection[0];
@@ -54,7 +56,6 @@ async function processMandatorySubmissions(
     const orderList = resOrder?.data?.list;
 
     if (orderList?.length !== 0) {
-      const mandatorySubmissionsLineItems = [];
       await Promise.all(
         orderList?.map(async (order) => {
           const productionOfDocumentApplications = await search_application_v2(
@@ -80,7 +81,7 @@ async function processMandatorySubmissions(
 
           if (applicationList?.length !== 0) {
             const innerLineItems = await Promise.all(
-              applicationList.map(async (application, index) => {
+              applicationList?.map(async (application, index) => {
                 if (application?.documents?.length !== 0) {
                   let newApplicationFileStoreId;
                   const signed = [];
@@ -126,8 +127,8 @@ async function processMandatorySubmissions(
                       const docketNameOfComplainants =
                         sourceRepresentative.representing
                           ?.map((lit) => lit.additionalDetails.fullName)
-                          .filter(Boolean)
-                          .join(", ");
+                          ?.filter(Boolean)
+                          ?.join(", ");
                       const partyType =
                         sourceRepresentative.representing[0].partyType.includes(
                           "complainant"
@@ -205,19 +206,19 @@ async function processMandatorySubmissions(
               })
             );
             mandatorySubmissionsLineItems.push(
-              ...innerLineItems.filter(Boolean)
+              ...innerLineItems?.filter(Boolean)
             );
           }
         })
       );
-
-      const mandatorySubmissionsIndexSection = indexCopy.sections.find(
-        (section) => section.name === "mandatorysubmissions"
-      );
-      mandatorySubmissionsIndexSection.lineItems =
-        mandatorySubmissionsLineItems.filter(Boolean);
     }
   }
+
+  const mandatorySubmissionsIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "mandatorysubmissions"
+  );
+  mandatorySubmissionsIndexSection.lineItems =
+    mandatorySubmissionsLineItems?.filter(Boolean);
 }
 
 module.exports = {

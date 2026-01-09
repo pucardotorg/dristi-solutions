@@ -12,6 +12,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import pucar.config.Configuration;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -48,15 +51,19 @@ public class FileStoreUtilTest {
     }
 
     @Test
-    public void StoreFileInFileStore_Success() {
+    public void StoreFileInFileStore_Success() throws IOException {
         MultipartFile file = mock(MultipartFile.class);
         String tenantId = "tenantId";
         String fileStoreId = "fileStoreId";
         String responseJson = "{\"files\":[{\"fileStoreId\":\"" + fileStoreId + "\"}]}";
 
         when(configs.getFileStoreHost()).thenReturn("http://localhost");
-        when(configs.getFileStoreSearchEndpoint()).thenReturn("/filestore/v1/files");
+        when(configs.getFileStoreSaveEndPoint()).thenReturn("/filestore/v1/files");
 
+        byte[] pdfSignature = "%PDF-1.4\n".getBytes();
+        when(file.getOriginalFilename()).thenReturn("test.pdf");
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(pdfSignature));
         when(file.getResource()).thenReturn(mock(Resource.class));
         when(file.getContentType()).thenReturn("application/pdf");
 

@@ -69,7 +69,7 @@ export const Request = async ({
   const ts = new Date().getTime();
   if (method.toUpperCase() === "POST") {
     data.RequestInfo = {
-      apiId: "Rainmaker",
+      apiId: "Dristi",
     };
     if (auth || !!window?.Digit.UserService.getUser()?.access_token) {
       data.RequestInfo = { ...data.RequestInfo, ...requestInfo() };

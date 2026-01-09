@@ -4,7 +4,7 @@ const useGetHearingLink = (moduleName = "Hearing", masterName = [{ name: "Hearin
   return Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), moduleName, masterName, {
     select: (data) => {
       const hearingLinks = _.get(data, "Hearing.HearingLink", []);
-      return hearingLinks.map((linkObj) => linkObj.link);
+      return hearingLinks[0].link;
     },
   });
 };

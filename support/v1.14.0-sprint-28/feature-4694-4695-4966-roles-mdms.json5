@@ -1,0 +1,226 @@
+[
+  //PLEA
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": null,
+    "data": {
+      "code": "PLEA_CREATOR",
+      "name": "PLEA_CREATOR",
+      "description": "PLEA_CREATOR"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": null,
+    "data": {
+      "code": "PLEA_APPROVER",
+      "name": "PLEA_APPROVER",
+      "description": "PLEA_APPROVER"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": null,
+    "data": {
+      "code": "PLEA_SIGNER",
+      "name": "PLEA_SIGNER",
+      "description": "PLEA_SIGNER"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": null,
+    "data": {
+      "code": "PLEA_EDITOR",
+      "name": "PLEA_EDITOR",
+      "description": "PLEA_EDITOR"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": null,
+    "data": {
+      "code": "PLEA_VIEWER",
+      "name": "PLEA_VIEWER",
+      "description": "PLEA_VIEWER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "9478ccf7-dc1b-4938-8d71-30db6e319273",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION",
+    "data": {
+      "code": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION",
+      "name": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION",
+      "description": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION"
+    },
+    "isActive": true
+  },
+  {
+    "id": "97af488e-5141-435e-8027-d77f5877bb18",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION",
+    "data": {
+      "code": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION",
+      "name": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION",
+      "description": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION"
+    },
+    "isActive": true
+  },
+  {
+    "id": "9508eeea-168a-4bfd-a9b6-123d32f901dc",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "SIGN_DIGITALIZED_DOCUMENT_PLEA",
+    "data": {
+      "code": "SIGN_DIGITALIZED_DOCUMENT_PLEA",
+      "name": "SIGN_DIGITALIZED_DOCUMENT_PLEA",
+      "description": "SIGN_DIGITALIZED_DOCUMENT_PLEA"
+    },
+    "isActive": true
+  },
+  {
+    "id": "e8b4779a-3426-4b08-8699-73633d75b966",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "DIGITALIZED_DOCUMENT_ESIGN",
+    "data": {
+      "code": "DIGITALIZED_DOCUMENT_ESIGN",
+      "name": "DIGITALIZED_DOCUMENT_ESIGN",
+      "description": "DIGITALIZED_DOCUMENT_ESIGN"
+    },
+    "isActive": true
+  },
+  {
+    "id": "0270f738-3828-4ee3-806a-f5dbf9f1199e",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EXAMINATION_VIEWER",
+    "data": {
+      "code": "EXAMINATION_VIEWER",
+      "name": "EXAMINATION_VIEWER",
+      "description": "EXAMINATION_VIEWER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "13a6ef21-ea31-4466-83ce-e918c51fef82",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EXAMINATION_EDITOR",
+    "data": {
+      "code": "EXAMINATION_EDITOR",
+      "name": "EXAMINATION_EDITOR",
+      "description": "EXAMINATION_EDITOR"
+    },
+    "isActive": true
+  },
+  {
+    "id": "535fc4e0-9c3b-45f4-995d-3cae9b8a0565",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "MEDIATION_VIEWER",
+    "data": {
+      "code": "MEDIATION_VIEWER",
+      "name": "MEDIATION_VIEWER",
+      "description": "MEDIATION_VIEWER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "b2c96332-ab24-4aa1-9c74-c93dc7d99ac1",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "MEDIATION_EDITOR",
+    "data": {
+      "code": "MEDIATION_EDITOR",
+      "name": "MEDIATION_EDITOR",
+      "description": "MEDIATION_EDITOR"
+    },
+    "isActive": true
+  },
+  {
+    "id": "6632a691-7136-40c0-8753-3aa263dbb873",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EXAMINATION_SIGNER",
+    "data": {
+      "code": "EXAMINATION_SIGNER",
+      "name": "EXAMINATION_SIGNER",
+      "description": "EXAMINATION_SIGNER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "2ad40799-8b2e-4ed1-8ef0-8bf3616def1f",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EXAMINATION_APPROVER",
+    "data": {
+      "code": "EXAMINATION_APPROVER",
+      "name": "EXAMINATION_APPROVER",
+      "description": "EXAMINATION_APPROVER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "fe738e0c-08c6-4ddd-8a8c-fe7ee372d38b",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "EXAMINATION_CREATOR",
+    "data": {
+      "code": "EXAMINATION_CREATOR",
+      "name": "EXAMINATION_CREATOR",
+      "description": "EXAMINATION_CREATOR"
+    },
+    "isActive": true
+  },
+  {
+    "id": "adb624ff-e20b-4cd5-b161-3488070ffda1",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "MEDIATION_SIGNER",
+    "data": {
+      "code": "MEDIATION_SIGNER",
+      "name": "MEDIATION_SIGNER",
+      "description": "MEDIATION_SIGNER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "6be2cdcc-c2cd-452d-829d-772cc67a6907",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "MEDIATION_APPROVER",
+    "data": {
+      "code": "MEDIATION_APPROVER",
+      "name": "MEDIATION_APPROVER",
+      "description": "MEDIATION_APPROVER"
+    },
+    "isActive": true
+  },
+  {
+    "id": "6cab7a89-14d3-4640-92a3-345425b0135d",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "MEDIATION_CREATOR",
+    "data": {
+      "code": "MEDIATION_CREATOR",
+      "name": "MEDIATION_CREATOR",
+      "description": "MEDIATION_CREATOR"
+    },
+    "isActive": true
+  }
+]

@@ -22,7 +22,8 @@ public class EvidenceQueryBuilder {
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
             "art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, " +
             "art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, " +
-            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate";
+            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate, art.shortenedUrl as shortenedUrl , art.witnessMobileNumbers as witnessMobileNumbers, art.witnessEmails as witnessEmails, art.evidenceMarkedStatus as evidenceMarkedStatus, art.seal as seal, art.isEvidenceMarkedFlow as isEvidenceMarkedFlow" +
+            ", art.tag as tag ";
 
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY art.createdtime DESC ";
@@ -52,6 +53,14 @@ public class EvidenceQueryBuilder {
             String filingType = criteria.getFilingType();
             Boolean isVoid = criteria.getIsVoid();
             String sourceType = criteria.getSourceType();
+            List<String> status = criteria.getStatus();
+            List<String> workflowStatus = criteria.getWorkflowStatus();
+            String evidenceNumber = criteria.getEvidenceNumber();
+            Boolean isActive = criteria.getIsActive();
+            String citizenUserUuid = null;
+            if (!criteria.getIsCourtEmployee()) {
+                citizenUserUuid = criteria.getUserUuid();
+            }
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -69,9 +78,28 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(filingType, query, preparedStmtList, firstCriteria, "art.filingType = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(evidenceNumber, query, preparedStmtList, firstCriteria, "art.evidenceNumber = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
-            addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteriaList(status, query, preparedStmtList, firstCriteria, "art.status", preparedStmtArgList);
+            firstCriteria = addArtifactCriteriaList(workflowStatus, query, preparedStmtList, firstCriteria, "art.evidenceMarkedStatus", preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(isActive, query,"art.isActive = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
 
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- Exclude bail application evidences if isHideBailCaseBundle is true ----------
+            if (Boolean.TRUE.equals(criteria.getIsHideBailCaseBundle())) {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("(art.application IS NULL OR art.application NOT IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber))");
+                preparedStmtList.add(REQUEST_FOR_BAIL);
+                preparedStmtArgList.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- REQUEST_FOR_BAIL evidence visibility ----------
+            applyRequestForBailEvidenceVisibility(
+                    query, firstCriteria, citizenUserUuid,
+                    preparedStmtList, preparedStmtArgList);
             return query.toString();
         } catch (Exception e) {
             log.error("Error while building artifact search query", e);
@@ -86,12 +114,12 @@ public class EvidenceQueryBuilder {
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
             queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             queryBuilder.append(" )) ");
         }
 
         else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -105,16 +133,16 @@ public class EvidenceQueryBuilder {
             if (searchCriteria.getOwner() == null) {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
                 queryBuilder.append(" )) ");
             }
 
             else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             }
         }
         else{
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -137,11 +165,11 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
+    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList, EvidenceSearchCriteria searchCriteria) {
         StringBuilder queryBuilder = new StringBuilder(" AND ");
 
         if (statusList != null && !statusList.isEmpty()) {
-            queryBuilder.append(" (status NOT IN (");
+            queryBuilder.append(" (((status NOT IN (");
             for (int i = 0; i < statusList.size(); i++) {
                 queryBuilder.append("?");
                 if (i < statusList.size() - 1) {
@@ -150,19 +178,34 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(" ) OR ");
+            queryBuilder.append(")");
+            queryBuilder.append(" OR ");
         }
-        queryBuilder.append(" status IS NULL )");
-
+        if (!searchCriteria.getIsCourtEmployee()) {
+            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
+            preparedStmtList.add(searchCriteria.getUserUuid());
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
+        } else {
+            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION')))");
+        }
+        queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();
     }
-    void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
+    boolean addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("art.artifactNumber").append(" LIKE ?");
-            preparedStmtList.add("%" + criteria + "%");
-            preparedStmtArgList.add(Types.VARCHAR);// Add wildcard characters for partial match
+            if (Boolean.TRUE.equals(fuzzySearch)) {
+                query.append("art.artifactNumber").append(" LIKE ?");
+                preparedStmtList.add("%" + criteria + "%");
+                preparedStmtArgList.add(Types.VARCHAR);// Add wildcard characters for partial match
+            } else {
+                query.append("art.artifactNumber").append(" = ?");
+                preparedStmtList.add(criteria);
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            firstCriteria = false;
         }
+        return firstCriteria;
     }
     boolean addArtifactCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String criteriaClause,List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
@@ -170,6 +213,60 @@ public class EvidenceQueryBuilder {
             query.append(criteriaClause);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    // TODO : need
+    private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+
+        // If user info is missing, do not restrict visibility
+        if (userUuid == null || userUuid.isEmpty()) {
+            return;
+        }
+
+        addClauseIfRequired(query, firstCriteria);
+
+        query.append("(")
+                .append("art.application IS NULL ")
+                .append("OR ")
+                .append("art.application NOT IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber) ")
+                .append("OR ")
+                .append("art.application IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber ")
+                .append("AND ")
+                .append("(")
+                .append("app.onBehalfOf @> ?::jsonb ")
+                .append("OR app.createdBy = ?)")
+                .append(")")
+                .append(")");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add("[\"" + userUuid + "\"]");
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(userUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+    }
+
+    boolean addArtifactCriteriaList(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String fieldName, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(fieldName).append(" IN (");
+            for (int i = 0; i < criteria.size(); i++) {
+                query.append("?");
+                if (i < criteria.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(criteria.get(i));
+                preparedStmtArgList.add(java.sql.Types.VARCHAR);
+            }
+            query.append(")");
             firstCriteria = false;
         }
         return firstCriteria;

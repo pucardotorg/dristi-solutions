@@ -3,7 +3,6 @@ import _ from "lodash";
 import React from "react";
 import { Button } from "@egovernments/digit-ui-react-components";
 
-
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
 // these functions will act as middlewares
@@ -63,7 +62,6 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -166,7 +164,6 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
-      
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -205,13 +202,16 @@ export const UICustomizations = {
             t("ES_COMMON_NA")
           );
         case "action": {
-          return (<Link
-            to={{
-              pathname: `/${window.contextPath}/employee/cases/search-case`,
-              state: row,
-            }}
-          >Proceed</Link>);
-
+          return (
+            <Link
+              to={{
+                pathname: `/${window.contextPath}/employee/cases/search-case`,
+                state: row,
+              }}
+            >
+              Proceed
+            </Link>
+          );
         }
         default:
           return t("ES_COMMON_NA");
@@ -280,7 +280,6 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -319,12 +318,16 @@ export const UICustomizations = {
             t("ES_COMMON_NA")
           );
         case "action": {
-          return (<Link
-            to={{
-              pathname: `/${window.contextPath}/employee/cases/advocate-vakalath`,
-              state: row,
-            }}
-          >Proceed</Link>);
+          return (
+            <Link
+              to={{
+                pathname: `/${window.contextPath}/employee/cases/advocate-vakalath`,
+                state: row,
+              }}
+            >
+              Proceed
+            </Link>
+          );
         }
         default:
           return t("ES_COMMON_NA");
@@ -343,5 +346,5 @@ export const UICustomizations = {
         return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
       }
     },
-  }
+  },
 };

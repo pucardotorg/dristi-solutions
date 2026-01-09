@@ -63,6 +63,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
                         .issuedBy(rs.getString("issuedby"))
                         .createdDate(rs.getLong("createddate"))
                         .comments(rs.getString("comment"))
+                        .status(rs.getString("status"))
                         .documents(new ArrayList<>())
                         .build();
                 notifications.add(notification);

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { CustomArrowDownIcon } from "../../../icons/svgIndex";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import SendCaseBack from "./SendCaseBack";
+import { runComprehensiveSanitizer } from "../../../../Utils";
 
 function CaseFileAdmission({ t }) {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -74,6 +75,7 @@ function CaseFileAdmission({ t }) {
   };
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "4d082acb-c58d-41c4-bd83-65b2caae72e6",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "542",
+    "data": {
+      "id": 542,
+      "actionid": 2774,
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2774"
+    },
+    "isActive": true
+  },
+  {
+    "id": "54103b91-e2f6-4868-a1bf-bad22c64c338",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "540",
+    "data": {
+      "id": 540,
+      "actionid": 2774,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2774"
+    },
+    "isActive": true
+  },
+  {
+    "id": "4bd6b9d1-8dc1-43ca-8580-bdb307f4c5c0",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2774",
+    "data": {
+      "id": 2774,
+      "url": "/order-management/v1/getBotdOrders",
+      "code": "2774",
+      "name": "Botd Orders",
+      "displayName": "Botd Orders",
+      "serviceCode": "Botd Orders"
+    },
+    "isActive": true
+  }
+]

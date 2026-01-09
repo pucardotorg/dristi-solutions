@@ -292,7 +292,7 @@ public class CaseBundleIndexBuilderService {
     }
 
 
-    private void enrichCaseBundlePdfIndex(RequestInfo requestInfo, String businessId, String tenantId, String stateName , boolean isDelayRequired) {
+    public void enrichCaseBundlePdfIndex(RequestInfo requestInfo, String businessId, String tenantId, String stateName , boolean isDelayRequired) {
 
             String caseID = getCaseNumber(requestInfo,businessId,tenantId);
             if(caseID!=null){

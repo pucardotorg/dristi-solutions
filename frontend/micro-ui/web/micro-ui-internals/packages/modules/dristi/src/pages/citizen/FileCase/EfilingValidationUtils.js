@@ -1,7 +1,7 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue, TaskManagementWorkflowAction } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -196,6 +196,55 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
   }
 };
 
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const runGenericTextSanitizer = ({ formData, setValue }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const value = formData[key];
+
+    if (typeof value === "string") {
+      const sanitized = sanitizeInput(value);
+      if (sanitized !== value) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitized);
+        setTimeout(() => {
+          element?.setSelectionRange(start, end);
+        }, 0);
+      }
+    }
+  });
+};
+
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
     const formDataCopy = structuredClone(formData);
@@ -338,7 +387,9 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
       formData?.lastName ||
       formData?.witnessDesignation ||
       formData?.witnessAge ||
-      formData?.complainantAge
+      formData?.complainantAge ||
+      formData?.respondentAge ||
+      formData?.poaAge
     ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
@@ -391,14 +442,14 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
             }, 0);
           }
         }
-        if (["complainantAge", "witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (key === "poaAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
-
+          // keep only digits
           let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
+          // Max 3 digits
+          if (updatedValue?.length > 3) {
+            updatedValue = updatedValue.substring(0, 3);
           }
           if (updatedValue !== oldValue) {
             const element = document?.querySelector(`[name="${key}"]`);
@@ -468,7 +519,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const respondentMobileNumbersArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
@@ -478,21 +529,21 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+      ?.map((data) => {
+        return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const respondentEmailsArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -502,14 +553,14 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
+      ?.map((data) => {
+        return data?.emails?.emailId;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
@@ -824,10 +875,10 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
-        if(!numberOfAdvocates) {
+        if (!numberOfAdvocates) {
           isNumberOfAdvocatesMissing = true;
         }
-        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
           isAdvocateCountDiffer = true;
         }
       }
@@ -854,6 +905,46 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
       const errorData = {
         index: boxComplainant?.index,
         complainant: boxComplainant?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
+  }
+  return allErrorData;
+};
+
+export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+
+    let errorObject = {
+      NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
+      SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
+    };
+    if (isDelayCondonation) {
+      if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
+        errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    } else {
+      if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
+        errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
+      }
+    }
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
+    }
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: formData?.multipleAccusedProcessCourier?.index,
+        type: "Accused",
+        complainant: formData?.multipleAccusedProcessCourier?.firstName,
         errorKeys: Object.keys(errorObject)
           .filter((key) => errorObject[key])
           .map((key) => t(key)),
@@ -1047,6 +1138,31 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
   }
 };
 
+export const ageValidation = ({ formData, selected, setFormErrors, clearFormDataErrors }) => {
+  if (selected === "poaAge") {
+    const poaAge = parseInt(formData?.poaAge, 10);
+    if (poaAge < 18 || poaAge > 999) {
+      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("poaAge");
+  } else if (selected === "complainantAge") {
+    const complainantAge = parseInt(formData?.complainantAge, 10);
+    if (complainantAge < 18 || complainantAge > 999) {
+      setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("complainantAge");
+  } else if (selected === "respondentAge") {
+    const respondentAge = parseInt(formData?.respondentAge, 10);
+    if (respondentAge < 18 || respondentAge > 999) {
+      setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("respondentAge");
+  }
+};
+
 export const addressValidation = ({ formData, selected, setAddressError, config }) => {
   if (
     config
@@ -1176,6 +1292,12 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       }
     }
 
+    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
     return hasError;
   } else {
     return false;
@@ -1239,6 +1361,18 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -1350,7 +1484,7 @@ export const onDocumentUpload = async (documentType = "Document", fileData, file
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   } catch (error) {
-    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType);
+    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType, error?.response?.data?.Errors?.[0]?.code);
   }
 };
 
@@ -1558,6 +1692,7 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
   filingType,
+  isDelayCondonation,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1802,9 +1937,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1813,9 +1948,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1834,9 +1969,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1845,9 +1980,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1913,9 +2048,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1924,9 +2059,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1945,9 +2080,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1956,9 +2091,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -2098,8 +2233,8 @@ export const updateCaseDetails = async ({
                       },
                     });
                   const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
-                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
-                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
+                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "";
+                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
                   const street = Individual?.Individual?.address[0]?.street || "";
                   const city = Individual?.Individual?.address[0]?.city || "";
@@ -2346,6 +2481,9 @@ export const updateCaseDetails = async ({
             data: {
               ...data.data,
               ...documentData,
+              firstName: data?.data?.firstName?.trim(),
+              middleName: data?.data?.middleName?.trim(),
+              lastName: data?.data?.lastName?.trim(),
               complainantVerification: {
                 ...data?.data?.complainantVerification,
                 ...updatedComplainantVerification,
@@ -2373,6 +2511,10 @@ export const updateCaseDetails = async ({
         lit.id = existingLit?.id;
         lit.auditDetails = existingLit?.auditDetails;
         lit.hasSigned = existingLit?.hasSigned || false;
+        // In case of PIP, if affidavit doc already exists then keep it as it is.
+        if (existingLit?.documents?.[0]?.fileStore) {
+          lit.documents = structuredClone(existingLit?.documents);
+        }
         return lit;
       }
       return lit;
@@ -2526,6 +2668,9 @@ export const updateCaseDetails = async ({
             ...data,
             data: {
               ...data.data,
+              respondentFirstName: data?.data?.respondentFirstName?.trim(),
+              respondentMiddleName: data?.data?.respondentMiddleName?.trim(),
+              respondentLastName: data?.data?.respondentLastName?.trim(),
               ...documentData,
             },
             uniqueId: data?.uniqueId || generateUUID(),
@@ -2741,6 +2886,13 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.firstName = obj?.data?.firstName?.trim();
+      obj.data.middleName = obj?.data?.middleName?.trim();
+      obj.data.lastName = obj?.data?.lastName?.trim();
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {
@@ -3262,6 +3414,15 @@ export const updateCaseDetails = async ({
       },
     };
   }
+  if (selected === "processCourierService") {
+    data.additionalDetails = {
+      ...caseDetails.additionalDetails,
+      processCourierService: {
+        formdata: updatedFormData,
+        isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+      },
+    };
+  }
   if (selected === "reviewCaseFile") {
     if (caseComplaintDocument) {
       tempDocList = updateComplaintDocInCaseDoc(tempDocList, caseComplaintDocument);
@@ -3301,6 +3462,25 @@ export const updateCaseDetails = async ({
     },
   });
 
+  if (data?.additionalDetails?.processCourierService) {
+    data.additionalDetails.processCourierService = {
+      ...data?.additionalDetails?.processCourierService,
+      formdata: data?.additionalDetails?.processCourierService?.formdata?.map((item) => {
+        const courier = item?.data?.multipleAccusedProcessCourier;
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            multipleAccusedProcessCourier: {
+              ...courier,
+              noticeCourierService: isDelayCondonation ? courier?.noticeCourierService : [],
+            },
+          },
+        };
+      }),
+    };
+  }
+
   if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
     return null;
   }
@@ -3317,6 +3497,7 @@ export const updateCaseDetails = async ({
     }
     return doc;
   });
+  const updatedData = transformCaseDataForUpdate(data, "witnessDetails");
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3324,7 +3505,7 @@ export const updateCaseDetails = async ({
         ...caseDetails,
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-        ...data,
+        ...updatedData,
         documents: updatedTempDocList,
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
@@ -3339,4 +3520,122 @@ export const updateCaseDetails = async ({
     },
     tenantId
   );
+};
+
+export const transformCaseDataForFetching = (caseDetails, key) => {
+  if (key === "witnessDetails" && caseDetails?.witnessDetails?.length > 0) {
+    let updatedCaseData = structuredClone(caseDetails || {});
+    updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+    let isCompleted = true;
+
+    const formdata = (caseDetails?.witnessDetails).map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
+      if (!uiData?.isCompleted) {
+        isCompleted = false;
+      }
+      return {
+        data: witnessFormData,
+        isenabled: uiData?.isenabled,
+        displayindex: uiData?.displayIndex || 0,
+        uniqueId,
+      };
+    });
+
+    updatedCaseData.additionalDetails[key] = {
+      formdata,
+      ...(isCompleted && { isCompleted }),
+    };
+    return updatedCaseData;
+  }
+  return caseDetails;
+};
+
+export const transformCaseDataForUpdate = (caseDetails, key) => {
+  const updatedCaseData = structuredClone(caseDetails || {});
+
+  if (key === "witnessDetails") {
+    const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
+    if (formdata?.length > 0) {
+      const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+        return {
+          ...data,
+          uniqueId,
+          uiData: {
+            isenabled,
+            displayIndex: displayindex,
+            isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
+          },
+        };
+      });
+      delete updatedCaseData.additionalDetails[key];
+      updatedCaseData.witnessDetails = witnessDetails;
+    } else updatedCaseData.witnessDetails = [];
+  }
+  return updatedCaseData;
+};
+
+export const mergeBreakdowns = (...breakdownArrays) => {
+  const map = {};
+  breakdownArrays?.flat()?.forEach((item) => {
+    const codeKey = item?.code;
+    if (!map[codeKey]) {
+      map[codeKey] = { ...item };
+    } else {
+      map[codeKey].amount += item?.amount;
+    }
+  });
+  return Object?.values(map);
+};
+
+export const createOrUpdateTask = async ({
+  type,
+  existingTask,
+  accusedDetails,
+  respondentFormData,
+  filingNumber,
+  tenantId,
+  isUpfrontPayment,
+  status,
+}) => {
+  if (existingTask && (!accusedDetails || accusedDetails?.length === 0)) {
+    const expirePayload = {
+      ...existingTask,
+      workflow: { action: TaskManagementWorkflowAction.EXPIRE },
+    };
+
+    await DRISTIService.updateTaskManagementService({
+      taskManagement: expirePayload,
+    });
+
+    return;
+  }
+  if (!accusedDetails || accusedDetails?.length === 0) return;
+
+  const partyDetails = accusedDetails?.map((accused) => ({
+    ...(status && { status }),
+    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
+    respondentDetails: {
+      ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      uniqueId: accused?.uniqueId,
+    },
+  }));
+
+  const taskManagementPayload = existingTask
+    ? {
+        ...existingTask,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+      }
+    : {
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails,
+        partyType: "RESPONDENT",
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+      };
+
+  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+  await serviceMethod({ taskManagement: taskManagementPayload });
 };

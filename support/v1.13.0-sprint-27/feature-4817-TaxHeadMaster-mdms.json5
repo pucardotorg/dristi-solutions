@@ -1,0 +1,16 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "BillingService.TaxHeadMaster",
+  "uniqueIdentifier": "TASK_MANAGEMENT_ADVANCE_CARRYFORWARD_COURT_POST_PROCESS",
+  "data": {
+    "code": "TASK_MANAGEMENT_ADVANCE_CARRYFORWARD_COURT_POST_PROCESS",
+    "name": "Task Management Advance Carryforward Court Post Process",
+    "order": "0",
+    "isDebit": true,
+    "service": "task-management-payment",
+    "category": "ADVANCE_COLLECTION",
+    "isRequired": false,
+    "isActualDemand": false
+  },
+  "isActive": true
+}
