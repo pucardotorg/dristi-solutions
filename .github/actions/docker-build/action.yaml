@@ -100,9 +100,9 @@ runs:
         docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}:${{ steps.export-image-tag.outputs.image_tag }}
 
     - name: Build and Push Docker image for service-db
-      if: env.db_migration_dockerfile_path != ''
+      if: env.db_source_path != ''
       shell: bash
       run: |
         docker build -t ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }} . 
         docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }}
-      working-directory: ${{ env.db_migration_dockerfile_path }}
+      working-directory: ${{ env.db_source_path }}
