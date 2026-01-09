@@ -412,7 +412,7 @@
     },
     "pdf-service": {
         "service_group": "core-services",
-        "db_source_path": "",
+        "db_source_path": "common/pdf-service/migration",
         "dockerfile_path": "common/pdf-service/Dockerfile",
         "service_source_path": "common/pdf-service",
         "language": "nodejs",

@@ -49,20 +49,28 @@ runs:
     - name: Set Version from Tag or Branch
       id: set_version
       shell: bash
+      env:
+        INPUT_BRANCH: ${{ inputs.branch }}
       run: |
-        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/}  # Use tag name for version
-        elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-          # Use branch name as version, replacing '/' with '-'
-          VERSION=${GITHUB_REF#refs/heads/}
-          VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
-        elif [[ "${ inputs.branch}" != "" ]]; then
-          VERSION=${ inputs.branch}
-          VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
+        sanitize_branch() {
+          local b="$1"
+          b="${b#refs/heads/}"   # strip refs/heads if present
+          b="${b#refs/tags/}"    # strip refs/tags if present
+          b="${b//\//-}"         # replace / with -
+          echo "$b"
+        }
+        VERSION=""
+        if [[ -n "$INPUT_BRANCH" ]]; then
+          VERSION="$(sanitize_branch "$INPUT_BRANCH")"
+        elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
+        elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
         else
-          VERSION="latest"  # Default version if not a tag or branch
+          VERSION="latest"
         fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "current version is $VERSION"
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
     - name: Git commit_hash for service
       shell: bash
