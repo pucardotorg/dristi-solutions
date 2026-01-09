@@ -145,7 +145,33 @@ public class PdfEmbedder {
             appearance.setAcro6Layers(false);// deprecated
 
             Coordinate locationToSign = findLocationToSign(reader, signPlaceHolder);
-            Rectangle rectangle = new Rectangle(locationToSign.getX(), locationToSign.getY(), locationToSign.getX() + (100), locationToSign.getY() + (50));
+            float signatureWidth = 250f;
+            float signatureHeight = 35f;
+            float spacingGap = 10f;
+
+            float x = locationToSign.getX();
+            float y = locationToSign.getY() + spacingGap;
+
+            Rectangle cropBox = reader.getCropBox(locationToSign.getPageNumber());
+            if (cropBox != null) {
+                // Horizontal bounds check
+                if (x + signatureWidth > cropBox.getRight()) {
+                    x = cropBox.getRight() - signatureWidth;
+                }
+                if (x < cropBox.getLeft()) {
+                    x = cropBox.getLeft();
+                }
+
+                // Vertical bounds check
+                if (y + signatureHeight > cropBox.getTop()) {
+                    y = cropBox.getTop() - signatureHeight;
+                }
+                if (y < cropBox.getBottom()) {
+                    y = cropBox.getBottom();
+                }
+            }
+
+            Rectangle rectangle = new Rectangle(x, y, x + signatureWidth, y + signatureHeight);
 
             Font font = new Font();
             font.setSize(6);
