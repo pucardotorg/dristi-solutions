@@ -191,7 +191,7 @@ jobs:
 
       - name: Docker Build
         id: docker_build
-        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop
+        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop-actions-enhancement-pr-test
         with:
           service_name: ${{ matrix.service }}
           docker_password: ${{ secrets.ACR_PASSWORD }}
