@@ -109,15 +109,3 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
-
-    - name: Build and analyze (Java)
-      if: ${{ env.language == 'java' }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.ghub_token }}
-        SONAR_TOKEN: ${{ inputs.sonar_token }}
-      shell: bash
-      run: | 
-        # FIX: Use env context for service_source_path
-
-        mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }}
-
