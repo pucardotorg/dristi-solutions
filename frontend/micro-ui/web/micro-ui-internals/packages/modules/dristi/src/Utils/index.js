@@ -553,3 +553,23 @@ export const getComplainantSideAdvocates = (caseDetails) => {
       };
     });
 };
+
+export const getFileByFileStore = async (uri, filename) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await axios.get(uri, {
+      responseType: "blob",
+      headers: {
+        "auth-token": `${token}`,
+      },
+    });
+    // Create a file object from the response Blob
+    const file = new File([response.data], filename, {
+      type: response.data.type || "application/pdf",
+    });
+    return file;
+  } catch (error) {
+    console.error("Error fetching file:", error);
+    throw error;
+  }
+};
