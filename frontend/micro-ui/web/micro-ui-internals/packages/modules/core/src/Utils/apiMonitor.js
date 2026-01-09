@@ -12,7 +12,7 @@
  * - Provides analysis functions
  */
 
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 
 // Configuration
 const config = {
@@ -105,15 +105,15 @@ const logWithColors = (type, method, url, status, duration, requestSize, respons
   // Format the log message
   if (type === "OUT") {
     console.groupCollapsed(`%c[API OUT] ${method} ${url}`, `${typeStyle}; font-weight: bold;`);
-    console.log(`→ Request: ${formatDataSize(requestSize)}`);
+    // console.log(`→ Request: ${formatDataSize(requestSize)}`);
     console.groupEnd();
   } else if (type === "IN") {
     console.groupCollapsed(`%c[API IN] ${method} ${url} - ${status}`, `${statusStyle}; font-weight: bold;`);
-    console.log(`→ Duration: ${duration}ms | Response: ${formatDataSize(responseSize)} | Total: ${formatDataSize(requestSize + responseSize)}`);
+    // console.log(`→ Duration: ${duration}ms | Response: ${formatDataSize(responseSize)} | Total: ${formatDataSize(requestSize + responseSize)}`);
     console.groupEnd();
   } else if (type === "ERROR") {
     console.groupCollapsed(`%c[API ERROR] ${method} ${url} - ${status || "FAILED"}`, "color: #f44336; font-weight: bold;");
-    console.log(`→ Error: ${(error && error.message) || "Unknown error"} | Duration: ${duration}ms`);
+    // console.log(`→ Error: ${(error && error.message) || "Unknown error"} | Duration: ${duration}ms`);
     console.groupEnd();
   }
 
@@ -143,21 +143,11 @@ const storeApiCall = (callData) => {
 // Set up interceptors
 const setupInterceptors = () => {
   // Request interceptor
-  axios.interceptors.request.use(
+  axiosInstance.interceptors.request.use(
     (config) => {
-      // Debug logging for filestore API calls
-      if (config.url && config.url.includes("/filestore/v1/files/")) {
-        console.log(`[API Monitor Debug] Request intercepted: ${config.url}`);
-        console.log(`[API Monitor Debug] Has params:`, !!config.params);
-        if (config.params) {
-          console.log(`[API Monitor Debug] Params:`, config.params);
-        }
-      }
-
       // Skip filestore API calls with no fileStoreIds
       const isFileStoreApi = config.url && config.url.includes("/filestore/v1/files/url");
       if (isFileStoreApi && (!config.params || !config.params.fileStoreIds)) {
-        console.log(`[API Monitor Debug] Skipping URL API call: ${config.url}`);
         // Skip monitoring for these calls
         return config;
       }
@@ -168,7 +158,7 @@ const setupInterceptors = () => {
         apiCallData.startTime = Date.now();
         interactionPending = false;
 
-        console.log("%c[API Monitor] New interaction detected → logs reset", "color:#38bdf8;font-weight:bold;");
+        // console.log("%c[API Monitor] New interaction detected → logs reset", "color:#38bdf8;font-weight:bold;");
       }
 
       // Add timestamp to track duration
@@ -185,7 +175,7 @@ const setupInterceptors = () => {
       // Log outgoing request
       logWithColors("OUT", method, url, null, null, requestSize, 0);
 
-      console.log("config.includeHeaders", config.includeHeaders, "h", config.includeFullPayload);
+      // console.log("config.includeHeaders", config.includeHeaders, "h", config.includeFullPayload);
 
       // Store initial call data
       const callData = {
@@ -227,21 +217,13 @@ const setupInterceptors = () => {
   );
 
   // Response interceptor
-  axios.interceptors.response.use(
+  axiosInstance.interceptors.response.use(
     (response) => {
-      // Debug logging for filestore API calls
-      if (response.config.url && response.config.url.includes("/filestore/v1/files/")) {
-        console.log(`[API Monitor Debug] Response intercepted: ${response.config.url}`);
-        console.log(`[API Monitor Debug] Has metadata:`, !!response.config.metadata);
-        console.log(`[API Monitor Debug] Status:`, response.status);
-      }
-
       // Skip if no metadata (not tracked by our request interceptor)
       // or if it's a filestore API call with no fileStoreIds
       const isFileStoreApi = response.config.url && response.config.url.includes("/filestore/v1/files/url");
       if (!response.config.metadata || (isFileStoreApi && (!response.config.params || !response.config.params.fileStoreIds))) {
         if (response.config.url && response.config.url.includes("/filestore/v1/files/")) {
-          console.log(`[API Monitor Debug] Skipping response: ${response.config.url}`);
         }
         return response;
       }
@@ -371,7 +353,7 @@ const apiMonitor = {
   init: () => {
     setupInteractionListeners();
     setupInterceptors();
-    console.log("%c[API Monitor] Initialized and monitoring API calls", "color: #4caf50; font-weight: bold;");
+    // console.log("%c[API Monitor] Initialized and monitoring API calls", "color: #4caf50; font-weight: bold;");
   },
 
   // Get all recorded API calls
@@ -381,13 +363,11 @@ const apiMonitor = {
   clear: () => {
     apiCallData.calls = [];
     apiCallData.startTime = Date.now();
-    console.log("API Monitor: Data cleared");
   },
 
   // Stop recording
   stop: () => {
     apiCallData.isRecording = false;
-    console.log("API Monitor: Recording stopped");
   },
 
   // Start recording
