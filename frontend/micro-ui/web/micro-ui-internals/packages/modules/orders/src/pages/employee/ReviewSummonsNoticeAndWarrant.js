@@ -1843,12 +1843,25 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       // Store config ONLY when searchForm is present (means search button was clicked)
       if (isPendingRpadTab && form?.searchForm) {
-        // Don't update during initial load after "Send for Sign" reload
-        if (isInitialLoadRef.current) {
+        // Don't update during initial load after "Send for Sign" reload or after clear search
+        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
           return;
         }
 
         const formValues = form.searchForm;
+
+        // Check if this is a "Clear Search" action - when orderType is empty/default
+        // Clear Search resets form to default values where orderType is empty string
+        const isOrderTypeEmpty =
+          !formValues.orderType || formValues.orderType === "" || (typeof formValues.orderType === "string" && formValues.orderType.trim() === "");
+
+        if (isOrderTypeEmpty) {
+          // Clear search was clicked - remove stored config and reset ref
+          sessionStorage.removeItem("pendingRpadStoredConfig");
+          latestFormValuesRef.current = {};
+          return;
+        }
+
         const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
         const baseConfig = configArray?.[activeTabIndex];
 
@@ -2095,6 +2108,42 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewNoticeAccess,
     reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
+
+  // Ref to track if clear search was clicked - used to trigger reload
+  const clearSearchClickedRef = useRef(false);
+
+  // Clear search button handler - clears sessionStorage when clear search is clicked on PENDING_RPAD_COLLECTION tab
+  useEffect(() => {
+    const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+    const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
+
+    if (!isPendingRpadTab) return;
+
+    const handleClearSearchClick = (e) => {
+      const target = e.target;
+      // Check if clicked element or its parent is a link-label with "Clear" text
+      const linkLabel = target?.closest(".link-label") || (target?.classList?.contains("link-label") ? target : null);
+
+      if (linkLabel && linkLabel.textContent?.toLowerCase()?.includes("clear")) {
+        // Clear stored config when clear search is clicked
+        sessionStorage.removeItem("pendingRpadStoredConfig");
+        latestFormValuesRef.current = {};
+        // Set flag and trigger reload after a short delay to let the form reset first
+        clearSearchClickedRef.current = true;
+        setTimeout(() => {
+          setReload((prev) => !prev);
+          clearSearchClickedRef.current = false;
+        }, 100);
+      }
+    };
+
+    // Use document level event delegation with capture phase
+    document.addEventListener("click", handleClearSearchClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleClearSearchClick, true);
+    };
+  }, [activeTabIndex, isJudge, courtId]);
 
   // Header checkbox functionality: Controls all visible row checkboxes.
   // When header is checked/unchecked, all rows follow. When any individual row checkbox is clicked,
