@@ -1,6 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-components";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
 import CustomDetailsCard from "../../../components/CustomDetailsCard";
@@ -11,6 +11,7 @@ import { FileDownloadIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
+import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
 
 const customNoteConfig = {
   populators: {
@@ -31,6 +32,14 @@ export const formatDate = (date) => {
   return `${day}-${month}-${year}`;
 };
 
+const removeYearFromName = (name = "") => name.replace(/,\s*\d{4}$/, "");
+
+const DEFAULT_SELECTION_RULES = {
+  CASE_CATEGORY: (item) => item?.category?.toLowerCase() === "criminal",
+  CS_STATUS_ACT: (item) => item?.name?.toLowerCase()?.includes("negotiable"),
+  CS_SECTION: (item) => item?.sectionCode === "138" || item?.sectionHeading?.includes("138"),
+};
+
 function CaseType({ t }) {
   const { path } = useRouteMatch();
   const history = useHistory();
@@ -38,6 +47,7 @@ function CaseType({ t }) {
   const [page, setPage] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const requiredDocumentsListLink = window?.globalConfigs?.getConfig("CASE_FILE_REQUIRED_DOCUMENTS");
+  const [formData, setFormData] = useState({});
 
   const onCancel = () => {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
@@ -65,6 +75,9 @@ function CaseType({ t }) {
       },
     }
   );
+
+  const { isLoading: mdmsLoading, data: statuteData } = useGetStatuteSection();
+
   const Submitbar = () => {
     const token = window.localStorage.getItem("token");
     const isUserLoggedIn = Boolean(token);
@@ -138,8 +151,6 @@ function CaseType({ t }) {
       return searchResult?.[0]?.responseList?.[0]?.id;
     }, [searchResult]);
 
-    const { isLoading: mdmsLoading, data: statuteData } = useGetStatuteSection();
-
     if (isLoading || isFetching || isSearchLoading || mdmsLoading || isComplainantRespondentTypeLoading) {
       return <Loader />;
     }
@@ -176,8 +187,8 @@ function CaseType({ t }) {
                   {
                     tenantId,
                     statute: statuteData?.name,
-                    sections: ["Negotiable Instrument Act"],
-                    subsections: ["138"],
+                    sections: [removeYearFromName(formData?.CS_STATUS_ACT?.name)],
+                    subsections: [formData?.CS_SECTION?.sectionHeading],
                   },
                 ],
                 litigants: [],
@@ -304,66 +315,114 @@ function CaseType({ t }) {
   };
 
   const detailsCardList = useMemo(() => {
-    const caseTypeDetails = [
-      { header: "CASE_CATEGORY", subtext: "CS_CRIMINAL" },
+    if (page !== 0) {
+      return [
+        {
+          header: "CS_PROOF_OF_IDENTITY",
+          subtext: "TAX_RECORDS_DESCRIPTION",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "01.",
+        },
+        {
+          header: "CS_BOUNCED_CHEQUE",
+          subtext: "CS_BOUNCE_DESCRIPTION",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "02.",
+        },
+        {
+          header: "CHEQUE_RETURN_MEMO",
+          subtext: "CS_RETURN_MEMO_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "03.",
+        },
+        {
+          header: "CS_DEMAND_NOTICE",
+          subtext: "CS_DEMAND_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "04",
+        },
+        {
+          header: "CS_POSTAL_ISSUE_NOTICE",
+          subtext: "CS_POSTAL_ISSUE_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "05",
+        },
+        {
+          header: "CS_POSTAL_DELIVERY_NOTICE",
+          subtext: "CS_POSTAL_DELIVERY_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "06",
+        },
+        {
+          header: "CS_SWORN_STATEMENT",
+          subtext: "CS_AFFADAVIT_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "07",
+        },
+        {
+          header: "CS_ANY_OTHER_DOC",
+          subtext: "CS_ADDTIONAL_DOC_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "08",
+        },
+      ];
+    }
+
+    return [
+      {
+        header: "CASE_CATEGORY",
+        subtext:
+          statuteData?.CaseCategory?.filter((c) => c.isactive)?.map((c) => {
+            return {
+              ...c,
+              label: t(c.category),
+            };
+          }) || [],
+      },
       {
         header: "CS_STATUS_ACT",
-        subtext: "CS_NIA",
-      },
-      { header: "CS_SECTION", subtext: "138" },
-    ];
-    const listDocumentDetails = [
-      {
-        header: "CS_PROOF_OF_IDENTITY",
-        subtext: "TAX_RECORDS_DESCRIPTION",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "01.",
+        subtext:
+          statuteData?.Statute?.filter((s) => s.isActive).map((s) => {
+            return {
+              ...s,
+              label: removeYearFromName(s?.name),
+            };
+          }) || [],
       },
       {
-        header: "CS_BOUNCED_CHEQUE",
-        subtext: "CS_BOUNCE_DESCRIPTION",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "02.",
-      },
-      {
-        header: "CHEQUE_RETURN_MEMO",
-        subtext: "CS_RETURN_MEMO_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "03.",
-      },
-      {
-        header: "CS_DEMAND_NOTICE",
-        subtext: "CS_DEMAND_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "04",
-      },
-      {
-        header: "CS_POSTAL_ISSUE_NOTICE",
-        subtext: "CS_POSTAL_ISSUE_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "05",
-      },
-      {
-        header: "CS_POSTAL_DELIVERY_NOTICE",
-        subtext: "CS_POSTAL_DELIVERY_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "06",
-      },
-      {
-        header: "CS_SWORN_STATEMENT",
-        subtext: "CS_AFFADAVIT_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "07",
-      },
-      {
-        header: "CS_ANY_OTHER_DOC",
-        subtext: "CS_ADDTIONAL_DOC_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "08",
+        header: "CS_SECTION",
+        subtext:
+          statuteData?.Section?.filter((s) => s.isActive)?.map((s) => {
+            return {
+              ...s,
+              label: s?.sectionHeading,
+            };
+          }) || [],
       },
     ];
-    return page === 0 ? caseTypeDetails : listDocumentDetails;
-  }, [page]);
+  }, [page, statuteData, t]);
+
+  useEffect(() => {
+    if (page !== 0) return;
+
+    setFormData((prev) => {
+      if (Object.keys(prev || {}).length) return prev;
+      const initialData = {};
+      detailsCardList?.forEach((item) => {
+        if (item?.subtext?.length) {
+          const matcher = DEFAULT_SELECTION_RULES[item.header];
+          const matchedValue = matcher ? item.subtext.find(matcher) : null;
+          initialData[item?.header] = matchedValue || item?.subtext?.[0];
+        }
+      });
+
+      return initialData;
+    });
+  }, [page, detailsCardList]);
+
+  if (mdmsLoading) {
+    return <Loader />;
+  }
 
   return (
     <Modal
@@ -379,15 +438,31 @@ function CaseType({ t }) {
       className="case-types"
     >
       <div className="case-types-main-div">
-        {detailsCardList.map((item) => (
-          <CustomDetailsCard
-            header={item.header}
-            subtext={item.subtext}
-            serialNumber={item.serialNumber}
-            subnote={item.subnote}
-            style={{ width: "100%" }}
-          />
-        ))}
+        {detailsCardList.map((item) =>
+          page === 0 ? (
+            <CustomDetailsDropdownCard
+              key={item.header}
+              header={item.header}
+              options={item.subtext}
+              value={formData[item.header]}
+              onChange={(data) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  [item.header]: data,
+                }));
+              }}
+            />
+          ) : (
+            <CustomDetailsCard
+              key={item.header}
+              header={item.header}
+              subtext={item.subtext}
+              serialNumber={item.serialNumber}
+              subnote={item.subnote}
+              style={{ width: "100%" }}
+            />
+          )
+        )}
         {page === 0 && <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>}
       </div>
 
