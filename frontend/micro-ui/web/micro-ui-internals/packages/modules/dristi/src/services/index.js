@@ -34,6 +34,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  deleteIndividualUser: (data, params) =>
+    Request({
+      url: Urls.dristi.deleteIndividual,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   searchEmployeeUser: (data, params) =>
     Request({
       url: Urls.dristi.searchEmployee,

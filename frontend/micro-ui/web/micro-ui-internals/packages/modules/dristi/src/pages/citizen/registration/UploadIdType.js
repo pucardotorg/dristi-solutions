@@ -1,6 +1,7 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { getFileByFileStore } from "../../../Utils";
 
 function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange }) {
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -58,14 +59,61 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
     return () => clearTimeout(timer);
   }, [closeToast]);
 
-  if (!isAdvocateUploading && !params?.indentity) {
-    history.push(pathOnRefresh);
-  }
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!isAdvocateUploading && !params?.indentity) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params.address, params, history, pathOnRefresh, isAdvocateUploading]);
+
   return (
     <div className="advocate-additional-details upload-id">
       <FormComposerV2
         config={config}
         t={t}
+        defaultValues={
+          params?.uploadedDocument
+            ? {
+                SelectUserTypeComponent: {
+                  selectIdType: params?.uploadedDocument?.IdType || "",
+                  ID_Proof: [
+                    [
+                      params?.uploadedDocument?.filename,
+                      {
+                        file: params?.uploadedDocument?.file,
+                        fileStoreId: {
+                          fileStoreId: params?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId || "",
+                        },
+                      },
+                    ],
+                  ],
+                },
+              }
+            : {}
+        }
         onSubmit={(data) => {
           if (isAdvocateUploading) {
             return;
