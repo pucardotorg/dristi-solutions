@@ -19,6 +19,12 @@ inputs:
   branch:
     description: Branch name.
     required: false
+  esign_private_key:
+    description: Private key for e-sign service.
+    required: false
+  esign_public_key:
+    description: Public key for e-sign service.
+    required: false
 
 outputs:
   image_tag:
@@ -94,8 +100,8 @@ runs:
       if: env.service_name == "e-sign-svc"
       shell: bash
       run: |
-          echo "${{ secrets.ESIGN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
-          echo "${{ secrets.ESIGN_PUBLIC_KEY }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
+          echo "${{ inputs.esign_private_key }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+          echo "${{ inputs.esign_public_key }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
 
     - name: Build and Push Docker Image
       shell: bash
