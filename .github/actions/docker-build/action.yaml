@@ -97,7 +97,7 @@ runs:
         echo "image_tag=${{ env.VERSION }}-${{ env.commit_hash }}" >> $GITHUB_OUTPUT
 
     - name: Set encryption keys based on branch or tag
-      if: env.service_name == "e-sign-svc"
+      if: ${{ env.service_name == 'e-sign-svc' }}
       shell: bash
       run: |
           echo "${{ inputs.esign_private_key }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
