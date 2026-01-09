@@ -204,15 +204,7 @@ const DigitizedDocumentsSignaturePage = () => {
   }, []);
 
   useEffect(() => {
-    if (isUserLoggedIn) {
-      if (!isDocumentsDataLoading && digitizedDocumentsDetails) {
-        if (!ifUserAuthorized) {
-          history.replace(
-            `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
-          );
-        }
-      }
-    } else if (!isUserLoggedIn && !ifUserAuthorized) {
+    if (!isUserLoggedIn && !ifUserAuthorized) {
       history.replace(
         `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
       );
@@ -272,8 +264,16 @@ const DigitizedDocumentsSignaturePage = () => {
   const isSubmitButtonEnabled = useMemo(() => {
     if (digitizedDocumentsDetails?.status !== "PENDING_E-SIGN") return false;
     if (isUserLoggedIn && partyUUID && partyUUID !== userInfo?.uuid) return false;
+
+    const mobNumber =
+      type === "PLEA"
+        ? digitizedDocumentsDetails?.pleaDetails?.accusedMobileNumber
+        : digitizedDocumentsDetails?.examinationOfAccusedDetails?.accusedMobileNumber;
+    if (isUserLoggedIn && mobNumber !== userInfo?.mobileNumber) {
+      return false;
+    }
     return true;
-  }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, userInfo]);
+  }, [digitizedDocumentsDetails, isUserLoggedIn, partyUUID, type, userInfo?.mobileNumber, userInfo?.uuid]);
 
   if (isDigitizedDocumentsOpenOpenLoading || isLoading || isDocumentsDataLoading) {
     return <Loader />;
