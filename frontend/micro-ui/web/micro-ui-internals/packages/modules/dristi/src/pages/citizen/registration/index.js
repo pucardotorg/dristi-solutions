@@ -87,7 +87,8 @@ const Registration = ({ stateCode }) => {
 
   useEffect(() => {
     if (newParams) {
-      sessionStorage.setItem("userRegistrationParams", JSON.stringify(newParams));
+      const { mobileNumber, ...sanitizedParams } = newParams || {};
+      sessionStorage.setItem("userRegistrationParams", JSON.stringify(sanitizedParams));
     }
   }, [newParams]);
 

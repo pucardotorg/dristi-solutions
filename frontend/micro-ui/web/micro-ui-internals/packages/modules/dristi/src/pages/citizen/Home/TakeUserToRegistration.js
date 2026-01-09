@@ -19,6 +19,7 @@ function TakeUserToRegistration({ message, isRejected, data, userType }) {
   const handleRegister = async () => {
     sessionStorage.removeItem("Digit.aadharNumber");
     sessionStorage.removeItem("Digit.isAadharNumberVerified");
+    sessionStorage.removeItem("userRegistrationParams");
 
     let params = {};
 
