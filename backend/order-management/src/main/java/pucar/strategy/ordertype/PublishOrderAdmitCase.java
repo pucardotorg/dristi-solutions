@@ -93,7 +93,6 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
         // pending response pending task
 
         List<Party> respondent = caseUtil.getRespondentOrComplainant(courtCase, "respondent");
-
         log.info("creating pending task of pending response for respondent of size:{}", respondent.size());
         for (Party party : respondent) {
 

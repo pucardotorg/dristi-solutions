@@ -11,7 +11,7 @@ import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submiss
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
-
+import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import "dristi-ui-css/dist/index.min.css";
 
 window.contextPath =
@@ -32,6 +32,7 @@ const moduleReducers = (initData) => ({
 
 const initDigitUI = () => {
   window.Digit.ComponentRegistryService.setupRegistry({});
+  setupRequestInterceptor();
   initCoreComponents();
   initDRISTIComponents();
   initOrdersComponents();
@@ -46,9 +47,7 @@ initLibraries().then(() => {
 });
 
 function App() {
-  const stateCode =
-    window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
-    process.env.REACT_APP_STATE_LEVEL_TENANT_ID;
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   if (!stateCode) {
     return <h1>stateCode is not defined</h1>;
   }

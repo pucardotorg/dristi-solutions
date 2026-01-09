@@ -75,6 +75,7 @@ public class HearingRowMapperTest {
         when(rs.getString("presidedby")).thenReturn(presidedByJson);
         when(rs.getString("attendees")).thenReturn(attendeesJson);
         when(rs.getString("transcript")).thenReturn(transcriptJson);
+        when(rs.getString("hearingsummary")).thenReturn("hearingSummary");
         PGobject pgObject = new PGobject();
         pgObject.setValue(additionalDetailsJson);
         when(rs.getObject("additionalDetails")).thenReturn(pgObject);
@@ -90,6 +91,7 @@ public class HearingRowMapperTest {
                 .vcLink("link1")
                 .isActive(true)
                 .notes("note1")
+                .hearingSummary("hearingSummary")
                 .auditDetails(AuditDetails.builder().createdBy("user1").createdTime(1625140800000L).lastModifiedBy("user2").lastModifiedTime(1625144400000L).build())
                 .cnrNumbers(Collections.singletonList("cnr1"))
                 .filingNumber(Collections.singletonList("file1"))
@@ -143,6 +145,7 @@ public class HearingRowMapperTest {
         PGobject pgObject = new PGobject();
         pgObject.setValue(additionalDetailsJson);
         when(rs.getObject("additionalDetails")).thenReturn(pgObject);
+        when(rs.getString("hearingsummary")).thenReturn("hearingSummary");
 
         Hearing hearing = Hearing.builder()
                 .tenantId("tenant1")
@@ -156,6 +159,7 @@ public class HearingRowMapperTest {
                 .startTime(0L)
                 .endTime(1625140800000L)
                 .vcLink("link1")
+                .hearingSummary("hearingSummary")
                 .isActive(true)
                 .notes("note1")
                 .auditDetails(AuditDetails.builder().createdBy("user1").createdTime(1625140800000L).lastModifiedBy("user2").lastModifiedTime(1625144400000L).build())

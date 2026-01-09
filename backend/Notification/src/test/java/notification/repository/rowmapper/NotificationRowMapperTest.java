@@ -160,6 +160,7 @@ class NotificationRowMapperTest {
             when(resultSet.getString("documenttype")).thenReturn("PDF");
             when(resultSet.getString("documentuid")).thenReturn("DOC-001");
             when(resultSet.getString("filestore")).thenReturn("store-001");
+            when(resultSet.getString("status")).thenReturn("PUBLISHED");
         }
     }
 

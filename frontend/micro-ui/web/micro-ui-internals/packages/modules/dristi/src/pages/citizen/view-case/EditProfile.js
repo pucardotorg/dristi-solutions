@@ -10,7 +10,7 @@ import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { useToast } from "../../../components/Toast/useToast";
-import { documentLabels, getFilingType } from "../../../Utils";
+import { documentLabels, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
 import {
   editCheckDuplicateMobileEmailValidation,
   editCheckNameValidation,
@@ -606,6 +606,7 @@ const EditProfile = ({ path }) => {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
     editCheckNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
+    runComprehensiveSanitizer({ formData, setValue });
     if (!isEqual(formData, formdata[index].data)) {
       editCheckDuplicateMobileEmailValidation({
         formData,
@@ -672,7 +673,7 @@ const EditProfile = ({ path }) => {
         },
         { tenantId, limit: 1000, offset: 0 }
       );
-  
+
       const individual = response?.Individual?.[0];
       return individual?.userUuid || uniqueId;
     } catch (error) {
@@ -774,6 +775,12 @@ const EditProfile = ({ path }) => {
     } else {
       setIsLoader(true);
       try {
+        const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
+        const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
+        if (ifProfileRequestAlreadyExists) {
+          toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
+          return;
+        }
         const onBehalfOfUuid = await getOnBehalfOfUuid();
         const res = await updateProfileData({
           t,

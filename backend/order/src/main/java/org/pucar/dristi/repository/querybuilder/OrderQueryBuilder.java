@@ -17,9 +17,9 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class OrderQueryBuilder {
 
-    private static final String BASE_ORDER_QUERY = " SELECT orders.id as id, orders.tenantid as tenantid, orders.hearingnumber as hearingnumber, " +
+    private static final String BASE_ORDER_QUERY = " SELECT orders.id as id, orders.tenantid as tenantid, orders.hearingnumber as hearingnumber, orders.hearingtype as hearingtype, orders.scheduledhearingnumber as scheduledhearingnumber," +
             "orders.filingnumber as filingnumber, orders.courtId as courtId, orders.comments as comments, orders.cnrnumber as cnrnumber, orders.linkedordernumber as linkedordernumber, orders.ordernumber as ordernumber, orders.applicationnumber as applicationnumber," +
-            "orders.createddate as createddate, orders.ordertype as ordertype, orders.orderdetails as orderdetails, orders.issuedby as issuedby, orders.ordercategory as ordercategory," +
+            "orders.createddate as createddate, orders.ordertype as ordertype, orders.orderdetails as orderdetails, orders.issuedby as issuedby, orders.ordercategory as ordercategory,  orders.attendance as attendance,  orders.itemText as itemtext, orders.purposeofnexthearing as purposeofnexthearing, orders.nexthearingdate as nexthearingdate," +
             "orders.status as status, orders.isactive as isactive, orders.additionaldetails as additionaldetails, orders.compositeitems as compositeitems, orders.ordertitle as ordertitle, orders.createdby as createdby," +
             "orders.lastmodifiedby as lastmodifiedby, orders.createdtime as createdtime, orders.lastmodifiedtime as lastmodifiedtime ";
 
@@ -110,8 +110,18 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getOrderCategory(), query, firstCriteria, "orders.orderCategory = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getHearingType(), query, firstCriteria, "orders.hearingType = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getScheduledHearingNumber(), query, firstCriteria, "orders.scheduledhearingnumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteriaDate(criteria.getFromPublishedDate(), query, firstCriteria, "orders.createdDate >= ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addCriteriaDate(criteria.getToPublishedDate(), query, firstCriteria, "orders.createdDate <= ?", preparedStmtList, preparedStmtArgList);
 
-             addCriteria(criteria.getOrderNumber() == null? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
+                addCriteria(criteria.getOrderNumber() , query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            } else {
+                addCriteria(criteria.getOrderNumber() == null ? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            }
+
             return query.toString();
         } catch (Exception e) {
             log.error("Error while building order search query :: {}",e.toString());
@@ -127,6 +137,17 @@ public class OrderQueryBuilder {
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(type);
 
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    boolean addCriteriaDate(Long criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
+            preparedStmtList.add(criteria);
+            preparedStmtArgList.add(Types.BIGINT);
             firstCriteria = false;
         }
         return firstCriteria;
@@ -211,7 +232,7 @@ public class OrderQueryBuilder {
 
     private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
         if (isFirstCriteria) {
-            query.append(" WHERE ");
+            query.append(" WHERE orders.status <> 'DELETED' AND ");
         } else {
             query.append(" AND ");
         }

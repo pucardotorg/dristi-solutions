@@ -39,4 +39,10 @@ public class OrderCriteria {
     @JsonProperty("status")
     private String status = null;
 
+    @JsonProperty("hearingNumber")
+    private String hearingNumber = null;
+
+    @JsonProperty("hearingType")
+    private String hearingType = null;
+
 }

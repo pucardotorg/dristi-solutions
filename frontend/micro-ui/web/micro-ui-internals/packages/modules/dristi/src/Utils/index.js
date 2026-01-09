@@ -2,6 +2,7 @@ import { Request } from "@egovernments/digit-ui-libraries";
 import isEmpty from "lodash/isEmpty";
 import axios from "axios";
 import { DocumentUploadError } from "./errorUtil";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
 export const ServiceRequest = async ({
   serviceName,
@@ -112,10 +113,16 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
-export const modifiedEvidenceNumber = (value) => {
-  return value && typeof value === "string" ? value.split("-").pop() : value;
+export const modifiedEvidenceNumber = (value, filingNumber = null) => {
+  if (value && typeof value === "string") {
+    if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {
+      return value.slice(filingNumber.length + 1).trim();
+    } else {
+      return value.split("-").pop();
+    }
+  }
+  return value;
 };
-
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
@@ -173,6 +180,7 @@ export const documentsTypeMapping = {
   pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
+  lprDocument: "LPR_DOCUMENT",
 };
 
 export const documentLabels = {
@@ -194,6 +202,20 @@ export const documentLabels = {
   VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
   SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
+};
+
+export const caseFileLabels = {
+  "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
+  "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
+  "case.cheque": "DISHONORED_CHEQUE",
+  "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",
+  "case.cheque.returnmemo": "CHEQUE_RETURN_MEMO",
+  "case.demandnotice": "LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.proof": "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
+  "case.replynotice": "PROOF_OF_REPLY",
+  "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
+  "case.docs": "OTHERS_DOCUMENT",
 };
 
 export const getFileByFileStoreId = async (uri) => {
@@ -346,4 +368,277 @@ export const isEmptyValue = (value) => {
   } else {
     return false;
   }
+};
+
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const sanitizeData = (data) => {
+  if (typeof data === "string") {
+    return sanitizeInput(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeInput(data[key]);
+      return acc;
+    }, {});
+  }
+
+  return data;
+};
+
+const RICH_TEXT_FIELDS = [
+  "reasonForFiling",
+  "reasonForApplication",
+  "comments",
+  "applicationDetails",
+  "reasonForApplicationOfBail",
+  "additionalInformation",
+  "reasonForDelay",
+  "additionalInformation",
+];
+
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const originalValue = formData[key];
+    if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
+      const sanitizedValue = sanitizeData(originalValue);
+      if (sanitizedValue !== originalValue) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitizedValue);
+        if (element) {
+          setTimeout(() => {
+            element.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
+      runComprehensiveSanitizer({
+        formData: originalValue,
+        setValue,
+        ignoredKeys,
+      });
+    }
+  });
+};
+
+export const TaskManagementWorkflowAction = {
+  CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
+  UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",
+  EXPIRE: "EXPIRE",
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  CREATE_WITHOUT_PAYMENT: "CREATE_WITHOUT_PAYMENT",
+  UPDATE_WITHOUT_PAYMENT: "UPDATE_WITHOUT_PAYMENT",
+  COMPLETE_WITHOUT_PAYMENT: "COMPLETE_WITHOUT_PAYMENT",
+};
+
+export const TaskManagementWorkflowState = {
+  PENDING_PAYMENT: "PENDING_PAYMENT",
+  TASK_CREATION: "TASK_CREATION",
+  COMPLETED: "COMPLETED",
+};
+
+export const getOrderTypes = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
+    case "TRANSFER":
+      return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
+    case "BAIL_BOND":
+      return "BAIL";
+    case "SURETY":
+      return "BAIL";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    default:
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
+  }
+};
+
+export const setApplicationStatus = (type, applicationType) => {
+  if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
+    return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  if (["DELAY_CONDONATION"].includes(applicationType)) {
+    return type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  return type === "accept" ? "APPROVED" : "REJECTED";
+};
+
+export const checkOrderTypeValidation = (a, b) => {
+  let errorObj = { isIncompatible: false, isDuplicate: false };
+  for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+    const currentObj = compositeOrderAllowedTypes?.[i];
+    if (currentObj?.orderTypes?.includes(a)) {
+      if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+        if (a === b) {
+          errorObj.isDuplicate = true;
+        } else {
+          errorObj.isIncompatible = true;
+        }
+        break;
+      }
+    }
+  }
+  return errorObj;
+};
+
+export const checkAcceptRejectOrderValidation = (orderType, compositeOrderObj) => {
+  if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+    const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  }
+  return compositeOrderObj?.compositeItems?.some((item) => {
+    if (!item?.isEnabled) return false;
+    const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  });
+};
+
+export const getOrderActionName = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
+    case "TRANSFER":
+      return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
+    case "BAIL_BOND":
+      return "ORDER_FOR_BAIL";
+    case "SURETY":
+      return "ORDER_FOR_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    default:
+      return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
+  }
+};
+
+export const _getDigitilizationPatiresName = (data) => {
+  if (data?.type === "PLEA") {
+    return data?.pleaDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "EXAMINATION_OF_ACCUSED") {
+    return data?.examinationOfAccusedDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "MEDIATION") {
+    return (
+      data?.mediationDetails?.partyDetails
+        ?.map((p) => p.partyName)
+        ?.filter(Boolean)
+        ?.join(", ") || ""
+    );
+  }
+};
+
+export const getComplainants = (caseDetails) => {
+  return (
+    caseDetails?.litigants
+      ?.filter((item) => item?.partyType?.includes("complainant"))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+        const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+        if (poaHolder) {
+          return {
+            name: `${fullName} (Complainant, PoA Holder)`,
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+          };
+        }
+        return {
+          name: `${fullName} (Complainant)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "complainant",
+        };
+      }) || []
+  );
+};
+
+//poa holders who are associated with complainants.
+export const getComplainantsSidePoAHolders = (caseDetails, complainants) => {
+  return (
+    caseDetails?.poaHolders
+      ?.filter((item) => item?.representingLitigants?.every((rep) => complainants?.find((c) => c?.individualId === rep?.individualId)))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.name);
+        return {
+          name: `${fullName} (PoA Holder)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "Complainant's poaHolder",
+        };
+      }) || []
+  );
+};
+
+//advocates who are associated with complainants.
+export const getComplainantSideAdvocates = (caseDetails) => {
+  return caseDetails?.representatives
+    ?.filter((rep) => rep?.representing?.every((lit) => lit?.partyType?.includes("complainant")))
+    ?.map((rep) => {
+      return {
+        name: rep?.additionalDetails?.advocateName,
+        partyUuid: rep?.additionalDetails?.uuid,
+        partyType: "advocate",
+      };
+    });
 };

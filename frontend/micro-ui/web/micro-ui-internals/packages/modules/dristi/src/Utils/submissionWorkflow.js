@@ -7,6 +7,9 @@ export const SubmissionWorkflowAction = {
   APPROVE: "APPROVE",
   DELETE: "DELETE",
   PAY: "PAY",
+  SAVEDRAFT: "SAVE_DRAFT",
+  EDIT: "EDIT",
+  SUBMIT: "SUBMIT",
 };
 export const SubmissionWorkflowState = {
   PENDINGSUBMISSION: "PENDINGSUBMISSION",
@@ -20,9 +23,39 @@ export const SubmissionWorkflowState = {
   ABATED: "ABATED",
   REJECTED: "REJECTED",
   DOC_UPLOAD: "DOCUMENT_UPLOAD",
+  DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
 };
 
 export const SubmissionDocumentsWorkflowState = {
   PENDING_ESIGN: "PENDING_E-SIGN",
   SUBMITTED: "SUBMITTED",
+};
+
+export const bailBondWorkflowAction = {
+  SAVEDRAFT: "SAVE_DRAFT",
+  INITIATEESIGN: "INITIATE_E-SIGN",
+  UPLOAD: "UPLOAD",
+  EDIT: "EDIT",
+  ESIGN: "E-SIGN",
+  SIGN: "SIGN",
+  REJECT: "REJECT",
+};
+
+export const witnessDepositionWorkflowAction = {
+  SAVEDRAFT: "SAVE_DRAFT",
+  INITIATEESIGN: "INITIATE_E-SIGN",
+  UPLOAD: "UPLOAD",
+  EDIT: "EDIT",
+  ESIGN: "E-SIGN",
+  SIGN: "SIGN",
+  REJECT: "REJECT",
+};
+
+export const MarkAsEvidenceAction = {
+  CREATE: "CREATE",
+  SAVEDRAFT: "SAVE_DRAFT",
+  ESIGN: "E-SIGN",
+  BULKSIGN: "SUBMIT_BULK_E-SIGN",
+  EDIT: "EDIT",
+  RECREATE: "RECREATE",
 };

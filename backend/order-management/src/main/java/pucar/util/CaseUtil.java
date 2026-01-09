@@ -157,4 +157,32 @@ public class CaseUtil {
         }
         return litigantPoaMapping;
     }
+
+    public void addWitnessToCase(WitnessDetailsRequest witnessDetailsRequest) {
+        StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getAddWitnessEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, witnessDetailsRequest);
+        try {
+            objectMapper.valueToTree(response);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
+        }
+    }
+
+    public void updateLprDetailsInCase(CaseRequest caseRequest) {
+        StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getUpdateLprDetailsEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, caseRequest);
+        try {
+            objectMapper.valueToTree(response);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
+        }
+    }
 }

@@ -12,6 +12,9 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import static org.drishti.esign.config.ServiceConstants.FILE_STORE_SERVICE_EXCEPTION_CODE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -84,7 +87,7 @@ public class FileStoreUtilTest {
     }
 
     @Test
-    public void StoreFileInFileStore_Success() {
+    public void StoreFileInFileStore_Success() throws IOException {
         MultipartFile file = mock(MultipartFile.class);
         String tenantId = "tenantId";
         String fileStoreId = "fileStoreId";
@@ -93,6 +96,10 @@ public class FileStoreUtilTest {
         when(configs.getFilestoreHost()).thenReturn("http://localhost");
         when(configs.getFilestoreCreateEndPoint()).thenReturn("/filestore/v1/files");
 
+        byte[] pdfSignature = "%PDF-1.4\n".getBytes();
+        when(file.getOriginalFilename()).thenReturn("test.pdf");
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(pdfSignature));
         when(file.getResource()).thenReturn(mock(Resource.class));
         when(file.getContentType()).thenReturn("application/pdf");
 

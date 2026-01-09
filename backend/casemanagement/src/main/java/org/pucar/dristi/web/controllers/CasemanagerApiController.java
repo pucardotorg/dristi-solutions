@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.egov.common.contract.response.ResponseInfo;
+import org.pucar.dristi.service.CaseBundleIndexBuilderService;
 import org.pucar.dristi.service.CaseBundleService;
 import org.pucar.dristi.service.CaseManagerService;
 import org.pucar.dristi.service.ServiceUrlMapperVCService;
@@ -47,15 +48,18 @@ public class CasemanagerApiController {
 
     private  final CaseBundleService caseBundleService;
 
+    private final CaseBundleIndexBuilderService caseBundleIndexBuilderService;
+
     private final ResponseInfoFactory responseInfoFactory;
 
     @Autowired
-    public CasemanagerApiController(CaseBundleService caseBundleService,ObjectMapper objectMapper, HttpServletRequest request, ServiceUrlMappingPdfService serviceUrlMappingPdfService, ServiceUrlMapperVCService serviceUrlMapperVCService, CaseManagerService caseManagerService, ResponseInfoFactory responseInfoFactory) {
+    public CasemanagerApiController(CaseBundleService caseBundleService,ObjectMapper objectMapper, HttpServletRequest request, ServiceUrlMappingPdfService serviceUrlMappingPdfService, ServiceUrlMapperVCService serviceUrlMapperVCService, CaseManagerService caseManagerService, CaseBundleIndexBuilderService caseBundleIndexBuilderService, ResponseInfoFactory responseInfoFactory) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.serviceUrlMapperVCService = serviceUrlMapperVCService;
         this.serviceUrlMappingPdfService = serviceUrlMappingPdfService;
         this.caseManagerService = caseManagerService;
+        this.caseBundleIndexBuilderService = caseBundleIndexBuilderService;
         this.responseInfoFactory = responseInfoFactory;
         this.caseBundleService = caseBundleService;
     }
@@ -144,6 +148,38 @@ public class CasemanagerApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(caseBundleRequest.getRequestInfo(), true);
         CaseBundleCreateIndexResponse caseBundleCreateIndexResponse = CaseBundleCreateIndexResponse.builder().responseInfo(responseInfo).message(message).build();
         return new ResponseEntity<>(caseBundleCreateIndexResponse, HttpStatus.OK);
+    }
+
+    // Enrich Case Bundle PDF Index this is used to enrich the case bundle pdf index (#5016)
+    @PostMapping("/casemanager/case/v1/_enrichcasebundlepdfindex")
+    public ResponseEntity<EnrichCaseBundlePdfIndexResponse> enrichCaseBundlePdfIndex(@Valid @RequestBody EnrichCaseBundlePdfIndexRequest request) {
+        try {
+            caseBundleIndexBuilderService.enrichCaseBundlePdfIndex(
+                request.getRequestInfo(),
+                request.getFilingNumber(),
+                request.getTenantId(),
+                request.getStateName(),
+                request.getIsDelayRequired()
+            );
+            
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            EnrichCaseBundlePdfIndexResponse response = EnrichCaseBundlePdfIndexResponse.builder()
+                .responseInfo(responseInfo)
+                .message("Case bundle PDF index enrichment completed successfully")
+                .success(true)
+                .build();
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), false);
+            EnrichCaseBundlePdfIndexResponse response = EnrichCaseBundlePdfIndexResponse.builder()
+                .responseInfo(responseInfo)
+                .message("Failed to enrich case bundle PDF index: " + e.getMessage())
+                .success(false)
+                .build();
+            
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

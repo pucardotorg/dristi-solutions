@@ -16,7 +16,8 @@ const submissionDocumentConfig = [
           mdmsConfig: {
             moduleName: "Submission",
             masterName: "SubmissionDocumentType",
-            select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a,b) => a.code.localeCompare(b.code));}",
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -56,7 +57,7 @@ const submissionDocumentConfig = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "reasonForFiling",
         isMandatory: true,
         populators: {

@@ -1,5 +1,5 @@
 import { CustomDropdown, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { dropdownConfig, newconfigAdvocate, newconfigClerk } from "./config";
@@ -18,7 +18,12 @@ const Inbox = ({ tenants, parentRoute }) => {
   const { t } = useTranslation();
   Digit.SessionStorage.set("ENGAGEMENT_TENANTS", tenants);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const roles = Digit.UserService.getUser()?.info?.roles;
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const history = useHistory();
   const urlParams = new URLSearchParams(window.location.search);
   const type = urlParams.get("type") || "advocate";
@@ -33,10 +38,12 @@ const Inbox = ({ tenants, parentRoute }) => {
     userType: defaultType,
     ulb: tenants?.find((tenant) => tenant?.code === tenantId),
   });
-  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) => roles.some((role) => role.code === requiredRole));
+  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) =>
+    roles?.some((role) => role.code === requiredRole)
+  );
 
   if (!hasApprovalRoles) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (

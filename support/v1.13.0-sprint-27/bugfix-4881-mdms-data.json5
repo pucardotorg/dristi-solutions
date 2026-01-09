@@ -1,0 +1,23 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "common-masters.PendingTaskType",
+  "uniqueIdentifier": "24",
+  "data": {
+    "id": "24",
+    "actor": "Judge",
+    "state": "ABANDONED",
+    "isgeneric": false,
+    "screenType": "home",
+    // TODO: update pending task name from order for scheduling next hearing
+    "pendingTask": "Schedule Next Hearing",
+    "closerAction": [
+      "CLOSE"
+    ],
+    "triggerAction": [
+      "ABANDON"
+    ],
+    "actionCategory": "Schedule Hearing",
+    "workflowModule": "hearing-default"
+  },
+  "isActive": true
+}

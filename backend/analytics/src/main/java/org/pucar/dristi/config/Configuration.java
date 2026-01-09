@@ -152,6 +152,14 @@ public class Configuration {
 	private String taskBusinessServices;
 	private List<String> taskBusinessServiceList;
 
+    @Value("${egov.task.management.business.services}")
+    private String taskManagementBusinessServices;
+    private List<String> taskManagementBusinessServiceList;
+
+    @Value("${egov.digitalized.documents.business.services}")
+    private String digitalizedDocumentsBusinessServices;
+    private List<String> digitalizedDocumentsBusinessServiceList;
+
 	@Value("${egov.application.business.services}")
 	private String applicationBusinessServices;
 	private List<String> applicationBusinessServiceList;
@@ -163,6 +171,10 @@ public class Configuration {
 	@Value("${egov.adiary.business.services}")
 	private String aDiaryBusinessServices;
 	private List<String> aDiaryBusinessServiceList;
+
+	@Value("${egov.bail.bond.business.services}")
+	private String bailBondBusinessServices;
+	private List<String> bailBondBusinessServiceList;
 
 	//Localization
 	@Value("${egov.localization.host}")
@@ -206,6 +218,37 @@ public class Configuration {
 	@Value("${elastic.pending.task.search}")
 	private String pendingTaskSearchPath;
 
+	// User Config
+	@Value("${egov.user.host}")
+	private String userHost;
+
+	@Value("${egov.user.search.path}")
+	private String userSearchEndpoint;
+
+	@Value("${egov.user.create.path}")
+	private String userCreateEndpoint;
+
+	//Tenant Id
+	@Value("${egov-state-level-tenant-id}")
+	private String egovStateTenantId;
+
+	// LPR config
+	@Value("${lpr.stage}")
+	private String lprStage;
+
+	@Value("${lpr.sub.stage}")
+	private String lprSubStage;
+
+    // case section and sub section
+    @Value("${case.section.and.sub.section}")
+    private String caseSectionAndSubSection;
+
+	// task management config
+	@Value("${dristi.task-management.host}")
+	private String taskManagementServiceHost;
+
+	@Value("${dristi.task-management.search.endpoint}")
+	private String taskManagementSearchEndpoint;
 
 	@PostConstruct
 	public void init() {
@@ -213,9 +256,12 @@ public class Configuration {
 		caseBusinessServiceList = Arrays.asList(caseBusinessServices.split(","));
 		evidenceBusinessServiceList = Arrays.asList(evidenceBusinessServices.split(","));
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
+        taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
+		digitalizedDocumentsBusinessServiceList = Arrays.asList(digitalizedDocumentsBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
+		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
 	}
 
 

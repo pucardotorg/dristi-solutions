@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 const applicationCaseWithdrawal = async (
   req,
@@ -66,7 +67,7 @@ const applicationCaseWithdrawal = async (
         : {};
 
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -97,8 +98,9 @@ const applicationCaseWithdrawal = async (
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalComments || ""
+    );
     const localreasonForWithdrawal =
       application?.applicationDetails?.reasonForWithdrawal || "";
     const reasonForWithdrawal =
@@ -152,7 +154,9 @@ const applicationCaseWithdrawal = async (
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [

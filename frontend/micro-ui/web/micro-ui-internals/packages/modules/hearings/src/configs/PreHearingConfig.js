@@ -122,6 +122,7 @@ export const preHearingConfig = {
           {
             label: "CS_STAGE",
             jsonPath: "subStage",
+            additionalCustomization: true,
           },
           {
             label: "CASE_TYPE",

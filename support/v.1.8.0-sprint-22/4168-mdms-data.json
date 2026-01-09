@@ -1,0 +1,58 @@
+[
+  {
+    "tenantId" : "kl",
+    "moduleName" : "ACCESSCONTROL-ROLEACTIONS",
+    "masterName" : "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 485,
+          "actionid": 2743,
+          "actioncode": "2743",
+          "rolecode": "EMPLOYEE",
+          "tenantid": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 484,
+          "actionid": 2743,
+          "rolecode": "CITIZEN",
+          "tenantid": "kl",
+          "actioncode": "2743"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2743",
+        "data": {
+          "id": 2743,
+          "url": "/etreasury/payment/v1/_getHeadBreakDown",
+          "code": "2743",
+          "name": "Get Payment BreakDown",
+          "enabled": true,
+          "displayName": "Get Payment BreakDown",
+          "orderNumber": 0,
+          "serviceCode": "etreasury"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

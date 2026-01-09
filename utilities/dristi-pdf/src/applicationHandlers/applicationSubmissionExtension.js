@@ -69,7 +69,7 @@ async function applicationSubmissionExtension(
   try {
     // Search for case details
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -85,7 +85,14 @@ async function applicationSubmissionExtension(
     );
 
     const resOrder = await handleApiCall(
-      () => search_order(tenantId, refOrderNumber, requestInfo, true),
+      () =>
+        search_order(
+          tenantId,
+          refOrderNumber,
+          requestInfo,
+          application?.courtId,
+          true
+        ),
       "Failed to query order service"
     );
 
@@ -208,7 +215,9 @@ async function applicationSubmissionExtension(
         )
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer;
 
     const data = {

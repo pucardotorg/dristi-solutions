@@ -21,6 +21,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.tika.Tika;
 import org.egov.filestore.config.FileStoreConfig;
 import org.egov.filestore.domain.model.FileLocation;
 import org.egov.filestore.persistence.entity.Artifact;
@@ -74,35 +75,31 @@ public class MinioRepository implements CloudFilesManager {
 			fileLocation.setFileSource(minioConfig.getSource());
 			persistList.add(mapToEntity(artifact));
 
-		});
-	}
+        });
+    }
 
-	
+    
 
-	private void push(MultipartFile multipartFile, String fileNameWithPath) {
-		try {
-			InputStream is = multipartFile.getInputStream();
-			long contentLength = multipartFile.getSize();
+    private void push(MultipartFile multipartFile, String fileNameWithPath) {
+        try {
+            InputStream is = multipartFile.getInputStream();
+            long contentLength = multipartFile.getSize();
 
-			/*PutObjectOptions putObjectOptions = new PutObjectOptions(contentLength, PutObjectOptions.MAX_PART_SIZE);
-			putObjectOptions.setContentType(multipartFile.getContentType());
-			minioClient.putObject(minioConfig.getBucketName(), fileNameWithPath, is, putObjectOptions);*/
+            long fileSize = is.available();
+            String contentTypeDetected;
+            try {
+                Tika tika = new Tika();
+                contentTypeDetected = tika.detect(multipartFile.getInputStream(), multipartFile.getOriginalFilename());
+            } catch (IOException e) {
+                contentTypeDetected = multipartFile.getContentType();
+            }
+            PutObjectArgs.Builder putObjectArgsBuilder = PutObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .object(fileNameWithPath)
+                    .stream(is, fileSize, -1) // Set part size to -1 for auto detection
+                    .contentType(contentTypeDetected); // use detected MIME type
 
-			long fileSize = is.available();
-			PutObjectArgs.Builder putObjectArgsBuilder = PutObjectArgs.builder()
-					.bucket(minioConfig.getBucketName())
-					.object(fileNameWithPath)
-					.stream(is, fileSize, -1) // Set part size to -1 for auto detection
-					.contentType(multipartFile.getContentType()); // Change this as per your file's content type
-
-			// If the file is larger than 5 MB, set the part size explicitly (5 * 1024 * 1024 bytes)
-			/*if (fileSize > 5 * 1024 * 1024) {
-				putObjectArgsBuilder.  .partSize(5 * 1024 * 1024);
-			}*/
-
-			minioClient.putObject(putObjectArgsBuilder.build());
-
-
+            minioClient.putObject(putObjectArgsBuilder.build());
 
 			log.debug("Upload Successful");
 
@@ -142,12 +139,28 @@ public class MinioRepository implements CloudFilesManager {
 
 			for (Map.Entry<String, BufferedImage> entry : artifact.getThumbnailImages().entrySet()) {
 				ByteArrayOutputStream os = new ByteArrayOutputStream();
-				ImageIO.write(entry.getValue(),
-						FilenameUtils.getExtension(artifact.getMultipartFile().getOriginalFilename()), os);
-				byte[] byteArray = os.toByteArray();
-				ByteArrayInputStream is = new ByteArrayInputStream(byteArray);
-				push(is, byteArray.length, artifact.getMultipartFile().getContentType(), entry.getKey());
-				os.flush();
+				String ext = FilenameUtils.getExtension(artifact.getMultipartFile().getOriginalFilename());
+                ImageIO.write(entry.getValue(), ext, os);
+                byte[] byteArray = os.toByteArray();
+
+                String thumbContentType;
+                try {
+                    Tika tika = new Tika();
+                    thumbContentType = tika.detect(new ByteArrayInputStream(byteArray), entry.getKey());
+                } catch (IOException e) {
+                    // Fallback to a generic guess based on extension
+                    if ("jpg".equalsIgnoreCase(ext) || "jpeg".equalsIgnoreCase(ext)) {
+                        thumbContentType = "image/jpeg";
+                    } else if ("png".equalsIgnoreCase(ext)) {
+                        thumbContentType = "image/png";
+                    } else {
+                        thumbContentType = artifact.getMultipartFile().getContentType();
+                    }
+                }
+
+                ByteArrayInputStream is = new ByteArrayInputStream(byteArray);
+                push(is, byteArray.length, thumbContentType, entry.getKey());
+                os.flush();
 			}
 
 		} catch (Exception ioe) {
@@ -249,7 +262,7 @@ public class MinioRepository implements CloudFilesManager {
         return signedUrl;
 	}
 
-	public Resource read(FileLocation fileLocation) {
+	public Resource read(FileLocation fileLocation, boolean isRetry) {
 
 		Resource resource = null;
 		File f = new File(fileLocation.getFileStoreId());
@@ -259,8 +272,14 @@ public class MinioRepository implements CloudFilesManager {
 					fileLocation.getFileName().length());
 
 			try {
+				if (f.exists()) {
+					boolean deleted = f.delete();
+					if (!deleted) {
+						log.warn("Failed to delete existing destination file: {}", f.getAbsolutePath());
+					}
+				}
 				minioClient.getObject(minioConfig.getBucketName(), fileName, f.getName());
-			} catch (InvalidKeyException | ErrorResponseException | IllegalArgumentException |
+			} catch (InvalidKeyException | ErrorResponseException |
                      InsufficientDataException | InternalException | InvalidBucketNameException |
                      InvalidResponseException | NoSuchAlgorithmException | XmlParserException | IOException |
                      ServerException e) {
@@ -270,12 +289,36 @@ public class MinioRepository implements CloudFilesManager {
 						"An error has occured while trying to download image from filestore system .");
 				throw new CustomException(map);
 
+			} catch (IllegalArgumentException e) {
+				handleDownloadRetry(isRetry, f, fileName, e);
 			}
-
 			resource = new FileSystemResource(Paths.get(f.getPath()).toFile());
 
 		}
 		return resource;
+	}
+
+	private void handleDownloadRetry(boolean isRetry, File f, String fileName, IllegalArgumentException e) {
+		if(isRetry){
+			log.warn("IllegalArgumentException caught while downloading the file. Retrying once...");
+			try {
+				if (f.exists()) {
+					boolean deleted = f.delete();
+					if (!deleted) {
+						log.warn("Failed to delete existing local file before download: {}", f.getAbsolutePath());
+					} else {
+						log.info("Deleted local file before retrying download: {}", f.getAbsolutePath());
+					}
+				}
+				minioClient.getObject(minioConfig.getBucketName(), fileName, f.getName());
+			} catch (Exception exception) {
+				log.error("Retry failed while downloading the file from Minio", exception);
+				Map<String, String> map = new HashMap<>();
+				map.put("ERROR_MINIO_RETRY_DOWNLOAD",
+						"Retry failed while downloading file from filestore system.");
+				throw new CustomException(map);
+			}
+		}
 	}
 
 	private Artifact mapToEntity(org.egov.filestore.domain.model.Artifact artifact) {
