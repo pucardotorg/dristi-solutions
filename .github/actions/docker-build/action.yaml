@@ -90,6 +90,13 @@ runs:
         echo "image tag for the service ${{ env.service_name }} is ${{ env.VERSION }}-${{ env.commit_hash }}"
         echo "image_tag=${{ env.VERSION }}-${{ env.commit_hash }}" >> $GITHUB_OUTPUT
 
+    - name: Set encryption keys based on branch or tag
+      if: env.service_name == "e-sign-svc"
+      shell: bash
+      run: |
+          echo "${{ secrets.ESIGN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+          echo "${{ secrets.ESIGN_PUBLIC_KEY }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
+
     - name: Build and Push Docker Image
       shell: bash
       run: |
