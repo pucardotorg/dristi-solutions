@@ -99,8 +99,6 @@ runs:
     - name: Set encryption keys based on branch or tag
       shell: bash
       run: |
-          ls
-          pwd
           echo "${{ inputs.esign_private_key }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
           echo "${{ inputs.esign_public_key }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
           cat backend/e-sign-svc/src/main/resources/privateKey.pem

@@ -83,13 +83,13 @@ runs:
     #     format: 'SARIF'
     #     args: "--disableOssIndex"
 
-    # - name: Build and analyze for ${{ inputs.service_name }}
-    #   if: ${{ env.language == 'java' }}
-    #   shell: bash
-    #   env:
-    #     GITHUB_TOKEN: ${{ inputs.ghub_token }}
-    #     SONAR_TOKEN: ${{ inputs.sonar_token }}
-    #   run: mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=${{ inputs.sonar_url }}
+    - name: Build and analyze for ${{ inputs.service_name }}
+      if: ${{ env.language == 'java' }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.ghub_token }}
+        SONAR_TOKEN: ${{ inputs.sonar_token }}
+      run: mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=solutions -Dsonar.host.url=${{ inputs.sonar_url }}
 
     # - name: find sarif file
     #   run: |
