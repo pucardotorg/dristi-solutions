@@ -421,6 +421,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         }
       }
     }
+    sessionStorage.removeItem("userRegistrationParams");
   };
 
   useEffect(() => {
