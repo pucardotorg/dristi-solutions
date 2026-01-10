@@ -14,6 +14,8 @@ import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import "dristi-ui-css";
 
 import { UICustomizations } from "./UICustomizations";
+import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
+import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
 
 var Digit = window.Digit || {};
 
@@ -49,12 +51,17 @@ const initTokens = (stateCode) => {
 };
 
 const initDigitUI = () => {
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
   window.Digit.Customizations = {
     commonUiConfig: UICustomizations,
   };
   window?.Digit.ComponentRegistryService.setupRegistry({});
   setupRequestInterceptor();
+  apiMonitor.init();
   initCoreComponents();
   initDRISTIComponents();
   initOrdersComponents();
@@ -68,7 +75,10 @@ const initDigitUI = () => {
   initTokens(stateCode);
 
   ReactDOM.render(
-    <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />,
+    <>
+      <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />
+      {hasViewApiMonitorAccess && <ApiMonitorPanel />}
+    </>,
     document.getElementById("root")
   );
 };

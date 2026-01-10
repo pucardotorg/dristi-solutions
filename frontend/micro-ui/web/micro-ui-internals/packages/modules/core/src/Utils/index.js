@@ -1,5 +1,5 @@
-import Axios from "axios";
-Axios.interceptors.response.use(
+import axiosInstance from "./axiosInstance";
+axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     const isEmployee = window.location.pathname.split("/").includes("employee");
@@ -124,7 +124,7 @@ export const Request = async ({
     .join("/");
 
   if (multipartFormData) {
-    const multipartFormDataRes = await Axios({
+    const multipartFormDataRes = await axiosInstance({
       method,
       url: _url,
       data: multipartData.data,
@@ -143,8 +143,8 @@ export const Request = async ({
   }
 
   const res = userDownload
-    ? await Axios({ method, url: _url, data, params, headers, responseType: "arraybuffer" })
-    : await Axios({ method, url: _url, data, params, headers });
+    ? await axiosInstance({ method, url: _url, data, params, headers, responseType: "arraybuffer" })
+    : await axiosInstance({ method, url: _url, data, params, headers });
 
   if (userDownload) return res;
 

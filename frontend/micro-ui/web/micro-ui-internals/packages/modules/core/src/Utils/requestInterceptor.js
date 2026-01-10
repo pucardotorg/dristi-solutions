@@ -1,7 +1,7 @@
-import Axios from "axios";
+import axiosInstance from "./axiosInstance";
 
 export const setupRequestInterceptor = () => {
-  Axios.interceptors.request.use(
+  axiosInstance.interceptors.request.use(
     (config) => {
       const isFileStoreApi = config.url && config.url.includes("/filestore/v1/files/url");
 
