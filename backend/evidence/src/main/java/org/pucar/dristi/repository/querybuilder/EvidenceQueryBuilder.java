@@ -219,35 +219,6 @@ public class EvidenceQueryBuilder {
         return firstCriteria;
     }
 
-    boolean addArtifactCriteriaList(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String fieldName, List<Integer> preparedStmtArgList) {
-        if (criteria != null && !criteria.isEmpty()) {
-            addClauseIfRequired(query, firstCriteria);
-            query.append(fieldName).append(" IN (");
-            for (int i = 0; i < criteria.size(); i++) {
-                query.append("?");
-                if (i < criteria.size() - 1) {
-                    query.append(", ");
-                }
-                preparedStmtList.add(criteria.get(i));
-                preparedStmtArgList.add(java.sql.Types.VARCHAR);
-            }
-            query.append(")");
-            firstCriteria = false;
-        }
-        return firstCriteria;
-    }
-
-    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, String criteriaClause,List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
-        if (criteria != null) {
-            addClauseIfRequired(query, firstCriteria);
-            query.append(criteriaClause);
-            preparedStmtList.add(criteria);
-            preparedStmtArgList.add(Types.BOOLEAN);
-            firstCriteria = false;
-        }
-        return firstCriteria;
-    }
-
     // TODO : need
     private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
@@ -282,6 +253,35 @@ public class EvidenceQueryBuilder {
 
         preparedStmtList.add(userUuid);
         preparedStmtArgList.add(Types.VARCHAR);
+    }
+
+    boolean addArtifactCriteriaList(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String fieldName, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(fieldName).append(" IN (");
+            for (int i = 0; i < criteria.size(); i++) {
+                query.append("?");
+                if (i < criteria.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(criteria.get(i));
+                preparedStmtArgList.add(java.sql.Types.VARCHAR);
+            }
+            query.append(")");
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, String criteriaClause,List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
+        if (criteria != null) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(criteriaClause);
+            preparedStmtList.add(criteria);
+            preparedStmtArgList.add(Types.BOOLEAN);
+            firstCriteria = false;
+        }
+        return firstCriteria;
     }
 
     public String getTotalCountQuery(String baseQuery) {

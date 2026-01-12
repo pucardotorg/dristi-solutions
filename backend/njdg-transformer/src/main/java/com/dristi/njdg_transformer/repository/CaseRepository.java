@@ -413,7 +413,7 @@ public class CaseRepository {
 
     public CaseTypeDetails getExistingCaseConversionDetails(String cino) {
         try {
-            log.debug("Fetching existing case conversion details for CINO: {}", cino);
+            log.info("Fetching existing case conversion details for CINO: {}", cino);
             
             String selectQuery = queryBuilder.getCaseConversionSelectQuery();
             Object[] params = new Object[]{cino};
@@ -437,15 +437,15 @@ public class CaseRepository {
                     .build());
             
             if (!results.isEmpty()) {
-                log.debug("Found existing case conversion details for CINO: {}", cino);
+                log.info("Found existing case conversion details for CINO: {}", cino);
                 return results.get(0);
             } else {
-                log.debug("No existing case conversion details found for CINO: {}", cino);
+                log.info("No existing case conversion details found for CINO: {}", cino);
                 return null;
             }
             
         } catch (EmptyResultDataAccessException e) {
-            log.debug("No case conversion details found for CINO: {}", cino);
+            log.info("No case conversion details found for CINO: {}", cino);
             return null;
         } catch (DataAccessException e) {
             log.error("Failed to fetch case conversion details for CINO: {} | error: {}", cino, e.getMessage(), e);
@@ -455,7 +455,7 @@ public class CaseRepository {
 
     public Integer getNextSrNoForCaseConversion(String cino) {
         try {
-            log.debug("Getting next sr_no for case conversion CINO: {}", cino);
+            log.info("Getting next sr_no for case conversion CINO: {}", cino);
             
             String maxSrNoQuery = queryBuilder.getMaxSrNoCaseConversionQuery();
             Object[] params = new Object[]{cino};
@@ -464,11 +464,11 @@ public class CaseRepository {
             Integer maxSrNo = jdbcTemplate.queryForObject(maxSrNoQuery, params, types, Integer.class);
             Integer nextSrNo = (maxSrNo != null ? maxSrNo : 0) + 1;
             
-            log.debug("Next sr_no for CINO: {} is {}", cino, nextSrNo);
+            log.info("Next sr_no for CINO: {} is {}", cino, nextSrNo);
             return nextSrNo;
             
         } catch (EmptyResultDataAccessException e) {
-            log.debug("No existing records found for CINO: {}, starting with sr_no = 1", cino);
+            log.info("No existing records found for CINO: {}, starting with sr_no = 1", cino);
             return 1;
         } catch (DataAccessException e) {
             log.error("Failed to get next sr_no for CINO: {} | error: {}", cino, e.getMessage(), e);
@@ -501,6 +501,7 @@ public class CaseRepository {
             preparedStmtList.add(caseTypeDetails.getNewFilNo());
             preparedStmtList.add(caseTypeDetails.getNewFilYear());
             preparedStmtList.add(caseTypeDetails.getJocode());
+            preparedStmtList.add(caseTypeDetails.getConvertedAt());
             
             // Set parameter types
             preparedStmtArgsList.add(Types.VARCHAR);    // cino
@@ -518,6 +519,7 @@ public class CaseRepository {
             preparedStmtArgsList.add(Types.INTEGER);    // newfil_no
             preparedStmtArgsList.add(Types.SMALLINT);   // newfil_year
             preparedStmtArgsList.add(Types.VARCHAR);    // jocode
+            preparedStmtArgsList.add(Types.TIMESTAMP);  // converted_at
             
             jdbcTemplate.update(insertQuery, preparedStmtList.toArray(),
                     preparedStmtArgsList.stream().mapToInt(Integer::intValue).toArray());

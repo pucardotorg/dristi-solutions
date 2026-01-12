@@ -157,6 +157,16 @@ public class BailQueryBuilder {
         }
     }
 
+    private void addOwnerCriteria(String owner, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (owner != null && !owner.isEmpty()) {
+            query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
+            preparedStmtList.add(owner);
+            preparedStmtList.add(owner);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+    }
+
     private void addBailCriteria(String criteria, StringBuilder query, String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             query.append(" AND ");
@@ -175,16 +185,6 @@ public class BailQueryBuilder {
                     .append(") ");
             preparedStmtList.addAll(criteria);
             criteria.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
-        }
-    }
-
-    private void addOwnerCriteria(String owner, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (owner != null && !owner.isEmpty()) {
-            query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
-            preparedStmtList.add(owner);
-            preparedStmtList.add(owner);
-            preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtArgList.add(Types.VARCHAR);
         }
     }
 }
