@@ -279,6 +279,7 @@ public class CaseBundleService {
                         log.info("process case bundle ended  for caseID {}", caseId);
                     } catch (Exception e) {
                         log.error("Error generating PDF", e);
+                        throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
                     }
                     Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                     Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
@@ -288,7 +289,8 @@ public class CaseBundleService {
                     removeFileStore(curFileStore, fileStoreIds, tenantId);
                     log.info("removing file ended  for case {} ", caseId);
                     fileStoreId = (String) indexMap.get("fileStoreId");
-                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount") != null ? (Integer) pdfResponseMap.get("pageCount") : 0;
+                    Object pageCountObj = pdfResponseMap.get("pageCount");
+                    Integer pageCount = pageCountObj != null ? (Integer) pageCountObj : 0;
                     caseBundleTracker.setPageCount(pageCount);
                     //TODO: remove commented code after testing
 //                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
@@ -356,7 +358,7 @@ public class CaseBundleService {
             }
             fileStoreUtil.deleteFilesByFileStore(fileStoreToRemove, tenantId);
         } catch (Exception e) {
-            log.error("Error deleting files :: {}", fileStoreToRemove);
+            log.error("Error deleting files :: {}", fileStoreToRemove, e);
         }
     }
 
