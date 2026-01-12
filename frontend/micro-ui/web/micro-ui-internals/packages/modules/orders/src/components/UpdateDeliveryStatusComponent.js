@@ -77,7 +77,7 @@ const UpdateDeliveryStatusComponent = ({
           type={"text"}
           name={"remarks"}
           onChange={(e) => {
-            sanitizeData(e?.target?.value);
+            setRemarks(sanitizeData(e?.target?.value));
           }}
         />
       </LabelFieldPair>
