@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
@@ -81,11 +81,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
-  const latestFormValuesRef = useRef(null); // Track latest form values for PENDING_RPAD_COLLECTION tab
-  const latestPendingSignFormValuesRef = useRef(null); // Track latest form values for PENDING_SIGN tab
-  const latestSignedFormValuesRef = useRef(null); // Track latest form values for SIGNED tab
-  const latestSentFormValuesRef = useRef(null); // Track latest form values for SENT tab
-  const isInitialLoadRef = useRef(false); // Track if this is the initial load after "Send for Sign" - start as false so normal searches work
   const roles = Digit.UserService.getUser()?.info?.roles;
 
   const hasViewAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_ATTACHMENT"), [roles]);
@@ -301,12 +296,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
 
       setShowActionModal(false);
-      // Set flag to prevent onFormValueChange from overwriting during reload (for PENDING_SIGN tab)
-      isInitialLoadRef.current = true;
       setReload(!reload);
-      setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 1000);
     } catch (error) {
       setShowErrorToast({
         message: t("SEND_FAILED"),
@@ -417,33 +407,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setShowErrorToast({ message: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
         setTimeout(() => setShowErrorToast(null), 3000);
         setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((s) => s.taskNumber === item.taskNumber)) || []);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
         setReload(!reload);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
       } else {
         setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
         setTimeout(() => setShowErrorToast(null), 5000);
         setBulkSendList([]);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
         setReload((prev) => prev + 1);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
       }
     } catch (error) {
       setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
       setTimeout(() => setShowErrorToast(null), 5000);
       setBulkSendList([]);
-      // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-      isInitialLoadRef.current = true;
       setReload((prev) => prev + 1);
-      setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 1000);
     } finally {
       setIsSubmitting(false);
       setIsBulkSending(false);
@@ -525,12 +500,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           });
         }
         setShowActionModal(false);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
         setReload(!reload);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
       } catch (error) {
         console.error("Error updating task data:", error);
       }
@@ -592,38 +562,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setBulkSignList([]);
     setBulkSendList([]);
     setBulkRpadList([]);
-    // Clear stored config when switching tabs
-    sessionStorage.removeItem("pendingRpadStoredConfig");
-    sessionStorage.removeItem("pendingSignStoredConfig");
-    sessionStorage.removeItem("signedStoredConfig");
-    sessionStorage.removeItem("sentStoredConfig");
     setReload(!reload);
   };
-
-  // Clear sessionStorage when component unmounts (user navigates away) or page refreshes
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Clear storage on page refresh
-      sessionStorage.removeItem("pendingRpadStoredConfig");
-      sessionStorage.removeItem("pendingSignStoredConfig");
-      sessionStorage.removeItem("signedStoredConfig");
-      sessionStorage.removeItem("sentStoredConfig");
-    };
-
-    // Add event listener for page refresh
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    // Cleanup function - runs when component unmounts (user navigates away)
-    return () => {
-      // Remove event listener
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Clear storage when component unmounts
-      sessionStorage.removeItem("pendingRpadStoredConfig");
-      sessionStorage.removeItem("pendingSignStoredConfig");
-      sessionStorage.removeItem("signedStoredConfig");
-      sessionStorage.removeItem("sentStoredConfig");
-    };
-  }, []);
 
   function findNextHearings(objectsList) {
     const now = Date.now();
@@ -786,9 +726,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [documents, orderType, deliveryChannel]);
 
   const handleSubmitEsign = useCallback(async () => {
-    // Set flag to prevent onFormValueChange from clearing sessionStorage during this operation
-    isInitialLoadRef.current = true;
-
     try {
       let localStorageID = "";
       if (mockESignEnabled) {
@@ -889,10 +826,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
       console.error("Error uploading document:", error);
     } finally {
       setIsLoading(false);
-      // Reset the flag after a delay to allow re-renders to complete
-      setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 1000);
     }
   }, [rowData, signatureId, tenantId]);
 
@@ -1003,21 +936,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setShowErrorToast({ message: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
       setTimeout(() => setShowErrorToast(null), 3000);
       setShowActionModal(false);
-
-      // Remove the sent case from the list immediately
-      if (rowData?.taskNumber) {
-        setBulkRpadList((prev) => prev?.filter((item) => item?.taskNumber !== rowData.taskNumber) || []);
-      }
-
-      // Don't update sessionStorage here - it should only be updated when search is clicked
-      // The reload will use the stored config from sessionStorage (which was set when search was clicked)
-      // Set flag to prevent onFormValueChange from overwriting during reload
-      isInitialLoadRef.current = true;
       setReload((prev) => !prev);
-      // Reset flag after a short delay to allow initial form load to complete
-      setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 1000);
     } catch (error) {
       setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
       setTimeout(() => setShowErrorToast(null), 5000);
@@ -1310,13 +1229,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
           // Only remove tasks that were successfully processed (non-police + successfully sent police tasks)
           setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !tasksToRemove.has(p.taskNumber)) : []));
-          // Set flag to prevent onFormValueChange from overwriting during reload
-          isInitialLoadRef.current = true;
           setReload((prev) => prev + 1);
-          // Reset flag after a short delay to allow initial form load to complete
-          setTimeout(() => {
-            isInitialLoadRef.current = false;
-          }, 1000);
           // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
         } catch (e) {
@@ -1569,12 +1482,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       // closeButtonAction={false}
                       submitButtonAction={() => {
                         setShowActionModal(false);
-                        // Set flag to prevent onFormValueChange from overwriting during reload
-                        isInitialLoadRef.current = true;
                         setReload(!reload);
-                        setTimeout(() => {
-                          isInitialLoadRef.current = false;
-                        }, 1000);
                       }}
                       t={t}
                       submissionData={submissionDataIcops}
@@ -1698,12 +1606,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       // closeButtonAction={false}
                       submitButtonAction={() => {
                         setShowActionModal(false);
-                        // Set flag to prevent onFormValueChange from overwriting during reload
-                        isInitialLoadRef.current = true;
                         setReload(!reload);
-                        setTimeout(() => {
-                          isInitialLoadRef.current = false;
-                        }, 1000);
                       }}
                       t={t}
                       submissionData={submissionDataIcops}
@@ -1864,416 +1767,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setRowData({});
   }, []);
 
-  // Store config in sessionStorage when search is performed (detected via onFormValueChange)
   const onFormValueChange = useCallback(
     (form) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
       const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
-      const isPendingSignTab = currentConfig?.label === "PENDING_SIGN";
-      const isSentTab = currentConfig?.label === "SENT";
-
-      // Track latest form values for PENDING_RPAD_COLLECTION tab whenever form changes
-      if (isPendingRpadTab) {
-        if (form?.searchForm) {
-          let searchFormValues = { ...form.searchForm };
-
-          // If orderType is empty string but we have a previous object value in ref, preserve it
-          if (
-            (!searchFormValues.orderType || searchFormValues.orderType === "" || typeof searchFormValues.orderType === "string") &&
-            latestFormValuesRef.current?.orderType &&
-            typeof latestFormValuesRef.current.orderType === "object"
-          ) {
-            searchFormValues.orderType = latestFormValuesRef.current.orderType;
-          }
-
-          latestFormValuesRef.current = searchFormValues;
-        } else {
-          const stored = sessionStorage.getItem("pendingRpadStoredConfig");
-          if (stored) {
-            try {
-              const parsedConfig = JSON.parse(stored);
-              if (parsedConfig?.sections?.search?.uiConfig?.defaultValues) {
-                latestFormValuesRef.current = parsedConfig.sections.search.uiConfig.defaultValues;
-              }
-            } catch (e) {
-              // Keep previous value
-            }
-          }
-        }
-      }
-
-      // Track latest form values for PENDING_SIGN tab whenever form changes
-      if (isPendingSignTab) {
-        if (form?.searchForm) {
-          let searchFormValues = { ...form.searchForm };
-
-          // If orderType is empty string but we have a previous object value in ref, preserve it
-          if (
-            (!searchFormValues.orderType || searchFormValues.orderType === "" || typeof searchFormValues.orderType === "string") &&
-            latestPendingSignFormValuesRef.current?.orderType &&
-            typeof latestPendingSignFormValuesRef.current.orderType === "object"
-          ) {
-            searchFormValues.orderType = latestPendingSignFormValuesRef.current.orderType;
-          }
-
-          latestPendingSignFormValuesRef.current = searchFormValues;
-        } else {
-          const stored = sessionStorage.getItem("pendingSignStoredConfig");
-          if (stored) {
-            try {
-              const parsedConfig = JSON.parse(stored);
-              if (parsedConfig?.sections?.search?.uiConfig?.defaultValues) {
-                latestPendingSignFormValuesRef.current = parsedConfig.sections.search.uiConfig.defaultValues;
-              }
-            } catch (e) {
-              // Keep previous value
-            }
-          }
-        }
-      }
-
-      // Track latest form values for SIGNED tab whenever form changes
-      if (isSignedTab) {
-        if (form?.searchForm) {
-          let searchFormValues = { ...form.searchForm };
-
-          // If orderType is empty string but we have a previous object value in ref, preserve it
-          if (
-            (!searchFormValues.orderType || searchFormValues.orderType === "" || typeof searchFormValues.orderType === "string") &&
-            latestSignedFormValuesRef.current?.orderType &&
-            typeof latestSignedFormValuesRef.current.orderType === "object"
-          ) {
-            searchFormValues.orderType = latestSignedFormValuesRef.current.orderType;
-          }
-
-          latestSignedFormValuesRef.current = searchFormValues;
-        } else {
-          const stored = sessionStorage.getItem("signedStoredConfig");
-          if (stored) {
-            try {
-              const parsedConfig = JSON.parse(stored);
-              if (parsedConfig?.sections?.search?.uiConfig?.defaultValues) {
-                latestSignedFormValuesRef.current = parsedConfig.sections.search.uiConfig.defaultValues;
-              }
-            } catch (e) {
-              // Keep previous value
-            }
-          }
-        }
-      }
-
-      // Track latest form values for SENT tab whenever form changes
-      if (isSentTab) {
-        if (form?.searchForm) {
-          let searchFormValues = { ...form.searchForm };
-
-          // If orderType is empty string but we have a previous object value in ref, preserve it
-          if (
-            (!searchFormValues.orderType || searchFormValues.orderType === "" || typeof searchFormValues.orderType === "string") &&
-            latestSentFormValuesRef.current?.orderType &&
-            typeof latestSentFormValuesRef.current.orderType === "object"
-          ) {
-            searchFormValues.orderType = latestSentFormValuesRef.current.orderType;
-          }
-
-          latestSentFormValuesRef.current = searchFormValues;
-        } else {
-          const stored = sessionStorage.getItem("sentStoredConfig");
-          if (stored) {
-            try {
-              const parsedConfig = JSON.parse(stored);
-              if (parsedConfig?.sections?.search?.uiConfig?.defaultValues) {
-                latestSentFormValuesRef.current = parsedConfig.sections.search.uiConfig.defaultValues;
-              }
-            } catch (e) {
-              // Keep previous value
-            }
-          }
-        }
-      }
-
-      // Store config ONLY when searchForm is present (means search button was clicked) - PENDING_RPAD_COLLECTION
-      if (isPendingRpadTab && form?.searchForm) {
-        // Don't update during initial load after "Send for Sign" reload or after clear search
-        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
-          return;
-        }
-
-        const formValues = form.searchForm;
-
-        // Check if this is a "Clear Search" action - when orderType is empty/default
-        // Clear Search resets form to default values where orderType is empty string
-        const isOrderTypeEmpty =
-          !formValues.orderType || formValues.orderType === "" || (typeof formValues.orderType === "string" && formValues.orderType.trim() === "");
-
-        if (isOrderTypeEmpty) {
-          // Clear search was clicked - remove stored config and reset ref
-          sessionStorage.removeItem("pendingRpadStoredConfig");
-          latestFormValuesRef.current = {};
-          return;
-        }
-
-        const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-        const baseConfig = configArray?.[activeTabIndex];
-
-        if (baseConfig) {
-          let processedFormValues = { ...formValues };
-
-          // If orderType is empty string but we have it in ref, use ref value
-          if (!processedFormValues.orderType || processedFormValues.orderType === "" || typeof processedFormValues.orderType === "string") {
-            if (latestFormValuesRef.current?.orderType && typeof latestFormValuesRef.current.orderType === "object") {
-              processedFormValues.orderType = latestFormValuesRef.current.orderType;
-            } else {
-              const stored = sessionStorage.getItem("pendingRpadStoredConfig");
-              if (stored) {
-                try {
-                  const parsedConfig = JSON.parse(stored);
-                  const storedOrderType = parsedConfig?.sections?.search?.uiConfig?.defaultValues?.orderType;
-                  if (storedOrderType && typeof storedOrderType === "object") {
-                    processedFormValues.orderType = storedOrderType;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-            }
-          }
-
-          // Create updated config with form values as defaultValues
-          const updatedConfig = {
-            ...baseConfig,
-            sections: {
-              ...baseConfig?.sections,
-              search: {
-                ...baseConfig?.sections?.search,
-                uiConfig: {
-                  ...baseConfig?.sections?.search?.uiConfig,
-                  defaultValues: processedFormValues,
-                },
-              },
-            },
-          };
-
-          try {
-            const configString = JSON.stringify(updatedConfig);
-            sessionStorage.setItem("pendingRpadStoredConfig", configString);
-          } catch (storageError) {
-            // Ignore storage errors
-          }
-        }
-      }
-
-      // Store config ONLY when searchForm is present (means search button was clicked) - PENDING_SIGN
-      if (isPendingSignTab && form?.searchForm) {
-        // Don't update during initial load after bulk sign reload or after clear search
-        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
-          return;
-        }
-
-        const formValues = form.searchForm;
-
-        // Check if this is a "Clear Search" action - when orderType is empty/default
-        const isOrderTypeEmpty =
-          !formValues.orderType || formValues.orderType === "" || (typeof formValues.orderType === "string" && formValues.orderType.trim() === "");
-
-        if (isOrderTypeEmpty) {
-          // Clear search was clicked - remove stored config and reset ref
-          sessionStorage.removeItem("pendingSignStoredConfig");
-          latestPendingSignFormValuesRef.current = {};
-          return;
-        }
-
-        const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-        const baseConfig = configArray?.[activeTabIndex];
-
-        if (baseConfig) {
-          let processedFormValues = { ...formValues };
-
-          // If orderType is empty string but we have it in ref, use ref value
-          if (!processedFormValues.orderType || processedFormValues.orderType === "" || typeof processedFormValues.orderType === "string") {
-            if (latestPendingSignFormValuesRef.current?.orderType && typeof latestPendingSignFormValuesRef.current.orderType === "object") {
-              processedFormValues.orderType = latestPendingSignFormValuesRef.current.orderType;
-            } else {
-              const stored = sessionStorage.getItem("pendingSignStoredConfig");
-              if (stored) {
-                try {
-                  const parsedConfig = JSON.parse(stored);
-                  const storedOrderType = parsedConfig?.sections?.search?.uiConfig?.defaultValues?.orderType;
-                  if (storedOrderType && typeof storedOrderType === "object") {
-                    processedFormValues.orderType = storedOrderType;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-            }
-          }
-
-          // Create updated config with form values as defaultValues
-          const updatedConfig = {
-            ...baseConfig,
-            sections: {
-              ...baseConfig?.sections,
-              search: {
-                ...baseConfig?.sections?.search,
-                uiConfig: {
-                  ...baseConfig?.sections?.search?.uiConfig,
-                  defaultValues: processedFormValues,
-                },
-              },
-            },
-          };
-
-          try {
-            const configString = JSON.stringify(updatedConfig);
-            sessionStorage.setItem("pendingSignStoredConfig", configString);
-          } catch (storageError) {
-            // Ignore storage errors
-          }
-        }
-      }
-
-      // Store config ONLY when searchForm is present (means search button was clicked) - SIGNED
-      if (isSignedTab && form?.searchForm) {
-        // Don't update during initial load after action reload or after clear search
-        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
-          return;
-        }
-
-        const formValues = form.searchForm;
-
-        // Check if this is a "Clear Search" action - when orderType is empty/default
-        const isOrderTypeEmpty =
-          !formValues.orderType || formValues.orderType === "" || (typeof formValues.orderType === "string" && formValues.orderType.trim() === "");
-
-        if (isOrderTypeEmpty) {
-          // Clear search was clicked - remove stored config and reset ref
-          sessionStorage.removeItem("signedStoredConfig");
-          latestSignedFormValuesRef.current = {};
-          return;
-        }
-
-        const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-        const baseConfig = configArray?.[activeTabIndex];
-
-        if (baseConfig) {
-          let processedFormValues = { ...formValues };
-
-          // If orderType is empty string but we have it in ref, use ref value
-          if (!processedFormValues.orderType || processedFormValues.orderType === "" || typeof processedFormValues.orderType === "string") {
-            if (latestSignedFormValuesRef.current?.orderType && typeof latestSignedFormValuesRef.current.orderType === "object") {
-              processedFormValues.orderType = latestSignedFormValuesRef.current.orderType;
-            } else {
-              const stored = sessionStorage.getItem("signedStoredConfig");
-              if (stored) {
-                try {
-                  const parsedConfig = JSON.parse(stored);
-                  const storedOrderType = parsedConfig?.sections?.search?.uiConfig?.defaultValues?.orderType;
-                  if (storedOrderType && typeof storedOrderType === "object") {
-                    processedFormValues.orderType = storedOrderType;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-            }
-          }
-
-          // Create updated config with form values as defaultValues
-          const updatedConfig = {
-            ...baseConfig,
-            sections: {
-              ...baseConfig?.sections,
-              search: {
-                ...baseConfig?.sections?.search,
-                uiConfig: {
-                  ...baseConfig?.sections?.search?.uiConfig,
-                  defaultValues: processedFormValues,
-                },
-              },
-            },
-          };
-
-          try {
-            const configString = JSON.stringify(updatedConfig);
-            sessionStorage.setItem("signedStoredConfig", configString);
-          } catch (storageError) {
-            // Ignore storage errors
-          }
-        }
-      }
-
-      // Store config ONLY when searchForm is present (means search button was clicked) - SENT
-      if (isSentTab && form?.searchForm) {
-        // Don't update during initial load after action reload or after clear search
-        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
-          return;
-        }
-
-        const formValues = form.searchForm;
-
-        // Check if this is a "Clear Search" action - when orderType is empty/default
-        const isOrderTypeEmpty =
-          !formValues.orderType || formValues.orderType === "" || (typeof formValues.orderType === "string" && formValues.orderType.trim() === "");
-
-        if (isOrderTypeEmpty) {
-          // Clear search was clicked - remove stored config and reset ref
-          sessionStorage.removeItem("sentStoredConfig");
-          latestSentFormValuesRef.current = {};
-          return;
-        }
-
-        const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-        const baseConfig = configArray?.[activeTabIndex];
-
-        if (baseConfig) {
-          let processedFormValues = { ...formValues };
-
-          // If orderType is empty string but we have it in ref, use ref value
-          if (!processedFormValues.orderType || processedFormValues.orderType === "" || typeof processedFormValues.orderType === "string") {
-            if (latestSentFormValuesRef.current?.orderType && typeof latestSentFormValuesRef.current.orderType === "object") {
-              processedFormValues.orderType = latestSentFormValuesRef.current.orderType;
-            } else {
-              const stored = sessionStorage.getItem("sentStoredConfig");
-              if (stored) {
-                try {
-                  const parsedConfig = JSON.parse(stored);
-                  const storedOrderType = parsedConfig?.sections?.search?.uiConfig?.defaultValues?.orderType;
-                  if (storedOrderType && typeof storedOrderType === "object") {
-                    processedFormValues.orderType = storedOrderType;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-            }
-          }
-
-          // Create updated config with form values as defaultValues
-          const updatedConfig = {
-            ...baseConfig,
-            sections: {
-              ...baseConfig?.sections,
-              search: {
-                ...baseConfig?.sections?.search,
-                uiConfig: {
-                  ...baseConfig?.sections?.search?.uiConfig,
-                  defaultValues: processedFormValues,
-                },
-              },
-            },
-          };
-
-          try {
-            const configString = JSON.stringify(updatedConfig);
-            sessionStorage.setItem("sentStoredConfig", configString);
-          } catch (storageError) {
-            // Ignore storage errors
-          }
-        }
-      }
-
       if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
         const updatedData = form.searchResult.map((item) => ({
           ...item,
@@ -2351,77 +1849,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
     };
 
-    // Check sessionStorage for stored config first (for PENDING_RPAD_COLLECTION and PENDING_SIGN tabs)
     const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-    const currentTabConfig = configArray?.[activeTabIndex];
-
-    let baseConfig;
-    let hasStoredConfig = false;
-
-    // Check for PENDING_RPAD_COLLECTION stored config
-    if (currentTabConfig?.label === "PENDING_RPAD_COLLECTION") {
-      const storedConfig = sessionStorage.getItem("pendingRpadStoredConfig");
-      if (storedConfig) {
-        try {
-          const parsedConfig = JSON.parse(storedConfig);
-          baseConfig = parsedConfig;
-          hasStoredConfig = true;
-        } catch (e) {
-          baseConfig = currentTabConfig;
-        }
-      } else {
-        baseConfig = currentTabConfig;
-      }
-    }
-    // Check for PENDING_SIGN stored config
-    else if (currentTabConfig?.label === "PENDING_SIGN") {
-      const storedConfig = sessionStorage.getItem("pendingSignStoredConfig");
-      if (storedConfig) {
-        try {
-          const parsedConfig = JSON.parse(storedConfig);
-          baseConfig = parsedConfig;
-          hasStoredConfig = true;
-        } catch (e) {
-          baseConfig = currentTabConfig;
-        }
-      } else {
-        baseConfig = currentTabConfig;
-      }
-    }
-    // Check for SIGNED stored config
-    else if (currentTabConfig?.label === "SIGNED") {
-      const storedConfig = sessionStorage.getItem("signedStoredConfig");
-      if (storedConfig) {
-        try {
-          const parsedConfig = JSON.parse(storedConfig);
-          baseConfig = parsedConfig;
-          hasStoredConfig = true;
-        } catch (e) {
-          baseConfig = currentTabConfig;
-        }
-      } else {
-        baseConfig = currentTabConfig;
-      }
-    }
-    // Check for SENT stored config
-    else if (currentTabConfig?.label === "SENT") {
-      const storedConfig = sessionStorage.getItem("sentStoredConfig");
-      if (storedConfig) {
-        try {
-          const parsedConfig = JSON.parse(storedConfig);
-          baseConfig = parsedConfig;
-          hasStoredConfig = true;
-        } catch (e) {
-          baseConfig = currentTabConfig;
-        }
-      } else {
-        baseConfig = currentTabConfig;
-      }
-    }
-    // For other tabs, use the default config
-    else {
-      baseConfig = currentTabConfig;
-    }
+    const baseConfig = configArray?.[activeTabIndex];
 
     if (!baseConfig) return null;
 
@@ -2452,7 +1881,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return field;
     });
 
-    const finalConfig = {
+    return {
       ...baseConfig,
       sections: {
         ...baseConfig?.sections,
@@ -2460,10 +1889,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           ...baseConfig?.sections?.search,
           uiConfig: {
             ...baseConfig?.sections?.search?.uiConfig,
-            // Always preserve defaultValues from baseConfig if they exist
-            // When using stored config, this will have the search values
-            // When not using stored config, this will be undefined/empty (form won't reset)
-            defaultValues: baseConfig?.sections?.search?.uiConfig?.defaultValues,
             fields: updatedFields,
           },
         },
@@ -2494,18 +1919,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
         activeTabIndex: activeTabIndex,
       },
     };
-
-    // Force a new object reference when defaultValues change to ensure useEffect triggers in Inboxheader
-    // This ensures the form resets when config changes
-    return {
-      ...finalConfig,
-      _defaultValuesHash:
-        hasStoredConfig && finalConfig?.sections?.search?.uiConfig?.defaultValues
-          ? `${finalConfig.sections.search.uiConfig.defaultValues.orderType?.code || ""}-${
-              finalConfig.sections.search.uiConfig.defaultValues.channel?.code || ""
-            }`
-          : "no-defaults",
-    };
   }, [
     isJudge,
     courtId,
@@ -2515,58 +1928,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewSummonsAccess,
     hasViewWarrantAccess,
     hasViewNoticeAccess,
-    reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
-
-  // Ref to track if clear search was clicked - used to trigger reload
-  const clearSearchClickedRef = useRef(false);
-
-  // Clear search button handler - clears sessionStorage when clear search is clicked on PENDING_RPAD_COLLECTION or PENDING_SIGN tab
-  useEffect(() => {
-    const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-    const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
-    const isPendingSignTab = currentConfig?.label === "PENDING_SIGN";
-    const isSignedTab = currentConfig?.label === "SIGNED";
-    const isSentTab = currentConfig?.label === "SENT";
-
-    if (!isPendingRpadTab && !isPendingSignTab && !isSignedTab && !isSentTab) return;
-
-    const handleClearSearchClick = (e) => {
-      const target = e.target;
-      // Check if clicked element or its parent is a link-label with "Clear" text
-      const linkLabel = target?.closest(".link-label") || (target?.classList?.contains("link-label") ? target : null);
-
-      if (linkLabel && linkLabel.textContent?.toLowerCase()?.includes("clear")) {
-        // Clear stored config when clear search is clicked
-        if (isPendingRpadTab) {
-          sessionStorage.removeItem("pendingRpadStoredConfig");
-          latestFormValuesRef.current = {};
-        } else if (isPendingSignTab) {
-          sessionStorage.removeItem("pendingSignStoredConfig");
-          latestPendingSignFormValuesRef.current = {};
-        } else if (isSignedTab) {
-          sessionStorage.removeItem("signedStoredConfig");
-          latestSignedFormValuesRef.current = {};
-        } else if (isSentTab) {
-          sessionStorage.removeItem("sentStoredConfig");
-          latestSentFormValuesRef.current = {};
-        }
-        // Set flag and trigger reload after a short delay to let the form reset first
-        clearSearchClickedRef.current = true;
-        setTimeout(() => {
-          setReload((prev) => !prev);
-          clearSearchClickedRef.current = false;
-        }, 100);
-      }
-    };
-
-    // Use document level event delegation with capture phase
-    document.addEventListener("click", handleClearSearchClick, true);
-
-    return () => {
-      document.removeEventListener("click", handleClearSearchClick, true);
-    };
-  }, [activeTabIndex, isJudge, courtId]);
 
   // Header checkbox functionality: Controls all visible row checkboxes.
   // When header is checked/unchecked, all rows follow. When any individual row checkbox is clicked,
@@ -2745,11 +2107,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
             </div>
             <div className="review-process-page inbox-search-wrapper">
               <InboxSearchComposer
-                key={`inbox-composer-${reload}-${config?.label || "default"}-${
-                  config?.sections?.search?.uiConfig?.defaultValues?.orderType?.code || "no-orderType"
-                }-${config?.sections?.search?.uiConfig?.defaultValues?.channel?.code || "no-channel"}-${config?._defaultValuesHash || "no-hash"}`}
+                key={`inbox-composer-${reload}`}
                 configs={config}
-                defaultValues={config?.sections?.search?.uiConfig?.defaultValues || defaultValues}
+                defaultValues={defaultValues}
                 showTab={true}
                 tabData={tabData}
                 onTabChange={onTabChange}
