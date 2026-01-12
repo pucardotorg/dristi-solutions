@@ -77,6 +77,7 @@ export const WitnessDepositionSignModal = ({
   const [witnessDepositionSignedPdf, setWitnessDepositionSignedPdf] = useState("");
   const [loader, setLoader] = useState(false);
   const [witnessDepositionLoader, setWitnessDepositionLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -180,6 +181,7 @@ export const WitnessDepositionSignModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = useCallback(async () => {
@@ -193,6 +195,7 @@ export const WitnessDepositionSignModal = ({
         clearWitnessDepositionSessionData();
       } catch (error) {
         console.error("error", error);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setLoader(false);
       }
@@ -525,6 +528,7 @@ export const WitnessDepositionSignModal = ({
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          fileUploadError={fileUploadError}
         />
       )}
       {/* after signing showing signed modal */}

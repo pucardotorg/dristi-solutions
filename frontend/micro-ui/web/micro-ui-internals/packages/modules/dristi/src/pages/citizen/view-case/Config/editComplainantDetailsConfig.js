@@ -464,16 +464,16 @@ const editComplainantDetailsFormConfig = [
               options: [
                 {
                   code: "YES",
-                  name: "YES"
+                  name: "YES",
                 },
                 {
                   code: "NO",
-                  name: "NO"
-                }
+                  name: "NO",
+                },
               ],
               required: true,
               optionsKey: "code",
-              isMandatory: true
+              isMandatory: true,
             },
             {
               name: "pincode",
@@ -487,10 +487,10 @@ const editComplainantDetailsFormConfig = [
                 maxlength: 6,
                 minlength: 6,
                 isRequired: true,
-                patternType: "Pincode"
+                patternType: "Pincode",
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
+              inputFieldClassName: "user-details-form-style",
             },
             {
               name: "state",
@@ -502,13 +502,13 @@ const editComplainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name"
+                  patternType: "name",
                 },
                 isRequired: true,
-                patternType: "Name"
+                patternType: "Name",
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
+              inputFieldClassName: "user-details-form-style",
             },
             {
               name: "district",
@@ -520,13 +520,13 @@ const editComplainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "name"
+                  patternType: "name",
                 },
                 isRequired: true,
-                patternType: "Name"
+                patternType: "Name",
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
+              inputFieldClassName: "user-details-form-style",
             },
             {
               name: "city",
@@ -535,10 +535,10 @@ const editComplainantDetailsFormConfig = [
               validation: {
                 errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
                 isRequired: true,
-                patternType: "Name"
+                patternType: "Name",
               },
               isMandatory: true,
-              inputFieldClassName: "user-details-form-style"
+              inputFieldClassName: "user-details-form-style",
             },
             {
               name: "locality",
@@ -549,21 +549,21 @@ const editComplainantDetailsFormConfig = [
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
-                  patternType: "address"
+                  patternType: "address",
                 },
                 maxlength: 256,
                 minlength: 2,
-                isRequired: true
+                isRequired: true,
               },
               isMandatory: true,
               isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style"
-            }
+              inputFieldClassName: "user-details-form-style",
+            },
           ],
-          validation: {}
+          validation: {},
         },
-        withoutLabel: true
-      }
+        withoutLabel: true,
+      },
     ],
     head: "CS_COMPLAINANT_LOCATION",
     dependentKey: {

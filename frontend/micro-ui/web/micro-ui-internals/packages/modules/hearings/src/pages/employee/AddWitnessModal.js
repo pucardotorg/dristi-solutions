@@ -7,6 +7,7 @@ import isEqual from "lodash/isEqual";
 import { submissionService } from "../../../../submissions/src/hooks/services/index.js";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 
 const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
@@ -515,6 +516,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
     (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
       // Ensure we have valid form data
       if (!isEqual(formData, witnessFormList?.[index]?.data)) {
+        runComprehensiveSanitizer({ formData, setValue });
         setWitnessFormList((prevData) => prevData?.map((item, i) => (i === index ? { ...item, data: formData } : item)));
         checkNameValidation({ formData, setValue, clearErrors, formState });
         checkDuplicateMobileEmailValidation({

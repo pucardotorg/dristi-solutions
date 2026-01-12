@@ -125,6 +125,7 @@ const ADiaryPage = ({ path }) => {
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
   const [loader, setLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -214,6 +215,7 @@ const ADiaryPage = ({ path }) => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
@@ -230,6 +232,7 @@ const ADiaryPage = ({ path }) => {
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -589,6 +592,7 @@ const ADiaryPage = ({ path }) => {
               formData={formData}
               onSubmit={onUploadSubmit}
               isDisabled={loader}
+              fileUploadError={fileUploadError}
             />
           )}
 

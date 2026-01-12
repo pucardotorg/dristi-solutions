@@ -25,12 +25,13 @@ const GenericUploadSignatureModal = ({
   setLoader,
   loader,
   fileStoreId,
-  title="SELECT_MODE_SIGNING",
-  infoText="BAIL_SIGN_INFO"
+  title = "SELECT_MODE_SIGNING",
+  infoText = "BAIL_SIGN_INFO",
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
 
@@ -63,6 +64,7 @@ const GenericUploadSignatureModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -75,6 +77,7 @@ const GenericUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -116,6 +119,7 @@ const GenericUploadSignatureModal = ({
           showDownloadText={true}
           fileStoreId={fileStoreId}
           cancelLabel={"SUBMIT"}
+          fileUploadError={fileUploadError}
         />
       )}
     </React.Fragment>

@@ -9,7 +9,7 @@ import { CustomAddIcon } from "../icons/svgIndex";
 import Button from "./Button";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
-import { getFilingType } from "../Utils";
+import { getFilingType, sanitizeData } from "../Utils";
 
 function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
@@ -165,7 +165,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                           key={input?.name}
                           value={currentValue}
                           onChange={(e) => {
-                            handleOnTextChange(e.target.value, input, index);
+                            const val = sanitizeData(e.target.value);
+                            handleOnTextChange(val, input, index);
                           }}
                           disable={input?.isDisabled || (index < config?.doclength ? true : config?.disable)}
                           defaultValue={undefined}

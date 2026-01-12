@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Button, Modal, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -117,7 +118,7 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
         <div style={{ display: "flex", gap: "10px" }}>
           <TextInput
             className="field desktop-w-full"
-            onChange={(e) => setBusinessOfTheDay(e.target.value)}
+            onChange={(e) => setBusinessOfTheDay(sanitizeData(e.target.value))}
             disable={isSelectedDataSigned ? true : false}
             value={businessOfTheDay}
             style={{ minWidth: "500px" }}
