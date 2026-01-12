@@ -224,9 +224,18 @@ public class CaseOverallStatusUtil {
 		return null;
 	}
 
-	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status) {
+	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType) {
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList){
-			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+			if (statusType.getEntityType() != null) {
+				if(ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+					return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				} else if (HEARING.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType) && statusType.getState().equalsIgnoreCase(status)) {
+					return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				} else if (CASE.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+					return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				}
+			}
+			else if (statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
 				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
@@ -361,9 +370,24 @@ public class CaseOverallStatusUtil {
     private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, String hearingType, boolean canPublishCaseOverallStatus) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
 		if (hearingType == null) {
-//			hearingType = getHearingType(orderItemJson);
+			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderCategory)) {
+				String path = null;
+				for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
+					if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType())) {
+						if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
+							path = caseOverallStatusType.getCompositeHearingPath();
+						} else {
+							path = caseOverallStatusType.getIntermediateHearingPath();
+						}
+						break;
+					}
+				}
+				if(path!=null){
+					hearingType = JsonPath.read(orderObject.toString(), path);
+				}
+			}
 		}
-		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status);
+		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType);
 		if (canPublishCaseOverallStatus) {
 			publishToCaseOverallStatus(caseOverallStatus, request);
 		}
