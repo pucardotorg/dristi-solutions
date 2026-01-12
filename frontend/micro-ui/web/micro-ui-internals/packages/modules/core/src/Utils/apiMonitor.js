@@ -162,7 +162,10 @@ const setupInterceptors = () => {
       }
 
       // Add timestamp to track duration
-      config.metadata = { startTime: Date.now() };
+      config.metadata = {
+        startTime: Date.now(),
+        startPerf: performance.now(),
+      };
 
       // Calculate request size
       const requestSize = calculateDataSize(config.data);
@@ -181,6 +184,7 @@ const setupInterceptors = () => {
       const callData = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
+        startPerf: performance.now(),
         page,
         method,
         url,
@@ -230,7 +234,8 @@ const setupInterceptors = () => {
 
       try {
         // Calculate timing and sizes
-        const duration = Date.now() - response.config.metadata.startTime;
+        const endPerf = performance.now();
+        const duration = endPerf - response.config.metadata.startPerf;
 
         // Check for Content-Length header for file downloads
         let responseSize = 0;
@@ -278,6 +283,7 @@ const setupInterceptors = () => {
             duration,
             responseSize,
             responseTimestamp: Date.now(),
+            responsePerf: endPerf,
           };
         }
       } catch (e) {
@@ -300,7 +306,8 @@ const setupInterceptors = () => {
         }
 
         // Calculate timing
-        const duration = Date.now() - config.metadata.startTime;
+        const endPerf = performance.now();
+        const duration = endPerf - response.config.metadata.startPerf;
         const method = (config.method && config.method.toUpperCase()) || "UNKNOWN";
         const url = config.url;
         const status = response && response.status;
@@ -373,7 +380,7 @@ const apiMonitor = {
   // Start recording
   start: () => {
     apiCallData.isRecording = true;
-    console.log("API Monitor: Recording started");
+    // console.log("API Monitor: Recording started");
   },
 
   // Get calls for a specific page
@@ -401,7 +408,7 @@ const apiMonitor = {
   // Download data as CSV
   downloadCSV: () => {
     // Create CSV header
-    const headers = ["timestamp", "page", "method", "url", "status", "duration", "requestSize", "responseSize", "error"];
+    const headers = ["timestamp", "page", "method", "url", "status", "duration(ms)", "requestSize(KB)", "responseSize(KB)", "error"];
 
     // Convert calls to CSV rows
     const rows = apiCallData.calls.map((call) => [
@@ -410,11 +417,44 @@ const apiMonitor = {
       call.method,
       call.url,
       call.status || "",
-      call.duration || "",
-      call.requestSize,
-      call.responseSize || "",
+      Math.round(call.duration || 0),
+      (call.requestSize / 1024).toFixed(2) || "",
+      (call.responseSize / 1024).toFixed(2) || "",
       call.error ? call.error.message : "",
     ]);
+
+    // Get stats to add totalNetworkTime
+    const stats = apiMonitor.getStats();
+
+    // Add a separator row and the totalNetworkTime row
+    rows.push(["", "", "", "", "", "", "", "", ""]);
+    rows.push(["SUMMARY", "", "", "", "", "", "", "", ""]);
+    rows.push(["Total Network Time", stats.summary.totalNetworkTime, "", "", "", "", "", "", ""]);
+    rows.push(["Total API Calls", stats.summary.totalCalls, "", "", "", "", "", "", ""]);
+    rows.push(["Unique Endpoints", stats.summary.uniqueEndpoints, "", "", "", "", "", "", ""]);
+
+    // Add Most Called Endpoints table
+    rows.push(["", "", "", "", "", "", "", "", ""]);
+    rows.push(["MOST CALLED ENDPOINTS", "", "", "", "", "", "", "", ""]);
+    rows.push(["Endpoint", "Call Count", "Avg Latency (ms)", "", "", "", "", "", ""]);
+
+    const mostCalledEndpoints = stats.mostCalledEndpoints || [];
+    const topEndpoints = mostCalledEndpoints;
+
+    topEndpoints.forEach((endpoint) => {
+      rows.push([endpoint.endpoint, endpoint.callCount, endpoint.avgApiLatency, "", "", "", "", "", ""]);
+    });
+
+    // Add Slowest Endpoints table
+    rows.push(["", "", "", "", "", "", "", "", ""]);
+    rows.push(["SLOWEST ENDPOINTS", "", "", "", "", "", "", "", ""]);
+    rows.push(["Endpoint", "Avg Latency (ms)", "Call Count", "Max Duration (ms)", "", "", "", "", ""]);
+
+    const slowestEndpoints = stats.slowestEndpoints || [];
+
+    slowestEndpoints.forEach((endpoint) => {
+      rows.push([endpoint.endpoint, endpoint.avgApiLatency, endpoint.callCount, endpoint.maxDuration, "", "", "", "", ""]);
+    });
 
     // Combine header and rows
     const csvContent = [headers.join(","), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
@@ -440,10 +480,12 @@ const apiMonitor = {
           totalErrors: 0,
           errorRate: "0%",
           totalDataKB: "0",
+          totalRequestSizeKB: "0",
+          totalResponseSizeKB: "0",
           totalDataMB: "0",
-          avgDuration: "0ms",
+          avgApiLatency: "0ms",
           avgCallSizeKB: "0",
-          totalTime: "0ms",
+          totalNetworkTime: "0ms",
         },
         byPage: [],
         heaviestEndpoints: [],
@@ -464,9 +506,15 @@ const apiMonitor = {
     const totalDataKB = (totalDataBytes / 1024).toFixed(2);
     const totalDataMB = (totalDataBytes / (1024 * 1024)).toFixed(2);
 
-    const totalTime = Math.round(completedCalls.reduce((sum, call) => sum + (call.duration || 0), 0));
+    // Calculate total time as the difference between first request and last response
+    let totalNetworkTime = 0;
+    const perfStarts = calls.map((c) => c.startPerf).filter(Boolean);
+    const perfEnds = completedCalls.map((c) => c.responsePerf).filter(Boolean);
+    if (perfStarts.length && perfEnds.length) {
+      totalNetworkTime = Math.round(Math.max(...perfEnds) - Math.min(...perfStarts));
+    }
 
-    const avgDuration =
+    const avgApiLatency =
       completedCalls.length > 0 ? Math.round(completedCalls.reduce((sum, call) => sum + (call.duration || 0), 0) / completedCalls.length) : 0;
 
     const avgCallSizeKB =
@@ -487,29 +535,6 @@ const apiMonitor = {
       pageMap[call.page].calls.push(call);
       pageMap[call.page].endpoints.add(call.endpoint);
     });
-
-    const byPage = Object.values(pageMap)
-      .map((page) => {
-        const totalSize = page.calls.reduce((sum, call) => sum + call.requestSize + (call.responseSize || 0), 0);
-        const totalSizeKB = (totalSize / 1024).toFixed(2);
-        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-
-        const avgResponseSize =
-          page.calls.filter((call) => call.responseSize).length > 0
-            ? page.calls.filter((call) => call.responseSize).reduce((sum, call) => sum + call.responseSize, 0) /
-              page.calls.filter((call) => call.responseSize).length
-            : 0;
-
-        return {
-          page: page.page,
-          callCount: page.calls.length,
-          uniqueEndpoints: page.endpoints.size,
-          totalSizeKB,
-          totalSizeMB: totalSizeMB !== "0.00" ? totalSizeMB : undefined,
-          avgResponseSizeKB: (avgResponseSize / 1024).toFixed(2),
-        };
-      })
-      .sort((a, b) => b.callCount - a.callCount);
 
     // Group by endpoint
     const endpointMap = {};
@@ -558,15 +583,14 @@ const apiMonitor = {
         totalResponseSizeKB,
         totalSizeMB: totalSizeMB !== "0.00" ? totalSizeMB : undefined,
         avgResponseSizeKB: (avgResponseSize / 1024).toFixed(2),
-        avgDuration: Math.round(avgDuration),
-        maxDuration,
+        avgApiLatency: Math.round(avgDuration),
+        maxDuration: Math.round(maxDuration),
       };
     });
 
     // Sort endpoints by different metrics
-    const heaviestEndpoints = [...endpointStats].sort((a, b) => parseFloat(b.totalSizeKB) - parseFloat(a.totalSizeKB));
 
-    const slowestEndpoints = [...endpointStats].filter((e) => e.avgDuration > 0).sort((a, b) => b.avgDuration - a.avgDuration);
+    const slowestEndpoints = [...endpointStats].filter((e) => e.avgApiLatency > 0).sort((a, b) => b.avgApiLatency - a.avgApiLatency);
 
     const mostCalledEndpoints = [...endpointStats].sort((a, b) => b.callCount - a.callCount);
     return {
@@ -578,14 +602,12 @@ const apiMonitor = {
         totalRequestSizeKB,
         totalResponseSizeKB,
         totalDataMB,
-        avgDuration: `${avgDuration}ms`,
+        avgApiLatency: `${avgApiLatency}ms`,
         avgCallSizeKB,
-        totalTime: `${totalTime}ms`,
+        totalNetworkTime: `${totalNetworkTime}ms`,
         urlPath: Object.values(pageMap)[0].page,
         uniqueEndpoints: Object.values(pageMap)[0].endpoints.size,
       },
-      byPage,
-      heaviestEndpoints,
       slowestEndpoints,
       mostCalledEndpoints,
     };
