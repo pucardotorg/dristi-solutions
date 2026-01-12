@@ -2,11 +2,12 @@ import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import isEqual from "lodash/isEqual";
+import { getFileByFileStore } from "../../../Utils";
 
 const SelectUserAddress = ({ config, onSelect, t, params, pathOnRefresh }) => {
   const history = useHistory();
   const [isDisabled, setIsDisabled] = useState(false);
-  const [formdata, setformData] = useState({});
+  const [formdata, setformData] = useState(params?.address || {});
 
   const onFormValueChange = (setValue, formData, formState) => {
     if (formData?.isBothAddressSame?.code === "YES") {
@@ -52,13 +53,36 @@ const SelectUserAddress = ({ config, onSelect, t, params, pathOnRefresh }) => {
       setformData(formData);
     }
   };
-  if (!params?.name) {
-    history.push(pathOnRefresh);
-  }
 
   useEffect(() => {
-    setformData(params?.address);
-  }, [params]);
+    const handleRedirect = async () => {
+      if (!params?.name) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params?.address, params, history, pathOnRefresh]);
 
   const modifiedConfig = useMemo(() => {
     const shouldDisable = formdata?.isBothAddressSame?.code === "YES";
