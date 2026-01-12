@@ -58,6 +58,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
+        SONAR_SCANNER_OPTS: "-Xmx2048m"
       shell: bash
       run: |
         npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
@@ -109,3 +110,4 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
+
