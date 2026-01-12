@@ -6,7 +6,7 @@ import { ReactComponent as RegisterImage } from "./ImageUpload/image/register.sv
 import { ReactComponent as RightArrow } from "./ImageUpload/image/arrow_forward.svg";
 import { getFileByFileStore } from "../../../Utils";
 
-function TakeUserToRegistration({ message, isRejected, data, userType }) {
+function TakeUserToRegistration({ message, isRejected, data, advocate }) {
   const { t } = useTranslation();
   const history = useHistory();
 
@@ -30,6 +30,9 @@ function TakeUserToRegistration({ message, isRejected, data, userType }) {
 
       const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${individual?.tenantId}&fileStoreId=${identifierIdDetails?.fileStoreId}`;
       const file = await getFileByFileStore(uri, identifierIdDetails?.filename);
+
+      const barCouncilUri = `${window.location.origin}/filestore/v1/files/id?tenantId=${advocate?.tenantId}&fileStoreId=${advocate?.documents?.[0]?.fileStore}`;
+      const barCouncilFile = await getFileByFileStore(barCouncilUri, advocate?.documents?.[0]?.additionalDetails?.fileName);
 
       const permanentAddress = individual?.address?.find((a) => a.type === "PERMANENT");
       const correspondenceAddress = individual?.address?.find((a) => a.type === "CORRESPONDENCE");
@@ -88,6 +91,20 @@ function TakeUserToRegistration({ message, isRejected, data, userType }) {
           IdType: identifierTypeData?.find((identifier) => identifier?.type === individual?.identifiers[0]?.identifierType) || {},
           filename: identifierIdDetails?.filename || "",
         },
+        formData: {
+          clientDetails: {
+            barCouncilId: [
+              [
+                advocate?.documents?.[0]?.additionalDetails?.fileName || "",
+                {
+                  file: barCouncilFile,
+                  fileStoreId: advocate?.documents?.[0]?.fileStore || "",
+                },
+              ],
+            ],
+            barRegistrationNumber: advocate?.barRegistrationNumber || "",
+          },
+        },
       };
     }
 
@@ -95,7 +112,7 @@ function TakeUserToRegistration({ message, isRejected, data, userType }) {
       ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`)
       : history.push(`/${window?.contextPath}/citizen/dristi/home/registration/email`, {
           newParams: { ...data, ...params, isRejected: isRejected },
-          userType: userType,
+          userType: advocate?.additionalDetails?.userType,
         });
   };
   return (
