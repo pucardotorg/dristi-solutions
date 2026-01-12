@@ -262,63 +262,39 @@ public class CaseBundleService {
                     fileStoreId = indexJson.path("fileStoreId").asText();
                     return fileStoreId;
                 } else {
-                    //TODO: process case bundle here
-                    List<String> curFileStore = extractFileStore(indexJson);
-                    ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
-                    processCaseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
-                    processCaseBundlePdfRequest.setCaseId(caseId);
-                    processCaseBundlePdfRequest.setIndex(indexJson);
-                    processCaseBundlePdfRequest.setTenantId(tenantId);
-                    StringBuilder url = new StringBuilder();
-                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
-
-                    Object pdfResponse = null;
                     try {
-                        log.info("process case bundle started for caseID {}", caseId);
-                        pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
-                        log.info("process case bundle ended  for caseID {}", caseId);
+                        log.info("Processing case bundle for caseId: {}", caseId);
+                        processCaseBundle(caseBundleRequest, indexJson, caseId, tenantId);
+                        log.info("Case bundle processed successfully for caseId: {}", caseId);
+                    } catch (Exception e) {
+                        log.error("Error processing case bundle", e);
+                        throw new CustomException("CASE_BUNDLE_PROCESSING_ERROR", "Error processing case bundle");
+                    }
+                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
+                    CaseBundlePdfRequest caseBundlePdfRequest = new CaseBundlePdfRequest();
+                    caseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
+                    caseBundlePdfRequest.setIndex(indexJson);
+                    caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
+                    caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
+                    caseBundlePdfRequest.setTenantId(tenantId);
+
+                    StringBuilder url = new StringBuilder();
+                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());
+
+                    Object pdfResponse;
+                    try {
+                        pdfResponse = serviceRequestRepository.fetchResult(url, caseBundlePdfRequest);
                     } catch (Exception e) {
                         log.error("Error generating PDF", e);
                         throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
                     }
+
                     Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                     Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
                     JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
-                    List<String> fileStoreIds = extractFileStore(updateIndexJson);
-                    log.info("removing file started for case {} ", caseId);
-                    removeFileStore(curFileStore, fileStoreIds, tenantId);
-                    log.info("removing file ended  for case {} ", caseId);
                     fileStoreId = (String) indexMap.get("fileStoreId");
-                    Object pageCountObj = pdfResponseMap.get("pageCount");
-                    Integer pageCount = pageCountObj != null ? (Integer) pageCountObj : 0;
+                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
                     caseBundleTracker.setPageCount(pageCount);
-                    //TODO: remove commented code after testing
-//                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
-//                    CaseBundlePdfRequest caseBundlePdfRequest = new CaseBundlePdfRequest();
-//                    caseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
-//                    caseBundlePdfRequest.setIndex(indexJson);
-//                    caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
-//                    caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
-//                    caseBundlePdfRequest.setTenantId(tenantId);
-//
-//                    StringBuilder url = new StringBuilder();
-//                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());
-//
-//                    Object pdfResponse;
-//                    try {
-//                        pdfResponse = serviceRequestRepository.fetchResult(url, caseBundlePdfRequest);
-//                    } catch (Exception e) {
-//                        log.error("Error generating PDF", e);
-//                        throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
-//                    }
-//
-//                    Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
-//                    Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
-//                    JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
-//                    fileStoreId = (String) indexMap.get("fileStoreId");
-//                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
-//                    caseBundleTracker.setPageCount(pageCount);
-
                     String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseId;
                     String esRequest;
                     try {
@@ -344,6 +320,34 @@ public class CaseBundleService {
         caseBundleRepository.insertCaseTracker(caseBundleTracker);
 
         return fileStoreId;
+    }
+
+    private void processCaseBundle(CaseBundleRequest caseBundleRequest, JsonNode indexJson, String caseId, String tenantId) {
+        List<String> curFileStore = extractFileStore(indexJson);
+        ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
+        processCaseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
+        processCaseBundlePdfRequest.setCaseId(caseId);
+        processCaseBundlePdfRequest.setIndex(indexJson);
+        processCaseBundlePdfRequest.setTenantId(tenantId);
+        StringBuilder url = new StringBuilder();
+        url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
+
+        Object pdfResponse = null;
+        try {
+            log.info("process case bundle started for caseID {}", caseId);
+            pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+            log.info("process case bundle ended  for caseID {}", caseId);
+        } catch (Exception e) {
+            log.error("Error generating PDF", e);
+            throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
+        }
+        Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
+        Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
+        JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+        List<String> fileStoreIds = extractFileStore(updateIndexJson);
+        log.info("removing file started for case {} ", caseId);
+        removeFileStore(curFileStore, fileStoreIds, tenantId);
+        log.info("removing file ended  for case {} ", caseId);
     }
 
     private void removeFileStore(List<String> curFileStore, List<String> fileStoreIds, String tenantId) {
