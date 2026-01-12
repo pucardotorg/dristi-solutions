@@ -53,15 +53,20 @@ runs:
       run: |
         echo "${{ env.language }} ${{ env.version }} ${{ env.db_source_path }} ${{ env.dockerfile_path }}"
 
+    - name: Setup Node.js
+      if: ${{ env.language == 'nodejs' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
     - name: Build and analyze (Node.js)
       if: ${{ env.language == 'nodejs' }}
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
         SONAR_TOKEN: ${{ inputs.sonar_token }}
-        SONAR_SCANNER_OPTS: "-Xmx2048m"
       shell: bash
       run: |
-        npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
+        npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**,**/build/**,**/*.min.js"
       working-directory: ${{ env.service_source_path }}
 
     - name: Set up JDK 17
@@ -110,4 +115,5 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
+
 
