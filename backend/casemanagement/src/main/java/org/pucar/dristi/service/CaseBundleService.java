@@ -13,6 +13,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseBundleRepository;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class CaseBundleService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final CaseBundleRepository caseBundleRepository;
     private final Producer producer;
+    private final FileStoreUtil fileStoreUtil;
 
     public String readCaseBundleDefaultIndex() throws IOException {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("CaseBundleDefault.json")) {
@@ -64,13 +66,14 @@ public class CaseBundleService {
 
     @Autowired
     public CaseBundleService(ElasticSearchRepository esRepository, Configuration configuration, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository,
-                             CaseBundleRepository caseBundleRepository,Producer producer) {
+                             CaseBundleRepository caseBundleRepository, Producer producer, FileStoreUtil fileStoreUtil) {
         this.esRepository = esRepository;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.caseBundleRepository = caseBundleRepository;
         this.producer = producer;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public CaseNumberResponse getCaseNumber(RequestInfo requestInfo, String caseId, String tenantId) {
@@ -259,31 +262,60 @@ public class CaseBundleService {
                     fileStoreId = indexJson.path("fileStoreId").asText();
                     return fileStoreId;
                 } else {
-                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
-                    CaseBundlePdfRequest caseBundlePdfRequest = new CaseBundlePdfRequest();
-                    caseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
-                    caseBundlePdfRequest.setIndex(indexJson);
-                    caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
-                    caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
-                    caseBundlePdfRequest.setTenantId(tenantId);
-
+                    //TODO: process case bundle here
+                    List<String> curFileStore = extractFileStore(indexJson);
+                    ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
+                    processCaseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
+                    processCaseBundlePdfRequest.setCaseId(caseId);
+                    processCaseBundlePdfRequest.setIndex(indexJson);
+                    processCaseBundlePdfRequest.setTenantId(tenantId);
                     StringBuilder url = new StringBuilder();
-                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());
+                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
 
-                    Object pdfResponse;
+                    Object pdfResponse = null;
                     try {
-                        pdfResponse = serviceRequestRepository.fetchResult(url, caseBundlePdfRequest);
+                        log.info("process case bundle started for caseID {}", caseId);
+                        pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+                        log.info("process case bundle ended  for caseID {}", caseId);
                     } catch (Exception e) {
                         log.error("Error generating PDF", e);
-                        throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
                     }
-
                     Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                     Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
                     JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+                    List<String> fileStoreIds = extractFileStore(updateIndexJson);
+                    log.info("removing file started for case {} ", caseId);
+                    removeFileStore(curFileStore, fileStoreIds, tenantId);
+                    log.info("removing file ended  for case {} ", caseId);
                     fileStoreId = (String) indexMap.get("fileStoreId");
-                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
+                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount") != null ? (Integer) pdfResponseMap.get("pageCount") : 0;
                     caseBundleTracker.setPageCount(pageCount);
+                    //TODO: remove commented code after testing
+//                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
+//                    CaseBundlePdfRequest caseBundlePdfRequest = new CaseBundlePdfRequest();
+//                    caseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
+//                    caseBundlePdfRequest.setIndex(indexJson);
+//                    caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
+//                    caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
+//                    caseBundlePdfRequest.setTenantId(tenantId);
+//
+//                    StringBuilder url = new StringBuilder();
+//                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());
+//
+//                    Object pdfResponse;
+//                    try {
+//                        pdfResponse = serviceRequestRepository.fetchResult(url, caseBundlePdfRequest);
+//                    } catch (Exception e) {
+//                        log.error("Error generating PDF", e);
+//                        throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
+//                    }
+//
+//                    Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
+//                    Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
+//                    JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+//                    fileStoreId = (String) indexMap.get("fileStoreId");
+//                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
+//                    caseBundleTracker.setPageCount(pageCount);
 
                     String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseId;
                     String esRequest;
@@ -310,6 +342,45 @@ public class CaseBundleService {
         caseBundleRepository.insertCaseTracker(caseBundleTracker);
 
         return fileStoreId;
+    }
+
+    private void removeFileStore(List<String> curFileStore, List<String> fileStoreIds, String tenantId) {
+        List<String> fileStoreToRemove = new ArrayList<>();
+        try {
+            fileStoreToRemove = curFileStore.stream()
+                    .filter(fileStoreId -> !fileStoreIds.contains(fileStoreId))
+                    .toList();
+            if(fileStoreToRemove.isEmpty()) {
+                log.info("No files to delete.");
+                return;
+            }
+            fileStoreUtil.deleteFilesByFileStore(fileStoreToRemove, tenantId);
+        } catch (Exception e) {
+            log.error("Error deleting files :: {}", fileStoreToRemove);
+        }
+    }
+
+    private List<String> extractFileStore(JsonNode indexJson) {
+        List<String> fileStoreIds = new ArrayList<>();
+        String fileStoreIdFromIndex = indexJson.path("fileStoreId").textValue();
+        if(fileStoreIdFromIndex!=null && !fileStoreIdFromIndex.isEmpty()) {
+            fileStoreIds.add(fileStoreIdFromIndex);
+        }
+        JsonNode sections = indexJson.path("sections");
+        if (sections.isArray()) {
+            for (JsonNode section : sections) {
+                JsonNode lineItems = section.path("lineItems");
+                if (lineItems.isArray()) {
+                    for (JsonNode item : lineItems) {
+                        JsonNode fileStoreId = item.get("fileStoreId");
+                        if (fileStoreId != null && !fileStoreId.isNull()) {
+                            fileStoreIds.add(fileStoreId.textValue());
+                        }
+                    }
+                }
+            }
+        }
+        return fileStoreIds;
     }
 
     public Boolean getBulkCaseBundle(CaseBundleBulkRequest caseBundleBulkRequest){
