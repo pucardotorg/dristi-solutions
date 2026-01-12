@@ -11,6 +11,8 @@ import com.dristi.njdg_transformer.producer.Producer;
 import com.dristi.njdg_transformer.repository.CaseRepository;
 import com.dristi.njdg_transformer.repository.HearingRepository;
 import com.dristi.njdg_transformer.utils.HearingUtil;
+import com.dristi.njdg_transformer.utils.InboxUtil;
+import com.dristi.njdg_transformer.model.inbox.InboxResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,9 @@ class OrderNotificationServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private InboxUtil inboxUtil;
 
     @InjectMocks
     private OrderNotificationService orderNotificationService;
@@ -98,6 +103,8 @@ class OrderNotificationServiceTest {
                 .startTime(System.currentTimeMillis() + 86400000L) // Tomorrow
                 .cnrNumbers(Collections.singletonList("CNR-001"))
                 .build();
+
+        lenient().when(inboxUtil.getOrders(any())).thenReturn(InboxResponse.builder().items(Collections.emptyList()).build());
     }
 
     @Test
@@ -334,12 +341,12 @@ class OrderNotificationServiceTest {
     }
 
     @Test
-    void testProcessNotificationOrders_CompletedHearingSkipped() {
+    void testProcessNotificationOrders_CompletedHearingProcessed() {
         Notification notification = Notification.builder()
                 .notificationNumber("NOT-001")
                 .tenantId("kl.kollam")
                 .courtId("COURT-001")
-                .createdDate(System.currentTimeMillis())
+                .createdDate(System.currentTimeMillis() - 172800000L)
                 .build();
         notification.addCaseNumberItem("CASE-001");
 
@@ -353,10 +360,15 @@ class OrderNotificationServiceTest {
                 .build();
 
         when(hearingUtil.fetchHearingDetails(any())).thenReturn(Collections.singletonList(completedNotificationHearing));
+        when(caseRepository.getJudge(any(LocalDate.class))).thenReturn(Collections.singletonList(judgeDetails));
+        when(caseRepository.getDesignationMaster(anyString())).thenReturn(designationMaster);
+        when(hearingRepository.getHearingPurposeCode(any(Hearing.class))).thenReturn(1);
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
+        when(properties.getNotificationOrderBusinessTemplate()).thenReturn("Case scheduled from {hearingDate} to {nextDate}");
 
         orderNotificationService.processNotificationOrders(notification, requestInfo);
 
-        verify(producer, never()).push(eq("save-hearing-details"), any(HearingDetails.class));
+        verify(producer).push(eq("save-hearing-details"), any(HearingDetails.class));
     }
 
     @Test

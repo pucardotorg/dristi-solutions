@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import SelectMultiUpload from "./SelectMultiUpload";
 import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
+import { sanitizeData } from "../Utils";
 
 const CloseBtn = () => {
   return (
@@ -150,7 +151,8 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                       key={input?.key}
                       value={obj?.[input?.name] ? obj?.[input?.name] : ""}
                       onChange={(e) => {
-                        setValue(e.target.value, input.key, input, formIndex);
+                        const newValue = sanitizeData(e.target.value);
+                        setValue(newValue, input.key, input, formIndex);
                       }}
                       disable={input?.isDisabled}
                       isRequired={input?.validation?.isRequired}

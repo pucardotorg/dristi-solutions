@@ -139,9 +139,9 @@ const MultiUploadWrapper = ({
     // 1. Check if the incoming data from parent is different from our local state
     // 2. We use isEqual to compare values, not object references
     if (!isEqual(state, setuploadedstate)) {
-      dispatch({ 
-        type: "RESET_FILE", 
-        payload: [...setuploadedstate] 
+      dispatch({
+        type: "RESET_FILE",
+        payload: [...setuploadedstate],
       });
     }
   }, [JSON.stringify(setuploadedstate)]);

@@ -18,6 +18,9 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -211,6 +214,7 @@ public class CaseService {
                     .newRegCaseType(caseRepository.getCaseTypeCode(caseConversionDetails.getConvertedTo()))
                     .newRegNo(numberExtractor.extractCaseNumber(caseConversionDetails.getPostCaseNumber()))
                     .newRegYear(extractRegYear(caseConversionDetails.getPostCaseNumber()))
+                    .convertedAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(caseConversionDetails.getDateOfConversion()), ZoneId.systemDefault()))
                     .build();
 
             producer.push("save-case-conversion-details", caseTypeDetails);

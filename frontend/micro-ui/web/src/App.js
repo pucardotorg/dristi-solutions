@@ -14,8 +14,7 @@ import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import "dristi-ui-css/dist/index.min.css";
 
-window.contextPath =
-  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
+window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
 const enabledModules = [
   "DRISTI",
@@ -48,8 +47,7 @@ initLibraries().then(() => {
 
 function App() {
   const stateCode =
-    window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
-    process.env.REACT_APP_STATE_LEVEL_TENANT_ID;
+    window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   if (!stateCode) {
     return <h1>stateCode is not defined</h1>;
   }
