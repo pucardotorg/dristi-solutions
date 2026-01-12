@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { bulkMarkAsEvidenceConfig } from "../../configs/BulkMarkAsEvidenceConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import MarkAsEvidence from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/MarkAsEvidence";
 import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -150,7 +150,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: MarkAsEvidence?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },

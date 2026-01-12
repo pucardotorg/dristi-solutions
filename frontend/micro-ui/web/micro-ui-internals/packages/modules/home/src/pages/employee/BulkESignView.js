@@ -8,7 +8,7 @@ import { orderManagementService, ordersService } from "@egovernments/digit-ui-mo
 import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
@@ -294,7 +294,7 @@ function BulkESignView() {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: order?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },
