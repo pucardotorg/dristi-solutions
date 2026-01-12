@@ -73,6 +73,7 @@ public class ServiceConstants {
 
     public static final String HEARING_PATH = "$.HearingList.*";
     public static final String HEARING_TYPE_PATH = "$.hearingType";
+    public static final String PURPOSE_OF_NEXT_HEARING_PATH = "$.purposeOfNextHearing";
     public static final String CASE_PATH = "$.criteria.*.responseList[0]";
     public static final String ARTIFACT_PATH = "$.artifacts.*";
     public static final String TASK_PATH = "$.list.*";
@@ -278,5 +279,8 @@ public class ServiceConstants {
     public static final String LONG_PENDING_REGISTER = "Long Pending Register";
     public static final String REFER_TO_ADR = "REFER_TO_ADR";
     public static final String ACTIVE = "ACTIVE";
+
+    public static final String HEARING = "HEARING";
+    public static final String ORDER = "ORDER";
 
 }

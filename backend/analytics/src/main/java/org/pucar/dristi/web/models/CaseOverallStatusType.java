@@ -46,4 +46,20 @@ public class CaseOverallStatusType {
     @Valid
     private String substage = null;
 
+    @JsonProperty("priority")
+    @Valid
+    private Integer priority = null;
+
+    @JsonProperty("entityType")
+    @Valid
+    private String entityType = null;
+
+    @JsonProperty("intermediateHearingPath")
+    @Valid
+    private String intermediateHearingPath = null;
+
+    @JsonProperty("compositeHearingPath")
+    @Valid
+    private String compositeHearingPath = null;
+
 }

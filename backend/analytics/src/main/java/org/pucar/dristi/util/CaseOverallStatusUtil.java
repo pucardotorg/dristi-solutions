@@ -98,6 +98,7 @@ public class CaseOverallStatusUtil {
         Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
+        String hearingType = JsonPath.read(orderObject.toString(), PURPOSE_OF_NEXT_HEARING_PATH);
         try {
             if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
 
@@ -109,14 +110,15 @@ public class CaseOverallStatusUtil {
                 for (int i = 0; i < compositeItems.length(); i++) {
 					try{
 						JSONObject compositeItem = compositeItems.getJSONObject(i);
-						processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE);
+						boolean canPublishCaseOverallStatus = i == compositeItem.length() - 1;
+                        processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, hearingType, canPublishCaseOverallStatus);
 					} catch(Exception e){
 						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
 					}
                 }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, hearingType, true);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -356,9 +358,15 @@ public class CaseOverallStatusUtil {
     }
 
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory) {
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, String hearingType, boolean canPublishCaseOverallStatus) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
-        publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
+		if (hearingType == null) {
+//			hearingType = getHearingType(orderItemJson);
+		}
+		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status);
+		if (canPublishCaseOverallStatus) {
+			publishToCaseOverallStatus(caseOverallStatus, request);
+		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
     }
 }
