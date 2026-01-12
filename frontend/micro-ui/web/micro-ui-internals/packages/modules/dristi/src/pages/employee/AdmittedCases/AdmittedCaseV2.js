@@ -357,7 +357,6 @@ const AdmittedCaseV2 = () => {
   });
 
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
-
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 

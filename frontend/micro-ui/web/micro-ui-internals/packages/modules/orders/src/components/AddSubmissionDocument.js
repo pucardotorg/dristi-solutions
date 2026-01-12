@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
+import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = () => {
   return (
@@ -208,7 +209,8 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         key={input.name}
                         value={docObj?.[input.name] || ""}
                         onChange={(e) => {
-                          setValue(e.target.value, input.name, input, index);
+                          const newValue = sanitizeData(e.target.value);
+                          setValue(newValue, input.name, input, index);
                         }}
                         disable={input.isDisabled || disable}
                         defaultValue={undefined}

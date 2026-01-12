@@ -370,6 +370,95 @@ export const isEmptyValue = (value) => {
   }
 };
 
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const sanitizeData = (data) => {
+  if (typeof data === "string") {
+    return sanitizeInput(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeInput(data[key]);
+      return acc;
+    }, {});
+  }
+
+  return data;
+};
+
+const RICH_TEXT_FIELDS = [
+  "reasonForFiling",
+  "reasonForApplication",
+  "comments",
+  "applicationDetails",
+  "reasonForApplicationOfBail",
+  "additionalInformation",
+  "reasonForDelay",
+  "additionalInformation",
+];
+
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const originalValue = formData[key];
+    if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
+      const sanitizedValue = sanitizeData(originalValue);
+      if (sanitizedValue !== originalValue) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitizedValue);
+        if (element) {
+          setTimeout(() => {
+            element.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
+      runComprehensiveSanitizer({
+        formData: originalValue,
+        setValue,
+        ignoredKeys,
+      });
+    }
+  });
+};
+
 export const TaskManagementWorkflowAction = {
   CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
   UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",

@@ -76,6 +76,7 @@ function BulkSignADiaryView() {
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
   const [toastMsg, setToastMsg] = useState(null);
   const [reload, setReload] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -339,6 +340,7 @@ function BulkSignADiaryView() {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
@@ -355,6 +357,7 @@ function BulkSignADiaryView() {
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -586,6 +589,7 @@ function BulkSignADiaryView() {
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            fileUploadError={fileUploadError}
           />
         )}
 

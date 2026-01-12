@@ -3,6 +3,7 @@ import Modal from "../../../components/Modal";
 import { Dropdown, Loader, CloseSvg, TextArea, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
+import { sanitizeData } from "../../../Utils";
 
 const INITIAL_PAYMENT_ITEM = { type: "", amount: "" };
 const MIN_AMOUNT = 0;
@@ -235,6 +236,11 @@ const PaymentDemandModal = ({
     }
   }, [isSubmitting, paymentItems, dueDate, caseDetails, tenantId, totalAmount, selectedParty, comments, setShowPaymentConfirmationModal]);
 
+  const handleCommentChage = (e) => {
+    const val = sanitizeData(e.target.value);
+    setComments(val);
+  };
+
   if (isOptionsLoading) {
     return <Loader />;
   }
@@ -311,7 +317,7 @@ const PaymentDemandModal = ({
 
             <LabelFieldPair>
               <CardLabel className="case-input-label">{t("OPTIONAL_COMMENTS")}</CardLabel>
-              <TextArea rows="6" value={comments} onChange={(e) => setComments(e.target.value)} style={{ maxWidth: "100%", height: "100px" }} />
+              <TextArea rows="6" value={comments} onChange={handleCommentChage} style={{ maxWidth: "100%", height: "100px" }} />
             </LabelFieldPair>
           </div>
         </Modal>
