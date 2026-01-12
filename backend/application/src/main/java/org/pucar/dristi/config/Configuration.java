@@ -153,9 +153,6 @@ public class Configuration {
     @Value("${egov.idgen.cmpFormat}")
     private String cmpFormat;
 
-    @Value("${egov.idgen.cmp.tenant.override.year}")
-    private String cmpTenantOverrideYear;
-
     // Path for searching cases
     @Value("${egov.case.search.path}")
     private String caseSearchPath;
