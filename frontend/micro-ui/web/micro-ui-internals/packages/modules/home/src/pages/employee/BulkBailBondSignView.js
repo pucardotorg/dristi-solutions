@@ -3,7 +3,7 @@ import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { BailBondSignModal } from "./BailBondSignModal";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
@@ -152,7 +152,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: bailBond?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },
