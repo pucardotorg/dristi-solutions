@@ -257,14 +257,15 @@ public class CaseBundleService {
                 long contentLastModified = indexJson.path("contentLastModified").asLong();
                 long pdfCreatedDate = indexJson.path("pdfCreatedDate").asLong();
 
-                if (contentLastModified <= pdfCreatedDate) {
+                fileStoreId = indexJson.path("fileStoreId").textValue();
+                if (contentLastModified <= pdfCreatedDate && fileStoreId != null && !fileStoreId.isEmpty()) {
                     log.info("No content update. Reusing existing PDF bundle.");
-                    fileStoreId = indexJson.path("fileStoreId").asText();
                     return fileStoreId;
                 } else {
+                    String processFileStoreId = null;
                     try {
                         log.info("Processing case bundle for caseId: {}", caseId);
-                        processCaseBundle(caseBundleRequest, indexJson, caseId, tenantId);
+                        processFileStoreId = processCaseBundle(caseBundleRequest, indexJson, caseId, tenantId);
                         log.info("Case bundle processed successfully for caseId: {}", caseId);
                     } catch (Exception e) {
                         log.error("Error processing case bundle", e);
@@ -295,6 +296,9 @@ public class CaseBundleService {
                     fileStoreId = (String) indexMap.get("fileStoreId");
                     Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
                     caseBundleTracker.setPageCount(pageCount);
+                    if(processFileStoreId!=null && !processFileStoreId.isEmpty() && !processFileStoreId.equals(fileStoreId)) {
+                        fileStoreUtil.deleteFilesByFileStore(List.of(processFileStoreId), tenantId);
+                    }
                     String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseId;
                     String esRequest;
                     try {
@@ -322,7 +326,7 @@ public class CaseBundleService {
         return fileStoreId;
     }
 
-    private void processCaseBundle(CaseBundleRequest caseBundleRequest, JsonNode indexJson, String caseId, String tenantId) {
+    private String processCaseBundle(CaseBundleRequest caseBundleRequest, JsonNode indexJson, String caseId, String tenantId) {
         List<String> curFileStore = extractFileStore(indexJson);
         ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
         processCaseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
@@ -344,10 +348,12 @@ public class CaseBundleService {
         Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
         Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
         JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+        String fileStoreId = (String) indexMap.get("fileStoreId");
         List<String> fileStoreIds = extractFileStore(updateIndexJson);
         log.info("removing file started for case {} ", caseId);
         removeFileStore(curFileStore, fileStoreIds, tenantId);
         log.info("removing file ended  for case {} ", caseId);
+        return fileStoreId;
     }
 
     private void removeFileStore(List<String> curFileStore, List<String> fileStoreIds, String tenantId) {
