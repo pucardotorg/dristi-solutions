@@ -40,6 +40,10 @@ const ProjectBreadCrumb = ({ location }) => {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   if (isProcessViewer) homePath = `/${window?.contextPath}/${userType}/orders/Summons&Notice`;
+
+  const pathTokeyMap = {
+    "generate-order": "CS_GENERATE_ORDER",
+  };
   const crumbs = useMemo(
     () => [
       {
@@ -60,7 +64,7 @@ const ProjectBreadCrumb = ({ location }) => {
         : []),
       {
         path: `/${window?.contextPath}/${userType}`,
-        content: t(location.pathname.split("/").pop()),
+        content: t(pathTokeyMap[pathname.split("/").pop()] || pathname.split("/").pop()),
         show: true,
       },
     ],
