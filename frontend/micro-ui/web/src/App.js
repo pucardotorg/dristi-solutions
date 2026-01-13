@@ -54,6 +54,10 @@ function App() {
   const stateCode =
     window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
     process.env.REACT_APP_STATE_LEVEL_TENANT_ID;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   if (!stateCode) {
     return <h1>stateCode is not defined</h1>;
   }
@@ -65,7 +69,7 @@ function App() {
         moduleReducers={moduleReducers}
         // defaultLanding="employee"
       />
-      <ApiMonitorPanel />
+      {hasViewApiMonitorAccess && <ApiMonitorPanel />}
     </>
   );
 }
