@@ -91,6 +91,7 @@ public class CaseBundleIndexBuilderService {
         caseList.add(caseCriteria);
         caseSearchRequest.setCriteria(caseList);
         caseSearchRequest.setRequestInfo(requestInfo);
+        caseSearchRequest.setFlow(FLOW_JAC);
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchUrl());
@@ -314,39 +315,10 @@ public class CaseBundleIndexBuilderService {
                     if (hitsNode.isArray() && hitsNode.isEmpty()) {
                         log.error("not able to get data from es for given case ID");
                     } else {
-                        JsonNode indexJson = hitsNode.get(0).path("_source");
-                        List<String> curFileStore = extractFileStore(indexJson);
-                        ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
-                        processCaseBundlePdfRequest.setRequestInfo(requestInfo);
-                        processCaseBundlePdfRequest.setCaseId(caseID);
-                        processCaseBundlePdfRequest.setIndex(indexJson);
-                        processCaseBundlePdfRequest.setState(stateName);
-                        processCaseBundlePdfRequest.setTenantId(tenantId);
-                        StringBuilder url = new StringBuilder();
-                        url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
-
-                        Object pdfResponse =null;
-                        try {
-                            if (isDelayRequired) {
-                                Integer delayTime = configuration.getDelayTime();
-                                log.info("delay time: {}", delayTime);
-                                Thread.sleep(delayTime);
-                            }
-                            log.info("process case bundle started for caseID {}", caseID);
-                            pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
-                            log.info("process case bundle ended  for caseID {}", caseID);
-                        } catch (Exception e) {
-                            log.error("Error generating PDF", e);
-                        }
-
-                        Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
-                        Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
-                        JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
-                        List<String> fileStoreIds = extractFileStore(updateIndexJson);
-                        log.info("removing file started for case {} ", caseID);
-                        removeFileStore(curFileStore, fileStoreIds, tenantId);
-                        log.info("removing file ended  for case {} ", caseID);
-
+                        ObjectNode indexJson = (ObjectNode) hitsNode.get(0).path("_source");
+                        long contentLastModified = System.currentTimeMillis();
+                        indexJson.put("contentLastModified", contentLastModified);
+                        JsonNode updateIndexJson = objectMapper.valueToTree(indexJson);
                         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
                         String esRequest;
                         try {

@@ -1,6 +1,6 @@
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import TasksComponent from "../../components/TaskComponent";
@@ -187,7 +187,7 @@ const DashboardPage = () => {
     let timer;
 
     try {
-      const response = await axios.post(downloadLink, null, config);
+      const response = await axiosInstance.post(downloadLink, null, config);
       if (!response.data?.path) {
         showToast("error", t("ERR_REPORT_PATH"), 50000);
         console.error("Report path not found in the response");
@@ -197,7 +197,7 @@ const DashboardPage = () => {
       const reportUrl = `${baseUrl}${response.data.path}`;
       const tryDownload = async () => {
         try {
-          const csvResponse = await axios.get(reportUrl, {
+          const csvResponse = await axiosInstance.get(reportUrl, {
             ...config,
             responseType: "blob",
           });

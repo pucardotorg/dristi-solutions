@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import Background from "../../../components/Background";
 import Header from "../../../components/Header";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
-import Axios from "axios";
+import axiosInstance from "../../../Utils/axiosInstance";
 
 /* set employee details to enable backward compatiable */
 const setEmployeeDetail = (userObject, token) => {
@@ -87,7 +87,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     try {
       const { UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
       Digit.SessionStorage.set("Employee.tenantId", info?.tenantId);
-      const employee = await Axios.post(
+      const employee = await axiosInstance.post(
         Urls.dristi.searchEmployee,
         {
           RequestInfo: {

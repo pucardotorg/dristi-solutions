@@ -82,5 +82,5 @@ public class ServiceConstants {
     public static final String CASE_NOT_FOUND = "CASE_NOT_FOUND";
 
     public static final String CASE_ERROR_MESSAGE = "No case present for given filingNumber";
-
+    public static final String FLOW_JAC = "flow_jac";
 }
