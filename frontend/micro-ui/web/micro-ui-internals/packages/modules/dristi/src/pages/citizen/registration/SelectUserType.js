@@ -1,6 +1,7 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFileByFileStore } from "../../../Utils";
 
 const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh, userTypeRegister }) => {
   const Digit = window.Digit || {};
@@ -61,6 +62,26 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     return isValid;
   };
 
+  const updatedConfig = useMemo(() => {
+    return config.map((section) => ({
+      ...section,
+      body: section.body.map((item) => {
+        if (item?.key !== "clientDetails") return item;
+
+        return {
+          ...item,
+          populators: {
+            ...item.populators,
+            inputs: item.populators.inputs.map((input) => ({
+              ...input,
+              disable: params?.isRejected,
+            })),
+          },
+        };
+      }),
+    }));
+  }, [config, params]);
+
   const [isDisabled, setIsDisabled] = useState(false);
   const onFormValueChange = (setValue, formData, formState) => {
     let isDisabled = false;
@@ -92,10 +113,10 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       setIsDisabled(false);
     }
   };
-  const onSubmit = (userType) => {
+  const onSubmit = async (userType) => {
     const data = params;
     const userTypeSelcted = userType?.clientDetails?.selectUserType?.code;
-    const uploadedDocument = Digit?.SessionStorage?.get("UploadedDocument");
+    const uploadedDocument = params?.uploadedDocument;
     const aadhaarNumber = Digit?.SessionStorage?.get("aadharNumber");
     const identifierId = uploadedDocument ? uploadedDocument?.filedata?.files?.[0]?.fileStoreId : data?.adhaarNumber;
     const identifierIdDetails = uploadedDocument
@@ -195,31 +216,139 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         auditDetails: {},
       },
     };
-    setParams({
+
+    const permanentAddress = Individual?.Individual?.address?.find((addr) => addr.type === "PERMANENT");
+    const correspondenceAddress = Individual?.Individual?.address?.find((addr) => addr.type === "CORRESPONDENCE");
+
+    const savedPermanentAddress = params?.Individual?.[0]?.address?.find((addr) => addr.type === "PERMANENT");
+    const savedCorrespondenceAddress = params?.Individual?.[0]?.address?.find((addr) => addr.type === "CORRESPONDENCE");
+
+    const latestParams = {
       ...params,
       IndividualPayload: {
         ...Individual,
       },
+      ...(params?.Individual && {
+        Individual: [
+          {
+            ...Individual?.Individual,
+            identifiers: [
+              {
+                ...params?.Individual?.[0]?.identifiers?.[0],
+                identifierType,
+                identifierId,
+              },
+            ],
+            address: [
+              {
+                ...savedPermanentAddress,
+                ...permanentAddress,
+              },
+              ...(correspondenceAddress
+                ? [
+                    {
+                      ...savedCorrespondenceAddress,
+                      ...correspondenceAddress,
+                    },
+                  ]
+                : savedCorrespondenceAddress
+                ? [
+                    {
+                      ...savedCorrespondenceAddress,
+                      ...permanentAddress,
+                      type: "CORRESPONDENCE",
+                    },
+                  ]
+                : []),
+            ],
+            rowVersion: params?.Individual?.[0]?.rowVersion,
+            isDeleted: params?.Individual?.[0]?.isDeleted,
+            isSystemUser: params?.Individual?.[0]?.isSystemUser,
+            isSystemUserActive: params?.Individual?.[0]?.isSystemUserActive,
+            individualId: params?.Individual?.[0]?.individualId,
+            auditDetails: params?.Individual?.[0]?.auditDetails,
+            id: params?.Individual?.[0]?.id,
+          },
+        ],
+      }),
       userType: {
         ...userType,
       },
-    });
+    };
+    setParams(latestParams);
     if (
       ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !data?.Individual?.[0]?.individualId) ||
       (userTypeSelcted === "ADVOCATE_CLERK" && data?.Individual?.[0]?.individualId)
     ) {
-      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`);
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: latestParams });
     } else {
-      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`);
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });
     }
   };
-  if (!params?.indentity && showUsename === false && !params?.Individual?.[0]?.additionalFields) {
-    history.push(pathOnRefresh);
-  }
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.indentity && showUsename === false && !params?.Individual?.[0]?.additionalFields) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params.address, params, history, pathOnRefresh, showUsename, Digit.ULBService]);
+
   return (
     <div className="select-user">
       <FormComposerV2
-        config={config}
+        config={updatedConfig}
         t={t}
         noBoxShadow
         inline

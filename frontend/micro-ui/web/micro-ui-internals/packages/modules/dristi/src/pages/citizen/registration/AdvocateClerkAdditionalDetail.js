@@ -1,8 +1,9 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { advocateClerkConfig } from "./config";
+import { getFileByFileStore } from "../../../Utils";
 
 const headerStyle = {
   fontFamily: "Roboto",
@@ -157,11 +158,68 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
       ...params,
       formData: formData,
     });
-    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: { ...params, formData } });
   };
-  if (!params?.IndividualPayload) {
-    history.push(pathOnRefresh);
-  }
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.IndividualPayload) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params, history, pathOnRefresh, Digit.ULBService]);
+
   return (
     <div className="advocate-additional-details">
       <div className="id-verificatin-header">
@@ -183,7 +241,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         }}
         isDisabled={isDisabled}
         label={"CS_COMMON_CONTINUE"}
-        defaultValues={{ ...params?.registrationData } || {}}
+        defaultValues={{ ...params?.formData } || {}}
         submitInForm
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>

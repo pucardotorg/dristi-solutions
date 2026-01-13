@@ -1,5 +1,6 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
+import { getFileByFileStore } from "../../../Utils";
 
 function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -54,9 +55,65 @@ function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
     return isValid;
   };
 
-  if (!params?.address) {
-    history.push(pathOnRefresh);
-  }
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.address) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params?.address, params, history, pathOnRefresh]);
+
   return (
     <div className="id-verification">
       <FormComposerV2
@@ -66,7 +123,7 @@ function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
         inline
         isDisabled={isDisabled}
         label={t("CS_COMMON_CONTINUE")}
-        onSecondayActionClick={() => { }}
+        onSecondayActionClick={() => {}}
         onFormValueChange={onFormValueChange}
         defaultValues={params?.indentity || {}}
         value={params?.indentity || {}}
@@ -80,10 +137,7 @@ function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
         }}
         submitInForm
       ></FormComposerV2>
-      {
-        showErrorToast &&
-        <Toast error={true} label={t("ID_NOT_SELECTED_ERROR_MESSAGE")} isDleteBtn={true} onClose={closeToast} />
-      }
+      {showErrorToast && <Toast error={true} label={t("ID_NOT_SELECTED_ERROR_MESSAGE")} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 }
