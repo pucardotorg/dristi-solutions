@@ -29,6 +29,7 @@ on:
       - develop
       - release/*
       - develop-actions-enhancement
+      - pipeline-testcheck
 
 
 jobs:
