@@ -17,7 +17,7 @@
     },
     "analytics": {
         "service_group": "core-services",
-        "db_source_path": "backend/analytics/src/main/resources/db",
+        "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/analytics",
         "language": "java",
