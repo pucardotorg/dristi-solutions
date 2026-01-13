@@ -273,6 +273,14 @@
         padding: 0px;
         margin: 0px !important;
         align-items: center;
+        .view-image-modal {
+          .header-content {
+            width: auto !important;
+          }
+          .header-end {
+            width: auto !important;
+          }
+        }
         div {
           width: 100% !important;
         }

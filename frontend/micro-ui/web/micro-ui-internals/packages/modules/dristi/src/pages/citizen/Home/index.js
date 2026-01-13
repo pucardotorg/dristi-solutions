@@ -166,7 +166,7 @@ function CitizenHome({ tenantId, setHideBack }) {
           message={isRejected ? `${t("CS_REJECT_MESSAGE")} due to ${rejectionReason}. ${t("KINDLY_REGISTER_AGAIN")}` : t("CS_REGISTRATION_MESSAGE")}
           isRejected={isRejected}
           data={data}
-          userType={searchResult?.[0]?.additionalDetails?.userType}
+          advocate={searchResult?.[0]}
         />
       )}
     </div>

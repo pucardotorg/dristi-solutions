@@ -1069,7 +1069,6 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
-                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "WARRANT",
                 "OTHERS",
@@ -1083,7 +1082,6 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
-                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "SCHEDULE_OF_HEARING_DATE",
                 "WARRANT",
@@ -3354,7 +3352,10 @@ const GenerateOrdersV2 = () => {
           break;
         }
 
-        if (["TAKE_COGNIZANCE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+        if (
+          (orderType === "TAKE_COGNIZANCE" && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) ||
+          (orderType === "DISMISS_CASE" && ["CASE_DISMISSED"].includes(caseDetails?.status))
+        ) {
           setShowErrorToast({
             label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
