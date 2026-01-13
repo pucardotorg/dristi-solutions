@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
@@ -168,7 +168,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: deposition?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },

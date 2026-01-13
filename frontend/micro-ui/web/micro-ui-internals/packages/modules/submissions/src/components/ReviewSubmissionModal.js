@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import Axios from "axios";
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
 import { convertToDateInputFormat } from "../utils/index";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -108,7 +108,7 @@ function ReviewSubmissionModal({
   courtId,
   cancelLabel,
   handleSubmit,
-  handleCancel
+  handleCancel,
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -136,27 +136,30 @@ function ReviewSubmissionModal({
     ],
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.application.submissionPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          applicationNumber: application?.applicationNumber,
-          cnrNumber: application?.cnrNumber,
-          qrCode: false,
-          applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-          courtId: courtId || application?.courtId,
-        },
-        data: {
-          RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Dristi",
+      return axiosInstance
+        .post(
+          Urls.application.submissionPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: Digit.UserService.getUser().access_token,
+              userInfo: Digit.UserService.getUser()?.info,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+          {
+            params: {
+              tenantId: tenantId,
+              applicationNumber: application?.applicationNumber,
+              cnrNumber: application?.cnrNumber,
+              qrCode: false,
+              applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
+              courtId: courtId || application?.courtId,
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
   });
@@ -201,7 +204,7 @@ function ReviewSubmissionModal({
       actionCancelOnSubmit={handleCancel}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
-      actionSaveOnSubmit={() => handleSubmit({applicationPreviewPdf, applicationPreviewFileName})}
+      actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
       className={"review-submission-appl-modal"}
     >
       <div className="review-submission-appl-body-main">
