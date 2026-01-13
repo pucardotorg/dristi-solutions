@@ -101,17 +101,9 @@ public class CaseOverallStatusUtil {
 		try {
 			String hearingType = JsonPath.read(orderObject.toString(), PURPOSE_OF_NEXT_HEARING_PATH);
 			isHearingFound = hearingType != null;
-			for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
-				if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && isHearingFound && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
-					Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
-					CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
-					priorityMap.put(priority, caseOverallStatus);
-				}
+			if (isHearingFound) {
+				populateHearingPriorityMap(filingNumber, tenantId, hearingType, priorityMap);
 			}
-			if (priorityMap.isEmpty()) {
-				log.error("No priority found for hearing type: {} for filing number: {}", hearingType, filingNumber);
-			}
-
 		} catch (Exception e) {
 			log.error("Error processing order while processing priority map: {} for filing number: {}", e.getMessage(), filingNumber, e);
 		}
@@ -145,6 +137,19 @@ public class CaseOverallStatusUtil {
         }
         return orderObject;
     }
+
+	private void populateHearingPriorityMap(String filingNumber, String tenantId, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+		for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
+			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
+				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
+				priorityMap.put(priority, caseOverallStatus);
+			}
+		}
+		if (priorityMap.isEmpty()) {
+			log.error("No priority found for hearing type: {} for filing number: {}", hearingType, filingNumber);
+		}
+	}
 
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
@@ -407,7 +412,7 @@ public class CaseOverallStatusUtil {
 				}
 				if(path!=null){
 					try {
-						hearingType = JsonPath.read(orderObject.toString(), path);
+						hearingType = JsonPath.read(orderItemJson, path);
 					} catch (Exception e) {
 						log.error("Error reading hearing type from path: {} for filing number: {}", path, filingNumber, e);
 					}
