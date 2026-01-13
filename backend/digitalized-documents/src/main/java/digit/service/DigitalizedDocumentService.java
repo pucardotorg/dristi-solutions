@@ -163,7 +163,7 @@ public class DigitalizedDocumentService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY() + 20);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
