@@ -109,7 +109,7 @@ public class CaseOverallStatusUtil {
 				}
 			}
 			if (priorityMap.isEmpty()) {
-				log.warn("No priority found for hearing type: {} for filing number: {}", hearingType, filingNumber);
+				log.error("No priority found for hearing type: {} for filing number: {}", hearingType, filingNumber);
 			}
 
 		} catch (Exception e) {
@@ -126,7 +126,7 @@ public class CaseOverallStatusUtil {
                 for (int i = 0; i < compositeItems.length(); i++) {
 					try{
 						JSONObject compositeItem = compositeItems.getJSONObject(i);
-						boolean canPublishCaseOverallStatus = i == compositeItem.length() - 1;
+						boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
                         processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap);
 					} catch(Exception e){
 						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);

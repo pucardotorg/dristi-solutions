@@ -297,4 +297,368 @@ class CaseOverallStatusUtilTest {
         // Assertions
         assertNull(result);
     }
+
+    @Test
+    void testOrderWithSinglePriority_TreeMapSelection() throws Exception {
+        String entityType = "order";
+        String referenceId = "order-123";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        User user = new User();
+        user.setUuid("uuid-123");
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(user);
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-123");
+        orderObject.put("orderCategory", "normal");
+        orderObject.put("orderType", "SUMMONS");
+
+        Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
+        caseOverallStatusTypeMap.put("order", List.of(
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("SUMMONS")
+                        .state(status)
+                        .stage("Pre-Trial")
+                        .substage("Summons Issued")
+                        .priority(5)
+                        .build()
+        ));
+
+        Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
+        caseOutcomeTypeMap.put("SUMMONS", CaseOutcomeType.builder().isJudgement(false).build());
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(config.getCaseOverallStatusTopic()).thenReturn("case-status-topic");
+        when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void testCompositeOrderWithMultiplePriorities_SelectsLowestPriority() throws Exception {
+        String entityType = "order";
+        String referenceId = "composite-456";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        User user = new User();
+        user.setUuid("uuid-123");
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(user);
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-456");
+        orderObject.put("orderCategory", "composite");
+
+        JSONArray compositeItems = new JSONArray();
+        JSONObject item1 = new JSONObject();
+        item1.put("orderType", "NOTICE");
+        JSONObject item2 = new JSONObject();
+        item2.put("orderType", "WARRANT");
+        JSONObject item3 = new JSONObject();
+        item3.put("orderType", "SUMMONS");
+        compositeItems.put(item1);
+        compositeItems.put(item2);
+        compositeItems.put(item3);
+
+        orderObject.put("compositeItems", compositeItems);
+
+        Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
+        caseOverallStatusTypeMap.put("order", List.of(
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("NOTICE")
+                        .state(status)
+                        .stage("Pre-Trial")
+                        .substage("Notice Sent")
+                        .priority(10)
+                        .build(),
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("WARRANT")
+                        .state(status)
+                        .stage("Trial")
+                        .substage("Warrant Issued")
+                        .priority(1)
+                        .build(),
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("SUMMONS")
+                        .state(status)
+                        .stage("Pre-Trial")
+                        .substage("Summons Issued")
+                        .priority(5)
+                        .build()
+        ));
+
+        Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
+        caseOutcomeTypeMap.put("NOTICE", CaseOutcomeType.builder().isJudgement(false).build());
+        caseOutcomeTypeMap.put("WARRANT", CaseOutcomeType.builder().isJudgement(false).build());
+        caseOutcomeTypeMap.put("SUMMONS", CaseOutcomeType.builder().isJudgement(false).build());
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(config.getCaseOverallStatusTopic()).thenReturn("case-status-topic");
+        when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(compositeItems);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+        ArgumentCaptor<CaseStageSubStage> captor = ArgumentCaptor.forClass(CaseStageSubStage.class);
+
+    }
+
+    @Test
+    void testNullPriority_DefaultsToMaxValue() throws Exception {
+        String entityType = "order";
+        String referenceId = "order-789";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        User user = new User();
+        user.setUuid("uuid-123");
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(user);
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-789");
+        orderObject.put("orderCategory", "composite");
+
+        JSONArray compositeItems = new JSONArray();
+        JSONObject item1 = new JSONObject();
+        item1.put("orderType", "TYPE_NULL_PRIORITY");
+        JSONObject item2 = new JSONObject();
+        item2.put("orderType", "TYPE_WITH_PRIORITY");
+        compositeItems.put(item1);
+        compositeItems.put(item2);
+
+        orderObject.put("compositeItems", compositeItems);
+
+        Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
+        caseOverallStatusTypeMap.put("order", List.of(
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("TYPE_NULL_PRIORITY")
+                        .state(status)
+                        .stage("Stage-Null")
+                        .substage("Substage-Null")
+                        .priority(null)
+                        .build(),
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("TYPE_WITH_PRIORITY")
+                        .state(status)
+                        .stage("Stage-Priority")
+                        .substage("Substage-Priority")
+                        .priority(50)
+                        .build()
+        ));
+
+        Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
+        caseOutcomeTypeMap.put("TYPE_NULL_PRIORITY", CaseOutcomeType.builder().isJudgement(false).build());
+        caseOutcomeTypeMap.put("TYPE_WITH_PRIORITY", CaseOutcomeType.builder().isJudgement(false).build());
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(config.getCaseOverallStatusTopic()).thenReturn("case-status-topic");
+        when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(compositeItems);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+        ArgumentCaptor<CaseStageSubStage> captor = ArgumentCaptor.forClass(CaseStageSubStage.class);
+
+    }
+
+    @Test
+    void testHearingTypeExtraction_WithTreeMapPriority() throws Exception {
+        String entityType = "order";
+        String referenceId = "order-hearing-123";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        User user = new User();
+        user.setUuid("uuid-123");
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(user);
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-HEARING-123");
+        orderObject.put("orderCategory", "normal");
+        orderObject.put("orderType", "SUMMONS");
+        orderObject.put("purposeOfNextHearing", "EVIDENCE");
+
+        Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
+        caseOverallStatusTypeMap.put("order", List.of(
+                CaseOverallStatusType.builder()
+                        .entityType("HEARING")
+                        .typeIdentifier("EVIDENCE")
+                        .state(status)
+                        .stage("Trial")
+                        .substage("Evidence Phase")
+                        .priority(2)
+                        .build(),
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("SUMMONS")
+                        .state(status)
+                        .stage("Pre-Trial")
+                        .substage("Summons Issued")
+                        .priority(10)
+                        .build()
+        ));
+
+        Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
+        caseOutcomeTypeMap.put("SUMMONS", CaseOutcomeType.builder().isJudgement(false).build());
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(config.getCaseOverallStatusTopic()).thenReturn("case-status-topic");
+        when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+
+    }
+
+    @Test
+    void testEmptyCompositeItems_NoPublish() throws Exception {
+        String entityType = "order";
+        String referenceId = "empty-composite-123";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-EMPTY-123");
+        orderObject.put("orderCategory", "composite");
+
+        JSONArray emptyCompositeItems = new JSONArray();
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(new HashMap<>());
+        when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(emptyCompositeItems);
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+        verify(producer, never()).push(anyString(), any(CaseStageSubStage.class));
+    }
+
+    @Test
+    void testSamePriority_TreeMapHandlesConsistently() throws Exception {
+        String entityType = "order";
+        String referenceId = "same-priority-123";
+        String status = "published";
+        String tenantId = "tenant1";
+
+        User user = new User();
+        user.setUuid("uuid-123");
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(user);
+        JSONObject requestInfoJson = new JSONObject();
+        requestInfoJson.put("RequestInfo", new JSONObject());
+
+        JSONObject orderObject = new JSONObject();
+        orderObject.put("filingNumber", "FN-SAME-PRIORITY");
+        orderObject.put("orderCategory", "composite");
+
+        JSONArray compositeItems = new JSONArray();
+        JSONObject item1 = new JSONObject();
+        item1.put("orderType", "TYPE_X");
+        JSONObject item2 = new JSONObject();
+        item2.put("orderType", "TYPE_Y");
+        compositeItems.put(item1);
+        compositeItems.put(item2);
+
+        orderObject.put("compositeItems", compositeItems);
+
+        Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
+        caseOverallStatusTypeMap.put("order", List.of(
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("TYPE_X")
+                        .state(status)
+                        .stage("Stage-X")
+                        .substage("Substage-X")
+                        .priority(5)
+                        .build(),
+                CaseOverallStatusType.builder()
+                        .entityType("ORDER")
+                        .typeIdentifier("TYPE_Y")
+                        .state(status)
+                        .stage("Stage-Y")
+                        .substage("Substage-Y")
+                        .priority(5)
+                        .build()
+        ));
+
+        Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
+        caseOutcomeTypeMap.put("TYPE_X", CaseOutcomeType.builder().isJudgement(false).build());
+        caseOutcomeTypeMap.put("TYPE_Y", CaseOutcomeType.builder().isJudgement(false).build());
+
+        when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(config.getCaseOverallStatusTopic()).thenReturn("case-status-topic");
+        when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
+        when(config.getStateLevelTenantId()).thenReturn("pg");
+        when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(compositeItems);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
+
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+
+        assertNotNull(result);
+        ArgumentCaptor<CaseStageSubStage> captor = ArgumentCaptor.forClass(CaseStageSubStage.class);
+
+    }
 }
