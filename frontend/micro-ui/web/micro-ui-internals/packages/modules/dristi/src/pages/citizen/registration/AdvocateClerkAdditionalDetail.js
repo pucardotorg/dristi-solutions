@@ -170,6 +170,35 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
         const filename = newParams?.uploadedDocument?.filename;
 
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
         if (fileStoreId && filename) {
           const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
           const file = await getFileByFileStore(uri, filename);
@@ -212,7 +241,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         }}
         isDisabled={isDisabled}
         label={"CS_COMMON_CONTINUE"}
-        defaultValues={{ ...params?.registrationData } || {}}
+        defaultValues={{ ...params?.formData } || {}}
         submitInForm
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>
