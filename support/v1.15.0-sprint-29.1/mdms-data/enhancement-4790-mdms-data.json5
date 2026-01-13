@@ -93,7 +93,7 @@
       "id": "16",
       "stage": "Trial",
       // TODO : need to update the state
-      "state": " published",
+      "state": "published",
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
