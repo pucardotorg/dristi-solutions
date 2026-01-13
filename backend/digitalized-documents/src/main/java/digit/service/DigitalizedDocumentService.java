@@ -25,6 +25,7 @@ import static digit.config.ServiceConstants.COMMAND;
 import static digit.config.ServiceConstants.CO_ORDINATES;
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 import static digit.config.ServiceConstants.DATA;
+import static digit.config.ServiceConstants.DATE_FORMAT;
 import static digit.config.ServiceConstants.FILE;
 import static digit.config.ServiceConstants.NAME;
 import static digit.config.ServiceConstants.PAGE;
@@ -286,6 +287,7 @@ public class DigitalizedDocumentService {
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
         pdf.put(SIZE, "250,40");
+        pdf.put(DATE_FORMAT, "dd-MMM-yyyy");
         requestData.put(PDF, pdf);
 
         requestData.put(DATA, base64Doc);
