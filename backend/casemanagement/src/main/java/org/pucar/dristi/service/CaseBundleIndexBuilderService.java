@@ -91,7 +91,7 @@ public class CaseBundleIndexBuilderService {
         caseList.add(caseCriteria);
         caseSearchRequest.setCriteria(caseList);
         caseSearchRequest.setRequestInfo(requestInfo);
-        caseSearchRequest.setFlow("flow_jac");
+        caseSearchRequest.setFlow(FLOW_JAC);
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchUrl());
