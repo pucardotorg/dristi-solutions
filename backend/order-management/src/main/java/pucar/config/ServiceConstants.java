@@ -111,7 +111,7 @@ public class ServiceConstants {
     public static final String UNSIGNED = "UNSIGNED";
     public static final String DELETE = "DELETE";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
-
+    public static final String SUBMIT_BULK_ESIGN = "SUBMIT_BULK_E-SIGN";
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
