@@ -25,6 +25,32 @@
     gtag('js', new Date());
     gtag('config', 'G-P0JH39REGV');
   </script>
+  <script>
+    // Detect Full Document Reload
+    console.log("APP_BOOT", {
+      timeOrigin: performance.timeOrigin,
+      timestamp: Date.now(),
+    });
+  
+    // Detect Browser Unload (Not App Navigation)
+    window.addEventListener("beforeunload", () => {
+      console.log("BEFORE_UNLOAD_TRIGGERED", Date.now());
+    });
+  
+    // Correlate Network State Changes
+    window.addEventListener("offline", () => {
+      console.log("NETWORK_OFFLINE", Date.now());
+    });
+  
+    window.addEventListener("online", () => {
+      console.log("NETWORK_ONLINE", Date.now());
+    });
+  
+    // Detect Visibility / System Context Changes
+    document.addEventListener("visibilitychange", () => {
+      console.log("VISIBILITY_CHANGE", document.visibilityState, Date.now());
+    });
+  </script>
 </head>
 
 <body>
