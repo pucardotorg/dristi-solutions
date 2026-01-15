@@ -22,7 +22,7 @@ public class TextLocationFinder implements RenderListener {
     private float keywordX, keywordY;
     private StringBuilder currentText = new StringBuilder();
     private Float lastY;
-    private float lineStartX;
+    private float firstCharX;
 
     @Getter
     private Boolean keywordFound = false;
@@ -37,21 +37,35 @@ public class TextLocationFinder implements RenderListener {
             
             if (lastY != null && !currentY.equals(lastY)) {
                 currentText = new StringBuilder();
-            }
-            
-            if (currentText.length() == 0) {
-                lineStartX = currentX;
+                firstCharX = 0;
             }
             
             lastY = currentY;
-            currentText.append(text);
             
-            if (currentText.toString().contains(keyword)) {
-                keywordX = lineStartX;
+            String before = currentText.toString();
+            currentText.append(text);
+            String after = currentText.toString();
+            
+            if (!before.contains(keyword) && after.contains(keyword)) {
+                int keywordStartIndex = after.indexOf(keyword);
+                int chunkStartIndex = before.length();
+                
+                if (keywordStartIndex >= chunkStartIndex) {
+                    int offsetInChunk = keywordStartIndex - chunkStartIndex;
+                    float chunkWidth = renderInfo.getBaseline().getEndPoint().get(0) - currentX;
+                    float avgCharWidth = text.length() > 0 ? chunkWidth / text.length() : 0;
+                    keywordX = currentX + (offsetInChunk * avgCharWidth);
+                } else {
+                    keywordX = firstCharX;
+                }
                 keywordY = currentY;
                 keywordFound = true;
                 currentText = new StringBuilder();
                 log.debug("Keyword '{}' found at coordinates ({}, {})", keyword, keywordX, keywordY);
+            } else if (after.startsWith(keyword.substring(0, Math.min(keyword.length(), after.length())))) {
+                if (firstCharX == 0) {
+                    firstCharX = currentX;
+                }
             }
         }
     }
