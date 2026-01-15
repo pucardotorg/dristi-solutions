@@ -1,8 +1,10 @@
-const { search_pdf, create_file, search_mdms } = require("../api");
+const { create_file, search_mdms } = require("../api");
 const { PDFDocument, rgb } = require("pdf-lib");
-const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const {
+  convertFileStoreToDocument,
+} = require("./utils/convertFileStoreToDocument");
 
 /**
  * @typedef CaseBundleMaster
@@ -68,48 +70,30 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
 
         try {
           // Fetch PDF from fileStoreId
-          const pdfResponse = await search_pdf(
+          const itemPdf = await convertFileStoreToDocument(
             tenantId,
             item.fileStoreId,
             requestInfo
           );
-          if (
-            pdfResponse.status === 200 &&
-            pdfResponse.data[item.fileStoreId]
-          ) {
-            const pdfUrl = pdfResponse.data[item.fileStoreId];
-            const pdfFetchResponse = await axios.get(pdfUrl, {
-              responseType: "arraybuffer",
+
+          // Add case number to each page
+          const pages = itemPdf.getPages();
+          for (const page of pages) {
+            const { width, height } = page.getSize();
+            page.drawText(`Case Number: ${caseNumber}`, {
+              x: width / 2 - 50,
+              y: height - 30,
+              size: 12,
+              color: rgb(0, 0, 0),
             });
-            const pdfData = pdfFetchResponse.data;
-
-            const itemPdf = await PDFDocument.load(pdfData, {
-              ignoreEncryption: true,
-            });
-
-            // Add case number to each page
-            const pages = itemPdf.getPages();
-            for (const page of pages) {
-              const { width, height } = page.getSize();
-              page.drawText(`Case Number: ${caseNumber}`, {
-                x: width / 2 - 50,
-                y: height - 30,
-                size: 12,
-                color: rgb(0, 0, 0),
-              });
-            }
-
-            // Merge the fetched PDF pages
-            const copiedPages = await mergedPdf.copyPages(
-              itemPdf,
-              itemPdf.getPageIndices()
-            );
-            copiedPages.forEach((page) => mergedPdf.addPage(page));
-          } else {
-            console.error(
-              `Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`
-            );
           }
+
+          // Merge the fetched PDF pages
+          const copiedPages = await mergedPdf.copyPages(
+            itemPdf,
+            itemPdf.getPageIndices()
+          );
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
         } catch (error) {
           console.error(
             `Error processing fileStoreId '${item.fileStoreId}': ${error.message}`
