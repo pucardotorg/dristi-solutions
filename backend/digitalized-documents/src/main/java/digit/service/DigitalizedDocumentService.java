@@ -3,6 +3,7 @@ package digit.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.DigitalizedDocumentRepository;
+import digit.config.Configuration;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
 import digit.util.FileStoreUtil;
@@ -26,6 +27,7 @@ import static digit.config.ServiceConstants.CO_ORDINATES;
 import static digit.config.ServiceConstants.CREATE_DIGITALIZED_DOCUMENT_FAILED;
 import static digit.config.ServiceConstants.DATA;
 import static digit.config.ServiceConstants.DATE_FORMAT;
+import static digit.config.ServiceConstants.ESIGN_DATE_FORMAT;
 import static digit.config.ServiceConstants.FILE;
 import static digit.config.ServiceConstants.NAME;
 import static digit.config.ServiceConstants.PAGE;
@@ -50,6 +52,7 @@ public class DigitalizedDocumentService {
     private final XmlRequestGenerator xmlRequestGenerator;
     private final DigitalizedDocumentRepository repository;
     private final ObjectMapper objectMapper;
+    private final Configuration configuration;
 
     @Autowired
     public DigitalizedDocumentService(DocumentTypeServiceFactory serviceFactory,
@@ -58,7 +61,8 @@ public class DigitalizedDocumentService {
                                       CipherUtil cipherUtil,
                                       XmlRequestGenerator xmlRequestGenerator,
                                       DigitalizedDocumentRepository repository,
-                                      ObjectMapper objectMapper) {
+                                      ObjectMapper objectMapper,
+                                      Configuration configuration) {
         this.serviceFactory = serviceFactory;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -66,6 +70,7 @@ public class DigitalizedDocumentService {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.repository = repository;
         this.objectMapper = objectMapper;
+        this.configuration = configuration;
     }
 
     public DigitalizedDocument createDigitalizedDocument(DigitalizedDocumentRequest digitalizedDocumentRequest) {
@@ -114,15 +119,15 @@ public class DigitalizedDocumentService {
     public List<DigitalizedDocument> searchDigitalizedDocument(DigitalizedDocumentSearchRequest digitalizedDocumentSearchRequest) {
         try {
             log.info("operation = searchDigitalizedDocument , result = IN_PROGRESS, request: {}", digitalizedDocumentSearchRequest);
-            
+
             DigitalizedDocumentSearchCriteria criteria = digitalizedDocumentSearchRequest.getCriteria();
             Pagination pagination = digitalizedDocumentSearchRequest.getPagination();
-            
+
             List<DigitalizedDocument> documents = repository.getDigitalizedDocuments(criteria, pagination);
-            
+
             log.info("operation = searchDigitalizedDocument , result = SUCCESS, documents found: {}", documents.size());
             return documents;
-            
+
         } catch (Exception e) {
             log.error("Error searching digitalized documents: {}", e.getMessage());
             throw new CustomException("DIGITALIZED_DOCUMENT_SEARCH_FAILED", "Error searching digitalized documents: " + e.getMessage());
@@ -164,7 +169,7 @@ public class DigitalizedDocumentService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY() + 20);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
@@ -209,7 +214,7 @@ public class DigitalizedDocumentService {
                     List<Document> existingDocuments = document.getDocuments();
                     if (existingDocuments == null || existingDocuments.isEmpty()) {
                         throw new CustomException("DOCUMENT_UPDATE_ERROR", "No documents found in digitalized document");
-                   }
+                    }
                     Object documentAdditionalDetails = existingDocuments.get(0).getAdditionalDetails();
                     JsonNode documentAdditionalDetailsJsonNode = objectMapper.convertValue(documentAdditionalDetails, JsonNode.class);
                     String documentName = documentAdditionalDetailsJsonNode.path("name").asText();
@@ -286,8 +291,8 @@ public class DigitalizedDocumentService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "250,50");
-        pdf.put(DATE_FORMAT, "dd-MMM-yyyy");
+        pdf.put(SIZE, configuration.getEsignSignatureWidth() + "," + configuration.getEsignSignatureHeight());
+        pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
         requestData.put(DATA, base64Doc);

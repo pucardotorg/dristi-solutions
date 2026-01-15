@@ -51,6 +51,8 @@ public class ServiceConstants {
     public static final String PAGE = "page";
     public static final String CO_ORDINATES = "cood";
     public static final String SIZE = "size";
+    public static final String DATE_FORMAT = "dateformat";
+    public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 

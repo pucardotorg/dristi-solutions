@@ -187,4 +187,10 @@ public class Configuration {
     @Value("${egov.esign.location.endpoint}")
     private String esignLocationEndPoint;
 
+    @Value("${egov.esign.signature.width}")
+    private Integer esignSignatureWidth;
+
+    @Value("${egov.esign.signature.height}")
+    private Integer esignSignatureHeight;
+
 }

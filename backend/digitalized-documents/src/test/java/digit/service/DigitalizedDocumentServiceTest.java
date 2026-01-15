@@ -1,6 +1,7 @@
 package digit.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import digit.config.Configuration;
 import digit.repository.DigitalizedDocumentRepository;
 import digit.util.CipherUtil;
 import digit.util.ESignUtil;
@@ -38,6 +39,7 @@ class DigitalizedDocumentServiceTest {
     @Mock private CipherUtil cipherUtil;
     @Mock private XmlRequestGenerator xmlRequestGenerator;
     @Mock private DigitalizedDocumentRepository repository;
+    @Mock private Configuration configuration;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

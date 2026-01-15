@@ -339,6 +339,12 @@ public class Configuration {
     @Value("${dristi.esign.location.endpoint}")
     private String esignLocationEndPoint;
 
+    @Value("${dristi.esign.signature.width}")
+    private Integer esignSignatureWidth;
+
+    @Value("${dristi.esign.signature.height}")
+    private Integer esignSignatureHeight;
+
     // Zone id
     @Value("${app.zone.id}")
     private String zoneId;

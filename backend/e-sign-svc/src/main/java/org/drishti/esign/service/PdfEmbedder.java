@@ -79,7 +79,7 @@ public class PdfEmbedder {
                     float x = finder.getKeywordX();
                     float y = finder.getKeywordY();
                     coordinate.setX(x);
-                    coordinate.setY(y);
+                    coordinate.setY(y + configuration.getESignYCoordinateOffset());
                     coordinate.setFound(true);
                     coordinate.setPageNumber(i);
                     log.info("Method=findLocationToSign,Result=Success,Coordinate found for placeholder={}", signaturePlace);

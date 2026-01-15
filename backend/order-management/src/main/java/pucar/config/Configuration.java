@@ -64,6 +64,12 @@ public class Configuration {
     @Value("${dristi.esign.location.endpoint}")
     private String esignLocationEndPoint;
 
+    @Value("${dristi.esign.signature.width}")
+    private Integer esignSignatureWidth;
+
+    @Value("${dristi.esign.signature.height}")
+    private Integer esignSignatureHeight;
+
 
     // Advocate Config
     @Value("${dristi.advocate.host}")

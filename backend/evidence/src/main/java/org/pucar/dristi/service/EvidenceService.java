@@ -1147,7 +1147,8 @@ public class EvidenceService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "150,100");
+        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
         requestData.put(DATA, base64Doc);
