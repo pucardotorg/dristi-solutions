@@ -139,7 +139,7 @@ public class BSSService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "150,100");   // check on this
+        pdf.put(SIZE, "250,50");
         requestData.put(PDF, pdf);
 
         // Data section  // enrich this section
