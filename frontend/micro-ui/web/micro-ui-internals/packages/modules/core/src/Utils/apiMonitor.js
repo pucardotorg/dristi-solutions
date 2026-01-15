@@ -104,26 +104,26 @@ const logWithColors = (type, method, url, status, duration, requestSize, respons
 
   // Format the log message
   if (type === "OUT") {
-    console.groupCollapsed(`%c[API OUT] ${method} ${url}`, `${typeStyle}; font-weight: bold;`);
+    // console.groupCollapsed(`%c[API OUT] ${method} ${url}`, `${typeStyle}; font-weight: bold;`);
     // console.log(`→ Request: ${formatDataSize(requestSize)}`);
-    console.groupEnd();
+    // console.groupEnd();
   } else if (type === "IN") {
-    console.groupCollapsed(`%c[API IN] ${method} ${url} - ${status}`, `${statusStyle}; font-weight: bold;`);
+    // console.groupCollapsed(`%c[API IN] ${method} ${url} - ${status}`, `${statusStyle}; font-weight: bold;`);
     // console.log(`→ Duration: ${duration}ms | Response: ${formatDataSize(responseSize)} | Total: ${formatDataSize(requestSize + responseSize)}`);
-    console.groupEnd();
+    // console.groupEnd();
   } else if (type === "ERROR") {
-    console.groupCollapsed(`%c[API ERROR] ${method} ${url} - ${status || "FAILED"}`, "color: #f44336; font-weight: bold;");
+    // console.groupCollapsed(`%c[API ERROR] ${method} ${url} - ${status || "FAILED"}`, "color: #f44336; font-weight: bold;");
     // console.log(`→ Error: ${(error && error.message) || "Unknown error"} | Duration: ${duration}ms`);
-    console.groupEnd();
+    // console.groupEnd();
   }
 
   // Add warnings for slow requests or large responses
   if (duration > config.warnSlowRequestsMs) {
-    console.warn(`⚠️ Slow request detected: ${url} (${duration}ms)`);
+    // console.warn(`⚠️ Slow request detected: ${url} (${duration}ms)`);
   }
 
   if (responseSize / 1024 > config.warnLargeResponseKb) {
-    console.warn(`⚠️ Large response detected: ${url} (${formatDataSize(responseSize)})`);
+    // console.warn(`⚠️ Large response detected: ${url} (${formatDataSize(responseSize)})`);
   }
 };
 
