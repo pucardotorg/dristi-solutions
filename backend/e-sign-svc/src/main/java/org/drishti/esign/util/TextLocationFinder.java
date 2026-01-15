@@ -30,6 +30,9 @@ public class TextLocationFinder implements RenderListener {
 
     @Override
     public void renderText(TextRenderInfo renderInfo) {
+        if (keywordFound) {
+            return;
+        }
         String text = renderInfo.getText();
         if (text != null) {
             Float currentY = renderInfo.getBaseline().getStartPoint().get(1);
@@ -46,8 +49,8 @@ public class TextLocationFinder implements RenderListener {
             currentText.append(text);
             String after = currentText.toString();
             
-            if (!before.contains(keyword) && after.contains(keyword)) {
-                int keywordStartIndex = after.indexOf(keyword);
+            int keywordStartIndex = after.indexOf(keyword);
+            if (keywordStartIndex >= 0) {
                 int chunkStartIndex = before.length();
                 
                 if (keywordStartIndex >= chunkStartIndex) {
@@ -60,12 +63,14 @@ public class TextLocationFinder implements RenderListener {
                 }
                 keywordY = currentY;
                 keywordFound = true;
-                currentText = new StringBuilder();
                 log.debug("Keyword '{}' found at coordinates ({}, {})", keyword, keywordX, keywordY);
-            } else if (after.startsWith(keyword.substring(0, Math.min(keyword.length(), after.length())))) {
+            } else if (keyword.startsWith(after) || after.endsWith(keyword.substring(0, Math.min(keyword.length(), after.length())))) {
                 if (firstCharX == 0) {
                     firstCharX = currentX;
                 }
+            } else {
+                currentText = new StringBuilder();
+                firstCharX = 0;
             }
         }
     }
