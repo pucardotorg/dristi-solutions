@@ -384,12 +384,12 @@ public class OrderNotificationService {
             Integer purposeCode = hearingRepository.getHearingPurposeCode(hearing);
             if (purposeCode == null || purposeCode == 0) {
                 log.info("Purpose code is {} for hearing {}, returning null", purposeCode, hearing.getHearingId());
-                return null;
+                return "0";
             }
             return String.valueOf(purposeCode);
         } catch (Exception e) {
             log.warn("Failed to get hearing purpose code for hearing {}: {}", hearing.getHearingId(), e.getMessage());
-            return null;
+            return "0";
         }
     }
 
