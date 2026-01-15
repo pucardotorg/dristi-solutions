@@ -22,6 +22,7 @@ public class TextLocationFinder implements RenderListener {
     private float keywordX, keywordY;
     private StringBuilder currentText = new StringBuilder();
     private Float lastY;
+    private float lineStartX;
 
     @Getter
     private Boolean keywordFound = false;
@@ -32,17 +33,24 @@ public class TextLocationFinder implements RenderListener {
         String text = renderInfo.getText();
         if (text != null) {
             Float currentY = renderInfo.getBaseline().getStartPoint().get(1);
+            float currentX = renderInfo.getBaseline().getStartPoint().get(0);
+            
             if (lastY != null && !currentY.equals(lastY)) {
                 currentText = new StringBuilder();
             }
+            
+            if (currentText.length() == 0) {
+                lineStartX = currentX;
+            }
+            
             lastY = currentY;
             currentText.append(text);
+            
             if (currentText.toString().contains(keyword)) {
-                // Coordinates are in user space units
-                currentText = new StringBuilder();
-                keywordX = renderInfo.getBaseline().getStartPoint().get(0);
-                keywordY = renderInfo.getBaseline().getStartPoint().get(1);
+                keywordX = lineStartX;
+                keywordY = currentY;
                 keywordFound = true;
+                currentText = new StringBuilder();
                 log.debug("Keyword '{}' found at coordinates ({}, {})", keyword, keywordX, keywordY);
             }
         }
