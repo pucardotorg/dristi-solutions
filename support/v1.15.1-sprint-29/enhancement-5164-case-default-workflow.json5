@@ -1125,8 +1125,11 @@
         "applicationStatus": "ACTIVE",
         "docUploadRequired": false,
         "isStartState": false,
+        // mark it as false so it's not terminal state.
         "isTerminateState": false,
+        // mark it as true so it can be updated.
         "isStateUpdatable": true,
+        // action REJECT is allowed for CASE_DISMISSED state
         "actions": [
           {
             "tenantId": "kl",
