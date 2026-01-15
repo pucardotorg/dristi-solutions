@@ -69,7 +69,7 @@ runs:
       with:
         java-version: ${{ env.version }}
         distribution: 'temurin'
-        cache: maven
+        cache: maven-${{ env.version }}
 
     # - name: Dependency check
     #   uses: dependency-check/Dependency-Check_Action@main
@@ -109,3 +109,4 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
+
