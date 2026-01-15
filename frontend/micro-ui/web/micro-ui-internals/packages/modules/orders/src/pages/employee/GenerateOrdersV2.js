@@ -1100,6 +1100,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1117,6 +1118,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1139,6 +1141,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1155,6 +1158,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1175,6 +1179,7 @@ const GenerateOrdersV2 = () => {
       applyOrderTypes([
         "SUMMONS",
         "NOTICE",
+        "DISMISS_CASE",
         "SECTION_202_CRPC",
         "MANDATORY_SUBMISSIONS_RESPONSES",
         "REFERRAL_CASE_TO_ADR",
@@ -3347,7 +3352,10 @@ const GenerateOrdersV2 = () => {
           break;
         }
 
-        if (["TAKE_COGNIZANCE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+        if (
+          (orderType === "TAKE_COGNIZANCE" && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) ||
+          (orderType === "DISMISS_CASE" && ["CASE_DISMISSED"].includes(caseDetails?.status))
+        ) {
           setShowErrorToast({
             label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
