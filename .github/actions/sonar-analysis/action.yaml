@@ -83,7 +83,7 @@ runs:
     #     args: "--disableOssIndex"
 
     - name: Build and analyze for ${{ inputs.service_name }}
-      if: ${{ env.version != '8' }}
+      if: ${{ env.language == '8' && env.version == '17' }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
