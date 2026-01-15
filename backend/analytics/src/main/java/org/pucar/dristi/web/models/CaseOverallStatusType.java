@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.*;
+import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.validation.annotation.Validated;
 
 
@@ -61,5 +62,8 @@ public class CaseOverallStatusType {
     @JsonProperty("compositeHearingPath")
     @Valid
     private String compositeHearingPath = null;
+
+    @JsonProperty("processHandler")
+    private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
 
 }

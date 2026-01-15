@@ -24,6 +24,7 @@ import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.CaseStageSubStage;
 import org.pucar.dristi.web.models.Outcome;
+import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -283,18 +284,13 @@ public class CaseOverallStatusUtil {
                 Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
                 Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-                if (isLprCase != null && isLprCase) {
-                    if (!config.getLprStage().equalsIgnoreCase(caseStage)) {
-                        caseOverallStatus.setStage(config.getLprStage());
-                        caseOverallStatus.setSubstage(config.getLprSubStage());
-                    } else {
-                        log.info("case is already in lpr stage : {} ", filingNumber);
-                        return;
-                    }
-                } else {
-                    caseOverallStatus.setStage(caseOverallStatus.getStage());
-                    caseOverallStatus.setSubstage(caseOverallStatus.getSubstage());
-                }
+				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
+				
+				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage);
+				
+				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
+					return;
+				}
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
@@ -310,6 +306,32 @@ public class CaseOverallStatusUtil {
 		} catch (Exception e) {
 			log.error("Error in publishToCaseOverallStatus method", e);
 		}
+	}
+
+	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage) {
+		if (caseOverallStatus.getProcessHandler() == null) {
+			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
+		}
+		
+		if (caseOverallStatus.getProcessHandler() == ProcessHandler.UPDATE_BACKUP) {
+			caseOverallStatus.setStageBackUp(currentCaseStage);
+			caseOverallStatus.setSubstageBackUp(currentCaseSubStage);
+		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
+			caseOverallStatus.setStageBackUp(null);
+			caseOverallStatus.setSubstageBackUp(null);
+		}
+	}
+
+	private boolean handleLprCase(CaseOverallStatus caseOverallStatus, Boolean isLprCase, String caseStage, String filingNumber) {
+		if (isLprCase != null && isLprCase) {
+			if (config.getLprStage().equalsIgnoreCase(caseStage)) {
+				log.info("case is already in lpr stage : {} ", filingNumber);
+				return false;
+			}
+			caseOverallStatus.setStage(config.getLprStage());
+			caseOverallStatus.setSubstage(config.getLprSubStage());
+		}
+		return true;
 	}
 
 	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject, String orderCategory) {
