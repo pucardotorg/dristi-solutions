@@ -35,11 +35,11 @@ public class CaseOverallStatus {
     @JsonProperty("processHandler")
     private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
 
-    @JsonProperty("stageBackUp")
-    private String stageBackUp = null;
+    @JsonProperty("stageBackup")
+    private String stageBackup = null;
 
-    @JsonProperty("substageBackUp")
-    private String substageBackUp = null;
+    @JsonProperty("substageBackup")
+    private String substageBackup = null;
 
     @JsonProperty("auditDetails")
     @Valid

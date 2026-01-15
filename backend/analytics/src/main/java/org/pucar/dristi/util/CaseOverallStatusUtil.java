@@ -314,11 +314,11 @@ public class CaseOverallStatusUtil {
 		}
 		
 		if (caseOverallStatus.getProcessHandler() == ProcessHandler.UPDATE_BACKUP) {
-			caseOverallStatus.setStageBackUp(currentCaseStage);
-			caseOverallStatus.setSubstageBackUp(currentCaseSubStage);
+			caseOverallStatus.setStageBackup(currentCaseStage);
+			caseOverallStatus.setSubstageBackup(currentCaseSubStage);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
-			caseOverallStatus.setStageBackUp(null);
-			caseOverallStatus.setSubstageBackUp(null);
+			caseOverallStatus.setStageBackup(null);
+			caseOverallStatus.setSubstageBackup(null);
 		}
 	}
 
