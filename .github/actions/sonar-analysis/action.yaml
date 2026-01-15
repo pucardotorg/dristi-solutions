@@ -83,7 +83,7 @@ runs:
     #     args: "--disableOssIndex"
 
     - name: Build and analyze for ${{ inputs.service_name }}
-      if: ${{ env.language == 'java' }}
+      if: ${{ env.version != '8' }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
@@ -108,4 +108,5 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
+
 
