@@ -286,7 +286,7 @@ public class DigitalizedDocumentService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "250,40");
+        pdf.put(SIZE, "250,50");
         pdf.put(DATE_FORMAT, "dd-MMM-yyyy");
         requestData.put(PDF, pdf);
 
