@@ -27,7 +27,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>}
     </React.Fragment>
   );
 };
@@ -102,6 +102,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.size > maxFileSize) {
       setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
     } else if (clearErrors) {
       clearErrors(config.key);
     }
@@ -134,7 +135,11 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                  {input?.isOptional && (
+                    <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>
+                      &nbsp;{`${t(input?.isOptional)}`}
+                    </span>
+                  )}
                   <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}
