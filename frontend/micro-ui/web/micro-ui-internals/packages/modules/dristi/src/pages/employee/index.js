@@ -1,12 +1,12 @@
 import { BackButton, HelpOutlineIcon, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "./AdmittedCases/AdmittedCase";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
 import PaymentInbox from "./Payment/PaymentInbox";
@@ -22,6 +22,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
+  const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { toastMessage, toastType, closeToast } = useToast();
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
@@ -31,20 +32,27 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
+  const { caseId: contextCaseId, filingNumber: contextFilingNumber } = BreadCrumbsParamsData || {};
+  const queryForViewCase = useMemo(() => {
+    const caseId = contextCaseId || location?.state?.caseId;
+    const filingNumber = contextFilingNumber || location?.state?.filingNumber;
+    if (caseId && filingNumber) {
+      return `?${new URLSearchParams({ caseId, filingNumber }).toString()}`;
+    }
+    return location?.search || "";
+  }, [contextCaseId, contextFilingNumber, location?.state?.caseId, location?.state?.filingNumber, location?.search]);
 
-  const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"].includes(role.code));
-  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
-      homeActiveTab: homeActiveTab,
       isLast: false,
     },
     {
       path: `${path}/home/view-case`,
       content: t("VIEW_CASE"),
+      query: queryForViewCase,
       show: location.pathname.includes("/view-case"),
       isLast: !location.pathname.includes("/review-litigant-details"),
     },
@@ -55,16 +63,25 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
     {
-      path: `${path}/registration-requests`,
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
       content: t("ES_REGISTRATION_REQUESTS"),
       show: location.pathname.includes("/registration-requests"),
       isLast: !location.pathname.includes("/details"),
+      homeActiveTab: "REGISTER_USERS",
     },
     {
-      path: `${path}/pending-payment-inbox`,
-      content: t("CS_PENDING_PAYMENT_INBOX"),
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_OFFLINE_PAYMENTS"),
       show: location.pathname.includes("/pending-payment-inbox"),
-      isLast: !location.pathname.includes("/pending-payment-inbox"),
+      isLast: !location.pathname.includes("/pending-payment-details"),
+      homeActiveTab: "OFFLINE_PAYMENTS",
+    },
+    {
+      path: `${path?.replace("/dristi", "")}/home/home-screen`,
+      content: t("HOME_SCRUTINISE_CASES"),
+      show: location.pathname.includes("dristi/case"),
+      isLast: false,
+      homeActiveTab: "SCRUTINISE_CASES",
     },
     {
       path: `${path}/pending-payment-inbox/pending-payment-details`,
@@ -123,17 +140,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
           <PrivateRoute exact path={`${path}/registration-requests`} component={Inbox} />
           <PrivateRoute exact path={`${path}/registration-requests/details`} component={(props) => <ApplicationDetails {...props} />} />
-          <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} />
+          {/* <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} /> */}
           <PrivateRoute exact path={`${path}/pending-payment-inbox/response`} component={EFilingPaymentResponse} />
           <PrivateRoute exact path={`${path}/pending-payment-inbox/pending-payment-details`} component={ViewPaymentDetails} />
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute
-            exact
-            path={`${path}/home/view-case`}
-            component={isJudgeView ? (props) => <AdmittedCaseV2 /> : (props) => <AdmittedCases />}
-          />
+          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCaseV2 />} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

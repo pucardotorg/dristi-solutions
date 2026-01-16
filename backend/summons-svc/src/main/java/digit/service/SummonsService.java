@@ -77,7 +77,17 @@ public class SummonsService {
         String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
         String templateType = getTemplateType(taskType, taskRequest.getTask().getTaskDetails());
         String noticeType = getNoticeType(taskRequest.getTask().getTaskDetails());
+        Task task = taskRequest.getTask();
+        String deliveryChannel = (task != null &&
+                task.getTaskDetails() != null &&
+                task.getTaskDetails().getDeliveryChannel() != null)
+                ? task.getTaskDetails().getDeliveryChannel().getChannelName()
+                : null;
         String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType);
+
+        if (E_POST.equalsIgnoreCase(deliveryChannel)) {
+            pdfTemplateKey = pdfTemplateKey + "-e-post";
+        }
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
     }
@@ -85,6 +95,10 @@ public class SummonsService {
     private String getTemplateType(String taskType, TaskDetails taskDetails) {
         if(WARRANT.equals(taskType)){
             return taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getTemplateType() : null;
+        } else if(PROCLAMATION.equals(taskType)){
+            return taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getTemplateType() : null;
+        } else if(ATTACHMENT.equals(taskType)){
+            return taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getTemplateType() : null;
         }
         return null; // For other task types, templateType is not applicable
     }
@@ -116,7 +130,7 @@ public class SummonsService {
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
 
-        if (!taskType.equalsIgnoreCase(WARRANT)) {
+        if (!(taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
@@ -128,7 +142,7 @@ public class SummonsService {
 
         ChannelMessage channelMessage = externalChannelUtil.sendSummonsByDeliveryChannel(taskRequest, summonsDelivery);
 
-        if (channelMessage.getAcknowledgementStatus().equalsIgnoreCase("success")) {
+        if (SUCCESS.equalsIgnoreCase(channelMessage.getAcknowledgementStatus())) {
             summonsDelivery.setIsAcceptedByChannel(Boolean.TRUE);
             if (summonsDelivery.getChannelName() == ChannelName.SMS || summonsDelivery.getChannelName() == ChannelName.EMAIL) {
                 summonsDelivery.setDeliveryStatus(DeliveryStatus.DELIVERED);
@@ -184,11 +198,16 @@ public class SummonsService {
             }else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
-        } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
+        } else if (task.getTaskType().equalsIgnoreCase(WARRANT) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT) ) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
             workflow = Workflow.builder().action("DELIVERED").build();
             } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
                 workflow = Workflow.builder().action("TRANSIT").build();
+            }
+            else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
             }
             else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
@@ -321,7 +340,7 @@ public class SummonsService {
                 }
             }
             case WARRANT -> {
-                if(SPECIFIC.equals(templateType)){
+                if (SPECIFIC.equals(templateType)) {
                     if (BAILABLE.equals(docSubType)) {
                         return config.getBailableWarrantPdfTemplateKey();
                     } else if (NON_BAILABLE.equals(docSubType)) {
@@ -329,11 +348,17 @@ public class SummonsService {
                     } else {
                         throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                     }
-                } else if(GENERIC.equals(templateType)) {
+                } else if (GENERIC.equals(templateType)) {
                     return config.getTaskWarrantGenericPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
                 }
+            }
+            case PROCLAMATION -> {
+                return config.getTaskProclamationGenericPdfTemplateKey();
+            }
+            case ATTACHMENT -> {
+                return config.getTaskAttachmentGenericPdfTemplateKey();
             }
             case NOTICE -> {
                 if(Objects.equals(noticeType, BNSS_NOTICE)){
@@ -357,6 +382,8 @@ public class SummonsService {
             case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
             case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
             case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
+            case PROCLAMATION -> taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getDocSubType() : null;
+            case ATTACHMENT -> taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

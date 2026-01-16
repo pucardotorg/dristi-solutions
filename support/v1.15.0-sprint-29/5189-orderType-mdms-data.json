@@ -1,0 +1,92 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "936f0d0c-8f61-4c35-8ddd-9e5d5ce1243e",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "42",
+      "data": {
+        "id": 42,
+        "code": "APPROVAL_REJECTION_ADD_WITNESS",
+        "type": "APPROVAL_REJECTION_ADD_WITNESS",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "a38f0478-53a5-4adb-82b3-0eed637a56e2",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "31",
+      "data": {
+        "id": 31,
+        "code": "COMPOSITE",
+        "type": "COMPOSITE",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "d8bfdc17-6fd6-431d-8d3d-e62e9bc0737e",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "12",
+      "data": {
+        "id": 12,
+        "code": "SETTLEMENT",
+        "type": "SETTLEMENT",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "7df43765-3ad5-4c76-a9fa-1c6260320aa7",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "16",
+      "data": {
+        "id": 16,
+        "code": "WITHDRAWAL",
+        "type": "WITHDRAWAL",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "c25ba532-919e-42c9-8e2f-c512ba89dc70",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "11",
+      "data": {
+        "id": 11,
+        "code": "CASE_TRANSFER",
+        "type": "CASE_TRANSFER",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  }
+]

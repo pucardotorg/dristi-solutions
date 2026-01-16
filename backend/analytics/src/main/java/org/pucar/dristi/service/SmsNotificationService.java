@@ -54,12 +54,11 @@ public class SmsNotificationService {
     }
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
-        if (messageCode.equalsIgnoreCase(PENDING_TASK_CREATED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationPendingTaskCreatedTemplateId());
-        }
-        if (messageCode.equalsIgnoreCase(CASE_STATUS_CHANGED_MESSAGE)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationCaseStatusChangeTemplateId());
-        }
+        String templateId = switch (messageCode) {
+            case CASE_STATUS_CHANGED_MESSAGE -> config.getSmsNotificationCaseStatusChangeTemplateId();
+            default -> null;
+        };
+        pushNotification(templateData,message,mobileNumber,templateId);
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -92,6 +91,7 @@ public class SmsNotificationService {
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
         smsDetails.put("cmpNumber",smsTemplateData.getCmpNumber());
+        smsDetails.put("subStage", smsTemplateData.getSubStage());
 
         return smsDetails;
     }
@@ -126,9 +126,11 @@ public class SmsNotificationService {
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
                 .replace("{{efilingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
+                .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
+                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
+                .replace("{{subStage}}", Optional.ofNullable(userDetailsForSMS.get("subStage")).orElse(""));
         return message;
     }
 

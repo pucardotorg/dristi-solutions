@@ -14,10 +14,19 @@ import { Link } from "react-router-dom";
  * @param {string} props.className - Optional CSS class for styling
  * @param {Object} props.style - Optional inline styles for breadcrumb items
  * @param {Object} props.spanStyle - Optional inline styles for text spans
+ *
  */
+
+const formatCrumbText = (text) => {
+  if (!text || typeof text !== "string") return text;
+
+  return text
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const BreadCrumbSubmissions = (props) => {
-  console.log('Crumbs', props.crumbs);
-  
   /**
    * Determines if the current crumb is the last one in the list
    * @param {number} index - Current crumb index
@@ -30,7 +39,7 @@ const BreadCrumbSubmissions = (props) => {
    * Handles redirection for breadcrumb navigation
    * This method is specifically added to handle external API redirections through breadcrumbs
    * It constructs the full URL using the current origin and the crumb's path
-   * 
+   *
    * @param {Event} ev - Click event
    * @param {Object} crumb - Breadcrumb item with path information
    */
@@ -46,10 +55,16 @@ const BreadCrumbSubmissions = (props) => {
         return (
           <li key={ci} style={{ ...props.style, color: "rgb(0, 126, 126)" }} className="bread-crumb--item">
             {/* Render as plain text if it's the last item or has no path */}
-            {isLast(ci) || !crumb?.path ?
-              (<span style={props?.spanStyle ? { ...props?.spanStyle, color: "#0B0C0C" } : { color: "#0B0C0C" }}>{crumb.content}</span>) :
+            {isLast(ci) || !crumb?.path ? (
+              <span style={props?.spanStyle ? { ...props?.spanStyle, color: "#0B0C0C" } : { color: "#0B0C0C" }}>
+                {formatCrumbText(crumb.content)}
+              </span>
+            ) : (
               /* Otherwise render as a link with the custom redirect handler */
-              (<Link to={{ pathname: crumb.path }} onClick={(ev) => handleRedirect(ev, crumb)}>{crumb.content}</Link>)}
+              <Link to={{ pathname: crumb.path }} onClick={(ev) => handleRedirect(ev, crumb)}>
+                {crumb.content}
+              </Link>
+            )}
           </li>
         );
       })}

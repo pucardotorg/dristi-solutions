@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 
 @Component
 @Import({TracerConfiguration.class})
@@ -213,6 +215,13 @@ public class Configuration {
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
 
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
 
     @Value("${egov.indexer.es.username}")
     private String esUsername;
@@ -233,4 +242,106 @@ public class Configuration {
     // template for generic message of hearing types
     @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
     private String smsNotificationVariableHearingScheduled;
+
+    // Order service
+
+    @Value("${dristi.order.host}")
+    private String orderHost;
+
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
+
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
+
+    // Task Config
+    @Value("${dristi.task.host}")
+    private String taskServiceHost;
+
+    @Value("${dristi.task.search.endpoint}")
+    private String taskSearchEndpoint;
+
+    @Value("${dristi.task.update.endpoint}")
+    private String taskUpdateEndpoint;
+
+    // Billing Config
+    @Value("${egov.billingservice.host}")
+    private String billingServiceHost;
+
+    @Value("${egov.billingservice.search.bill}")
+    private String searchBillEndpoint;
+
+    @Value("${egov.billingservice.demand.search.endpoint}")
+    private String searchDemandEndpoint;
+
+    @Value("${egov.billingservice.demand.update.endpoint}")
+    private String updateDemandEndpoint;
+
+    @Value("${egov.mdms.payment.business.service.name}")
+    private String paymentBusinessServiceName;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    @Value("${dristi.pending.task.name}")
+    private String pendingTaskName;
+
+    @Value("${order.businessservice}")
+    private String orderEntityType;
+
+    @Value("${schedule.hearing.sla}")
+    private int scheduleHearingSla;
+
+    @Value("${hearing.statuses.to.filter}")
+    private List<String> hearingStatusesToFilter;
+
+    @Value("${notification.sms.enabled}")
+    private Boolean isSMSEnabled;
+
+    // Default User
+    @Value("${egov.default.user.username}")
+    private String defaultUserUserName;
+
+    @Value("${egov.default.user.password}")
+    private String defaultUserPassword;
+
+    @Value("${user.oauth.url}")
+    private String userOauthUrl;
+
+    // Template ids for hearing notifications
+    @Value("${egov.sms.notification.hearings.held.today.single}")
+    private String smsNotificationHearingsHeldTodaySingleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.held.today.multiple}")
+    private String smsNotificationHearingsHeldTodayMultipleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.scheduled.tomorrow.single}")
+    private String smsNotificationHearingsScheduledTomorrowSingleTemplateId;
+
+    @Value("${egov.sms.notification.hearings.scheduled.tomorrow.multiple}")
+    private String smsNotificationHearingsScheduledTomorrowMultipleTemplateId;
+
+    @Value("${egov.sms.notification.hearing.reScheduled.template.id}")
+    private String smsNotificationHearingReScheduledTemplateId;
+
+    @Value("${state.level.tenant.id}")
+    private String tenantId;
+
+    // Task Config
+    @Value("${dristi.task-management.host}")
+    private String taskManagementServiceHost;
+
+    @Value("${dristi.task-management.search.endpoint}")
+    private String taskManagementSearchEndpoint;
+
+    @Value("${dristi.task-management.update.endpoint}")
+    private String taskManagementUpdateEndPoint;
+
+    @Value("${task.management.suffix}")
+    private String taskManagementSuffix;
+
 }

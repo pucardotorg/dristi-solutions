@@ -1,0 +1,34 @@
+// todo search Hearing.HearingLink mdms schema, copy the response and delete the schema from the table
+// todo create it again and update the schema definition:
+{
+  "tenantId": "kl",
+  "code": "Hearing.HearingLink",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "link": {
+        "type": "string"
+      },
+      // todo this property should be added
+      "shortenedUrl": {
+        "type": "string"
+      },
+      "isActive": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

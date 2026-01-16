@@ -81,7 +81,6 @@ public class SpeedPostUtil {
         Double businessFee = configParams.getBusinessFee();
 
 
-        Double envelopeFee = configParams.getEnvelopeChargeIncludingGst();
         Double gstPercentage = configParams.getGstPercentage();
 
 
@@ -97,7 +96,7 @@ public class SpeedPostUtil {
         // gst on post Fee
         Double gstFee = ePostFeeWithoutGST * gstPercentage;
         // Total Fee including GST and envelope fee
-        double totalFee = ePostFeeWithoutGST + gstFee + envelopeFee;
+        double totalFee = ePostFeeWithoutGST + gstFee;
 
         return getRoundOffValue(totalFee);
     }

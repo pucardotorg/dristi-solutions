@@ -61,4 +61,10 @@ public class PendingTaskType {
 
     @JsonProperty("referenceEntityTypeNameMapping")
     private List<ReferenceEntityTypeNameMapping> referenceEntityTypeNameMapping = null;
+
+    @JsonProperty("stateSla")
+    private String stateSla = null;
+
+    @JsonProperty("defaultRoles")
+    private List<String> defaultRoles = null;
 }

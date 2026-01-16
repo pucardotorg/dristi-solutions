@@ -151,8 +151,8 @@ public class StorageService {
 		return minioConfig.getBucketName() + "/" + getFolderName(module, tenantId, calendar);
 	}
 
-	public Resource retrieve(String fileStoreId, String tenantId) throws IOException {
-		return artifactRepository.find(fileStoreId, tenantId);
+	public Resource retrieve(String fileStoreId, String tenantId, String module) throws IOException {
+		return artifactRepository.find(fileStoreId, tenantId, module);
 	}
 
 	public List<FileInfo> retrieveByTag(String tag, String tenantId) {

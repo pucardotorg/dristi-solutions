@@ -48,9 +48,10 @@ public class EvidenceStatusUpdateService {
             RequestInfo requestInfo = objectMapper.convertValue(requestInfoMap, RequestInfo.class);
             String applicationNumber = JsonPath.read(application, APPLICATION_NUMBER_PATH);
             String status = JsonPath.read(application, APPLICATION_STATUS_PATH);
+            String filingNumber = JsonPath.read(application, FILING_NUMBER_PATH);
             String tenantId = requestInfo.getUserInfo().getTenantId();
 
-            EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().applicationNumber(applicationNumber).tenantId(tenantId).build();
+            EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().applicationNumber(applicationNumber).filingNumber(filingNumber).tenantId(tenantId).build();
             List<Artifact> artifacts = evidenceService.searchEvidence(requestInfo, evidenceSearchCriteria, null);
 
             log.info("updating evidence for application number: {} , status : {} , no of evidence: {}", applicationNumber, status, artifacts.size());

@@ -132,7 +132,13 @@ async function mandatoryAsyncSubmissionsResponses(
           "DD-MM-YYYY"
         )
       : "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {
@@ -198,7 +204,7 @@ async function mandatoryAsyncSubmissionsResponses(
         return renderError(res, "Failed to send PDF response", 500, err);
       });
   } catch (ex) {
-    console.log(ex);
+    console.error(ex);
     return renderError(
       res,
       "Failed to generate PDF for order for mandatory async submission",

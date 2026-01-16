@@ -19,6 +19,7 @@ const PaymentStatus = ({ path }) => {
   const orderType = receiptData?.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const commonProps = {
     whichSvg: "tick",
@@ -37,10 +38,15 @@ const PaymentStatus = ({ path }) => {
         message: t("CS_PAYMENT_FAILED"),
       };
 
-  const statusMessage = `${orderType === "SUMMONS" ? t("THE_SUMMON") : orderType === "NOTICE" ? t("THE_NOTICE") : t("THE_WARRANT")} ${t(
-    "WOULD_BE_SENT_TO_PARTY"
-  )}`;
+  const orderTypeMap = {
+    SUMMONS: "THE_SUMMON",
+    NOTICE: "THE_NOTICE",
+    WARRANT: "THE_WARRANT",
+    PROCLAMATION: "THE_PROCLAMATION",
+    ATTACHMENT: "THE_ATTACHMENT",
+  };
 
+  const statusMessage = `${t(orderTypeMap[orderType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
@@ -88,7 +94,9 @@ const PaymentStatus = ({ path }) => {
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onClick={() => {
-                history.goBack();
+                triggerSurvey("TASK_PAYMENT", () => {
+                  history.goBack();
+                });
               }}
             />
           ) : (
@@ -108,11 +116,14 @@ const PaymentStatus = ({ path }) => {
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onClick={() => {
-              history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              triggerSurvey("TASK_PAYMENT", () => {
+                history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              });
             }}
           />
         </div>
       </div>
+      {SurveyUI}
     </div>
   );
 };

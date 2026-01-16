@@ -157,7 +157,7 @@ const SummaryModal = ({
       .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
       .then((res) => {
         history.push(
-          `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {

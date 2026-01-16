@@ -21,10 +21,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   const { t } = useTranslation();
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
@@ -43,7 +40,10 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   );
 
   const scheduledHearing = hearingRes?.HearingList?.filter(
-    (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED,HearingWorkflowState?.ABANDONED].includes(hearing?.status)
+    (hearing) =>
+      ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED, HearingWorkflowState?.ABANDONED].includes(
+        hearing?.status
+      )
   ).sort((hearing1, hearing2) => hearing1.startTime - hearing2.startTime)[0];
 
   const hiddenOutcomes = [
@@ -58,7 +58,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
     "SETTLED",
   ];
 
-  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome) && !(isJudge || isBenchClerk || isTypist || isCourtRoomManager);
+  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome) && !isEmployee;
 
   const formattedTime = () => {
     const date1 = new Date(scheduledHearing?.startTime);
@@ -127,11 +127,15 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
 
   return (
     <Card
-      style={{ ...(cardStyle ? cardStyle : {
-        width: width,
-        minWidth: minWidth,
-        marginTop: "10px",
-      })}}
+      style={{
+        ...(cardStyle
+          ? cardStyle
+          : {
+              width: width,
+              minWidth: minWidth,
+              marginTop: "10px",
+            }),
+      }}
     >
       <div
         style={{
@@ -164,7 +168,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
               }}
             >
               {/* {formattedTime()} */}
-              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
+              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)}
             </div>
             <div
               style={{
@@ -183,8 +187,17 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
           <Button
             variation={"outlined"}
             onButtonClick={handleButtonClick}
-            isDisabled={isCourtRoomManager || (roles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
-            label={scheduledHearing?.status === "SCHEDULED" ? t("AWAIT_START_HEARING") : scheduledHearing?.status === "IN_PROGRESS" ? t("JOIN_HEARING") : t("PASSED_OVER")}
+            isDisabled={scheduledHearing?.status !== "IN_PROGRESS"}
+            label={
+              scheduledHearing?.status === "SCHEDULED"
+                ? t("AWAIT_START_HEARING")
+                : scheduledHearing?.status === "IN_PROGRESS"
+                ? t("JOIN_HEARING")
+                : t("PASSED_OVER")
+            }
+            style={{
+              ...(scheduledHearing?.status !== "IN_PROGRESS" ? { cursor: "default" } : { cursor: "pointer" }),
+            }}
           />
         )}
       </div>

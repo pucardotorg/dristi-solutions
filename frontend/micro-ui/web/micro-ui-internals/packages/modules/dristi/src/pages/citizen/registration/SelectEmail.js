@@ -11,12 +11,10 @@ const ProjectBreadCrumb = ({ location }) => {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
       path: homePath,
@@ -95,7 +93,7 @@ const SelectEmail = ({
       localStorage.setItem("user-info", JSON.stringify({ ...localUserInfo, emailId: info?.emailId }));
       localStorage.setItem("Citizen.user-info", JSON.stringify({ ...localCitizenUserInfo, emailId: info?.emailId }));
       if (!isProfile) {
-        history.push(`${path}/user-name`);
+        history.push(`${path}/user-name`, { newParams: params });
       } else {
         history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }

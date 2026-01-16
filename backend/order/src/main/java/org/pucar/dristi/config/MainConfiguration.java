@@ -1,6 +1,7 @@
 package org.pucar.dristi.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +13,12 @@ import jakarta.annotation.PostConstruct;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.tracer.config.TracerConfiguration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 
 @Import({TracerConfiguration.class})
+@Configuration
 public class MainConfiguration {
 
     @Value("${app.timezone}")
@@ -36,5 +40,14 @@ public class MainConfiguration {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper);
         return converter;
+    }
+
+    @Bean
+    public TaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(5);
+        scheduler.setThreadNamePrefix("MyScheduler-");
+        scheduler.initialize();
+        return scheduler;
     }
 }

@@ -23,6 +23,8 @@ const { processBailDocuments } = require("./processBailDocuments");
 const { processTaskProcesses } = require("./processTaskProcesses");
 const { processPaymentReceipts } = require("./processPaymentReceipts");
 const { processOrders } = require("./processOrders");
+const { processExamination } = require("./processExamination");
+const { processOthersSection } = require("./processOthersSection");
 
 async function processPendingAdmissionCase({
   tenantId,
@@ -183,6 +185,11 @@ async function processPendingAdmissionCase({
       indexCopy,
       messagesMap
     ),
+  ];
+
+  await Promise.all(processingPromises);
+
+  const finalPromises = [
     processBailDocuments(
       courtCase,
       caseBundleMaster,
@@ -200,7 +207,20 @@ async function processPendingAdmissionCase({
       TEMP_FILES_DIR,
       indexCopy
     ),
+  ];
+
+  await Promise.all(finalPromises);
+
+  const orderPromises = [
     processPaymentReceipts(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processExamination(
       courtCase,
       caseBundleMaster,
       tenantId,
@@ -218,7 +238,20 @@ async function processPendingAdmissionCase({
     ),
   ];
 
-  await Promise.all(processingPromises);
+  await Promise.all(orderPromises);
+
+  const othersPromises = [
+    processOthersSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+  ];
+
+  await Promise.all(othersPromises);
 
   indexCopy.isRegistered = true;
   indexCopy.contentLastModified = Date.now();

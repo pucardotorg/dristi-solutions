@@ -48,4 +48,8 @@ public class DeliveryChannel {
 
     @JsonProperty("channelAcknowledgementId")
     private String channelAcknowledgementId;
+
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection = false;
+
 }

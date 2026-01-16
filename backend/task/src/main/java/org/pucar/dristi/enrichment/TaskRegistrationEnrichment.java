@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
@@ -20,8 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.JOIN_CASE_PAYMENT;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -72,10 +72,27 @@ public class TaskRegistrationEnrichment {
                 enrichConsumerCodeInTaskDetails(task);
             }
 
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
+            }
+
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private void enrichCaseDetails(TaskRequest taskRequest) {
+        log.info("case details not found in task, enriching case details for task {}", taskRequest.getTask().getTaskNumber());
+        List<CourtCase> cases = caseUtil.getCaseDetails(taskRequest);
+        if (cases.isEmpty()) {
+            log.error("No case found for the given task.");
+            return;
+        }
+        String caseId = cases.get(0).getId().toString();
+        String caseTitle = cases.get(0).getCaseTitle();
+        taskRequest.getTask().setCaseTitle(caseTitle);
+        taskRequest.getTask().setCaseId(caseId);
     }
 
     private void enrichCourtId(TaskRequest taskRequest) {
@@ -115,9 +132,18 @@ public class TaskRegistrationEnrichment {
                 });
             }
 
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
+            }
+
         } catch (Exception e) {
             log.error("Error enriching task application upon update :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Exception in task enrichment service during task update process: " + e.getMessage());
         }
+    }
+
+    public void enrichAuditDetailsForUpdate(Task task, RequestInfo requestInfo) {
+        task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
     }
 }

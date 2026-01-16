@@ -10,6 +10,7 @@ import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
+import { sanitizeData } from "../../Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -117,7 +118,11 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
-  const isAdvocateApplicationViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+  // if user is employee then ADVOCATE_APPROVER  role is needed and for citizrn ADVOCATE_APPLICATION_VIEWER role is needed.
+  const hasAdvocateApplicationViewAccess = useMemo(
+    () => userRoles?.some((role) => role === "ADVOCATE_APPLICATION_VIEWER" || role === "ADVOCATE_APPROVER"),
+    [userRoles]
+  );
 
   const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
 
@@ -232,7 +237,14 @@ const ApplicationDetails = ({ location, match }) => {
         content: fileName,
       },
       {
-        doc: <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} docViewerCardClassName={"doc-card"}></DocViewerWrapper>,
+        doc: (
+          <DocViewerWrapper
+            fileStoreId={fileStoreId}
+            tenantId={tenantId}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          ></DocViewerWrapper>
+        ),
         image: true,
       },
     ];
@@ -245,7 +257,13 @@ const ApplicationDetails = ({ location, match }) => {
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
         doc: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
+          <DocViewerWrapper
+            fileStoreId={identifierIdDetails?.fileStoreId}
+            tenantId={tenantId}
+            displayFilename={identifierIdDetails?.filename}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
@@ -257,7 +275,7 @@ const ApplicationDetails = ({ location, match }) => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
 
-  if (!isAdvocateApplicationViewer) {
+  if (!hasAdvocateApplicationViewAccess) {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
@@ -329,7 +347,15 @@ const ApplicationDetails = ({ location, match }) => {
             >
               <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
                 <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
-                <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
+                <TextArea
+                  rows={"3"}
+                  value={reasons}
+                  onChange={(e) => {
+                    const newValue = sanitizeData(e.target.value);
+                    setReasons(newValue);
+                  }}
+                  style={{ maxWidth: "100%", height: "auto" }}
+                ></TextArea>
               </Card>
             </Modal>
           )}
@@ -356,10 +382,8 @@ const ApplicationDetails = ({ location, match }) => {
                   onClick={() => {
                     setShowInfoModal({ isOpen: false, status: "" });
                     history.push(
-                      userType === "ADVOCATE_CLERK"
-                        ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                        : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                      { isSentBack: true }
+                      `/${window?.contextPath}/employee/home/home-screen`,
+                      { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                     );
                   }}
                 />
@@ -368,10 +392,8 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 setShowInfoModal({ isOpen: false, status: "" });
                 history.push(
-                  userType === "ADVOCATE_CLERK"
-                    ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                    : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                  { isSentBack: true }
+                  `/${window?.contextPath}/employee/home/home-screen`,
+                  { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                 );
               }}
               style={{ backgroundColor: "#BB2C2F" }}

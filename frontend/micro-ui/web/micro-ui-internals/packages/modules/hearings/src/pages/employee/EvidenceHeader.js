@@ -52,7 +52,7 @@ const EvidenceHearingHeader = ({
         hearingId: hearing.hearingId,
         filingNumber,
       });
-      window.open(`${window.location.origin}/${window.contextPath}/${userType}/${"orders/generate-orders"}?${searchParams.toString()}`, "_blank");
+      window.open(`${window.location.origin}/${window.contextPath}/${userType}/${"orders/generate-order"}?${searchParams.toString()}`, "_blank");
       return;
     }
 

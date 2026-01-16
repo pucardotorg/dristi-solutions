@@ -84,6 +84,10 @@ class TaskRegistrationEnrichmentTest {
 
         // Mock court case response for enrichCourtId
         CourtCase mockCase = new CourtCase();
+        UUID mockCaseId = UUID.randomUUID();
+        mockCase.setId(mockCaseId);
+        mockCase.setFilingNumber("FIL-123");
+        mockCase.setCaseType("A vs B");
         mockCase.setCourtId("court-001");
         when(caseUtil.getCaseDetails(any())).thenReturn(Collections.singletonList(mockCase));
 

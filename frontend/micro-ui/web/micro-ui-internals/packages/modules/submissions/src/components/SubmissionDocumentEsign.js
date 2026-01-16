@@ -11,14 +11,16 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [pageModule, setPageModule] = useState(() =>
-    Digit.UserService.getUser()?.info?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role.code)) ? "en" : "ci"
-  );
+  const userInfo = Digit.UserService.getUser()?.info;
+  const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
+  const [pageModule, setPageModule] = useState(() => (isEmployee ? "en" : "ci")); // here
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
+
   const name = "Signature";
-  const userInfo = Digit.UserService.getUser()?.info;
   const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
 
   const uploadModalConfig = useMemo(() => {
@@ -54,6 +56,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const cleanString = (input) => {
@@ -76,6 +79,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -83,6 +87,16 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned, setIsSignedHeading);
   }, [checkSignStatus]);
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+      setIsSignedHeading(true);
+    } else {
+      sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
+      handleEsign(name, pageModule, combinedFileStoreId);
+    }
+  };
 
   return !openUploadSignatureModal ? (
     <div style={{ padding: "30px 30px 5px 30px", width: "80%" }}>
@@ -99,10 +113,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           <div style={{ display: "flex" }}>
             <Button
               label={""}
-              onButtonClick={() => {
-                sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
-                handleEsign(name, pageModule, combinedFileStoreId);
-              }}
+              onButtonClick={handleClickEsign}
               style={{ boxShadow: "none", backgroundColor: "#007E7E", border: "none", padding: "20px 30px", maxWidth: "fit-content" }}
               textStyles={{
                 width: "unset",
@@ -190,6 +201,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
     />
   );
 }

@@ -169,7 +169,13 @@ async function orderWithdrawalAccept(
       application?.applicationDetails?.reasonForWithdrawal || "";
     const summaryReasonForWithdrawal =
       messagesMap?.[localreasonForWithdrawal] || localreasonForWithdrawal;
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

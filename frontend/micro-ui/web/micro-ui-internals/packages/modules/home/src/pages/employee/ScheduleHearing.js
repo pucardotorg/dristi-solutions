@@ -332,7 +332,7 @@ function ScheduleHearing({
               referenceId: `MANUAL_${caseDetails?.filingNumber}`,
               status: "SCHEDULE_HEARING",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber: caseDetails?.cnrNumber,
               filingNumber: caseDetails?.filingNumber,
               caseId: caseDetails?.id,
@@ -342,7 +342,7 @@ function ScheduleHearing({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
           setIsSubmitDisabled(false);
         })
         .catch((err) => {

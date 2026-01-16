@@ -178,7 +178,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
         statuteSection: {
           tenantId,
         },
@@ -218,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -229,7 +229,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
     } catch (error) {}
   };
 
@@ -250,8 +250,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return order?.compositeItems
           ?.filter(
             (item) =>
-              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(item?.orderType)) &&
-              order?.hearingNumber === hearingId
+              (taskOrderType === "NOTICE"
+                ? item?.orderType === "NOTICE"
+                : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
+              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
             ...order,
@@ -261,8 +263,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             itemId: item?.id,
           }));
       } else {
-        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(order?.orderType)) &&
-          order?.hearingNumber === hearingId
+        return (taskOrderType === "NOTICE"
+          ? order?.orderType === "NOTICE"
+          : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
+          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
       }
@@ -398,7 +402,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = ["SUMMONS", "WARRANT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
@@ -507,8 +511,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+          {/* <Button
+            label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
             }}
@@ -518,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>

@@ -81,7 +81,13 @@
       "name": "paymentreceipts"
     },
     {
+      "name": "digitalizedDocuments"
+    },
+    {
       "name": "orders"
+    },
+    {
+      "name": "others"
     }
   ]
 }

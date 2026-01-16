@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { caseFileLabels } from "../../../Utils";
+import { _getDigitilizationPatiresName, caseFileLabels, modifiedEvidenceNumber, TaskManagementWorkflowState } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import { Loader } from "@egovernments/digit-ui-react-components";
-import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
+import MarkAsEvidence from "./MarkAsEvidence";
+import DownloadButton from "../../../components/DownloadButton";
+import CustomChip from "../../../components/CustomChip";
+import { Toast } from "@egovernments/digit-ui-react-components";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -16,6 +20,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     cheque: false,
     affidavit: false,
     "pending-application": false,
+    bail: false,
   });
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
@@ -27,22 +32,26 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
 
   const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
   const [disposedApplicationChildren, setDisposedApplicationChildren] = useState([]);
-  const [bailApplicationChildren, setBailApplicationChildren] = useState([]);
   const [processChildren, setProcessChildren] = useState([]);
+  const [genericTaskList, setGenericTaskList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishedOrderData, setPublishedOrderData] = useState([]);
   const [contextMenu, setContextMenu] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const { downloadFilesAsZip } = useDownloadFiles();
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
   const [isEvidenceSubmitDisabled, setIsEvidenceSubmitDisabled] = useState(false);
   const [menuData, setMenuData] = useState(null);
-
+  const [counter, setCounter] = useState(0);
   const { t } = useTranslation();
+  const [toastMsg, setToastMsg] = useState(null);
 
   const courtId = caseDetails?.courtId;
   useEffect(() => {
@@ -51,6 +60,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       setSelectedFileStoreId(complaintDoc?.fileStore);
     }
   }, [caseDetails, selectedFileStoreId]);
+  useEffect(() => {
+    if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      setShowEvidenceConfirmationModal(true);
+    }
+  }, [setShowEvidenceConfirmationModal]);
 
   const collectDescendantIds = (item) => {
     let ids = [];
@@ -131,6 +145,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         courtId: courtId,
         filingNumber: filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "applicationCMPNumber",
@@ -153,6 +168,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         courtId: courtId,
         filingNumber: filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "applicationCMPNumber",
@@ -196,6 +212,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         evidenceStatus: false,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "createdTime",
@@ -221,6 +238,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         evidenceStatus: false,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "createdTime",
@@ -232,15 +250,52 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber + "applicationEvidence",
     filingNumber
   );
+  const {
+    data: completeEvidenceData,
+    isLoading: isCompleteEvidenceLoading, // renamed to match convention and fix lint warning
+    refetch: completeEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
+    {
+      criteria: {
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+        isHideBailCaseBundle: true,
+      },
+      pagination: {
+        sortBy: "createdTime",
+        order: "asc",
+        limit: 100,
+      },
+    },
+    {},
+    filingNumber + "completeEvidence",
+    filingNumber
+  );
+
+  useEffect(() => {
+    completeEvidenceRefetch();
+  }, [counter]);
 
   const combinedEvidenceList = useMemo(() => {
     const directEvidenceList = directEvidenceData?.artifacts || [];
     const applicationEvidenceList = applicationEvidenceData?.artifacts || [];
 
-    const newEvidenceList = [...directEvidenceList, ...applicationEvidenceList];
-
-    return newEvidenceList.sort((a, b) => a?.auditdetails?.createdTime - b?.auditdetails?.createdTime);
+    return [...directEvidenceList, ...applicationEvidenceList];
   }, [directEvidenceData, applicationEvidenceData]);
+
+  // Create a map of fileStoreId to evidence data for quick lookups
+  const evidenceFileStoreMap = useMemo(() => {
+    const map = new Map();
+    if (completeEvidenceData?.artifacts && Array.isArray(completeEvidenceData?.artifacts)) {
+      completeEvidenceData.artifacts.forEach((evidence) => {
+        if (evidence?.file?.fileStore) {
+          map.set(evidence.file.fileStore, evidence);
+        }
+      });
+    }
+    return map;
+  }, [completeEvidenceData]);
 
   const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
@@ -277,6 +332,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -302,6 +358,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -327,6 +384,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         evidenceStatus: true,
         isVoid: false,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -339,17 +397,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const {
-    data: courtEvidenceDepositionData,
-    isLoading: isCourtDepositionEvidenceLoading,
-    refetch: courtDepositionRefetch,
-  } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: depositionData, isLoading: depositionLoading, refetch: depositionRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
         filingNumber: filingNumber,
-        sourceType: "COURT",
         artifactType: "WITNESS_DEPOSITION",
+        status: ["COMPLETED"],
         isVoid: false,
         tenantId,
       },
@@ -360,9 +414,32 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       },
     },
     {},
-    filingNumber + "courtEvidenceDepositionData",
+    filingNumber + "depositionData",
     filingNumber
   );
+
+  const complainantDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      return depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "COMPLAINANT");
+    }
+    return null;
+  }, [depositionData]);
+
+  const accusedDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      return depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "ACCUSED");
+    }
+    return null;
+  }, [depositionData]);
+
+  const courtDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      const courtDepositions = depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "-");
+      const noOwnerType = depositionData.artifacts.filter((artifact) => !artifact?.additionalDetails?.witnessDetails?.ownerType);
+      return [...new Set([...courtDepositions, ...noOwnerType])];
+    }
+    return null;
+  }, [depositionData]);
 
   const { data: completedApplicationData, isLoading: isCompletedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -371,6 +448,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         courtId: courtId,
         filingNumber: filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "applicationCMPNumber",
@@ -390,6 +468,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         courtId: courtId,
         filingNumber: filingNumber,
         tenantId,
+        isHideBailCaseBundle: true,
       },
       pagination: {
         sortBy: "applicationCMPNumber",
@@ -419,49 +498,123 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return applicationList;
   }, [completedApplicationData, rejectedApplicationData]);
 
-  const { data: bailApplicationsData, isLoading: isBailApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const {
+    data: digitalizedDocumentsData,
+    isLoading: isDigitalizedDocumentsLoading,
+    refetch: digitalizedDocumentsRefetch,
+  } = Digit.Hooks.submissions.useSearchDigitalization(
     {
       criteria: {
-        status: "COMPLETED",
-        courtId: courtId,
-        filingNumber: filingNumber,
-        applicationType: "REQUEST_FOR_BAIL",
+        caseId: caseDetails?.id,
         tenantId,
+        status: "COMPLETED",
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+      },
+      tenantId,
+    },
+    {},
+    caseDetails?.filingNumber,
+    Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
+  );
+
+  const sortedAndFilteredDigitalizedDocumentsData = useMemo(
+    () =>
+      digitalizedDocumentsData?.documents
+        ?.filter((doc) => doc?.documents?.[0]?.fileStore)
+        ?.sort((a, b) => {
+          const aTime = a?.auditDetails?.createdTime || 0;
+          const bTime = b?.auditDetails?.createdTime || 0;
+          return aTime - bTime;
+        }),
+    [digitalizedDocumentsData]
+  );
+
+  const examinationOfAccusedDocumentsList = useMemo(() => {
+    return sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "EXAMINATION_OF_ACCUSED");
+  }, [sortedAndFilteredDigitalizedDocumentsData]);
+  const pleaDocumentsList = useMemo(() => sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "PLEA"), [
+    sortedAndFilteredDigitalizedDocumentsData,
+  ]);
+
+  const mediationDocumentsList = useMemo(() => sortedAndFilteredDigitalizedDocumentsData?.filter((doc) => doc?.type === "MEDIATION"), [
+    sortedAndFilteredDigitalizedDocumentsData,
+  ]);
+
+  const { data: taskManagementData, isLoading: isTaskManagementLoading } = Digit.Hooks.dristi.useSearchTaskMangementService(
+    {
+      criteria: {
+        filingNumber,
+        status: TaskManagementWorkflowState.COMPLETED,
+        tenantId: tenantId,
       },
       pagination: {
-        sortBy: "applicationCMPNumber",
+        sortBy: "last_modified_time",
         order: "asc",
         limit: 100,
       },
     },
     {},
-    filingNumber + "bailApplicationsData",
+    `case-bundle-taskManagement-${filingNumber}`,
     Boolean(filingNumber)
   );
 
-  const bailApplicationsList = useMemo(() => bailApplicationsData?.applicationList, [bailApplicationsData]);
+  const taskManagementList = useMemo(() => {
+    return taskManagementData?.taskManagementRecords;
+  }, [taskManagementData]);
 
   useEffect(() => {
     const fetchProcessData = async () => {
       try {
         setLoading(true);
+        const genericTasks = await DRISTIService.customApiService("/task/v1/search", {
+          criteria: {
+            tenantId: tenantId,
+            filingNumber: filingNumber,
+            taskType: "GENERIC",
+            courtId: courtId,
+            status: "COMPLETED",
+          },
+        });
+        const sortedGenericTasks = genericTasks?.list?.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate));
+        const combinedDocuments = sortedGenericTasks?.reduce((acc, current) => {
+          return acc.concat(current.documents);
+        }, []);
+
+        const updatedCombinedDocuments = combinedDocuments
+          ?.filter((doc) => doc?.fileStore)
+          .map((doc, index) => {
+            return {
+              id: `GENRIC_PAYMENT_RECEIPT_${index}`,
+              title: "CASE_FILING_GENRIC_TASK_PAYMENT_RECEIPT",
+              fileStoreId: doc?.fileStore,
+              hasChildren: false,
+            };
+          });
+
+        setGenericTaskList(updatedCombinedDocuments);
+
         const resTask = await DRISTIService.customApiService("/task/v1/table/search", {
           criteria: {
             completeStatus: [
               "ISSUE_SUMMON",
               "ISSUE_NOTICE",
               "ISSUE_WARRANT",
+              "ISSUE_PROCLAMATION",
+              "ISSUE_ATTACHMENT",
               "OTHER",
               "ABATED",
               "SUMMON_SENT",
               "EXECUTED",
               "NOT_EXECUTED",
               "WARRANT_SENT",
+              "PROCLAMATION_SENT",
+              "ATTACHMENT_SENT",
               "DELIVERED",
               "UNDELIVERED",
               "NOTICE_SENT",
             ],
-            searchText: caseDetails?.cnrNumber || caseDetails?.cmpNumber || caseDetails?.courtCaseNumber,
+            searchText:
+              caseDetails?.cnrNumber || caseDetails?.cmpNumber || (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber),
             courtId: caseDetails?.courtId,
             tenantId,
           },
@@ -514,7 +667,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     };
 
     fetchProcessData();
-  }, [caseDetails, t, tenantId]);
+  }, [caseDetails, t, tenantId, courtId, filingNumber]);
 
   const productionQueries = useQueries(
     orderList?.map((order) => ({
@@ -564,6 +717,63 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           id: `affidavit-225-${index + 1}`,
           title: `${t("AFFIDAVIT")} ${index + 1}`,
           fileStoreId: doc.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
+
+    return structure;
+  };
+
+  const generateExaminationAndPleaStructure = () => {
+    const structure = [];
+    if (pleaDocumentsList?.length > 0) {
+      structure.push({
+        id: "plea",
+        title: "PLEA",
+        hasChildren: true,
+        children: pleaDocumentsList.map((doc, index) => {
+          const partyName = _getDigitilizationPatiresName(doc);
+          return {
+            id: `plea-${index + 1}`,
+            title: `${t("PLEA")} (${partyName})`,
+            fileStoreId: doc?.documents?.[0]?.fileStore,
+            hasChildren: false,
+          };
+        }),
+      });
+    }
+
+    if (examinationOfAccusedDocumentsList?.length > 0) {
+      structure.push({
+        id: "s351-examination",
+        title: "S351_EXAMINATION",
+        hasChildren: true,
+        children: examinationOfAccusedDocumentsList.map((doc, index) => {
+          const partyName = _getDigitilizationPatiresName(doc);
+          return {
+            id: `s351-examination-${index + 1}`,
+            title: `${t("S351_EXAMINATION")} (${partyName})`,
+            fileStoreId: doc?.documents?.[0]?.fileStore,
+            hasChildren: false,
+          };
+        }),
+      });
+    }
+    return structure;
+  };
+
+  const mediationDocumentsStructure = () => {
+    const structure = [];
+    if (mediationDocumentsList?.length > 0) {
+      structure.push({
+        id: "mediation",
+        title: "MEDIATION_FORM",
+        hasChildren: true,
+        children: mediationDocumentsList.map((doc, index) => ({
+          id: `mediation-${index + 1}`,
+          title: `${t("MEDIATION_FORM")} ${index + 1}`,
+          fileStoreId: doc?.documents?.[0]?.fileStore,
           hasChildren: false,
         })),
       });
@@ -751,41 +961,119 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const evidenceChildren = generateEvidenceStructure(combinedEvidenceList);
 
   const generateCompliantEvidenceStructure = (complaintEvidenceData) => {
-    if (!complaintEvidenceData?.artifacts || !Array.isArray(complaintEvidenceData?.artifacts)) return [];
-    return complaintEvidenceData?.artifacts
-      ?.filter((artifact) => artifact?.file?.fileStore)
-      ?.map((artifact, idx) => ({
-        id: `complaint-evidence-${idx}`,
-        title:
-          artifact?.additionalDetails?.formdata?.documentTitle ||
-          artifact?.file?.additionalDetails?.documentTitle ||
-          artifact?.file?.additionalDetails?.documentType ||
-          artifact?.artifactType,
-        fileStoreId: artifact?.file?.fileStore,
-        hasChildren: false,
-      }));
+    const depositions = Array.isArray(complainantDepositions)
+      ? complainantDepositions
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `complainant-deposition-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const evidences = Array.isArray(complaintEvidenceData?.artifacts)
+      ? complaintEvidenceData?.artifacts
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `complainant-evidence-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const result = [];
+
+    if (depositions?.length > 0) {
+      result.push({
+        id: "complainant-depositions",
+        title: "DEPOSITIONS_PDF_HEADING",
+        hasChildren: true,
+        children: depositions,
+      });
+    }
+
+    if (evidences?.length > 0) {
+      result.push({
+        id: "complainant-evidences",
+        title: "EVIDENCES_PDF_HEADING",
+        hasChildren: evidences?.length > 0,
+        children: evidences,
+      });
+    }
+
+    return result;
   };
 
   const generateAccusedEvidenceStructure = (accusedEvidenceData) => {
-    if (!accusedEvidenceData?.artifacts || !Array.isArray(accusedEvidenceData?.artifacts)) return [];
-    return accusedEvidenceData?.artifacts
-      ?.filter((evidence) => evidence?.file?.fileStore)
-      ?.map((evidence, idx) => ({
-        id: `accused-evidence-${idx}`,
-        title:
-          evidence?.additionalDetails?.formdata?.documentTitle ||
-          evidence?.file?.additionalDetails?.documentTitle ||
-          evidence?.file?.additionalDetails?.documentType ||
-          evidence?.artifactType,
-        fileStoreId: evidence?.file?.fileStore,
-        hasChildren: false,
-      }));
+    const depositions = Array.isArray(accusedDepositions)
+      ? accusedDepositions
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `accused-deposition-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const evidences = Array.isArray(accusedEvidenceData?.artifacts)
+      ? accusedEvidenceData?.artifacts
+          ?.filter((evidence) => evidence?.file?.fileStore)
+          ?.map((evidence, idx) => ({
+            id: `accused-evidence-${idx}`,
+            title:
+              evidence?.additionalDetails?.formdata?.documentTitle ||
+              evidence?.file?.additionalDetails?.documentTitle ||
+              evidence?.file?.additionalDetails?.documentType ||
+              evidence?.artifactType,
+            fileStoreId: evidence?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const result = [];
+
+    if (depositions?.length > 0) {
+      result.push({
+        id: "accused-depositions",
+        title: "DEPOSITIONS_PDF_HEADING",
+        hasChildren: true,
+        children: depositions,
+      });
+    }
+
+    if (evidences?.length > 0) {
+      result.push({
+        id: "accused-evidences",
+        title: "EVIDENCES_PDF_HEADING",
+        hasChildren: evidences?.length > 0,
+        children: evidences,
+      });
+    }
+
+    return result;
   };
 
   const generateCourtEvidenceStructure = (courtEvidenceData, courtEvidenceDepositionData) => {
     // "Depositions" children from courtEvidenceDepositionData
-    const depositions = Array.isArray(courtEvidenceDepositionData?.artifacts)
-      ? courtEvidenceDepositionData?.artifacts
+    const depositions = Array.isArray(courtEvidenceDepositionData)
+      ? courtEvidenceDepositionData
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
@@ -793,6 +1081,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               artifact?.additionalDetails?.formdata?.documentTitle ||
               artifact?.file?.additionalDetails?.documentTitle ||
               artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
               artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
@@ -959,143 +1248,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   }, [disposedApplicationList, courtId, filingNumber, tenantId, t]);
 
   useEffect(() => {
-    const buildBailApplicationStructure = async () => {
-      if (!bailApplicationsList || bailApplicationsList.length === 0) return;
-
-      setLoading(true);
-      const children = await Promise.all(
-        bailApplicationsList?.map(async (application, index) => {
-          const signed = [];
-          const otherDocument = [];
-
-          application?.documents?.forEach((doc) => {
-            if (doc?.fileStore) {
-              if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
-              else otherDocument?.push(doc);
-            }
-          });
-
-          const signedNode = {
-            id: `${application?.applicationNumber}-signed`,
-            title: "APPLICATION_PDF_HEADING",
-            hasChildren: false,
-            fileStoreId: signed[0] || null,
-          };
-
-          const otherDocsChildren = otherDocument?.map((doc, i) => ({
-            id: `${application?.applicationNumber}-other-${i}`,
-            title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
-            fileStoreId: doc?.fileStore,
-            hasChildren: false,
-          }));
-
-          const otherDocsNode = {
-            id: `${application?.applicationNumber}-others`,
-            title: "OTHER_DOCUMENTS_HEADING",
-            hasChildren: otherDocsChildren?.length > 0,
-            children: otherDocsChildren,
-          };
-
-          let submitBailNode = null;
-          try {
-            const resOrder = await DRISTIService.searchOrders({
-              criteria: {
-                courtId,
-                filingNumber,
-                applicationNumber: application?.applicationNumber,
-                status: "PUBLISHED",
-                orderType: "SET_BAIL_TERMS",
-                tenantId,
-              },
-            });
-
-            const orderList = resOrder?.list || [];
-
-            if (orderList?.length > 0) {
-              const resSubmissions = await DRISTIService.searchSubmissions({
-                criteria: {
-                  courtId,
-                  filingNumber,
-                  referenceId: orderList[0]?.id,
-                  applicationType: "SUBMIT_BAIL_DOCUMENTS",
-                  status: "COMPLETED",
-                  tenantId,
-                },
-              });
-
-              const submitApps = resSubmissions?.applicationList || [];
-
-              if (submitApps.length > 0) {
-                const docs = submitApps[0]?.documents || [];
-                const submitSigned = [];
-                const submitOtherDocument = [];
-
-                docs.forEach((doc) => {
-                  if (doc?.fileStore) {
-                    if (doc?.documentType === "SIGNED") submitSigned?.push(doc?.fileStore);
-                    else submitOtherDocument?.push(doc);
-                  }
-                });
-
-                const submitChildren = [];
-
-                submitSigned?.forEach((fsId, i) =>
-                  submitChildren?.push({
-                    id: `${application?.applicationNumber}-submit-signed-${i}`,
-                    title: "APPLICATION_PDF_HEADING",
-                    fileStoreId: fsId,
-                    hasChildren: false,
-                  })
-                );
-
-                if (submitOtherDocument.length > 0) {
-                  const othersChildren = submitOtherDocument?.map((doc, j) => ({
-                    id: `${application?.applicationNumber}-submit-other-${j}`,
-                    title:
-                      doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
-                    fileStoreId: doc?.fileStore,
-                    hasChildren: false,
-                  }));
-
-                  submitChildren.push({
-                    id: `${application?.applicationNumber}-submit-other-group`,
-                    title: "OTHER_DOCUMENTS_HEADING",
-                    hasChildren: true,
-                    children: othersChildren,
-                  });
-                }
-
-                submitBailNode = {
-                  id: `${application?.applicationNumber}-submit-bail`,
-                  title: submitApps[0]?.applicationType,
-                  hasChildren: true,
-                  children: submitChildren,
-                };
-              }
-            }
-          } catch (e) {
-            console.error("Error fetching Submit Bail Documents for", application?.applicationNumber, e);
-          }
-
-          const appChildren = [signedNode, otherDocsNode];
-          if (submitBailNode) appChildren?.push(submitBailNode);
-
-          return {
-            id: application?.applicationNumber,
-            title: t(application?.applicationType) + " " + (index + 1),
-            hasChildren: appChildren?.length > 0,
-            children: appChildren,
-          };
-        })
-      );
-      setLoading(false);
-      setBailApplicationChildren(children);
-    };
-
-    buildBailApplicationStructure();
-  }, [bailApplicationsList, tenantId, courtId, filingNumber, t]);
-
-  useEffect(() => {
     const getOrder = async () => {
       try {
         setLoading(true);
@@ -1163,7 +1315,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           complainantEvidenceRefetch();
           accusedEvidenceRefetch();
           courtEvidenceRefetch();
-          courtDepositionRefetch();
+          depositionRefetch();
+          completeEvidenceRefetch(); // Refresh the complete evidence data
         });
     } catch (error) {
       console.error("error: ", error);
@@ -1236,20 +1389,40 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const vakalatnamaChildren = generateVakalatnamaStructure(caseDetails);
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
-    const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
+    const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtDepositions);
+    const examinationAndPleaChildren = generateExaminationAndPleaStructure();
+    const mediationDocumentsChildren = mediationDocumentsStructure();
 
-    const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
+    // const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
 
-    const paymentReceiptsChildren = casePaymentFilestoreId
-      ? [
-          {
-            id: "PAYMENT_RECEIPT",
+    const casePaymentFile = docs
+      ? docs
+          .filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
+          .sort((a, b) => (a?.additionalDetails?.consumerCode || "").localeCompare(b?.additionalDetails?.consumerCode || ""))
+          .map((doc, index) => ({
+            id: `PAYMENT_RECEIPT_${index}`,
             title: "CASE_FILING_PAYMENT_RECEIPT",
-            fileStoreId: casePaymentFilestoreId,
+            fileStoreId: doc?.fileStore,
             hasChildren: false,
-          },
-        ]
+          }))
       : [];
+
+    const taskManagementDocs =
+      taskManagementList
+        ?.map((taskManagement, index) => {
+          const doc = taskManagement?.documents?.find?.((d) => d?.documentType === "PAYMENT_RECEIPT") || null;
+          if (!doc) return null;
+
+          return {
+            id: `TASK_MANAGEMENT_PAYMENT_RECEIPT_${index}`,
+            title: `${taskManagement?.taskType}_TASK_PAYMENT_RECEIPT`,
+            fileStoreId: doc?.fileStore,
+            hasChildren: false,
+          };
+        })
+        ?.filter(Boolean) || [];
+
+    const paymentReceiptsChildren = [...casePaymentFile, ...genericTaskList, ...(taskManagementDocs?.length > 0 ? taskManagementDocs : [])];
 
     const mainStructureRaw = [
       {
@@ -1298,19 +1471,19 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "complaint-evidence",
         title: "EVIDENCE_OF_COMPLAINANT",
-        hasChildren: complaintEvidenceData?.artifacts?.length > 0,
+        hasChildren: complaintEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: complaintEvidenceChildren,
       },
       {
         id: "accused-evidence",
         title: "EVIDENCE_OF_ACCUSED",
-        hasChildren: accusedEvidenceData?.artifacts?.length > 0,
+        hasChildren: accusedEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: accusedEvidenceChildren,
       },
       {
         id: "court-evidence",
         title: "COURT_EVIDENCE",
-        hasChildren: courtEvidenceData?.artifacts?.length > 0 || courtEvidenceDepositionData?.artifacts?.length > 0,
+        hasChildren: courtEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: courtEvidenceChildren,
       },
       {
@@ -1318,12 +1491,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         title: "DISPOSED_APPLICATIONS_PDF",
         hasChildren: disposedApplicationList?.length > 0,
         children: disposedApplicationChildren,
-      },
-      {
-        id: "bail-applications",
-        title: "BAIL_APPLICATIONS_PDF",
-        hasChildren: bailApplicationsList?.length > 0,
-        children: bailApplicationChildren,
       },
       {
         id: "processes",
@@ -1338,10 +1505,22 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         children: paymentReceiptsChildren,
       },
       {
+        id: "examination-of-accused",
+        title: "EXAMINATION_OF_ACCUSED",
+        hasChildren: examinationOfAccusedDocumentsList?.length > 0 || pleaDocumentsList?.length > 0,
+        children: examinationAndPleaChildren,
+      },
+      {
         id: "orders",
         title: "ORDERS_CASE_PDF",
         hasChildren: publishedOrderData?.length > 0,
         children: publishedOrderChildren,
+      },
+      {
+        id: "others",
+        title: "OTHERS",
+        hasChildren: mediationDocumentsList?.length > 0,
+        children: mediationDocumentsChildren,
       },
     ];
 
@@ -1366,33 +1545,76 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return mainStructure;
   };
 
+  // Handle download for either single PDF or ZIP containing evidence file and seal
+  const handleDownload = (fileStoreId) => {
+    if (evidenceFileStoreMap?.has(fileStoreId)) {
+      const evidenceData = evidenceFileStoreMap.get(fileStoreId);
+      // Check if evidence is marked as COMPLETED and has a seal object
+      if (evidenceData?.evidenceMarkedStatus === "COMPLETED" && evidenceData?.seal?.fileStore) {
+        // Download both evidence and seal files as a ZIP
+        const filesToDownload = [
+          { fileStoreId: fileStoreId, fileName: `Evidence_${evidenceData.evidenceNumber || "File"}` },
+          { fileStoreId: evidenceData.seal.fileStore, fileName: `Seal_${evidenceData.evidenceNumber || "File"}` },
+        ];
+        downloadFilesAsZip(tenantId, filesToDownload, `Evidence_${evidenceData.evidenceNumber || "Files"}`);
+      } else {
+        // Normal PDF download if not completed or no seal
+        downloadPdf(tenantId, fileStoreId);
+      }
+    } else {
+      // Normal PDF download for non-evidence files
+      downloadPdf(tenantId, fileStoreId);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(false);
     window?.addEventListener("click", handleClickOutside);
     return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
-  const MemoDocViewerWrapper = useMemo(
-    () => (
-      <DocViewerWrapper
-        key={"selectedFileStoreId"}
-        tenantId={tenantId}
-        fileStoreId={selectedFileStoreId}
-        showDownloadOption={false}
-        docHeight="100%"
-        docWidth="100%"
-        docViewerStyle={{ maxWidth: "100%" }}
-      />
-    ),
-    [selectedFileStoreId, tenantId]
-  );
+  const MemoDocViewerWrapper = useMemo(() => {
+    return (
+      <React.Fragment>
+        <DocViewerWrapper
+          key={"selectedFileStoreId"}
+          tenantId={tenantId}
+          fileStoreId={selectedFileStoreId}
+          showDownloadOption={false}
+          docHeight="100%"
+          docWidth="100%"
+          docViewerStyle={{ maxWidth: "100%" }}
+        />
+
+        {evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore &&
+          evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+            <DocViewerWrapper
+              key={"seal-document"}
+              tenantId={tenantId}
+              fileStoreId={evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore}
+              showDownloadOption={false}
+              docHeight="100%"
+              docWidth="100%"
+              docViewerStyle={{ maxWidth: "100%" }}
+            />
+          )}
+      </React.Fragment>
+    );
+  }, [evidenceFileStoreMap, selectedFileStoreId, tenantId]);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
+  const selectedDocumentData = useMemo(() => {
+    if (!selectedDocument || !dynamicCaseFileStructure) return null;
 
+    return dynamicCaseFileStructure
+      ?.flatMap((item) =>
+        item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
+      )
+      ?.find((item) => item.id === selectedDocument);
+  }, [selectedDocument, dynamicCaseFileStructure]);
   if (
     loading ||
     isDirectEvidenceLoading ||
     isApplicationEvidenceLoading ||
-    isBailApplicationLoading ||
     isComplaintEvidenceLoading ||
     isCompletedApplicationLoading ||
     isRejectedApplicationLoading ||
@@ -1400,12 +1622,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isAccusedEvidenceLoading ||
     isComplaintEvidenceLoading ||
     isCourtEvidenceLoading ||
-    isCourtDepositionEvidenceLoading ||
-    isBailApplicationLoading ||
+    depositionLoading ||
     isHearingLoading ||
     isPendingReviewApplicationLoading ||
     isPendingApprovalApplicationLoading ||
-    isMandatoryOrdersLoading
+    isMandatoryOrdersLoading ||
+    isCompleteEvidenceLoading ||
+    isTaskManagementLoading ||
+    isDigitalizedDocumentsLoading
   ) {
     return (
       <div style={{ width: "100%", paddingTop: "50px" }}>
@@ -1482,6 +1706,12 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
     );
   };
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
+  };
 
   return (
     <React.Fragment>
@@ -1493,8 +1723,101 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
 
       {/* Right Content Area - Independent scrolling */}
-      <div className="doc-viewer-container">{MemoDocViewerWrapper}</div>
-      {contextMenu && (
+      <div className="doc-viewer-container">
+        <div
+          className="doc-viewer-header-container"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 0px",
+          }}
+        >
+          <div>
+            {selectedDocument && selectedFileStoreId && (
+              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto" }}>
+                <span style={{ fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+                  {" "}
+                  {selectedDocumentData?.title && t(selectedDocumentData.title)}
+                </span>
+
+                {evidenceFileStoreMap &&
+                  evidenceFileStoreMap.has(selectedFileStoreId) &&
+                  evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null &&
+                  (evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" || userType === "employee") && (
+                    <React.Fragment>
+                      <CustomChip
+                        text={
+                          t(
+                            evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED"
+                              ? "SIGNED"
+                              : evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus
+                          ) || ""
+                        }
+                        shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+                      />
+                      {evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+                        <span>
+                          <span style={{ fontSize: "20px", paddingLeft: "5px", paddingRight: "5px" }}> | </span>
+                          <span style={{ fontSize: "14px", fontWeight: "400" }}>
+                            {t("EVIDENCE_NUMBER")}:{" "}
+                            {modifiedEvidenceNumber(
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceNumber,
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.filingNumber
+                            )}
+                          </span>
+                        </span>
+                      )}
+                    </React.Fragment>
+                  )}
+              </span>
+            )}
+          </div>
+          {selectedDocument && selectedFileStoreId && (
+            <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
+              <DownloadButton onClick={() => handleDownload(selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
+              {userType === "employee" &&
+                selectedFileStoreId &&
+                evidenceFileStoreMap.has(selectedFileStoreId) &&
+                evidenceFileStoreMap.get(selectedFileStoreId)?.artifactType !== "WITNESS_DEPOSITION" &&
+                !evidenceFileStoreMap?.get(selectedFileStoreId)?.isEvidence && (
+                  <button
+                    className="mark-asevidence-button"
+                    onClick={() => {
+                      setMenuData({
+                        fileStoreId: selectedFileStoreId,
+                        isEvidence: false,
+                        isEvidenceMenu: true,
+                        artifactNumber: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactNumber,
+                        artifactList: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactList,
+                      });
+                      setShowEvidenceConfirmationModal(true);
+                    }}
+                    // data-tip="This feature is not available"
+                    // disabled={evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "PENDING_BULK_E-SIGN" ? true : false}
+                    style={{}}
+                  >
+                    {t("MARK_AS_EVIDENCE")}
+                  </button>
+                )}
+            </div>
+          )}
+        </div>
+        {MemoDocViewerWrapper}
+      </div>
+      {/* {contextMenu && (
         <div
           className="context-menu"
           style={{
@@ -1512,7 +1835,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           >
             {t("DOWNLOAD_PDF")}
           </div>
-          {isJudge && menuData?.isEvidenceMenu && menuData?.isEvidence === false && (
+          {isJudge && menuData?.fileStoreId && !evidenceFileStoreMap.has(menuData?.fileStoreId) && (
             <div
               style={{ padding: "10px", cursor: "pointer" }}
               onClick={() => {
@@ -1523,8 +1846,17 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             </div>
           )}
         </div>
-      )}
+      )} */}
       {showEvidenceConfirmationModal && (
+        <MarkAsEvidence
+          t={t}
+          setShowMakeAsEvidenceModal={setShowEvidenceConfirmationModal}
+          evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
+          setDocumentCounter={setCounter}
+          showToast={showToast}
+        />
+      )}
+      {/* {showEvidenceConfirmationModal && (
         <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowEvidenceConfirmationModal}
@@ -1533,6 +1865,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           isBackButtonDisabled={isEvidenceSubmitDisabled}
           isFromActions={true}
           setMenuData={setMenuData}
+        />
+      )} */}
+      {toastMsg && (
+        <Toast
+          error={toastMsg.key === "error"}
+          label={t(toastMsg.action)}
+          onClose={() => setToastMsg(null)}
+          isDleteBtn={true}
+          style={{ maxWidth: "500px" }}
         />
       )}
     </React.Fragment>

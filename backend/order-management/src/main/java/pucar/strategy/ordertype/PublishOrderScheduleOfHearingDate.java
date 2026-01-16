@@ -74,7 +74,7 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
         HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(requestInfo, order, courtCase);
         StringBuilder createHearingUri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
         HearingResponse createdHearingResponse = hearingUtil.createOrUpdateHearing(request, createHearingUri);
-        order.setHearingNumber(createdHearingResponse.getHearing().getHearingId());
+        order.setScheduledHearingNumber(createdHearingResponse.getHearing().getHearingId());
         log.info("created hearing for caseId:{}, hearingId:{}", courtCase.getId(), createdHearingResponse.getHearing().getHearingId());
 
         log.info("pre processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
@@ -100,18 +100,6 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
         log.info("case status:{}", status);
 
-        // PENDING_ADMISSION_HEARING
-        if (PENDING_ADMISSION_HEARING.equalsIgnoreCase(status)) {
-
-            WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(SCHEDULE_ADMISSION_HEARING);
-            courtCase.setWorkflow(workflow);
-            CaseRequest request = CaseRequest.builder().requestInfo(requestInfo)
-                    .cases(courtCase).build();
-            log.info("case update for caseId:{},action:{}", courtCase.getId(), SCHEDULE_ADMISSION_HEARING);
-            caseUtil.updateCase(request);
-
-        }
 
         // if any abandon hearing is there close the hearing and close pending task for that hearing number
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
@@ -135,6 +123,9 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
         // close manual pending task for filing number
         log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
         pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
+        // close manual pending task of schedule of hearing
+        log.info("close manual pending task of schedule of hearing");
+        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
