@@ -220,6 +220,9 @@ const AdmittedCaseV2 = () => {
   const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
+  const [showDownloadCasePdfModal, setShowDownloadCasePdfModal] = useState(false);
+  const [casePdfFileStoreId, setCasePdfFileStoreId] = useState(null);
+  const [casePdfError, setCasePdfError] = useState(null);
   const [voidReason, setVoidReason] = useState("");
   const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
   const [isOpenDCA, setIsOpenDCA] = useState(false);
@@ -2482,14 +2485,18 @@ const AdmittedCaseV2 = () => {
     const caseId = caseDetails?.id;
     const caseStatus = caseDetails?.status;
 
+    setCasePdfError(null);
+    setCasePdfFileStoreId(null);
+
     if (["PENDING_PAYMENT", "RE_PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
       const fileStoreId =
         caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
       if (fileStoreId) {
-        downloadPdf(tenantId, fileStoreId);
+        setCasePdfFileStoreId(fileStoreId);
         return;
       } else {
         console.error("No fileStoreId available for download.");
+        setCasePdfError("No fileStoreId available for download.");
         return;
       }
     }
@@ -2508,17 +2515,30 @@ const AdmittedCaseV2 = () => {
         throw new Error("Invalid fileStoreId received in the response.");
       }
 
-      downloadPdf(tenantId, responseFileStoreId);
+      setCasePdfFileStoreId(responseFileStoreId);
     } catch (error) {
       console.error("Error downloading PDF: ", error.message || error);
       showToast({
         isError: true,
         message: "UNABLE_CASE_PDF",
       });
+      setCasePdfError(t("UNABLE_CASE_PDF"));
     } finally {
       setDownloadCasePdfLoading(false);
     }
-  }, [caseDetails, downloadPdf, tenantId, showToast]);
+  }, [t, caseDetails, tenantId, showToast]);
+
+  useEffect(() => {
+    if (showDownloadCasePdfModal) {
+      handleDownloadPDF();
+    }
+  }, [showDownloadCasePdfModal, handleDownloadPDF]);
+
+  const handleDownloadClick = useCallback(() => {
+    if (casePdfFileStoreId) {
+      downloadPdf(tenantId, casePdfFileStoreId);
+    }
+  }, [casePdfFileStoreId, downloadPdf, tenantId]);
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -2730,7 +2750,7 @@ const AdmittedCaseV2 = () => {
   const handleEmployeeAction = useCallback(
     async (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
-        handleDownloadPDF();
+        setShowDownloadCasePdfModal(true);
       } else if (option.value === "NEXT_HEARING") {
         nextHearing(false);
       } else if (option.value === "VIEW_CALENDAR") {
@@ -2766,7 +2786,6 @@ const AdmittedCaseV2 = () => {
       caseDetails?.tenantId,
       currentInProgressHearing?.hearingId,
       handleCourtAction,
-      handleDownloadPDF,
       nextHearing,
       ordersService,
     ]
@@ -3672,7 +3691,7 @@ const AdmittedCaseV2 = () => {
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
       <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
-      {(downloadCasePdfLoading || apiCalled) && (
+      {apiCalled && (
         <div
           style={{
             width: "100vw",
@@ -3744,7 +3763,7 @@ const AdmittedCaseV2 = () => {
                               setShowJoinCase(true);
                               setShowCitizenMenu(false);
                             } else if (option === "DOWNLOAD_CASE_FILE") {
-                              handleDownloadPDF();
+                              setShowDownloadCasePdfModal(true);
                             } else if (option === "SHOW_TIMELINE") {
                               setShowAllStagesModal(true);
                             }
@@ -4575,6 +4594,49 @@ const AdmittedCaseV2 = () => {
           className={"edit-send-back-modal"}
           submitButtonStyle={{ backgroundColor: "#C7222A" }}
           loader={loader}
+        />
+      )}
+      {showDownloadCasePdfModal && (
+        <Modal
+          headerBarMain={<Heading label={t("DOWNLOAD_CASE_FILE")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                if (!downloadCasePdfLoading) {
+                  setShowDownloadCasePdfModal(false);
+                }
+              }}
+            />
+          }
+          actionCancelLabel={t("CS_COMMON_CLOSE")}
+          actionCancelOnSubmit={() => {
+            if (!downloadCasePdfLoading) {
+              setShowDownloadCasePdfModal(false);
+            }
+          }}
+          actionSaveLabel={t("DOWNLOAD")}
+          actionSaveOnSubmit={handleDownloadClick}
+          style={{ height: "40px" }}
+          popupStyles={{ width: "35%" }}
+          className={"review-order-modal"}
+          isDisabled={downloadCasePdfLoading || casePdfError || !casePdfFileStoreId}
+          isBackButtonDisabled={downloadCasePdfLoading}
+          children={
+            downloadCasePdfLoading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", padding: "24px" }}>
+                <Loader />
+                <p style={{ margin: 0, textAlign: "center" }}>{t("CASE_BUNDLE_GENERATION_IN_PROGRESS")}</p>
+              </div>
+            ) : casePdfError ? (
+              <div style={{ padding: "24px" }}>
+                <p style={{ margin: 0, color: "#D4351C" }}>{casePdfError}</p>
+              </div>
+            ) : (
+              <div style={{ padding: "24px" }}>
+                <p style={{ margin: 0 }}>{t("CASE_BUNDLE_IS_READY")}</p>
+              </div>
+            )
+          }
         />
       )}
     </div>
