@@ -959,6 +959,7 @@ export const TabSearchconfigNew = {
                     // localePrefix: "SUBMISSION_TYPE",
                     select: `(data) => {
                       return data['Order'].OrderStatus
+                      ?.filter(item => !['ABATED', 'PENDINGSTAMPING'].includes(item.code))
                         ?.map((item) => {
                           return item;
                         })
