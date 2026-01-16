@@ -71,6 +71,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .judgeIds(new ArrayList<>())/// there is judge id in issued by but its UUID
                 .documents(event.getDocuments())
                 .createdTime(event.getAuditDetails().getCreatedTime())
+                .lastModifiedTime(event.getAuditDetails().getLastModifiedTime())
                 .caseTitle(enrichCaseTitle(courtCase))
                 .caseSTNumber(enrichCaseSTNumber(courtCase))
                 .build();
