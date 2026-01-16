@@ -59,7 +59,13 @@ public class TextLocationFinder implements RenderListener {
                     float avgCharWidth = text.length() > 0 ? chunkWidth / text.length() : 0;
                     keywordX = currentX + (offsetInChunk * avgCharWidth);
                 } else {
-                    keywordX = firstCharX;
+                    if (firstCharX == 0) {
+                        log.info("Keyword '{}' started in a previous chunk but firstCharX is 0. Falling back to currentX. before='{}', after='{}', currentX={}, currentY={}",
+                                keyword, before, after, currentX, currentY);
+                        keywordX = currentX;
+                    } else {
+                        keywordX = firstCharX;
+                    }
                 }
                 keywordY = currentY;
                 keywordFound = true;
