@@ -199,6 +199,12 @@ public class Configuration {
     @Value("${egov.esign.location.endpoint}")
     private String esignLocationEndPoint;
 
+    @Value("${dristi.esign.signature.width:250}")
+    private int esignSignatureWidth;
+
+    @Value("${dristi.esign.signature.height:50}")
+    private int esignSignatureHeight;
+
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
