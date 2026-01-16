@@ -224,7 +224,7 @@ const DocViewerWrapper = ({
           style={{
             display: "flex",
             color: "#505A5F",
-            width: 250,
+            width: "fit-content",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
