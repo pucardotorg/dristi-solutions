@@ -81,7 +81,7 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName, getSafeFileExtension } from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -2933,7 +2933,7 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
-      const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? signedOrderPdfFileName.split(".").pop() : "pdf";
+      const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? getSafeFileExtension(signedOrderPdfFileName) : "pdf";
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {

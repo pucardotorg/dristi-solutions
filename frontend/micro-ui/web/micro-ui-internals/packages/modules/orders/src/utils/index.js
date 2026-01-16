@@ -412,3 +412,20 @@ export function convertTaskResponseToPayload(responseArray, id = null) {
 
   return pendingTask;
 }
+
+export const getSafeFileExtension = (fileName, fallback = "pdf") => {
+  if (typeof fileName !== "string" || !fileName?.trim()) return fallback;
+
+  const lastDotIndex = fileName?.lastIndexOf(".");
+
+  if (
+    lastDotIndex <= 0 || 
+    lastDotIndex === fileName?.length - 1
+  ) {
+    return fallback;
+  }
+
+  const extension = fileName?.substring(lastDotIndex + 1)?.toLowerCase();
+
+  return extension || fallback;
+};
