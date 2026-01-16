@@ -37,7 +37,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>2.6.6</version>
+            <version>3.4.10</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>5.3.26</version>
+            <version>6.2.11</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
