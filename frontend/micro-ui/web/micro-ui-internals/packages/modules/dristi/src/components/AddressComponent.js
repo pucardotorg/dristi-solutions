@@ -4,7 +4,6 @@ import LocationSearch from "./LocationSearch";
 import { ReactComponent as SmallInfoIcon } from "../images/smallInfoIcon.svg";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
-import Axios from "axios";
 import { sanitizeData } from "../Utils";
 const getLocation = (places, code) => {
   let location = null;
