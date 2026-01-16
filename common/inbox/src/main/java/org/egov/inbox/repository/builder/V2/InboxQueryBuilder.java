@@ -60,7 +60,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder(), inboxRequest.getInbox().getProcessSearchCriteria().getIsHearingSerialNumberSorting(), inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
             } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && "Order".equals(params.get("entityType"))) {
                 addIndexSort(baseEsQuery, configuration.getIndex());
-            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && !"Order".equals(params.get("entityType"))) {
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && !params.containsKey("entityType")) {
                 orderNotificationSortClause(baseEsQuery);
             } else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
                 List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
