@@ -13,6 +13,7 @@
       "substage": "Long Pending Register",
       // TODO : need to update the entity type
       "entityType": "ORDER",
+      "processHandler": "UPDATE_BACKUP",
       "typeIdentifier": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
       "workflowModule": "order-default"
     },
@@ -28,7 +29,7 @@
       "state": "published",
       "action": "",
       // TODO : need to update the priority
-      "priority": 1,
+      "priority": 2,
       "substage": "POST_JUDGEMENT",
       // TODO : need to update the entity type
       "entityType": "ORDER",
@@ -49,7 +50,7 @@
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
-      "priority": 6,
+      "priority": 7,
       "substage": "EVIDENCE",
       // TODO : need to update the entity type
       "entityType": "HEARING",
@@ -74,7 +75,7 @@
       "state": "published",
       "action": "admit",
       // TODO : need to update the priority
-      "priority": 7,
+      "priority": 8,
       "substage": "APPEARANCE",
       // TODO : need to update the entity type
       "entityType": "ORDER",
@@ -97,7 +98,7 @@
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
-      "priority": 5,
+      "priority": 6,
       "substage": "EVIDENCE",
       // TODO : need to update the entity type
       "entityType": "HEARING",
@@ -123,7 +124,7 @@
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
-      "priority": 4,
+      "priority": 5,
       "substage": "EVIDENCE",
       // TODO : need to update the entity type
       "entityType": "HEARING",
@@ -149,7 +150,7 @@
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
-      "priority": 3,
+      "priority": 4,
       "substage": "ARGUMENTS",
       // TODO : need to update the entity type
       "entityType": "HEARING",
@@ -175,7 +176,7 @@
       // TODO : need to update the action
       "action": "E-SIGN",
       // TODO : need to update the priority
-      "priority": 2,
+      "priority": 3,
       "substage": "JUDGEMENT",
       // TODO : need to update the entity type
       "entityType": "HEARING",
@@ -186,6 +187,25 @@
       "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
       // TODO : need to update the intermediate hearing path
       "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+    },
+    "isActive": true
+  },
+  // TODO : need to add this new data
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "21",
+    "data": {
+      "id": "21",
+      "stage": "RESTORE_BACKUP",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 1,
+      "substage": "RESTORE_BACKUP",
+      "entityType": "ORDER",
+      "processHandler": "RESTORE_BACKUP",
+      "typeIdentifier": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
+      "workflowModule": "order-default"
     },
     "isActive": true
   }

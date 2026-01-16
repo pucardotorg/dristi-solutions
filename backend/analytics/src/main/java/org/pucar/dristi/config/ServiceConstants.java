@@ -93,6 +93,8 @@ public class ServiceConstants {
     public static final String IS_LPR_CASE_PATH = "$.isLPRCase";
 
     public static final String CASE_STAGE_PATH = "$.stage";
+    public static final String CASE_STAGE_BACKUP_PATH = "$.stageBackup";
+    public static final String CASE_SUB_STAGE_BACKUP_PATH = "$.substageBackup";
     public static final String CASE_SUB_STAGE_PATH = "$.substage";
     public static final String CASE_ID_PATH = "$.caseId";
     public static final String CASE_STATUTES_AND_SECTIONS = "$.statutesAndSections";

@@ -144,6 +144,7 @@ public class CaseOverallStatusUtil {
 			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
 				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
+				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
 				priorityMap.put(priority, caseOverallStatus);
 			}
 		}
@@ -286,8 +287,10 @@ public class CaseOverallStatusUtil {
                 Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
+				String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
+				String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
 				
-				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage);
+				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage, caseStageBackup, caseSubStageBackup);
 				
 				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
 					return;
@@ -309,17 +312,25 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage) {
+	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage, String caseStageBackup, String caseSubStageBackup) {
 		if (caseOverallStatus.getProcessHandler() == null) {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
 		
 		if (caseOverallStatus.getProcessHandler() == ProcessHandler.UPDATE_BACKUP) {
-			caseOverallStatus.setStageBackup(currentCaseStage);
-			caseOverallStatus.setSubstageBackup(currentCaseSubStage);
+			if (caseOverallStatus.getStageBackup() == null) {
+				caseOverallStatus.setStageBackup(currentCaseStage);
+				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
+			}
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
 			caseOverallStatus.setStageBackup(null);
 			caseOverallStatus.setSubstageBackup(null);
+		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
+			// If stage hasn't been set from second priority, use case backup values
+			if (caseOverallStatus.getStage() == null || caseOverallStatus.getStage().isEmpty()) {
+				caseOverallStatus.setStage(caseStageBackup);
+				caseOverallStatus.setSubstage(caseSubStageBackup);
+			}
 		}
 	}
 
@@ -445,6 +456,24 @@ public class CaseOverallStatusUtil {
 		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
 		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
+
+			if (priorityMap.size() > 1) {
+				Map.Entry<Integer, CaseOverallStatus> secondEntry = priorityMap.higherEntry(priorityMap.firstKey());
+				if (secondEntry != null) {
+					CaseOverallStatus backupCaseOverallStatus = secondEntry.getValue();
+					
+					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
+						// For RESTORE_BACKUP, use second priority values directly for stage/substage
+						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());
+						finalCaseOverallStatus.setSubstage(backupCaseOverallStatus.getSubstage());
+					} else if (finalCaseOverallStatus.getStageBackup() == null) {
+						// For other handlers, set backup values if not already set
+						finalCaseOverallStatus.setStageBackup(backupCaseOverallStatus.getStage());
+						finalCaseOverallStatus.setSubstageBackup(backupCaseOverallStatus.getSubstage());
+					}
+				}
+			}
+
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
 			publishToCaseOverallStatus(finalCaseOverallStatus, request);
 		}

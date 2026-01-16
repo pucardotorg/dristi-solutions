@@ -31,7 +31,16 @@
       "action": {
         "type": "string"
       },
+      "priority": {
+        "type": "number"
+      },
       "substage": {
+        "type": "string"
+      },
+      "entityType": {
+        "type": "string"
+      },
+      "processHandler": {
         "type": "string"
       },
       "typeIdentifier": {
@@ -40,16 +49,10 @@
       "workflowModule": {
         "type": "string"
       },
-      "priority": {
-        "type": "number"
-      },
-      "entityType": {
+      "compositeHearingPath": {
         "type": "string"
       },
       "intermediateHearingPath": {
-        "type": "string"
-      },
-      "compositeHearingPath": {
         "type": "string"
       }
     },

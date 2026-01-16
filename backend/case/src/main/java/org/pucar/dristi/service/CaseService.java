@@ -6219,8 +6219,6 @@ public class CaseService {
                 String courtCaseNumber = courtCase.getCourtCaseNumber();
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 courtCase.setCourtCaseNumberBackup(courtCaseNumber);
-                courtCase.setStage(courtCase.getStageBackup());
-                courtCase.setSubstage(courtCase.getSubstageBackup());
             }
             updateCaseConversion(caseRequest);
             producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
