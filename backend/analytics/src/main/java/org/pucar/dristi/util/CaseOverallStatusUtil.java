@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.web.models.enums.ProcessHandler.UPDATE_BACKUP;
 
 @Slf4j
 @Component
@@ -317,7 +318,7 @@ public class CaseOverallStatusUtil {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
 		
-		if (caseOverallStatus.getProcessHandler() == ProcessHandler.UPDATE_BACKUP) {
+		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
 			if (caseOverallStatus.getStageBackup() == null) {
 				caseOverallStatus.setStageBackup(currentCaseStage);
 				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
@@ -327,7 +328,7 @@ public class CaseOverallStatusUtil {
 			caseOverallStatus.setSubstageBackup(null);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
 			// If stage hasn't been set from second priority, use case backup values
-			if (caseOverallStatus.getStage() == null || caseOverallStatus.getStage().isEmpty()) {
+			if (caseOverallStatus.getStage() == null || caseOverallStatus.getStage().isEmpty() || caseOverallStatus.getStage().equalsIgnoreCase(RESTORE_BACKUP)) {
 				caseOverallStatus.setStage(caseStageBackup);
 				caseOverallStatus.setSubstage(caseSubStageBackup);
 			}
@@ -466,7 +467,7 @@ public class CaseOverallStatusUtil {
 						// For RESTORE_BACKUP, use second priority values directly for stage/substage
 						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());
 						finalCaseOverallStatus.setSubstage(backupCaseOverallStatus.getSubstage());
-					} else if (finalCaseOverallStatus.getStageBackup() == null) {
+					} else if (finalCaseOverallStatus.getStageBackup() == null && UPDATE_BACKUP.equals(finalCaseOverallStatus.getProcessHandler())) {
 						// For other handlers, set backup values if not already set
 						finalCaseOverallStatus.setStageBackup(backupCaseOverallStatus.getStage());
 						finalCaseOverallStatus.setSubstageBackup(backupCaseOverallStatus.getSubstage());
