@@ -339,9 +339,7 @@ public class EvidenceService {
 
         // Remark: may need to add email later to witness details
 //        updateWitnessEmails(body, witness);
-        if(body.getArtifact().getWitnessMobileNumbers() != null && !body.getArtifact().getWitnessMobileNumbers().isEmpty()){
-            updateWitnessMobileNumbers(body, witness);
-        }
+        updateWitnessMobileNumbers(body, witness);
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
                 .requestInfo(body.getRequestInfo())
