@@ -238,6 +238,7 @@ const GenerateOrdersV2 = () => {
   const [isLoading, setIsLoading] = useState(false);
   const judgeName = localStorage.getItem("judgeName");
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
+  const [signedOrderPdfFileName, setSignedOrderPdfFileName] = useState("");
   const [fileStoreIds, setFileStoreIds] = useState(new Set()); // TODO: need to check usage
   const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null); // TODO: need to check usage
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -2932,20 +2933,25 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
+      const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? signedOrderPdfFileName.split(".").pop() : "pdf";
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+              additionalDetails: {
+                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+              },
             }
           : unsignedFileStoreId
           ? {
               documentType: "UNSIGNED",
               fileStore: unsignedFileStoreId,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+              additionalDetails: {
+                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+              },
             }
           : null;
       const updatedDocuments = mockESignEnabled
@@ -4808,6 +4814,7 @@ const GenerateOrdersV2 = () => {
           handleIssueOrder={processHandleIssueOrder}
           handleGoBackSignatureModal={handleGoBackSignatureModal}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
+          setSignedOrderPdfFileName={setSignedOrderPdfFileName}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}
