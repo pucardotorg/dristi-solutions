@@ -6,11 +6,11 @@ import SuccessBannerModal from "../../../../../submissions/src/components/Succes
 import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
-import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -264,7 +264,7 @@ const MarkAsEvidence = ({
   // downloadFiles();
   const getMarkAsEvidencePdf = async () => {
     try {
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.dristi.getMarkAsEvidencePdf,
         {
           RequestInfo: {

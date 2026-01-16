@@ -30,7 +30,7 @@ import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, Warni
 import { DRISTIService } from "../../../services";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import {
   accusedAddressValidation,
   addressValidation,
@@ -2426,7 +2426,7 @@ function EFilingCases({ path }) {
         if (isCaseLocked) {
           setIsDisabled(true);
           const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-          const response = await axios.post(
+          const response = await axiosInstance.post(
             "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
             {
               cases: caseObject,
@@ -3013,7 +3013,7 @@ function EFilingCases({ path }) {
     setIsLoader(true);
     try {
       const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "/dristi-case-pdf/v1/generateCasePdf",
         {
           cases: caseObject,

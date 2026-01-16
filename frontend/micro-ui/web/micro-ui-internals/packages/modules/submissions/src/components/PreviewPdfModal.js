@@ -2,7 +2,7 @@ import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
-import Axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Toast } from "@egovernments/digit-ui-react-components";
 
 const Heading = (props) => {
@@ -43,23 +43,26 @@ const PreviewPdfModal = ({
     queryKey: ["previewPdf", tenantId, pdfConfig?.id, pdfConfig?.cnrNumber, pdfConfig?.pdfMap],
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: pdfConfig?.url,
-        params: pdfConfig?.params,
-        data: {
-          RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Dristi",
+      return axiosInstance
+        .post(
+          pdfConfig?.url,
+          {
+            RequestInfo: {
+              authToken: Digit.UserService.getUser().access_token,
+              userInfo: Digit.UserService.getUser()?.info,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({
-        file: res.data,
-        fileName: res.headers["content-disposition"]?.split("filename=")[1],
-      }));
+          {
+            params: pdfConfig?.params,
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({
+          file: res.data,
+          fileName: res.headers["content-disposition"]?.split("filename=")[1],
+        }));
     },
     enabled: pdfConfig?.enabled,
   });

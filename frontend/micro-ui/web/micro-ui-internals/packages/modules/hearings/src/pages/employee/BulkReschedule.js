@@ -7,11 +7,11 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import isEqual from "lodash/isEqual";
 import { hearingService } from "../../hooks/services";
-import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -488,7 +488,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     try {
       setLoader(true);
 
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.hearing.createNotificationPdf,
 
         {

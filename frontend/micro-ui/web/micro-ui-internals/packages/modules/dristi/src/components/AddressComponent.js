@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
 import LocationSearch from "./LocationSearch";
 import { ReactComponent as SmallInfoIcon } from "../images/smallInfoIcon.svg";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
-import Axios from "axios";
 import { sanitizeData } from "../Utils";
 const getLocation = (places, code) => {
   let location = null;
@@ -28,7 +28,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
-    const response = await Axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
+    const response = await axiosInstance.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
     return response;
   };
   function setValue(value, input, autoFill) {
