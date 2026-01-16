@@ -192,7 +192,7 @@ public class ServiceConstants {
     public static final String FILE = "file";
     public static final String CERTIFICATE = "certificate";
     public static final String PAGE = "page";
-    public static final String CO_ORDINATES = "coord";
+    public static final String CO_ORDINATES = "cood";
     public static final String SIZE = "size";
     public static final String DATE_FORMAT = "dateformat";
     public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
