@@ -744,7 +744,8 @@
 
 .info-row {
   display: flex;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 4px;
   h3 {
     margin: 0px;
     font-family: Roboto;
@@ -758,7 +759,7 @@
     color: #0a0a0a;
   }
   .info-value {
-    width: calc(100% - 180px);
+    width: calc(100% - 140px);
     font-weight: 400 !important;
     color: #3d3c3c !important;
   }

@@ -1,0 +1,7 @@
+ALTER TABLE interim_orders
+ADD COLUMN doc_type INTEGER,
+ADD COLUMN jocode VARCHAR(100),
+ADD COLUMN disp_nature INTEGER,
+ADD COLUMN court_no INTEGER,
+ADD COLUMN judge_code INTEGER,
+ADD COLUMN desg_code INTEGER;

@@ -108,6 +108,9 @@ public class PaymentConfiguration {
     @Value("${egov.idgen.name}")
     private String idName;
 
+    @Value("${egov.mock.grn.name}")
+    private String mockGrnName;
+
     @Value("${egov.pdf.service.host}")
     private String pdfServiceHost;
 
@@ -175,6 +178,12 @@ public class PaymentConfiguration {
     @Value("${treasury.mapping.save.topic}")
     private String treasuryMappingSaveTopic;
 
+    @Value("${treasury.mapping.update.topic}")
+    private String treasuryMappingUpdateTopic;
+
+    @Value("${isMock.enabled}")
+    private boolean isMockEnabled;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));
@@ -186,5 +195,36 @@ public class PaymentConfiguration {
     @Value("${treasury.id.prefix}")
     private String treasuryIdPrefix;
 
+    // Advocate Config
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    // SMSNotification
+    @Value("${egov.sms.notification.topic}")
+    private String smsNotificationTopic;
+
+    @Value("${egov.sms.notification.payment.completed.template.id}")
+    private String smsNotificationPaymentCompletedTemplateId;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
 
 }

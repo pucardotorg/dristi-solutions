@@ -12,73 +12,85 @@ public class FileValidationUtilTest {
 
     @Test
     public void testIsValidFile_Jpeg() {
-        MultipartFile file = new MockMultipartFile("file", "filename.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[0]);
+        byte[] jpegSignature = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+        MultipartFile file = new MockMultipartFile("file", "filename.jpg", MediaType.IMAGE_JPEG_VALUE, jpegSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Png() {
-        MultipartFile file = new MockMultipartFile("file", "filename.png", MediaType.IMAGE_PNG_VALUE, new byte[0]);
+        byte[] pngSignature = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        MultipartFile file = new MockMultipartFile("file", "filename.png", MediaType.IMAGE_PNG_VALUE, pngSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Pdf() {
-        MultipartFile file = new MockMultipartFile("file", "filename.pdf", MediaType.APPLICATION_PDF_VALUE, new byte[0]);
+        byte[] pdfSignature = "%PDF-1.4\n".getBytes();
+        MultipartFile file = new MockMultipartFile("file", "filename.pdf", MediaType.APPLICATION_PDF_VALUE, pdfSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Odt() {
-        MultipartFile file = new MockMultipartFile("file", "filename.odt", "application/vnd.oasis.opendocument.text", new byte[0]);
+        byte[] odtSignature = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        MultipartFile file = new MockMultipartFile("file", "filename.odt", "application/vnd.oasis.opendocument.text", odtSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Ods() {
-        MultipartFile file = new MockMultipartFile("file", "filename.ods", "application/vnd.oasis.opendocument.spreadsheet", new byte[0]);
+        byte[] odsSignature = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        MultipartFile file = new MockMultipartFile("file", "filename.ods", "application/vnd.oasis.opendocument.spreadsheet", odsSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Docx() {
-        MultipartFile file = new MockMultipartFile("file", "filename.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", new byte[0]);
+        byte[] docxSignature = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        MultipartFile file = new MockMultipartFile("file", "filename.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Xlsx() {
-        MultipartFile file = new MockMultipartFile("file", "filename.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new byte[0]);
+        byte[] xlsxSignature = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        MultipartFile file = new MockMultipartFile("file", "filename.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsxSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Doc() {
-        MultipartFile file = new MockMultipartFile("file", "filename.doc", "application/msword", new byte[0]);
+        byte[] docSignature = new byte[]{(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0, (byte) 0xA1, (byte) 0xB1, 0x1A, (byte) 0xE1};
+        MultipartFile file = new MockMultipartFile("file", "filename.doc", "application/msword", docSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Xls() {
-        MultipartFile file = new MockMultipartFile("file", "filename.xls", "application/vnd.ms-excel", new byte[0]);
+        byte[] xlsSignature = new byte[]{(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0, (byte) 0xA1, (byte) 0xB1, 0x1A, (byte) 0xE1};
+        MultipartFile file = new MockMultipartFile("file", "filename.xls", "application/vnd.ms-excel", xlsSignature);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Dxf() {
-        MultipartFile file = new MockMultipartFile("file", "filename.dxf", "application/dxf", new byte[0]);
-        assertTrue(FileValidationUtil.isValidFile(file));
+        byte[] dxfContent = "0\nSECTION\n2\nHEADER\n".getBytes();
+        MultipartFile file = new MockMultipartFile("file", "filename.dxf", "application/dxf", dxfContent);
+        assertFalse(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Csv() {
-        MultipartFile file = new MockMultipartFile("file", "filename.csv", "text/csv", new byte[0]);
+        byte[] csvContent = "column1,column2\nvalue1,value2\n".getBytes();
+        MultipartFile file = new MockMultipartFile("file", "filename.csv", "text/csv", csvContent);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 
     @Test
     public void testIsValidFile_Txt() {
-        MultipartFile file = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[0]);
+        byte[] txtContent = "This is a text file\n".getBytes();
+        MultipartFile file = new MockMultipartFile("file", "filename.txt", "text/plain", txtContent);
         assertTrue(FileValidationUtil.isValidFile(file));
     }
 

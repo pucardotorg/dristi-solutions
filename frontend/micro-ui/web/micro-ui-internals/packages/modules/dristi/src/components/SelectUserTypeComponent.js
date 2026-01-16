@@ -5,6 +5,7 @@ import CitizenInfoLabel from "./CitizenInfoLabel";
 import { CardText } from "@egovernments/digit-ui-components";
 import useInterval from "../hooks/useInterval";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
+import ImageModal from "./ImageModal";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -24,6 +25,8 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
     const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
   useInterval(
     () => {
       setTimeLeft(timeLeft - 1);
@@ -134,9 +137,18 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
     }
   };
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName, docViewerStyle: { minWidth: "100%", height: "calc(100vh - 154px)" } } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   const showUploadedDocument = useMemo(() => {
     return (
-      <div>
+      <div onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
         <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} displayFilename={fileName} />
         </div>
@@ -238,6 +250,12 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                     />
                   )}
                   {showDoc && input?.type === "documentUpload" && showUploadedDocument}
+                  {isImageModalOpen && <ImageModal t={t} imageInfo={imageInfo} handleCloseModal={handleImageModalClose} headerBarMainStyle={{
+                    position: "sticky",
+                    top: "0",
+                    zIndex: 1000,
+                    backgroundColor: "grey",
+                  }} />}
                   {input?.type === "text" && (
                     <TextInput
                       className="field desktop-w-full"

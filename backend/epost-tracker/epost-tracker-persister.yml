@@ -11,7 +11,7 @@ serviceMaps:
       tenantIdJsonPath: $.tenantId
       auditAttributeBasePath: EPostTracker
       queryMaps:
-        - query: INSERT INTO dristi_epost_tracker (process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, createdBy, lastModifiedBy, createdTime, lastModifiedTime, postal_hub) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_epost_tracker (process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, createdBy, lastModifiedBy, createdTime, lastModifiedTime, postal_hub, total_amount, speed_post_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           basePath: EPostTracker
           jsonMaps:
             - jsonPath: $.EPostTracker.processNumber
@@ -34,6 +34,8 @@ serviceMaps:
             - jsonPath: $.EPostTracker.auditDetails.createdTime
             - jsonPath: $.EPostTracker.auditDetails.lastModifiedTime
             - jsonPath: $.EPostTracker.postalHub
+            - jsonPath: $.EPostTracker.totalAmount
+            - jsonPath: $.EPostTracker.speedPostId
 
     - version: 1.0
       description: Persists EPost tracker data
@@ -45,7 +47,7 @@ serviceMaps:
       tenantIdJsonPath: $.tenantId
       auditAttributeBasePath: EPostTracker
       queryMaps:
-        - query: UPDATE dristi_epost_tracker SET delivery_status = ?, tracking_number = ?, remarks = ? , received_date = ?, additional_details = ?, row_version = ?, postal_hub = ?, lastModifiedBy = ?, lastModifiedTime = ?  WHERE process_number = ?;
+        - query: UPDATE dristi_epost_tracker SET delivery_status = ?, tracking_number = ?, remarks = ? , received_date = ?, additional_details = ?, row_version = ?, postal_hub = ?, speed_post_id = ?, lastModifiedBy = ?, lastModifiedTime = ?  WHERE process_number = ?;
           basePath: EPostTracker
           jsonMaps:
             - jsonPath: $.EPostTracker.deliveryStatus
@@ -57,6 +59,7 @@ serviceMaps:
               dbType: JSONB
             - jsonPath: $.EPostTracker.rowVersion
             - jsonPath: $.EPostTracker.postalHub
+            - jsonPath: $.EPostTracker.speedPostId
             - jsonPath: $.EPostTracker.auditDetails.lastModifiedBy
             - jsonPath: $.EPostTracker.auditDetails.lastModifiedTime
             - jsonPath: $.EPostTracker.processNumber

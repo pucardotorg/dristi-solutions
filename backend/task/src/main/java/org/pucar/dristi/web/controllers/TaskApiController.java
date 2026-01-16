@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,6 +99,61 @@ public class TaskApiController {
         }
         TaskCaseResponse taskCaseResponse = TaskCaseResponse.builder().list(tasks).totalCount(totalCount).responseInfo(responseInfo).build();
         return new ResponseEntity<>(taskCaseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/_getTasksToSign")
+    public ResponseEntity<TasksToSignResponse> getTasksToSign(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody TasksToSignRequest request){
+        List<TaskToSign> taskToSign = taskService.createTasksToSignRequest(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+        TasksToSignResponse response = TasksToSignResponse.builder()
+                .responseInfo(responseInfo)
+                .taskList(taskToSign)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @PostMapping("/v1/_updateSignedTasks")
+    public ResponseEntity<UpdateSignedTaskResponse> updateSignedTasks(@Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema()) @Valid @RequestBody UpdateSignedTaskRequest request) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        List<Task> tasks = taskService.updateTaskWithSignedDoc(request);
+        UpdateSignedTaskResponse response = UpdateSignedTaskResponse.builder()
+                .responseInfo(responseInfo)
+                .tasks(tasks)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/bulk-send", method = RequestMethod.POST)
+    public ResponseEntity<BulkSendResponse> taskBulkSendPost(@Parameter(in = ParameterIn.DEFAULT, description = "details for the bulk sending of task", schema = @Schema()) @Valid @RequestBody BulkSendRequest body) {
+        List<BulkSend> bulkSendTasks = taskService.bulkSend(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        BulkSendResponse taskResponse = BulkSendResponse.builder().bulkSendTasks(bulkSendTasks).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(taskResponse, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/task-details", method = RequestMethod.POST)
+    public ResponseEntity<TaskDetailsResponse> taskDetailsPost(@Parameter(in = ParameterIn.DEFAULT, description = "Request containing task details, task number and unique ID", schema = @Schema()) @Valid @RequestBody TaskDetailsRequest body) {
+        TaskDetailsDTO result = taskService.processTaskDetails(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        TaskDetailsResponse response = TaskDetailsResponse.builder()
+                .taskDetailsDTO(result)
+                .responseInfo(responseInfo)
+                .message("Task details processed successfully")
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/bulk-pending-collection-update", method = RequestMethod.POST)
+    public ResponseEntity<BulkPendingCollectionUpdateResponse> bulkPendingCollectionUpdatePost(@Parameter(in = ParameterIn.DEFAULT, description = "Bulk update isPendingCollection to false", schema = @Schema()) @Valid @RequestBody BulkPendingCollectionUpdateRequest body) {
+        List<BulkPendingCollectionUpdate> tasks = taskService.bulkUpdatePendingCollection(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        BulkPendingCollectionUpdateResponse response = BulkPendingCollectionUpdateResponse.builder()
+                .tasks(tasks)
+                .responseInfo(responseInfo)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

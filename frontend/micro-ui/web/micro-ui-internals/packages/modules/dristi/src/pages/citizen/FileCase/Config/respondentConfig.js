@@ -187,6 +187,8 @@ const respondentFromconfig = [
           name: "respondentAge",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },

@@ -16,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +34,7 @@ public class BillingUtil {
 	public BillingUtil(RestTemplate restTemplate, Configuration configs) {
 		this.restTemplate = restTemplate;
 		this.configs = configs;
-	}
+    }
 
 	public void createDemand(CaseRequest caseRequest) {
 		StringBuilder uri = new StringBuilder();

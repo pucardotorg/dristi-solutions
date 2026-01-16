@@ -1,0 +1,123 @@
+{
+  "mdms": [
+    {
+      "tenantId": "kl",
+      "schemaCode": "INBOX.InboxQueryConfiguration",
+      "uniqueIdentifier": "digitalized-document-index",
+      "data": {
+        "index": "digitalized-document-index",
+        "module": "Digitalized Document Service",
+        "sortBy": {
+          "path": "Data.digitalizedDocumentDetails.createdTime",
+          "defaultOrder": "DESC"
+        },
+        "sourceFilterPathList": [
+          "Data"
+        ],
+        "allowedSearchCriteria": [
+          {
+            "name": "id",
+            "path": "Data.digitalizedDocumentDetails.id.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "tenantId",
+            "path": "Data.digitalizedDocumentDetails.tenantId.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "courtId",
+            "path": "Data.digitalizedDocumentDetails.courtId.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "type",
+            "path": "Data.digitalizedDocumentDetails.type.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "documentNumber",
+            "path": "Data.digitalizedDocumentDetails.documentNumber.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "createdTime",
+            "path": "Data.digitalizedDocumentDetails.createdTime.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "caseId",
+            "path": "Data.digitalizedDocumentDetails.caseId.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "caseTitle",
+            "path": "Data.digitalizedDocumentDetails.caseTitle.keyword",
+            "operator": "WILDCARD",
+            "isMandatory": false
+          },
+          {
+            "name": "title",
+            "path": "Data.digitalizedDocumentDetails.title.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "caseFilingNumber",
+            "path": "Data.digitalizedDocumentDetails.caseFilingNumber.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "status",
+            "path": "Data.digitalizedDocumentDetails.status.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "searchableFields",
+            "path": "Data.digitalizedDocumentDetails.searchableFields.keyword",
+            "operator": "WILDCARD",
+            "isMandatory": false
+          },
+          {
+            "name": "startOfTheDay",
+            "path": "Data.digitalizedDocumentDetails.createdTime",
+            "operator": "GTE",
+            "isMandatory": false
+          },
+          {
+            "name": "endOfTheDay",
+            "path": "Data.digitalizedDocumentDetails.createdTime",
+            "operator": "LTE",
+            "isMandatory": false
+          },
+          {
+            "name": "caseNumber",
+            "path": "Data.digitalizedDocumentDetails.caseNumber.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "caseName",
+            "path": "Data.digitalizedDocumentDetails.caseName.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "assignedRoles",
+            "path": "Data.digitalizedDocumentDetails.assignedRoles.keyword",
+            "isMandatory": false
+          },
+          {
+            "name": "assignedTo",
+            "path": "Data.digitalizedDocumentDetails.assignedTo.keyword",
+            "isMandatory": false
+          }
+        ]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1764566720562,
+        "lastModifiedTime": 1764914324784
+      }
+    }
+  ]
+}

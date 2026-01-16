@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
+
+import java.util.List;
 import java.util.UUID;
 
 @Validated
@@ -33,6 +35,9 @@ public class ApplicationCriteria {
     @JsonProperty("courtId")
     private String courtId = null;
 
+    @JsonProperty("onBehalfOf")
+    private List<UUID> onBehalfOf = null;
+
     @JsonProperty("applicationNumber")
     @Valid
     private String applicationNumber = null;
@@ -51,5 +56,13 @@ public class ApplicationCriteria {
     @JsonProperty("referenceId")
     @Valid
     private String referenceId = null;
+
+    @JsonProperty("isFuzzySearch")
+    private Boolean isFuzzySearch = false;
+
+    // TODO : remove this, this is temporary fix (#5016)
+    @JsonProperty("isHideBailCaseBundle")
+    private Boolean isHideBailCaseBundle = false;
+
 
 }

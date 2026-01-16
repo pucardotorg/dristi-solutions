@@ -51,7 +51,7 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
     }
     const data = params?.registrationData;
     setParams({ ...params, ...termsAndConditionData });
-    const uploadedDocument = Digit?.SessionStorage?.get("UploadedDocument");
+    const uploadedDocument = params?.uploadedDocument;
     const aadhaarNumber = Digit?.SessionStorage?.get("aadharNumber");
     const identifierId = uploadedDocument ? uploadedDocument?.filedata?.files?.[0]?.fileStoreId : aadhaarNumber;
     const identifierIdDetails = uploadedDocument

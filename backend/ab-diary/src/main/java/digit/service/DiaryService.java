@@ -238,7 +238,7 @@ public class DiaryService {
         return byteArrayResource;
     }
 
-    public CaseDiary searchCaseDiaryForJudge(String tenantId,String courtId,String diaryType,Long date,UUID caseId) {
+    public CaseDiary searchCaseDiaryForCourt(String tenantId,String courtId,String diaryType,Long date,UUID caseId) {
 
         try {
 

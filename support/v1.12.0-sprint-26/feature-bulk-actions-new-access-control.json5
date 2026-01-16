@@ -1,0 +1,45 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2761",
+    "data": {
+      "id": 2761,
+      "url": "/task/v1/_updateSignedTasks",
+      "code": "2761",
+      "name": "Update signed tasks",
+      "displayName": "Update signed tasks",
+      "serviceCode": "task"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2760",
+    "data": {
+      "id": 2760,
+      "url": "/task/v1/_getTasksToSign",
+      "code": "2760",
+      "name": "Get tasks to sign",
+      "displayName": "Get tasks to sign",
+      "serviceCode": "task"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2759",
+    "data": {
+      "id": 2759,
+      "url": "/task/v1/bulk-send",
+      "code": "2759",
+      "name": "Bulk send task",
+      "enabled": false,
+      "displayName": "Bulk send task",
+      "serviceCode": "task"
+    },
+    "isActive": true
+  }
+]

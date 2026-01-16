@@ -275,6 +275,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                   zIndex: 1000,
                   backgroundColor: "grey",
                 }}
+                popupModuleMianStyles={input?.popupModuleMianStyles}
               />
             )}
           </div>

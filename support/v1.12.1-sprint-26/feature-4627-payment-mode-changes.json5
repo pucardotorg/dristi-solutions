@@ -1,0 +1,35 @@
+// TODO : can update this data through workbench
+[
+  // TODO : in activate this data
+  {
+    "id": "16bb49bd-ecb4-4d2c-8f89-db5a686b4e11",
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentMode",
+    "uniqueIdentifier": "9",
+    "data": {
+      "id": 9,
+      "suffix": "EPOST_PROCESS",
+      "gateway": "SBI",
+      "paymentMode": [
+        "ONLINE"
+      ]
+    },
+    "isActive": false
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentMode",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": 6,
+      // TODO : update suffix and gateway
+      "suffix": "POST_PROCESS_COURT",
+      "gateway": "eTreasury",
+      "paymentMode": [
+        "ONLINE",
+        "OFFLINE"
+      ]
+    },
+    "isActive": true
+  }
+]

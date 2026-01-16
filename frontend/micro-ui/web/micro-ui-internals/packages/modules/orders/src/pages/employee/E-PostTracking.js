@@ -1,336 +1,632 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { InboxSearchComposer, Toast } from "@egovernments/digit-ui-react-components";
-import { EpostTrackingConfig } from "./../../configs/E-PostTrackingConfig";
-import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
-import DocumentModal from "../../components/DocumentModal";
-import EpostPrintAndSendDocument from "./EpostPrintAndSendDocument";
+import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
+import SubmitBar from "../../components/SubmitBar";
 import EpostUpdateStatus from "./EpostUpdateStatus";
-import { EpostService, ordersService } from "../../hooks/services";
-import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
+import { updateEpostStatusPendingConfig, updateEpostStatusConfig } from "../../configs/EpostFormConfigs";
+import { EpostService } from "../../hooks/services";
+import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } from "../../utils";
 import { Urls } from "../../hooks/services/Urls";
+import { _getDate, _getStatus } from "../../utils";
+import EmptyTable from "../../components/InboxComposerHeader.js/EmptyTable";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+
+const defaultSearchValues = {
+  pagination: { sortBy: "", order: "" },
+  deliveryStatusList: {
+    name: "All",
+    code: "ALL",
+  },
+  speedPostId: "",
+  bookingDate: "",
+  monthReports: "",
+};
+
+const convertToFormData = (t, obj, dropdownData) => {
+  const bookingData = [null, 0]?.includes(obj?.bookingDate) ? null : obj?.bookingDate;
+  const formdata = {
+    statusDate: _getDate(),
+    remarks: {
+      text: obj?.remarks || "",
+    },
+    speedPostId: obj?.speedPostId || "",
+    status: _getStatus(obj?.deliveryStatus, dropdownData),
+  };
+
+  return formdata;
+};
 
 const EpostTrackingPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { state } = location;
+  const history = useHistory();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const accessToken = window.localStorage.getItem("token");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const outboxFilters = ["DELIVERED", "NOT_DELIVERED"];
-  const inboxFilters = ["IN_TRANSIT", "NOT_UPDATED"];
-  const [config, setConfig] = useState(EpostTrackingConfig({ inboxFilters, outboxFilters })?.[0]);
-  const [stepper, setStepper] = useState(0);
-  const [rowData, setRowData] = useState();
-  const [form, setForm] = useState();
-  const [tempForm, setTempForm] = useState({});
+  const [isClearing, setIsClearing] = useState(false);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [initialSearchPerformed, setInitialSearchPerformed] = useState({ 0: true, 1: true, 2: false });
+  const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
+  const setFormErrors = useRef({});
+  const clearFormErrors = useRef({});
+  const [selectedRowData, setSelectedRowData] = useState({});
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
+  const [hasResults, setHasResults] = useState(() => sessionStorage.getItem("epostSearchHasResults") === "true");
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const userName = useMemo(() => {
+    const userInfo = Digit.UserService.getUser()?.info || {};
+    return userInfo?.name || "";
+  }, []);
 
-  const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [fileStoreId, setFileStoreID] = useState();
-  const [showDocument, setShowDocument] = useState(false);
-  const [show, setShow] = useState(false);
+  const [searchFormData, setSearchFormData] = useState(
+    TabSearchConfig.map((_, index) => {
+      if (_.label === "CS_REPORTS") {
+        return {
+          ...defaultSearchValues,
+          monthReports: new Date().toISOString().slice(0, 7),
+        };
+      }
+      return { ...defaultSearchValues };
+    })
+  );
+
   const [tabData, setTabData] = useState(
-    EpostTrackingConfig({ inboxFilters, outboxFilters })?.map((configItem, index) => ({
+    TabSearchConfig?.map((configItem, index) => ({
       key: index,
       label: configItem.label,
-      active: index === 0 ? true : false,
+      active: index === 0,
     }))
   );
-  const [updatedData, setUpdatedData] = useState(rowData?.original);
-  const [toast, setToast] = useState(null);
-  const dayInMillisecond = 24 * 3600 * 1000;
-  const todayDate = new Date().getTime();
 
-  const showToast = (type, message, duration = 5000) => {
-    setToast({ key: type, action: message });
-    setTimeout(() => {
-      setToast(null);
-    }, duration);
-  };
   const onTabChange = (n) => {
-    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
-    setConfig(EpostTrackingConfig({ inboxFilters, outboxFilters })?.[n]);
+    setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n })));
+    setActiveTabIndex(n);
+    setInitialSearchPerformed((prev) => ({
+      ...prev,
+      [activeTabIndex]: activeTabIndex === 2 ? false : true,
+    }));
+    setSearchFormData((prev) => {
+      const newData = [...prev];
+      newData[activeTabIndex] =
+        activeTabIndex === 2
+          ? {
+              ...defaultSearchValues,
+              monthReports: new Date().toISOString().slice(0, 7),
+            }
+          : { ...defaultSearchValues };
+
+      return newData;
+    });
   };
 
-  useEffect(() => {
-    getTotalCountForTab(EpostTrackingConfig({ inboxFilters, outboxFilters }));
-  }, [state]);
-
-  const getTotalCountForTab = useCallback(
-    async function (tabConfig) {
-      const updatedTabData = await Promise.all(
-        tabConfig?.map(async (configItem, index) => {
-          const response = await Digit.HomeService.customApiService(configItem?.apiDetails?.serviceName, configItem?.apiDetails?.requestBody);
-          const totalCount = response?.pagination?.totalCount;
-          return {
-            key: index,
-            label: totalCount ? `${configItem.label} (${totalCount})` : `${configItem.label} (0)`,
-            active: index === 0 ? true : false,
-          };
-        }) || []
-      );
-      setTabData(updatedTabData);
-    },
-    [tenantId]
+  const { data: epostUserData, isLoading: isEpostUserDataLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Epost",
+    [{ name: "PostalHubAndUserName" }],
+    { select: (data) => data?.Epost?.PostalHubAndUserName || [] }
   );
 
-  function epochToDateTimeObject(epochTime) {
-    if (!epochTime || typeof epochTime !== "number") {
-      return null;
-    }
+  const { data: epostStatusDropDown, isLoading: isEpostStatusDropDownLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Epost",
+    [{ name: "status" }],
+    { select: (data) => data?.Epost?.status || [] }
+  );
 
-    const date = new Date(epochTime);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const dateTimeObject = {
-      date: `${day}/${month}/${year}  ${hours}:${minutes}`,
+  const loggedInUser = useMemo(() => {
+    if (!userName) return "";
+    return epostUserData?.find((user) => user?.userName === userName);
+  }, [epostUserData, userName]);
+
+  const epostStatusDropDownData = useMemo(() => {
+    return (epostStatusDropDown || [])?.slice()?.sort((a, b) => a?.code?.localeCompare(b?.code));
+  }, [epostStatusDropDown]);
+
+  const intermediateStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "INTERMEDIATE"), [
+    epostStatusDropDownData,
+  ]);
+
+  const terminalStatuses = useMemo(() => epostStatusDropDownData.filter((item) => item?.statustype === "TERMINAL"), [epostStatusDropDownData]);
+
+  const handleDownloadDocument = async (row) => {
+    const { fileStoreId, processNumber } = row;
+    if (!fileStoreId) {
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+      return;
+    }
+    try {
+      setLoading(true);
+      await downloadPdf(tenantId, fileStoreId, processNumber);
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+    } catch (err) {
+      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleActionItems = (history, column, row, item) => {
+    setSelectedRowData({});
+    setShowUpdateStatusModal(false);
+    switch (item.id) {
+      case "print_document":
+        handleDownloadDocument(row);
+        break;
+      case "update_status":
+        setShowUpdateStatusModal(true);
+        setSelectedRowData(row);
+        break;
+      case "pencil_edit":
+        setShowUpdateStatusModal(true);
+        setSelectedRowData(row);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleDownloadList = async (activeIndex, postalHub) => {
+    if (activeIndex === 2) {
+      try {
+        setLoading(true);
+        const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
+        const terminalStatusesList = terminalStatuses?.flatMap((data) => data?.code) || [];
+        const month = searchFormData?.[activeIndex]?.monthReports || new Date().toISOString().slice(0, 7);
+        const speedPostId = searchFormData?.[activeIndex]?.speedPostId;
+        const { start: bookingDateStartTime, end: bookingDateEndTime } = getEpochRangeFromMonthIST(month);
+        const payload = {
+          ePostTrackerSearchCriteria: {
+            excelSheetType: "REPORTS_TAB",
+            bookingDateStartTime: bookingDateStartTime || "",
+            bookingDateEndTime: bookingDateEndTime || "",
+            speedPostId: speedPostId || "",
+            deliveryStatusList: [...epostStausList, ...terminalStatusesList],
+            postalHub: postalHub,
+            pagination: {},
+          },
+        };
+        const response = await axiosInstance.post(
+          Urls.Epost.EpostReportDownload,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
+            ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
+          },
+          {
+            params: {
+              tenantId: tenantId,
+            },
+            responseType: "blob",
+          }
+        );
+        const [yearStr, monthNumStr] = month.split("-");
+        const monthNum = parseInt(monthNumStr, 10);
+        const dateForMonth = new Date(yearStr, monthNum - 1);
+        const monthName = dateForMonth.toLocaleString("en-US", { month: "long" });
+        const filename = `${yearStr}_${monthName}_Epost_Report.xlsx`;
+        downloadFile(response?.data, filename);
+        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      } catch (error) {
+        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // TODO: Need to Check
+      try {
+        setLoading(true);
+        const speedPostId = searchFormData?.[activeIndex]?.speedPostId;
+        const payload = {
+          ePostTrackerSearchCriteria: {
+            excelSheetType: "PENDING_BOOKING_TAB",
+            speedPostId: speedPostId || "",
+            deliveryStatusList: ["NOT_UPDATED"],
+            postalHub: postalHub,
+            pagination: {},
+          },
+        };
+        const response = await axiosInstance.post(
+          Urls.Epost.EpostReportDownload,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
+            ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
+          },
+          {
+            params: {
+              tenantId: tenantId,
+            },
+            responseType: "blob",
+          }
+        );
+
+        const filename = `Epost_List.xlsx`;
+        downloadFile(response?.data, filename);
+        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      } catch (error) {
+        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const getSearchRequestBody = (activeTabIndex, searchFormData, baseConfig) => {
+    const currentForm = searchFormData[activeTabIndex] || {};
+    const epostStausList = intermediateStatuses?.flatMap((data) => data?.code) || [];
+    const terminalStatusesList = terminalStatuses?.flatMap((data) => data?.code) || [];
+    const currentStatus = currentForm?.deliveryStatusList?.code !== "ALL" ? [currentForm?.deliveryStatusList?.code] : epostStausList;
+    const { start: bookingDateStartTime, end: bookingDateEndTime } = currentForm?.bookingDate
+      ? getEpochRangeFromDateIST(currentForm?.bookingDate)
+      : getEpochRangeFromMonthIST(currentForm?.monthReports);
+    return {
+      ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria,
+      isDataRequired: true,
+      speedPostId: currentForm?.speedPostId || "",
+      deliveryStatusList:
+        activeTabIndex === 1 ? currentStatus : activeTabIndex === 0 ? ["NOT_UPDATED"] : [...epostStausList, ...terminalStatusesList],
+      bookingDateStartTime: bookingDateStartTime || "",
+      bookingDateEndTime: bookingDateEndTime || "",
+      pagination: {
+        ...baseConfig.apiDetails.requestBody.ePostTrackerSearchCriteria.pagination,
+        sortBy: currentForm?.pagination?.sortBy || activeTabIndex !== 0 ? "bookingDate" : "receivedDate",
+        orderBy: currentForm?.pagination?.orderBy || "asc",
+      },
+    };
+  };
+
+  const config = useMemo(() => {
+    const baseConfig = TabSearchConfig?.[activeTabIndex];
+    if (!baseConfig) return null;
+
+    const defaultValues = {
+      ...baseConfig.sections.search.uiConfig.defaultValues,
+      ...searchFormData[activeTabIndex],
     };
 
-    return dateTimeObject;
+    // Shared SubmitBar customization
+    const submitBarCustomization =
+      activeTabIndex !== 1
+        ? {
+            additionalCustomization: {
+              component: ({ t, formData, setValue }) => (
+                <SubmitBar
+                  label={t(activeTabIndex === 0 ? "DOWNLOAD_LIST" : "DOWNLOAD_REPORTS")}
+                  submit="submit"
+                  style={{ width: activeTabIndex === 0 ? "150px" : "175px" }}
+                  onSubmit={() => handleDownloadList(activeTabIndex, loggedInUser?.postHubName)}
+                  disabled={activeTabIndex === 2 && !initialSearchPerformed?.[2] ? true : !hasResults}
+                />
+              ),
+              className: "custom-button-wrapper",
+            },
+          }
+        : {};
+
+    // Initial load for tab 2: no API call
+    if (activeTabIndex === 2 && !initialSearchPerformed?.[2]) {
+      return {
+        ...baseConfig,
+        apiDetails: {},
+        sections: {
+          ...baseConfig.sections,
+          search: {
+            ...baseConfig.sections.search,
+            uiConfig: {
+              ...baseConfig.sections.search.uiConfig,
+              defaultValues,
+            },
+            ...submitBarCustomization,
+          },
+          searchResult: {
+            ...baseConfig.sections.searchResult,
+            uiConfig: {
+              ...baseConfig.sections.searchResult.uiConfig,
+            },
+          },
+        },
+      };
+    }
+
+    // Default case with API call
+    return {
+      ...baseConfig,
+      apiDetails: {
+        ...baseConfig.apiDetails,
+        requestBody: {
+          ...baseConfig.apiDetails.requestBody,
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          ePostTrackerSearchCriteria: getSearchRequestBody(activeTabIndex, searchFormData, baseConfig),
+        },
+      },
+      sections: {
+        ...baseConfig.sections,
+        search: {
+          ...baseConfig.sections.search,
+          uiConfig: {
+            ...baseConfig.sections.search.uiConfig,
+            fields: baseConfig.sections.search.uiConfig.fields?.map((field) =>
+              field.key === "deliveryStatusList"
+                ? {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [{ id: 0, code: "ALL", name: "All" }, ...intermediateStatuses],
+                    },
+                  }
+                : field
+            ),
+            defaultValues,
+          },
+          ...submitBarCustomization,
+        },
+        searchResult: {
+          ...baseConfig.sections.searchResult,
+          uiConfig: {
+            ...baseConfig.sections.searchResult.uiConfig,
+            columns: baseConfig.sections.searchResult.uiConfig.columns.map((column) =>
+              ["CS_ACTIONS", "CS_ACTIONS_PENCIL"].includes(column.label) ? { ...column, clickFunc: handleActionItems } : column
+            ),
+          },
+        },
+      },
+    };
+  }, [activeTabIndex, initialSearchPerformed, searchFormData, intermediateStatuses, hasResults, loggedInUser?.postHubName]);
+
+  const closeToast = () => setShowErrorToast(null);
+
+  const onFormSubmit = (formData, isClear = false) => {
+    setSearchFormData((prev) => {
+      const newData = [...prev];
+      newData[activeTabIndex] = isClear
+        ? activeTabIndex === 2
+          ? {
+              ...defaultSearchValues,
+              monthReports: new Date().toISOString().slice(0, 7),
+            }
+          : { ...defaultSearchValues }
+        : { ...formData };
+      return newData;
+    });
+    // Mark that we've performed a search on this tab
+    setInitialSearchPerformed((prev) => ({
+      ...prev,
+      [activeTabIndex]: activeTabIndex === 2 ? (isClear ? false : true) : true,
+    }));
+
+    if (isClear) {
+      setIsClearing(true);
+      setTimeout(() => setIsClearing(false), 100);
+    }
+
+    window.sessionStorage.setItem("epostSearchHasResults", "true");
+    window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+    setSearchRefreshCounter((prev) => prev + 1);
+  };
+
+  const handleUpdateStatus = async (formData) => {
+    try {
+      const { start: selectedStartDate, end: selectedEndDate } = getEpochRangeFromDateIST(formData?.statusDate);
+      if (selectedRowData?.receivedDate > selectedEndDate) {
+        setFormErrors?.current("statusDate", {
+          message: `${t("DATE_STATUS_ERROR")} (${_getDate(selectedRowData?.receivedDate, true)})`,
+        });
+        return;
+      }
+      const deliveryStatus = activeTabIndex === 0 ? "BOOKED" : formData?.status?.code;
+      const updateStatusPayload = {
+        EPostTracker: {
+          ...selectedRowData,
+          ...(formData?.speedPostId && { speedPostId: formData?.speedPostId }),
+          ...(!selectedRowData?.bookingDate && { bookingDate: selectedEndDate }),
+          ...(deliveryStatus && { deliveryStatus: deliveryStatus }),
+          remarks: formData?.remarks?.text || "",
+          statusUpdateDate: selectedEndDate,
+        },
+      };
+      await EpostService.EpostUpdate(updateStatusPayload, { tenantId });
+      setShowUpdateStatusModal(false);
+      setSelectedRowData({});
+      setShowErrorToast({ label: t("STATUS_UPDATE_SUCCESSFULLY"), error: false });
+      setSearchRefreshCounter((prev) => prev + 1);
+    } catch (error) {
+      console.error("error while updating : ", error);
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("SOMETHING_WENT_WRONG");
+
+      if (errorCode === "DUPLICATE_SPEED_POST_ID_ERROR") {
+        setFormErrors?.current("speedPostId", {
+          message: `${t("DUPLICATE_SPEED_POST_ID_ERROR")}`,
+        });
+        return;
+      }
+      setShowErrorToast({ label: errorMsg, error: true });
+    }
+  };
+
+  const modifiedFormConfig = useMemo(() => {
+    const baseConfig = activeTabIndex === 0 ? updateEpostStatusPendingConfig : updateEpostStatusConfig;
+
+    return baseConfig.map((section) => ({
+      ...section,
+      body: section.body.map((field) => {
+        let updatedField = { ...field };
+
+        if (updatedField.key === "status") {
+          updatedField = {
+            ...updatedField,
+            populators: {
+              ...updatedField.populators,
+              options: epostStatusDropDownData,
+            },
+          };
+        }
+
+        const customValidationFn = updatedField?.populators?.validation?.customValidationFn;
+        if (customValidationFn) {
+          const customValidations = Digit?.Customizations?.[customValidationFn?.moduleName]?.[customValidationFn?.masterName];
+
+          if (typeof customValidations === "function") {
+            updatedField = {
+              ...updatedField,
+              populators: {
+                ...updatedField.populators,
+                validation: {
+                  ...updatedField.populators.validation,
+                  ...customValidations(),
+                },
+              },
+            };
+          }
+        }
+
+        if (updatedField?.key === "statusDate") {
+          const today = new Date();
+          const receivedDateEpoch = selectedRowData?.receivedDate;
+          const receivedDate = receivedDateEpoch ? new Date(receivedDateEpoch) : null;
+          const effectiveMinDate = receivedDate && receivedDate <= today ? receivedDate : today;
+
+          updatedField = {
+            ...updatedField,
+            populators: {
+              ...updatedField.populators,
+              validation: {
+                ...updatedField.populators?.validation,
+                min: effectiveMinDate.toISOString().split("T")[0],
+                max: today.toISOString().split("T")[0],
+              },
+            },
+          };
+        }
+        return updatedField;
+      }),
+    }));
+  }, [activeTabIndex, epostStatusDropDownData, selectedRowData]);
+
+  const getDefaultValue = useMemo(() => {
+    if (showUpdateStatusModal) {
+      return convertToFormData(t, selectedRowData, epostStatusDropDownData);
+    }
+  }, [epostStatusDropDownData, selectedRowData, showUpdateStatusModal, t]);
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => setShowErrorToast(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHasResults(sessionStorage.getItem("epostSearchHasResults") === "true");
+    };
+
+    window.addEventListener("epostSearchHasResultsChanged", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("epostSearchHasResultsChanged", handleStorageChange);
+    };
+  }, []);
+
+  const isApiSuppressed = !config?.apiDetails || Object.keys(config.apiDetails).length === 0;
+
+  const showCustomEmptyTable = isApiSuppressed || (initialSearchPerformed?.[activeTabIndex] && hasResults === false && !isClearing);
+
+  useEffect(() => {
+    if (activeTabIndex === 0 || activeTabIndex === 1) {
+      const storedValue = sessionStorage.getItem("epostSearchHasResults");
+      if (storedValue !== "true") {
+        window.sessionStorage.setItem("epostSearchHasResults", "true");
+        window.dispatchEvent(new Event("epostSearchHasResultsChanged"));
+      }
+    }
+  }, [activeTabIndex]);
+
+  if (!isEpostUser) {
+    history.replace(homePath);
+    return;
   }
 
-  const recievedOn = epochToDateTimeObject(rowData?.original?.auditDetails?.createdTime);
-
-  const onRowClick = (row) => {
-    setRowData(row);
-    setFileStoreID(row?.original?.fileStoreId);
-    setStepper(stepper + 1);
-    setShow(true);
-  };
-
-  const { data: taskData } = Digit.Hooks.hearings.useGetTaskList(
-    {
-      criteria: {
-        tenantId: tenantId,
-        taskNumber: rowData?.original?.taskNumber,
-      },
-    },
-    {},
-    rowData?.original?.taskNumber,
-    Boolean(rowData)
-  );
-
-  const ePostFee = taskData?.list?.[0]?.taskDetails?.deliveryChannels?.fees;
-
-  const printInfos = useMemo(() => {
-    return [
-      { key: "E-post fees", value: `Rs. ${ePostFee || "N.A."}` },
-      { key: "Received on", value: recievedOn ? recievedOn?.date : "04/07/2024, 12:56" },
-    ];
-  }, [recievedOn, ePostFee]);
-
-  const printLinks = useMemo(() => {
-    return [{ text: "View Details", link: "" }];
-  }, []);
-
-  const keyMapping = {
-    barCode: "trackingNumber",
-    dateofBooking: "bookingDate",
-    currentStatus: "deliveryStatus",
-    dateOfDelivery: "receivedDate",
-  };
-
-  const updateFunction = () => {
-    let data = updatedData;
-    for (const formKey in keyMapping) {
-      const updatedDataKey = keyMapping[formKey];
-
-      if (formKey === "currentStatus") {
-        data[updatedDataKey] = form[formKey].code;
-      } else if (form[formKey]) {
-        data[updatedDataKey] = form[formKey];
-      }
-    }
-
-    setUpdatedData(data);
-  };
-
-  const { data: orderData } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: taskData?.list[0]?.orderId } },
-    { tenantId },
-    taskData?.list[0]?.orderId,
-    Boolean(taskData)
-  );
-
-  const orderType = useMemo(
-    () =>
-      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
-        ? orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === taskData?.list?.[0]?.additionalDetails?.itemId)?.orderType
-        : orderData?.list?.[0]?.orderType,
-    [orderData, taskData]
-  );
-
-  const onUpdateClick = async () => {
-    updateFunction();
-    const requestBody = {
-      Individual: {
-        tenantId: Digit.ULBService.getCurrentTenantId(),
-      },
-      EPostTracker: updatedData,
-    };
-    try {
-      const data = await EpostService.EpostUpdate(requestBody, {});
-      if (rowData?.original?.deliveryStatus === "NOT_DELIVERED") {
-        ordersService.customApiService(Urls.orders.pendingTask, {
-          pendingTask: {
-            name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
-            entityType: "order-default",
-            referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
-            status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
-            assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
-            cnrNumber: taskData?.list[0]?.cnrNumber,
-            filingNumber: taskData?.list[0]?.filingNumber,
-            caseId: taskData?.list[0]?.caseId,
-            caseTitle: taskData?.list[0]?.caseTitle,
-            isCompleted: false,
-            stateSla: 3 * dayInMillisecond + todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-      }
-      showToast("success", t("CORE_COMMON_PROFILE_UPDATE_SUCCESS_WITH_PASSWORD"), 50000);
-      setShow(false);
-    } catch (error) {
-      console.log("error updating Status");
-    }
-  };
-
-  const printDocuments = useMemo(() => {
-    return [
-      {
-        fileName: `${orderType === "NOTICE" ? "Notice" : "Summon"}s Document`,
-        fileStoreId: "03e93220-7254-4877-ac80-bb808a722a61",
-        documentName: "file_example_JPG_100kB.jpg",
-        documentType: "image/jpeg",
-      },
-    ];
-  }, []);
-
-  const infos = useMemo(() => {
-    return [
-      { key: "E-post fees", value: `Rs. ${ePostFee || "N.A."}` },
-      { key: "Received on", value: recievedOn ? recievedOn?.date : "04/07/2024, 12:56" },
-      { key: "Bar Code", value: "1234567890" },
-      { key: "Date of Booking", value: "04/07/2024" },
-    ];
-  }, [recievedOn]);
-
-  const links = useMemo(() => {
-    return [
-      { text: "View Details", link: "", onClick: () => {} },
-      {
-        text: "View Document",
-        link: "",
-        onClick: () => {
-          setShowDocument(true);
-        },
-      },
-    ];
-  }, []);
-
-  const modalConfig = useMemo(() => {
-    return {
-      handleClose: () => {
-        setShow(false);
-      },
-      isStepperModal: true,
-      actionSaveOnSubmit: () => {},
-      steps: [
-        {
-          heading: { label: "Print & Send Documents" },
-          modalBody: (
-            <EpostPrintAndSendDocument
-              t={t}
-              infos={printInfos}
-              links={printLinks}
-              documents={printDocuments}
-              rowData={rowData}
-              setTempForm={setTempForm}
-              tempForm={tempForm}
-            />
-          ),
-          actionSaveOnSubmit: () => {
-            setForm(tempForm);
-          },
-          actionCancelType: "SKIP",
-          actionSaveLabel: "Save & Proceed",
-          actionCancelLabel: "Skip",
-          isDisabled: rowData?.original?.deliveryStatus === "DELIVERED" || rowData?.original?.deliveryStatus === "NOT_DELIVERED" ? true : false,
-        },
-        {
-          type: showDocument && "document",
-          heading: { label: showDocument ? "Documents" : "E-post Status" },
-          modalBody: showDocument ? (
-            <DocumentViewerWithComment documents={printDocuments} />
-          ) : (
-            <EpostUpdateStatus
-              t={t}
-              setForm={setForm}
-              setUpdatedData={setUpdatedData}
-              rowData={rowData}
-              form={form}
-              infos={infos}
-              links={links}
-              setShowDocument={setShowDocument}
-            />
-          ),
-          isDisabled: rowData?.original?.deliveryStatus === "DELIVERED" || rowData?.original?.deliveryStatus === "NOT_DELIVERED" ? true : false,
-          actionSaveOnSubmit: () => onUpdateClick(),
-          actionSaveLabel: !showDocument && "Update Status",
-          handleClose: showDocument ? () => setShowDocument(false) : undefined,
-        },
-      ],
-    };
-  }, [printInfos, printLinks, printDocuments, t, rowData, form, showDocument, tempForm, setTempForm, setShowDocument]);
-
-  useEffect(() => {
-    setUpdatedData(rowData?.original);
-  }, [rowData]);
-
-  useEffect(() => {
-    if (form) setTempForm(form);
-  }, [form]);
+  if (isEpostUserDataLoading || isEpostStatusDropDownLoading) return <Loader />;
 
   return (
-    <div style={{ padding: "16px", margin: "24px" }} className="e-post-tracking-main">
-      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-        <svg width="40" height="41" viewBox="0 0 40 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M20 2.16699C14.4767 2.16699 10 6.64366 10 12.167C10 19.3103 20 30.5003 20 30.5003C20 30.5003 30 19.3103 30 12.167C30 6.64366 25.5234 2.16699 20 2.16699ZM20 5.50033C23.6767 5.50033 26.6667 8.49033 26.6667 12.167C26.6667 15.517 23.1985 21.101 19.9968 25.2659C16.7951 21.1076 13.3334 15.527 13.3334 12.167C13.3334 8.49033 16.3234 5.50033 20 5.50033ZM20 8.83366C19.116 8.83366 18.2681 9.18485 17.643 9.80997C17.0179 10.4351 16.6667 11.2829 16.6667 12.167C16.6667 13.051 17.0179 13.8989 17.643 14.524C18.2681 15.1491 19.116 15.5003 20 15.5003C20.8841 15.5003 21.7319 15.1491 22.3571 14.524C22.9822 13.8989 23.3334 13.051 23.3334 12.167C23.3334 11.2829 22.9822 10.4351 22.3571 9.80997C21.7319 9.18485 20.8841 8.83366 20 8.83366ZM8.00134 25.5003L3.33337 37.167H36.6667L31.9987 25.5003H28.0209C27.2125 26.7187 26.401 27.847 25.6543 28.8337H29.7461L31.7448 33.8337H8.25525L10.2539 28.8337H14.3457C13.5991 27.847 12.7875 26.7187 11.9792 25.5003H8.00134Z"
-            fill="#77787B"
-          />
-        </svg>
-        <strong style={{ fontSize: "24px", fontFamily: "roboto" }}>Kollam Postal Hub</strong>
+    <React.Fragment>
+      {loading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: 10001,
+            position: "fixed",
+            top: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgb(234 234 245 / 50%)",
+          }}
+        >
+          <Loader />
+        </div>
+      )}
+
+      <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px", display: "flex", flexDirection: "column", gap: "2rem" }}>
+        <div style={{ fontWeight: 700, fontSize: "2rem" }}>{`${t("HUB_CO_ORDINATOR")}, ${loggedInUser?.district}`}</div>
+        <div style={{ display: "flex", flexDirection: "column" }} key={`e-post-${hasResults}-${searchRefreshCounter}-${showCustomEmptyTable}`}>
+          <Inboxheader config={config} tabData={tabData} onTabChange={onTabChange} onFormSubmit={onFormSubmit} />
+          {showCustomEmptyTable ? (
+            <EmptyTable config={config} t={t} message={"NO_DATA_TO_DISPLAY"} subText={"PLEASE_REFINE_SEARCH"} />
+          ) : (
+            <InboxSearchComposer
+              key={`e-post-track-${activeTabIndex}-${searchRefreshCounter}`}
+              configs={config}
+              showTab={false}
+              tabData={tabData}
+              onTabChange={onTabChange}
+            />
+          )}
+        </div>
       </div>
-      <div style={{ margin: "24px" }}>
-        <strong style={{ fontSize: "24px" }}>Online Process Memo</strong>
-      </div>
-      <InboxSearchComposer
-        key={`e-post-track-${show}`}
-        configs={config}
-        showTab={true}
-        tabData={tabData}
-        onTabChange={onTabChange}
-        additionalConfig={{
-          resultsTable: {
-            onClickRow: onRowClick,
-          },
-        }}
-      ></InboxSearchComposer>
-      {show && <DocumentModal config={modalConfig} setShow={setShow} />}
-      {toast && (
-        <Toast
-          error={toast.key === "error"}
-          label={t(toast.key === "success" ? `CORE_COMMON_PROFILE_UPDATE_SUCCESS` : toast.action)}
-          onClose={() => setToast(null)}
-          style={{ maxWidth: "670px" }}
+      {showUpdateStatusModal && (
+        <EpostUpdateStatus
+          t={t}
+          headerLabel={"UPDATE_STATUS"}
+          handleCancel={() => setShowUpdateStatusModal(false)}
+          handleSubmit={handleUpdateStatus}
+          defaultValue={getDefaultValue}
+          modifiedFormConfig={modifiedFormConfig}
+          saveLabel={"CONFIRM"}
+          cancelLabel={"CS_COMMON_CANCEL"}
+          closeToast={closeToast}
+          showErrorToast={showErrorToast}
+          setFormErrors={setFormErrors}
+          clearFormErrors={clearFormErrors}
         />
       )}
-    </div>
+      {showErrorToast && !showUpdateStatusModal && (
+        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />
+      )}
+    </React.Fragment>
   );
 };
 

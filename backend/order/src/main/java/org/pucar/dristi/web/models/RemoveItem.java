@@ -34,4 +34,7 @@ public class RemoveItem {
     @JsonProperty("itemID")
     @NotNull
     private String itemID;
+
+    @JsonProperty("itemText")
+    private String itemText;
 }

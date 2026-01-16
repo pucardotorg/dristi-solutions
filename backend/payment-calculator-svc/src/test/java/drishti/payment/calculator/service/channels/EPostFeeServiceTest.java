@@ -53,7 +53,7 @@ public class EPostFeeServiceTest {
 
         when(repository.getPostalHub(any())).thenReturn(Collections.singletonList(PostalHub.builder().classification(Classification.LTD).build()));
         when(taskUtil.getIPostFeesDefaultData(any(), anyString())).thenReturn(configParams);
-        Double courtFee = 100.0;
+        Double courtFee = 110.0;
         when(taskUtil.calculateCourtFees(any(TaskPayment.class))).thenReturn(courtFee);
         when(config.getNumberOfPgOfSummon()).thenReturn(2);
         TaskPaymentCriteria criteria = new TaskPaymentCriteria();
@@ -62,7 +62,7 @@ public class EPostFeeServiceTest {
 
         Calculation result = ePostSummonFeeService.calculatePayment(new RequestInfo(), criteria);
 
-        assertEquals(courtFee, result.getTotalAmount());
+        assertEquals(courtFee + configParams.getEnvelopeChargeIncludingGst(), result.getTotalAmount());
 
     }
 

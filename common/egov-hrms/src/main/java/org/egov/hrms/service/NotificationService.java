@@ -88,7 +88,7 @@ public class NotificationService {
 		}
 		for(Employee employee: request.getEmployees()) {
 			sendSms(pwdMap, employee, message, tenantId);
-			if(!employee.getUser().getEmailId().isEmpty()) {
+			if(employee.getUser().getEmailId() != null && !employee.getUser().getEmailId().isEmpty()) {
 				pwdMap.put("email", employee.getUser().getEmailId());
 				sendEmail(pwdMap, employee, tenantId, request.getRequestInfo());
 			}

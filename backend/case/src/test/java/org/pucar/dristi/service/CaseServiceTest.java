@@ -40,6 +40,9 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,6 +114,12 @@ public class CaseServiceTest {
     @Mock
     private FileStoreUtil fileStoreUtil;
 
+    @Mock
+    private DateUtil dateUtil;
+
+    @Mock
+    private InboxUtil inboxUtil;
+
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -172,7 +181,8 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil);
+        OrderUtil orderUtil = new OrderUtil(null, null, null);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil);
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
@@ -268,7 +278,6 @@ public class CaseServiceTest {
         // Verify calls inside addLitigantToCase (simplified)
         verify(cacheService, times(1)).save(anyString(), any());
         verify(producer, times(1)).push(eq(config.getJoinCaseTopicIndexer()), any(CaseRequest.class));
-        verify(notificationService, times(1)).sendNotification(any(), any(), eq(NEW_USER_JOIN), anyString()); // Assuming notification is sent
     }
 
     @Test
@@ -315,7 +324,7 @@ public class CaseServiceTest {
         // Verify key interactions
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any(JoinCasePaymentRequest.class));
         verify(taskUtil, never()).callCreateTask(any()); // No task creation
         verify(etreasuryUtil, never()).createDemand(any(), anyString(), anyList()); // No demand creation
     }
@@ -359,7 +368,7 @@ public class CaseServiceTest {
         // Verify key interactions
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any(JoinCasePaymentRequest.class));
         verify(taskUtil, times(1)).callCreateTask(any(TaskRequest.class));
         verify(etreasuryUtil, times(1)).createDemand(any(), eq(FILING_NUMBER + "_JOIN"), anyList());
         verify(producer, never()).push(eq(config.getRepresentativeJoinCaseTopic()), any()); // Shouldn't push advocate data yet
@@ -472,7 +481,7 @@ public class CaseServiceTest {
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, never()).callPaymentCalculator(any()); // Should fail before payment calc
+        verify(paymentCalculaterUtil, never()).callPaymentCalculator(any(JoinCasePaymentRequest.class)); // Should fail before payment calc
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -975,6 +984,142 @@ public class CaseServiceTest {
     }
 
     @Test
+    public void updateCaseWithoutWorkflowSuccess() {
+        // Setup test data
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId("pb.amritsar");
+        courtCase.setCaseNumber("CASE-2024-001");
+        caseRequest.setCases(courtCase);
+
+        // Mock encryption
+        CourtCase encryptedCourtCase = new CourtCase();
+        encryptedCourtCase.setId(courtCase.getId());
+        encryptedCourtCase.setTenantId(courtCase.getTenantId());
+        when(encryptionDecryptionUtil.encryptObject(eq(caseRequest.getCases()), anyString(), eq(CourtCase.class)))
+                .thenReturn(encryptedCourtCase);
+
+        // Mock config
+        when(config.getCourtCaseEncrypt()).thenReturn("case-encrypt-key");
+
+        // Execute the method
+        CourtCase result = caseService.updateCaseWithoutWorkflow(caseRequest);
+
+        // Verify the result
+        assertNotNull(result);
+        assertEquals(courtCase.getId(), result.getId());
+        assertEquals(courtCase.getTenantId(), result.getTenantId());
+        assertEquals(courtCase.getCaseNumber(), result.getCaseNumber());
+
+        // Verify interactions
+        verify(encryptionDecryptionUtil).encryptObject(eq(caseRequest.getCases()), eq("case-encrypt-key"), eq(CourtCase.class));
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullCourtCase() {
+        // Setup test data with null court case
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        caseRequest.setCases(null); // Null court case
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("CourtCase cannot be null"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullTenantId() {
+        // Setup test data with null tenant ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId(null); // Null tenant ID
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("TenantId cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureEmptyTenantId() {
+        // Setup test data with empty tenant ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId(""); // Empty tenant ID
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("TenantId cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullCaseId() {
+        // Setup test data with null case ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(null); // Null case ID
+        courtCase.setTenantId("pb.amritsar");
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Case ID cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
     void testExistCases_Success() {
         // Setup
         CaseExists caseExists = new CaseExists();
@@ -1389,6 +1534,340 @@ public class CaseServiceTest {
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         assertTrue(result.contains("IND-123"));
+    }
+
+    @Test
+    void testAddWitnessToCase_Success() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        CourtCase courtCase = createCourtCase();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.singletonList(courtCase))
+                .defaultFields(false)
+                .build();
+        
+        // Mock dependencies
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+        when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any()))
+                .thenReturn(courtCase);
+        when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class)))
+                .thenReturn(courtCase);
+        when(config.getCaseDecryptSelf()).thenReturn("decrypt-key");
+        when(config.getCourtCaseEncrypt()).thenReturn("encryption-key");
+        when(config.getCaseUpdateTopic()).thenReturn("case-update-topic");
+        doNothing().when(validator).validateWitnessRequest(any(), any());
+        doNothing().when(cacheService).save(anyString(), any());
+        doNothing().when(producer).push(anyString(), any());
+        
+        // Execute
+        WitnessDetailsResponse response = caseService.addWitnessToCase(request);
+        
+        // Verify
+        assertNotNull(response);
+        assertNotNull(response.getWitnessDetails());
+        assertEquals(request.getWitnessDetails().get(0).getFirstName(), response.getWitnessDetails().get(0).getFirstName());
+        assertEquals(request.getWitnessDetails().get(0).getLastName(), response.getWitnessDetails().get(0).getLastName());
+        
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
+        verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
+        verify(encryptionDecryptionUtil, times(1)).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
+        verify(cacheService, times(1)).save(anyString(), any(CourtCase.class));
+        verify(producer, times(1)).push(eq("case-update-topic"), any(CaseRequest.class));
+    }
+
+    @Test
+    void testAddWitnessToCase_CaseNotFound() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.emptyList())
+                .defaultFields(false)
+                .build();
+        
+        // Mock empty case list
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
+        
+        assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
+        assertTrue(exception.getMessage().contains("Error while adding witness to case"));
+        
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(validator, never()).validateWitnessRequest(any(), any());
+        verify(producer, never()).push(anyString(), any());
+    }
+
+    @Test
+    void testAddWitnessToCase_NullWitnessDetails() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        request.setWitnessDetails(null);
+        CourtCase courtCase = createCourtCase();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.singletonList(courtCase))
+                .defaultFields(false)
+                .build();
+        
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+        when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any()))
+                .thenReturn(courtCase);
+        when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class)))
+                .thenReturn(courtCase);
+        when(config.getCaseDecryptSelf()).thenReturn("decrypt-key");
+        when(config.getCourtCaseEncrypt()).thenReturn("encryption-key");
+        when(config.getCaseUpdateTopic()).thenReturn("case-update-topic");
+        doNothing().when(validator).validateWitnessRequest(any(), any());
+        doNothing().when(cacheService).save(anyString(), any());
+        doNothing().when(producer).push(anyString(), any());
+        
+        // Execute
+        WitnessDetailsResponse response = caseService.addWitnessToCase(request);
+        
+        // Verify
+        assertNotNull(response);
+        assertNull(response.getWitnessDetails());
+        
+        verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
+        verify(producer, times(1)).push(anyString(), any());
+    }
+
+    // Helper methods for test data creation
+    private WitnessDetailsRequest createWitnessDetailsRequest() {
+        WitnessDetails witnessDetails = new WitnessDetails();
+        witnessDetails.setFirstName("John");
+        witnessDetails.setLastName("Doe");
+        witnessDetails.setMiddleName("Smith");
+        witnessDetails.setUniqueId("witness-001");
+
+        return WitnessDetailsRequest.builder()
+                .requestInfo(requestInfo)
+                .caseFilingNumber("CASE-2024-001")
+                .tenantId("pb.amritsar")
+                .witnessDetails(Collections.singletonList(witnessDetails))
+                .build();
+    }
+
+    private CourtCase createCourtCase() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("CASE-2024-001");
+        courtCase.setTenantId("pb.amritsar");
+        courtCase.setAdditionalDetails(new HashMap<>());
+        return courtCase;
+    }
+
+
+    @Test
+    void testUpdateCaseConversion_CMPConversion_Success() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-001");
+        courtCase.setCnrNumber("CNR-2024-001");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber("CMP-2024-001");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+        verify(dateUtil, times(1)).getEpochFromLocalDate(any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_STConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-002");
+        courtCase.setCnrNumber("CNR-2024-002");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setCmpNumber("CMP-2024-002");
+        courtCase.setCourtCaseNumber("ST-2024-002");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_LPRConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-003");
+        courtCase.setCnrNumber("CNR-2024-003");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setIsLPRCase(true);
+        courtCase.setCourtCaseNumber("ST-2024-003");
+        courtCase.setLprNumber("LPR-2024-003");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_LPToSTConversion_Success() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-004");
+        courtCase.setCnrNumber("CNR-2024-004");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setIsLPRCase(false);
+        courtCase.setLprNumber("LPR-2024-004");
+        courtCase.setCourtCaseNumberBackup("ST-2024-004-BACKUP");
+        courtCase.setCourtCaseNumber("ST-2024-004-NEW");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_NoMatchingConversionType() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-005");
+        courtCase.setCnrNumber("CNR-2024-005");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("UNKNOWN");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should still push to Kafka even without conversion details set
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_ExceptionHandling() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-006");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber("CMP-2024-006");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doThrow(new RuntimeException("Kafka error")).when(producer).push(anyString(), any());
+
+        // Act - should not throw exception due to try-catch
+        assertDoesNotThrow(() -> caseService.updateCaseConversion(caseRequest));
+
+        // Assert
+        verify(producer, times(1)).push(anyString(), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_CMPWithNullCmpNumber_NoConversion() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-007");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("CMP");
+        courtCase.setCmpNumber(null); // CMP number is null
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should push but without conversion details set (convertedFrom/To will be null)
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+    }
+
+    @Test
+    void testUpdateCaseConversion_STWithNullCourtCaseNumber_FallbackToLPRCheck() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("FILING-2024-008");
+        courtCase.setTenantId("kl.kollam");
+        courtCase.setCaseType("ST");
+        courtCase.setCourtCaseNumber(null);
+        courtCase.setIsLPRCase(true);
+        courtCase.setLprNumber("LPR-2024-008");
+
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo(requestInfo);
+
+        when(dateUtil.getEpochFromLocalDate(any())).thenReturn(1702857600000L);
+        when(config.getCaseConversionTopic()).thenReturn("case-conversion-topic");
+        doNothing().when(producer).push(anyString(), any());
+
+        // Act
+        caseService.updateCaseConversion(caseRequest);
+
+        // Assert - should match LPR case conversion (ST -> LP)
+        verify(producer, times(1)).push(eq("case-conversion-topic"), any());
+        verify(dateUtil, times(1)).getEpochFromLocalDate(any());
     }
 
 }

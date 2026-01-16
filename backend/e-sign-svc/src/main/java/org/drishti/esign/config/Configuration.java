@@ -69,4 +69,7 @@ public class Configuration {
     @Value("${esign.position.offset}")
     private Float positionOffset;
 
+    @Value("${esign.y.coordinate.offset}")
+    private float eSignYCoordinateOffset;
+
 }
