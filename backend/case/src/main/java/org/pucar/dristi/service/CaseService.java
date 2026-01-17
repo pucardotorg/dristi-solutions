@@ -4044,6 +4044,8 @@ public class CaseService {
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
             courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
+            courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
+            courtCaseRedis.setSubstageBackup(caseOverallStatus.getSubstageBackup());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
@@ -6212,17 +6214,11 @@ public class CaseService {
             if (courtCase.getIsLPRCase()) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
-                courtCase.setStageBackup(courtCase.getStage());
-                courtCase.setSubstageBackup(courtCase.getSubstage());
-                courtCase.setStage(config.getLprStage());
-                courtCase.setSubstage(config.getLprSubStage());
             } else {
                 // moving the case out of LPR
                 String courtCaseNumber = courtCase.getCourtCaseNumber();
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 courtCase.setCourtCaseNumberBackup(courtCaseNumber);
-                courtCase.setStage(courtCase.getStageBackup());
-                courtCase.setSubstage(courtCase.getSubstageBackup());
             }
             updateCaseConversion(caseRequest);
             producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
