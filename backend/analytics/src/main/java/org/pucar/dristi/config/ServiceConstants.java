@@ -73,6 +73,7 @@ public class ServiceConstants {
 
     public static final String HEARING_PATH = "$.HearingList.*";
     public static final String HEARING_TYPE_PATH = "$.hearingType";
+    public static final String PURPOSE_OF_NEXT_HEARING_PATH = "$.purposeOfNextHearing";
     public static final String CASE_PATH = "$.criteria.*.responseList[0]";
     public static final String ARTIFACT_PATH = "$.artifacts.*";
     public static final String TASK_PATH = "$.list.*";
@@ -92,6 +93,9 @@ public class ServiceConstants {
     public static final String IS_LPR_CASE_PATH = "$.isLPRCase";
 
     public static final String CASE_STAGE_PATH = "$.stage";
+    public static final String CASE_STAGE_BACKUP_PATH = "$.stageBackup";
+    public static final String CASE_SUB_STAGE_BACKUP_PATH = "$.substageBackup";
+    public static final String CASE_SUB_STAGE_PATH = "$.substage";
     public static final String CASE_ID_PATH = "$.caseId";
     public static final String CASE_STATUTES_AND_SECTIONS = "$.statutesAndSections";
     public static final String CASE_REPRESENTATIVES = "$.representatives";
@@ -278,5 +282,13 @@ public class ServiceConstants {
     public static final String LONG_PENDING_REGISTER = "Long Pending Register";
     public static final String REFER_TO_ADR = "REFER_TO_ADR";
     public static final String ACTIVE = "ACTIVE";
+
+    public static final String HEARING = "HEARING";
+    public static final String ORDER = "ORDER";
+    public static final String CASE = "CASE";
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String SCHEDULING_NEXT_HEARING = "SCHEDULING_NEXT_HEARING";
+
+    public static final String RESTORE_BACKUP = "RESTORE_BACKUP";
 
 }
