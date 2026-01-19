@@ -29,6 +29,7 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   businessOfDay,
+  setSignedOrderPdfFileName,
   // selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -82,6 +83,7 @@ function OrderSignatureModal({
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
+        setSignedOrderPdfFileName(formData?.uploadSignature?.Signature?.[0]?.name);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
