@@ -4025,19 +4025,6 @@ const AdmittedCaseV2 = () => {
               style={{ marginRight: "30px" }}
             />
           )}
-          {userRoles?.includes("ORDER_CREATOR") && config?.label === "Orders" && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div
-                onClick={() => handleSelect(t("GENERATE_ORDER_HOME"))}
-                style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
-              >
-                {t("GENERATE_ORDERS_LINK")}
-              </div>
-              {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
-                {t("DOWNLOAD_ALL_LINK")}
-              </div> */}
-            </div>
-          )}
           {userRoles?.includes("ORDER_CREATOR") && config?.label === "Submissions" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
