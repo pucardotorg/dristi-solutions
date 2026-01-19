@@ -80,14 +80,14 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     // }
     if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    return file.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
+    return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
 
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
     // Check file size before adding to currentValue
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    if (file.size > maxFileSize) {
+    if (file?.size > maxFileSize) {
       setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
       return;
     } else if (clearErrors) {
