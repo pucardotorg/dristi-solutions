@@ -76,7 +76,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>}
     </React.Fragment>
   );
 };
@@ -624,6 +624,14 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (advocateAndPipData && advocateAndPipData[input.fileKey] && advocateAndPipData[input.fileKey][input.name]) || [];
 
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file.size > maxFileSize) {
+      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
+
     currentValue.splice(index, 1, file);
     currentValue = currentValue.map((item) => {
       if (item?.name) {
@@ -638,12 +646,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         return item;
       }
     });
-    const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    // if (file.size > maxFileSize) {
-    //   setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
-    // } else if (clearErrors) {
-    //   clearErrors(config.key);
-    // }
+
     const fileKey = input?.fileKey;
     const name = input?.name;
 
@@ -1016,7 +1019,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         <DragDropJSX
                           t={t}
                           currentValue={currentValue}
-                          //   error={errors?.[config.key]}  //check- TODO: handleError
+                          error={errors?.[config.key]} //check- TODO: handleError
                         />
                       }
                       key={input?.fileKey}
