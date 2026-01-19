@@ -101,8 +101,8 @@ runs:
       run: |
           echo "${{ inputs.esign_private_key }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
           echo "${{ inputs.esign_public_key }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
-          cat backend/integration-services/e-sign-svc/src/main/resources/privateKey.pem
-          cat backend/integration-services/e-sign-svc/src/main/resources/publicKey.cer
+          cat backend/e-sign-svc/src/main/resources/privateKey.pem
+          cat backend/e-sign-svc/src/main/resources/publicKey.cer
 
     - name: Build and Push Docker Image
       shell: bash
