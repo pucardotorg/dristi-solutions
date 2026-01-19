@@ -1,28 +1,27 @@
 import { Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useRouteMatch } from "react-router-dom";
-import useGetOrders from "../../../hooks/dristi/useGetOrders";
 import useGetBotdOrders from "../../../hooks/dristi/useGetBotdOrders";
 import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
 import { PreviousHearingIcon } from "../../../icons/svgIndex";
-import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
-import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import NextHearingCard from "./NextHearingCard";
 
-const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true, isBailBondTaskExists = false }) => {
+const CaseOverviewV2 = ({
+  caseData,
+  filingNumber,
+  currentHearingId,
+  caseDetails,
+  showNoticeProcessModal = true,
+  isBailBondTaskExists = false,
+  ordersDataFromParent = null,
+  hearingsDataFromParent = null,
+}) => {
   const { t } = useTranslation();
-  //   const filingNumber = caseData.filingNumber;
-  const history = useHistory();
   const cnrNumber = caseData.cnrNumber;
-  const { path } = useRouteMatch();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState({});
   const [taskType, setTaskType] = useState({});
   const [showAllTranscript, setShowAllTranscript] = useState(false);
-  // const [showAllStagesModal, setShowAllStagesModal] = useState(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
@@ -30,34 +29,6 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   const NoticeProcessModal = useMemo(
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
-  );
-
-  const allAdvocates = useMemo(() => getAdvocates(caseData?.case)[userInfo?.uuid], [caseData?.case, userInfo]);
-  const isAdvocatePresent = useMemo(
-    () => (userInfo?.roles?.some((role) => role?.code === "ADVOCATE_ROLE") ? true : allAdvocates?.includes(userInfo?.uuid)),
-    [allAdvocates, userInfo?.roles, userInfo?.uuid]
-  );
-
-  // const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
-  //   {
-  //     criteria: advocateIds,
-  //   },
-  //   { tenantId: tenantId },
-  //   "DRISTI",
-  //   cnrNumber + filingNumber,
-  //   Boolean(filingNumber)
-  // );
-
-  const { data: hearingRes, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-      },
-    },
-    {},
-    cnrNumber + filingNumber,
-    Boolean(filingNumber)
   );
 
   const { data: botdOrdersRes, isLoading: isBotdOrdersLoading } = useGetBotdOrders(
@@ -72,13 +43,9 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
     Boolean(filingNumber)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) =>
-    [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)
-  ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
-
   const previousBotdOrders = botdOrdersRes?.botdOrderList?.sort((order1, order2) => order2.createdDate - order1.createdDate);
 
-  if (isHearingsLoading || isBotdOrdersLoading) {
+  if (isBotdOrdersLoading) {
     return <Loader />;
   }
   return (
@@ -133,17 +100,6 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             </Card>
           }
         </div>
-        {/* <div className="case-timeline-container" style={{ width: "27%" }}>
-          <WorkflowTimeline
-            t={t}
-            applicationNo={caseDetails?.filingNumber}
-            tenantId={tenantId}
-            businessService="case-default"
-            onViewCasePage={true}
-            setShowAllStagesModal={setShowAllStagesModal}
-            modalView={false}
-          />
-        </div> */}
       </div>
       <div className="pending-actions-container">
         <TasksComponent
@@ -161,24 +117,22 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
       {showNoticeProcessModal && (
         <div className="process-summary-container">
           <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-            {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
+            {
+              <NoticeProcessModal
+                showModal={false}
+                filingNumber={filingNumber}
+                currentHearingId={currentHearingId}
+                caseDetails={caseDetails}
+                ordersDataFromParent={ordersDataFromParent}
+                hearingsDataFromParent={hearingsDataFromParent}
+              />
+            }
           </Card>
         </div>
       )}
-      {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} botdOrderList={previousBotdOrders} judgeView={true} />}
-      {/* {showAllStagesModal && (
-        <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
-          <WorkflowTimeline
-            t={t}
-            applicationNo={caseDetails?.filingNumber}
-            tenantId={tenantId}
-            businessService="case-default"
-            onViewCasePage={true}
-            setShowAllStagesModal={setShowAllStagesModal}
-            modalView={true}
-          />
-        </Modal>
-      )} */}
+      {showAllTranscript && (
+        <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} botdOrderList={previousBotdOrders} judgeView={true} />
+      )}
     </div>
   );
 };

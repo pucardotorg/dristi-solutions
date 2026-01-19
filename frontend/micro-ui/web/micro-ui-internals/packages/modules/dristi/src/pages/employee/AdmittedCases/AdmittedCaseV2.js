@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -178,13 +178,13 @@ const AdmittedCaseV2 = () => {
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const activeTab = urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const userRoles = useMemo(() => roles.map((role) => role.code), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
   const [apiCalled, setApiCalled] = useState(false);
@@ -262,7 +262,6 @@ const AdmittedCaseV2 = () => {
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
   );
-  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isEmployee = useMemo(() => userType === "employee", [userType]);
   const todayDate = new Date().getTime();
@@ -287,6 +286,7 @@ const AdmittedCaseV2 = () => {
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
   const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
+  const bailBondPendingtaskSearchRef = useRef(null);
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -349,11 +349,12 @@ const AdmittedCaseV2 = () => {
     revalidate: revalidateWorkflow = () => {},
     isFetching: isWorkFlowFetching,
   } = useWorkflowDetails({
+    //egov-workflow-v2/egov-wf/process/_search
     tenantId,
-    id: caseDetails?.filingNumber,
+    id: filingNumber,
     moduleCode: "case-default",
     config: {
-      enabled: Boolean(caseDetails?.filingNumber && tenantId),
+      enabled: Boolean(filingNumber && tenantId),
       cacheTime: 10000,
       retry: 1,
     },
@@ -1812,6 +1813,7 @@ const AdmittedCaseV2 = () => {
         return DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
           .then((res) => {
             DRISTIService.customApiService(Urls.dristi.pendingTask, {
+              //here
               pendingTask: {
                 name: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
                 entityType: "order-default",
@@ -2211,7 +2213,7 @@ const AdmittedCaseV2 = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber && caseCourtId) // this
   );
 
   // const isDcaHearingScheduled = useMemo(() => {
@@ -2284,12 +2286,12 @@ const AdmittedCaseV2 = () => {
   const { data: apiOrdersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
-    filingNumber + currentHearingId,
+    filingNumber,
     Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
 
-  const ordersData = historyOrderData || apiOrdersData;
+  const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(
     (_, i, label = "") => {
@@ -2671,8 +2673,12 @@ const AdmittedCaseV2 = () => {
         console.error(err);
       }
     };
-    if (isEmployee) isBailBondPendingTaskPresent();
-  }, [userType, isEmployee, tenantId, roles, filingNumber, courtId]);
+
+    if (isEmployee && roles && courtId && filingNumber && tenantId && !bailBondPendingtaskSearchRef.current) {
+      isBailBondPendingTaskPresent();
+      bailBondPendingtaskSearchRef.current = true;
+    }
+  }, [userType, isEmployee, tenantId, roles, filingNumber, courtId, bailBondPendingtaskSearchRef]);
 
   const hideNextHearingButton = useMemo(() => {
     const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
@@ -3686,9 +3692,11 @@ const AdmittedCaseV2 = () => {
         caseDetails={caseDetails}
         showNoticeProcessModal={!isCitizen}
         isBailBondTaskExists={isBailBondTaskExists}
+        ordersDataFromParent={ordersData}
+        hearingsDataFromParent={hearingDetails}
       />
     );
-  }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists]);
+  }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists, ordersData, hearingDetails]);
 
   if (isEpostUser) {
     history.push(homePath);
