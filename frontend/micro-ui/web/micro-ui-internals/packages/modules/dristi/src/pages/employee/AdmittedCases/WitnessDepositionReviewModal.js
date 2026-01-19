@@ -2,8 +2,8 @@ import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "react-query";
-import Axios from "axios";
 import { Urls } from "../../../hooks";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -53,31 +53,34 @@ const WitnessDepositionReviewModal = ({
     ],
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.hearing.witnessDepositionPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          artifactNumber: currentEvidence?.artifactNumber, // need to change
-          cnrNumber: cnrNumber,
-          filingNumber: filingNumber,
-          qrCode: false,
-          hearingPdfType: witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"], // need to change
-          courtId: courtId,
-        },
-        data: {
-          RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Dristi",
+      return axiosInstance
+        .post(
+          Urls.hearing.witnessDepositionPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: Digit.UserService.getUser().access_token,
+              userInfo: Digit.UserService.getUser()?.info,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({
-        file: res.data,
-        fileName: res.headers["content-disposition"]?.split("filename=")[1],
-      }));
+          {
+            params: {
+              tenantId: tenantId,
+              artifactNumber: currentEvidence?.artifactNumber, // need to change
+              cnrNumber: cnrNumber,
+              filingNumber: filingNumber,
+              qrCode: false,
+              hearingPdfType: witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"], // need to change
+              courtId: courtId,
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({
+          file: res.data,
+          fileName: res.headers["content-disposition"]?.split("filename=")[1],
+        }));
     },
     enabled: !!currentEvidence?.artifactNumber && !!cnrNumber && !!witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"],
   });

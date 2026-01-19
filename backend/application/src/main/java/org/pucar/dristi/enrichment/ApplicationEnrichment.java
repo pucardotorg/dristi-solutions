@@ -110,11 +110,6 @@ public class ApplicationEnrichment {
             String tenantId = courtId + "_" +
                     applicationRequest.getApplication().getFilingNumber().replace("-", "") + "_" +
                     currentYear;
-            // this is done to maintain current sequence till the end of the year
-            // it should be removed for the first deployment of 2026
-            if (configuration.getCmpTenantOverrideYear().equals(currentYear)) {
-                tenantId = courtId;
-            }
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);

@@ -101,7 +101,7 @@ public class HearingService {
         openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
         if(isCreateHearing){
-            openHearing.setOrderStatus(OrderStatus.PENDING_SIGN);
+            openHearing.setOrderStatus(OrderStatus.NOT_CREATED);
         }
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );

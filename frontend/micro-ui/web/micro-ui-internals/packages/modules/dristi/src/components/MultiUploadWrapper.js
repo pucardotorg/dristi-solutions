@@ -22,12 +22,12 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
   const status = { valid: true, name: file?.name?.substring(0, 15), error: "" };
   if (!file) return;
 
-  if (!updatedRegex.test(file.name) && file.size / 1024 / 1024 > maxSize) {
+  if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
     status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_5MB`);
   }
 
-  if (!updatedRegex.test(file.name)) {
+  if (!updatedRegex.test(file?.name)) {
     status.valid = false;
     status.error = t(notSupportedError ? notSupportedError : `NOT_SUPPORTED_FILE_TYPE`);
   }
@@ -107,7 +107,7 @@ const MultiUploadWrapper = ({
         });
         return [newFileName, { file, fileStoreId: fileStoreIds[index] }];
       } else {
-        return filesData?.map((file, index) => [file.name, { file, fileStoreId: fileStoreIds[index] }]);
+        return filesData?.map((file, index) => [file?.name, { file, fileStoreId: fileStoreIds[index] }]);
       }
     });
     return [...newUploads];

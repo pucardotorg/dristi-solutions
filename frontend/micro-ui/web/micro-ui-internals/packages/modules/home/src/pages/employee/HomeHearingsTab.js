@@ -477,6 +477,7 @@ const HomeHearingsTab = ({
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
       const offset = page * rowsPerPage;
+      const orderStatus = hearingDetails?.orderStatus?.toLowerCase();
       return (
         <tr key={row?.id || idx} className="custom-table-row">
           <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
@@ -537,18 +538,32 @@ const HomeHearingsTab = ({
                 {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
               </span>
               <span
-                title={hearingDetails?.orderStatus?.toLowerCase() === "signed" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
+                title={
+                  orderStatus === "signed"
+                    ? t("ORDER_PUBLISHED")
+                    : orderStatus === "pending_sign"
+                    ? t("ORDER_PENDING_BULK_SIGN")
+                    : orderStatus === "draft"
+                    ? t("ORDER_DRAFT")
+                    : orderStatus === "not_created"
+                    ? t("ORDER_NOT_CREATED")
+                    : t("ORDER_PENDING")
+                }
                 style={{
                   borderRadius: "50%",
                   padding: "10px",
-                  background: hearingDetails?.orderStatus?.toLowerCase() === "signed" ? "#F0FDF4" : "#FEE2E2",
+                  background: orderStatus === "signed" ? "#F0FDF4" : orderStatus === "pending_sign" ? "#FEF3C7" : "#FEE2E2",
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
                   cursor: "pointer",
                 }}
               >
-                {hearingDetails?.orderStatus?.toLowerCase() === "signed" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
+                {orderStatus === "signed" ? (
+                  <DocumentSignedIcon />
+                ) : (
+                  <DocumentNotSignedIcon fill={orderStatus === "pending_sign" ? "#F7C600" : "#DC2626"} />
+                )}
               </span>
             </div>
           </td>

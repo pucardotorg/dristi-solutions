@@ -450,7 +450,43 @@ public class HearingUtil {
         if (openHearingList != null && !openHearingList.isEmpty()) {
             openHearingList.get(0).setOrderStatus(OrderStatus.SIGNED);
         }
-        log.info("Update open hearing index with orderStatus");
+        log.info("Update open hearing index with orderStatus SIGNED");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
+    }
+
+    public void updateOpenHearingOrderStatusForDraftOrder(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest :: {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.DRAFT);
+        }
+        log.info("Updated open hearing index with orderStatus DRAFT");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
+    }
+
+    public void updateOpenHearingOrderStatusForDeletedOrder(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest :: {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.NOT_CREATED);
+        }
+        log.info("Updated open hearing index with orderStatus NOT_CREATED");
+        esUtil.updateOpenHearingOrderStatus(openHearingList);
+    }
+
+    public void updateOpenHearingOrderStatusForPendingSignOrder(Order order) {
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        log.info("inboxRequest :: {}", inboxRequest.toString());
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+
+        if (openHearingList != null && !openHearingList.isEmpty()) {
+            openHearingList.get(0).setOrderStatus(OrderStatus.PENDING_SIGN);
+        }
+        log.info("Updated open hearing index with orderStatus PENDING_SIGN");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
     }
 }

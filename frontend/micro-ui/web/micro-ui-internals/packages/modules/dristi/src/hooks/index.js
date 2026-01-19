@@ -47,6 +47,7 @@ export const Urls = {
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
+    deleteIndividual: "/individual/v1/_delete",
     searchEmployee: "/egov-hrms/employees/_search",
     searchIndividualAdvocate: "/advocate/v1/_search",
     searchIndividualClerk: "/advocate/clerk/v1/_search",

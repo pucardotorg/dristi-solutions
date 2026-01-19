@@ -76,7 +76,8 @@ public class ApplicationService {
                     || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()) || (COMPLETED.equalsIgnoreCase(body.getApplication().getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(body.getApplication().getApplicationType())))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
-            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType(), true);
+            boolean isSubmitAction = body.getApplication().getWorkflow() != null && SUBMIT.equalsIgnoreCase(body.getApplication().getWorkflow().getAction());
+            smsNotificationUtil.callNotificationService(body, body.getApplication().getStatus(), body.getApplication().getApplicationType(), isSubmitAction);
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
@@ -157,7 +158,8 @@ public class ApplicationService {
                     }
                 }
             }
-            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), false);
+            boolean isSubmitAction = applicationRequest.getApplication().getWorkflow() != null && SUBMIT.equalsIgnoreCase(applicationRequest.getApplication().getWorkflow().getAction());
+            smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), isSubmitAction);
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
             filterDocuments(new ArrayList<>() {{

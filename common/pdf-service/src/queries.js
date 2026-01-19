@@ -62,7 +62,7 @@ export const getFileStoreIds = (
 
   pool.query(searchquery, queryparams, (error, results) => {
     if (error) {
-      logger.error(error.stack || error);
+      logger.error("Database search query failed", { jobid, entityid, tenantId, error: error.message, stack: error.stack });
       callback({
         status: 400,
         message: `error occured while searching records in DB : ${error.message}`
@@ -83,10 +83,10 @@ export const getFileStoreIds = (
             moduleName: crow.modulename
           });
         });
-        logger.info(results.rows.length + " matching records found in search");
+        logger.info("Database search completed", { jobid, entityid, tenantId, resultCount: results.rows.length });
         callback({ status: 200, message: "Success", searchresult });
       } else {
-        logger.error("no result found in DB search");
+        logger.info("No results found in database search", { jobid, entityid, tenantId });
         callback({ status: 404, message: "no matching result found" });
       }
     }
@@ -119,12 +119,12 @@ export const insertStoreIds = (
   });
   producer.send(payloads, function(err, data) {
     if (err) {
-      logger.error(err.stack || err);
+      logger.error("Kafka publish failed", { jobId: jobid, topic: createJobKafkaTopic, error: err.message, stack: err.stack });
       errorCallback({
         message: `error while publishing to kafka: ${err.message}`
       });
     } else {
-      logger.info("jobid: " + jobid + ": published to kafka successfully");
+      logger.info("Kafka publish successful", { jobId: jobid, topic: createJobKafkaTopic, recordCount: jobs.length });
       successCallback({
         message: "Success",
         jobid: jobid,
@@ -146,7 +146,7 @@ export const getUpdatedTopic = (tenantId, topic) => {
   let tenants = tenantId.split('.');
   if(tenants.length > getStateSchemaIndexPositionInTenantId())
     topic = tenants[getStateSchemaIndexPositionInTenantId()] + "-" + topic;
-  console.log("The Kafka topic for the tenantId : " + tenantId + " is : " + topic);
+  logger.info("Kafka topic resolved", { tenantId, topic });
   return topic;
 };
 
@@ -198,7 +198,7 @@ export async function mergePdf(bulkPdfJobId, tenantId, userid, numberOfFiles, mo
     if(recordscompleted >= totalrecords && fileNames.length == numberOfFiles){
       var merger = new PDFMerger();
     
-      logger.info('Files to be merged: ',fileNames);
+      logger.info("PDF merge started", { bulkPdfJobId, fileCount: fileNames.length, files: fileNames });
       (async () => {
         var processStatus = updateResult.rows[0].status;
         if(processStatus != 'CANCEL'){
@@ -207,9 +207,10 @@ export async function mergePdf(bulkPdfJobId, tenantId, userid, numberOfFiles, mo
               logger.info(baseFolder+fileNames[i]);
               merger.add(baseFolder+fileNames[i]);            //merge all pages. parameter is the path to file and filename.
             }
-            await merger.save(baseFolder+'/output.pdf');        //save under given name and reset the internal document
+            await merger.save(baseFolder+'/output.pdf');
+            logger.info("PDF merge completed", { bulkPdfJobId, outputFile: baseFolder+'/output.pdf' });
           } catch (err) {
-            logger.error(err.stack || err);
+            logger.error("PDF merge failed", { bulkPdfJobId, error: err.message, stack: err.stack });
           }
       
           var mergePdfData = fs.createReadStream(baseFolder+'output.pdf');
@@ -278,9 +279,9 @@ export async function sendNoitification(filestoreid, mobileNumber, tenantId){
 
   producer.send(payloads, function(err, data) {
     if (!err) {
-      console.log(data);
+      logger.info("Notification sent successfully", { filestoreid, mobileNumber });
     } else {
-      console.log(err);
+      logger.error("Notification send failed", { filestoreid, mobileNumber, error: err.message });
     }
   });
 }

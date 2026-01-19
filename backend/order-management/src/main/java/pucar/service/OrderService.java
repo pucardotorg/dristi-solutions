@@ -94,6 +94,13 @@ public class OrderService {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
+        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+            hearingUtil.updateOpenHearingOrderStatusForDeletedOrder(request.getOrder());
+        }
+        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+            hearingUtil.updateOpenHearingOrderStatusForPendingSignOrder(request.getOrder());
+        }
+
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
@@ -168,6 +175,7 @@ public class OrderService {
             OrderRequest orderRequest = OrderRequest.builder()
                     .requestInfo(requestInfo).order(order).build();
             orderResponse = orderUtil.createOrder(orderRequest);
+            hearingUtil.updateOpenHearingOrderStatusForDraftOrder(order);
             log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
         }
 

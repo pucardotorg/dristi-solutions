@@ -16,6 +16,15 @@ inputs:
   docker_password:
     description: Docker registry password.
     required: true
+  branch:
+    description: Branch name.
+    required: false
+  esign_private_key:
+    description: Private key for e-sign service.
+    required: false
+  esign_public_key:
+    description: Public key for e-sign service.
+    required: false
 
 outputs:
   image_tag:
@@ -46,17 +55,28 @@ runs:
     - name: Set Version from Tag or Branch
       id: set_version
       shell: bash
+      env:
+        INPUT_BRANCH: ${{ inputs.branch }}
       run: |
-        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/}  # Use tag name for version
-        elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-          # Use branch name as version, replacing '/' with '-'
-          VERSION=${GITHUB_REF#refs/heads/}
-          VERSION=$(echo "${VERSION}" | sed 's|/|-|g')
+        sanitize_branch() {
+          local b="$1"
+          b="${b#refs/heads/}"   # strip refs/heads if present
+          b="${b#refs/tags/}"    # strip refs/tags if present
+          b="${b//\//-}"         # replace / with -
+          echo "$b"
+        }
+        VERSION=""
+        if [[ -n "$INPUT_BRANCH" ]]; then
+          VERSION="$(sanitize_branch "$INPUT_BRANCH")"
+        elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
+        elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
         else
-          VERSION="latest"  # Default version if not a tag or branch
+          VERSION="latest"
         fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "current version is $VERSION"
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
     - name: Git commit_hash for service
       shell: bash
@@ -76,6 +96,13 @@ runs:
         echo "image tag for the service ${{ env.service_name }} is ${{ env.VERSION }}-${{ env.commit_hash }}"
         echo "image_tag=${{ env.VERSION }}-${{ env.commit_hash }}" >> $GITHUB_OUTPUT
 
+    - name: Set encryption keys based on branch or tag
+      if: env.service_name == "e-sign-svc"
+      shell: bash
+      run: |
+          echo "${{ inputs.esign_private_key }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+          echo "${{ inputs.esign_public_key }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
+
     - name: Build and Push Docker Image
       shell: bash
       run: |
@@ -86,9 +113,9 @@ runs:
         docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}:${{ steps.export-image-tag.outputs.image_tag }}
 
     - name: Build and Push Docker image for service-db
-      if: env.db_migration_dockerfile_path != ''
+      if: env.db_source_path != ''
       shell: bash
       run: |
         docker build -t ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }} . 
         docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }}
-      working-directory: ${{ env.db_migration_dockerfile_path }}
+      working-directory: ${{ env.db_source_path }}

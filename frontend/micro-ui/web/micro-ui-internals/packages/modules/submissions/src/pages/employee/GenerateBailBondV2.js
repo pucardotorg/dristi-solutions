@@ -573,7 +573,11 @@ const GenerateBailBondV2 = () => {
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     runComprehensiveSanitizer({ formData, setValue });
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
+      setError("bailAmount", { message: t("Must be greater than zero") });
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {
+      clearErrors("bailAmount");
+    }
+    if (formData?.bailType?.code === "SURETY") {
       if (formData?.sureties?.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
         formData?.sureties?.forEach((docs, index) => {
           if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {

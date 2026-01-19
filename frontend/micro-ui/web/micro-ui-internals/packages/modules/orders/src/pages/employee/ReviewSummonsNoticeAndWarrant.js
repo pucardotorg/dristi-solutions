@@ -10,7 +10,7 @@ import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
 import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
 import { ordersService, taskService, processManagementService } from "../../hooks/services";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
 import { convertToDateInputFormat, formatDate, getPartyNameForInfos } from "../../utils/index";
@@ -167,7 +167,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore;
     const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
     const authToken = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(uri, {
         headers: {
           "auth-token": `${authToken}`,
@@ -971,7 +971,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     const requests = orderRequestList?.map(async (order) => {
       try {
         const formData = qs.stringify({ response: order?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },

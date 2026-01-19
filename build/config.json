@@ -104,6 +104,14 @@
         "language": "java",
         "version": "17"
     },
+    "gateway": {
+        "service_group": "core-services",
+        "db_source_path": "",
+        "dockerfile_path": "build/maven/Dockerfile",
+        "service_source_path": "common/gateway",
+        "language": "java",
+        "version": "17"
+    },
     "hearing": {
         "service_group": "core-services",
         "db_source_path": "backend/hearing/src/main/resources/db",
@@ -412,7 +420,7 @@
     },
     "pdf-service": {
         "service_group": "core-services",
-        "db_source_path": "",
+        "db_source_path": "common/pdf-service/migration",
         "dockerfile_path": "common/pdf-service/Dockerfile",
         "service_source_path": "common/pdf-service",
         "language": "nodejs",

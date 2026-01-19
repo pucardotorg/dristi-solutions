@@ -14,7 +14,7 @@
 - **HTTP Client**: Axios
 - **Build Tools**: Webpack 4.x, Babel
 - **Package Manager**: Yarn
-- **CSS**: Custom CSS with dristi-ui-css 0.0.9-dristi-kerala.9
+- **CSS**: Custom CSS with dristi-ui-css 0.1.0-dristi-kerala.3
 
 ## Backend
 - **Language**: Java 17

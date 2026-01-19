@@ -1,6 +1,6 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import isEmpty from "lodash/isEmpty";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DocumentUploadError } from "./errorUtil";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
@@ -221,7 +221,7 @@ export const caseFileLabels = {
 export const getFileByFileStoreId = async (uri) => {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(uri, {
+    const response = await axiosInstance.get(uri, {
       responseType: "blob", // To treat the response as a binary Blob
       headers: {
         "auth-token": `${token}`,
@@ -263,7 +263,7 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
     const token = localStorage.getItem("token");
     // ${Urls.CombineDocuments} // check- Should use this but it is causing circular dependency, need to relocate Urls
     const combineDocumentsUrl = `${window.location.origin}/egov-pdf/dristi-pdf/combine-documents?tenantId=${tenantId}`;
-    const response = await axios.post(combineDocumentsUrl, formData, {
+    const response = await axiosInstance.post(combineDocumentsUrl, formData, {
       headers: {
         "auth-token": `${token}`,
       },
@@ -641,4 +641,24 @@ export const getComplainantSideAdvocates = (caseDetails) => {
         partyType: "advocate",
       };
     });
+};
+
+export const getFileByFileStore = async (uri, filename) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await axios.get(uri, {
+      responseType: "blob",
+      headers: {
+        "auth-token": `${token}`,
+      },
+    });
+    // Create a file object from the response Blob
+    const file = new File([response.data], filename, {
+      type: response.data.type || "application/pdf",
+    });
+    return file;
+  } catch (error) {
+    console.error("Error fetching file:", error);
+    throw error;
+  }
 };

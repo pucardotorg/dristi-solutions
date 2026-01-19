@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Urls } from "../../hooks";
 import AuthenticatedLink from "../../Utils/authenticatedLink";
 import { DocumentViewErrorIcon } from "../../icons/svgIndex";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const DocViewerWrapper = ({
   style,
@@ -44,21 +45,24 @@ const DocViewerWrapper = ({
     setDocError(null);
 
     try {
-      const res = await fetch(uri, { headers });
+      const res = await axiosInstance.get(uri, {
+        headers,
+        responseType: "blob",
+      });
 
-      if (!res.ok) {
-        const errText = await res.text().catch(() => "Error fetching file");
-        const error = new Error(errText);
+      // Axios does not have res.ok, so we emulate it
+      if (res.status < 200 || res.status >= 300) {
+        const error = new Error("Error fetching file");
         error.status = res.status;
         throw error;
       }
 
-      const blob = await res.blob();
+      const blob = res.data;
       const blobUrl = URL.createObjectURL(blob);
       setDocUrl(blobUrl);
     } catch (err) {
       setDocError({
-        status: err.status,
+        status: err.status || err?.response?.status,
         message: err.message,
       });
     } finally {
@@ -220,7 +224,7 @@ const DocViewerWrapper = ({
           style={{
             display: "flex",
             color: "#505A5F",
-            width: 250,
+            width: "fit-content",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",

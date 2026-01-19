@@ -4,13 +4,13 @@ import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, 
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-import Axios from "axios";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
 import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import _ from "lodash";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -338,7 +338,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     try {
       setLoader(true);
 
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.hearing.createNotificationPdf,
 
         {

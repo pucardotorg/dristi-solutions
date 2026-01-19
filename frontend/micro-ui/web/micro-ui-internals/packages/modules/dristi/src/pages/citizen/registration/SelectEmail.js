@@ -93,7 +93,7 @@ const SelectEmail = ({
       localStorage.setItem("user-info", JSON.stringify({ ...localUserInfo, emailId: info?.emailId }));
       localStorage.setItem("Citizen.user-info", JSON.stringify({ ...localCitizenUserInfo, emailId: info?.emailId }));
       if (!isProfile) {
-        history.push(`${path}/user-name`);
+        history.push(`${path}/user-name`, { newParams: params });
       } else {
         history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }

@@ -261,9 +261,6 @@ public class Configuration {
     @Value("${egov.sms.notification.application.submitted.template.id}")
     private String smsNotificationApplicationSubmittedTemplateId;
 
-    @Value("${egov.idgen.cmp.tenant.override.year}")
-    private String cmpTenantOverrideYear;
-
     // evidence
     @Value("${egov.evidence.host}")
     private String evidenceServiceHost;

@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { digitalizationService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
@@ -219,7 +219,7 @@ function BulkSignDigitalizationView() {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: document?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },

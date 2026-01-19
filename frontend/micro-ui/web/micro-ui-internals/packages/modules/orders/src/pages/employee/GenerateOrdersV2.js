@@ -81,7 +81,7 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName, getSafeFileExtension } from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -238,6 +238,7 @@ const GenerateOrdersV2 = () => {
   const [isLoading, setIsLoading] = useState(false);
   const judgeName = localStorage.getItem("judgeName");
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
+  const [signedOrderPdfFileName, setSignedOrderPdfFileName] = useState("");
   const [fileStoreIds, setFileStoreIds] = useState(new Set()); // TODO: need to check usage
   const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null); // TODO: need to check usage
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -1100,6 +1101,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1117,6 +1119,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1139,6 +1142,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1155,6 +1159,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "SECTION_202_CRPC",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "REFERRAL_CASE_TO_ADR",
@@ -1175,6 +1180,7 @@ const GenerateOrdersV2 = () => {
       applyOrderTypes([
         "SUMMONS",
         "NOTICE",
+        "DISMISS_CASE",
         "SECTION_202_CRPC",
         "MANDATORY_SUBMISSIONS_RESPONSES",
         "REFERRAL_CASE_TO_ADR",
@@ -2927,20 +2933,25 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
+      const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? getSafeFileExtension(signedOrderPdfFileName) : "pdf";
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+              additionalDetails: {
+                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+              },
             }
           : unsignedFileStoreId
           ? {
               documentType: "UNSIGNED",
               fileStore: unsignedFileStoreId,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+              additionalDetails: {
+                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+              },
             }
           : null;
       const updatedDocuments = mockESignEnabled
@@ -3347,7 +3358,10 @@ const GenerateOrdersV2 = () => {
           break;
         }
 
-        if (["TAKE_COGNIZANCE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+        if (
+          (orderType === "TAKE_COGNIZANCE" && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) ||
+          (orderType === "DISMISS_CASE" && ["CASE_DISMISSED"].includes(caseDetails?.status))
+        ) {
           setShowErrorToast({
             label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
@@ -4800,6 +4814,7 @@ const GenerateOrdersV2 = () => {
           handleIssueOrder={processHandleIssueOrder}
           handleGoBackSignatureModal={handleGoBackSignatureModal}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
+          setSignedOrderPdfFileName={setSignedOrderPdfFileName}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}

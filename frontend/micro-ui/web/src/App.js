@@ -12,10 +12,11 @@ import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
+import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
 import "dristi-ui-css/dist/index.min.css";
+import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
 
-window.contextPath =
-  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
+window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
 const enabledModules = [
   "DRISTI",
@@ -40,6 +41,9 @@ const initDigitUI = () => {
   initCasesComponents();
   initSubmissionsComponents();
   initHomeComponents();
+
+  // Initialize API monitoring after all components are initialized
+  apiMonitor.init();
 };
 
 initLibraries().then(() => {
@@ -52,12 +56,15 @@ function App() {
     return <h1>stateCode is not defined</h1>;
   }
   return (
-    <DigitUI
-      stateCode={stateCode}
-      enabledModules={enabledModules}
-      moduleReducers={moduleReducers}
-      // defaultLanding="employee"
-    />
+    <>
+      <DigitUI
+        stateCode={stateCode}
+        enabledModules={enabledModules}
+        moduleReducers={moduleReducers}
+        // defaultLanding="employee"
+      />
+      <ApiMonitorPanel />
+    </>
   );
 }
 

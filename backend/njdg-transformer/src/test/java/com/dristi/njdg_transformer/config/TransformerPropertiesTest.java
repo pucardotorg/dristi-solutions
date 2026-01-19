@@ -52,7 +52,8 @@ class TransformerPropertiesTest {
                 "http://inbox",
                 "/inbox/v1/_search",
                 10,
-                0
+                0,
+                5000L
         );
 
         assertEquals("http://filestore", properties.getFileStoreHost());
@@ -80,6 +81,7 @@ class TransformerPropertiesTest {
         assertEquals(allowedTenantIds, properties.getAllowedTenantIds());
         assertEquals(10, properties.getLimit());
         assertEquals(0, properties.getOffset());
+        assertEquals(5000L, properties.getNotificationOrderProcessingDelay());
     }
 
     @Test
@@ -112,6 +114,7 @@ class TransformerPropertiesTest {
                 .inboxSearchEndPoint("/inbox/v1/_search")
                 .limit(10)
                 .offset(0)
+                .notificationOrderProcessingDelay(5000L)
                 .build();
 
         assertEquals("http://filestore", properties.getFileStoreHost());
@@ -149,6 +152,7 @@ class TransformerPropertiesTest {
         properties.setInboxSearchEndPoint("/inbox/v1/_search");
         properties.setLimit(10);
         properties.setOffset(0);
+        properties.setNotificationOrderProcessingDelay(5000L);
 
         Set<String> allowedTenantIds = new HashSet<>();
         allowedTenantIds.add("kl.kollam");
@@ -179,6 +183,7 @@ class TransformerPropertiesTest {
         assertTrue(properties.getAllowedTenantIds().contains("kl.kollam"));
         assertEquals(10, properties.getLimit());
         assertEquals(0, properties.getOffset());
+        assertEquals(5000L, properties.getNotificationOrderProcessingDelay());
     }
 
     @Test
