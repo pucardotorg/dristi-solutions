@@ -358,7 +358,7 @@
         "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile",
-        "service_source_path": "backend/integration-services/egov-notification-mail",
+        "service_source_path": "backend/digit-services/egov-notification-mail",
         "language": "java",
         "version": "17"
     },
