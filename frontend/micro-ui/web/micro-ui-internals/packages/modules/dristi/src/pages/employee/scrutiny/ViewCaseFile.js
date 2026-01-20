@@ -19,6 +19,8 @@ import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { runComprehensiveSanitizer } from "../../../Utils";
 import { getComplainants, getComplainantSideAdvocates, getComplainantsSidePoAHolders } from "../../../Utils";
+import isEqual from "lodash/isEqual";
+
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -102,12 +104,19 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const checkListLink = window?.globalConfigs?.getConfig("SCRUTINY_CHECK_LIST");
 
+  // Saving formdata in session storage (if page refresh happens, form data is not lost and user is not needed to fill the form from start)
+  const employeeCreateSession = Digit.Hooks.useSessionStorage("NEW_EMPLOYEE_CREATE", {});
+  const [sessionFormData, setSessionFormData, clearSessionFormData] = employeeCreateSession;
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
       runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
+    }
+    if (!isEqual(sessionFormData?.data, formData)) {
+      setSessionFormData({ data: { ...sessionFormData?.data, ...formData }, caseId: caseId });
     }
   };
 
@@ -172,6 +181,17 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const filingNumberRef = useRef(null);
 
   useEffect(() => {
+    return () => {
+      if (window.location.pathname.includes("employee/dristi/case")) {
+        return;
+      } else {
+        // clear the stored form data if user moved away from scrutiny page
+        clearSessionFormData();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (caseDetails) {
       filingNumberRef.current = caseDetails?.filingNumber;
     }
@@ -196,6 +216,10 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const defaultScrutinyErrors = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny || {};
   }, [caseDetails]);
+
+  const defaultvalue = useMemo(() => {
+    return sessionFormData?.data && sessionFormData?.caseId === caseId ? sessionFormData?.data : defaultScrutinyErrors?.data || {};
+  }, [defaultScrutinyErrors, sessionFormData, caseId]);
 
   const isPrevScrutiny = useMemo(() => {
     return Object.keys(defaultScrutinyErrors).length > 0;
@@ -797,11 +821,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                 </div>
               )}
               <FormComposerV2
+                key={`${inViewCase}-${isScrutiny}-${caseId}-${sessionFormData}`}
                 label={primaryButtonLabel}
                 config={formConfig}
                 onSubmit={handlePrimaryButtonClick}
                 onSecondayActionClick={handleSecondaryButtonClick}
-                defaultValues={structuredClone(defaultScrutinyErrors?.data)}
+                defaultValues={structuredClone(defaultvalue)}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
                 isDisabled={isDisabled}
