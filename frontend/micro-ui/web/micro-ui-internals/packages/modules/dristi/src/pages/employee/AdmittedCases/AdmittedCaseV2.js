@@ -419,7 +419,6 @@ const AdmittedCaseV2 = () => {
         };
 
         if (homeNextHearingData) {
-          debugger;
           const fromDateForNextHearings = new Date(homeNextHearingData.homeFilterDate).setHours(0, 0, 0, 0);
           const toDateForNextHearings = new Date(homeNextHearingData.homeFilterDate).setHours(23, 59, 59, 999);
 
