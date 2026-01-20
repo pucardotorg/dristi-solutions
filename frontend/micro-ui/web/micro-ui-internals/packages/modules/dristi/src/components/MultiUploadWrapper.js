@@ -71,7 +71,7 @@ const MultiUploadWrapper = ({
   showHintBelow,
   hintText,
   allowedFileTypesRegex = /(.*?)(jpg|jpeg|webp|aif|png|image|pdf|msword|openxmlformats-officedocument|xls|xlsx|openxmlformats-officedocument|wordprocessingml|document|spreadsheetml|sheet|ms-excel)$/i,
-  allowedMaxSizeInMB = 5,
+  allowedMaxSizeInMB = 10,
   acceptFiles = "image/*, .jpg, .jpeg, .webp, .aif, .png, .image, .pdf, .msword, .openxmlformats-officedocument, .dxf, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   maxFilesAllowed,
   customClass = "",
