@@ -185,10 +185,10 @@ components:
             - SPECIFIC_CASES
           default: ALL_CASES
           description: Type of access granted to the member
-        allowCaseEdit:
+        allowCaseCreate:
           type: boolean
           default: true
-          description: Whether the member is allowed to edit cases
+          description: Whether the member is allowed to create new cases
         addNewCasesAutomatically:
           type: boolean
           default: true
