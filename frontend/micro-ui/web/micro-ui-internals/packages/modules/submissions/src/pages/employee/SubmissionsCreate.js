@@ -17,6 +17,7 @@ import {
   submitDocsForBail,
   submitDelayCondonation,
   poaClaimingConfig,
+  configsAdvancementOrAdjournment,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -450,6 +451,7 @@ const SubmissionsCreate = ({ path }) => {
           ? getModifiedForm(editRespondentConfig.formconfig, formdata)
           : getModifiedForm(editComplainantDetailsConfig.formconfig, formdata),
       APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: poaClaimingConfig,
+      ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: configsAdvancementOrAdjournment,
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -876,6 +878,7 @@ const SubmissionsCreate = ({ path }) => {
         "CORRECTION_IN_COMPLAINANT_DETAILS",
         "ADDING_WITNESSES",
         "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+        "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {

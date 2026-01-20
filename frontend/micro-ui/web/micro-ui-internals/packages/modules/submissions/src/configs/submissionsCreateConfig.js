@@ -2683,3 +2683,130 @@ export const poaClaimingConfig = [
     ],
   },
 ];
+
+export const configsAdvancementOrAdjournment = [
+  {
+    body: [
+      {
+        inline: true,
+        label: "Original_Hearing_Date",
+        disable: true,
+        isMandatory: true,
+        key: "originalHearingDate",
+        schemaKeyPath: "applicationDetails.originalHearingDate",
+        transformer: "date",
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "Have the other parties in the case agreed to advance/reschedule the hearing to the above dates?",
+        isMandatory: true,
+        key: "isAllPartiesAgreed",
+        type: "radio",
+        populators: {
+          name: "isAllPartiesAgreed",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
+      },
+      {
+        key: "newHearingDates",
+        type: "component",
+        label: "Please select date(s) at which the party is available to attend",
+        component: "SelectBulkDateInputs",
+        populators: {
+          inputs: [
+            {
+              name: "newHearingDates",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "Please select date(s) at which the party is available to attend",
+              maxSelected: 5,
+              validation: {
+                isRequired: true,
+                minDate: new Date().toISOString().split("T")[0],
+                errMsg: "CORE_REQUIRED_FIELD_ERROR",
+              },
+              isMandatory: true,
+            },
+          ],
+          validation: {},
+        },
+        withoutLabel: true,
+      },
+      {
+        inline: true,
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForRequest",
+        schemaKeyPath: "applicationDetails.reasonForRequest",
+        transformer: "customTextArea",
+        isMandatory: true,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "Reason for Request",
+              subHeaderClassName: "dristi-font-big-bold",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: 0,
+              },
+            },
+          ],
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiSubmissions",
+              masterName: "alphaNumericValidation",
+            },
+          },
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      },
+      {
+        type: "component",
+        key: "submissionDocuments",
+        component: "SelectMultiUpload",
+        disable: false,
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: false,
+              textAreaHeader: "Supporting Documents",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
