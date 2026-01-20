@@ -10,7 +10,8 @@
   "workspaces": [
     "micro-ui-internals/packages/libraries",
     "micro-ui-internals/packages/react-components",
-    "micro-ui-internals/packages/modules/*"
+    "micro-ui-internals/packages/modules/*",
+    "micro-ui-internals/packages/css"
   ],
   "homepage": "/ui",
   "dependencies": {
@@ -24,7 +25,7 @@
     "@egovernments/digit-ui-module-submissions": "0.0.1",
     "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
     "jszip": "^3.10.1",
-    "dristi-ui-css": "0.1.0-dristi-kerala.1",
+    "dristi-ui-css": "0.1.0-dristi-kerala.2",
     "babel-loader": "8.1.0",
     "clean-webpack-plugin": "4.0.0",
     "css-loader": "5.2.6",

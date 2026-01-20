@@ -69,7 +69,6 @@ runs:
       with:
         java-version: ${{ env.version }}
         distribution: 'temurin'
-        cache: maven
 
     # - name: Dependency check
     #   uses: dependency-check/Dependency-Check_Action@main
@@ -84,7 +83,7 @@ runs:
     #     args: "--disableOssIndex"
 
     - name: Build and analyze for ${{ inputs.service_name }}
-      if: ${{ env.language == 'java' }}
+      if: ${{ env.language == 'java' && env.version == 17 }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
@@ -109,3 +108,5 @@ runs:
     #     sarif_file: reports/dependency-check-report.sarif
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
+
+

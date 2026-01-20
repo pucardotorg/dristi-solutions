@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
+import ImageModal from "./ImageModal";
 
 const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, clearErrors }) => {
   const [removeFile, setRemoveFile] = useState();
@@ -9,6 +10,8 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [fileStoreId, setFileStoreID] = useState();
   const [fileName, setFileName] = useState();
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
   const Digit = window.Digit || {};
   const inputs = useMemo(
     () =>
@@ -65,9 +68,18 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
     setValue(numberOfFiles > 0 ? filesData : [], input.name, input);
   }
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName, docViewerStyle: { minWidth: "100%", height: "calc(100vh - 154px)" } } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   const showDocument = useMemo(() => {
     return (
-      <div>
+      <div onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
         <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} displayFilename={fileName} />
         </div>
@@ -110,7 +122,7 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
                     showHintBelow={input?.showHintBelow ? true : false}
                     setuploadedstate={formData?.[config.key]?.[input.name] || []}
                     allowedFileTypesRegex={input.allowedFileTypes}
-                    allowedMaxSizeInMB={input.allowedMaxSizeInMB || "5"}
+                    allowedMaxSizeInMB={input.allowedMaxSizeInMB || "10"}
                     hintText={input.hintText}
                     maxFilesAllowed={input.maxFilesAllowed || "1"}
                     extraStyleName={{ padding: "0.5rem" }}
@@ -160,6 +172,12 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
         );
       })}
       {showDoc && showDocument}
+      {isImageModalOpen && <ImageModal t={t} imageInfo={imageInfo} handleCloseModal={handleImageModalClose} headerBarMainStyle={{
+        position: "sticky",
+        top: "0",
+        zIndex: 1000,
+        backgroundColor: "grey",
+      }} />}
     </React.Fragment>
   );
 };

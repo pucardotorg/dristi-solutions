@@ -1963,15 +1963,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }
 
         const formValues = form.searchForm;
-
-        // Check if this is a "Clear Search" action - when orderType is empty/default
-        if (isOrderTypeEmpty(formValues.orderType)) {
-          // Clear search was clicked - remove stored config and reset ref
-          clearStoredConfig(storageKey);
-          latestFormValuesRefs.current[tabLabel] = {};
-          return;
-        }
-
         const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
         const baseConfig = configArray?.[activeTabIndex];
 
