@@ -254,6 +254,10 @@ components:
         memberMobileNumber:
           type: string
           description: Filter by member mobile number
+        memberId:
+          type: string
+          format: uuid
+          description: Filter by member UUID
 
     MemberSearchResponse:
       type: object
