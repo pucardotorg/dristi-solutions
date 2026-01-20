@@ -1,6 +1,6 @@
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../hooks/services";
-import { getParties } from "./orderUtils";
+import { getMediationChangedFlag, getParties } from "./orderUtils";
 
 export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
   try {
@@ -24,7 +24,18 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (t, order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
+export const addOrderItem = async (
+  t,
+  order,
+  action,
+  tenantId,
+  applicationTypeConfigUpdated,
+  configKeys,
+  caseDetails,
+  allParties,
+  currentOrder,
+  allAdvocatesNames
+) => {
   const compositeItems = [];
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
@@ -50,7 +61,7 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       actionResponse = isResponseRequired ? "RESPONSE_REQUIRED" : "RESPONSE_NOT_REQUIRED";
     }
 
-    const parties = getParties(
+    let parties = getParties(
       item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
       {
         ...orderSchema,
@@ -59,14 +70,39 @@ export const addOrderItem = async (t, order, action, tenantId, applicationTypeCo
       allParties
     );
 
+    parties = parties?.map((p) => ({
+      ...p,
+      counselName: (allAdvocatesNames[p?.userUuid] || [])?.join(", "),
+    }));
+
     const caseNumber =
       (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;
+
+    const oldItem = currentOrder?.compositeItems?.find((compItem) => compItem?.id === item?.id);
+    const isMediationChanged = getMediationChangedFlag(oldItem?.orderSchema?.orderDetails, {
+      ...orderSchema?.orderDetails,
+      mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
+      parties,
+    });
     const orderSchemaUpdated = {
       ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber, ...(actionResponse && { action: actionResponse }) },
+      orderDetails: {
+        ...orderSchema?.orderDetails,
+        parties: parties,
+        caseNumber: caseNumber,
+        ...(actionResponse && { action: actionResponse }),
+        ...(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code === "REFERRAL_CASE_TO_ADR" && {
+          dateOfInstitution: caseDetails?.filingDate,
+          caseStage: caseDetails?.stage,
+          caseId: caseDetails?.id,
+          isMediationChanged: isMediationChanged,
+          dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
+          mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
+        }),
+      },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {
         applicationNumber: [orderSchema.orderDetails.refApplicationId],

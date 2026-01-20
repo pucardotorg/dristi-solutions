@@ -76,7 +76,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>}
     </React.Fragment>
   );
 };
@@ -96,26 +96,26 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     formData?.[config?.key]
       ? formData?.[config?.key]
       : {
-        boxComplainant: {
-          firstName: "",
-          middleName: "",
-          lastName: "",
-          individualId: "",
-          mobileNumber: "",
-          index: 0,
-        },
-        numberOfAdvocates: 0,
-        isComplainantPip: {
-          code: "NO",
-          name: "No",
-          isEnabled: true,
-        },
-        multipleAdvocateNameDetails: [],
-        showVakalatNamaUpload: true,
-        showAffidavit: false,
-        vakalatnamaFileUpload: null,
-        pipAffidavitFileUpload: null,
-      }
+          boxComplainant: {
+            firstName: "",
+            middleName: "",
+            lastName: "",
+            individualId: "",
+            mobileNumber: "",
+            index: 0,
+          },
+          numberOfAdvocates: 0,
+          isComplainantPip: {
+            code: "NO",
+            name: "No",
+            isEnabled: true,
+          },
+          multipleAdvocateNameDetails: [],
+          showVakalatNamaUpload: true,
+          showAffidavit: false,
+          vakalatnamaFileUpload: null,
+          pipAffidavitFileUpload: null,
+        }
   );
 
   useEffect(() => {
@@ -211,13 +211,14 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           isDocDependentKey: "showVakalatNamaUpload",
           documentHeader: "UPLOAD_VAKALATNAMA",
           infoTooltipMessage: "UPLOAD_VAKALATNAMA",
-          uploadGuidelines: "UPLOAD_DOC_50",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          uploadGuidelines: "UPLOAD_DOC_10",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG"],
           isMultipleUpload: true,
           downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-          downloadTemplateLink: "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
+          downloadTemplateLink:
+            "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
         },
         {
           fileKey: "pipAffidavitFileUpload",
@@ -226,9 +227,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           isDocDependentOn: "multipleAdvocatesAndPip",
           isDocDependentKey: "showAffidavit",
           documentHeader: "UPLOAD_AFFIDAVIT",
-          uploadGuidelines: "UPLOAD_DOC_50",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          uploadGuidelines: "UPLOAD_DOC_10",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG"],
           isMultipleUpload: true,
         },
@@ -280,14 +281,35 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       const currentFormErrorObject =
         caseDetails?.additionalDetails?.scrutiny?.data?.additionalDetails?.advocateDetails?.form?.[curentFormIndex] || {};
       if (Object.keys(currentFormErrorObject)?.length > 0) {
-        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.vakalatnamaFileUpload.document") && currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError) {
-          errorMssg = { ...errorMssg, vakalatnamaFileUpload: true, vakalatnamaFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError || "" };
+        if (
+          currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.vakalatnamaFileUpload.document") &&
+          currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError
+        ) {
+          errorMssg = {
+            ...errorMssg,
+            vakalatnamaFileUpload: true,
+            vakalatnamaFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError || "",
+          };
         }
-        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.pipAffidavitFileUpload.document") && currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError) {
-          errorMssg = { ...errorMssg, pipAffidavitFileUpload: true, pipAffidavitFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError || "" };
+        if (
+          currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.pipAffidavitFileUpload.document") &&
+          currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError
+        ) {
+          errorMssg = {
+            ...errorMssg,
+            pipAffidavitFileUpload: true,
+            pipAffidavitFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError || "",
+          };
         }
-        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.numberOfAdvocates") && currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError) {
-          errorMssg = { ...errorMssg, numberOfAdvocates: true, numberOfAdvocatesMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError || "" };
+        if (
+          currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.numberOfAdvocates") &&
+          currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError
+        ) {
+          errorMssg = {
+            ...errorMssg,
+            numberOfAdvocates: true,
+            numberOfAdvocatesMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError || "",
+          };
         }
 
         if (Object.keys(errorMssg)?.length > 0) {
@@ -457,17 +479,31 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         } else if (
           advData?.length > 0 &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
-          advData?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId
+          advData?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
+          caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
           const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
           const updatedData = [firstAdvocate, ...advData];
           newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
         }
-        setAdvocateAndPipData(newData);
-        onSelect(config.key, newData);
+        if (!isEqual(advocateAndPipData, newData)) {
+          setAdvocateAndPipData(newData);
+          onSelect(config.key, newData);
+        }
       }
     }
-  }, [isApproved, onSelect, searchResult, selectedIndividual, userType, config?.key, individualId, formData, advocateAndPipData]);
+  }, [
+    isApproved,
+    onSelect,
+    searchResult,
+    selectedIndividual,
+    userType,
+    config?.key,
+    individualId,
+    formData,
+    advocateAndPipData,
+    caseDetails?.status,
+  ]);
 
   const handleInputChange = async (index, field, value) => {
     const updatedData = structuredClone(advocateAndPipData?.multipleAdvocateNameDetails);
@@ -582,11 +618,19 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const fileValidator = (file, input) => {
     if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    return file.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
+    return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
 
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (advocateAndPipData && advocateAndPipData[input.fileKey] && advocateAndPipData[input.fileKey][input.name]) || [];
+
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.size > maxFileSize) {
+      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
 
     currentValue.splice(index, 1, file);
     currentValue = currentValue.map((item) => {
@@ -602,12 +646,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         return item;
       }
     });
-    const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    // if (file.size > maxFileSize) {
-    //   setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
-    // } else if (clearErrors) {
-    //   clearErrors(config.key);
-    // }
+
     const fileKey = input?.fileKey;
     const name = input?.name;
 
@@ -745,7 +784,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               flexDirection: "row",
               alignItems: "center",
               gap: "30px",
-              pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto"
+              pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto",
             }}
           >
             <div
@@ -779,7 +818,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               />
             </div>
           </div>
-          <div className="advocate-details-div" style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}>
+          <div
+            className="advocate-details-div"
+            style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}
+          >
             {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
               Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
               advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
@@ -805,18 +847,18 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         advocateAndPipData?.boxComplainant?.index === 0 &&
                         advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
                       ) && (
-                          <span
-                            onClick={() => handleDeleteAdvocate(index)}
-                            style={{
-                              cursor: "pointer",
-                              color: "red",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            <CustomDeleteIcon />
-                          </span>
-                        )}
+                        <span
+                          onClick={() => handleDeleteAdvocate(index)}
+                          style={{
+                            cursor: "pointer",
+                            color: "red",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <CustomDeleteIcon />
+                        </span>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
@@ -919,7 +961,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
             input?.isDocDependentOn && input?.isDocDependentKey
               ? formData?.[input?.isDocDependentOn]?.[input?.isDocDependentKey]
               : !input?.hideDocument;
-          const message = input?.fileKey === "vakalatnamaFileUpload" ? isCaseReAssigned?.vakalatnamaFileUploadMessage : input?.fileKey === "pipAffidavitFileUpload" ? isCaseReAssigned?.pipAffidavitFileUploadMessage : "";
+          const message =
+            input?.fileKey === "vakalatnamaFileUpload"
+              ? isCaseReAssigned?.vakalatnamaFileUploadMessage
+              : input?.fileKey === "pipAffidavitFileUpload"
+              ? isCaseReAssigned?.pipAffidavitFileUploadMessage
+              : "";
           return (
             <div style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}>
               {showDocument && (
@@ -972,7 +1019,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         <DragDropJSX
                           t={t}
                           currentValue={currentValue}
-                          //   error={errors?.[config.key]}  //check- TODO: handleError
+                          error={errors?.[config.key]} //check- TODO: handleError
                         />
                       }
                       key={input?.fileKey}

@@ -29,8 +29,8 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
             isMultipleUpload: false,
           },
@@ -187,35 +187,37 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  lineHeight: "28.13px",
-                  textAlign: "left",
-                  color: "#3d3c3c",
-                }}
-              >
-                {t("YOUR_SIGNATURE")}
-              </h1>
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  lineHeight: "16.41px",
-                  textAlign: "center",
-                  color: "#00703c",
-                  padding: "6px",
-                  backgroundColor: "#e4f2e4",
-                  borderRadius: "999px",
-                }}
-              >
-                {t("SIGNED")}
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontFamily: "Roboto",
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    lineHeight: "28.13px",
+                    textAlign: "left",
+                    color: "#3d3c3c",
+                  }}
+                >
+                  {t("YOUR_SIGNATURE")}
+                </h1>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontFamily: "Roboto",
+                    fontSize: "14px",
+                    fontWeight: 400,
+                    lineHeight: "16.41px",
+                    textAlign: "center",
+                    color: "#00703c",
+                    padding: "6px",
+                    backgroundColor: "#e4f2e4",
+                    borderRadius: "999px",
+                  }}
+                >
+                  {t("SIGNED")}
+                </h2>
+              </div>
               <div>
                 {rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && fileStore && (
                   <div className="print-documents-box-div">

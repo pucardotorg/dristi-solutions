@@ -54,23 +54,11 @@ function WitnessDepositionDocModal({
 
   const showDocument = useMemo(() => {
     return (
-      <div
-        className="show-document-doc-container"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxHeight: "60vh",
-          maxWidth: "100%",
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
+      <React.Fragment>
         {docObj?.applicationContent?.fileStoreId ? (
           <DocViewerWrapper
             key={docObj?.applicationContent?.fileStoreId}
-            docWidth={"calc(95vw * 62 / 100)"}
+            docWidth={"75vw"}
             docHeight={"unset"}
             fileStoreId={docObj?.applicationContent?.fileStoreId}
             tenantId={tenantId}
@@ -82,7 +70,7 @@ function WitnessDepositionDocModal({
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}
-      </div>
+      </React.Fragment>
     );
   }, [docObj, t, tenantId]);
 
@@ -134,9 +122,18 @@ function WitnessDepositionDocModal({
         actionSaveLabel={saveLabel}
         hideSubmit={!Boolean(saveLabel)}
         actionSaveOnSubmit={handleSubmit}
-        popupStyles={{ minWidth: "880px", width: "80%" }}
+        popupStyles={{ width: "70vw", minHeight: "75vh", maxHeight: "90vh" }}
+        headerBarMainStyle={{ minHeight: "50px" }}
+        className={"review-submission-appl-modal bail-bond"}
+        style={{ backgroundColor: "#007e7e !important" }}
+        textStyle={{ color: "#fff", fontSize: "1.2rem", fontWeight: "600", margin: "0px" }}
+        formId="modal-action"
       >
-        {showDocument}
+        <div className="review-submission-appl-body-main">
+          <div className="application-details">
+            <div className="application-view doc-preview">{showDocument}</div>
+          </div>
+        </div>
         {isLoading && (
           <div
             style={{

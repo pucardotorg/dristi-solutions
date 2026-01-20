@@ -50,9 +50,22 @@ export const applicationTypeConfig = [
           mdmsConfig: {
             masterName: "ApplicationType",
             moduleName: "Application",
-            // localePrefix: "APPLICATION_TYPE",
-            select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`, `APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`].includes(item.type)).map((item) => {return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };});}", //name: 'APPLICATION_TYPE_'+item.type
+            select: `(data) => {
+              return data['Application'].ApplicationType
+                ?.filter((item) => ![
+                  'ADDING_WITNESSES',
+                  'EXTENSION_SUBMISSION_DEADLINE',
+                  'DOCUMENT',
+                  'RE_SCHEDULE',
+                  'CHECKOUT_REQUEST',
+                  'SUBMIT_BAIL_DOCUMENTS',
+                  'APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS'
+                ].includes(item.type))
+                .map((item) => {
+                  return { ...item, name: item.type === 'REQUEST_FOR_BAIL' ? 'BAIL' : item.type };
+                })
+                .sort((a, b) => a.name.localeCompare(b.name)); 
+            }`,
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -200,7 +213,8 @@ export const configsRescheduleRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -231,6 +245,7 @@ export const configsRescheduleRequest = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -267,6 +282,7 @@ export const configsRescheduleRequest = [
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -423,7 +439,8 @@ export const configsCheckoutRequest = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReschedulingReason",
-            select: "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReschedulingReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -458,6 +475,7 @@ export const configsCheckoutRequest = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -489,6 +507,7 @@ export const configsCheckoutRequest = [
         transformer: "customTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -679,7 +698,8 @@ export const configsExtensionSubmissionDeadline = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ExtensionReason",
-            select: "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -691,6 +711,7 @@ export const configsExtensionSubmissionDeadline = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -727,6 +748,7 @@ export const configsExtensionSubmissionDeadline = [
         schemaKeyPath: "applicationDetails.benefitOfExtension",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -751,6 +773,7 @@ export const configsExtensionSubmissionDeadline = [
         transformer: "customTextArea",
         key: "comments",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -830,6 +853,7 @@ export const configsDocumentSubmission = [
         component: "SelectCustomTextArea",
         key: "extensionBenefit",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -864,11 +888,11 @@ export const configsDocumentSubmission = [
               documentHeader: "DOCUMENT",
               documentHeaderStyle: { fontSize: "16px", fontWeight: 400, marginBottom: 0 },
               type: "DragDropComponent",
-              maxFileSize: 25,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               fileTypes: ["TXT", "DOC", "PDF", "DOCX", "PNG", "JPG", "JPEG"],
               isMultipleUpload: false,
-              uploadGuidelines: "UPLOAD_PDF_JPEG_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               headerClassName: "dristi-font-bold",
             },
           ],
@@ -1012,7 +1036,8 @@ export const configsProductionOfDocuments = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                 },
               },
             },
@@ -1052,6 +1077,7 @@ export const configsProductionOfDocuments = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1253,7 +1279,8 @@ export const configsCaseWithdrawal = [
           mdmsConfig: {
             moduleName: "Application",
             masterName: "ReasonForWithdrawal",
-            select: "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Application'].ReasonForWithdrawal?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
           },
         },
       },
@@ -1265,6 +1292,7 @@ export const configsCaseWithdrawal = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1463,6 +1491,7 @@ export const configsCaseTransfer = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1637,6 +1666,7 @@ export const configsSettlement = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -1678,253 +1708,6 @@ export const configsSettlement = [
               placeholder: "TYPE_HERE_PLACEHOLDER",
               isOptional: true,
               type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
-];
-
-export const configsSurety = [
-  {
-    body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        type: "component",
-        key: "reasonForApplication",
-        isMandatory: true,
-        inline: false,
-        component: "SelectCustomTextArea",
-        schemaKeyPath: "applicationDetails.reasonForApplication",
-        transformer: "customTextArea",
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_APPLICATION",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "CustomInfo",
-        key: "suretyDocuments",
-        inline: false,
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              infoHeader: "SURETY_DOCUMENTS",
-              infoText: "SURETY_DOCUMENTS_INFO_TEXT",
-              infoTooltipMessage: "CS_NOTETOOLTIP_RESPONDENT_PERSONAL_DETAILS",
-              type: "InfoComponent",
-              linkText: "CLICK_HERE",
-              modalHeading: "LIST_OF_SURETY_DOCUMENT",
-              modalData: [],
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "AddSubmissionDocument",
-        key: "submissionDocuments",
-        schemaKeyPath: "applicationDetails.applicationDocuments",
-        transformer: "applicationDocuments",
-        inline: false,
-        populators: {
-          inputs: [
-            {
-              isMandatory: true,
-              key: "documentType",
-              type: "dropdown",
-              label: "DOCUMENT_TYPE",
-              name: "documentType",
-              disable: false,
-              populators: {
-                name: "documentType",
-                optionsKey: "name",
-                required: true,
-                mdmsConfig: {
-                  moduleName: "Application",
-                  masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
-                },
-              },
-            },
-            {
-              label: "DOCUMENT_TITLE",
-              type: "text",
-              name: "documentTitle",
-              validation: {
-                isRequired: true,
-                pattern: /^[0-9A-Z/]{0,20}$/,
-                errMsg: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "DOCUMENT_ATTACHMENT",
-              type: "documentUpload",
-              name: "document",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
-            },
-          ],
-        },
-      },
-    ],
-  },
-];
-
-export const configsBailBond = [
-  {
-    body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        type: "component",
-        key: "reasonForApplication",
-        isMandatory: true,
-        inline: false,
-        component: "SelectCustomTextArea",
-        schemaKeyPath: "applicationDetails.reasonForApplication",
-        transformer: "customTextArea",
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_APPLICATION",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomNote",
-        key: "info",
-        inline: false,
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              infoHeader: "BAIL_DOCUMENTS",
-              infoText: "BAIL_DOCUMENTS_INFO_TEXT",
-              infoTooltipMessage: "BAIL_DOCUMENTS_INFO_TOOLTIP_TEXT",
-              type: "InfoComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "AddSubmissionDocument",
-        key: "submissionDocuments",
-        schemaKeyPath: "applicationDetails.applicationDocuments",
-        transformer: "applicationDocuments",
-        inline: false,
-        populators: {
-          inputs: [
-            {
-              isMandatory: true,
-              key: "documentType",
-              type: "dropdown",
-              label: "DOCUMENT_TYPE",
-              name: "documentType",
-              disable: false,
-              populators: {
-                name: "documentType",
-                optionsKey: "name",
-                required: true,
-                mdmsConfig: {
-                  moduleName: "Application",
-                  masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
-                },
-              },
-            },
-            {
-              label: "DOCUMENT_TITLE",
-              type: "text",
-              name: "documentTitle",
-              validation: {
-                isRequired: true,
-                pattern: /^[0-9A-Z/]{0,20}$/,
-                errMsg: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "DOCUMENT_ATTACHMENT",
-              type: "documentUpload",
-              name: "document",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
             },
           ],
         },
@@ -1987,8 +1770,8 @@ export const configsOthers = [
               documentHeader: "OTHERS_DOCUMENT",
               documentHeaderStyle: { fontSize: "19px", fontWeight: 700 },
               type: "DragDropComponent",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               fileTypes: ["PDF", "JPEG", "PNG", "JPG"],
               uploadGuidelines: "UPLOAD_PDF_JPEG_50",
               headerClassName: "dristi-font-bold",
@@ -2005,6 +1788,7 @@ export const configsOthers = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2383,9 +2167,9 @@ export const requestForBail = [
                     isMandatory: true,
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2408,9 +2192,9 @@ export const requestForBail = [
                     isMandatory: true,
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2434,9 +2218,9 @@ export const requestForBail = [
                     isOptional: "CS_IS_OPTIONAL",
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
                     textAreaStyle: {
                       fontSize: "16px",
@@ -2495,6 +2279,7 @@ export const submitDocsForBail = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2527,6 +2312,7 @@ export const submitDocsForBail = [
         schemaKeyPath: "applicationDetails.additionalInformation",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2599,7 +2385,8 @@ export const submitDocsForBail = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },
@@ -2629,9 +2416,9 @@ export const submitDocsForBail = [
                     isMandatory: true,
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
@@ -2709,6 +2496,7 @@ export const submitDelayCondonation = [
         schemaKeyPath: "applicationDetails.prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2785,7 +2573,8 @@ export const submitDelayCondonation = [
                 mdmsConfig: {
                   moduleName: "Submission",
                   masterName: "SubmissionDocumentType",
-                  select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+                  select:
+                    "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                 },
                 customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
               },
@@ -2815,9 +2604,9 @@ export const submitDelayCondonation = [
                     isMandatory: true,
                     textAreaHeader: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
@@ -2844,6 +2633,7 @@ export const poaClaimingConfig = [
         key: "comments",
         transformer: "customTextArea",
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -2863,6 +2653,7 @@ export const poaClaimingConfig = [
         key: "prayer",
         transformer: "customTextArea",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {

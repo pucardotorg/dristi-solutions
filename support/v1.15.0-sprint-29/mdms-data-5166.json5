@@ -1,0 +1,15 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "common-masters.Court_Rooms",
+  "uniqueIdentifier": "KLKM52",
+  "data": {
+    "code": "KLKM52",
+    // Need to update Name with: NI Act
+    "name": "Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\"24X7 ON Court\")",
+    "email": "court@gmail.com",
+    "active": true,
+    "address": "dummy address",
+    "establishment": "JUDICIAL_MAGISTRATE_FIRST_CLASS"
+  },
+  "isActive": true
+}

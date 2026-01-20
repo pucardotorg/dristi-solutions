@@ -186,7 +186,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -314,7 +314,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -457,7 +457,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -603,7 +603,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "OutcomeType",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];});}",
+                      "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];}).sort((a,b) => a.outcome.localeCompare(b.outcome));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -1738,9 +1738,7 @@ export const pendingTaskForBailBondActions = {
     actionName: "Raise Bail Bond",
     redirectDetails: {
       url: "/submissions/bail-bond",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-      ],
+      params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
 };
@@ -1771,6 +1769,99 @@ export const pendingTaskForWitnessDepositionActions = {
   },
 };
 
+export const pendingTaskForDigitalizedDocumentExaminationActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/digitalized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "digitalizedDocumentId", value: "referenceId" },
+        { key: "type", defaultValue: "EXAMINATION_OF_ACCUSED" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the examination",
+    redirectDetails: {
+      url: "/home/digitized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
+
+export const pendingTaskForDigitalizedDocumentPleaActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/digitalized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "digitalizedDocumentId", value: "referenceId" },
+        { key: "type", defaultValue: "PLEA" },
+      ],
+    },
+  },
+
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the plea",
+    redirectDetails: {
+      url: "/home/digitized-document-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
+
+export const pendingTaskForDigitalizedDocumentMediationActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/home/mediation-form-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "courtId", value: "courtId" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review of Mediation Form",
+    redirectDetails: {
+      url: "/home/mediation-form-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+      ],
+    },
+  },
+  PENDING_UPLOAD: {
+    actorName: ["JUDGE"],
+    actionName: "Review the witness deposition",
+    redirectDetails: {
+      url: "/home/mediation-form-sign",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "documentNumber", value: "referenceId" },
+        { key: "courtId", value: "courtId" },
+      ],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -1789,4 +1880,7 @@ export const selectTaskType = {
   "bail bond": pendingTaskForBailBondActions,
   "bail-bond-default": pendingTaskForBailBondActions,
   "witness-deposition-default": pendingTaskForWitnessDepositionActions,
+  "digitalized-document-mediation": pendingTaskForDigitalizedDocumentMediationActions,
+  "digitalized-document-examination": pendingTaskForDigitalizedDocumentExaminationActions,
+  "digitalized-document-plea": pendingTaskForDigitalizedDocumentPleaActions,
 };

@@ -1,0 +1,242 @@
+[
+  {
+    "id": "39e907a1-f7d6-4b56-bbc0-5737b30907ec",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "539",
+    "data": {
+      "id": 539,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_PLEA", // update signed documents
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "1c4c8454-f7bb-4bf3-8117-d34965d95bee",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "538",
+    "data": {
+      "id": 538,
+      "actionid": 2773, // egov pdf digitization
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2773"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "537",
+    "data": {
+      "id": 537,
+      "actionid": 2767,
+      "rolecode": "PLEA_CREATOR", // digitalized documents create
+      "tenantid": "kl",
+      "actioncode": "2767"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590318168,
+      "lastModifiedTime": 1764590318168
+    }
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "536",
+    "data": {
+      "id": 536,
+      "actionid": 2768,
+      "rolecode": "PLEA_EDITOR", // digitalized documents update
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1764590293633,
+      "lastModifiedTime": 1764590293633
+    }
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "535",
+    "data": {
+      "id": 535,
+      "actionid": 2769,
+      "rolecode": "PLEA_VIEWER", // digitalized documents search
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "465",
+    "data": {
+      "id": 465,
+      "actionid": 2735,
+      // TODO : need to map to /order-management/v2/add-item
+      "rolecode": "ORDER_APPROVER",
+      "tenantid": "kl",
+      "actioncode": "2735"
+    },
+    "isActive": true
+    "isActive": true
+  },
+  {
+    "id": "dc24c14a-6efa-454b-9b4f-475b227d5bc6",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "532",
+    "data": {
+      "id": 532,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_MEDIATION", // update signed documents
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "022a7dd1-f1f6-4b6c-8279-bc6cb618a170",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "531",
+    "data": {
+      "id": 531,
+      "actionid": 2772,
+      "rolecode": "SIGN_DIGITALIZED_DOCUMENT_EXAMINATION", // update signed documents
+      "tenantid": "kl",
+      "actioncode": "2772"
+    },
+    "isActive": true
+  },
+  {
+    "id": "a45fdc0c-45a5-42d5-89bf-2ecefec908e1",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "530",
+    "data": {
+      "id": 530,
+      "actionid": 2770,
+      "rolecode": "DIGITALIZED_DOCUMENT_ESIGN", // get digitalized documents to sign
+      "tenantid": "kl",
+      "actioncode": "2770"
+    },
+    "isActive": true
+  },
+  {
+    "id": "738f4eb4-877e-4236-a801-9d131b8b9f22",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "529",
+    "data": {
+      "id": 529,
+      "actionid": 2769,
+      "rolecode": "EXAMINATION_VIEWER", // digitalized documents search
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "id": "59ccc836-caed-4c9a-aedc-52e641b9499e",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "527",
+    "data": {
+      "id": 527,
+      "actionid": 2768,
+      "rolecode": "EXAMINATION_EDITOR", // digitalized documents update
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true
+  },
+  {
+    "id": "5a533503-0bab-4482-a6da-8e76c0d9451c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "526",
+    "data": {
+      "id": 526,
+      "actionid": 2767,
+      "rolecode": "EXAMINATION_CREATOR", // digitalized documents create
+      "tenantid": "kl",
+      "actioncode": "2767"
+    },
+    "isActive": true
+  },
+  {
+    "id": "eddfb1b8-3a5d-40de-9f56-0dec3ccf3dd8",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "525",
+    "data": {
+      "id": 525,
+      "actionid": 2769,
+      "rolecode": "MEDIATION_VIEWER", // digitalized documents search
+      "tenantid": "kl",
+      "actioncode": "2769"
+    },
+    "isActive": true
+  },
+  {
+    "id": "ae351a51-64ba-4925-b2e2-452c028efa00",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "524",
+    "data": {
+      "id": 524,
+      "actionid": 2768,
+      "rolecode": "MEDIATION_EDITOR", // digitalized documents update
+      "tenantid": "kl",
+      "actioncode": "2768"
+    },
+    "isActive": true
+  },
+  {
+    "id": "26ea9c26-9039-4d55-8c27-4df59cb9d201",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "523",
+    "data": {
+      "id": 523,
+      "actionid": 2767,
+      "rolecode": "MEDIATION_CREATOR", // digitalized documents create
+      "tenantid": "kl",
+      "actioncode": "2767"
+    },
+    "isActive": true
+  },
+  {
+    "id": "f8c74a17-d781-4409-bc64-0b4abb5896ba",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "547",
+    "data": {
+      "id": 547,
+      "actionid": 2776, // get botd orders
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2776"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1765386878825,
+      "lastModifiedTime": 1765386878825
+    }
+  }
+]

@@ -68,7 +68,7 @@ export const pendingTaskConfig = {
               mdmsConfig: {
                 masterName: "SubStage",
                 moduleName: "case",
-                select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a, b) => a.code.localeCompare(b.code));}",
               },
               // mdmsConfig: {
               //   masterName: "pendingTaskFilterText",

@@ -34,6 +34,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  deleteIndividualUser: (data, params) =>
+    Request({
+      url: Urls.dristi.deleteIndividual,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   searchEmployeeUser: (data, params) =>
     Request({
       url: Urls.dristi.searchEmployee,
@@ -158,6 +166,30 @@ export const DRISTIService = {
       data,
     });
   },
+  updateDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.dristi.updateDigitizedDocument,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  createDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.dristi.createDigitizedDocument,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchDigitizedDocument: (data) => {
+    return Request({
+      url: Urls.dristi.searchDigitizedDocument,
+      useCache: false,
+      userService: false,
+      data,
+    });
+  },
   searchHearings: (data, params) => {
     return Request({
       url: Urls.dristi.searchHearings,
@@ -219,6 +251,15 @@ export const DRISTIService = {
   searchOrders: (data, params) => {
     return Request({
       url: Urls.dristi.ordersSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  searchBotdOrders: (data, params) => {
+    return Request({
+      url: Urls.dristi.botdOrdersSearch,
       useCache: false,
       userService: false,
       data,

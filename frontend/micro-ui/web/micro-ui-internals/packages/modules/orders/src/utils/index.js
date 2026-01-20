@@ -336,7 +336,13 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
   const partyData = formdata?.[key]?.party?.data;
 
   const name =
-    [partyData?.firstName?.trim(), partyData?.middleName?.trim(), partyData?.lastName?.trim()]?.filter(Boolean)?.join(" ") ||
+    getFormattedName(
+      partyData?.firstName?.trim(),
+      partyData?.middleName?.trim(),
+      partyData?.lastName?.trim(),
+      partyData?.witnessDesignation?.trim(),
+      null
+    ) ||
     (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
     (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
     (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
@@ -406,3 +412,20 @@ export function convertTaskResponseToPayload(responseArray, id = null) {
 
   return pendingTask;
 }
+
+export const getSafeFileExtension = (fileName, fallback = "pdf") => {
+  if (typeof fileName !== "string" || !fileName?.trim()) return fallback;
+
+  const lastDotIndex = fileName?.lastIndexOf(".");
+
+  if (
+    lastDotIndex <= 0 || 
+    lastDotIndex === fileName?.length - 1
+  ) {
+    return fallback;
+  }
+
+  const extension = fileName?.substring(lastDotIndex + 1)?.toLowerCase();
+
+  return extension || fallback;
+};

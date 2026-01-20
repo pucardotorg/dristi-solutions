@@ -30,10 +30,11 @@ import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, Warni
 import { DRISTIService } from "../../../services";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import {
   accusedAddressValidation,
   addressValidation,
+  ageValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
   checkNameValidation,
@@ -65,7 +66,14 @@ import isMatch from "lodash/isMatch";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import { getFilingType, getSuffixByBusinessCode, TaskManagementWorkflowState } from "../../../Utils";
+import {
+  getComplainants,
+  getComplainantSideAdvocates,
+  getComplainantsSidePoAHolders,
+  getFilingType,
+  getSuffixByBusinessCode,
+  TaskManagementWorkflowState,
+} from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
@@ -613,14 +621,43 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress, judgeObj, scrutinyObj, selected]);
 
-  useEffect(() => {
-    const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-    setIsFilingParty(filingParty);
+  const allComplainantSideUuids = useMemo(() => {
+    const complainants = getComplainants(caseDetails);
+    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
+    const advocates = getComplainantSideAdvocates(caseDetails) || [];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
+    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+  }, [caseDetails]);
 
-    if (caseDetails && !filingParty && !isLoading) {
-      history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+  useEffect(() => {
+    if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
+      // In draft stage, only the party who created the case can have the edit access.
+      const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
+      setIsFilingParty(filingParty);
+      if (caseDetails && !filingParty && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
     }
-  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid]);
+    if (caseDetails?.status === "CASE_REASSIGNED") {
+      // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
+      const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
+      setIsFilingParty(isCaseCorrectionAllowed);
+      if (caseDetails && !isCaseCorrectionAllowed && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
+    }
+    //If already other party changed the case stage -> redirect accordingly after refetching case data.
+    if (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}`);
+    }
+  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids]);
 
   const completedComplainants = useMemo(() => {
     // check TODO: apply filter for formdata which is enabled and completed
@@ -2100,6 +2137,7 @@ function EFilingCases({ path }) {
     }
 
     if (selected === "complainantDetails") {
+      let isValidationError = false;
       if (
         formdata
           ?.filter((data) => data.isenabled)
@@ -2109,14 +2147,50 @@ function EFilingCases({ path }) {
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
               setAddressError,
               config: modifiedFormConfig[index],
+              setFormErrors: setFormErrors.current,
             })
           )
       ) {
+        isValidationError = true;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "poaAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
+        return;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "complainantAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
         return;
       }
     }
 
     if (selected === "respondentDetails") {
+      let isValidationError = false;
       if (
         formdata
           ?.filter((data) => data.isenabled)
@@ -2126,9 +2200,27 @@ function EFilingCases({ path }) {
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
               setAddressError,
               config: modifiedFormConfig[index],
+              setFormErrors: setFormErrors.current,
             })
           )
       ) {
+        isValidationError = true;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "respondentAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
         return;
       }
     }
@@ -2328,7 +2420,7 @@ function EFilingCases({ path }) {
         if (isCaseLocked) {
           setIsDisabled(true);
           const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-          const response = await axios.post(
+          const response = await axiosInstance.post(
             "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
             {
               cases: caseObject,
@@ -2336,7 +2428,7 @@ function EFilingCases({ path }) {
                 authToken: Digit.UserService.getUser().access_token,
                 userInfo: Digit.UserService.getUser()?.info,
                 msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-                apiId: "Rainmaker",
+                apiId: "Dristi",
               },
             },
             { responseType: "blob" } // Important: Set responseType to handle binary data
@@ -2451,17 +2543,26 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         }
 
-        await refetchCaseData();
+        const updatedCaseResponse = await refetchCaseData();
+        const updatedCaseDetails = updatedCaseResponse?.data?.criteria[0].responseList[0];
         const caseData =
-          caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-          caseDetails?.caseDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.caseDetails?.[nextSelected]?.formdata ||
           (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
 
         setFormdata(caseData);
         setIsDisabled(false);
         setPrevSelected(selected);
 
-        if (selected !== "reviewCaseFile") {
+        if (
+          selected !== "reviewCaseFile" &&
+          ![
+            CaseWorkflowState?.PENDING_RE_SIGN,
+            CaseWorkflowState.PENDING_RE_E_SIGN,
+            CaseWorkflowState.PENDING_E_SIGN,
+            CaseWorkflowState.PENDING_SIGN,
+          ]?.includes(updatedCaseDetails?.status)
+        ) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
@@ -2906,7 +3007,7 @@ function EFilingCases({ path }) {
     setIsLoader(true);
     try {
       const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "/dristi-case-pdf/v1/generateCasePdf",
         {
           cases: caseObject,
@@ -2914,7 +3015,7 @@ function EFilingCases({ path }) {
             authToken: Digit.UserService.getUser().access_token,
             userInfo: Digit.UserService.getUser()?.info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         { responseType: "blob" } // Important: Set responseType to handle binary data
@@ -3273,7 +3374,7 @@ function EFilingCases({ path }) {
             !isDisableAllFieldsMode &&
             !optionalFieldModalAlreadyViewed && (
               <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
                 headerBarEnd={
                   <CloseBtn
                     onClick={() => {

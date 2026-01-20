@@ -259,7 +259,14 @@ const TasksComponent = ({
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
+      if (
+        Object?.keys(courierOrderDetails)?.length === 0 &&
+        courierServicePendingTask &&
+        Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
+        Array?.isArray(taskManagementList)
+      ) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
           const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
@@ -402,7 +409,7 @@ const TasksComponent = ({
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
+  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails, courierOrderDetails]);
 
   const handleProcessCourierOnSubmit = async (courierData, isLast, hasProcessManagementEditorAccess) => {
     const orderType = courierOrderDetails?.orderType;
@@ -450,6 +457,21 @@ const TasksComponent = ({
         return formattedDate;
       };
       const applicationDetails = await getApplicationDetail(referenceId);
+      if (applicationDetails?.applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+        const pendingTaskRefId = applicationDetails?.additionalDetails?.pendingTaskRefId;
+        const dateOfApplication = applicationDetails?.additionalDetails?.dateOfApplication;
+        const uniqueId = applicationDetails?.additionalDetails?.uniqueId;
+        const refApplicationId = applicationDetails?.applicationNumber;
+
+        history.push(
+          `/${window.contextPath}/${userType}/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication,
+            uniqueId,
+          }
+        );
+        return;
+      }
       const defaultObj = {
         status: applicationDetails?.status,
         details: {
@@ -606,6 +628,7 @@ const TasksComponent = ({
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
+      const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = {
@@ -615,6 +638,7 @@ const TasksComponent = ({
         filingNumber,
         caseTitle,
         ...(applicationType && { applicationType }),
+        courtId,
       };
       const orderItemId = data?.fields?.find((field) => field?.key === "additionalDetails.orderItemId")?.value;
       const partyType = data?.fields?.find((field) => field?.key === "additionalDetails.partyType")?.value;
@@ -1249,7 +1273,7 @@ const TasksComponent = ({
                   </CardLabel>
                   <Dropdown
                     t={t}
-                    option={options}
+                    option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
                     optionKey={"name"}
                     selected={taskType}
                     select={(value) => {

@@ -12,6 +12,11 @@ const defaultSearchValues = {
   artifactNumber: "",
 };
 
+const digitalizationDefaultSearch = {
+  type: {},
+  documentNumber: "",
+};
+
 const defaultBailValues = { bailId: "" };
 
 //config for tab search sceeen
@@ -63,14 +68,7 @@ export const DocumentSearchConfig = {
                 populators: {
                   name: "artifactType",
                   optionsKey: "name",
-                  mdmsConfig: {
-                    masterName: "EvidenceType",
-                    moduleName: "Evidence",
-                    localePrefix: "EVIDENCE_TYPE",
-                    select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               {
@@ -238,6 +236,100 @@ export const DocumentSearchConfig = {
 
             enableColumnSort: true,
             resultsJsonPath: "bails",
+          },
+          show: true,
+        },
+      },
+    },
+    {
+      label: "Digitalization Forms",
+      displayLabel: "DIGITALIZATION_TAB",
+      type: "search",
+      apiDetails: {
+        serviceName: "/inbox/v2/_getFields",
+        requestParam: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+        },
+        requestBody: {
+          SearchCriteria: {},
+        },
+        masterName: "commonUiConfig",
+        moduleName: "DigitalizationConfig",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestBody.pagination",
+        filterFormJsonPath: "requestBody.SearchCriteria",
+        searchFormJsonPath: "requestBody.SearchCriteria",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: digitalizationDefaultSearch,
+            fields: [
+              {
+                label: "TYPE",
+                isMandatory: false,
+                key: "type",
+                type: "dropdown",
+                populators: {
+                  name: "type",
+                  optionsKey: "name",
+                  mdmsConfig: {
+                    masterName: "DigitalizationForm",
+                    moduleName: "Order",
+                    select:
+                      "(data) => {return data['Order']?.DigitalizationForm?.map((item) => {return { code: item.code, name: item.name};}).sort((a,b) => a.name.localeCompare(b.name));}",
+                  },
+                },
+              },
+              {
+                label: "SEARCH_DOCUMENT_NUMBER",
+                isMandatory: false,
+                key: "documentNumber",
+                type: "text",
+                populators: {
+                  name: "documentNumber",
+                },
+              },
+            ],
+          },
+
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "DOCUMENT_TYPE",
+                jsonPath: "type",
+                additionalCustomization: true,
+              },
+              {
+                label: "DITILIZATION_DOCUMENT_NUMBER",
+                jsonPath: "documentNumber",
+              },
+              {
+                label: "PARTIES",
+                jsonpath: "parties",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "status",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_ACTIONS",
+                additionalCustomization: true,
+              },
+            ],
+
+            enableColumnSort: true,
+            resultsJsonPath: "documents",
           },
           show: true,
         },

@@ -1,0 +1,122 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2776",
+    "data": {
+      "id": 2776,
+      "url": "/order-management/v1/getBotdOrders",
+      "code": "2776",
+      "name": "Botd Orders",
+      "enabled": false,
+      "displayName": "Botd Orders",
+      "serviceCode": "Botd Orders"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2775",
+    "data": {
+      "id": 2775,
+      "url": "/egov-pdf/digitisation",
+      "code": "2775",
+      "name": "digitalization document",
+      "enabled": false,
+      "displayName": "digitalization document",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2774",
+    "data": {
+      "id": 2774,
+      "url": "/digitalized-documents/v1/_updateSignedDigitalizedDocuments",
+      "code": "2774",
+      "name": "Update signed digitalized documents",
+      "enabled": false,
+      "displayName": "Update signed digitalized documents",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2773",
+    "data": {
+      "id": 2773,
+      "url": "/digitalized-documents/v1/_getDigitalizedDocumentsToSign",
+      "code": "2773",
+      "name": "Get digitalized documents to sign",
+      "enabled": false,
+      "displayName": "Get digitalized documents to sign",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2772",
+    "data": {
+      "id": 2772,
+      "url": "/digitalized-documents/v1/_search",
+      "code": "2772",
+      "name": "Search digitalized document",
+      "enabled": false,
+      "displayName": "Search digitalized document",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2771",
+    "data": {
+      "id": 2771,
+      "url": "/digitalized-documents/v1/_update",
+      "code": "2771",
+      "name": "Update digitalized document",
+      "enabled": false,
+      "displayName": "Update digitalized document",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2770",
+    "data": {
+      "id": 2770,
+      "url": "/digitalized-documents/v1/_create",
+      "code": "2770",
+      "name": "Create digitalized document",
+      "enabled": false,
+      "displayName": "Create digitalized document",
+      "serviceCode": "digitalized-documents"
+    },
+    "isActive": true,
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2769",
+    "data": {
+      "id": 2769,
+      "url": "/order-management/v2/add-item",
+      "code": "2769",
+      "name": "Order management add item",
+      "enabled": false,
+      "displayName": "Order management add item",
+      "serviceCode": "Order-Management"
+    },
+    "isActive": true,
+  }
+]

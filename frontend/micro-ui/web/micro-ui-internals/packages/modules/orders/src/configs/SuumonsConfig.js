@@ -10,6 +10,14 @@ const defaultSearchValues = {
   // orderType: { type: OrderWorkflowState.ABATED }, // "", // null,
 };
 
+export const defaultSearchValuesForPendingRpad = {
+  searchText: "",
+  orderType: "",
+  channel: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
+  hearingDate: "",
+  compStatus: "",
+};
+
 export const defaultSearchValuesForJudgePending = {
   searchText: "",
   hearingDate: "",
@@ -59,6 +67,172 @@ export const SummonsTabsConfig = {
   moduleName: "reviewSummonWarrantNotice",
   showTab: true,
   SummonsTabsConfig: [
+    // Pending RPAD collection
+    {
+      label: "PENDING_RPAD_COLLECTION",
+      type: "search",
+      apiDetails: {
+        serviceName: "/task/v1/table/search",
+        requestParam: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          limit: 10,
+          offset: 0,
+        },
+        requestBody: {
+          apiOperation: "SEARCH",
+          criteria: {
+            applicationStatus: "SIGN_PENDING",
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: true,
+          },
+        },
+        masterName: "commonUiConfig",
+        moduleName: "reviewSummonWarrantNotice",
+        minParametersForSearchForm: 0,
+        tableFormJsonPath: "requestParam",
+        filterFormJsonPath: "requestBody.criteria",
+        searchFormJsonPath: "requestBody.criteria",
+      },
+      sections: {
+        search: {
+          uiConfig: {
+            formClassName: "custom-both-clear-search",
+            primaryLabel: "ES_COMMON_SEARCH",
+            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            minReqFields: 0,
+            defaultValues: defaultSearchValuesForPendingRpad,
+            fields: [
+              // hidden
+              {
+                type: "component",
+                component: "CustomSortComponent",
+                isMandatory: false,
+                disable: false,
+                name: "Issue Date",
+                key: "sortCaseListByDate",
+                sortBy: "createdDate",
+                showIcon: true,
+                icon: "UpDownArrowIcon",
+                populators: {},
+                hideInForm: true,
+              },
+              // process type
+              {
+                label: "PROCESS_TYPE",
+                isMandatory: false,
+                key: "orderType",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "orderType",
+                  optionsKey: "name",
+                  mdmsConfig: {
+                    moduleName: "Order",
+                    masterName: "CourtStaffOrderType",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                  styles: {
+                    maxWidth: "200px",
+                    minWidth: "150px",
+                  },
+                  className: "custom-dropdown-color",
+                },
+              },
+              // Delivery channel - Only show RPAD for PENDING_RPAD_COLLECTION tab
+              {
+                label: "DELIVERY_CHANNEL",
+                isMandatory: false,
+                key: "channel",
+                type: "dropdown",
+                populators: {
+                  name: "channel",
+                  optionsKey: "displayLabel",
+                  defaultValue: { code: "RPAD", name: "RPAD", displayLabel: "RPAD" },
+                  options: [{ code: "RPAD", name: "RPAD", displayLabel: "RPAD" }],
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                },
+              },
+              // search case
+              {
+                label: "CS_CASE_NAME_ID",
+                isMandatory: false,
+                type: "text",
+                key: "searchText",
+                disable: false,
+                populators: {
+                  name: "searchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+            ],
+          },
+          show: true,
+        },
+        searchResult: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+          uiConfig: {
+            columns: [
+              {
+                label: "SELECT",
+                columnType: "checkbox",
+                additionalCustomization: true,
+              },
+              {
+                label: "CASE_TITLE",
+                jsonPath: "caseName",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_CASE_NUMBER_HOME",
+                jsonPath: "courtCaseNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "PROCESS_TYPE",
+                jsonPath: "taskType",
+                additionalCustomization: true,
+              },
+              {
+                label: "ISSUE_DATE",
+                jsonPath: "createdDate",
+                additionalCustomization: true,
+              },
+              {
+                label: "DELIEVERY_CHANNEL",
+                jsonPath: "delieveryChannel",
+                additionalCustomization: true,
+              },
+              {
+                label: "HEARING_DATE",
+                jsonPath: "hearingDate",
+                additionalCustomization: true,
+              },
+            ],
+            enableColumnSort: true,
+            resultsJsonPath: "list",
+          },
+          show: true,
+        },
+      },
+      additionalDetails: {
+        sortBy: "sortCaseListByDate",
+      },
+    },
     // Pending Sign
     {
       label: "PENDING_SIGN",
@@ -75,6 +249,7 @@ export const SummonsTabsConfig = {
           criteria: {
             applicationStatus: "SIGN_PENDING",
             completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -128,7 +303,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -179,7 +355,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "ESignPendingStatus",
-                    select: "(data) => {return data['Order'].ESignPendingStatus?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].ESignPendingStatus?.map((item) => {return item;}).sort((a, b) => a.code.localeCompare(b.code));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -206,7 +383,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -363,6 +540,7 @@ export const SummonsTabsConfig = {
           criteria: {
             applicationStatus: "SIGNED",
             completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -441,7 +619,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -468,7 +647,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -611,6 +790,7 @@ export const SummonsTabsConfig = {
         requestBody: {
           criteria: {
             completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -664,7 +844,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -691,7 +872,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -812,6 +993,7 @@ export const SummonsTabsConfig = {
         requestBody: {
           criteria: {
             completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
+            isPendingCollection: false,
           },
         },
         masterName: "commonUiConfig",
@@ -865,7 +1047,8 @@ export const SummonsTabsConfig = {
                   mdmsConfig: {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
-                    select: "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;});}",
+                    select:
+                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
                     // moduleName: "Order,Notice",
                     // masterName: "CourtStaffOrderType,NoticeType",
                     // select:
@@ -899,7 +1082,7 @@ export const SummonsTabsConfig = {
                     moduleName: "payment",
                     masterName: "paymentType",
                     select:
-                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }); }",
+                      "(data) => { var list = (data && data.payment && data.payment.paymentType) ? data.payment.paymentType : []; var seen = {}; var unique = []; for (var i = 0; i < list.length; i++) { var ch = list[i].deliveryChannel; if (!seen[ch]) { seen[ch] = true; unique.push(list[i]); } } unique = unique.filter(item => item.deliveryChannel !== 'Online' && item.deliveryChannel !== 'ONLINE'); return unique.map(function(item) { return { code: item.deliveryChannel, name: item.deliveryChannel, displayLabel: item.deliveryChannel === 'EPOST' ? 'Post' : item.deliveryChannel }; }).sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -926,7 +1109,7 @@ export const SummonsTabsConfig = {
                     masterName: "SentStatus",
                     // select: "(data) => {return data['Order'].SentStatus?.map((item) => {return item;});}",
                     select:
-                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`].includes(item.code));}",
+                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`].includes(item.code)).sort((a, b) => a.name.localeCompare(b.name));}",
                     //  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
                   },
                   optionsCustomStyle: {

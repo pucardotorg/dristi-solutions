@@ -19,7 +19,7 @@
 
   <!-- <link rel="stylesheet" href="https://unpkg.com/@egovernments/digit-ui-css/dist/index.css"/> -->
   <!-- <script src="https://s3.ap-south-1.amazonaws.com/egov-dev-assets/globalConfigs.js"></script> -->
-  <link rel="stylesheet" href="https://unpkg.com/dristi-ui-css@0.0.8-dristi-kerala.3/dist/index.css" />
+  <link rel="stylesheet" href="https://unpkg.com/dristi-ui-css@0.1.0-dristi-kerala.2/dist/index.css" />
 
 
   <script src="%REACT_APP_GLOBAL%"></script>
@@ -29,6 +29,41 @@
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-P0JH39REGV');
+  </script>
+  <script>
+    //  Detect Full Document Reload
+    console.log("APP_BOOT", {
+      timeOrigin: performance.timeOrigin,
+      timestamp: Date.now(),
+    });
+
+  
+    //  Detect Browser Unload (Not App Navigation)
+    window.addEventListener("beforeunload", () => {
+      console.log("BEFORE_UNLOAD_TRIGGERED", Date.now());
+    });
+
+    window.addEventListener("pagehide", (e) => {
+      console.log("[RELOAD_DIAG] PAGEHIDE", {
+        persisted: e.persisted,
+        time: Date.now(),
+      });
+    });
+
+  
+    // Correlate Network State Changes
+    window.addEventListener("offline", () => {
+      console.log("NETWORK_OFFLINE", Date.now());
+    });
+  
+    window.addEventListener("online", () => {
+      console.log("NETWORK_ONLINE", Date.now());
+    });
+  
+    // Detect Visibility / System Context Changes
+    document.addEventListener("visibilitychange", () => {
+      console.log("VISIBILITY_CHANGE", document.visibilityState, Date.now());
+    });
   </script>
 </head>
 

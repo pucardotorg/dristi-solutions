@@ -114,6 +114,14 @@ export const submissionService = {
       data,
       params,
     }),
+  searchOpenApiDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.openApi.digitizedDocumentSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   updateOpenBailBond: (data, params) =>
     Request({
       url: Urls.openApi.updateBailBond,
@@ -130,9 +138,41 @@ export const submissionService = {
       data,
       params,
     }),
+  updateOpenDigitizedDocument: (data, params) =>
+    Request({
+      url: Urls.openApi.updateDigitizedDocument,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   getPendingTask: (data, params) =>
     Request({
       url: Urls.getPendingTaskFields,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  createDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.digitalizationCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.digitalizationUpdate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchDigitalization: (data, params) =>
+    Request({
+      url: Urls.digitalization.digitalizationSearch,
       useCache: false,
       userService: false,
       data,

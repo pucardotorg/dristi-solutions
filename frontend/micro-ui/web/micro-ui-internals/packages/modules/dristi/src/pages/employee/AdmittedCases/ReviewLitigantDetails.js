@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
@@ -51,6 +51,20 @@ const ReviewLitigantDetails = ({ path }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const courtId = localStorage.getItem("courtId");
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -329,7 +343,16 @@ const ReviewLitigantDetails = ({ path }) => {
         <div
           className="supporting-document"
           style={{ marginTop: "-25px", marginLeft: "10px", cursor: "pointer" }}
-          onClick={() => setShowDocModal(true)}
+          onClick={() => {
+            if (profileRequest?.document?.fileStore) {
+              setShowDocModal(true);
+            } else {
+              setShowErrorToast({
+                label: t("NO_SUPPORTING_DOCUMENTS_UPLOADED"),
+                error: true,
+              });
+            }
+          }}
         >
           <DocViewerWrapper
             fileStoreId={profileRequest?.document?.fileStore}
@@ -420,6 +443,7 @@ const ReviewLitigantDetails = ({ path }) => {
         </div>
       </div>
       {showDocModal && <ImageModal imageInfo={imageInfo} handleCloseModal={() => setShowDocModal(false)}></ImageModal>}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

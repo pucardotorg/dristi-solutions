@@ -52,6 +52,9 @@ function groupOrdersByParty(filteredOrders) {
     if (!Array?.isArray(parties) || parties?.length === 0) return;
 
     parties.forEach((party) => {
+      const uniqueId = party?.data?.uniqueId;
+      if (!uniqueId) return;
+
       const partyName = getFormattedName(
         party?.data?.firstName || party?.data?.respondentFirstName,
         party?.data?.middleName || party?.data?.respondentMiddleName,
@@ -59,8 +62,6 @@ function groupOrdersByParty(filteredOrders) {
         party?.data?.witnessDesignation,
         null
       );
-
-      if (!partyName) return;
 
       let partyType = (party?.data?.partyType || "").toLowerCase();
 
@@ -72,11 +73,11 @@ function groupOrdersByParty(filteredOrders) {
         partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
       }
 
-      if (!accusedWiseOrdersMap?.has(partyName)) {
-        accusedWiseOrdersMap?.set(partyName, { partyType, partyName, ordersList: [] });
+      if (!accusedWiseOrdersMap?.has(uniqueId)) {
+        accusedWiseOrdersMap?.set(uniqueId, { partyType, partyName, uniqueId, ordersList: [], order });
       }
 
-      accusedWiseOrdersMap?.get(partyName)?.ordersList?.push(order);
+      accusedWiseOrdersMap?.get(uniqueId)?.ordersList?.push(order);
     });
   });
 
@@ -106,12 +107,15 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
-  const [partyName, setPartyName] = useState(null);
-  const [partyType, setPartyType] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
+  const [orderList, setOrderList] = useState([]);
+  const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
+  const [hasPendingTasks, setHasPendingTasks] = useState(true);
+  const [partyUniqueId, setPartyUniqueId] = useState("");
+  const [partyType, setPartyType] = useState(null);
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -154,8 +158,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     filingNumber,
     Boolean(filingNumber && caseCourtId)
   );
-
-  const [orderList, setOrderList] = useState([]);
 
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
@@ -209,17 +211,52 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return updatedGrouped;
   }, [ordersData]);
 
-  const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
-
   useEffect(() => {
     setOrderList(orderListFiltered?.[0]?.ordersList || []);
     setOrderNumber(orderListFiltered?.[0]?.ordersList?.[0]?.orderNumber);
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
-    setPartyName(removeAccusedSuffix(orderListFiltered?.[0]?.partyName));
+    setPartyUniqueId(orderListFiltered?.[0]?.uniqueId);
     setPartyType(orderListFiltered?.[0]?.partyType);
   }, [orderListFiltered]);
+
+  const [currentHearingNumber, setCurrentHearingNumber] = useState(hearingDetails?.hearingId);
+
+  useEffect(() => {
+    if (hearingDetails?.hearingId && !currentHearingNumber) {
+      setCurrentHearingNumber(hearingDetails.hearingId);
+    }
+  }, [hearingDetails?.hearingId]);
+
+  const hearingCriteria = useMemo(
+    () => ({
+      tenantId,
+      filingNumber,
+      ...(currentHearingNumber && { hearingId: currentHearingNumber }),
+      ...(caseCourtId && { courtId: caseCourtId }),
+    }),
+    [tenantId, filingNumber, caseCourtId, currentHearingNumber]
+  );
+
+  const { data: hearingByNumber } = Digit.Hooks.hearings.useGetHearings(
+    {
+      criteria: hearingCriteria,
+    },
+    { applicationNumber: "", cnrNumber: "" },
+    `${currentHearingNumber}`,
+    Boolean(filingNumber && caseCourtId)
+  );
+
+  const paymentStatusText = useMemo(() => {
+    const status = hearingByNumber?.HearingList?.[0]?.status;
+    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_TEXT" : "PAYMENT_PENDING_TEXT";
+  }, [hearingByNumber]);
+
+  const paymentStatusSubText = useMemo(() => {
+    const status = hearingByNumber?.HearingList?.[0]?.status;
+    return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_SUB_TEXT" : "PAYMENT_PENDING_SUB_TEXT";
+  }, [hearingByNumber]);
 
   const config = useMemo(() => {
     if (!taskCnrNumber && !cnrNumber) return undefined;
@@ -231,10 +268,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       orderType,
       taskCnrNumber: taskCnrNumber || cnrNumber,
       itemId,
-      partyName,
+      partyUniqueId,
       partyType,
     });
-  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyName, partyType]);
+  }, [filingNumber, orderNumber, orderId, orderType, taskCnrNumber, cnrNumber, itemId, partyUniqueId]);
 
   const CloseButton = (props) => {
     return (
@@ -295,11 +332,13 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               setOrderType(item?.ordersList?.[0]?.orderType);
               setOrderId(item?.ordersList?.[0]?.id);
               setItemId(item?.ordersList?.[0]?.itemId);
-              setPartyName(removeAccusedSuffix(item?.partyName));
               setPartyType(item?.partyType);
+              setPartyUniqueId(item?.uniqueId);
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);
+              setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
+              setHasPendingTasks(true);
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
             style={{
@@ -347,6 +386,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                   setTimeout(() => {
                     setOrderLoading((prev) => !prev);
                   }, 0);
+                  setCurrentHearingNumber(item?.scheduledHearingNumber);
+                  setHasPendingTasks(true);
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
                 style={{
@@ -382,7 +423,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
+                  <span>{formatDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
                 </div>
               </div>
               <div style={{ marginLeft: "10px" }}>
@@ -396,40 +437,47 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               </div>
             </div>
           )}
-
-          {orderNumber && !orderLoading && config && (
-            <InboxSearchComposer
-              configs={config}
-              defaultValues={filingNumber}
-              additionalConfig={{
-                resultsTable: {
-                  onClickRow: (props) => {
-                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
-                      setRowData(props?.original);
-                      setshowNoticeModal(true);
-                      return;
-                    }
-                  },
-                },
+          {hasPendingTasks === false ? (
+            <div
+              style={{
+                background: "#F9E6E6",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "24px 0",
               }}
-            />
-          )}
-          {/* {isButtonVisible && currentHearingId && userType === "employee" && (
-            <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
-              <Button
-                label={`Re-Issue ${t(orderType)}`}
-                onButtonClick={() => {
-                  handleNavigate();
-                }}
-                className="action-button"
-                style={{
-                  boxShadow: "none",
-                  padding: "16px 24px",
-                }}
-                textStyles={headingStyle}
-              />
+            >
+              <span style={{ fontSize: "20px", fontWeight: "700", marginBottom: "6px" }}>{t(paymentStatusText)}</span>
+              <span style={{ fontSize: "16px", fontWeight: "400" }}>{t(paymentStatusSubText)}</span>
             </div>
-          )} */}
+          ) : (
+            orderNumber &&
+            !orderLoading &&
+            config && (
+              <InboxSearchComposer
+                configs={{
+                  ...config,
+                  additionalDetails: {
+                    ...config?.additionalDetails,
+                    setHasTasks: setHasPendingTasks,
+                  },
+                }}
+                defaultValues={filingNumber}
+                additionalConfig={{
+                  resultsTable: {
+                    onClickRow: (props) => {
+                      if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+                        setRowData(props?.original);
+                        setshowNoticeModal(true);
+                        return;
+                      }
+                    },
+                  },
+                }}
+              />
+            )
+          )}
         </React.Fragment>
       )}
     </div>

@@ -701,6 +701,13 @@
   border-top: 1px solid #bbbbbd;
   .submit-bar {
     box-shadow: none;
+    width: fit-content;
+    min-width: 220px;
+    padding: 8px 24px;
+    header {
+      line-height: 24px;
+      white-space: nowrap;
+    }
   }
 }
 
@@ -1472,5 +1479,141 @@
 
   .filter-bar .filter-actions .digit-button-tertiary {
     padding: 8px 16px !important;
+    margin: 0px 8px 0px 0px;
+  }
+}
+
+.mediation-form-signature {
+  .header {
+    font-size: 26px;
+    padding: 12px 40px;
+    font-weight: 700;
+    border-bottom: 1px solid #e8e8e8;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - 202px);
+  }
+
+  .details {
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 18px;
+    padding-bottom: 18px;
+  }
+
+  .details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .left-panel {
+    width: 20%;
+    height: calc(100vh - 167px);
+    padding: 30px 0 0px 45px;
+    border-right: 1px solid #e8e8e8;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    padding: 20px 40px 40px 100px;
+    width: 80%;
+    height: calc(100vh - 167px);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-evenly;
+    gap: 40px;
+  }
+
+  .doc-viewer {
+    flex: 6;
+    overflow: auto;
+    border-radius: 8px;
+    background: white;
+    width: fit-content;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+      width: fit-content;
+      .doc-card {
+        margin-bottom: 0px !important;
+      }
+    }
+  }
+
+  .edit-button {
+    border: none;
+    color: #007e7e;
+    font-size: 16px;
+    font-weight: 700;
+    width: fit-content !important;
+  }
+
+  h2 {
+    width: fit-content !important;
+  }
+
+  .litigant-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e8e8e8;
+    color: #77787b;
+    padding: 8px 16px 20px 0;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 5px;
+  }
+
+  .signed-label {
+    padding: 6px 8px;
+    border-radius: 999px;
+    color: #00703c;
+    background-color: #e4f2e4;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .unsigned-label {
+    padding: 6px 8px;
+    border-radius: 999px;
+    color: #9e400a;
+    background-color: #fff6e8;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .action-bar {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    padding: 16px 24px;
+    box-shadow: none;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  .submit-loader {
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999999;
+    position: fixed;
+    right: 0;
+    top: 0;
+    background: rgba(234, 234, 245, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

@@ -2,6 +2,7 @@ import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
+import { getFileByFileStore } from "../../../Utils";
 
 const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -335,6 +336,12 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         });
       } else if (params?.Individual?.[0]?.individualId) {
         if (data?.selectUserType?.apiDetails && data?.selectUserType?.apiDetails?.serviceName && data?.selectUserType?.role[0] === "ADVOCATE_ROLE") {
+          await window?.Digit.DRISTIService.updateIndividualUser(
+            {
+              Individual: params?.Individual?.[0],
+            },
+            { tenantId }
+          );
           onDocumentUpload(formData?.clientDetails?.barCouncilId[0][1]?.file, formData?.clientDetails?.barCouncilId[0][0]).then((document) => {
             const requestBody = {
               [data?.selectUserType?.apiDetails?.requestKey]: {
@@ -414,11 +421,67 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         }
       }
     }
+    sessionStorage.removeItem("userRegistrationParams");
   };
 
-  if (!params?.IndividualPayload && showSuccess == false) {
-    history.push(pathOnRefresh);
-  }
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.IndividualPayload && showSuccess === false) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params.address, params, history, pathOnRefresh, showSuccess]);
 
   return (
     <div className="terms-condition" style={{ margin: "50px" }}>

@@ -159,8 +159,8 @@ export const WitnessDepositionSignModal = ({
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -269,6 +269,7 @@ export const WitnessDepositionSignModal = ({
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.artifactNumber) {
@@ -349,12 +350,13 @@ export const WitnessDepositionSignModal = ({
         action: witnessDepositionWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      setWitnessDepositionSignedPdf(newFilestore);
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setWitnessDepositionSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 

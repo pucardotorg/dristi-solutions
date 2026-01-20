@@ -378,6 +378,21 @@
   }
 }
 
+.success-modal{
+  &.popup-module {
+    .popup-module-main {
+      .popup-module-action-bar {
+        .selector-button-border {
+          gap: 6px;
+          h2 {
+           width: fit-content !important;
+          }
+        }
+      }
+    }
+  }
+}
+
 .orders-add-bulk-list-modal {
   &.popup-module {
     width: 40vw;
@@ -1163,6 +1178,11 @@
   .new-order {
     padding: 24px !important;
   }
+  .order-type-action{
+      .submit-bar-disabled {
+        width:164px !important;
+      }
+    }
 }
 
 .order-type-form-modal {

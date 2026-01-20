@@ -5,13 +5,13 @@ import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useQuery } from "react-query";
-import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
 import useOpenApiSearchBailBond from "../../hooks/submissions/useOpenApiSearchBailBond";
 import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const BailBondSignaturePage = () => {
   const { t } = useTranslation();
@@ -126,16 +126,19 @@ const BailBondSignaturePage = () => {
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: `${Urls.openApi.FileFetchByFileStore}`,
-        data: {
-          tenantId: "kl",
-          fileStoreId: fileStoreId,
-          moduleName: "DRISTI",
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+      return axiosInstance
+        .post(
+          `${Urls.openApi.FileFetchByFileStore}`,
+          {
+            tenantId: "kl",
+            fileStoreId: fileStoreId,
+            moduleName: "DRISTI",
+          },
+          {
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);

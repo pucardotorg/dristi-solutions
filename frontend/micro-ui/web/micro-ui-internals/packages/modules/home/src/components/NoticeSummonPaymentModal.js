@@ -5,7 +5,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
@@ -39,7 +39,9 @@ function NoticeSummonPaymentModal({
 
   const accusedNameList = useMemo(() => {
     const partyList = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
-    const names = partyList?.map((party) => getFullName(" ", party?.data?.firstName, party?.data?.middleName, party?.data?.lastName));
+    const names = partyList?.map((party) =>
+      getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName, party?.data?.witnessDesignation, null)
+    );
     return names?.join(", ");
   }, [formDataKey, courierOrderDetails]);
 
@@ -53,7 +55,7 @@ function NoticeSummonPaymentModal({
     const channelMap = {};
     taskManagement?.partyDetails?.forEach((party) => {
       const person = party?.respondentDetails || party?.witnessDetails || {};
-      const fullName = getFullName(" ", person?.firstName, person?.middleName, person?.lastName);
+      const fullName = getFormattedName(person?.firstName, person?.middleName, person?.lastName, person?.witnessDesignation, null);
 
       party?.deliveryChannels?.forEach((channel) => {
         const code = channel?.channelCode;

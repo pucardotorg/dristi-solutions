@@ -55,9 +55,6 @@ const HomeHearingsTab = ({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
-
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -113,7 +110,7 @@ const HomeHearingsTab = ({
         id: status?.id,
         code: status?.code,
         name: status?.code !== "IN_PROGRESS" ? status?.code : "ON_GOING_HEARING",
-      }))?.sort((a, b) => a.id - b.id) || []
+      }))?.sort((a, b) => a.code.localeCompare(b.code)) || []
     );
   }, [hearingTypeOptions]);
 
@@ -268,6 +265,7 @@ const HomeHearingsTab = ({
                   filingNumber: hearingDetails?.filingNumber,
                   tenantId: hearingDetails?.tenantId,
                   hearingNumber: hearingDetails?.hearingNumber,
+                  hearingType: hearingDetails?.hearingType,
                 },
               },
               {}
@@ -479,6 +477,7 @@ const HomeHearingsTab = ({
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
       const offset = page * rowsPerPage;
+      const orderStatus = hearingDetails?.orderStatus?.toLowerCase();
       return (
         <tr key={row?.id || idx} className="custom-table-row">
           <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
@@ -488,6 +487,15 @@ const HomeHearingsTab = ({
                 pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
                 search: `?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
                 state: { homeFilteredData: filters },
+              }}
+              onClick={() => {
+                localStorage.setItem(
+                  "Digit.homeNextHearingFilter",
+                  JSON.stringify({
+                    homeFilterDate: hearingDetails?.fromDate,
+                    homeHearingNumber: hearingDetails?.hearingNumber,
+                  })
+                );
               }}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
@@ -524,7 +532,8 @@ const HomeHearingsTab = ({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "14px",
+                justifyContent: "space-between",
+                width: "170px",
               }}
             >
               <span
@@ -537,23 +546,34 @@ const HomeHearingsTab = ({
               >
                 {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
               </span>
-
-              {hearingDetails?.status === "IN_PROGRESS" && (
-                <span
-                  title={hearingDetails?.orderStatus === "SIGNED" ? t("ORDER_PUBLISHED") : t("ORDER_PENDING")}
-                  style={{
-                    borderRadius: "50%",
-                    padding: "10px",
-                    background: hearingDetails?.orderStatus === "SIGNED" ? "#F0FDF4" : "#FEE2E2",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  {hearingDetails?.orderStatus === "SIGNED" ? <DocumentSignedIcon /> : <DocumentNotSignedIcon />}
-                </span>
-              )}
+              <span
+                title={
+                  orderStatus === "signed"
+                    ? t("ORDER_PUBLISHED")
+                    : orderStatus === "pending_sign"
+                    ? t("ORDER_PENDING_BULK_SIGN")
+                    : orderStatus === "draft"
+                    ? t("ORDER_DRAFT")
+                    : orderStatus === "not_created"
+                    ? t("ORDER_NOT_CREATED")
+                    : t("ORDER_PENDING")
+                }
+                style={{
+                  borderRadius: "50%",
+                  padding: "10px",
+                  background: orderStatus === "signed" ? "#F0FDF4" : orderStatus === "pending_sign" ? "#FEF3C7" : "#FEE2E2",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+              >
+                {orderStatus === "signed" ? (
+                  <DocumentSignedIcon />
+                ) : (
+                  <DocumentNotSignedIcon fill={orderStatus === "pending_sign" ? "#F7C600" : "#DC2626"} />
+                )}
+              </span>
             </div>
           </td>
           <td
@@ -648,7 +668,15 @@ const HomeHearingsTab = ({
               <Dropdown
                 t={t}
                 placeholder={`${t("PURPOSE")}`}
-                option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
+                option={
+                  hearingTypeOptions?.Hearing?.HearingType
+                    ? hearingTypeOptions?.Hearing?.HearingType.sort((a, b) => {
+                        const stringA = t(a?.code);
+                        const stringB = t(b?.code);
+                        return stringA.localeCompare(stringB);
+                      })
+                    : []
+                }
                 selected={filters?.purpose}
                 optionKey={"code"}
                 select={(e) => {
@@ -786,7 +814,7 @@ const HomeHearingsTab = ({
                 <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
-                <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
+                <th>{t("CS_COMMON_ADVOCATES")} </th>
                 <th>{t("PURPOSE")}</th>
                 <th>{t("STATUS")}</th>
                 <th>{t("ACTIONS")}</th>

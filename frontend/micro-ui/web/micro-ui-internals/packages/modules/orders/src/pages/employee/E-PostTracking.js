@@ -9,10 +9,10 @@ import EpostUpdateStatus from "./EpostUpdateStatus";
 import { updateEpostStatusPendingConfig, updateEpostStatusConfig } from "../../configs/EpostFormConfigs";
 import { EpostService } from "../../hooks/services";
 import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } from "../../utils";
-import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
 import { _getDate, _getStatus } from "../../utils";
 import EmptyTable from "../../components/InboxComposerHeader.js/EmptyTable";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -195,14 +195,14 @@ const EpostTrackingPage = () => {
             pagination: {},
           },
         };
-        const response = await Axios.post(
+        const response = await axiosInstance.post(
           Urls.Epost.EpostReportDownload,
           {
             RequestInfo: {
               authToken: accessToken,
               userInfo: userInfo,
               msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-              apiId: "Rainmaker",
+              apiId: "Dristi",
             },
             ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
           },
@@ -240,14 +240,14 @@ const EpostTrackingPage = () => {
             pagination: {},
           },
         };
-        const response = await Axios.post(
+        const response = await axiosInstance.post(
           Urls.Epost.EpostReportDownload,
           {
             RequestInfo: {
               authToken: accessToken,
               userInfo: userInfo,
               msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-              apiId: "Rainmaker",
+              apiId: "Dristi",
             },
             ePostTrackerSearchCriteria: payload?.ePostTrackerSearchCriteria,
           },

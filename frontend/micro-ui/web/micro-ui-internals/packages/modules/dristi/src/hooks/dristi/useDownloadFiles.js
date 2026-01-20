@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Urls } from "../index";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import JSZip from "jszip";
 
 const useDownloadFiles = () => {
@@ -19,7 +19,7 @@ const useDownloadFiles = () => {
         const url = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
 
         try {
-          const response = await axios.get(url, {
+          const response = await axiosInstance.get(url, {
             responseType: "blob",
             headers: {
               "auth-token": `${token}`,

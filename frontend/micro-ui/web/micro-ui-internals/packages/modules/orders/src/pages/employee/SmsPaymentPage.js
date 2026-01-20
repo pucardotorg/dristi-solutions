@@ -149,9 +149,9 @@ const SmsPaymentPage = () => {
         name = party?.partyName;
       } else {
         name =
-          party?.partyName && party?.witnessDesignation
-            ? `${party?.partyName} (${party?.witnessDesignation})`
-            : party?.partyName || party?.witnessDesignation;
+          party?.partyName?.trim() && party?.witnessDesignation
+            ? `${party?.partyName?.trim()} (${party?.witnessDesignation})`
+            : party?.partyName?.trim() || party?.witnessDesignation;
       }
 
       return {
@@ -252,7 +252,7 @@ const SmsPaymentPage = () => {
       fees: item?.fees || 0,
       deliveryTime: item?.channelDeliveryTime,
       deliveryChannelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
-      selected: false,
+      selected: true, // make it false when epost or other delievry channels added
     }));
 
     return options;
@@ -300,7 +300,7 @@ const SmsPaymentPage = () => {
       }));
 
       const mergedOptions = breakupOptions?.map((opt) => {
-        const currentlySelectedInState = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId)?.selected || false;
+        const currentlySelectedInState = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId)?.selected || true; // when other delievery channels then set it to false
         const alreadySelectedInTask = existingDeliveryChannels?.some((ch) => ch?.channelId === opt?.channelId);
 
         return {

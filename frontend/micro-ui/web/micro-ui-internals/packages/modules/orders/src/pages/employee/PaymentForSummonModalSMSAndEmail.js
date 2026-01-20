@@ -11,7 +11,7 @@ import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
 import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { getSuffixByDeliveryChannel } from "../../utils";
+import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 
@@ -632,7 +632,13 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         : orderDetails?.additionalDetails?.formdata;
     const partyData = formdata?.[formDataKeyMap[orderType]]?.party?.data;
     const name =
-      [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+      getFormattedName(
+        partyData?.firstName?.trim(),
+        partyData?.middleName?.trim(),
+        partyData?.lastName?.trim(),
+        partyData?.witnessDesignation?.trim(),
+        null
+      ) ||
       (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
       (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
       (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||

@@ -8,7 +8,7 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
@@ -108,8 +108,8 @@ function BulkSignADiaryView() {
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -140,12 +140,10 @@ function BulkSignADiaryView() {
       } catch (error) {
         console.error("Error :", error);
       } finally {
-        if (entryDate !== date) {
-          setEntryDate(date);
-        }
+        setEntryDate(date);
       }
     },
-    [tenantId, courtId, entryDate]
+    [tenantId, courtId]
   );
 
   const config = useMemo(() => {
@@ -263,7 +261,7 @@ function BulkSignADiaryView() {
         setDiaryEntries: setDiaryEntries,
       },
     };
-  }, [isSelectedDataSigned]);
+  }, []);
 
   const MemoInboxSearchComposer = useMemo(() => {
     return (
@@ -417,7 +415,7 @@ function BulkSignADiaryView() {
     const uriSignedADiary = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${ADiarypdf}`;
 
     const authToken = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(uriSignedADiary, {
         headers: {
           "auth-token": `${authToken}`,

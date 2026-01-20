@@ -1,0 +1,14 @@
+// TODO : can be added through workbench UI
+{
+  "tenantId": "kl",
+  "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+  "uniqueIdentifier": "543",
+  "data": {
+    "id": 543,
+    "actionid": 2776, // TODO : need to assign this to (/application/v1/bulk-pending-collection-update)
+    "rolecode": "EMPLOYEE",
+    "tenantid": "kl",
+    "actioncode": "2776"
+  },
+  "isActive": true
+}

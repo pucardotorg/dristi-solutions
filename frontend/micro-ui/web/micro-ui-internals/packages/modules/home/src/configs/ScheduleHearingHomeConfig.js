@@ -57,7 +57,8 @@ export const HomeScheduleHearingConfig = {
               mdmsConfig: {
                 masterName: "SubStage",
                 moduleName: "case",
-                select: "(data) => {return data['case'].SubStage?.filter((item) => !['JUDGEMENT', 'POST_JUDGEMENT'].includes(item.code));}",
+                select:
+                  "(data) => {return data['case'].SubStage?.filter((item) => !['JUDGEMENT', 'POST_JUDGEMENT'].includes(item.code)).sort((a, b) => a.code.localeCompare(b.code));}",
               },
               // mdmsConfig: {
               //   masterName: "pendingTaskFilterText",

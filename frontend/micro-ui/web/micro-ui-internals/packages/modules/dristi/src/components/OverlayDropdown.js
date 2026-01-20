@@ -1,25 +1,62 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { CustomThreeDots, ThreeDots } from "../icons/svgIndex";
 
 export const Context = React.createContext();
 
+// Track currently open dropdown globally within this module
+let activeDropdownSetter = null;
+
 const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [], position = "absolute", textStyle = {} }) => {
   const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const history = useHistory();
 
   const dropdownItems = master ? Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) : cutomDropdownItems || [];
 
   const filteredDropdownItems = dropdownItems.filter((item) => !item.hide);
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+  const toggleDropdown = (event) => {
+    event.stopPropagation();
+
+    // If opening this dropdown, close any other open dropdown first
+    if (!isDropdownOpen) {
+      if (activeDropdownSetter && activeDropdownSetter !== setIsDropdownOpen) {
+        activeDropdownSetter(false);
+      }
+      activeDropdownSetter = setIsDropdownOpen;
+      setIsDropdownOpen(true);
+    } else {
+      setIsDropdownOpen(false);
+      if (activeDropdownSetter === setIsDropdownOpen) {
+        activeDropdownSetter = null;
+      }
+    }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+        if (activeDropdownSetter === setIsDropdownOpen) {
+          activeDropdownSetter = null;
+        }
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
   return (
-    <div style={{ position: position, display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
+    <div ref={dropdownRef} style={{ position: position, display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
       <div
         style={{
           cursor: "pointer",

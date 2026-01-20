@@ -131,6 +131,7 @@ module.exports = function (app) {
     "/inportal-survey/v1/feedback",
     "/inportal-survey/v1/remind-me-later",
     "/task-management",
+    "/digitalized-documents",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

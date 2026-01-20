@@ -9,7 +9,7 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -53,6 +53,46 @@ const getCaseNumber = (billDetails = {}) => {
   if (isValid(filingNumber)) return filingNumber;
 
   return "";
+};
+
+const normalizeItems = (items = []) => {
+  return items?.map?.((item) => {
+    const obj = {};
+
+    item?.fields?.forEach?.(({ key, value }) => {
+      const cleanedKey = key.replace("digitalizedDocumentDetails.", "");
+
+      const parts = cleanedKey.split(".");
+      let current = obj;
+
+      parts.forEach((part, index) => {
+        const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+
+        if (arrayMatch) {
+          const prop = arrayMatch[1];
+          const idx = Number(arrayMatch[2]);
+
+          current[prop] = current[prop] || [];
+          current[prop][idx] = current[prop][idx] || {};
+
+          if (index === parts.length - 1) {
+            current[prop][idx] = value;
+          } else {
+            current = current[prop][idx];
+          }
+        } else {
+          if (index === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      });
+    });
+
+    return obj;
+  });
 };
 
 export const UICustomizations = {
@@ -796,7 +836,7 @@ export const UICustomizations = {
             // if (requestCriteria.url.split("/").includes("order")) {
             return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
               ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
+              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
               ? {
                   ...data,
                   applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
@@ -855,6 +895,9 @@ export const UICustomizations = {
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
+          if (column?.jsonPath === "applicationDraftDelete" && row.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
@@ -863,6 +906,19 @@ export const UICustomizations = {
       }
     },
     dropDownItems: (row, configs) => {
+      if (configs?.jsonPath === "applicationDraftDelete") {
+        return [
+          {
+            label: "CS_COMMON_DELETE",
+            id: "draft_order_delete",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
+            },
+          },
+        ];
+      }
       const formatDate = (date) => {
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -1240,6 +1296,9 @@ export const UICustomizations = {
         case "EVIDENCE_NUMBER":
           return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
+          if (row?.evidenceMarkedStatus === "DELETED_DRAFT") {
+            return "";
+          }
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip
               text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
@@ -1271,7 +1330,7 @@ export const UICustomizations = {
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+          ? (row?.evidenceMarkedStatus !== null && row?.evidenceMarkedStatus !== "DELETED_DRAFT") || row.isEvidence
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",
@@ -1314,6 +1373,21 @@ export const UICustomizations = {
             ]
           : []),
 
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
+        !row?.isVoid &&
+        row?.evidenceMarkedStatus &&
+        ["DRAFT", "DRAFT_IN_PROGRESS"].includes(row?.evidenceMarkedStatus)
+          ? [
+              {
+                label: "DELETE_EVIDENCE_DRAFT",
+                id: "delete_evidence_draft",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
         {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
@@ -2621,6 +2695,73 @@ export const UICustomizations = {
       }
     },
   },
+
+  DigitalizationConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const courtId = localStorage.getItem("courtId");
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const isCitizen = userRoles?.includes("CITIZEN");
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Digitalized Document Service",
+            moduleSearchCriteria: {
+              ...(requestCriteria.body.SearchCriteria.moduleSearchCriteria || {}),
+              ...(courtId ? { courtId } : {}),
+              ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
+              ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
+              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const normalized = normalizeItems(data?.data || []);
+            return { documents: normalized, totalCount: data?.totalCount || normalized?.length };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          const newValue = value === "MEDIATION" ? "MEDIATION_FORM" : value;
+          return (
+            <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={newValue} showAsHeading={true} isDigitilization={true} />
+          );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return _getDigitilizationPatiresName(row);
+        case "CS_ACTIONS":
+          if (row?.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="DigitalizationConfig" />;
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_ditilization_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
+    },
+  },
   patternValidation: (key) => {
     switch (key) {
       case "contact":
@@ -2629,6 +2770,8 @@ export const UICustomizations = {
         return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       case "userName":
         return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i;
+      case "debtNature":
+        return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i;
       case "address":
         return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
       case "nonNumericString":

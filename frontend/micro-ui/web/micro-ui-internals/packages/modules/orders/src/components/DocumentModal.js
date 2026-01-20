@@ -105,6 +105,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {}, disab
       hideCancel={config?.isStepperModal ? config?.steps[step]?.hideCancel || config?.hideCancel : config?.hideCancel}
       actionCancelLabel={config?.isStepperModal ? config?.steps[step]?.actionCancelLabel || config?.actionCancelLabel : config?.actionCancelLabel}
       actionCancelOnSubmit={actionCancelOnSubmit}
+      cancelTheme={config?.isStepperModal ? config?.steps[step]?.cancelTheme || config?.cancelTheme : config?.cancelTheme}
       formId="modal-action"
       headerBarMain={
         config?.isStepperModal && config?.steps[step]?.type !== "success" ? (

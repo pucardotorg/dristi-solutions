@@ -236,7 +236,14 @@ const ApplicationDetails = ({ location, match }) => {
         content: fileName,
       },
       {
-        doc: <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} docViewerCardClassName={"doc-card"}></DocViewerWrapper>,
+        doc: (
+          <DocViewerWrapper
+            fileStoreId={fileStoreId}
+            tenantId={tenantId}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          ></DocViewerWrapper>
+        ),
         image: true,
       },
     ];
@@ -254,6 +261,7 @@ const ApplicationDetails = ({ location, match }) => {
             tenantId={tenantId}
             displayFilename={identifierIdDetails?.filename}
             docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
           />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId

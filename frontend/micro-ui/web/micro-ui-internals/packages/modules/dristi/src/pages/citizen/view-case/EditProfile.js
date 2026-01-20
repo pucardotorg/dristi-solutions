@@ -672,7 +672,7 @@ const EditProfile = ({ path }) => {
         },
         { tenantId, limit: 1000, offset: 0 }
       );
-  
+
       const individual = response?.Individual?.[0];
       return individual?.userUuid || uniqueId;
     } catch (error) {
@@ -774,6 +774,12 @@ const EditProfile = ({ path }) => {
     } else {
       setIsLoader(true);
       try {
+        const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
+        const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
+        if (ifProfileRequestAlreadyExists) {
+          toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
+          return;
+        }
         const onBehalfOfUuid = await getOnBehalfOfUuid();
         const res = await updateProfileData({
           t,

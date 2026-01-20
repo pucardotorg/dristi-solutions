@@ -24,12 +24,12 @@ const CloseBtn = (props) => {
   );
 };
 
-const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView = false }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
   const { t } = useTranslation();
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("HEARING_SUMMARIES") : t("ALL_HEARING_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -40,21 +40,21 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {hearingList?.length === 0 ? (
+        {!botdOrderList?.length ? (
           <div style={{ marginTop: "20px" }}>
-            {t("NO_HEARING_SUMMARY_AVAILABLE")}
+            {t("NO_BOTD_SUMMARY_AVAILABLE")}
           </div>
         ) :
-        hearingList?.map((hearing, index) => (
+        botdOrderList?.map((botdOrder, index) => (
           <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
             <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ marginLeft: "4px" }}>{`${t(hearing?.hearingType)} Hearing`}</div>
-              <div style={{ marginRight: "8px" }}>{`${formatDate(hearing?.startTime)}`}</div>
+              <div style={{ marginLeft: "4px" }}>{botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}</div>
+              <div style={{ marginRight: "8px" }}>{`${formatDate(botdOrder?.createdDate)}`}</div>
             </div>
             <div>
               <TextArea
                 style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
-                value={hearing?.hearingSummary || ""}
+                value={botdOrder?.businessOfTheDay || ""}
                 readOnly
               />
             </div>

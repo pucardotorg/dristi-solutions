@@ -69,7 +69,7 @@ const getCase = async (caseId) => {
     criteria: [{ filingNumber: caseId }],
     tenantId: "kl",
     RequestInfo: {
-      apiId: "Rainmaker",
+      apiId: "Dristi",
       authToken: access_token,
       msgId: `${time}|en_IN`,
       plainAccessRequest: {},
@@ -184,7 +184,7 @@ const updateCase = async (caseId, data) => {
   const time = new Date().getTime();
 
   const RequestInfo = {
-    apiId: "Rainmaker",
+    apiId: "Dristi",
     authToken: access_token,
     msgId: `${time}|en_IN`,
     plainAccessRequest: {},

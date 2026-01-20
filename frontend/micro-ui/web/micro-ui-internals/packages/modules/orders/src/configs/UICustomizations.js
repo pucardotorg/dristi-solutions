@@ -1,6 +1,7 @@
 import get from "lodash/get";
 import set from "lodash/set";
 import { getFormattedName } from "../utils";
+import { formatDate } from "../utils/orderUtils";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -93,6 +94,14 @@ export const UICustomizations = {
       date: {
         formToSchema: (dateString) => {
           return dateString ? new Date(dateString).getTime() : null;
+        },
+        schemaToForm: (date) => {
+          return date ? new Date(date).toISOString().split("T")[0] : null;
+        },
+      },
+      customDate: {
+        formToSchema: (dateString) => {
+          return dateString ? formatDate(new Date(dateString), "DD-MM-YYYY") : null;
         },
         schemaToForm: (date) => {
           return date ? new Date(date).toISOString().split("T")[0] : null;

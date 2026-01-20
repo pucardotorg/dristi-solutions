@@ -338,6 +338,8 @@ const SubmissionDocuments = ({ path }) => {
             },
           },
         };
+        const updateIdForDownload = Boolean(signedDocumentUploadedID) ? signedDocumentUploadedID : localStorageID;
+        setSignedDocumentUploadID(updateIdForDownload);
         sessionStorage.removeItem("fileStoreId");
         evidence = await DRISTIService.updateEvidence(evidenceReqBody);
         await createPendingTask({
@@ -440,7 +442,7 @@ const SubmissionDocuments = ({ path }) => {
               mdmsConfig: {
                 moduleName: "Submission",
                 masterName: "SubmissionDocumentType",
-                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isEmployee});});}`,
+                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isEmployee});}).sort((a,b) => a.code.localeCompare(b.code));}`,
               },
             },
           };

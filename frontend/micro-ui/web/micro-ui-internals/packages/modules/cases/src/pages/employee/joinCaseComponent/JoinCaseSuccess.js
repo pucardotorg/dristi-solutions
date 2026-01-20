@@ -26,7 +26,7 @@ const JoinCaseSuccess = ({
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {

@@ -8,12 +8,19 @@ import { useTranslation } from "react-i18next";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { DRISTIService } from "../../../services";
-import { getSuffixByBusinessCode, getUniqueAcronym } from "../../../Utils";
+import {
+  getComplainants,
+  getComplainantSideAdvocates,
+  getComplainantsSidePoAHolders,
+  getSuffixByBusinessCode,
+  getUniqueAcronym,
+} from "../../../Utils";
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
+import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -166,6 +173,7 @@ const complainantWorkflowACTION = {
   UPLOAD_DOCUMENT: "UPLOAD",
   ESIGN: "E-SIGN",
   EDIT_CASE: "EDIT_CASE",
+  EDIT_UNSIGNED_CASE: "EDIT_UNSIGNED_CASE",
 };
 
 const complainantWorkflowState = {
@@ -220,8 +228,8 @@ const ComplainantSignature = ({ path }) => {
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -327,9 +335,43 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [caseDetails, litigants]);
 
+  // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
+  const allComplainantSideUuids = useMemo(() => {
+    const complainants = getComplainants(caseDetails);
+    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
+    const advocates = getComplainantSideAdvocates(caseDetails) || [];
+    const allParties = [...complainants, ...poaHolders, ...advocates];
+
+    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+  }, [caseDetails]);
+
   const isFilingParty = useMemo(() => {
-    return caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-  }, [caseDetails?.auditDetails?.createdBy, userInfo?.uuid]);
+    if ([CaseWorkflowState?.PENDING_SIGN, CaseWorkflowState.PENDING_E_SIGN]?.includes(caseDetails?.status)) {
+      const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
+      return filingParty;
+    }
+
+    if ([CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_RE_E_SIGN]?.includes(caseDetails?.status)) {
+      const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
+      return isCaseCorrectionAllowed;
+    }
+  }, [allComplainantSideUuids, userInfo?.uuid, caseDetails]);
+
+  useEffect(() => {
+    if ([CaseWorkflowState?.DRAFT_IN_PROGRESS, CaseWorkflowState.CASE_REASSIGNED]?.includes(caseDetails?.status)) {
+      history.replace(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${caseId}&selected=complainantDetails`);
+    } else if (
+      caseDetails?.status &&
+      ![
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
+      history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
+    }
+  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids, userInfoType]);
 
   const isCurrentLitigantSigned = useMemo(() => {
     return litigants?.some((lit) => lit?.hasSigned && lit?.additionalDetails?.uuid === userInfo?.uuid);
@@ -447,6 +489,10 @@ const ComplainantSignature = ({ path }) => {
         });
       }
 
+      const action = [CaseWorkflowState?.PENDING_SIGN, CaseWorkflowState.PENDING_E_SIGN]?.includes(caseDetails?.status)
+        ? complainantWorkflowACTION.EDIT_CASE
+        : complainantWorkflowACTION.EDIT_UNSIGNED_CASE;
+
       await DRISTIService.caseUpdateService(
         {
           cases: {
@@ -458,7 +504,7 @@ const ComplainantSignature = ({ path }) => {
             documents: tempDocs,
             workflow: {
               ...caseDetails?.workflow,
-              action: complainantWorkflowACTION.EDIT_CASE,
+              action: action,
               assignes: [],
             },
           },
@@ -898,7 +944,20 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || uploadDoc;
+    return (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status) &&
+      (isEsignSuccess ||
+        isCurrentAdvocateSigned ||
+        isCurrentLitigantSigned ||
+        isCurrentPoaSigned ||
+        (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
+        uploadDoc)
+    );
   };
 
   useEffect(() => {

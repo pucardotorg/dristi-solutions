@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
-import isEqual from "lodash/isEqual";
-import { max } from "lodash";
 
 const CloseBtn = () => {
   return (
@@ -34,7 +32,9 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       ],
     [config?.populators?.inputs]
   );
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key]?.submissionDocuments || [{}]);
+  const [formInstances, setFormInstances] = useState(() => {
+    return formData?.[config?.key]?.submissionDocuments || [{}];
+  });
 
   const addAnotherForm = () => {
     setFormInstances([...formInstances, {}]);
@@ -43,7 +43,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   const updateFormData = (updatedFormInstances) => {
     onSelect(config.key, {
       ...formData[config.key],
-      submissionDocuments: updatedFormInstances.map((instance) => instance[config.key]),
+      submissionDocuments: updatedFormInstances,
     });
   };
 
@@ -65,17 +65,27 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   };
 
   function setValue(value, name, input, index) {
-    const updatedFormInstances = [...formInstances];
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
-    }
-    updatedFormInstances[index][config.key][name] = value;
+    const formValue = formData?.[config.key]?.submissionDocuments || [{}];
+    const updatedFormInstances = [...formValue];
+    updatedFormInstances[index] = {
+      ...updatedFormInstances[index],
+      [name]: value,
+    };
 
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   }
 
   const getFileStoreData = async (filesData, input, index) => {
+    if (Array.isArray(filesData) && filesData.length === 0) {
+      setValue([], input.name, input, index);
+      return;
+    }
+
+    if (!filesData?.length) {
+      return;
+    }
+
     const numberOfFiles = filesData.length;
     let documents = [];
     if (numberOfFiles > 0 && !filesData?.[0]?.[1]?.fileStore) {
@@ -140,14 +150,14 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   );
 
   const memoizedDocuments = useMemo(() => {
-    return formInstances.map((formInstance, index) => {
-      return formInstance.submissionDocuments?.document && showDocument(formInstance.submissionDocuments.document);
+    return formInstances?.map((formInstance, index) => {
+      return formInstance?.document && showDocument(formInstance?.document);
     });
   }, [formInstances, showDocument]);
 
   return (
     <React.Fragment>
-      {formInstances.map((formInstance, index) => (
+      {formInstances?.map((formInstance, index) => (
         <div key={index}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
             <p style={{ fontSize: "24px", fontWeight: 700 }}>{`Submission Document (${index + 1})`}</p>
@@ -159,7 +169,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
           </div>
 
           {inputs?.map((input, idx) => {
-            const docObj = formInstances?.[index]?.documentTitle ? formInstances[index] : formInstances[index]?.submissionDocuments;
+            const docObj = formData?.[config?.key]?.submissionDocuments?.[index];
             let currentValue = (formData[index] && formData[index][config.key] && formData[index][config.key][input.name]) || "";
             return (
               <React.Fragment key={idx}>
@@ -174,9 +184,13 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         tenantId={window?.Digit.ULBService.getCurrentTenantId()}
                         getFormState={(fileData) => getFileStoreData(fileData, input, index)}
                         showHintBelow={input?.showHintBelow ? true : false}
-                        setuploadedstate={docObj ? (docObj?.document ? [[docObj?.document?.additionalDetails?.name, docObj?.document]] : []) : []}
+                        setuploadedstate={
+                          docObj?.document && Object.keys(docObj.document).length > 0
+                            ? [[docObj.document.additionalDetails?.name, docObj.document]]
+                            : []
+                        }
                         allowedFileTypesRegex={input.allowedFileTypes}
-                        allowedMaxSizeInMB={input.allowedMaxSizeInMB || "5"}
+                        allowedMaxSizeInMB={input.allowedMaxSizeInMB || "10"}
                         hintText={input.hintText}
                         maxFilesAllowed={input.maxFilesAllowed || "1"}
                         extraStyleName={{ padding: "0.5rem" }}
@@ -185,13 +199,14 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         displayName={docObj?.document?.additionalDetails?.name || ""}
                         disable={disable}
                         uploadDivStyle={input?.uploadDivStyle}
+                        multiple={true}
                       />
                     )}
                     {input?.type === "text" && (
                       <TextInput
                         className="field desktop-w-full"
                         key={input.name}
-                        value={docObj?.documentTitle ? docObj.documentTitle : ""}
+                        value={docObj?.[input.name] || ""}
                         onChange={(e) => {
                           setValue(e.target.value, input.name, input, index);
                         }}
@@ -211,7 +226,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         t={t}
                         label={input.name}
                         type={input.type}
-                        value={docObj?.documentType}
+                        value={docObj?.[input.name]}
                         onChange={(e) => {
                           setValue(e, input.name, input, index);
                         }}
@@ -240,7 +255,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
               </React.Fragment>
             );
           })}
-          {formInstances.length > 0 && memoizedDocuments[index]}
+          {formInstances?.length > 0 && memoizedDocuments[index]}
         </div>
       ))}
       {isImageModalOpen && (
@@ -258,7 +273,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       )}
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
+          {formInstances?.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
         </button>
       )}
     </React.Fragment>

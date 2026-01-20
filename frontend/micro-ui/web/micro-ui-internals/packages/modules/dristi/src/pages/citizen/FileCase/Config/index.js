@@ -1,3 +1,4 @@
+import { chequeDetailsConfig } from "./chequedetailsConfig";
 import { processDeliveryCourierServiceConfig } from "./processDeliveryCourierServiceConfig";
 
 export const sideMenuConfig = [
@@ -125,16 +126,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "chequeDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: chequeDetailsConfig,
         mandatoryFields: [
           "chequeSignatoryName",
           "bouncedChequeFileUpload.document",

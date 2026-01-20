@@ -60,6 +60,26 @@ const AddOrderTypeModal = ({
 
     const currentOrderType = orderType?.code || "";
 
+    if (currentOrderType && ["COST", "WITNESS_BATTA"].includes(currentOrderType)) {
+      if (typeof formData?.amount === "string") {
+        let cleanedAmount = formData.amount.replace(/-/g, "").replace(/[^0-9.]/g, "");
+        if (cleanedAmount === "-") cleanedAmount = "";
+        if (cleanedAmount !== formData.amount) {
+          setValue("amount", cleanedAmount);
+        }
+      }
+
+      const amountNum = Number(formData?.amount);
+      const hasAmount = formData?.amount !== undefined && formData?.amount !== null && formData?.amount !== "";
+      const hasAmountError = Object.keys(formState?.errors).includes("amount");
+
+      if (hasAmount && Number.isFinite(amountNum) && amountNum < 0 && !hasAmountError) {
+        setFormErrors?.current?.[index]?.("amount", { message: t("Amount should be greater that 0") });
+      } else if ((!hasAmount || (Number.isFinite(amountNum) && amountNum >= 0)) && hasAmountError) {
+        clearFormErrors?.current?.[index]?.("amount");
+      }
+    }
+
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
@@ -204,9 +224,17 @@ const AddOrderTypeModal = ({
     }
 
     if (currentOrderType === "ACCEPT_BAIL") {
-      if (formData?.chequeAmount < 0 && !Object.keys(formState?.errors).includes("chequeAmount")) {
+      if (typeof formData?.chequeAmount === "string") {
+        let cleaned = formData.chequeAmount.replace(/[^0-9.]/g, "");
+        if (cleaned !== formData.chequeAmount) {
+          setValue("chequeAmount", cleaned);
+        }
+      }
+
+      const chequeAmountNum = Number(formData?.chequeAmount);
+      if (chequeAmountNum < 0 && !Object.keys(formState?.errors).includes("chequeAmount")) {
         setFormErrors?.current?.[index]?.("chequeAmount", { message: t("Amount should be greater that 0") });
-      } else if (formData?.chequeAmount > 0 && Object.keys(formState?.errors).includes("chequeAmount")) {
+      } else if (chequeAmountNum >= 0 && Object.keys(formState?.errors).includes("chequeAmount")) {
         clearFormErrors?.current?.[index]?.("chequeAmount");
       }
 
@@ -217,6 +245,13 @@ const AddOrderTypeModal = ({
       })();
 
       if (isSurety) {
+        if (typeof formData?.noOfSureties === "string") {
+          const cleanedSureties = formData.noOfSureties.replace(/\D/g, "");
+          if (cleanedSureties !== formData.noOfSureties) {
+            setValue("noOfSureties", cleanedSureties);
+          }
+        }
+
         const suretiesNum = Number(formData?.noOfSureties);
         const hasNoOfSuretiesError = Object.keys(formState?.errors).includes("noOfSureties");
         if (formState?.submitCount && !formData?.noOfSureties && !hasNoOfSuretiesError) {
@@ -291,6 +326,21 @@ const AddOrderTypeModal = ({
     return bt;
   }, [newCurrentOrder]);
 
+  const defaultNatureOfDisposal = useMemo(() => {
+    const natureOfDisposal = newCurrentOrder?.additionalDetails?.formdata?.natureOfDisposal;
+    if (natureOfDisposal == null)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    if (typeof natureOfDisposal === "object" && Object?.keys(natureOfDisposal)?.length === 0)
+      return {
+        code: "UNCONTESTED",
+        name: "Uncontested",
+      };
+    return natureOfDisposal;
+  }, [newCurrentOrder]);
+
   return (
     <React.Fragment>
       <Modal
@@ -304,18 +354,40 @@ const AddOrderTypeModal = ({
             <div className="view-order order-type-form-modal">
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
+                const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
-                let effectiveConfig = isAcceptBail
-                  ? (modifiedFormConfig || []).map((cfg) => ({
-                      ...cfg,
-                      body: cfg.body.filter((field) => {
-                        if (field.key === "noOfSureties") return showSuretyFields;
-                        return true;
-                      }),
-                    }))
-                  : modifiedFormConfig;
+                const isMediation = formdata?.ADRMode?.name === "MEDIATION";
+
+                let effectiveConfig = modifiedFormConfig;
+
+                if (isAcceptBail) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.filter((field) => {
+                      if (field?.key === "noOfSureties") return showSuretyFields;
+                      return true;
+                    }),
+                  }));
+                } else if (isReferralToADR) {
+                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
+                  const hideForMediationEndKeys = ["dateOfEndADR"];
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.map((field) => {
+                      const shouldHide =
+                        (mediationKeys?.includes(field?.key) && !isMediation) || (hideForMediationEndKeys?.includes(field?.key) && isMediation);
+                      return {
+                        ...field,
+                        populators: {
+                          ...field?.populators,
+                          hideInForm: shouldHide,
+                        },
+                      };
+                    }),
+                  }));
+                }
 
                 if (isAcceptBail && bailTypeCode === "SURETY") {
                   const CheckboxRow = () => (
@@ -360,6 +432,7 @@ const AddOrderTypeModal = ({
                     defaultValues={{
                       ...(getDefaultValue(index) || {}),
                       ...(orderType?.code === "ACCEPT_BAIL" && { bailType: initialBailType }),
+                      ...(orderType?.code === "ABATE_CASE" && { natureOfDisposal: defaultNatureOfDisposal }),
                     }}
                     config={effectiveConfig}
                     fieldStyle={{ width: "100%" }}

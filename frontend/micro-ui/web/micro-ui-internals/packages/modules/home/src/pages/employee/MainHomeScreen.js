@@ -24,6 +24,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../../utils";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -139,6 +140,28 @@ const MainHomeScreen = () => {
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
   }, [config]);
+
+  const { data: applicationTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Application", [{ name: "ApplicationType" }], {
+    select: (data) => {
+      return data?.["Application"]?.ApplicationType || [];
+    },
+  });
+
+  const applicationTypeOptions = useMemo(() => {
+    if (!applicationTypeData) return [];
+
+    return applicationTypeData
+      .filter((item) => !["RE_SCHEDULE", "DELAY_CONDONATION"].includes(item.type))
+      .map((item) => {
+        const i18nKey = `APPLICATION_TYPE_${item.type}`;
+        return {
+          ...item,
+          name: i18nKey,
+          label: t(i18nKey),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [applicationTypeData, t]);
 
   // useEffect(() => {
   //   if (activeTab !== homeActiveTab) {
@@ -425,7 +448,14 @@ const MainHomeScreen = () => {
   // Fetch order details when courier service pending task is set
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (courierServicePendingTask && Object.keys(courierServicePendingTask).length > 0 && Array.isArray(taskManagementList)) {
+      if (
+        Object?.keys(courierOrderDetails)?.length === 0 &&
+        courierServicePendingTask &&
+        Object?.keys(courierServicePendingTask)?.length > 0 &&
+        caseDetails &&
+        Object?.keys(caseDetails)?.length > 0 &&
+        Array?.isArray(taskManagementList)
+      ) {
         try {
           const orderNumber = courierServicePendingTask?.referenceId?.split("_").pop();
           const uniqueIdsList = courierServicePendingTask?.partyUniqueIds;
@@ -570,7 +600,7 @@ const MainHomeScreen = () => {
     };
 
     fetchOrderDetails();
-  }, [courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
+  }, [courierOrderDetails, courierServicePendingTask, getOrderDetail, taskManagementList, tenantId, caseDetails]);
 
   const handleProcessCourierOnSubmit = useCallback(
     async (courierData, isLast) => {
@@ -896,7 +926,7 @@ const MainHomeScreen = () => {
             mdmsConfig: {
               masterName: "SubStage",
               moduleName: "case",
-              select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+              select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a, b) => a.code.localeCompare(b.code));}",
             },
           },
         },
@@ -927,12 +957,7 @@ const MainHomeScreen = () => {
         populators: {
           name: "referenceEntityType",
           optionsKey: "name",
-          mdmsConfig: {
-            masterName: "ApplicationType",
-            moduleName: "Application",
-            select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`RE_SCHEDULE`,`DELAY_CONDONATION`].includes(item.type))?.map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
-          },
+          options: applicationTypeOptions || [],
         },
       });
     }
@@ -982,7 +1007,7 @@ const MainHomeScreen = () => {
       },
     };
     setConfig(updatedConfig);
-  }, [activeTab]);
+  }, [activeTab, applicationTypeOptions]);
 
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
@@ -1167,23 +1192,15 @@ const MainHomeScreen = () => {
           <div className="home-bulk-sign">
             <BulkESignView />
           </div>
+        ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
+          <div className="home-bulk-sign">
+            <BulkSignDigitalizationView />
+          </div>
         ) : (
-          // <div
-          //   className="inbox-search-wrapper"
-          //   style={{
-          //     width: "100%",
-          //     maxHeight: "calc(100vh - 90px)",
-          //     overflowY: "auto",
-          //     scrollbarWidth: "thin",
-          //     scrollbarColor: "#c5c5c5 #f9fafb",
-          //     padding: "26px",
-          //   }}
-          // >
           <div className={`bulk-esign-order-view`}>
             <div className="header">{t(options[activeTab]?.name || applicationOptions[activeTab]?.name)}</div>
             <div className="inbox-search-wrapper">{activeTab === "SCRUTINISE_CASES" ? scrutinyInboxSearchComposer : inboxSearchComposer}</div>
           </div>
-          // </div>
         )}
         {showBailBondModal && (
           <BailBondModal

@@ -176,6 +176,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             email: item?.emails?.emailId || [],
             uuid: item?.uuid,
             partyIndex: `Witness_${index}`,
+            uniqueId: item?.uniqueId,
           },
         }));
 

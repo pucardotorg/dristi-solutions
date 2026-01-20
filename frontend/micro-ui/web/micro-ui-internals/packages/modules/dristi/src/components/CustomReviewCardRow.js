@@ -792,6 +792,7 @@ const CustomReviewCardRow = ({
                                   displayFilename={data?.fileName}
                                   tenantId={tenantId}
                                   docWidth="250px"
+                                  errorStyleSmallType={true}
                                   showDownloadOption={false}
                                   documentName={data?.fileName || data?.additionalDetails?.fileName}
                                   preview
@@ -825,6 +826,7 @@ const CustomReviewCardRow = ({
                                     displayFilename={data?.fileName}
                                     tenantId={tenantId}
                                     docWidth="250px"
+                                    errorStyleSmallType={true}
                                     showDownloadOption={false}
                                     documentName={data?.fileName}
                                     preview
@@ -849,6 +851,7 @@ const CustomReviewCardRow = ({
                             displayFilename={file?.fileName}
                             tenantId={tenantId}
                             docWidth="250px"
+                            errorStyleSmallType={true}
                             showDownloadOption={false}
                             documentName={data?.fileName}
                             preview

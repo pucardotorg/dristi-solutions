@@ -70,6 +70,8 @@ const createWitnessConfig = (index) => [
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -161,8 +163,8 @@ const createWitnessConfig = (index) => [
                 max: "9999999",
                 title: "",
                 errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "[0-9]+",
-                maxlength: 7,
+                pattern: /^[1-9][0-9]{5}$/i,
+                maxlength: 6,
                 minlength: 6,
                 isRequired: true,
                 patternType: "Pincode",
@@ -175,6 +177,10 @@ const createWitnessConfig = (index) => [
               label: "STATE",
               validation: {
                 isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
+                patternType: "Name",
+                title: "",
               },
               isMandatory: true,
             },
@@ -184,6 +190,10 @@ const createWitnessConfig = (index) => [
               label: "DISTRICT",
               validation: {
                 isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                patternType: "Name",
+                title: "",
               },
               isMandatory: true,
             },
@@ -193,8 +203,23 @@ const createWitnessConfig = (index) => [
               label: "CITY/TOWN",
               validation: {
                 isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                patternType: "Name",
+                errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
               },
               isMandatory: true,
+            },
+            {
+              name: "locality",
+              type: "text",
+              label: "ADDRESS",
+              isFormatRequired: true,
+              validation: {
+                minlength: 2,
+                maxlength: 256,
+                pattern: /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+              },
             },
           ],
           validation: {},
@@ -208,8 +233,9 @@ const createWitnessConfig = (index) => [
       {
         key: "witnessAdditionalDetails",
         type: "component",
-        label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
+        label: "CS_ADD_WITNESS_ADDITIONAL_DETAIL",
         component: "SelectCustomTextArea",
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -217,7 +243,7 @@ const createWitnessConfig = (index) => [
               type: "TextAreaComponent",
               isOptional: true,
               placeholder: "CS_TEXTAREA_PLACEHOLDER_ADDITIONAL_DETAIL",
-              textAreaSubHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
+              textAreaSubHeader: "CS_ADD_WITNESS_ADDITIONAL_DETAIL",
               subHeaderClassName: "dristi-font-bold",
             },
           ],

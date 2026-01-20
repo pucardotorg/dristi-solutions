@@ -27,7 +27,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>}
     </React.Fragment>
   );
 };
@@ -43,9 +43,9 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
           isOptional: "CS_IS_OPTIONAL",
           infoTooltipMessage: "AADHAR",
           type: "DragDropComponent",
-          uploadGuidelines: t("UPLOAD_DOC_50"),
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          uploadGuidelines: t("UPLOAD_DOC_10"),
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
         },
@@ -80,11 +80,21 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     // }
     if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    return file.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
+    return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
 
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
+    // Check file size before adding to currentValue
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.size > maxFileSize) {
+      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
+
+    // Only add the file to currentValue if it passes size validation
     currentValue.splice(index, 1, file);
     currentValue = currentValue.map((item) => {
       if (item?.name) {
@@ -99,12 +109,6 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
         return item;
       }
     });
-    const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    if (file.size > maxFileSize) {
-      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
-    } else if (clearErrors) {
-      clearErrors(config.key);
-    }
     setValue(currentValue, input?.name, file.size > maxFileSize);
   };
 
@@ -134,7 +138,11 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                  {input?.isOptional && (
+                    <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>
+                      &nbsp;{`${t(input?.isOptional)}`}
+                    </span>
+                  )}
                   <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}

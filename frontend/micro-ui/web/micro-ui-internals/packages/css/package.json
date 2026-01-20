@@ -1,13 +1,10 @@
 {
   "_comment": "This is a comment and will be ignored by npm",
   "name": "dristi-ui-css",
-  "version": "0.0.8-dristi-kerala.3",
+  "version": "0.1.0-dristi-kerala.2",
   "license": "MIT",
   "main": "dist/index.css",
   "author": "Akshay Kumar <akshay.kumar@beehyv.com>",
-  "engines": {
-    "node": ">=14"
-  },
   "cssConfig": {
     "prefix": ""
   },

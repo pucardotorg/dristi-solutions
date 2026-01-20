@@ -10,7 +10,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
 
-  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({"tenantId": tenantId});
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {

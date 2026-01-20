@@ -1,5 +1,4 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import Axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Modal from "../../../dristi/src/components/Modal";
@@ -7,6 +6,7 @@ import { Urls } from "../hooks/services/Urls";
 import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -65,27 +65,30 @@ function OrderReviewModal({
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.orders.orderPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          orderId: order?.id,
-          cnrNumber: order?.cnrNumber,
-          qrCode: false,
-          courtId: courtId,
-          orderPreviewKey: "new-order-generic",
-        },
-        data: {
-          RequestInfo: {
-            authToken: accessToken,
-            userInfo: userInfo,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+      return axiosInstance
+        .post(
+          Urls.orders.orderPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+          {
+            params: {
+              tenantId: tenantId,
+              orderId: order?.id,
+              cnrNumber: order?.cnrNumber,
+              qrCode: false,
+              courtId: courtId,
+              orderPreviewKey: "new-order-generic",
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
