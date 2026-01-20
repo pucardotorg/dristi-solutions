@@ -394,7 +394,7 @@ const AdmittedCaseV2 = () => {
     }
   }, []);
 
-  const homeNextHearingData = JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter"));
+  const homeNextHearingFilter = JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter"));
 
   useEffect(() => {
     const fetchInboxForNextHearingData = async () => {
@@ -418,9 +418,9 @@ const AdmittedCaseV2 = () => {
           };
         };
 
-        if (homeNextHearingData) {
-          const fromDateForNextHearings = new Date(homeNextHearingData.homeFilterDate).setHours(0, 0, 0, 0);
-          const toDateForNextHearings = new Date(homeNextHearingData.homeFilterDate).setHours(23, 59, 59, 999);
+        if (homeNextHearingFilter) {
+          const fromDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(0, 0, 0, 0);
+          const toDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(23, 59, 59, 999);
 
           const resForNextHearings = await HomeService.InboxSearch(payload(fromDateForNextHearings, toDateForNextHearings), { tenantId: "kl" });
           setDataForNextHearings(resForNextHearings?.items || []);
@@ -2704,10 +2704,10 @@ const AdmittedCaseV2 = () => {
   const hideNextHearingButton = useMemo(() => {
     const validData = dataForNextHearings?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
-      (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingData?.homeHearingNumber
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber
     );
     return index === -1 || validData?.length <= 1;
-  }, [dataForNextHearings, homeNextHearingData]);
+  }, [dataForNextHearings, homeNextHearingFilter]);
 
   const customNextHearing = useCallback(
     () => {
@@ -2716,7 +2716,7 @@ const AdmittedCaseV2 = () => {
       } else {
         const validData = dataForNextHearings?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status));
         const index = validData?.findIndex(
-          (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingData?.homeHearingNumber
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber
         );
         if (index === -1 || validData?.length === 1) {
           history.push(`/${window?.contextPath}/employee/home/home-screen`);
@@ -2734,7 +2734,7 @@ const AdmittedCaseV2 = () => {
           );
         }
       }
-    }, [dataForNextHearings, history, homeNextHearingData]
+    }, [dataForNextHearings, history, homeNextHearingFilter]
   )
 
   const nextHearing = useCallback(
@@ -3888,7 +3888,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : `${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingData?.homeFilterDate))).split("-").join("/")})`)}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : `${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate))).split("-").join("/")})`)}
                                 children={hasHearingPriorityView ? null : <RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3908,7 +3908,7 @@ const AdmittedCaseV2 = () => {
                             {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t(`${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingData?.homeFilterDate))).split("-").join("/")})`)}
+                                label={t(`${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate))).split("-").join("/")})`)}
                                 children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
