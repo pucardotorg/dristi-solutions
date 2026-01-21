@@ -46,5 +46,33 @@ public class ServiceConstants {
     public static final String TENANTID = "?tenantId=";
     public static final String BUSINESS_SERVICES = "&businessServices=";
 
+    // Advocate Office Management Exception Codes and Messages
+    public static final String MEMBER_ALREADY_EXISTS = "MEMBER_ALREADY_EXISTS";
+    public static final String MEMBER_ALREADY_EXISTS_MESSAGE = "Member already exists in the office";
+    
+    public static final String MEMBER_NOT_FOUND = "MEMBER_NOT_FOUND";
+    public static final String MEMBER_NOT_FOUND_MESSAGE = "Member not found in the office";
+    
+    public static final String SEARCH_CRITERIA_NULL = "SEARCH_CRITERIA_NULL";
+    public static final String SEARCH_CRITERIA_NULL_MESSAGE = "Search criteria cannot be null";
+    
+    public static final String ADD_MEMBER_ERROR = "ADD_MEMBER_ERROR";
+    public static final String ADD_MEMBER_ERROR_MESSAGE = "Error while adding member: ";
+    
+    public static final String LEAVE_OFFICE_ERROR = "LEAVE_OFFICE_ERROR";
+    public static final String LEAVE_OFFICE_ERROR_MESSAGE = "Error while processing leave office: ";
+    
+    public static final String SEARCH_MEMBER_ERROR = "SEARCH_MEMBER_ERROR";
+    public static final String SEARCH_MEMBER_ERROR_MESSAGE = "Error while searching members: ";
+    
+    public static final String MEMBER_SEARCH_QUERY_EXCEPTION = "MEMBER_SEARCH_QUERY_EXCEPTION";
+    public static final String MEMBER_SEARCH_QUERY_EXCEPTION_MESSAGE = "Exception occurred while building the member search query: ";
+    
+    public static final String SEARCH_MEMBER_ERR = "SEARCH_MEMBER_ERR";
+    public static final String ARGS_SIZE_MISMATCH_MESSAGE = "Args and ArgTypes size mismatch";
+    public static final String SEARCH_MEMBER_ERR_MESSAGE = "Exception while fetching member list: ";
+    
+    public static final String ROW_MAPPER_ERROR = "ROW_MAPPER_ERROR";
+    public static final String ROW_MAPPER_ERROR_MESSAGE = "Error mapping AddMember result set: ";
 
 }

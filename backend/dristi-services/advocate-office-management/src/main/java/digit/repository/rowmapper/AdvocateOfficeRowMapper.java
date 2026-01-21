@@ -13,6 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import static digit.config.ServiceConstants.ROW_MAPPER_ERROR;
+import static digit.config.ServiceConstants.ROW_MAPPER_ERROR_MESSAGE;
+
 @Component
 @Slf4j
 public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMember>> {
@@ -52,7 +55,7 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
             }
         } catch (Exception e) {
             log.error("Error occurred while processing AddMember ResultSet", e);
-            throw new CustomException("ROW_MAPPER_ERROR", "Error mapping AddMember result set: " + e.getMessage());
+            throw new CustomException(ROW_MAPPER_ERROR, ROW_MAPPER_ERROR_MESSAGE + e.getMessage());
         }
 
         return new ArrayList<>(memberMap.values());

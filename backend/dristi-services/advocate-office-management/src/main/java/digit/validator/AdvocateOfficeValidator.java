@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static digit.config.ServiceConstants.*;
+
 @Component
 @Slf4j
 public class AdvocateOfficeValidator {
@@ -31,7 +33,7 @@ public class AdvocateOfficeValidator {
 
         List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
         if (!existingMembers.isEmpty()) {
-            throw new CustomException("MEMBER_ALREADY_EXISTS", "Member already exists in the office");
+            throw new CustomException(MEMBER_ALREADY_EXISTS, MEMBER_ALREADY_EXISTS_MESSAGE);
         }
 
         // todo call user services to check if uuid exists for both officeAdvocateId and memberId
@@ -48,13 +50,13 @@ public class AdvocateOfficeValidator {
 
         List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
         if (existingMembers.isEmpty()) {
-            throw new CustomException("MEMBER_NOT_FOUND", "Member not found in the office");
+            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
         }
     }
 
     public void validateSearchRequest(MemberSearchRequest request) {
         if (request.getSearchCriteria() == null) {
-            throw new CustomException("SEARCH_CRITERIA_NULL", "Search criteria cannot be null");
+            throw new CustomException(SEARCH_CRITERIA_NULL, SEARCH_CRITERIA_NULL_MESSAGE);
         }
     }
 }

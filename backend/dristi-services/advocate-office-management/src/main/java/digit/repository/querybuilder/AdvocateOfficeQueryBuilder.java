@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 import java.sql.Types;
 import java.util.List;
 
+import static digit.config.ServiceConstants.MEMBER_SEARCH_QUERY_EXCEPTION;
+import static digit.config.ServiceConstants.MEMBER_SEARCH_QUERY_EXCEPTION_MESSAGE;
+
 @Component
 @Slf4j
 public class AdvocateOfficeQueryBuilder {
@@ -85,7 +88,7 @@ public class AdvocateOfficeQueryBuilder {
             return query.toString();
         } catch (Exception e) {
             log.error("Error while building member search query :: {}", e.toString());
-            throw new CustomException("MEMBER_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the member search query: " + e.getMessage());
+            throw new CustomException(MEMBER_SEARCH_QUERY_EXCEPTION, MEMBER_SEARCH_QUERY_EXCEPTION_MESSAGE + e.getMessage());
         }
     }
 

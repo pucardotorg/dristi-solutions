@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import static digit.config.ServiceConstants.*;
+
 @Slf4j
 @Repository
 public class AdvocateOfficeRepository {
@@ -39,7 +41,7 @@ public class AdvocateOfficeRepository {
 
             if (preparedStmtList.size() != preparedStmtArgList.size()) {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
-                throw new CustomException("SEARCH_MEMBER_ERR", "Args and ArgTypes size mismatch");
+                throw new CustomException(SEARCH_MEMBER_ERR, ARGS_SIZE_MISMATCH_MESSAGE);
             }
 
             memberQuery = queryBuilder.addOrderByQuery(memberQuery, pagination);
@@ -64,7 +66,7 @@ public class AdvocateOfficeRepository {
             throw e;
         } catch (Exception e) {
             log.error("Error while fetching member list :: {}", e.toString());
-            throw new CustomException("SEARCH_MEMBER_ERR", "Exception while fetching member list: " + e.getMessage());
+            throw new CustomException(SEARCH_MEMBER_ERR, SEARCH_MEMBER_ERR_MESSAGE + e.getMessage());
         }
     }
 

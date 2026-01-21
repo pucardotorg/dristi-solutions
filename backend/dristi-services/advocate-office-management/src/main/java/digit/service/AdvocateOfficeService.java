@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static digit.config.ServiceConstants.*;
+
 @Service
 @Slf4j
 public class AdvocateOfficeService {
@@ -55,7 +57,7 @@ public class AdvocateOfficeService {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while adding member", e);
-            throw new CustomException("ADD_MEMBER_ERROR", "Error while adding member: " + e.getMessage());
+            throw new CustomException(ADD_MEMBER_ERROR, ADD_MEMBER_ERROR_MESSAGE + e.getMessage());
         }
     }
 
@@ -76,7 +78,7 @@ public class AdvocateOfficeService {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while processing leave office", e);
-            throw new CustomException("LEAVE_OFFICE_ERROR", "Error while processing leave office: " + e.getMessage());
+            throw new CustomException(LEAVE_OFFICE_ERROR, LEAVE_OFFICE_ERROR_MESSAGE + e.getMessage());
         }
     }
 
@@ -95,7 +97,7 @@ public class AdvocateOfficeService {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while searching members", e);
-            throw new CustomException("SEARCH_MEMBER_ERROR", "Error while searching members: " + e.getMessage());
+            throw new CustomException(SEARCH_MEMBER_ERROR, SEARCH_MEMBER_ERROR_MESSAGE + e.getMessage());
         }
     }
 }
